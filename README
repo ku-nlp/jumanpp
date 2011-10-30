@@ -1,0 +1,80 @@
+====================================
+KKN - Chinese Morphological Analyzer
+====================================
+
+Quick start
+-----------
+
+1. make
+
+2. ./kkn < data/sample.raw > sample.result
+
+
+How to compile dictionary
+-------------------------
+
+If you add entries to data/dic.csv, you need to re-compile dictionary.
+
+./mkdarts data/dic.csv data/dic.da data/dic.bin data/dic.pos
+
+
+Feature definition
+------------------
+
+Feature templates are written in data/feature.def. A line represents a
+feature template. Its format is as follows:
+
+  UNIGRAM|BIGRAM NAME:macros1,macros2,...
+
+The following macros can be used:
+
+for UNIGRAM:
+  %w: word
+  %p: POS
+  %l: length (char num) of word
+  %bc: the beginning char of word
+  %ec: the ending char of word
+  %bt: char type of the beginning char of word
+  %et: char type of the ending char of word
+
+for BIGRAM:
+  %Lw: left word
+  %Lp: left POS
+  ... (%Ll, %Lbc, %Lec, %Lbt, %Let can be used)
+  %Rw: right word
+  %Rp: right POS
+  ... (%Rl, %Rbc, %Rec, %Rbt, %Ret can be used)
+
+
+Note
+----
+
+- The model attached to this package is trained using the training
+  part of Chinese Treebank 7.0. The detail of this data split is
+  written in [Wang et al., IJCNLP2011].
+
+- The dictionary attached to this package is extracted from the
+  training part of Chinese Treebank 7.0 (words occurring more than
+  once). In addition to this, entries extracted from Chinese Wikipedia
+  are also used.
+
+
+Algorithm overview
+------------------
+
+- Decoding algorithm
+-- Look up a dictionary using double array and make a morpheme lattice
+-- Calculate morpheme (unigram) score and connection (bigram) score according to learned weights
+-- Apply the Viterbi algorithm to get the best path
+
+- Learning
+-- Learn weights using averaged structured perceptron
+
+
+Authors
+-------
+
+Daisuke Kawahara <dk@i.kyoto-u.ac.jp>
+Toshiaki Nakazawa <nakazawa@nlp.ist.i.kyoto-u.ac.jp>
+Mo Shen <shen@nlp.ist.i.kyoto-u.ac.jp>
+Sadao Kurohashi <kuro@i.kyoto-u.ac.jp>
