@@ -154,7 +154,7 @@ int main(int argc, char **argv) {
       //cout << col[7] << endl;
       cout << col[8] << endl;
 
-      dic.push_back(std::make_pair<std::string, Token*>(w, token));
+      dic.push_back(std::make_pair(w, token));
   }
   if (file != "-") delete is;
 
