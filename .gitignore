@@ -1,0 +1,78 @@
+
+# Objects
+*.o
+*.ko
+*.ot
+*.obj
+*.elf
+
+# Libraries
+*.lib
+*.a
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+
+# generated or prepared data files and headers
+*.model
+*.dat
+*.prob
+*.db
+*.idx
+*.knpdict
+all-compound*
+chinese_rule/*data
+wordlist.txt
+INSTALL
+knprc
+system/version.h
+
+# generated binaries
+compile
+system/ipal
+system/knp
+system/make_db
+cdb/cdb
+darts/mkdarts
+
+# automake
+Makefile
+Makefile.in
+aclocal.m4
+autom4te.cache/
+config.*
+configure
+depcomp
+install-sh
+libtool
+ltmain.sh
+m4/
+missing
+stamp-h?
+.deps/
+.dirstamp
+.libs/
+*.l[ao]
+*~
+
+# editor
+*.swp
+*.swo
+*.swm
+*.swn
+
+# GTAGS
+GPATH
+GRTAGS
+GTAGS
