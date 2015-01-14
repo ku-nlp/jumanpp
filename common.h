@@ -8,6 +8,8 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <deque>
+#include <queue>
 #include <algorithm>
 #include <cstdlib>
 #include <ios>
@@ -50,6 +52,8 @@ extern bool check_exceptional_two_chars_in_figure(const char *cp, unsigned int r
 
 #define INITIAL_MAX_INPUT_LENGTH 1024
 #define MAX_RESOLVED_CHAR_NUM 15
+
+#define B_BEST_REDUNDANCY 0.25
 
 #define BOS "<BOS>"
 #define EOS "<EOS>"
@@ -106,6 +110,16 @@ extern bool check_exceptional_two_chars_in_figure(const char *cp, unsigned int r
 
 #define EXCEPTIONAL_FIGURE_EXPRESSION "分の"
 #define EXCEPTIONAL_FIGURE_EXPRESSION_LENGTH 6
+
+// TAG for chinese?
+#define MORPH_WORD_TAG 0
+#define MORPH_SC_TAG 16
+#define MORPH_BC_TAG 32
+#define MORPH_CC_TAG 64
+#define MORPH_DC_TAG 128
+#define MORPH_IC_TAG 256
+#define MORPH_EC_TAG 512
+
 
 // split function with split_num
 template<class T>
