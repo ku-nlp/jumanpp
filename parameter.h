@@ -10,6 +10,7 @@ class Parameter {
     bool unknown_word_detection;
     bool shuffle_training_data;
     bool debug;
+    bool nbest;
     unsigned int unk_max_length;
     unsigned int iteration_num;
     std::string darts_filename;
@@ -29,7 +30,7 @@ class Parameter {
     std::vector<unsigned short> unk_pos;
     std::vector<unsigned short> unk_figure_pos;
 
-    Parameter(const std::string &in_dic_filename, const std::string &in_ftmpl_filename, const int in_iteration_num, const bool in_unknown_word_detection, const bool in_shuffle_training_data, const unsigned int in_unk_max_length, const bool in_debug) {
+    Parameter(const std::string &in_dic_filename, const std::string &in_ftmpl_filename, const int in_iteration_num, const bool in_unknown_word_detection, const bool in_shuffle_training_data, const unsigned int in_unk_max_length, const bool in_debug, const bool in_nbest) {
         darts_filename = in_dic_filename + ".da";
         dic_filename = in_dic_filename + ".bin";
         pos_filename = in_dic_filename + ".pos" ;
@@ -46,6 +47,7 @@ class Parameter {
         shuffle_training_data = in_shuffle_training_data;
         unk_max_length = in_unk_max_length;
         debug = in_debug;
+        nbest = in_nbest;
 
 		N_redundant = N + (unsigned int)(ceil(N * B_BEST_REDUNDANCY));
     }

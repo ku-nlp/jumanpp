@@ -322,15 +322,24 @@ bool Sentence::lookup_and_analyze() {//{{{
         }
         previous_pos = pos;
     }
-
+    
     if (param->debug)
         print_juman_lattice();
 
     // Viterbi
-    for (unsigned int pos = 0; pos < length; pos += utf8_bytes((unsigned char *)(sentence_c_str + pos))) {
-        viterbi_at_position(pos, (*begin_node_list)[pos]);
+    if(param->nbest){
+        for (unsigned int pos = 0; pos < length;
+                pos += utf8_bytes((unsigned char *) (sentence_c_str + pos))) {
+            viterbi_at_position_nbest(pos, (*begin_node_list)[pos]);
+        }
+
+        find_N_best_path();
+    }else{
+        for (unsigned int pos = 0; pos < length; pos += utf8_bytes((unsigned char *)(sentence_c_str + pos))) {
+            viterbi_at_position(pos, (*begin_node_list)[pos]);
+        }
+        find_best_path();
     }
-    find_best_path();
     return true;
 }//}}}
 
@@ -522,14 +531,13 @@ bool Sentence::viterbi_at_position(unsigned int pos, Node *r_node) {
     return true;
 }
 
-bool Sentence::viterbi_at_position_nbest(unsigned int pos, Node *r_node) {
+bool Sentence::viterbi_at_position_nbest(unsigned int pos, Node *r_node) {//{{{
 	while (r_node) {
 		std::priority_queue<NbestSearchToken> nodeHeap;
 		Node *l_node = (*end_node_list)[pos];
-
+//        cerr << "r_node: " << *r_node->string_for_print << "_" << *r_node->pos << endl;
+            
         while (l_node) {
-            if ( (*(r_node->pos)).compare((*(l_node->pos))) == 0 ) {
-
                 FeatureSet f(ftmpl);
                 f.extract_bigram_feature(l_node, r_node);
                 double bigram_score = f.calc_inner_product_with_weight();
@@ -541,6 +549,14 @@ bool Sentence::viterbi_at_position_nbest(unsigned int pos, Node *r_node) {
                     NbestSearchToken newSearchToken(score, 0, l_node);
                     nodeHeap.push(newSearchToken);
 
+//                        cerr << *(l_node->string_for_print) 
+//                            << "_" << *l_node->pos  
+//                            //<< "_" << *(l_node->representation)
+//                            << "\t" << *(r_node->string_for_print) 
+//                            << "_" << *r_node->pos 
+//                            //<< "_" << *(r_node->representation) 
+//                            << "\t" << r_node->wcost 
+//                            << "\t" << score << "\t" << "rank" << 0 << endl;
                 } else {
                     if (traceSize > param->N_redundant)
                         traceSize = param->N_redundant;
@@ -550,16 +566,15 @@ bool Sentence::viterbi_at_position_nbest(unsigned int pos, Node *r_node) {
                             + r_node->wcost;
                         NbestSearchToken newSearchToken(score, i, l_node);
                         nodeHeap.push(newSearchToken);
-
-                        //					cerr << *(l_node->string_for_print) << "_" << *(l_node->pos)
-                        //							<< "\t" << *(r_node->string_for_print) << "_"
-                        //							<< *(r_node->pos) << "\t" << r_node->wcost << "\t"
-                        //							<< score << "\t" << "rank" << i << endl;
-
+//                        cerr << *(l_node->string_for_print) << "_" << *l_node->pos  
+//                            //<< "_" << *(l_node->representation)
+//                            << "\t" << *(r_node->string_for_print) 
+//                            << "_" << *r_node->pos  
+//                            //<< "_" << *(r_node->representation) 
+//                            << "\t" << r_node->wcost << "\t"
+//                            << score << "\t" << "rank" << i << endl;
                     }
                 }
-
-            }
             l_node = l_node->enext;
         }
 
@@ -585,8 +600,83 @@ bool Sentence::viterbi_at_position_nbest(unsigned int pos, Node *r_node) {
 	}
 
 	return true;
-}
+}//}}}
 
+void Sentence::print_N_best_path() {//{{{
+
+	std::string output_string_buffer;
+
+	unsigned int N_required = param->N;
+	unsigned int N_couter = 0;
+
+	unsigned int traceSize = (*begin_node_list)[length]->traceList.size();
+	if (traceSize > param->N_redundant) {
+		traceSize = param->N_redundant;
+	}
+
+	for (int i = 0; i < traceSize; ++i) {
+		Node *node = (*begin_node_list)[length];
+		std::vector<Node *> result_morphs;
+
+		bool find_bos_node = false;
+		int traceRank = i;
+
+		Node* temp_node = NULL;
+//		std::string subword_buffer;
+		long output_score = (*begin_node_list)[length]->traceList.at(i).score;
+//		cerr << node->traceList.at(i).rank << "\t" << node->traceList.at(i).score << endl;
+
+		while (node) {
+		    result_morphs.push_back(node);
+
+			if (node->traceList.size() == 0) {
+				break;
+			}
+			node = node->traceList.at(traceRank).prevNode;
+			if (node->stat == MORPH_BOS_NODE) {
+				find_bos_node = true;
+				break;
+			} else {
+				traceRank = result_morphs.back()->traceList.at(traceRank).rank;
+			}
+		}
+
+		if (!find_bos_node)
+			cerr << ";; cannot analyze:" << sentence << endl;
+
+		size_t printed_num = 0;
+		for (std::vector<Node *>::reverse_iterator it = result_morphs.rbegin();
+				it != result_morphs.rend(); it++) {
+
+			if ((*it)->stat != MORPH_BOS_NODE && (*it)->stat != MORPH_EOS_NODE) {
+				if (printed_num++)
+					output_string_buffer.append(" ");
+					output_string_buffer.append(*(*it)->string_for_print);
+					output_string_buffer.append("_");
+					output_string_buffer.append(*(*it)->pos);
+			}
+		}
+
+		std::map<std::string, int>::iterator find_output = nbest_duplicate_filter.find(output_string_buffer);
+		if (find_output != nbest_duplicate_filter.end()) {
+			//duplicate output
+//			cerr << "duplicate: " << output_string_buffer;
+//			cerr << " at " << nbest_duplicate_filter[output_string_buffer] << " vs. " << i << endl;
+		} else {
+			nbest_duplicate_filter.insert(std::make_pair(output_string_buffer, i));
+			cout << "#" << output_score << endl;
+			cout << output_string_buffer;
+			cout << endl;
+			++N_couter;
+		}
+
+		output_string_buffer.clear();
+		if (N_couter >= N_required)
+			break;
+
+	}
+	cout << endl;
+}//}}}
 
 
 // update end_node_list
