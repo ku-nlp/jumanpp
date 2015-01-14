@@ -15,7 +15,27 @@ struct morph_token_t {
 	unsigned short form_id; // 活用形
 	unsigned short form_type_id; // 活用型
 	unsigned long base_id; // 活用型
+    unsigned short length; // 単語の長さ? 不要? 
 	short wcost; // cost of this morpheme
+
+    //feature を入れられるようにしたいが, 大きなサイズの物をここに置いてしまっても良いのか？
+    unsigned int feature;
+
+    //これらに，ことなるコストを付けられるよう，素性を追加する
+    /* 小書き文字を大文字化、平仮名を長音記号に置換する際の追加コスト */
+    //#define NORMALIZED_COST        6
+    /* 長音を削除する際の追加コスト */
+    //#define PROLONG_DEL_COST1      6  /* 感動詞 */
+    //#define PROLONG_DEL_COST2     50  /* 判定詞 */
+    //#define PROLONG_DEL_COST3      9  /* その他 (9より小さいと"あーあ"を指示詞と解析する) */
+    /* 連濁認識用の追加コスト */
+    //  #define VERB_VOICED_COST       7  /* "が"から始まる動詞を除く動詞の連濁化のコスト */
+    //  #define VERB_GA_VOICED_COST    9  /* "が"から始まる動詞の連濁化のコスト */
+    //  #define NOUN_VOICED_COST       8  /* "が"から始まる名詞を除く名詞の連濁化のコスト */
+    //  #define NOUN_GA_VOICED_COST   11  /* "が"から始まる名詞の連濁化のコスト */
+    //  #define ADJECTIVE_VOICED_COST  9  /* 形容詞の連濁化のコスト */
+    //  #define OTHER_VOICED_COST      5  /* 上記以外の連濁化のコスト */
+
 	// unsigned int feature;
 	// unsigned int compound;  /* reserved for noun compound */
 };

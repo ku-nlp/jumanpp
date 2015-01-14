@@ -22,11 +22,11 @@ bool Dic::open(Parameter *in_param, FeatureTemplateSet *in_ftmpl) {
     }else{
         cerr << ";; " << param->darts_filename  << endl;
     }
-
+        
     MMAP_OPEN(char, dmmap, param->dic_filename.c_str());
     const char *ptr = dmmap->begin();
     token_head = reinterpret_cast<const Token *>(ptr);
-
+        
     posid2pos.read_pos_list(param->pos_filename);
     sposid2spos.read_pos_list(param->spos_filename);
     formid2form.read_pos_list(param->form_filename);
@@ -38,7 +38,7 @@ bool Dic::open(Parameter *in_param, FeatureTemplateSet *in_ftmpl) {
     for (std::vector<std::string>::iterator it = c.begin(); it != c.end(); it++) {
         param->unk_pos.push_back(posid2pos.get_id(*it));
     }
-
+        
     split_string(UNK_FIGURE_POSS, ",", c);
     for (std::vector<std::string>::iterator it = c.begin(); it != c.end(); it++){
         param->unk_figure_pos.push_back(posid2pos.get_id(*it));
@@ -58,7 +58,7 @@ Node *Dic::lookup(const char *start_str, unsigned int specified_length, std::str
         return lookup(start_str, specified_length, MORPH_DUMMY_POS);
 }
 
-Node *Dic::lookup(const char *start_str, unsigned int specified_length, unsigned short specified_posid) {
+Node *Dic::lookup(const char *start_str, unsigned int specified_length, unsigned short specified_posid) {//{{{
     Node *result_node = NULL;
 
     // search double array
@@ -85,8 +85,7 @@ Node *Dic::lookup(const char *start_str, unsigned int specified_length, unsigned
             if (new_node->lcAttr == 1) { // Wikipedia
                 new_node->string = new std::string(UNK_WIKIPEDIA);
                 new_node->stat = MORPH_UNK_NODE;
-            }
-            else {
+            } else {
                 new_node->string = new_node->string_for_print;
                 new_node->stat = MORPH_NORMAL_NODE;
             }
@@ -106,7 +105,74 @@ Node *Dic::lookup(const char *start_str, unsigned int specified_length, unsigned
         }
     }
     return result_node;
+}//}}}
+
+Node *Dic::lookup_lattice(std::vector<Darts::DoubleArray::result_pair_type> &da_search_result,const char *start_str) {
+    return lookup_lattice(da_search_result, start_str, 0, MORPH_DUMMY_POS);
 }
+
+Node *Dic::lookup_lattice(std::vector<Darts::DoubleArray::result_pair_type> &da_search_result, const char *start_str, unsigned int specified_length, std::string *specified_pos) {
+    if (specified_pos)
+        return lookup_lattice( da_search_result,start_str, specified_length, posid2pos.get_id(*specified_pos));
+    else
+        return lookup_lattice( da_search_result,start_str, specified_length, MORPH_DUMMY_POS);
+}
+
+// DA から検索した結果を Node に変換する
+// ラティスを受け取る方法を考える
+Node *Dic::lookup_lattice(std::vector<Darts::DoubleArray::result_pair_type> &da_search_result, const char *start_str, unsigned int specified_length, unsigned short specified_posid) { //{{{
+    Node *result_node = NULL;
+        
+    // コレを受け取る様にしたほうが依存関係がスッキリする... と思いきや，darts を持ってるのはDic クラスだった
+    // auto result_pair = da_search_from_position(int position);
+    std::vector<Darts::DoubleArray::result_pair_type> &result_pair = da_search_result; 
+        
+    if (result_pair.size() == 0)
+        return result_node;
+    size_t num = result_pair.size();
+        
+    //以降のコードは完全に同じ？
+    for (size_t i = 0; i < num; i++) { // hit num
+        if (specified_length && specified_length != result_pair[i].length)
+            continue;
+        size_t size  = token_size(result_pair[i]);
+        const Token *token = get_token(result_pair[i]);
+            
+        for (size_t j = 0; j < size; j++) { // same key but different value (pos)
+            if (specified_posid != MORPH_DUMMY_POS && specified_posid != (token + j)->posid)
+                continue;
+            Node *new_node = new Node;
+            read_node_info(*(token + j), &new_node);
+            new_node->token = (Token *)(token + j);
+            new_node->length = result_pair[i].length;// ここは変えるべき？
+            new_node->surface = start_str;
+            new_node->char_num = utf8_chars((unsigned char *)start_str, new_node->length);
+            new_node->string_for_print = new std::string(start_str, new_node->length);
+            if (new_node->lcAttr == 1) { // Wikipedia
+                new_node->string = new std::string(UNK_WIKIPEDIA);
+                new_node->stat = MORPH_UNK_NODE;
+            } else {
+                new_node->string = new_node->string_for_print;
+                new_node->stat = MORPH_NORMAL_NODE;
+            }
+            new_node->char_type = check_utf8_char_type((unsigned char *)start_str);
+            new_node->char_family = check_char_family(new_node->char_type);
+            char *end_char = (char *)get_specified_char_pointer((unsigned char *)start_str, new_node->length, new_node->char_num - 1);
+            new_node->end_char_family = check_char_family((unsigned char *)end_char);
+            new_node->end_string = new std::string(end_char, utf8_bytes((unsigned char *)end_char));
+                
+            FeatureSet *f = new FeatureSet(ftmpl);
+            f->extract_unigram_feature(new_node);
+            new_node->wcost = f->calc_inner_product_with_weight();
+            new_node->feature = f;
+                
+            new_node->bnext = result_node;
+            result_node = new_node;
+        }
+    }
+    return result_node;
+}//}}}
+
 
 Node *Dic::make_unk_pseudo_node(const char *start_str, int byte_len) {
     return make_unk_pseudo_node(start_str, byte_len, MORPH_DUMMY_POS);
@@ -135,14 +201,12 @@ Node *Dic::make_unk_pseudo_node_gold(const char *start_str, int byte_len, std::s
     new_node->stat = MORPH_UNK_NODE;
     if (specified_posid == MORPH_DUMMY_POS) {//ここは来ないはず
         cerr << ";; error there are unknown words on gold data" << endl;
-    }
-    else {
+    } else {
         new_node->posid  = specified_posid;
         new_node->sposid = sposid2spos.get_id(UNK_POS);
         new_node->formid = formid2form.get_id(UNK_POS);
         new_node->formtypeid = formtypeid2formtype.get_id(UNK_POS);
         new_node->baseid = baseid2base.get_id(UNK_POS);
-
     }
     new_node->pos = posid2pos.get_pos(new_node->posid);
     new_node->spos = sposid2spos.get_pos(new_node->sposid);
@@ -155,8 +219,6 @@ Node *Dic::make_unk_pseudo_node_gold(const char *start_str, int byte_len, std::s
     new_node->wcost = new_node->feature->calc_inner_product_with_weight();
     return new_node;
 }
-
-
 
 // make an unknown word node
 Node *Dic::make_unk_pseudo_node(const char *start_str, int byte_len, unsigned short specified_posid) {
@@ -295,8 +357,7 @@ Node *Dic::make_unk_pseudo_node_list_some_pos(const char *start_str, int byte_le
             new_node->bnext = result_node;
             result_node = new_node;
         }
-    }
-    else {
+    } else {
         // POSが分かる場合(主に訓練時)
         Node *new_node = make_unk_pseudo_node(start_str, byte_len, specified_posid);
         new_node->bnext = result_node;

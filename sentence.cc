@@ -139,11 +139,12 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str, unsi
     return lookup_and_make_special_pseudo_nodes(start_str, 0, specified_length, specified_pos);
 }
 
-Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str, unsigned int pos, unsigned int specified_length, std::string *specified_pos) {
+Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str, unsigned int pos, unsigned int specified_length, std::string *specified_pos) {//{{{
     Node *result_node = NULL;
     Node *kanji_result_node = NULL;
     
     // まず探す
+    //Node *dic_node = dic->lookup_lattice(start_str + pos, specified_length, specified_pos); // look up a dictionary with common prefix search
     Node *dic_node = dic->lookup(start_str + pos, specified_length, specified_pos); // look up a dictionary with common prefix search
 
     // 同じ品詞で同じ長さなら使わない
@@ -180,7 +181,7 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str, unsi
 //        }
 
         // カタカナ
-        // 適当に切れるところまで版が必要か
+        // TODO:適当に切れるところまでで未定義語を作る
 		if (!result_node) {
 			result_node = dic->make_specified_pseudo_node_by_dic_check(start_str + pos,
 					specified_length, specified_pos, &(param->unk_pos),
@@ -208,18 +209,100 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str, unsi
     }
 
     return result_node;
-}
+}//}}}
 
-bool Sentence::lookup_and_analyze() {
+Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, const char *start_str, unsigned int pos, unsigned int specified_length, std::string *specified_pos) {//{{{
+    Node *result_node = NULL;
+    Node *kanji_result_node = NULL;
+
+    // まず探す
+    auto lattice_result = cl.da_search_from_position(dic->darts, pos);
+    Node *dic_node = dic->lookup_lattice(lattice_result, start_str + pos, specified_length, specified_pos); // look up a dictionary with common prefix search
+    //Node *dic_node = dic->lookup(start_str + pos, specified_length, specified_pos); // look up a dictionary with common prefix search
+
+    // 同じ品詞で同じ長さなら使わない
+
+    // 訓練データで，長さが分かっている場合か，未知語として選択されていない範囲なら
+	if (specified_length || pos >= reached_pos_of_pseudo_nodes) {
+        // 数詞処理
+		// make figure nodes
+        // 同じ文字種が続く範囲を一語として入れてくれる
+		result_node = dic->make_specified_pseudo_node(start_str + pos,
+				specified_length, specified_pos, &(param->unk_figure_pos),
+				TYPE_FAMILY_FIGURE);
+        // 長さが指定されたものに合っていれば，そのまま返す
+		if (specified_length && result_node) return result_node;
+
+		// make alphabet nodes
+		if (!result_node) {
+			result_node = dic->make_specified_pseudo_node(start_str + pos,
+					specified_length, specified_pos, &(param->unk_pos),
+					TYPE_FAMILY_ALPH_PUNC);
+			if (specified_length && result_node) return result_node;
+		}
+
+        // 漢字
+        // 辞書にあれば、辞書にない品詞だけを追加する
+//        kanji_result_node = dic->make_specified_pseudo_node_by_dic_check(start_str + pos,
+//                specified_length, specified_pos, &(param->unk_pos),
+//                TYPE_KANJI|TYPE_KANJI_FIGURE, dic_node);
+//        if (result_node && kanji_result_node) {
+//            //数詞の場合はひとつしか返ってこないことが確定しているので、次のノードに追加すれば大丈夫
+//            result_node->bnext = kanji_result_node;
+//        }else if(!result_node){
+//            result_node = kanji_result_node;
+//        }
+
+        // カタカナ
+        // TODO:適当に切れるところまでで未定義語を作る
+		if (!result_node) {
+			result_node = dic->make_specified_pseudo_node_by_dic_check(start_str + pos,
+					specified_length, specified_pos, &(param->unk_pos),
+					TYPE_KATAKANA , dic_node);
+		}
+
+        // ひらがな
+//		if (!result_node) {
+//			result_node = dic->make_specified_pseudo_node(start_str + pos,
+//					3, specified_pos, &(param->unk_pos), TYPE_HIRAGANA );
+//			if (specified_length && result_node)
+//				return result_node;
+//		}
+
+		if (!specified_length && result_node) // only prediction
+			find_reached_pos_of_pseudo_nodes(pos, result_node);
+	}
+
+    if (dic_node) {
+        Node *tmp_node = dic_node;
+        while (tmp_node->bnext)
+            tmp_node = tmp_node->bnext;
+        tmp_node->bnext = result_node;
+        result_node = dic_node;
+    }
+
+    return result_node;
+}//}}}
+
+
+bool Sentence::lookup_and_analyze() {//{{{
     unsigned int previous_pos = 0;
+
+    // 文字Lattice の構築
+    CharLattice cl;
+    cl.parse(sentence);
+
+    // lookup あたりを書き換えて，Charlattice 対応版lookup に切り替えるフラグを用意する必要がある
     for (unsigned int pos = 0; pos < length; pos += utf8_bytes((unsigned char *)(sentence_c_str + pos))) {
-        if ((*end_node_list)[pos] == NULL) {
+        if ((*end_node_list)[pos] == NULL) {//pos にたどり着くノードが１つもない
             if (param->unknown_word_detection && pos > 0 && reached_pos <= pos)
                 make_unk_pseudo_node_list_from_previous_position(sentence_c_str, previous_pos);
         }
         else {
-            Node *r_node = lookup_and_make_special_pseudo_nodes(sentence_c_str, pos); 
+            Node *r_node = lookup_and_make_special_pseudo_nodes_lattice(cl,sentence_c_str, pos, 0, NULL); 
             // make figure/alphabet nodes and look up a dictionary
+            // オノマトペ処理 or lookup_and_make_special_pseudo_nodes 内
+            
             set_begin_node_list(pos, r_node);
             find_reached_pos(pos, r_node);
             if (param->unknown_word_detection) { // make unknown word candidates
@@ -239,8 +322,8 @@ bool Sentence::lookup_and_analyze() {
         previous_pos = pos;
     }
 
-    if (param->debug)
-        print_lattice();
+    //if (param->debug)
+    print_lattice();
 
     // Viterbi
     for (unsigned int pos = 0; pos < length; pos += utf8_bytes((unsigned char *)(sentence_c_str + pos))) {
@@ -248,7 +331,7 @@ bool Sentence::lookup_and_analyze() {
     }
     find_best_path();
     return true;
-}
+}//}}}
 
 void Sentence::print_lattice() {
     unsigned int char_num = 0;
