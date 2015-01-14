@@ -20,7 +20,7 @@ bool Dic::open(Parameter *in_param, FeatureTemplateSet *in_ftmpl) {
         cerr << ";; Cannot open: " << param->darts_filename << endl;
         return false;
     }else{
-        cerr << ";; " << param->darts_filename  << endl;
+        //cerr << ";; " << param->darts_filename  << endl;
     }
         
     MMAP_OPEN(char, dmmap, param->dic_filename.c_str());
@@ -32,7 +32,10 @@ bool Dic::open(Parameter *in_param, FeatureTemplateSet *in_ftmpl) {
     formid2form.read_pos_list(param->form_filename);
     formtypeid2formtype.read_pos_list(param->form_type_filename);
     baseid2base.read_pos_list(param->base_filename);
-
+    repid2rep.read_pos_list(param->rep_filename);
+    readingid2reading.read_pos_list(param->reading_filename);
+    imisid2imis.read_pos_list(param->imis_filename);
+        
     std::vector<std::string> c;
     split_string(UNK_POSS, ",", c);
     for (std::vector<std::string>::iterator it = c.begin(); it != c.end(); it++) {
@@ -43,7 +46,7 @@ bool Dic::open(Parameter *in_param, FeatureTemplateSet *in_ftmpl) {
     for (std::vector<std::string>::iterator it = c.begin(); it != c.end(); it++){
         param->unk_figure_pos.push_back(posid2pos.get_id(*it));
     }
-
+        
     return true;
 }
 
@@ -82,6 +85,7 @@ Node *Dic::lookup(const char *start_str, unsigned int specified_length, unsigned
             new_node->surface = start_str;
             new_node->char_num = utf8_chars((unsigned char *)start_str, new_node->length);
             new_node->string_for_print = new std::string(start_str, new_node->length);
+            new_node->original_surface = new std::string(start_str, new_node->length);
             if (new_node->lcAttr == 1) { // Wikipedia
                 new_node->string = new std::string(UNK_WIKIPEDIA);
                 new_node->stat = MORPH_UNK_NODE;
@@ -193,6 +197,7 @@ Node *Dic::make_unk_pseudo_node_gold(const char *start_str, int byte_len, std::s
     new_node->char_type = check_utf8_char_type((unsigned char *)new_node->surface);
     new_node->char_family = check_char_family(new_node->char_type);
     new_node->string = new std::string(new_node->surface, new_node->length);
+    new_node->original_surface = new std::string(new_node->surface, new_node->length);
     new_node->string_for_print = new std::string(new_node->surface, new_node->length);
     new_node->char_num = utf8_chars((unsigned char *)(new_node->surface), new_node->length);
     char *end_char = (char *)get_specified_char_pointer((unsigned char *)start_str, new_node->length, new_node->char_num - 1);
@@ -203,16 +208,24 @@ Node *Dic::make_unk_pseudo_node_gold(const char *start_str, int byte_len, std::s
         cerr << ";; error there are unknown words on gold data" << endl;
     } else {
         new_node->posid  = specified_posid;
-        new_node->sposid = sposid2spos.get_id(UNK_POS);
-        new_node->formid = formid2form.get_id(UNK_POS);
-        new_node->formtypeid = formtypeid2formtype.get_id(UNK_POS);
+        new_node->sposid = sposid2spos.get_id(UNK_POS);//文字種に置き換える
+        new_node->formid = formid2form.get_id("*");
+        new_node->formtypeid = formtypeid2formtype.get_id("*");
         new_node->baseid = baseid2base.get_id(UNK_POS);
+        new_node->readingid = readingid2reading.get_id(UNK_POS);
+                
+        new_node->repid = repid2rep.get_id("*");
+        new_node->imisid = imisid2imis.get_id("NIL");
     }
     new_node->pos = posid2pos.get_pos(new_node->posid);
     new_node->spos = sposid2spos.get_pos(new_node->sposid);
     new_node->form = formid2form.get_pos(new_node->formid);
     new_node->form_type = formtypeid2formtype.get_pos(new_node->formtypeid);
     new_node->base = baseid2base.get_pos(new_node->baseid);
+    new_node->reading = readingid2reading.get_pos(new_node->readingid);
+    
+    new_node->representation = repid2rep.get_pos(new_node->repid);
+    new_node->semantic_feature = imisid2imis.get_pos(new_node->imisid);
 
     new_node->feature = new FeatureSet(ftmpl);
     new_node->feature->extract_unigram_feature(new_node);
@@ -246,13 +259,20 @@ Node *Dic::make_unk_pseudo_node(const char *start_str, int byte_len, unsigned sh
         new_node->base = new std::string("未定義文字種不明");
     } //漢字かな交じりはどこに入る？
       
+    new_node->original_surface = new std::string(new_node->surface, new_node->length);
     new_node->string_for_print = new std::string(new_node->surface, new_node->length);
     new_node->char_num = utf8_chars((unsigned char *)(new_node->surface), new_node->length);
     char *end_char = (char *)get_specified_char_pointer((unsigned char *)start_str, new_node->length, new_node->char_num - 1);
     new_node->end_char_family = check_char_family((unsigned char *)end_char);
     new_node->end_string = new std::string(end_char, utf8_bytes((unsigned char *)end_char));
     new_node->stat = MORPH_UNK_NODE;
-        
+
+    new_node->readingid = readingid2reading.get_id(UNK_POS);
+    new_node->formid = formid2form.get_id("*");
+    new_node->formtypeid = formtypeid2formtype.get_id("*");
+    new_node->repid = repid2rep.get_id("*");
+    new_node->imisid = imisid2imis.get_id("NIL");
+                
     // pos が指定されている場合とそうでない場合で分岐する
     // 品詞などを埋める
     if (specified_posid == MORPH_DUMMY_POS) {
@@ -260,8 +280,10 @@ Node *Dic::make_unk_pseudo_node(const char *start_str, int byte_len, unsigned sh
         new_node->pos = posid2pos.get_pos(new_node->posid);
         new_node->sposid = sposid2spos.get_id(UNK_POS);
         new_node->spos = sposid2spos.get_pos(new_node->sposid);
-        new_node->formid = formid2form.get_id(UNK);
-        new_node->formtypeid = formtypeid2formtype.get_id(UNK);
+        new_node->formid = formid2form.get_id(UNK_POS);
+        new_node->formtypeid = formtypeid2formtype.get_id(UNK_POS);
+        new_node->baseid = baseid2base.get_id(UNK_POS);
+
         if ((new_node->char_type == (TYPE_FIGURE)) || (new_node->char_type == (TYPE_KANJI_FIGURE))){
             //数詞については詳細品詞まで分かるので入れておく
             new_node->string = new std::string("<数詞>");
@@ -290,10 +312,13 @@ Node *Dic::make_unk_pseudo_node(const char *start_str, int byte_len, unsigned sh
             new_node->pos = posid2pos.get_pos(new_node->posid);
             new_node->sposid = sposid2spos.get_id(UNK_POS);
             new_node->spos = sposid2spos.get_pos(new_node->sposid);
-            new_node->formid = formid2form.get_id(UNK_POS);
-            new_node->formtypeid = formtypeid2formtype.get_id(UNK_POS);
         }
     }
+        
+    new_node->reading = readingid2reading.get_pos(new_node->readingid);// 表層と同じにするには
+    new_node->representation = repid2rep.get_pos(new_node->repid);
+    new_node->semantic_feature = imisid2imis.get_pos(new_node->imisid);
+
     new_node->form = formid2form.get_pos(new_node->formid);
     new_node->form_type = formtypeid2formtype.get_pos(new_node->formtypeid);
             
@@ -486,6 +511,17 @@ void inline Dic::read_node_info(const Token &token, Node **node) {
     (*node)->form = formid2form.get_pos((*node)->formid);
     (*node)->form_type = formtypeid2formtype.get_pos((*node)->formtypeid);
     (*node)->base = (std::string *)baseid2base.get_pos((*node)->baseid);
+    (*node)->readingid = token.reading_id;
+    (*node)->reading = readingid2reading.get_pos((*node)->readingid);
+
+    (*node)->repid = token.rep_id;
+    (*node)->imisid = token.imis_id;
+
+    // 代表表記の読み込み
+    (*node)->representation = repid2rep.get_pos((*node)->repid);
+    //cout << (*node)->representation << endl;
+    // 意味情報の読み込み
+    (*node)->semantic_feature = imisid2imis.get_pos((*node)->imisid);
 
     (*node)->wcost = token.wcost;
     (*node)->token = const_cast<Token *>(&token);

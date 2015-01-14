@@ -15,13 +15,13 @@ struct morph_token_t {
 	unsigned short form_id; // 活用形
 	unsigned short form_type_id; // 活用型
 	unsigned long base_id; // 活用型
-    unsigned short length; // 単語の長さ? 不要? 
+    unsigned short length; // 単語の長さ
 	short wcost; // cost of this morpheme
-
-    //feature を入れられるようにしたいが, 大きなサイズの物をここに置いてしまっても良いのか？
-    unsigned int feature;
-
-    //これらに，ことなるコストを付けられるよう，素性を追加する
+        
+    unsigned long rep_id; // 代表表記
+    unsigned long imis_id; // 意味情報
+    unsigned long reading_id; // 読み
+        
     /* 小書き文字を大文字化、平仮名を長音記号に置換する際の追加コスト */
     //#define NORMALIZED_COST        6
     /* 長音を削除する際の追加コスト */
@@ -56,7 +56,11 @@ class Node {
     std::string *string_for_print;
     std::string *end_string;
     FeatureSet *feature;
-
+        
+    std::string *representation;
+    std::string *semantic_feature; 
+    std::string *original_surface;
+        
     // const char *feature;
     // unsigned int id;
     unsigned short length; /* length of morph */
@@ -68,11 +72,15 @@ class Node {
 	unsigned short formid;
 	unsigned short formtypeid;
 	unsigned long baseid;
+	unsigned long repid;
+	unsigned long imisid;
+	unsigned long readingid;
     std::string *pos;
 	std::string *spos;
 	std::string *form;
 	std::string *form_type;
 	std::string *base;
+    std::string *reading;
     unsigned int char_type;
     unsigned int char_family;
     unsigned int end_char_family;

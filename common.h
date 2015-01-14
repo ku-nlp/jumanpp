@@ -30,6 +30,7 @@ extern std::map<std::string, double> feature_weight_sum;
 namespace Morph {
 
 extern int utf8_bytes(unsigned char *ucp);
+extern size_t utf8_length(const char *ucp);
 extern unsigned short utf8_chars(unsigned char *ucp, size_t byte_len);
 extern unsigned char *get_specified_char_pointer(unsigned char *ucp, size_t byte_len, unsigned short specified_char_num);
 

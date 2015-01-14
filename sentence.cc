@@ -299,7 +299,8 @@ bool Sentence::lookup_and_analyze() {//{{{
                 make_unk_pseudo_node_list_from_previous_position(sentence_c_str, previous_pos);
         }
         else {
-            Node *r_node = lookup_and_make_special_pseudo_nodes_lattice(cl,sentence_c_str, pos, 0, NULL); 
+            //Node *r_node = lookup_and_make_special_pseudo_nodes_lattice(cl,sentence_c_str, pos, 0, NULL); 
+            Node *r_node = lookup_and_make_special_pseudo_nodes(sentence_c_str, pos, 0, NULL); 
             // make figure/alphabet nodes and look up a dictionary
             // オノマトペ処理 or lookup_and_make_special_pseudo_nodes 内
             
@@ -323,7 +324,7 @@ bool Sentence::lookup_and_analyze() {//{{{
     }
 
     //if (param->debug)
-    print_lattice();
+    print_juman_lattice();
 
     // Viterbi
     for (unsigned int pos = 0; pos < length; pos += utf8_bytes((unsigned char *)(sentence_c_str + pos))) {
@@ -349,6 +350,73 @@ void Sentence::print_lattice() {
         char_num++;
     }
 }
+
+void Sentence::print_juman_lattice() {
+    unsigned int char_num = 0;
+    int id = 1;
+    std::vector<std::vector<int>> num2id(length); //多めに保持する
+    for (unsigned int pos = 0; pos < length; pos += utf8_bytes((unsigned char *)(sentence_c_str + pos))) {
+        Node *node = (*begin_node_list)[pos];
+        // 2 0 0 6 部屋 へや 部屋 名詞 6 普通名詞 1 * 0 * 0 “代表表記:部屋/へや カテゴリ:場所-施設 …"
+        // 15 2 6 9 に に に 助詞 9 格助詞 1 * 0 * 0 NIL
+        // ID to_connect_ID index_begin index_end ... 
+            
+        while (node) {
+            size_t word_length = node->char_num;
+            cout << id << " " ;
+            num2id[char_num + word_length].push_back(id++);
+            // 無かったら 0 を出す
+            if(num2id[char_num].size()==0){
+                cout << "0";
+            }else{
+                std::string sep= "";
+                for(auto to_id:num2id[char_num]){
+                    cout << sep << to_id;// 間にだけ入れる様に午後になおす
+                    sep = ";";
+                }
+            }
+            cout << " ";
+            cout << char_num << " " << char_num + word_length << " ";//何文字目から何文字目か
+
+            // 45 29 12 18 よく よく よい 形容詞 3 * 0 イ形容詞アウオ段 18 基本連用形 7 "代表表記:良い/よい 反義:形容詞:悪い/
+            // 表層// よみ // 原形
+            if( *node->reading == UNK_POS ){//読み不明であれば表層を使う
+                cout << *node->original_surface << " " << *node->original_surface << " " << *node->original_surface << " " ; 
+            }else{
+                cout << *node->original_surface << " " << *node->reading  << " " << *node->base << " " ; 
+            }
+            // 品詞 // 品詞 id
+            cout << *node->pos << " " << node->posid << " ";
+            // 細分類// 細分類 id
+            if( *node->spos == UNK_POS) {
+                cout << "その他 " << node->sposid << " ";
+            }else{
+                cout << *node->spos << " " << node->sposid << " ";
+            }
+            // 活用型 // 活用型 id
+            cout << *node->form_type << " " << node->formtypeid << " ";
+            // 活用系// 活用系 id
+            cout << *node->form << " " << node->formid << " ";
+
+            if(*node->representation != "*" && *node->semantic_feature != "NIL" ){
+                cout << '"' ;
+                //cout << " 代表表記:" ;
+                if(*node->representation != UNK_POS)
+                    cout << "代表表記:" << *node->representation << " ";  //*ならスキップ
+                //cout << " 意味情報:" ;
+                if(*node->semantic_feature != "NIL" )
+                    cout << *node->semantic_feature; //NILならNIL
+                cout << '"' << endl;
+            }else{
+                cout << "NIL" << endl;
+            }
+            node = node->bnext;
+        }
+        char_num++;
+    }
+}
+
+
 
 Node *Sentence::get_bos_node() {
 	Node *bos_node = new Node;

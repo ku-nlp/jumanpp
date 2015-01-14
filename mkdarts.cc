@@ -94,6 +94,9 @@ int main(int argc, char **argv) {
   std::string form_list = base_filename + ".form";
   std::string form_type_list = base_filename + ".form_type";
   std::string base_list = base_filename + ".base";
+  std::string rep_list = base_filename + ".rep";
+  std::string imis_list = base_filename + ".imis";
+  std::string read_list = base_filename + ".read";
 
   Darts::DoubleArray da;
 
@@ -116,9 +119,12 @@ int main(int argc, char **argv) {
   Pos form_gen;//活用形
   Pos form_type_gen;//活用型
   Pos base_gen;//活用型
+  Pos reading_gen;
+  Pos rep_gen;//代表表記
+  Pos imis_gen;//意味情報
 
   std::string line;
-  const int max_dic_column= 9;
+  const int max_dic_column= 12;
   char *col[max_dic_column];
   std::string w;
   while (std::getline(*is, line)) {
@@ -134,14 +140,20 @@ int main(int argc, char **argv) {
           col[5] = "*";
       }
       if ( std::string(col[6]).size() == 0 ){
-          col[5] = "*";
+          col[6] = "*";
       }
       if ( std::string(col[7]).size() == 0 ){
           col[5] = "*";
       }
-
+      if ( std::string(col[9]).size() == 0 ){//代表表記がない場合
+          col[10] = "*";
+      }
+      if ( std::string(col[10]).size() == 0 ){//意味情報がない場合
+          col[11] = "*";
+      }
+        
       w = col[0];
-
+            
       Token *token  = new Token;
       token->lcAttr = std::atoi(col[1]);
       token->rcAttr = std::atoi(col[2]);
@@ -151,9 +163,14 @@ int main(int argc, char **argv) {
       token->form_id = form_gen.get_id(col[6]);
       token->form_type_id = form_type_gen.get_id(col[7]);
       token->base_id = base_gen.get_id(col[8]);
-      //cout << col[7] << endl;
-      cout << col[8] << endl;
-
+      token->reading_id = reading_gen.get_id(col[9]);
+      // 代表表記
+      token->rep_id = rep_gen.get_id(col[10]);
+      //cout << token->representation << endl;
+      // 意味情報(残り全て)
+      token->imis_id = imis_gen.get_id(col[11]);
+      //cout << col[10] << endl;
+        
       dic.push_back(std::make_pair(w, token));
   }
   if (file != "-") delete is;
@@ -219,6 +236,9 @@ int main(int argc, char **argv) {
   form_gen.write_pos_list(form_list);
   form_type_gen.write_pos_list(form_type_list);
   base_gen.write_pos_list(base_list);
+  reading_gen.write_pos_list(read_list);
+  rep_gen.write_pos_list(rep_list);
+  imis_gen.write_pos_list(imis_list);
 
   return 0;
 }

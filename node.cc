@@ -14,6 +14,8 @@ Node::~Node() {
         delete end_string;
     if (string)
         delete string;
+    if (original_surface)
+        delete original_surface;
     if (feature)
         delete feature;
 //    if (pos)
