@@ -32,7 +32,10 @@ namespace Morph {
 extern int utf8_bytes(unsigned char *ucp);
 extern unsigned short utf8_chars(unsigned char *ucp, size_t byte_len);
 extern unsigned char *get_specified_char_pointer(unsigned char *ucp, size_t byte_len, unsigned short specified_char_num);
+
+extern unsigned int check_utf8_char_type(const char *ucp);
 extern unsigned int check_utf8_char_type(unsigned char *ucp);
+
 extern unsigned int check_char_family(unsigned char *ucp);
 extern unsigned int check_char_family(unsigned int char_type);
 extern bool compare_char_type_in_family(unsigned int char_type, unsigned int family_pattern);

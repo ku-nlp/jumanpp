@@ -5,6 +5,7 @@
 #include "feature.h"
 #include "dic.h"
 #include "parameter.h"
+#include "charlattice.h"
 
 namespace Morph {
 
@@ -64,6 +65,8 @@ class Sentence {
     Node *lookup_and_make_special_pseudo_nodes(const char *start_str, unsigned int pos);
     Node *lookup_and_make_special_pseudo_nodes(const char *start_str, unsigned int specified_length, std::string *specified_pos);
     Node *lookup_and_make_special_pseudo_nodes(const char *start_str, unsigned int pos, unsigned int specified_length, std::string *specified_pos);
+    Node *lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, const char *start_str, unsigned int pos, unsigned int specified_length, std::string *specified_pos); 
+
     Node *make_unk_pseudo_node_list_from_previous_position(const char *start_str, unsigned int previous_pos);
     Node *make_unk_pseudo_node_list_from_some_positions(const char *start_str, unsigned int pos, unsigned int previous_pos);
     Node *make_unk_pseudo_node_list_by_dic_check(const char *start_str, unsigned int pos, Node *r_node, unsigned int specified_char_num);

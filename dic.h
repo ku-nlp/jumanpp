@@ -30,6 +30,10 @@ class Dic {
     Node *lookup(const char *start_str);
     Node *lookup(const char *start_str, unsigned int specified_length, std::string *specified_pos);
     Node *lookup(const char *start_str, unsigned int specified_length, unsigned short specified_posid);
+    Node *lookup_lattice(std::vector<Darts::DoubleArray::result_pair_type> &da_search_result, const char *start_str);
+    Node *lookup_lattice(std::vector<Darts::DoubleArray::result_pair_type> &da_search_result, const char *start_str, unsigned int specified_length, std::string *specified_pos); 
+    Node *lookup_lattice(std::vector<Darts::DoubleArray::result_pair_type> &da_search_result, const char *start_str, unsigned int specified_length, unsigned short specified_posid);
+
     Node *make_unk_pseudo_node(const char *start_str, int byte_len);
     Node *make_unk_pseudo_node(const char *start_str, int byte_len, std::string &specified_pos);
     Node *make_unk_pseudo_node(const char *start_str, int byte_len, unsigned short specified_posid);
@@ -50,9 +54,11 @@ class Dic {
     const Token *get_token(const Darts::DoubleArray::result_pair_type &n) const {
         return token_head + (n.value >> 8);
     }
+
     size_t token_size(const Darts::DoubleArray::result_pair_type &n) const { return 0xff & n.value; }
 
     void inline read_node_info(const Token &token, Node **node);
+    friend class Sentence;
 };
 
 #define MMAP_OPEN(type, map, file) do {         \

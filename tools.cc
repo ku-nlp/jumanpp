@@ -136,12 +136,60 @@ unsigned int check_unicode_char_type(int code) {
     }
 }
 
+
+//int check_code(U_CHAR *cp, int pos) {
+//    int	code;
+//    
+//    if ( cp[pos] == '\0')			return 0;
+//    else if ( cp[pos] == KUUHAKU )		return KUUHAKU;
+//    
+//#ifdef IO_ENCODING_EUC
+//    else if ( cp[pos] < HANKAKU )		return HANKAKU;
+//
+//    code = cp[pos]*256 + cp[pos+1];
+//    
+//    if ( code == PRIOD ) 			return PRIOD;
+//    else if ( code == CHOON ) 			return CHOON;
+//    else if ( code < KIGOU ) 			return KIGOU;
+//    else if ( code < SUJI ) 			return SUJI;
+//    else if ( code < ALPH )			return ALPH;
+//    else if ( code < HIRAGANA ) 		return HIRAGANA;
+//    else if ( code < KATAKANA ) 		return KATAKANA;
+//    else if ( code < GR ) 			return GR;
+//    else return KANJI;
+//#else
+//#ifdef IO_ENCODING_SJIS
+//    else if ( cp[pos] < HANKAKU )		return HANKAKU;
+//
+//    code = cp[pos]*256 + cp[pos+1];
+//    
+//    if ( code == 0x8144 ) 			return PRIOD;
+//    else if ( code == 0x815b ) 			return CHOON;
+//    else if ( code < 0x8200 ) 			return KIGOU;
+//    else if ( code < 0x8260 ) 			return SUJI;
+//    else if ( code < 0x829f )			return ALPH;
+//    else if ( code < 0x8300 ) 			return HIRAGANA;
+//    else if ( code < 0x839f ) 			return KATAKANA;
+//    else if ( code < 0x8800 ) 			return GR;
+//    else return KANJI;
+//#else /* UTF-8 */
+//    return check_utf8_char_type(cp + pos);
+//#endif
+//#endif
+//}
+
 // check the code of a char
+unsigned int check_utf8_char_type(const char *ucp) {
+    char cp[3]; 
+    strncpy(cp, ucp,3);
+    return check_utf8_char_type((unsigned char *)cp);
+}
+
 unsigned int check_utf8_char_type(unsigned char *ucp) {
     int code = 0;
     int unicode;
-
     unsigned char c = *ucp;
+
     if (c > 0xfb) { /* 6 bytes */
 	code = 0;
     }
@@ -170,7 +218,9 @@ unsigned int check_utf8_char_type(unsigned char *ucp) {
     }
 
     return code;
+
 }
+
 
 unsigned int check_char_family(unsigned char *ucp) {
     return check_char_family(check_utf8_char_type(ucp));

@@ -132,7 +132,7 @@ BOOST_AUTO_TEST_CASE(wv_add2)
     BOOST_CHECK_EQUAL(wvec1.canonical, false);
     wvec1.canonicalize();
     BOOST_CHECK_EQUAL(wvec1.canonical, true);
-    wvec1.add("3",1.3); //0で始まる(mac:clang3.5svn)1で始まる(linux:gcc4.9)?
+    wvec1.add("3",1.3); 
     wvec1.add("5",1.5);
     wvec1.add("10",1.1);
     wvec1.add("1",1.01);
