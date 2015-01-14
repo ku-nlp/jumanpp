@@ -323,8 +323,8 @@ bool Sentence::lookup_and_analyze() {//{{{
         previous_pos = pos;
     }
 
-    //if (param->debug)
-    print_juman_lattice();
+    if (param->debug)
+        print_juman_lattice();
 
     // Viterbi
     for (unsigned int pos = 0; pos < length; pos += utf8_bytes((unsigned char *)(sentence_c_str + pos))) {
@@ -354,56 +354,56 @@ void Sentence::print_lattice() {
 void Sentence::print_juman_lattice() {
     unsigned int char_num = 0;
     int id = 1;
+    // 2 0 0 1 部屋 へや 部屋 名詞 6 普通名詞 1 * 0 * 0 “代表表記:部屋/へや カテゴリ:場所-施設 …"
+    // 15 2 2 2 に に に 助詞 9 格助詞 1 * 0 * 0 NIL
+    // ID IDs_connecting_from index_begin index_end ... 
+        
     std::vector<std::vector<int>> num2id(length); //多めに保持する
     for (unsigned int pos = 0; pos < length; pos += utf8_bytes((unsigned char *)(sentence_c_str + pos))) {
         Node *node = (*begin_node_list)[pos];
-        // 2 0 0 6 部屋 へや 部屋 名詞 6 普通名詞 1 * 0 * 0 “代表表記:部屋/へや カテゴリ:場所-施設 …"
-        // 15 2 6 9 に に に 助詞 9 格助詞 1 * 0 * 0 NIL
-        // ID to_connect_ID index_begin index_end ... 
             
         while (node) {
             size_t word_length = node->char_num;
+            // ID の表示
             cout << id << " " ;
             num2id[char_num + word_length].push_back(id++);
-            // 無かったら 0 を出す
-            if(num2id[char_num].size()==0){
+            if(num2id[char_num].size()==0){ // 無かったら 0 を出す
                 cout << "0";
             }else{
                 std::string sep= "";
                 for(auto to_id:num2id[char_num]){
-                    cout << sep << to_id;// 間にだけ入れる様に午後になおす
+                    cout << sep << to_id;
                     sep = ";";
                 }
             }
             cout << " ";
-            cout << char_num << " " << char_num + word_length << " ";//何文字目から何文字目か
+            // 文字index の表示
+            cout << char_num << " " << char_num + word_length -1 << " ";
 
-            // 45 29 12 18 よく よく よい 形容詞 3 * 0 イ形容詞アウオ段 18 基本連用形 7 "代表表記:良い/よい 反義:形容詞:悪い/
-            // 表層// よみ // 原形
+            // 表層 よみ 原形
             if( *node->reading == UNK_POS ){//読み不明であれば表層を使う
                 cout << *node->original_surface << " " << *node->original_surface << " " << *node->original_surface << " " ; 
             }else{
                 cout << *node->original_surface << " " << *node->reading  << " " << *node->base << " " ; 
             }
-            // 品詞 // 品詞 id
+            // 品詞 品詞id
             cout << *node->pos << " " << node->posid << " ";
-            // 細分類// 細分類 id
+            // 細分類 細分類id
             if( *node->spos == UNK_POS) {
                 cout << "その他 " << node->sposid << " ";
             }else{
                 cout << *node->spos << " " << node->sposid << " ";
             }
-            // 活用型 // 活用型 id
+            // 活用型 活用型id
             cout << *node->form_type << " " << node->formtypeid << " ";
-            // 活用系// 活用系 id
+            // 活用系 活用系id
             cout << *node->form << " " << node->formid << " ";
 
+            // 意味情報を再構築して表示
             if(*node->representation != "*" && *node->semantic_feature != "NIL" ){
                 cout << '"' ;
-                //cout << " 代表表記:" ;
                 if(*node->representation != UNK_POS)
                     cout << "代表表記:" << *node->representation << " ";  //*ならスキップ
-                //cout << " 意味情報:" ;
                 if(*node->semantic_feature != "NIL" )
                     cout << *node->semantic_feature; //NILならNIL
                 cout << '"' << endl;
@@ -414,6 +414,7 @@ void Sentence::print_juman_lattice() {
         }
         char_num++;
     }
+    cout << "EOS" << endl;
 }
 
 

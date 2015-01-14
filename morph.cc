@@ -17,6 +17,7 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {
     option.add<std::string>("train", 't', "training filename", false, "data/train.txt");
     option.add<unsigned int>("iteration", 'i', "iteration number for training", false, 10);
     option.add<unsigned int>("unk_max_length", 'l', "maximum length of unknown word detection", false, 7);
+    option.add("lattice", 'L', "output lattice format");
     option.add("averaged", 'a', "use averaged perceptron for training");
     option.add("shuffle", 's', "shuffle training data for each iteration");
     option.add("unknown", 'u', "apply unknown word detection (obsolete; already default)");
@@ -95,7 +96,10 @@ int main(int argc, char** argv) {
                 continue;
             }
             tagger.new_sentence_analyze(buffer);
-            tagger.print_best_path();
+            if (option.exist("lattice"))
+                tagger.print_lattice();
+            else
+                tagger.print_best_path();
             tagger.sentence_clear();
         }
     }

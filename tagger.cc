@@ -126,6 +126,10 @@ void Tagger::print_best_path() {
     sentence->print_best_path();
 }
 
+void Tagger::print_lattice() {
+    sentence->print_juman_lattice();
+}
+
 bool Tagger::add_one_sentence_for_train (Sentence *in_sentence) {
     sentences_for_train.push_back(in_sentence);
     return true;
