@@ -126,6 +126,10 @@ void Tagger::print_best_path() {
     sentence->print_best_path();
 }
 
+void Tagger::print_N_best_path() {
+    sentence->print_N_best_path();
+}
+
 void Tagger::print_lattice() {
     sentence->print_juman_lattice();
 }

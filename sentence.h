@@ -61,8 +61,14 @@ class Sentence {
     unsigned int find_reached_pos_of_pseudo_nodes(unsigned int pos, Node *node);
     void print_best_path();
     void print_lattice();
-	Node *find_N_best_path();
+	std::map<std::string, int> nbest_duplicate_filter;
 	void print_N_best_path();
+    // make EOS node and get N-best path
+    Node* find_N_best_path() {
+        (*begin_node_list)[length] = get_eos_node(); // End Of Sentence
+        viterbi_at_position_nbest(length, (*begin_node_list)[length]);
+        return (*begin_node_list)[length];
+    }
     void print_juman_lattice();
     void minus_feature_from_weight(std::map<std::string, double> &in_feature_weight);
     void minus_feature_from_weight(std::map<std::string, double> &in_feature_weight, size_t factor);

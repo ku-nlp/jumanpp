@@ -18,6 +18,7 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {
     option.add<unsigned int>("iteration", 'i', "iteration number for training", false, 10);
     option.add<unsigned int>("unk_max_length", 'l', "maximum length of unknown word detection", false, 7);
     option.add("lattice", 'L', "output lattice format");
+    option.add("nbest", 'n', "n-best search");
     option.add("averaged", 'a', "use averaged perceptron for training");
     option.add("shuffle", 's', "shuffle training data for each iteration");
     option.add("unknown", 'u', "apply unknown word detection (obsolete; already default)");
@@ -75,7 +76,7 @@ int main(int argc, char** argv) {
     cmdline::parser option;
     option_proc(option, argc, argv);
 
-    Morph::Parameter param(option.get<std::string>("dict"), option.get<std::string>("feature"), option.get<unsigned int>("iteration"), true, option.exist("shuffle"), option.get<unsigned int>("unk_max_length"), option.exist("debug"));
+    Morph::Parameter param(option.get<std::string>("dict"), option.get<std::string>("feature"), option.get<unsigned int>("iteration"), true, option.exist("shuffle"), option.get<unsigned int>("unk_max_length"), option.exist("debug"), option.exist("nbest"));
     Morph::Tagger tagger(&param);
 
     if (MODE_TRAIN) {
@@ -98,8 +99,13 @@ int main(int argc, char** argv) {
             tagger.new_sentence_analyze(buffer);
             if (option.exist("lattice"))
                 tagger.print_lattice();
-            else
-                tagger.print_best_path();
+            else{
+                if(option.exist("nbest")){
+                    tagger.print_N_best_path();
+                }else{
+                    tagger.print_best_path();
+                }
+            }
             tagger.sentence_clear();
         }
     }

@@ -31,6 +31,7 @@ class Tagger {
     void sentence_clear();
     bool viterbi_at_position(unsigned int pos, Node *r_node);
     void print_best_path();
+    void print_N_best_path();
     void print_lattice();
 
     bool train(const std::string &gsd_file);
