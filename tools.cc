@@ -26,6 +26,16 @@ int utf8_bytes(unsigned char *ucp) {
     }
 }
 
+// utf8 文字列の長さを計る
+size_t utf8_length(const char *ucp){
+    size_t char_length = 0;
+    size_t byte_length = strlen(ucp);
+    for (unsigned int pos = 0; pos < byte_length; pos += utf8_bytes((unsigned char *)(ucp + pos))) {
+        char_length += 1;
+    }
+    return char_length;
+}
+
 // return the bytes of a char
 unsigned short utf8_chars(unsigned char *ucp, size_t byte_len) {
     unsigned short char_num = 0;
@@ -220,7 +230,6 @@ unsigned int check_utf8_char_type(unsigned char *ucp) {
     return code;
 
 }
-
 
 unsigned int check_char_family(unsigned char *ucp) {
     return check_char_family(check_utf8_char_type(ucp));

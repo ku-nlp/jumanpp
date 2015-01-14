@@ -21,6 +21,9 @@ class Dic {
     Pos formid2form;
     Pos formtypeid2formtype;
     Pos baseid2base;
+    Pos readingid2reading;
+    Pos repid2rep;
+    Pos imisid2imis;
     FeatureTemplateSet *ftmpl;
   public:
     Dic() {}

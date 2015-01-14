@@ -20,6 +20,9 @@ class Parameter {
 	std::string form_type_filename;
 	std::string base_filename;
     std::string ftmpl_filename;
+    std::string rep_filename;
+    std::string imis_filename;
+    std::string reading_filename;
 
     std::vector<unsigned short> unk_pos;
     std::vector<unsigned short> unk_figure_pos;
@@ -33,6 +36,9 @@ class Parameter {
 		form_type_filename = in_dic_filename + ".form_type";
 		base_filename = in_dic_filename + ".base";
         ftmpl_filename = in_ftmpl_filename;
+        rep_filename = in_dic_filename + ".rep";
+        imis_filename = in_dic_filename + ".imis";
+        reading_filename = in_dic_filename + ".read";
         iteration_num = in_iteration_num;
         unknown_word_detection = in_unknown_word_detection;
         shuffle_training_data = in_shuffle_training_data;

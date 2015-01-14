@@ -25,7 +25,7 @@ namespace Morph {
 
 class CharNode{//{{{
     public:
-        char chr[7] = "";
+        char chr[7];/// = "";
         char type = 0;
 
         CharNode *next;

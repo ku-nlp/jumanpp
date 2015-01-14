@@ -16,9 +16,23 @@ while (<STDIN>) {
     my $s = new JumanSexp($_);
     my $pos = $s->{data}[0]{element};
     my $spos = $s->{data}[1]{element};
+    my $yomi = ($s->get_elem('読み'))[0];
     my $type = ($s->get_elem('活用型'))[0];
-    # ここで代表表記を切り出す. なければ読みと見出しから作る
-    #$spos = ":$spos" if $spos;
+    my $imis = join(" ", ($s->get_elem('意味情報')));
+    my $rep = "*";
+    $imis =~ s/^"//; #最初と最後のクォーテーションを除く
+    $imis =~ s/"$//;
+    if($imis =~ s/代表表記:([^ "]*) ?//){
+        $rep = $1;
+    }
+    if($imis =~ /,/){# フォーマットが崩れる
+        $STDERR.print("err: 意味情報が','を含む.");
+        exit(1);
+    }
+    if($imis eq ""){
+        $imis = "NIL";
+    }
+    # $spos = ":$spos" if $spos;
     for my $midasi ($s->get_elem('見出し語')) {
         if ($type) {
             for my $m (&get_inflected_forms(Encode::encode('utf-8',$midasi), Encode::encode('utf-8',$type))) {
@@ -28,18 +42,20 @@ while (<STDIN>) {
                 my $form_type = Encode::decode('utf-8', $m->{form});
                 $shortform =~ s/\p{katakana}+列//;
                 $shortform =~ s/\p{katakana}+系//;
-                $form_type =~ /((\p{katakana}+列)|(\p{katakana}+系))+/;
-                $form_type = $&;
-                if($form_type eq ""){$form_type='*';}
+                if($form_type =~ /((\p{katakana}+列)|(\p{katakana}+系))+/){
+                    $form_type = $&;
+                }else{
+                    $form_type = "*";
+                }
                 #&print_entry($m->{str}, $pos, ':' , $m->{form});
-                &print_entry($mstr, $pos, '*' , $shortform, $form_type, $midasi);
+                &print_entry($mstr, $pos, '*' , $shortform, $type, $midasi, $yomi, $rep, $imis);
             }
         }
         else {
             if($midasi eq ','){
                 $midasi = '","';
             }
-            &print_entry($midasi, $pos, $spos,'*', '*',$midasi);
+            &print_entry($midasi, $pos, $spos,'*', '*',$midasi, $yomi, $rep, $imis);
         }
     }
 }
@@ -55,8 +71,8 @@ while (<STDIN>) {
 #あいこ,0,0,0,名詞:サ変名詞
 
 sub print_entry {
-    my ($h, $pos, $spos, $form, $form_type, $midasi) = @_;
-    print $h, ',0,0,0,', $pos,',', $spos, ',' , $form, ',', $form_type, ',' , $midasi , "\n"; }
+    my ($h, $pos, $spos, $form, $form_type, $midasi, $yomi, $rep, $imis) = @_;
+    print $h, ',0,0,0,', $pos,',', $spos, ',' , $form, ',', $form_type, ',' , $midasi , ',', $yomi, ',' , $rep, ',' , $imis,"\n"; }
 
 sub get_inflected_forms {
     my ($midasi, $type) = @_;

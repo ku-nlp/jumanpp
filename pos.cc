@@ -9,6 +9,7 @@ unsigned long Pos::get_id(const std::string &pos_str) {
     if (dic.find(pos_str) == dic.end()) {
         // cerr << "DEBUG: " << pos_str << " -> " << count << " (new)" << endl;
         dic[pos_str] = count++;
+        rdic[dic[pos_str]] = pos_str;
     }
     else {
         // cerr << "DEBUG: " << pos_str << " -> " << dic[pos_str] << endl;
@@ -41,7 +42,7 @@ bool Pos::write_pos_list(const std::string &pos_filename) {
     }
 
     for (std::map<std::string, unsigned long>::iterator it = dic.begin(); it != dic.end(); it++) {
-        pos_out << it->first << " " << it->second << endl;
+        pos_out << it->first << "\t" << it->second << endl;
     }
 
     pos_out.close();
@@ -59,7 +60,7 @@ bool Pos::read_pos_list(const std::string &pos_filename) {
     std::string buffer;
     while (getline(pos_in, buffer)) {
         std::vector<std::string> line;
-        split_string(buffer, " ", line);
+        split_string(buffer, "\t", line);
         dic[line[0]] = atoi(static_cast<const char *>(line[1].c_str()));
         rdic[atoi(static_cast<const char *>(line[1].c_str()))] = line[0];
         count++;
