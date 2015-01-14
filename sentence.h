@@ -63,6 +63,7 @@ class Sentence {
     void print_lattice();
 	std::map<std::string, int> nbest_duplicate_filter;
 	void print_N_best_path();
+    void mark_nbest();
     // make EOS node and get N-best path
     Node* find_N_best_path() {
         (*begin_node_list)[length] = get_eos_node(); // End Of Sentence

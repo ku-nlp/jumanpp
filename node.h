@@ -86,6 +86,7 @@ class Node {
     unsigned int char_family;
     unsigned int end_char_family;
     unsigned char stat;
+    bool used_in_nbest;
     short wcost; // cost of this morpheme
     long cost; // total cost to this node
     struct morph_token_t *token;

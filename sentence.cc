@@ -323,8 +323,6 @@ bool Sentence::lookup_and_analyze() {//{{{
         previous_pos = pos;
     }
     
-    if (param->debug)
-        print_juman_lattice();
 
     // Viterbi
     if(param->nbest){
@@ -340,6 +338,8 @@ bool Sentence::lookup_and_analyze() {//{{{
         }
         find_best_path();
     }
+    if (param->debug)
+        print_juman_lattice();
     return true;
 }//}}}
 
@@ -361,6 +361,9 @@ void Sentence::print_lattice() {
 }
 
 void Sentence::print_juman_lattice() {
+
+    mark_nbest();
+
     unsigned int char_num = 0;
     int id = 1;
     // 2 0 0 1 部屋 へや 部屋 名詞 6 普通名詞 1 * 0 * 0 “代表表記:部屋/へや カテゴリ:場所-施設 …"
@@ -374,7 +377,7 @@ void Sentence::print_juman_lattice() {
         while (node) {
             size_t word_length = node->char_num;
             // ID の表示
-            if( *node->spos != UNK_POS) { //とりあえず未定義語を出力しない
+            if( node->used_in_nbest) { //n-best解に使われているもののみ
                 cout << id << " " ;
                 num2id[char_num + word_length].push_back(id++);
                 if(num2id[char_num].size()==0){ // 無かったら 0 を出す
@@ -649,6 +652,7 @@ void Sentence::print_N_best_path() {//{{{
 				it != result_morphs.rend(); it++) {
 
 			if ((*it)->stat != MORPH_BOS_NODE && (*it)->stat != MORPH_EOS_NODE) {
+                (*it)->used_in_nbest = true;
 				if (printed_num++)
 					output_string_buffer.append(" ");
 					output_string_buffer.append(*(*it)->string_for_print);
@@ -678,6 +682,68 @@ void Sentence::print_N_best_path() {//{{{
 	cout << endl;
 }//}}}
 
+void Sentence::mark_nbest() {//{{{
+	unsigned int N_required = param->N;
+	unsigned int N_couter = 0;
+	std::string output_string_buffer;
+
+	unsigned int traceSize = (*begin_node_list)[length]->traceList.size();
+	if (traceSize > param->N_redundant) {
+		traceSize = param->N_redundant;
+	}
+
+	for (int i = 0; i < traceSize; ++i) {
+		Node *node = (*begin_node_list)[length];
+		std::vector<Node *> result_morphs;
+
+		bool find_bos_node = false;
+		int traceRank = i;
+
+		Node* temp_node = NULL;
+		long output_score = (*begin_node_list)[length]->traceList.at(i).score;
+
+		while (node) {
+		    result_morphs.push_back(node);
+
+			if (node->traceList.size() == 0) {
+				break;
+			}
+			node = node->traceList.at(traceRank).prevNode;
+			if (node->stat == MORPH_BOS_NODE) {
+				find_bos_node = true;
+				break;
+			} else {
+				traceRank = result_morphs.back()->traceList.at(traceRank).rank;
+			}
+		}
+
+		if (!find_bos_node)
+			cerr << ";; cannot analyze:" << sentence << endl;
+
+		size_t printed_num = 0;
+		for (std::vector<Node *>::reverse_iterator it = result_morphs.rbegin();
+				it != result_morphs.rend(); it++) {
+
+			if ((*it)->stat != MORPH_BOS_NODE && (*it)->stat != MORPH_EOS_NODE) {
+                (*it)->used_in_nbest = true;// Nodeにnbestに入っているかをマークするだけ
+                output_string_buffer.append(" ");
+                output_string_buffer.append(*(*it)->string_for_print);
+                output_string_buffer.append("_");
+                output_string_buffer.append(*(*it)->pos);
+			}
+		}
+
+		std::map<std::string, int>::iterator find_output = nbest_duplicate_filter.find(output_string_buffer);
+		if (find_output != nbest_duplicate_filter.end()) {
+		} else {
+			nbest_duplicate_filter.insert(std::make_pair(output_string_buffer, i));
+			++N_couter;
+		}
+
+		if (N_couter >= N_required)
+			break;
+	}
+}//}}}
 
 // update end_node_list
 void Sentence::set_end_node_list(unsigned int pos, Node *r_node) {
