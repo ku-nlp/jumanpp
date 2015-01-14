@@ -365,50 +365,52 @@ void Sentence::print_juman_lattice() {
         while (node) {
             size_t word_length = node->char_num;
             // ID の表示
-            cout << id << " " ;
-            num2id[char_num + word_length].push_back(id++);
-            if(num2id[char_num].size()==0){ // 無かったら 0 を出す
-                cout << "0";
-            }else{
-                std::string sep= "";
-                for(auto to_id:num2id[char_num]){
-                    cout << sep << to_id;
-                    sep = ";";
+            if( *node->spos != UNK_POS) { //とりあえず未定義語を出力しない
+                cout << id << " " ;
+                num2id[char_num + word_length].push_back(id++);
+                if(num2id[char_num].size()==0){ // 無かったら 0 を出す
+                    cout << "0";
+                }else{
+                    std::string sep= "";
+                    for(auto to_id:num2id[char_num]){
+                        cout << sep << to_id;
+                        sep = ";";
+                    }
                 }
-            }
-            cout << " ";
-            // 文字index の表示
-            cout << char_num << " " << char_num + word_length -1 << " ";
+                cout << " ";
+                // 文字index の表示
+                cout << char_num << " " << char_num + word_length -1 << " ";
 
-            // 表層 よみ 原形
-            if( *node->reading == UNK_POS ){//読み不明であれば表層を使う
-                cout << *node->original_surface << " " << *node->original_surface << " " << *node->original_surface << " " ; 
-            }else{
-                cout << *node->original_surface << " " << *node->reading  << " " << *node->base << " " ; 
-            }
-            // 品詞 品詞id
-            cout << *node->pos << " " << node->posid << " ";
-            // 細分類 細分類id
-            if( *node->spos == UNK_POS) {
-                cout << "その他 " << node->sposid << " ";
-            }else{
-                cout << *node->spos << " " << node->sposid << " ";
-            }
-            // 活用型 活用型id
-            cout << *node->form_type << " " << node->formtypeid << " ";
-            // 活用系 活用系id
-            cout << *node->form << " " << node->formid << " ";
+                // 表層 よみ 原形
+                if( *node->reading == UNK_POS ){//読み不明であれば表層を使う
+                    cout << *node->original_surface << " " << *node->original_surface << " " << *node->original_surface << " " ; 
+                }else{
+                    cout << *node->original_surface << " " << *node->reading  << " " << *node->base << " " ; 
+                }
+                // 品詞 品詞id
+                cout << *node->pos << " " << node->posid << " ";
+                // 細分類 細分類id
+                if( *node->spos == UNK_POS) {
+                    cout << "その他 " << node->sposid << " ";
+                }else{
+                    cout << *node->spos << " " << node->sposid << " ";
+                }
+                // 活用型 活用型id
+                cout << *node->form_type << " " << node->formtypeid << " ";
+                // 活用系 活用系id
+                cout << *node->form << " " << node->formid << " ";
 
-            // 意味情報を再構築して表示
-            if(*node->representation != "*" && *node->semantic_feature != "NIL" ){
-                cout << '"' ;
-                if(*node->representation != UNK_POS)
-                    cout << "代表表記:" << *node->representation << " ";  //*ならスキップ
-                if(*node->semantic_feature != "NIL" )
-                    cout << *node->semantic_feature; //NILならNIL
-                cout << '"' << endl;
-            }else{
-                cout << "NIL" << endl;
+                // 意味情報を再構築して表示
+                if(*node->representation != "*" || *node->semantic_feature != "NIL" ){
+                    cout << '"' ;
+                    if(*node->representation != UNK_POS)
+                        cout << "代表表記:" << *node->representation << " ";  //*ならスキップ
+                    if(*node->semantic_feature != "NIL" )
+                        cout << *node->semantic_feature; //NILならNIL
+                    cout << '"' << endl;
+                }else{
+                    cout << "NIL" << endl;
+                }
             }
             node = node->bnext;
         }
@@ -519,6 +521,73 @@ bool Sentence::viterbi_at_position(unsigned int pos, Node *r_node) {
 
     return true;
 }
+
+bool Sentence::viterbi_at_position_nbest(unsigned int pos, Node *r_node) {
+	while (r_node) {
+		std::priority_queue<NbestSearchToken> nodeHeap;
+		Node *l_node = (*end_node_list)[pos];
+
+        while (l_node) {
+            if ( (*(r_node->pos)).compare((*(l_node->pos))) == 0 ) {
+
+                FeatureSet f(ftmpl);
+                f.extract_bigram_feature(l_node, r_node);
+                double bigram_score = f.calc_inner_product_with_weight();
+
+                int traceSize = l_node->traceList.size();
+
+                if (traceSize == 0) {
+                    long score = l_node->cost + bigram_score + r_node->wcost;
+                    NbestSearchToken newSearchToken(score, 0, l_node);
+                    nodeHeap.push(newSearchToken);
+
+                } else {
+                    if (traceSize > param->N_redundant)
+                        traceSize = param->N_redundant;
+
+                    for (int i = 0; i < traceSize; ++i) {
+                        long score = l_node->traceList.at(i).score + bigram_score
+                            + r_node->wcost;
+                        NbestSearchToken newSearchToken(score, i, l_node);
+                        nodeHeap.push(newSearchToken);
+
+                        //					cerr << *(l_node->string_for_print) << "_" << *(l_node->pos)
+                        //							<< "\t" << *(r_node->string_for_print) << "_"
+                        //							<< *(r_node->pos) << "\t" << r_node->wcost << "\t"
+                        //							<< score << "\t" << "rank" << i << endl;
+
+                    }
+                }
+
+            }
+            l_node = l_node->enext;
+        }
+
+		int heapSize = nodeHeap.size();
+
+		if (heapSize > param->N_redundant)
+			heapSize = param->N_redundant;
+
+		for (int i = 0; i < heapSize; ++i) {
+			r_node->traceList.push_back(nodeHeap.top());
+			nodeHeap.pop();
+		}
+
+		if (r_node->traceList.size() > 0) {
+			r_node->next = NULL;
+			r_node->prev = r_node->traceList.front().prevNode;
+			r_node->cost = r_node->traceList.front().score;
+		} else {
+			return false;
+		}
+
+		r_node = r_node->bnext;
+	}
+
+	return true;
+}
+
+
 
 // update end_node_list
 void Sentence::set_end_node_list(unsigned int pos, Node *r_node) {

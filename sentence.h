@@ -2,6 +2,7 @@
 #define SENTENCE_H
 
 #include "common.h"
+
 #include "feature.h"
 #include "dic.h"
 #include "parameter.h"
@@ -55,10 +56,13 @@ class Sentence {
     void set_begin_node_list(unsigned int pos, Node *new_node);
     void set_end_node_list(unsigned int pos, Node *r_node);
     bool viterbi_at_position(unsigned int pos, Node *r_node);
+	bool viterbi_at_position_nbest(unsigned int pos, Node *r_node);
     unsigned int find_reached_pos(unsigned int pos, Node *node);
     unsigned int find_reached_pos_of_pseudo_nodes(unsigned int pos, Node *node);
     void print_best_path();
     void print_lattice();
+	Node *find_N_best_path();
+	void print_N_best_path();
     void print_juman_lattice();
     void minus_feature_from_weight(std::map<std::string, double> &in_feature_weight);
     void minus_feature_from_weight(std::map<std::string, double> &in_feature_weight, size_t factor);
@@ -72,6 +76,8 @@ class Sentence {
     Node *make_unk_pseudo_node_list_from_some_positions(const char *start_str, unsigned int pos, unsigned int previous_pos);
     Node *make_unk_pseudo_node_list_by_dic_check(const char *start_str, unsigned int pos, Node *r_node, unsigned int specified_char_num);
 };
+
+
 
 }
 

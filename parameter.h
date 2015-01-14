@@ -23,6 +23,8 @@ class Parameter {
     std::string rep_filename;
     std::string imis_filename;
     std::string reading_filename;
+	unsigned int N = 5;
+	unsigned int N_redundant;
 
     std::vector<unsigned short> unk_pos;
     std::vector<unsigned short> unk_figure_pos;
@@ -44,6 +46,8 @@ class Parameter {
         shuffle_training_data = in_shuffle_training_data;
         unk_max_length = in_unk_max_length;
         debug = in_debug;
+
+		N_redundant = N + (unsigned int)(ceil(N * B_BEST_REDUNDANCY));
     }
 };
 

@@ -6,6 +6,7 @@
 
 namespace Morph {
 class FeatureSet;
+class NbestSearchToken; 
 
 struct morph_token_t {
 	unsigned short lcAttr;
@@ -88,6 +89,14 @@ class Node {
     short wcost; // cost of this morpheme
     long cost; // total cost to this node
     struct morph_token_t *token;
+
+	//for N-best and Juman-style output
+	unsigned int id;
+	unsigned int starting_pos; // starting position
+	std::priority_queue<unsigned int, std::vector<unsigned int>,
+			std::greater<unsigned int> > connection; // id of previous nodes connected
+	std::vector<NbestSearchToken> traceList; // keep track of n-best paths
+    
     Node();
     ~Node();
     void print();
@@ -95,6 +104,45 @@ class Node {
     unsigned short get_char_num();
 };
 
+//shen版からのコピー
+class NbestSearchToken {
+
+public:
+	long score;
+	Node* prevNode; //access to previous trace-list
+	int rank; //specify an element in previous trace-list
+
+	NbestSearchToken(Node* pN) {
+		prevNode = pN;
+	}
+	;
+
+	NbestSearchToken(long s, int r) {
+		score = s;
+		rank = r;
+	}
+	;
+
+	NbestSearchToken(long s, int r, Node* pN) {
+		score = s;
+		rank = r;
+		prevNode = pN;
+	}
+	;
+
+	~NbestSearchToken() {
+
+	}
+	;
+
+	bool operator<(const NbestSearchToken &right) const {
+		if ((*this).score < right.score)
+			return true;
+		else
+			return false;
+	}
+
+};
 }
 
 #endif
