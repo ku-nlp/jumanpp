@@ -190,9 +190,9 @@ unsigned int check_unicode_char_type(int code) {
 
 // check the code of a char
 unsigned int check_utf8_char_type(const char *ucp) {
-    char cp[3]; 
-    strncpy(cp, ucp,3);
-    return check_utf8_char_type((unsigned char *)cp);
+    //char cp[3]; 
+    //strncpy(cp, ucp,3);
+    return check_utf8_char_type((unsigned char *)ucp);
 }
 
 unsigned int check_utf8_char_type(unsigned char *ucp) {

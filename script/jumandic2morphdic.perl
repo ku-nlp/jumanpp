@@ -35,11 +35,17 @@ while (<STDIN>) {
     # $spos = ":$spos" if $spos;
     for my $midasi ($s->get_elem('見出し語')) {
         if ($type) {
-            for my $m (&get_inflected_forms(Encode::encode('utf-8',$midasi), Encode::encode('utf-8',$type))) {
-                my $mstr = Encode::decode('utf-8', $m->{str});
+            if(!$spos){$spos= "*";}
+            my @ms =(&get_inflected_forms(Encode::encode('utf-8',$midasi), Encode::encode('utf-8',$type))) ;
+            my @ys =(&get_inflected_forms(Encode::encode('utf-8',$yomi), Encode::encode('utf-8',$type))) ;
+            #my %hash = map {$ms[$_], $ys[$_]}(0..$#ms); 
+            my %hash; @hash{@ms}=@ys;
+            for my $m_key (@ms){
+                my $mstr = Encode::decode('utf-8', $m_key->{str});
+                my $ystr = Encode::decode('utf-8', $hash{$m_key}->{str});
                 next unless $mstr;
-                my $shortform = Encode::decode('utf-8', $m->{form});
-                my $form_type = Encode::decode('utf-8', $m->{form});
+                my $shortform = Encode::decode('utf-8', $m_key->{form});
+                my $form_type = Encode::decode('utf-8', $hash{$m_key}->{form});
                 $shortform =~ s/\p{katakana}+列//;
                 $shortform =~ s/\p{katakana}+系//;
                 if($form_type =~ /((\p{katakana}+列)|(\p{katakana}+系))+/){
@@ -48,13 +54,10 @@ while (<STDIN>) {
                     $form_type = "*";
                 }
                 #&print_entry($m->{str}, $pos, ':' , $m->{form});
-                &print_entry($mstr, $pos, '*' , $shortform, $type, $midasi, $yomi, $rep, $imis);
+                &print_entry($mstr, $pos, $spos , $shortform, $type, $midasi, $ystr, $rep, $imis);
             }
         }
         else {
-            if($midasi eq ','){
-                $midasi = '","';
-            }
             &print_entry($midasi, $pos, $spos,'*', '*',$midasi, $yomi, $rep, $imis);
         }
     }

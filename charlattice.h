@@ -3,7 +3,7 @@
 #define CHARLATTICE_H
 
 #include <unordered_map>
-#include <boost/foreach.hpp>
+#include <unordered_set>
 #include "common.h"
 #include "darts.h"
 
@@ -35,15 +35,17 @@ class CharNode{//{{{
         std::vector<char> node_type;
         //string node_type[MAX_NODE_POS_NUM];
         //std::vector<std::string> deleted_bytes;// 形態素のlength の計算時に足していた. 今は不要かも?
+        //std::vector<int> result; //da を引いたstates を保存
         //string deleted_bytes[MAX_NODE_POS_NUM];
         //std::vector<char*> p_buffer;// DAで見つけた形態素の情報をここに書き込んでいた.  今は不要かも?
         //char *p_buffer[MAX_NODE_POS_NUM];
         size_t da_node_pos_num = 0; 
 
         CharNode(std::string str, int init_type){
+            for(auto&c:chr)c='\0';
             type = init_type;
             //chr = str.copy(chr, sizeof(str));
-            str.copy(chr, sizeof(str));
+            str.copy(chr, sizeof(str)); //一文字でない場合に例外を返せないので，コンストラクタで作るべきではない？
             chr[sizeof(str)] = '\0'; //copy はnull文字を付け加えない
         };
 };//}}}
@@ -54,6 +56,7 @@ class CharLattice{//{{{
         //std::vector<CharNode> root_node; //必要？
         size_t  CharNum;
         int MostDistantPosition;
+        std::vector<size_t> char_byte_length;
 
     public:
         // 文字列を受け取り, lattice に変換する.
@@ -61,8 +64,12 @@ class CharLattice{//{{{
         int parse(std::string sent);
         std::vector<Darts::DoubleArray::result_pair_type> da_search_one_step(Darts::DoubleArray &da, int left_position, int right_position);
         std::vector<Darts::DoubleArray::result_pair_type> da_search_from_position(Darts::DoubleArray &da, int position);
-
-        CharLattice():CharRootNodeList{CharNode("root", 0)}{};
+            
+        CharLattice():CharRootNodeList{CharNode("root", 0)}{
+            CharRootNodeList.back().da_node_pos_num = 1;
+            CharRootNodeList.back().da_node_pos.push_back(0);
+            CharRootNodeList.back().node_type.push_back(0);//初期値は0で良い？
+        };
 
     public: // クラス定数;
 
@@ -72,7 +79,7 @@ class CharLattice{//{{{
         /* 小書き文字・拗音(+"ん","ン")、小書き文字に対応する大文字の一覧
            非正規表記の処理(小書き文字・対応する大文字)、
            オノマトペ認識(開始文字チェック、拗音(cf. CONTRACTED_BONUS))で利用 */
-        const std::vector<std::string> lowercase{"ぁ", "ぃ", "ぅ", "ぇ", "ぉ", "ゎ", "ヵ",
+        const std::unordered_set<std::string> lowercase{"ぁ", "ぃ", "ぅ", "ぇ", "ぉ", "ゎ", "ヵ",
             "ァ", "ィ", "ゥ", "ェ", "ォ", "ヮ", "っ", "ッ", "ん", "ン",
             "ゃ", "ャ", "ゅ", "ュ", "ょ", "ョ"};
         const std::vector<std::string> uppercase{"あ", "い", "う", "え", "お", "わ", "か"};
@@ -126,7 +133,7 @@ class CharLattice{//{{{
             "こ", "そ", "の", "も", "よ", "ろ", "ぞ", "ど"}; /* ぉ: 8 */
 
         // lower list
-        const std::vector<std::string> lower_list{"ぁ", "ぃ", "ぅ", "ぇ", "ぉ"};
+        const std::unordered_set<std::string> lower_list{"ぁ", "ぃ", "ぅ", "ぇ", "ぉ"};
         // map 版 内容は同じ
         const std::unordered_map<std::string, std::string> lower_map{
             {"か", "ぁ" }, {"さ", "ぁ" }, {"た", "ぁ" }, {"な", "ぁ" }, {"は", "ぁ" }, 
@@ -147,6 +154,82 @@ class CharLattice{//{{{
 #ifndef COPY_FOR_REFERENCE
 
 //とりあえず作ったが 一旦忘れる
+
+// std::iterator<> が定義された <iterator> ヘッダーをインクルードします。
+
+ #include <iterator>
+
+  
+
+  // CMyClassIterator の定義中に CMyClass が登場するので、それがクラスであることだけを明示しておきます。
+
+  class CMyClass;
+
+   
+
+   // CMyClassIterator のプロトタイプ宣言です。
+
+   // std::iterator<> を std::forward_iterator_tag を指定して継承します。扱う値の型は int とします。
+
+   class CMyClassIterator : public std::iterator<std::forward_iterator_tag, int>
+
+   {
+
+   // CMyClass が private なコンストラクタを呼び出せるように friend 指定します。
+
+   friend CMyClass;
+
+    
+
+    // 値の場所を示すメンバ変数と、取り扱う CMyClass へのポインタを private に格納します。
+
+    private:
+
+    size_t m_index;
+
+    CMyClass* m_myClass;
+
+     
+
+     // イテレータを構築するコンストラクタは private に持たせ、外部で勝手に作れないようにします。
+
+     private:
+
+     CMyClassIterator();
+
+     CMyClassIterator(CMyClass* myClass, int index);
+
+      
+
+      // イテレータのコピーコンストラクタは public から呼び出せるようにします。
+
+      public:
+
+      CMyClassIterator(const CMyClassIterator& iterator);
+
+       
+
+       // フォワードイテレータで必要な実装です。
+
+       public:
+
+       CMyClassIterator& operator++();
+
+       CMyClassIterator operator++(int);
+
+        
+
+        int& operator*();
+
+         
+
+         bool operator==(const CMyClassIterator& iterator);
+
+         bool operator!=(const CMyClassIterator& iterator);
+
+         };
+
+
 class utf8_string{//{{{
     public: 
         std::string str;

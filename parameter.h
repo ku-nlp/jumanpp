@@ -24,7 +24,7 @@ class Parameter {
     std::string rep_filename;
     std::string imis_filename;
     std::string reading_filename;
-	unsigned int N = 5;
+	unsigned int N = 1;
 	unsigned int N_redundant;
 
     std::vector<unsigned short> unk_pos;

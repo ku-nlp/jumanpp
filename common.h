@@ -6,6 +6,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <unordered_map>
 #include <map>
 #include <set>
 #include <deque>
@@ -29,7 +30,13 @@ extern bool WEIGHT_AVERAGED;
 extern std::map<std::string, double> feature_weight;
 extern std::map<std::string, double> feature_weight_sum;
 
+
 namespace Morph {
+
+extern std::unordered_map<std::string, int> pos_map;
+extern std::unordered_map<std::string, int> spos_map;
+extern std::unordered_map<std::string, int> katuyou_type_map;
+extern std::unordered_map<std::string, int> katuyou_form_map;
 
 extern int utf8_bytes(unsigned char *ucp);
 extern size_t utf8_length(const char *ucp);
