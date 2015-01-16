@@ -106,7 +106,7 @@ std::string BOS_STRING = BOS;
 std::string EOS_STRING = EOS;
 
 // for test sentence
-rentence::Sentence(std::vector<Node *> *in_begin_node_list, std::vector<Node *> *in_end_node_list, std::string &in_sentence, Dic *in_dic, FeatureTemplateSet *in_ftmpl, Parameter *in_param) {//{{{
+Sentence::Sentence(std::vector<Node *> *in_begin_node_list, std::vector<Node *> *in_end_node_list, std::string &in_sentence, Dic *in_dic, FeatureTemplateSet *in_ftmpl, Parameter *in_param) {//{{{
     sentence_c_str = in_sentence.c_str();
     length = strlen(sentence_c_str);
     init(length, in_begin_node_list, in_end_node_list, in_dic, in_ftmpl, in_param);
@@ -228,88 +228,88 @@ Node* Sentence::make_unk_pseudo_node_list_from_some_positions(const char *start_
     return node;
 }//}}}
 
-Node* CharLattice::recognize_onomatopoeia(unsigned int pos) {//{{{
-    int i, len, code, next_code;
-    std::string key{sentence_c_str+pos}; // オノマトペかどうかを判定するキー
-    int key_length = key.size(); /* キーの文字数を数えておく */
-
-    size_t byte = utf8_bytes(sentence_c_str + pos);
-    std::string current_char = key.substr(0, byte);// １文字目
-
-    /* 通常の平仮名、片仮名以外から始まるものは不可 */
-    code = check_utf8_char_type((* unsigned char)current_char.c_str());
-
-    //code = check_code(String, pos);
-    if (code != TYPE_HIRAGANA && code != TYPE_KATAKANA) return FALSE;
-    if (lowercase.find(current_char)!=lowercase.end()) //小文字で始まる場合は終了
-        return FALSE;
-        
-    /* 反復型オノマトペ */
-    for (len = 1; len < 4; len++) {//二文字目からということ？
-            
-        std::string current_char = key.substr(len, );
-        /* 途中で文字種が変わるものは不可 */
-        next_code = check_utf8_char_type(current_char.c_str())
-        //next_code = check_code(String, pos + len * BYTES4CHAR - BYTES4CHAR);
-        if (next_code == CHOON) next_code = code; /* 長音は直前の文字種として扱う */
-        if (key_length < len * 2 * BYTES4CHAR || code != next_code) break;
-        code = next_code;
-            
-        /* 反復があるか判定 */
-        if (strncmp(String + pos, String + pos + len * BYTES4CHAR, len * BYTES4CHAR)) continue;
-        /* ただし3文字が同じものは不可 */
-        if (!strncmp(String + pos, String + pos + BYTES4CHAR, BYTES4CHAR) &&
-                !strncmp(String + pos, String + pos + 2 * BYTES4CHAR, BYTES4CHAR)) continue;
-            
-        m_buffer[m_buffer_num].hinsi = onomatopoeia_hinsi;
-        m_buffer[m_buffer_num].bunrui = onomatopoeia_bunrui;
-        m_buffer[m_buffer_num].con_tbl = onomatopoeia_con_tbl;
-
-        m_buffer[m_buffer_num].katuyou1 = 0;
-        m_buffer[m_buffer_num].katuyou2 = 0;
-        m_buffer[m_buffer_num].length = len * 2 * BYTES4CHAR;
-
-        strncpy(m_buffer[m_buffer_num].midasi, String+pos, len * 2 * BYTES4CHAR);
-        m_buffer[m_buffer_num].midasi[len * 2 * BYTES4CHAR] = '\0';
-        strncpy(m_buffer[m_buffer_num].yomi, String+pos, len * 2 * BYTES4CHAR);
-        m_buffer[m_buffer_num].yomi[len * 2 * BYTES4CHAR] = '\0';
-
-        // 以下は素性に置き換える
-        // /* weightの設定 */
-        m_buffer[m_buffer_num].weight = REPETITION_COST * len;
-        /* 拗音を含む場合 */
-        for (i = CONTRACTED_LOWERCASE_S; i < CONTRACTED_LOWERCASE_E; i++) {
-            if (strstr(m_buffer[m_buffer_num].midasi, lowercase[i])) break;
-        }
-        if (i < CONTRACTED_LOWERCASE_E) {
-            if (len == 2) continue; /* 1音の繰り返しは禁止 */		
-            /* 1文字分マイナス+ボーナス */
-            m_buffer[m_buffer_num].weight -= REPETITION_COST + CONTRACTED_BONUS;
-        }
-        /* 濁音・半濁音を含む場合 */
-        for (i = 0; *dakuon[i]; i++) {
-            if (strstr(m_buffer[m_buffer_num].midasi, dakuon[i])) break;
-        }
-        if (*dakuon[i]) {
-            m_buffer[m_buffer_num].weight -= DAKUON_BONUS; /* ボーナス */
-            /* 先頭が濁音の場合はさらにボーナス */
-            if (!strncmp(m_buffer[m_buffer_num].midasi, dakuon[i], BYTES4CHAR)) 
-                m_buffer[m_buffer_num].weight -= DAKUON_BONUS;
-        }
-        /* カタカナである場合 */
-        if (code == KATAKANA) 
-            m_buffer[m_buffer_num].weight -= KATAKANA_BONUS;
-
-        strcpy(m_buffer[m_buffer_num].midasi2, m_buffer[m_buffer_num].midasi);
-        strcpy(m_buffer[m_buffer_num].imis, "\"");
-        strcat(m_buffer[m_buffer_num].imis, DEF_ONOMATOPOEIA_IMIS);
-        strcat(m_buffer[m_buffer_num].imis, "\"");
-
-        check_connect(pos, m_buffer_num, 0);
-        if (++m_buffer_num == mrph_buffer_max) realloc_mrph_buffer();	
-        break; /* 最初にマッチしたもののみ採用 */
-    }
-}//}}}
+//Node* CharLattice::recognize_onomatopoeia(unsigned int pos) {//{{{
+//    int i, len, code, next_code;
+//    std::string key{sentence_c_str+pos}; // オノマトペかどうかを判定するキー
+//    int key_length = key.size(); /* キーの文字数を数えておく */
+//
+//    size_t byte = utf8_bytes(sentence_c_str + pos);
+//    std::string current_char = key.substr(0, byte);// １文字目
+//
+//    /* 通常の平仮名、片仮名以外から始まるものは不可 */
+//    code = check_utf8_char_type((* unsigned char)current_char.c_str());
+//
+//    //code = check_code(String, pos);
+//    if (code != TYPE_HIRAGANA && code != TYPE_KATAKANA) return FALSE;
+//    if (lowercase.find(current_char)!=lowercase.end()) //小文字で始まる場合は終了
+//        return FALSE;
+//        
+//    /* 反復型オノマトペ */
+//    for (len = 1; len < 4; len++) {//二文字目からということ？
+//            
+//        std::string current_char = key.substr(len, );
+//        /* 途中で文字種が変わるものは不可 */
+//        next_code = check_utf8_char_type(current_char.c_str())
+//        //next_code = check_code(String, pos + len * BYTES4CHAR - BYTES4CHAR);
+//        if (next_code == CHOON) next_code = code; /* 長音は直前の文字種として扱う */
+//        if (key_length < len * 2 * BYTES4CHAR || code != next_code) break;
+//        code = next_code;
+//            
+//        /* 反復があるか判定 */
+//        if (strncmp(String + pos, String + pos + len * BYTES4CHAR, len * BYTES4CHAR)) continue;
+//        /* ただし3文字が同じものは不可 */
+//        if (!strncmp(String + pos, String + pos + BYTES4CHAR, BYTES4CHAR) &&
+//                !strncmp(String + pos, String + pos + 2 * BYTES4CHAR, BYTES4CHAR)) continue;
+//            
+//        m_buffer[m_buffer_num].hinsi = onomatopoeia_hinsi;
+//        m_buffer[m_buffer_num].bunrui = onomatopoeia_bunrui;
+//        m_buffer[m_buffer_num].con_tbl = onomatopoeia_con_tbl;
+//
+//        m_buffer[m_buffer_num].katuyou1 = 0;
+//        m_buffer[m_buffer_num].katuyou2 = 0;
+//        m_buffer[m_buffer_num].length = len * 2 * BYTES4CHAR;
+//
+//        strncpy(m_buffer[m_buffer_num].midasi, String+pos, len * 2 * BYTES4CHAR);
+//        m_buffer[m_buffer_num].midasi[len * 2 * BYTES4CHAR] = '\0';
+//        strncpy(m_buffer[m_buffer_num].yomi, String+pos, len * 2 * BYTES4CHAR);
+//        m_buffer[m_buffer_num].yomi[len * 2 * BYTES4CHAR] = '\0';
+//
+//        // 以下は素性に置き換える
+//        // /* weightの設定 */
+//        m_buffer[m_buffer_num].weight = REPETITION_COST * len;
+//        /* 拗音を含む場合 */
+//        for (i = CONTRACTED_LOWERCASE_S; i < CONTRACTED_LOWERCASE_E; i++) {
+//            if (strstr(m_buffer[m_buffer_num].midasi, lowercase[i])) break;
+//        }
+//        if (i < CONTRACTED_LOWERCASE_E) {
+//            if (len == 2) continue; /* 1音の繰り返しは禁止 */		
+//            /* 1文字分マイナス+ボーナス */
+//            m_buffer[m_buffer_num].weight -= REPETITION_COST + CONTRACTED_BONUS;
+//        }
+//        /* 濁音・半濁音を含む場合 */
+//        for (i = 0; *dakuon[i]; i++) {
+//            if (strstr(m_buffer[m_buffer_num].midasi, dakuon[i])) break;
+//        }
+//        if (*dakuon[i]) {
+//            m_buffer[m_buffer_num].weight -= DAKUON_BONUS; /* ボーナス */
+//            /* 先頭が濁音の場合はさらにボーナス */
+//            if (!strncmp(m_buffer[m_buffer_num].midasi, dakuon[i], BYTES4CHAR)) 
+//                m_buffer[m_buffer_num].weight -= DAKUON_BONUS;
+//        }
+//        /* カタカナである場合 */
+//        if (code == KATAKANA) 
+//            m_buffer[m_buffer_num].weight -= KATAKANA_BONUS;
+//
+//        strcpy(m_buffer[m_buffer_num].midasi2, m_buffer[m_buffer_num].midasi);
+//        strcpy(m_buffer[m_buffer_num].imis, "\"");
+//        strcat(m_buffer[m_buffer_num].imis, DEF_ONOMATOPOEIA_IMIS);
+//        strcat(m_buffer[m_buffer_num].imis, "\"");
+//
+//        check_connect(pos, m_buffer_num, 0);
+//        if (++m_buffer_num == mrph_buffer_max) realloc_mrph_buffer();	
+//        break; /* 最初にマッチしたもののみ採用 */
+//    }
+//}//}}}
 
 Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str, unsigned int pos) {//{{{
     return lookup_and_make_special_pseudo_nodes(start_str, pos, 0, NULL);

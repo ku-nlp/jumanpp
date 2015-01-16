@@ -93,6 +93,7 @@ extern bool check_exceptional_two_chars_in_figure(const char *cp, unsigned int r
 #define TYPE_KANJI_FIGURE	2048
 #define TYPE_SLASH	4096
 #define TYPE_COLON	8192
+#define TYPE_ERA	16384 //㍻ 
 
 #define TYPE_FAMILY_FIGURE	14392 // TYPE_FIGURE + TYPE_PERIOD + TYPE_MIDDLE_DOT + TYPE_KANJI_FIGURE + TYPE_SLASH + TYPE_COLON
 #define TYPE_FAMILY_PUNC	82 // TYPE_PERIOD + TYPE_COMMA + TYPE_IDEOGRAPHIC_PUNC
@@ -117,16 +118,6 @@ extern bool check_exceptional_two_chars_in_figure(const char *cp, unsigned int r
 
 #define EXCEPTIONAL_FIGURE_EXPRESSION "分の"
 #define EXCEPTIONAL_FIGURE_EXPRESSION_LENGTH 6
-
-// TAG for chinese?
-#define MORPH_WORD_TAG 0
-#define MORPH_SC_TAG 16
-#define MORPH_BC_TAG 32
-#define MORPH_CC_TAG 64
-#define MORPH_DC_TAG 128
-#define MORPH_IC_TAG 256
-#define MORPH_EC_TAG 512
-
 
 // split function with split_num
 template<class T>

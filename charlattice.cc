@@ -32,8 +32,9 @@ int CharLattice::parse(std::string sent){//{{{
             //cerr << "<3byte char> " ;
             // (ーの文字 || (〜の文字 && (最後の文字である|| 次が記号 || 次がひらがな))) && ２文字目以降 //jumanの条件
             // (ーの文字 || 〜の文字) && (最後の文字である|| 次が記号 || 次がひらがな) && ２文字目以降 //旧条件
-            // (ーの文字 || 〜の文字)  && ２文字目以降 //現在の条件
-            if ((current_char == DEF_PROLONG_SYMBOL1 || current_char == DEF_PROLONG_SYMBOL2) && (pos > 0)){ //長音の母音化
+            // (ーの文字 || 〜の文字 || ３点リーダ)  && ２文字目以降 //現在の条件
+            if ((current_char == DEF_PROLONG_SYMBOL1 || current_char == DEF_PROLONG_SYMBOL2 || 
+                        current_char == DEF_ELIPSIS_SYMBOL1 || current_char == DEF_ELIPSIS_SYMBOL2) && (pos > 0)){ //長音の母音化
                 auto itr = prolonged_map.find(last_char); 
                 if( itr != prolonged_map.end()){
                     // 長音を母音に置換してvectorの末尾でconstruct する

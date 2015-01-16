@@ -23,6 +23,8 @@
 
 namespace Morph {
 
+
+
 class CharNode{//{{{
     public:
         char chr[7];/// = "";
@@ -89,6 +91,8 @@ class CharLattice{//{{{
         const std::string DEF_PROLONG_SYMBOL1{"ー"};
         const std::string DEF_PROLONG_SYMBOL2{"〜"};
         const std::string DEF_PROLONG_SYMBOL3{"っ"};
+        const std::string DEF_ELIPSIS_SYMBOL1{"…"};//HORIZONTAL ELLIPSIS
+        const std::string DEF_ELIPSIS_SYMBOL2{"⋯"};//MIDDLE_HORIZONTAL ELLIPSIS
 
         /* 長音置換のルールで利用 */
         // 置き換え先へのmap 場合に応じて使いやすい方で
@@ -153,20 +157,11 @@ class CharLattice{//{{{
 #define COPY_FOR_REFERENCE
 #ifndef COPY_FOR_REFERENCE
 
-//とりあえず作ったが 一旦忘れる
-
 // std::iterator<> が定義された <iterator> ヘッダーをインクルードします。
 
- #include <iterator>
-
-  
-
-  // CMyClassIterator の定義中に CMyClass が登場するので、それがクラスであることだけを明示しておきます。
-
-  class CMyClass;
-
-   
-
+#include <iterator>
+// CMyClassIterator の定義中に CMyClass が登場するので、それがクラスであることだけを明示しておきます。
+class u8string;
    // CMyClassIterator のプロトタイプ宣言です。
 
    // std::iterator<> を std::forward_iterator_tag を指定して継承します。扱う値の型は int とします。
@@ -230,84 +225,6 @@ class CharLattice{//{{{
          };
 
 
-class utf8_string{//{{{
-    public: 
-        std::string str;
-       
-        size_t size(){
-            size_t s = 0;
-            auto itr = str.begin();
-            auto end = str.end();
-            for(auto itr =str.begin();itr != end;;){
-                itr+=utf8_bytes(*itr);
-                s++;
-            }
-            return s;
-        };
-
-        int next(int pos){
-            if(!(0 < pos & pos < str.size()))
-                return -1;
-            int bytes = utf8_bytes(str[pos]);
-            if(pos + bytes > str.size())
-                return -1;
-            //
-            return pos + bytes;
-        };
-
-        int prev(int pos){
-            if(!(0 < pos & pos < str.size()))
-                return -1;
-            int tmp = pos;
-
-            while( 0x80 =< str[tmp] & str[tmp] < 0xC0 ){//2byte 以降はこの範囲に入る
-                tmp--;
-                if(tmp < 0) return -1;
-            }
-            if(pos != tmp + utf8_bytes(str[tmp]))//assert
-                return -1;
-            return tmp;
-        };
-            
-    inline int utf8_bytes(unsigned char u) {
-        if ( c < 0x80 ) {
-            return 1;
-        } else if ( 0xe0 =< c & c < 0xf0 ){// よく出てくるので先に調べる
-            return 3;
-        } else if ( c < 0xe0) {
-            return 2;
-        } else {
-            return 4;
-        }
-    }
-
-    int check_code(U_CHAR *cp, int pos) {
-        auto c = cp[pos];
-        auto ucp = cp + pos;
-        int unicode;
-
-        if (c == '\0') return 0;
-        if (c == KUUHAKU) return KUUHAKU;
-
-        if (c > 0xef) { /* 4 bytes */
-            return 0;
-        } else if (c > 0xdf) { /* 3 bytes */
-            unicode = (c & 0x0f) << 12;
-            c = *(ucp + 1);
-            unicode += (c & 0x3f) << 6;
-            c = *(ucp + 2);
-            unicode += c & 0x3f;
-            return check_unicode_char_type(unicode);
-        } else if (c > 0x7f) { /* 2 bytes */
-            unicode = (c & 0x1f) << 6;
-            c = *(ucp + 1);
-            unicode += c & 0x3f;
-            return check_unicode_char_type(unicode);
-        } else { /* 1 byte */
-            return check_unicode_char_type(c);
-        }
-    }
-}//}}}
 
 
 // copied from CharRootNode
