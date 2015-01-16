@@ -4,85 +4,97 @@
 
 namespace Morph {
 
-
-
 int CharLattice::parse(std::string sent){//{{{
     size_t length = sent.size();
 
     auto CharNum = 0;
     node_list.clear();
+    char_byte_length.clear();
     int pre_is_deleted = 0;
     int next_pre_is_deleted = 0;
     size_t next_pos=0;
-    std::string previous_char;
+    std::string last_char = "";
 
     for (int pos = 0; pos < length; pos+=next_pos) {
-            
         unsigned char pos_chr = sent[pos];
         auto bytes = utf8_bytes(& pos_chr);
+        char_byte_length.push_back(bytes);
         auto current_char = sent.substr(pos,bytes);
         auto current_char_type = check_utf8_char_type((unsigned char *)current_char.c_str());
-        std::string last_char = "";
+        //cout << current_char << endl;
             
         // 置き換え挿入の無い普通のコピー
-
         node_list.emplace_back();
         node_list[CharNum].emplace_back(current_char, OPT_NORMAL);
         next_pre_is_deleted = 0;
             
         if (current_char[0]&0x80) { /* 全角の場合 */
-            // (ーの文字 || (〜の文字 && (最後の文字である|| 次が記号 || 次がひらがな))) && ２文字目以降 //元の条件
-            // (ーの文字 || 〜の文字) && (最後の文字である|| 次が記号 || 次がひらがな) && ２文字目以降 //現在の条件
-            if ((current_char == DEF_PROLONG_SYMBOL1 || current_char == DEF_PROLONG_SYMBOL2) &&
-                    ((pos+bytes<length) || current_char_type == TYPE_SYMBOL || current_char_type == TYPE_HIRAGANA) &&
-                    (pos > 0)){ //長音の母音化
-                auto itr = prolonged_map.find(current_char); 
+            //cerr << "<3byte char> " ;
+            // (ーの文字 || (〜の文字 && (最後の文字である|| 次が記号 || 次がひらがな))) && ２文字目以降 //jumanの条件
+            // (ーの文字 || 〜の文字) && (最後の文字である|| 次が記号 || 次がひらがな) && ２文字目以降 //旧条件
+            // (ーの文字 || 〜の文字)  && ２文字目以降 //現在の条件
+            if ((current_char == DEF_PROLONG_SYMBOL1 || current_char == DEF_PROLONG_SYMBOL2) && (pos > 0)){ //長音の母音化
+                auto itr = prolonged_map.find(last_char); 
                 if( itr != prolonged_map.end()){
                     // 長音を母音に置換してvectorの末尾でconstruct する
                     node_list[CharNum].emplace_back(itr->second, OPT_NORMALIZE | OPT_PROLONG_REPLACE);
                 }
+                //cerr << "prolong(rep) " ;
             } else { //小文字の大文字化
                 auto itr = lower2upper.find(current_char);
-                if(itr != lower2upper.end()){ node_list[CharNum].emplace_back(itr->second, OPT_NORMALIZE); }
+                if(itr != lower2upper.end()){
+                    node_list[CharNum].emplace_back(itr->second, OPT_NORMALIZE); 
+                    //cerr << "prolong(capt) " ;
+                }
             }
             next_pos = bytes;
         } else { //1byte文字
             next_pos = 1;
+            //cerr << "<alpha>";
         }
             
         /* 長音挿入 (の削除)*/
         if (next_pos == BYTES4CHAR) { //全角文字
-            auto pre_char_type = (pos > 0) ? check_utf8_char_type(last_char.c_str()) : -1;
+            //cerr << "<3byte> " << "pos:" << pos << " ";
+            int pre_char_type = (pos > 0) ? check_utf8_char_type(last_char.c_str()) : -1;
+            //cerr << "pre_char_type:" << pre_char_type << " ";
             //unsigned char next_chr = sent[pos+next_pos];
             auto post_char_type = check_utf8_char_type(sent.substr(pos+next_pos, utf8_bytes((unsigned char*)&sent[pos + next_pos])).c_str()); /* 文末の場合は0 */
                 
             //直前の文字がある
             if ( pre_char_type > 0){ 
+                //cerr << "<not first>";
                 /* 長音記号で, 直前が削除されたか、直前が平仮名、直前が漢字かつ直後が平仮名 */
                 if ((pre_is_deleted || pre_char_type == TYPE_HIRAGANA || pre_char_type == TYPE_KANJI && post_char_type == TYPE_HIRAGANA) &&
                         (current_char == DEF_PROLONG_SYMBOL1 || current_char == DEF_PROLONG_SYMBOL2) || 
                         /* 直前が削除されていて、現在文字が"っ"、かつ、直後が文末もしくは記号の場合も削除 */
                         pre_is_deleted && current_char == DEF_PROLONG_SYMBOL3 && (post_char_type == 0 || post_char_type == TYPE_SYMBOL)) {
+                    //cerr << "hatsuon del" << endl;
                     node_list[CharNum].emplace_back("", OPT_PROLONG_DEL);
                     next_pre_is_deleted = 1;
-
-                } else if ( lower_map.find(previous_char)->second == current_char ||
-                        pre_is_deleted && lower_map.find(current_char)!=lower_map.end() && current_char == previous_char ){
-                    /* 直前の文字が対応する平仮名の小書き文字、 ("かぁ" > "か(ぁ)" :()内は削除の意味)
-                     * または、削除された同一の小書き文字の場合は削除 ("か(ぁ)ぁ" > "か(ぁぁ)") */
-                    node_list[CharNum].emplace_back("", OPT_PROLONG_DEL); 
-                    next_pre_is_deleted = 1;
+                } else {
+                    //cerr << "<check2> " << (lower_map.find(last_char) !=lower_map.end()) << "preisdel:" << pre_is_deleted << " ";
+                    if ( lower_map.find(last_char) !=lower_map.end() && lower_map.find(last_char)->second == current_char ||
+                            pre_is_deleted && lower_list.find(current_char)!=lower_list.end() && current_char == last_char ){
+                        //cerr << "<del_cont_prolong> ";
+                        /* 直前の文字が対応する平仮名の小書き文字、 ("かぁ" > "か(ぁ)" :()内は削除の意味)
+                         * または、削除された同一の小書き文字の場合は削除 ("か(ぁ)ぁ" > "か(ぁぁ)") */
+                        node_list[CharNum].emplace_back("", OPT_PROLONG_DEL); 
+                        next_pre_is_deleted = 1;
+                    }
                 }
             } 
+            //cerr << "<3byte end>" << endl;
         }
+        //cerr << "end" << endl;
         last_char = current_char;
         pre_is_deleted = next_pre_is_deleted;
         CharNum++;
     }
 }//}}}
 
-std::vector<Darts::DoubleArray::result_pair_type> CharLattice::da_search_one_step(Darts::DoubleArray &da, int left_position, int right_position) {//{{{
-    int status;
+// Dic クラスの中でやった方が良さそう？
+std::vector<Darts::DoubleArray::result_pair_type> CharLattice::da_search_one_step( Darts::DoubleArray &da, int left_position, int right_position) {//{{{
     size_t current_da_node_pos;
     std::vector<CharNode>* left_char_node_list;
     std::vector<CharNode>* right_char_node_list;
@@ -92,79 +104,77 @@ std::vector<Darts::DoubleArray::result_pair_type> CharLattice::da_search_one_ste
     if (left_position < 0) {
         // vector にする
         left_char_node_list = &(CharRootNodeList);
-    }
-    else {
-        // todo:チェックを行う
+    } else {
+        // todo:ラティスが構築されているかチェックを行う
         left_char_node_list = &(node_list[left_position]);
     }
-    
-    //while (left_char_node) {
+
     for(CharNode& left_char_node: (*left_char_node_list)){
+        //cerr << "l:" << left_char_node.chr << "," << left_char_node.da_node_pos_num << endl; //0はありえない
         for (int i = 0; i < left_char_node.da_node_pos_num; i++) { /* 現在位置のtrieのノード群から */
             std::vector<CharNode>& right_char_node_list = node_list[right_position];
-                for(CharNode& right_char_node: right_char_node_list){
-                //while (right_char_node) { /* 次の文字の集合 */
-                    if (right_char_node.chr[0] == '\0') { /* 削除ノード */
-                        if (left_position >= 0) {
-                            right_char_node.node_type.push_back(left_char_node.node_type[i] | right_char_node.type);
-                            right_char_node.da_node_pos.push_back( left_char_node.da_node_pos[i]);
-                            //right_char_node->deleted_bytes[right_char_node->da_node_pos_num] = left_char_node->deleted_bytes[i] + strlen(CharLattice[right_position].chr);
+            for(CharNode& right_char_node: right_char_node_list){
+                //cout << " r:" << right_char_node.chr << "," << right_char_node.da_node_pos_num << endl;
+                if (right_char_node.chr[0] == '\0') { /* 削除ノード */
+                    //cerr << "  da_del"<< endl;
+                    if (left_position >= 0) {
+                        right_char_node.node_type.push_back(left_char_node.node_type[i] | right_char_node.type);
+                        right_char_node.da_node_pos.push_back( left_char_node.da_node_pos[i]);
+                        size_t tmp=0;
+                        int status = da.traverse( "" , left_char_node.da_node_pos[i], tmp ); //left_char_node.da_node_pos[i] の位置にあるものをそのまま読み込む
                             
-                            // p_buffer を使うかどうか検討中
-                            // p_buffer を使わなくとも，不要なノードがある程度生成されるだけ？
-//                            if (left_char_node.p_buffer[i]) { // p_buffer には何が入っている？
-//                                if (right_char_node.p_buffer[right_char_node->da_node_pos_num] == NULL) {//初期化して
-//                                    right_char_node.p_buffer[right_char_node->da_node_pos_num] = (char *)malloc(50000);
-//                                    right_char_node.p_buffer[right_char_node->da_node_pos_num][0] = '\0';
-//                                }
-//                                strcat(right_char_node.p_buffer[right_char_node.da_node_pos_num], left_char_node.p_buffer[i]);//コピーする
-//                                
-//                                /* 各ノードのp_bufferの先頭(node_type)は未更新 -> pat_bufに入れるときに書き換える */
-//                                // 登録？ p_buffer の中身を pat_buf にコピー
-//                                register_nodes_by_deletion(left_char_node.p_buffer[i], pat_buf, 
-//                                                           right_char_node.node_type[right_char_node.da_node_pos_num], 
-//                                                           right_char_node.deleted_bytes[right_char_node.da_node_pos_num]);
-//                            }
-                             
-                            right_char_node.da_node_pos_num++;
-                            if (MostDistantPosition < right_position) MostDistantPosition = right_position;
+                        if (status > 0) { /* マッチしたら結果に登録するとともに、次回のノード開始位置とする */
+                            //cout << "    match:" << (status > 0) << endl;
+                            //cout << "    " << left_char_node.chr << "." << right_char_node.chr << "(" << (status >> 8) << "," << (0xff & status) << ")" << endl;
+                            Darts::DoubleArray::result_pair_type result_pair;
+                            da.set_result(&result_pair, status, 0);
+                            result.push_back( result_pair );
                         }
-                    } else { /* 通常ノード */
-                        if ( !(right_char_node.type & OPT_DEVOICE || right_char_node.type & OPT_PROLONG_REPLACE) || 
-                                (right_char_node.type & OPT_DEVOICE && left_position < 0) || /* 連濁ノードは先頭である必要がある */
-                                (right_char_node.type & OPT_PROLONG_REPLACE && left_position >= 0)) { /* 長音置換ノードは先頭以外である必要がある */
+                        right_char_node.da_node_pos_num++;
+                        if (MostDistantPosition < right_position) MostDistantPosition = right_position;
+                    }
+                } else { /* 通常ノード */
+                    //cerr << "  da_normal" << endl;
+                    if (!(right_char_node.type & OPT_DEVOICE || right_char_node.type & OPT_PROLONG_REPLACE) || 
+                            (right_char_node.type & OPT_DEVOICE && left_position < 0) || /* 連濁ノードは先頭である必要がある */
+                            (right_char_node.type & OPT_PROLONG_REPLACE && left_position >= 0)) { /* 長音置換ノードは先頭以外である必要がある */
+                        //cout << "   da_ind: "<< i <<endl;
+                            
+                        current_node_type = left_char_node.node_type[i] | right_char_node.type;
+                        current_da_node_pos = left_char_node.da_node_pos[i];
+                            
+                        size_t tmp =0;
+                        int status = da.traverse( right_char_node.chr , current_da_node_pos, tmp );
+                        //cout << "   status:" << status << endl;
+                        // -2 not found
+                        // -1 found but no value (cont.)
+                            
+                        if (status > 0) { /* マッチしたら結果に登録するとともに、次回のノード開始位置とする */
+                            //cout << "    match:" << (status > 0) << endl;
+                            //cout << "    " << left_char_node.chr << "." << right_char_node.chr << "(" << (status >> 8) << "," << (0xff & status) << ")" << endl;
+                            Darts::DoubleArray::result_pair_type result_pair;
+                            da.set_result(&result_pair, status, 0);
+                            result.push_back(result_pair); //返り値として保存
+                        }
 
-                            current_node_type = left_char_node.node_type[i] | right_char_node.type;
-                            current_da_node_pos = left_char_node.da_node_pos[i];
-                                
-                            size_t tmp =0;
-                            status = da.traverse( right_char_node.chr , current_da_node_pos, tmp );
-                            // -2 not found
-                            // -1 found but no value (cont.)
+                        // マッチした場合も続きはあるかもしれない
+                        if (status > 0 || status == -1) { /* マッチした場合と、ここではマッチしていないが、続きがある場合 */
+                            //if(status == -1){
+                            //    cout << "    continue:" << endl;
+                            //}
+                            right_char_node.node_type.push_back(left_char_node.node_type[i] | right_char_node.type);
+                            right_char_node.da_node_pos.push_back( current_da_node_pos);
+                            right_char_node.da_node_pos_num++;
 
-                            if (status > 0) { /* マッチしたら結果に登録するとともに、次回のノード開始位置とする */
-                                Darts::DoubleArray::result_pair_type result_pair;  
-                                da.set_result(&result_pair, status, 0); //長さは保存しておかないと分からないが，そもそも長さは必要か？
-                                // ここでtoken を取り出すのが良いことか？
-                                // そのままlatticeにセット
-                                result.push_back( result_pair );
-                            }
-                                
-                            // マッチした場合も続きはあるかもしれない
-                            if (status > 0 || status == -1) { /* マッチした場合と、ここではマッチしていないが、続きがある場合 */
-
-                                right_char_node.node_type.push_back(left_char_node.node_type[i] | right_char_node.type);
-                                right_char_node.da_node_pos.push_back( current_da_node_pos );
-
-                                if (MostDistantPosition < right_position)
-                                    MostDistantPosition = right_position;
-                            }
+                            if (MostDistantPosition < right_position)
+                                MostDistantPosition = right_position;
                         }
                     }
                 }
             }
         }
-        return result;
+    }
+    return result;
 }//}}}
 
 std::vector<Darts::DoubleArray::result_pair_type> CharLattice::da_search_from_position(Darts::DoubleArray &da,int position) {//{{{
@@ -183,13 +193,20 @@ std::vector<Darts::DoubleArray::result_pair_type> CharLattice::da_search_from_po
         
     // root から始まり，次の文字が node_list[position]のいずれかであるDAを探す.
     /* search double array by traverse */
-    da_search_one_step(da, -1, position); 
-    for (int i = position + 1; i < node_list.size(); i++) { // 二文字
-        if (MostDistantPosition < i - 1) break;
+    //cerr << position << " => " << MostDistantPosition  << endl;//文字
+    unsigned char byte= char_byte_length[position];
+    auto tokens_one_char = da_search_one_step(da, -1, position); 
+    for(auto &pair: tokens_one_char){
+        pair.length = byte;
+        result.push_back(pair);
+    }
+    for (int i = position + 1; i < node_list.size(); i++) {// 二文字
+        byte += char_byte_length[i];
+        if (MostDistantPosition < i - 1) break; //position まで辿りつけた文字がない場合
         std::vector<Darts::DoubleArray::result_pair_type> tokens = da_search_one_step(da,i - 1, i);
-        // result に長さを設定 (i-position)? 
+        
         for(auto &pair: tokens){
-            pair.length = i - position;
+            pair.length = byte; 
             //result に追加
             result.push_back(pair);
         }
@@ -201,80 +218,6 @@ std::vector<Darts::DoubleArray::result_pair_type> CharLattice::da_search_from_po
 //#define COPY_FOR_REFERENCE
 //#ifndef COPY_FOR_REFERENCE
 //
-//int CharLattice::recognize_onomatopoeia(int pos) {//{{{
-//    int i, len, code, next_code;
-//    int key_length = strlen(String + pos); /* キーの文字数を数えておく */
-//
-//    /* 通常の平仮名、片仮名以外から始まるものは不可 */
-//    code = check_code(String, pos);
-//    if (code != HIRAGANA && code != KATAKANA) return FALSE;
-//    for (i = 0; *lowercase[i]; i++) {
-//        if (!strncmp(String + pos, lowercase[i], BYTES4CHAR)) return FALSE;
-//    }
-//
-//    /* 反復型オノマトペ */
-//    for (len = 2; len < 5; len++) {
-//        /* 途中で文字種が変わるものは不可 */
-//        next_code = check_code(String, pos + len * BYTES4CHAR - BYTES4CHAR);
-//        if (next_code == CHOON) next_code = code; /* 長音は直前の文字種として扱う */
-//        if (key_length < len * 2 * BYTES4CHAR || code != next_code) break;
-//        code = next_code;
-//
-//        /* 反復があるか判定 */
-//        if (strncmp(String + pos, String + pos + len * BYTES4CHAR, len * BYTES4CHAR)) continue;
-//        /* ただし3文字が同じものは不可 */
-//        if (!strncmp(String + pos, String + pos + BYTES4CHAR, BYTES4CHAR) &&
-//                !strncmp(String + pos, String + pos + 2 * BYTES4CHAR, BYTES4CHAR)) continue;
-//
-//        m_buffer[m_buffer_num].hinsi = onomatopoeia_hinsi;
-//        m_buffer[m_buffer_num].bunrui = onomatopoeia_bunrui;
-//        m_buffer[m_buffer_num].con_tbl = onomatopoeia_con_tbl;
-//
-//        m_buffer[m_buffer_num].katuyou1 = 0;
-//        m_buffer[m_buffer_num].katuyou2 = 0;
-//        m_buffer[m_buffer_num].length = len * 2 * BYTES4CHAR;
-//
-//        strncpy(m_buffer[m_buffer_num].midasi, String+pos, len * 2 * BYTES4CHAR);
-//        m_buffer[m_buffer_num].midasi[len * 2 * BYTES4CHAR] = '\0';
-//        strncpy(m_buffer[m_buffer_num].yomi, String+pos, len * 2 * BYTES4CHAR);
-//        m_buffer[m_buffer_num].yomi[len * 2 * BYTES4CHAR] = '\0';
-//
-//        // 以下は素性に置き換える
-//        // /* weightの設定 */
-//        m_buffer[m_buffer_num].weight = REPETITION_COST * len;
-//        /* 拗音を含む場合 */
-//        for (i = CONTRACTED_LOWERCASE_S; i < CONTRACTED_LOWERCASE_E; i++) {
-//            if (strstr(m_buffer[m_buffer_num].midasi, lowercase[i])) break;
-//        }
-//        if (i < CONTRACTED_LOWERCASE_E) {
-//            if (len == 2) continue; /* 1音の繰り返しは禁止 */		
-//            /* 1文字分マイナス+ボーナス */
-//            m_buffer[m_buffer_num].weight -= REPETITION_COST + CONTRACTED_BONUS;
-//        }
-//        /* 濁音・半濁音を含む場合 */
-//        for (i = 0; *dakuon[i]; i++) {
-//            if (strstr(m_buffer[m_buffer_num].midasi, dakuon[i])) break;
-//        }
-//        if (*dakuon[i]) {
-//            m_buffer[m_buffer_num].weight -= DAKUON_BONUS; /* ボーナス */
-//            /* 先頭が濁音の場合はさらにボーナス */
-//            if (!strncmp(m_buffer[m_buffer_num].midasi, dakuon[i], BYTES4CHAR)) 
-//                m_buffer[m_buffer_num].weight -= DAKUON_BONUS;
-//        }
-//        /* カタカナである場合 */
-//        if (code == KATAKANA) 
-//            m_buffer[m_buffer_num].weight -= KATAKANA_BONUS;
-//
-//        strcpy(m_buffer[m_buffer_num].midasi2, m_buffer[m_buffer_num].midasi);
-//        strcpy(m_buffer[m_buffer_num].imis, "\"");
-//        strcat(m_buffer[m_buffer_num].imis, DEF_ONOMATOPOEIA_IMIS);
-//        strcat(m_buffer[m_buffer_num].imis, "\"");
-//
-//        check_connect(pos, m_buffer_num, 0);
-//        if (++m_buffer_num == mrph_buffer_max) realloc_mrph_buffer();	
-//        break; /* 最初にマッチしたもののみ採用 */
-//    }
-//}//}}}
 //
 ///*
 //------------------------------------------------------------------------------
