@@ -7,21 +7,11 @@
 #include <sstream>
 #include <vector>
 #include <string>
-#include <iterator>
+//#include <iterator>
 #include <string>
 #include <unordered_set>
+#include <unordered_map>
 
-
-#define TYPE_FAMILY_FIGURE	14392 // TYPE_FIGURE + TYPE_PERIOD + TYPE_MIDDLE_DOT + TYPE_KANJI_FIGURE + TYPE_SLASH + TYPE_COLON
-#define TYPE_FAMILY_PUNC	82 // TYPE_PERIOD + TYPE_COMMA + TYPE_IDEOGRAPHIC_PUNC
-#define TYPE_FAMILY_ALPH_PUNC	12432 // TYPE_ALPH + TYPE_PERIOD + TYPE_SLASH + TYPE_COLON
-#define TYPE_FAMILY_PUNC_SYMBOL	12658 // TYPE_PERIOD + TYPE_COMMA + TYPE_IDEOGRAPHIC_PUNC + TYPE_MIDDLE_DOT + TYPE_SYMBOL + TYPE_SLASH + TYPE_COLON
-
-#define TYPE_FAMILY_SPACE	1   // TYPE_SPACE
-#define TYPE_FAMILY_SYMBOL	256 // TYPE_SYMBOL
-#define TYPE_FAMILY_ALPH	128 // TYPE_ALPH
-#define TYPE_FAMILY_KANJI	2052 // TYPE_KANJI + TYPE_KANJI_FIGURE
-#define TYPE_FAMILY_OTHERS	0
 
 /******
  * U8string
@@ -63,8 +53,25 @@ class U8string{//{{{
     static constexpr unsigned long ERA             =0x00004000; // ㍻ 
     static constexpr unsigned long CHOON           =0x00008000; // ー, 〜
     static constexpr unsigned long HANKAKU_KANA    =0x00010000; // 半角カタカナ
+    static constexpr unsigned long BRACKET         =0x00020000; // 括弧, 引用符
+
+    // TYPE_FIGURE + TYPE_PERIOD + TYPE_MIDDLE_DOT + TYPE_KANJI_FIGURE + TYPE_SLASH + TYPE_COLON
+    static constexpr unsigned long FAMILY_FIGURE      = 0x00003838; 
+    // TYPE_PERIOD + TYPE_COMMA + TYPE_IDEOGRAPHIC_PUNC
+    static constexpr unsigned long FAMILY_PUNC        = 0x00000052; 
+    // TYPE_ALPH + TYPE_PERIOD + TYPE_SLASH + TYPE_COLON
+    static constexpr unsigned long FAMILY_ALPH_PUNC   = 0x00003090; 
+    // TYPE_PERIOD + TYPE_COMMA + TYPE_IDEOGRAPHIC_PUNC + TYPE_MIDDLE_DOT + TYPE_SYMBOL + TYPE_SLASH + TYPE_COLON
+    static constexpr unsigned long FAMILY_PUNC_SYMBOL = 0x0000315B; 
+    static constexpr unsigned long FAMILY_SPACE       = 0x00000001; // TYPE_SPACE
+    static constexpr unsigned long FAMILY_SYMBOL      = 0x00000100; // TYPE_SYMBOL
+    static constexpr unsigned long FAMILY_ALPH        = 0x00000080; // TYPE_ALPH
+    static constexpr unsigned long FAMILY_KANJI       = 0x0000080A; // TYPE_KANJI + TYPE_KANJI_FIGURE
+    static constexpr unsigned long FAMILY_BRACKET     = 0x00020000; // 括弧, 引用符
+    static constexpr unsigned long FAMILY_OTHERS      = 0x00000000;
 
     static const std::unordered_set<std::string> lowercase;
+    static const std::unordered_set<unsigned int> brackets;//あとでmap にするかも
 
     private: 
         std::string byte_str;
@@ -257,7 +264,6 @@ class U8string{//{{{
             return check_unicode_char_type(to_unicode(c));
         };//}}}
 
-        // TODO: static const な値として TYPE_... を定義
         unsigned int check_unicode_char_type(int code) {//{{{
             /* SPACE */
             if (code == 0x20 /* space*/|| code == 0x3000 /*全角スペース*/ || 
@@ -352,6 +358,8 @@ class U8string{//{{{
             /* CJK Unified Ideographs and "々" and "〇"*/
             else if ((code > 0x4dff && code < 0xa000) || code == 0x3005 || code == 0x3007) {
                 return KANJI;
+            } else if ( brackets.count(code)==1 ){ // 括弧，引用符
+                return BRACKET;
             } else {
                 return SYMBOL;
             }
