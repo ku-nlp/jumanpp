@@ -130,11 +130,14 @@ class U8string{//{{{
             parsed=true;
             char_array.clear();
             char_index2byte_index.clear();
-            for(size_t i=0,byte=0;i<byte_size();byte=utf8_bytes(byte_str[i]),i+=byte){
+            for(size_t i=0,byte=utf8_bytes(byte_str[0]);i<byte_size();byte=utf8_bytes(byte_str[i]),i+=byte){
                 char_array.emplace_back();
+                //std::cerr << i << ":" << byte;
                 for(char c:byte_str.substr(i,byte)){
+                    //std::cerr << c << " ";
                     char_array.back().push_back(static_cast<unsigned char>(c));
                 }
+                //std::cerr << std::endl;
                 char_index2byte_index.push_back(i);
             }
         };//}}}
@@ -172,14 +175,25 @@ class U8string{//{{{
         };//}}}
 
         unsigned int char_type_at(size_t char_ind){//{{{
-            return check_unicode_char_type( check_code(char_array[char_ind]));
+            parse();
+//            std::cerr << "key= " << byte_str << std::endl;
+//            std::cerr << "char_array[" << char_ind <<" ] = " ;
+//            for(auto a:char_array[char_ind]){
+//                std::cerr << (unsigned long)a << " ";
+//            }
+//            std::cerr << " " << std::hex << to_unicode(char_array[char_ind]) << std::dec << std::endl;
+
+            if(char_ind >= char_array.size()) return 0x0000;
+            return check_code(char_array[char_ind]);
         }//}}}
         
         bool is_lower(size_t char_ind){//{{{
+            parse();
             return lowercase.find(char_substr(char_ind, 1)) != lowercase.end();
         }//}}}
 
         bool is_choon(size_t char_ind){//{{{
+            parse();
             return check_unicode_char_type( check_code(char_array[char_ind])) & CHOON;
         }//}}}
         // is_katakana, is_lower 等を追加予定
@@ -211,7 +225,7 @@ class U8string{//{{{
         int to_unicode(std::vector<unsigned char>& c){//{{{
             int unicode = 0;
 
-            if (c[0] > 0xef) { /* 4 bytes */
+            if (c[0] > 0x00ef) { /* 4 bytes */
                 return 0; // 無視
             } else if (c[0] > 0xdf) { /* 3 bytes */
                 unicode =  (c[0] & 0x0f) << 12;
