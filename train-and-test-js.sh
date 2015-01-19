@@ -23,10 +23,10 @@ use_unknown=''
 flag_debug=''
 iteration_num=5
 unk_max_length=2
-while getopts 7sgup:d:f:i:l:h OPT
+while getopts msgup:d:f:i:l:h OPT
 do
     case $OPT in
-        7)  set_head=ctb7
+        m)  set_head=MixedCorpus
             ;;
         d)  dic_base=$OPTARG
             ;;
@@ -70,12 +70,12 @@ if [ -z "$model" -o -z "$out_base" ]; then
 fi
 
 if [ ! -f data/$dic_base.da ]; then
-    echo "cannot open $dic_base.da"
+    echo "cannot open data/$dic_base.da"
     usage
 fi
 
 if [ ! -f data/$feature_def ]; then
-    echo "cannot open $feature_def"
+    echo "cannot open data/$feature_def"
     usage
 fi
 

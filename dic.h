@@ -30,6 +30,10 @@ class Dic {
     static constexpr char* DEF_ONOMATOPOEIA_BUNRUI = "*";
     static constexpr char* DEF_ONOMATOPOEIA_IMIS = "自動認識";
   public:
+    static const std::unordered_map<std::string,int> pos_map;
+    static const std::unordered_map<std::string,int> spos_map;
+    static const std::unordered_map<std::string,int> katuyou_type_map;
+    static const std::unordered_map<std::string,int> katuyou_form_map;
 
     Dic() {}
     Dic(Parameter *in_param, FeatureTemplateSet *in_ftmpl);
