@@ -397,15 +397,22 @@ bool Sentence::lookup_and_analyze() {//{{{
                 make_unk_pseudo_node_list_from_previous_position(sentence_c_str, previous_pos);
         }
         else {
+            // make figure/alphabet nodes and look up a dictionary
             //cerr << "char_num:" << char_num << ", byte:" << pos  << "< length:" << length<< endl;
             Node *r_node = lookup_and_make_special_pseudo_nodes_lattice(cl,sentence_c_str, char_num, pos, 0, NULL); 
             //Node *r_node = lookup_and_make_special_pseudo_nodes(sentence_c_str, pos, 0, NULL); 
-            // make figure/alphabet nodes and look up a dictionary
+              
             // オノマトペ処理 or lookup_and_make_special_pseudo_nodes 内
             Node *r_onomatope_node = dic->recognize_onomatopoeia(sentence_c_str + pos);
-            if( r_onomatope_node ){
-                r_onomatope_node->bnext = r_node;
-                r_node = r_onomatope_node;
+            if( r_onomatope_node != NULL ){
+                if(r_node ){
+                    Node *tmp_node = r_node;
+                    while (tmp_node->bnext)
+                        tmp_node = tmp_node->bnext;
+                    tmp_node->bnext = r_onomatope_node;
+                }else{
+                    //r_node = r_onomatope_node;
+                }
             }
             
             set_begin_node_list(pos, r_node);
