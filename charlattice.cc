@@ -34,7 +34,7 @@ int CharLattice::parse(std::string sent){//{{{
             // (ーの文字 || 〜の文字) && (最後の文字である|| 次が記号 || 次がひらがな) && ２文字目以降 //旧条件
             // (ーの文字 || 〜の文字 || ３点リーダ)  && ２文字目以降 //現在の条件
             if ((current_char == DEF_PROLONG_SYMBOL1 || current_char == DEF_PROLONG_SYMBOL2 || 
-                        current_char == DEF_ELIPSIS_SYMBOL1 || current_char == DEF_ELIPSIS_SYMBOL2) && (pos > 0)){ //長音の母音化
+                        false) && (pos > 0)){ //長音の母音化
                 auto itr = prolonged_map.find(last_char); 
                 if( itr != prolonged_map.end()){
                     // 長音を母音に置換してvectorの末尾でconstruct する
@@ -67,7 +67,7 @@ int CharLattice::parse(std::string sent){//{{{
                 //cerr << "<not first>";
                 /* 長音記号で, 直前が削除されたか、直前が平仮名、直前が漢字かつ直後が平仮名 */
                 if ((pre_is_deleted || pre_char_type == TYPE_HIRAGANA || pre_char_type == TYPE_KANJI && post_char_type == TYPE_HIRAGANA) &&
-                        (current_char == DEF_PROLONG_SYMBOL1 || current_char == DEF_PROLONG_SYMBOL2) || 
+                        (current_char == DEF_PROLONG_SYMBOL1 || current_char == DEF_PROLONG_SYMBOL2 || current_char == DEF_ELIPSIS_SYMBOL1 || current_char == DEF_ELIPSIS_SYMBOL2) || 
                         /* 直前が削除されていて、現在文字が"っ"、かつ、直後が文末もしくは記号の場合も削除 */
                         pre_is_deleted && current_char == DEF_PROLONG_SYMBOL3 && (post_char_type == 0 || post_char_type == TYPE_SYMBOL)) {
                     //cerr << "hatsuon del" << endl;

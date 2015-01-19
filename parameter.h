@@ -6,6 +6,7 @@
 namespace Morph {
 
 class Parameter {
+  friend int main(int argc, char** argv);
   public:
     bool unknown_word_detection;
     bool shuffle_training_data;

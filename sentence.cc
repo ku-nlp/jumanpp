@@ -5,27 +5,27 @@
 
 namespace Morph {
 
-//(almost)constant variables //{{{
-std::unordered_map<std::string,int> pos_map({
+//(almost)constant variables 
+std::unordered_map<std::string,int> pos_map({//{{{
     {"*",0}, {"特殊",1}, {"動詞",2}, {"形容詞",3}, {"判定詞",4}, {"助動詞",5}, {"名詞",6}, {"指示詞",7},
-    {"副詞",8}, {"助詞",9}, {"接続詞",10}, {"連体詞",11}, {"感動詞",12}, {"接頭辞",13}, {"接尾辞",14}, {"未定義語",15}});
-std::unordered_map<std::string,int> spos_map{
+    {"副詞",8}, {"助詞",9}, {"接続詞",10}, {"連体詞",11}, {"感動詞",12}, {"接頭辞",13}, {"接尾辞",14}, {"未定義語",15}});//}}}
+std::unordered_map<std::string,int> spos_map{//{{{
     {"*",0},
     {"句点",1}, {"読点",2}, {"括弧始",3}, {"括弧終",4}, {"記号",5}, {"空白",6}, 
     {"普通名詞",1}, {"サ変名詞",2}, {"固有名詞",3}, {"地名",4}, {"人名",5}, {"組織名",6}, {"数詞",7}, {"形式名詞",8},
     {"副詞的名詞",9}, {"時相名詞",10}, {"名詞形態指示詞",1}, {"連体詞形態指示詞",2}, {"副詞形態指示詞",3}, {"格助詞",1}, {"副助詞",2}, 
     {"接続助詞",3}, {"終助詞",4}, {"名詞接頭辞",1}, {"動詞接頭辞",2}, {"イ形容詞接頭辞",3}, {"ナ形容詞接頭辞",4}, {"名詞性述語接尾辞",1}, 
     {"名詞性名詞接尾辞",2}, {"名詞性名詞助数辞",3}, {"名詞性特殊接尾辞",4}, {"形容詞性述語接尾辞",5}, {"形容詞性名詞接尾辞",6}, 
-    {"動詞性接尾辞",7}, {"その他",1}, {"カタカナ",2}, {"アルファベット",3}};
-std::unordered_map<std::string,int> katuyou_type_map{
+    {"動詞性接尾辞",7}, {"その他",1}, {"カタカナ",2}, {"アルファベット",3}};//}}}
+std::unordered_map<std::string,int> katuyou_type_map{//{{{
     {"*",0}, {"母音動詞",1}, {"子音動詞カ行",2}, {"子音動詞カ行促音便形",3}, {"子音動詞ガ行",4}, {"子音動詞サ行",5},
     {"子音動詞タ行",6}, {"子音動詞ナ行",7}, {"子音動詞バ行",8}, {"子音動詞マ行",9}, {"子音動詞ラ行",10},
     {"子音動詞ラ行イ形",11}, {"子音動詞ワ行",12}, {"子音動詞ワ行文語音便形",13}, {"カ変動詞",14}, {"カ変動詞来",15},
     {"サ変動詞",16}, {"ザ変動詞",17}, {"イ形容詞アウオ段",18}, {"イ形容詞イ段",19}, {"イ形容詞イ段特殊",20},
     {"ナ形容詞",21}, {"ナノ形容詞",22}, {"ナ形容詞特殊",23}, {"タル形容詞",24}, {"判定詞",25},
     {"無活用型",26}, {"助動詞ぬ型",27}, {"助動詞だろう型",28}, {"助動詞そうだ型",29},
-    {"助動詞く型",30}, {"動詞性接尾辞ます型",31}, {"動詞性接尾辞うる型",32}};
-std::unordered_map<std::string,int> katuyou_form_map{{"母音動詞:語幹",1},
+    {"助動詞く型",30}, {"動詞性接尾辞ます型",31}, {"動詞性接尾辞うる型",32}};//}}}
+std::unordered_map<std::string,int> katuyou_form_map{{"母音動詞:語幹",1},//{{{
     {"*:*",0},
 {"母音動詞:基本形",2}, {"母音動詞:未然形",3}, {"母音動詞:意志形",4}, {"母音動詞:省略意志形",5}, {"母音動詞:命令形",6}, {"母音動詞:基本条件形",7},
 {"母音動詞:基本連用形",8}, {"母音動詞:タ接連用形",9}, {"母音動詞:タ形",10}, {"母音動詞:タ系推量形",11}, {"母音動詞:タ系省略推量形",12},
@@ -99,8 +99,7 @@ std::unordered_map<std::string,int> katuyou_form_map{{"母音動詞:語幹",1},
 {"助動詞ぬ型:タ系省略推量形",11}, {"助動詞ぬ型:音便基本形",12}, {"助動詞ぬ型:音便推量形",13}, {"助動詞ぬ型:音便省略推量形",14}, {"助動詞ぬ型:文語連体形",15}, {"助動詞ぬ型:文語条件形",16}, {"助動詞ぬ型:文語音便条件形",17}, {"助動詞だろう型:語幹",1}, {"助動詞だろう型:基本形",2},
 {"助動詞だろう型:ダ列基本省略推量形",3}, {"助動詞だろう型:ダ列基本条件形",4}, {"助動詞だろう型:デアル列基本推量形",5}, {"助動詞だろう型:デアル列基本省略推量形",6}, {"助動詞だろう型:デス列基本推量形",7},
 {"助動詞だろう型:デス列基本省略推量形",8}, {"助動詞だろう型:ヤ列基本推量形",9}, {"助動詞だろう型:ヤ列基本省略推量形",10}, {"助動詞そうだ型:語幹",1}, {"助動詞そうだ型:基本形",2}, {"助動詞そうだ型:ダ列タ系連用テ形",3}, {"助動詞そうだ型:デアル列基本形",4}, {"助動詞そうだ型:デス列基本形",5}, {"助動詞く型:語幹",1}, {"助動詞く型:基本形",2}, {"助動詞く型:基本連用形",3}, {"助動詞く型:文語連体形",4}, {"動詞性接尾辞ます型:語幹",1},
-{"動詞性接尾辞ます型:基本形",2}, {"動詞性接尾辞ます型:未然形",3}, {"動詞性接尾辞ます型:意志形",4}, {"動詞性接尾辞ます型:省略意志形",5}, {"動詞性接尾辞ます型:命令形",6}, {"動詞性接尾辞ます型:タ形",7}, {"動詞性接尾辞ます型:タ系条件形",8}, {"動詞性接尾辞ます型:タ系連用テ形",9}, {"動詞性接尾辞ます型:タ系連用タリ形",10}, {"動詞性接尾辞うる型:語幹",1}, {"動詞性接尾辞うる型:基本形",2}, {"動詞性接尾辞うる型:基本条件形",3}};
-//}}}
+{"動詞性接尾辞ます型:基本形",2}, {"動詞性接尾辞ます型:未然形",3}, {"動詞性接尾辞ます型:意志形",4}, {"動詞性接尾辞ます型:省略意志形",5}, {"動詞性接尾辞ます型:命令形",6}, {"動詞性接尾辞ます型:タ形",7}, {"動詞性接尾辞ます型:タ系条件形",8}, {"動詞性接尾辞ます型:タ系連用テ形",9}, {"動詞性接尾辞ます型:タ系連用タリ形",10}, {"動詞性接尾辞うる型:語幹",1}, {"動詞性接尾辞うる型:基本形",2}, {"動詞性接尾辞うる型:基本条件形",3}};//}}}
 
 std::string BOS_STRING = BOS;
 std::string EOS_STRING = EOS;
@@ -228,88 +227,6 @@ Node* Sentence::make_unk_pseudo_node_list_from_some_positions(const char *start_
     return node;
 }//}}}
 
-//Node* CharLattice::recognize_onomatopoeia(unsigned int pos) {//{{{
-//    int i, len, code, next_code;
-//    std::string key{sentence_c_str+pos}; // オノマトペかどうかを判定するキー
-//    int key_length = key.size(); /* キーの文字数を数えておく */
-//
-//    size_t byte = utf8_bytes(sentence_c_str + pos);
-//    std::string current_char = key.substr(0, byte);// １文字目
-//
-//    /* 通常の平仮名、片仮名以外から始まるものは不可 */
-//    code = check_utf8_char_type((* unsigned char)current_char.c_str());
-//
-//    //code = check_code(String, pos);
-//    if (code != TYPE_HIRAGANA && code != TYPE_KATAKANA) return FALSE;
-//    if (lowercase.find(current_char)!=lowercase.end()) //小文字で始まる場合は終了
-//        return FALSE;
-//        
-//    /* 反復型オノマトペ */
-//    for (len = 1; len < 4; len++) {//二文字目からということ？
-//            
-//        std::string current_char = key.substr(len, );
-//        /* 途中で文字種が変わるものは不可 */
-//        next_code = check_utf8_char_type(current_char.c_str())
-//        //next_code = check_code(String, pos + len * BYTES4CHAR - BYTES4CHAR);
-//        if (next_code == CHOON) next_code = code; /* 長音は直前の文字種として扱う */
-//        if (key_length < len * 2 * BYTES4CHAR || code != next_code) break;
-//        code = next_code;
-//            
-//        /* 反復があるか判定 */
-//        if (strncmp(String + pos, String + pos + len * BYTES4CHAR, len * BYTES4CHAR)) continue;
-//        /* ただし3文字が同じものは不可 */
-//        if (!strncmp(String + pos, String + pos + BYTES4CHAR, BYTES4CHAR) &&
-//                !strncmp(String + pos, String + pos + 2 * BYTES4CHAR, BYTES4CHAR)) continue;
-//            
-//        m_buffer[m_buffer_num].hinsi = onomatopoeia_hinsi;
-//        m_buffer[m_buffer_num].bunrui = onomatopoeia_bunrui;
-//        m_buffer[m_buffer_num].con_tbl = onomatopoeia_con_tbl;
-//
-//        m_buffer[m_buffer_num].katuyou1 = 0;
-//        m_buffer[m_buffer_num].katuyou2 = 0;
-//        m_buffer[m_buffer_num].length = len * 2 * BYTES4CHAR;
-//
-//        strncpy(m_buffer[m_buffer_num].midasi, String+pos, len * 2 * BYTES4CHAR);
-//        m_buffer[m_buffer_num].midasi[len * 2 * BYTES4CHAR] = '\0';
-//        strncpy(m_buffer[m_buffer_num].yomi, String+pos, len * 2 * BYTES4CHAR);
-//        m_buffer[m_buffer_num].yomi[len * 2 * BYTES4CHAR] = '\0';
-//
-//        // 以下は素性に置き換える
-//        // /* weightの設定 */
-//        m_buffer[m_buffer_num].weight = REPETITION_COST * len;
-//        /* 拗音を含む場合 */
-//        for (i = CONTRACTED_LOWERCASE_S; i < CONTRACTED_LOWERCASE_E; i++) {
-//            if (strstr(m_buffer[m_buffer_num].midasi, lowercase[i])) break;
-//        }
-//        if (i < CONTRACTED_LOWERCASE_E) {
-//            if (len == 2) continue; /* 1音の繰り返しは禁止 */		
-//            /* 1文字分マイナス+ボーナス */
-//            m_buffer[m_buffer_num].weight -= REPETITION_COST + CONTRACTED_BONUS;
-//        }
-//        /* 濁音・半濁音を含む場合 */
-//        for (i = 0; *dakuon[i]; i++) {
-//            if (strstr(m_buffer[m_buffer_num].midasi, dakuon[i])) break;
-//        }
-//        if (*dakuon[i]) {
-//            m_buffer[m_buffer_num].weight -= DAKUON_BONUS; /* ボーナス */
-//            /* 先頭が濁音の場合はさらにボーナス */
-//            if (!strncmp(m_buffer[m_buffer_num].midasi, dakuon[i], BYTES4CHAR)) 
-//                m_buffer[m_buffer_num].weight -= DAKUON_BONUS;
-//        }
-//        /* カタカナである場合 */
-//        if (code == KATAKANA) 
-//            m_buffer[m_buffer_num].weight -= KATAKANA_BONUS;
-//
-//        strcpy(m_buffer[m_buffer_num].midasi2, m_buffer[m_buffer_num].midasi);
-//        strcpy(m_buffer[m_buffer_num].imis, "\"");
-//        strcat(m_buffer[m_buffer_num].imis, DEF_ONOMATOPOEIA_IMIS);
-//        strcat(m_buffer[m_buffer_num].imis, "\"");
-//
-//        check_connect(pos, m_buffer_num, 0);
-//        if (++m_buffer_num == mrph_buffer_max) realloc_mrph_buffer();	
-//        break; /* 最初にマッチしたもののみ採用 */
-//    }
-//}//}}}
 
 Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str, unsigned int pos) {//{{{
     return lookup_and_make_special_pseudo_nodes(start_str, pos, 0, NULL);
@@ -485,6 +402,11 @@ bool Sentence::lookup_and_analyze() {//{{{
             //Node *r_node = lookup_and_make_special_pseudo_nodes(sentence_c_str, pos, 0, NULL); 
             // make figure/alphabet nodes and look up a dictionary
             // オノマトペ処理 or lookup_and_make_special_pseudo_nodes 内
+            Node *r_onomatope_node = dic->recognize_onomatopoeia(sentence_c_str + pos);
+            if( r_onomatope_node ){
+                r_onomatope_node->bnext = r_node;
+                r_node = r_onomatope_node;
+            }
             
             set_begin_node_list(pos, r_node);
             find_reached_pos(pos, r_node);
@@ -580,7 +502,7 @@ void Sentence::print_juman_lattice() {//{{{
                 }else{
                     cout << *node->original_surface << " " << *node->reading  << " " << *node->base << " " ; 
                 }
-                if(*node->spos == UNK_POS) {
+                if(*node->spos == UNK_POS){
                     // 品詞 品詞id
                     cout << "未定義語" << " " << pos_map["未定義語"] << " ";
                     // 細分類 細分類id
@@ -600,7 +522,7 @@ void Sentence::print_juman_lattice() {//{{{
                 if(*node->representation != "*" || *node->semantic_feature != "NIL" || *node->spos == UNK_POS){
                     std::string delim="";
                     cout << '"' ;
-                    if(*node->representation != UNK_POS){
+                    if(*node->representation != "*"){
                         cout << "代表表記:" << *node->representation;  //*ならスキップ
                         delim = " ";
                     }
@@ -609,7 +531,7 @@ void Sentence::print_juman_lattice() {//{{{
                         delim = " ";
                     }
                     if(*node->spos == UNK_POS){
-                        cout << delim << "品詞推定:" << *node->pos;
+                        cout << delim << "品詞推定:" << *node->pos << ":" << *node->spos ;
                         delim = " ";
                     }
                     cout << '"' << endl;
@@ -1013,7 +935,7 @@ bool Sentence::lookup_gold_data(std::string &word_pos_pair) {//{{{
 
     std::vector<std::string> line(2);
     if (word_pos_pair == SPACE_AND_NONE) { // Chiense Treebank: _-NONE-
-        line[0] = SPACE;
+        line[0] = " ";
         line[1] = NONE_POS;
     }
     else {

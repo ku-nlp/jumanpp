@@ -8,6 +8,7 @@
 #include "node.h"
 #include "feature.h"
 #include "parameter.h"
+#include "u8string.h"
 
 namespace Morph {
 
@@ -25,7 +26,11 @@ class Dic {
     Pos repid2rep;
     Pos imisid2imis;
     FeatureTemplateSet *ftmpl;
+    static constexpr char* DEF_ONOMATOPOEIA_HINSI = "副詞";
+    static constexpr char* DEF_ONOMATOPOEIA_BUNRUI = "*";
+    static constexpr char* DEF_ONOMATOPOEIA_IMIS = "自動認識";
   public:
+
     Dic() {}
     Dic(Parameter *in_param, FeatureTemplateSet *in_ftmpl);
     ~Dic();
@@ -36,6 +41,7 @@ class Dic {
     Node *lookup_lattice(std::vector<Darts::DoubleArray::result_pair_type> &da_search_result, const char *start_str);
     Node *lookup_lattice(std::vector<Darts::DoubleArray::result_pair_type> &da_search_result, const char *start_str, unsigned int specified_length, std::string *specified_pos); 
     Node *lookup_lattice(std::vector<Darts::DoubleArray::result_pair_type> &da_search_result, const char *start_str, unsigned int specified_length, unsigned short specified_posid);
+    Node* recognize_onomatopoeia(const char* start_str);
 
     Node *make_unk_pseudo_node(const char *start_str, int byte_len);
     Node *make_unk_pseudo_node(const char *start_str, int byte_len, std::string &specified_pos);

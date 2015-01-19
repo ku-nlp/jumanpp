@@ -9,23 +9,8 @@
 #include <string>
 #include <iterator>
 #include <string>
+#include <unordered_set>
 
-
-#define TYPE_SPACE	1
-#define TYPE_IDEOGRAPHIC_PUNC	2 // 、。
-#define TYPE_KANJI	4
-#define TYPE_FIGURE	8
-#define TYPE_PERIOD	16 // ．
-#define TYPE_MIDDLE_DOT	32 // ・
-#define TYPE_COMMA	64 //　，
-#define TYPE_ALPH	128
-#define TYPE_SYMBOL	256
-#define TYPE_KATAKANA	512
-#define TYPE_HIRAGANA	1024
-#define TYPE_KANJI_FIGURE	2048
-#define TYPE_SLASH	4096
-#define TYPE_COLON	8192
-#define TYPE_ERA	16384 //㍻ 
 
 #define TYPE_FAMILY_FIGURE	14392 // TYPE_FIGURE + TYPE_PERIOD + TYPE_MIDDLE_DOT + TYPE_KANJI_FIGURE + TYPE_SLASH + TYPE_COLON
 #define TYPE_FAMILY_PUNC	82 // TYPE_PERIOD + TYPE_COMMA + TYPE_IDEOGRAPHIC_PUNC
@@ -48,16 +33,39 @@
  * size(), length() は何のサイズを返すべきか曖昧なので, 実装しない．代わりに byte_size, char_size を用意した．
  * morita(2015/01/16)
  ******/
-namespace Morph{
-    class U8string;
-}
 
+//エラー処理が不十分
+//空文字のみを渡された場合，"", NULL, 等を渡された場合，
 
+namespace Morph{ class U8string; }// 次の関数をGlobalに定義する際に必要．
 std::ostream& operator << (std::ostream& os, Morph::U8string& u);
+
 namespace Morph{
 
 class U8string{//{{{
     friend std::ostream& (::operator <<) (std::ostream&, Morph::U8string&);//cout 用
+    public: 
+    // 定数群, or で繋げたいのでenum にはしない．
+    static constexpr unsigned long SPACE           =0x00000001;
+    static constexpr unsigned long IDEOGRAPHIC_PUNC=0x00000002; // 、。
+    static constexpr unsigned long KANJI           =0x00000004;
+    static constexpr unsigned long FIGURE          =0x00000008;
+    static constexpr unsigned long PERIOD          =0x00000010; // ．
+    static constexpr unsigned long MIDDLE_DOT      =0x00000020; // ・
+    static constexpr unsigned long COMMA           =0x00000040; //　，
+    static constexpr unsigned long ALPH            =0x00000080;
+    static constexpr unsigned long SYMBOL          =0x00000100;
+    static constexpr unsigned long KATAKANA        =0x00000200;
+    static constexpr unsigned long HIRAGANA        =0x00000400;
+    static constexpr unsigned long KANJI_FIGURE    =0x00000800; // KANJI+FIGURE にするべき？
+    static constexpr unsigned long SLASH           =0x00001000;
+    static constexpr unsigned long COLON           =0x00002000;
+    static constexpr unsigned long ERA             =0x00004000; // ㍻ 
+    static constexpr unsigned long CHOON           =0x00008000; // ー, 〜
+    static constexpr unsigned long HANKAKU_KANA    =0x00010000; // 半角カタカナ
+
+    static const std::unordered_set<std::string> lowercase;
+
     private: 
         std::string byte_str;
         std::vector<std::vector<unsigned char>> char_array;
@@ -90,8 +98,8 @@ class U8string{//{{{
             return byte_str.find(key_str, index);
         };//}}}
 
-        std::string substr( size_t pos, size_t length){//{{{
-            return (byte_str.substr(pos,length));
+        std::string byte_substr( size_t pos, size_t byte_length){//{{{
+            return (byte_str.substr(pos,byte_length));
         };//}}}
 
         U8string operator+(const U8string& u8str){//{{{
@@ -132,11 +140,21 @@ class U8string{//{{{
         };//}}}
 
         // 以下は要パース
-        std::vector<unsigned char>& operator[](unsigned int char_index){//{{{
+        std::string operator []( size_t char_pos){//{{{
+            parse();
+            return (byte_str.substr(in_byte_index(char_pos), byte_size_at(char_pos)));
+        };//}}}
+
+        std::vector<unsigned char>& byte_array_at(unsigned int char_index){//{{{
             parse();
             return char_array[char_index];
         };//}}}
             
+        std::string char_substr( size_t char_pos, size_t char_length){//{{{
+            parse();
+            return (byte_str.substr(in_byte_index(char_pos), in_byte_index(char_pos + char_length) - in_byte_index(char_pos)));
+        };//}}}
+
         size_t char_size(){//{{{
             parse();
             return char_array.size();
@@ -152,7 +170,20 @@ class U8string{//{{{
         size_t byte_size_at(size_t i){//{{{
             return char_array[i].size();
         };//}}}
+
+        unsigned int char_type_at(size_t char_ind){//{{{
+            return check_unicode_char_type( check_code(char_array[char_ind]));
+        }//}}}
         
+        bool is_lower(size_t char_ind){//{{{
+            return lowercase.find(char_substr(char_ind, 1)) != lowercase.end();
+        }//}}}
+
+        bool is_choon(size_t char_ind){//{{{
+            return check_unicode_char_type( check_code(char_array[char_ind])) & CHOON;
+        }//}}}
+        // is_katakana, is_lower 等を追加予定
+        //
     private:
         int next(int pos){//{{{
             if(!(0 < pos & pos < byte_str.size()))
@@ -219,47 +250,53 @@ class U8string{//{{{
                     code == 0x00A0 || code == 0x1680 || code == 0x180E ||  /*その他のunicode上のスペース*/
                     (0x2000 >= code && code <= 0x200B )|| code == 0x202F || 
                     code == 0x205F || code == 0xFEFF) {
-                return TYPE_SPACE;
+                return SPACE;
             }
             /* IDEOGRAPHIC PUNCTUATIONS (、。) */
             else if (code > 0x3000 && code < 0x3003) {
-                return TYPE_IDEOGRAPHIC_PUNC;
+                return IDEOGRAPHIC_PUNC;
             }
             else if (0x337B <= code && code <= 0x337E){ /* ㍻㍼㍽㍾ */
-                return TYPE_SYMBOL | TYPE_ERA;
+                return SYMBOL + ERA;
             }
             /* HIRAGANA */
             else if (code > 0x303f && code < 0x30a0) {
-                return TYPE_HIRAGANA;
+                return HIRAGANA;
             }
-            /* KATAKANA and "ー"(0x30fc) */
-            else if (code > 0x309f && code < 0x30fb || code == 0x30fc) {
-                return TYPE_KATAKANA;
+            /* KATAKANA and  */
+            else if (code > 0x309f && code < 0x30fb ) {
+                return KATAKANA;
+            }else if ( 0x00A1 <= code && code<= 0x00DF){ //半角カナ(0xA1-0xDF) 
+                return HANKAKU_KANA; 
+            }else if (code == 0x30fc) { // "ー"(0x30fc)
+                return KATAKANA + CHOON;
+            }else if (code == 0x30fc) { // "〜"(0x301C)  ⁓ (U+2053)、fullwidth tilde: ～ (U+FF5E)、tilde operator: ∼ (U+223C) 
+                return CHOON;
             }
             /* "・"(0x30fb) "· 0x 00B7 */
             else if (code == 0x00B7 || code == 0x30fb ) {
-                return TYPE_MIDDLE_DOT;
+                return MIDDLE_DOT;
             }
             /* "，"(0xff0c), "," (0x002C) */
             else if (code == 0x002C || code == 0xff0c ) {
-                return TYPE_COMMA;
+                return COMMA;
             }
             /* "/"0x002F, "／"(0xff0f) */
             else if (code == 0x002F||code == 0xff0f) {
-                return TYPE_SLASH;
+                return SLASH;
             }
             /* ":" 0x003A "："(0xff1a) */
             else if (code == 0x003A ||code == 0xff1a) {
-                return TYPE_COLON;
+                return COLON;
             }
             /* PRIOD */
             else if (code == 0xff0e) {
-                return TYPE_PERIOD;
+                return PERIOD;
             }
-            /* FIGURE (0-9, ０-９) */
+            /* FIGURE (0-9, ０-９) */ //①，ⅷ などはどうするか
             else if ((code > 0x2f && code < 0x3a) || 
                     (code > 0xff0f && code < 0xff1a)) {
-                return TYPE_FIGURE;
+                return FIGURE;
             }
             /* KANJI_FIGURE (○一七万三九二五亿六八十千四百零, ％, 点余多) */
             else if (code == 0x25cb || //○(全角丸)
@@ -288,7 +325,7 @@ class U8string{//{{{
                     //code == 0x591a || //多
                     //code == 0x70b9 //点
                     false) {
-                        return TYPE_KANJI_FIGURE;
+                        return KANJI_FIGURE;
                     }
             /* ALPHABET (A-Z, a-z, Umlaut etc., Ａ-Ｚ, ａ-ｚ) */
             else if ((code > 0x40 && code < 0x5b) || 
@@ -296,19 +333,17 @@ class U8string{//{{{
                     (code > 0xbf && code < 0x0100) || 
                     (code > 0xff20 && code < 0xff3b) || 
                     (code > 0xff40 && code < 0xff5b)) {
-                return TYPE_ALPH;
+                return ALPH;
             }
             /* CJK Unified Ideographs and "々" and "〇"*/
             else if ((code > 0x4dff && code < 0xa000) || code == 0x3005 || code == 0x3007) {
-                return TYPE_KANJI;
+                return KANJI;
             } else {
-                return TYPE_SYMBOL;
+                return SYMBOL;
             }
         };//}}}
 
 };//}}}
 
 }
-
-std::ostream& operator <<(std::ostream& os, const Morph::U8string& u);
 

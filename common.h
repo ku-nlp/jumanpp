@@ -94,6 +94,8 @@ extern bool check_exceptional_two_chars_in_figure(const char *cp, unsigned int r
 #define TYPE_SLASH	4096
 #define TYPE_COLON	8192
 #define TYPE_ERA	16384 //㍻ 
+#define TYPE_CHOON   0x00008000; // ー, 〜
+#define TYPE_HANKAKU_KANA    0x00010000; // 半角カタカナ
 
 #define TYPE_FAMILY_FIGURE	14392 // TYPE_FIGURE + TYPE_PERIOD + TYPE_MIDDLE_DOT + TYPE_KANJI_FIGURE + TYPE_SLASH + TYPE_COLON
 #define TYPE_FAMILY_PUNC	82 // TYPE_PERIOD + TYPE_COMMA + TYPE_IDEOGRAPHIC_PUNC
@@ -108,7 +110,7 @@ extern bool check_exceptional_two_chars_in_figure(const char *cp, unsigned int r
 
 // for Chinese Treebank
 #define SPACE_AND_NONE "_-NONE-"
-#define SPACE " "
+//#define SPACE " "
 #define NONE_POS "-NONE-"
 #define UNK_POS "<UNK>"
 #define UNK_POSS "名詞,副詞,感動詞,動詞"
