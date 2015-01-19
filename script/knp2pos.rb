@@ -27,6 +27,8 @@ while line = STDIN.gets
 #                print "#{sp[0]}_#{sp[3]}:#{sp[5]} " #surface_pos
 #            end
         end
+    elsif(line =~ /^#/) 
+        STDERR.puts line
     end
 end
 
