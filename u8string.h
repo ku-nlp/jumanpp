@@ -178,6 +178,7 @@ class U8string{//{{{
 
         // i 文字目が何バイトの文字かを表す
         size_t byte_size_at(size_t i){//{{{
+            parse();
             return char_array[i].size();
         };//}}}
 
@@ -229,24 +230,7 @@ class U8string{//{{{
             return tmp;
         };//}}}
 
-        int to_unicode(std::vector<unsigned char>& c){//{{{
-            int unicode = 0;
-
-            if (c[0] > 0x00ef) { /* 4 bytes */
-                return 0; // 無視
-            } else if (c[0] > 0xdf) { /* 3 bytes */
-                unicode =  (c[0] & 0x0f) << 12;
-                unicode += (c[1] & 0x3f) << 6;
-                unicode +=  c[2] & 0x3f;
-                return unicode;
-            } else if (c[0] > 0x7f) { /* 2 bytes */
-                unicode = (c[0] & 0x1f) << 6;
-                unicode += c[1] & 0x3f;
-                return unicode;
-            } else { /* 1 byte */
-                return c[0];
-            }
-        };//}}}
+        int to_unicode(std::vector<unsigned char>& c);
             
         inline int utf8_bytes(unsigned char u) {//{{{
             if ( u < 0x80 ) {
@@ -264,106 +248,7 @@ class U8string{//{{{
             return check_unicode_char_type(to_unicode(c));
         };//}}}
 
-        unsigned int check_unicode_char_type(int code) {//{{{
-            /* SPACE */
-            if (code == 0x20 /* space*/|| code == 0x3000 /*全角スペース*/ || 
-                    code == 0x00A0 || code == 0x1680 || code == 0x180E ||  /*その他のunicode上のスペース*/
-                    (0x2000 >= code && code <= 0x200B )|| code == 0x202F || 
-                    code == 0x205F || code == 0xFEFF) {
-                return SPACE;
-            }
-            /* IDEOGRAPHIC PUNCTUATIONS (、。) */
-            else if (code > 0x3000 && code < 0x3003) {
-                return IDEOGRAPHIC_PUNC;
-            }
-            else if (0x337B <= code && code <= 0x337E){ /* ㍻㍼㍽㍾ */
-                return SYMBOL + ERA;
-            }
-            /* HIRAGANA */
-            else if (code > 0x303f && code < 0x30a0) {
-                return HIRAGANA;
-            }
-            /* KATAKANA and  */
-            else if (code > 0x309f && code < 0x30fb ) {
-                return KATAKANA;
-            }else if ( 0x00A1 <= code && code<= 0x00DF){ //半角カナ(0xA1-0xDF) 
-                return HANKAKU_KANA; 
-            }else if (code == 0x30fc) { // "ー"(0x30fc)
-                return KATAKANA + CHOON;
-            }else if (code == 0x30fc) { // "〜"(0x301C)  ⁓ (U+2053)、fullwidth tilde: ～ (U+FF5E)、tilde operator: ∼ (U+223C) 
-                return CHOON;
-            }
-            /* "・"(0x30fb) "· 0x 00B7 */
-            else if (code == 0x00B7 || code == 0x30fb ) {
-                return MIDDLE_DOT;
-            }
-            /* "，"(0xff0c), "," (0x002C) */
-            else if (code == 0x002C || code == 0xff0c ) {
-                return COMMA;
-            }
-            /* "/"0x002F, "／"(0xff0f) */
-            else if (code == 0x002F||code == 0xff0f) {
-                return SLASH;
-            }
-            /* ":" 0x003A "："(0xff1a) */
-            else if (code == 0x003A ||code == 0xff1a) {
-                return COLON;
-            }
-            /* PRIOD */
-            else if (code == 0xff0e) {
-                return PERIOD;
-            }
-            /* FIGURE (0-9, ０-９) */ //①，ⅷ などはどうするか
-            else if ((code > 0x2f && code < 0x3a) || 
-                    (code > 0xff0f && code < 0xff1a)) {
-                return FIGURE;
-            }
-            /* KANJI_FIGURE (○一七万三九二五亿六八十千四百零, ％, 点余多) */
-            else if (code == 0x25cb || //○(全角丸)
-                    code == 0x3007 || //〇
-                    code == 0x96f6 || //零
-                    code == 0x4e00 || //一
-                    code == 0x4e8c || //二
-                    code == 0x4e09 || //三
-                    code == 0x56db || //四
-                    code == 0x4e94 || //五
-                    code == 0x516d || //六
-                    code == 0x4e03 || //七
-                    code == 0x516b || //八
-                    code == 0x4e5d || //九
-                    code == 0x5341 || //十
-                    code == 0x767e || //百
-                    code == 0x5343 || //千
-                    code == 0x4e07 || //万
-                    code == 0x5104 || //億
-                    code == 0x5146 || //兆
-                    // 京は数字に含めると副作用が大きそう
-                    //code == 0xff05 ||//％
-                    // 年月日: code == 0x5e74 || code == 0x6708 || code == 0x65e5 || 
-                    //code == 0x4ebf || //??
-                    //code == 0x4f59 || //余
-                    //code == 0x591a || //多
-                    //code == 0x70b9 //点
-                    false) {
-                        return KANJI_FIGURE;
-                    }
-            /* ALPHABET (A-Z, a-z, Umlaut etc., Ａ-Ｚ, ａ-ｚ) */
-            else if ((code > 0x40 && code < 0x5b) || 
-                    (code > 0x60 && code < 0x7b) || 
-                    (code > 0xbf && code < 0x0100) || 
-                    (code > 0xff20 && code < 0xff3b) || 
-                    (code > 0xff40 && code < 0xff5b)) {
-                return ALPH;
-            }
-            /* CJK Unified Ideographs and "々" and "〇"*/
-            else if ((code > 0x4dff && code < 0xa000) || code == 0x3005 || code == 0x3007) {
-                return KANJI;
-            } else if ( brackets.count(code)==1 ){ // 括弧，引用符
-                return BRACKET;
-            } else {
-                return SYMBOL;
-            }
-        };//}}}
+        unsigned int check_unicode_char_type(int code); 
 
 };//}}}
 
