@@ -94,11 +94,11 @@ int U8string::to_unicode(std::vector<unsigned char>& c){//{{{
     }
 };//}}}
 
-unsigned int U8string::check_unicode_char_type(int code) {//{{{
+unsigned long U8string::check_unicode_char_type(int code) {//{{{
     /* SPACE */
     if (code == 0x20 /* space*/|| code == 0x3000 /*全角スペース*/ || 
             code == 0x00A0 || code == 0x1680 || code == 0x180E ||  /*その他のunicode上のスペース*/
-            (0x2000 >= code && code <= 0x200B )|| code == 0x202F || 
+            (0x2000 <= code && code <= 0x200B )|| code == 0x202F || 
             code == 0x205F || code == 0xFEFF) {
         return SPACE;
     }
@@ -116,10 +116,12 @@ unsigned int U8string::check_unicode_char_type(int code) {//{{{
     /* KATAKANA and  */
     else if (code > 0x309f && code < 0x30fb ) {
         return KATAKANA;
-    }else if ( 0x00A1 <= code && code<= 0x00DF){ //半角カナ(0xA1-0xDF) 
-        return HANKAKU_KANA; 
     }else if (code == 0x30fc) { // "ー"(0x30fc)
         return KATAKANA + CHOON;
+    }else if ( 0x00A1 <= code && code<= 0x00DF){ //半角カナ(0xA1-0xDF) 
+        return HANKAKU_KANA; 
+    }else if ( code == 0xFF70){ //半角長音(U+FF70
+        return HANKAKU_KANA + CHOON; 
     }else if (code == 0x30fc) { // "〜"(0x301C)  ⁓ (U+2053)、fullwidth tilde: ～ (U+FF5E)、tilde operator: ∼ (U+223C) 
         return CHOON;
     }

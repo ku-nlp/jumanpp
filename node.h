@@ -52,7 +52,8 @@ class Node {
     // struct morph_path_t  *lpath;
     // struct morph_node_t **begin_node_list;
     // struct morph_node_t **end_node_list;
-    const char *surface;
+    const char *surface; // 未定義語の場合など，素性に使うため書き換える可能性がある
+    std::string *original_surface; // 元々現れたままの表層
     std::string *string;
     std::string *string_for_print;
     std::string *end_string;
@@ -60,7 +61,6 @@ class Node {
         
     std::string *representation;
     std::string *semantic_feature; 
-    std::string *original_surface;
         
     // const char *feature;
     // unsigned int id;
