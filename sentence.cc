@@ -482,15 +482,18 @@ void Sentence::print_juman_lattice() {//{{{
     // 15 2 2 2 に に に 助詞 9 格助詞 1 * 0 * 0 NIL
     // ID IDs_connecting_from index_begin index_end ... 
 
-    std::vector<std::vector<int>> num2id(length); //多めに保持する
+    std::vector<std::vector<int>> num2id(length+1); //多めに保持する
+    //cout << "len:" << length << endl;
     for (unsigned int pos = 0; pos < length; pos += utf8_bytes((unsigned char *)(sentence_c_str + pos))) {
         Node *node = (*begin_node_list)[pos];
             
         while (node) {
             size_t word_length = node->char_num;
+            //cout << "pos:" << pos << " wordlen:" << word_length << endl;
             // ID の表示
             if( node->used_in_nbest) { //n-best解に使われているもののみ
                 cout << id << " " ;
+                // 接続先
                 num2id[char_num + word_length].push_back(id++);
                 if(num2id[char_num].size()==0){ // 無かったら 0 を出す
                     cout << "0";
@@ -545,6 +548,24 @@ void Sentence::print_juman_lattice() {//{{{
                     }
                     if(*node->spos == UNK_POS){
                         cout << delim << "品詞推定:" << *node->pos << ":" << *node->spos ;
+                        delim = " ";
+                    }
+                    U8string ustr(*node->original_surface);
+                    // この辺りの処理はあとでくくり出してNode 生成時に行う
+                    if(ustr.is_katakana()){
+                        cout << delim << "<カタカナ>";
+                        delim = " ";
+                    }
+                    if(ustr.is_kanji()){
+                        cout << delim << "<漢字>";
+                        delim = " ";
+                    }
+                    if(ustr.is_eisuu()){
+                        cout << delim << "<英数字>";
+                        delim = " ";
+                    }
+                    if(ustr.is_kigou()){
+                        cout << delim << "<記号>";
                         delim = " ";
                     }
                     cout << '"' << endl;

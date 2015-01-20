@@ -7,6 +7,7 @@
 #include "dic.h"
 #include "parameter.h"
 #include "charlattice.h"
+#include "u8string.h"
 
 namespace Morph {
 

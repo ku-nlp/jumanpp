@@ -45,7 +45,7 @@ class U8string{//{{{
     static constexpr unsigned long COMMA           =0x00000040; //　，
     static constexpr unsigned long ALPH            =0x00000080;
     static constexpr unsigned long SYMBOL          =0x00000100;
-    static constexpr unsigned long KATAKANA        =0x00000200;
+    static constexpr unsigned long KATAKANA        =0x00000200; // カタカナ or 長音?
     static constexpr unsigned long HIRAGANA        =0x00000400;
     static constexpr unsigned long KANJI_FIGURE    =0x00000800; // KANJI+FIGURE にするべき？
     static constexpr unsigned long SLASH           =0x00001000;
@@ -71,7 +71,7 @@ class U8string{//{{{
     static constexpr unsigned long FAMILY_OTHERS      = 0x00000000;
 
     static const std::unordered_set<std::string> lowercase;
-    static const std::unordered_set<unsigned int> brackets;//あとでmap にするかも
+    static const std::unordered_set<unsigned int> brackets; //あとでmap にするかも
 
     private: 
         std::string byte_str;
@@ -182,7 +182,7 @@ class U8string{//{{{
             return char_array[i].size();
         };//}}}
 
-        unsigned int char_type_at(size_t char_ind){//{{{
+        unsigned long char_type_at(size_t char_ind){//{{{
             parse();
 //            std::cerr << "key= " << byte_str << std::endl;
 //            std::cerr << "char_array[" << char_ind <<" ] = " ;
@@ -191,21 +191,61 @@ class U8string{//{{{
 //            }
 //            std::cerr << " " << std::hex << to_unicode(char_array[char_ind]) << std::dec << std::endl;
 
-            if(char_ind >= char_array.size()) return 0x0000;
+            if(char_ind >= char_size()) return 0x0000;
             return check_code(char_array[char_ind]);
         }//}}}
         
+        // is_katakana, is_lower 等 順次必要になったものを追加予定
         bool is_lower(size_t char_ind){//{{{
             parse();
             return lowercase.find(char_substr(char_ind, 1)) != lowercase.end();
-        }//}}}
+        };//}}}
 
         bool is_choon(size_t char_ind){//{{{
             parse();
-            return check_unicode_char_type( check_code(char_array[char_ind])) & CHOON;
-        }//}}}
-        // is_katakana, is_lower 等を追加予定
-        //
+            return char_type_at(char_ind) & CHOON > 0;
+        };//}}}
+
+        bool is_katakana(){//{{{
+            parse();
+            if(char_size() == 0) return false;
+            for(int i=0;i<char_size();i++){
+                if( (char_type_at(i) & (KATAKANA+HANKAKU_KANA)) == 0 )
+                    return false;
+            }
+            return true;
+        };//}}}
+        
+        bool is_kanji(){//{{{
+            parse();
+            if(char_size() == 0) return false;
+            for(int i=0;i<char_size();i++){
+                if( (char_type_at(i) & (KANJI|KANJI_FIGURE)) == 0)
+                    return false;
+            }
+            return true;
+        };//}}}
+
+        bool is_eisuu(){//{{{
+            parse();
+            if(char_size() == 0) return false;
+            for(int i=0;i<char_size();i++){
+                if( (char_type_at(i) & (ALPH|FIGURE)) == 0)
+                    return false;
+            }
+            return true;
+        };//}}}
+
+        bool is_kigou(){//{{{
+            parse();
+            if(char_size() == 0) return false;
+            for(int i=0;i<char_size();i++){
+                if( (char_type_at(i) & (SYMBOL|BRACKET|COMMA|SLASH|COLON|PERIOD)) == 0)
+                    return false;
+            }
+            return true;
+        };//}}}
+
     private:
         int next(int pos){//{{{
             if(!(0 < pos & pos < byte_str.size()))
@@ -244,11 +284,11 @@ class U8string{//{{{
             }
         };//}}}
 
-        int check_code(std::vector<unsigned char>& c) {//{{{
+        unsigned long check_code(std::vector<unsigned char>& c) {//{{{
             return check_unicode_char_type(to_unicode(c));
         };//}}}
 
-        unsigned int check_unicode_char_type(int code); 
+        unsigned long check_unicode_char_type(int code); 
 
 };//}}}
 
