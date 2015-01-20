@@ -228,7 +228,6 @@ Node* Sentence::make_unk_pseudo_node_list_from_some_positions(const char *start_
     return node;
 }//}}}
 
-
 Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str, unsigned int pos) {//{{{
     return lookup_and_make_special_pseudo_nodes(start_str, pos, 0, NULL);
 }//}}}

@@ -76,7 +76,7 @@ int main(int argc, char** argv) {
     cmdline::parser option;
     option_proc(option, argc, argv);
 
-    Morph::Parameter param(option.get<std::string>("dict"), option.get<std::string>("feature"), option.get<unsigned int>("iteration"), true, option.exist("shuffle"), option.get<unsigned int>("unk_max_length"), option.exist("debug"), option.exist("nbest")|option.get<unsigned int>("lattice")>1);
+    Morph::Parameter param(option.get<std::string>("dict"), option.get<std::string>("feature"), option.get<unsigned int>("iteration"), true, option.exist("shuffle"), option.get<unsigned int>("unk_max_length"), option.exist("debug"), option.exist("nbest")|option.exist("lattice"));
     Morph::Tagger tagger(&param);
     param.N = option.get<unsigned int>("lattice");
 

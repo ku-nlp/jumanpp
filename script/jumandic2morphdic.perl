@@ -15,6 +15,8 @@ while (<STDIN>) {
     if($_ =~ /^\s*;/){ next;}
     my $s = new JumanSexp($_);
     my $pos = $s->{data}[0]{element};
+    
+    if($pos eq "連語"){next;} # 連語は飛ばす
     my $spos = $s->{data}[1]{element};
     my $yomi = ($s->get_elem('読み'))[0];
     my $type = ($s->get_elem('活用型'))[0];
@@ -44,17 +46,8 @@ while (<STDIN>) {
                 my $mstr = Encode::decode('utf-8', $m_key->{str});
                 my $ystr = Encode::decode('utf-8', $hash{$m_key}->{str});
                 next unless $mstr;
-                my $shortform = Encode::decode('utf-8', $m_key->{form});
-                my $form_type = Encode::decode('utf-8', $hash{$m_key}->{form});
-                $shortform =~ s/\p{katakana}+列//;
-                $shortform =~ s/\p{katakana}+系//;
-                if($form_type =~ /((\p{katakana}+列)|(\p{katakana}+系))+/){
-                    $form_type = $&;
-                }else{
-                    $form_type = "*";
-                }
-                #&print_entry($m->{str}, $pos, ':' , $m->{form});
-                &print_entry($mstr, $pos, $spos , $shortform, $type, $midasi, $ystr, $rep, $imis);
+                my $form = Encode::decode('utf-8', $m_key->{form});
+                &print_entry($mstr, $pos, $spos ,$form, $type, $midasi, $ystr, $rep, $imis);
             }
         }
         else {
