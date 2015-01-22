@@ -84,8 +84,7 @@ int main(int argc, char** argv) {
         tagger.train(option.get<std::string>("train"));
         write_model_file(option.get<std::string>("model"));
         feature_weight_sum.clear();
-    }
-    else {
+    } else {
         read_model_file(option.get<std::string>("model"));
 
         std::ifstream is(argv[1]); // input stream

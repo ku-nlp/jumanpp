@@ -111,6 +111,71 @@ Node *Dic::lookup(const char *start_str, unsigned int specified_length, unsigned
     return result_node;
 }//}}}
 
+Node *Dic::lookup(const char *start_str, unsigned int specified_length, const std::vector<std::string>& specified) {//{{{
+    Node *result_node = NULL;
+    // surf_read_base_pos_spos_type_form
+    auto specified_readingid = readingid2reading.get_id(specified[0]);
+    auto specified_baseid = baseid2base.get_id(specified[1]);
+    auto specified_posid = posid2pos.get_id(specified[2]);
+    auto specified_sposid = sposid2spos.get_id(specified[3]);
+    auto specified_formtypeid = formtypeid2formtype.get_id(specified[4]);
+    auto specified_formid = formid2form.get_id(specified[5]);
+
+    //cerr << start_str << " " << specified_posid << ", " << specified_sposid << ", " << specified_formid << ", " << specified_formtypeid << endl;
+
+    // search double array
+    Darts::DoubleArray::result_pair_type result_pair[1024];
+    size_t num = darts.commonPrefixSearch(start_str, result_pair, 1024);
+    if (num == 0)
+        return result_node;
+        
+    for (size_t i = 0; i < num; i++) { // hit num
+        if (specified_length && specified_length != result_pair[i].length)
+            continue;
+        size_t size  = token_size(result_pair[i]);
+        const Token *token = get_token(result_pair[i]);
+        for (size_t j = 0; j < size; j++) { // same key but different value (pos)
+            if (specified_posid != MORPH_DUMMY_POS && 
+                   ((specified[0] != "" && specified_readingid != (token + j)->reading_id) ||
+                    (specified[1] != "" && specified_baseid != (token + j)->base_id) ||
+                    (specified[2] != "" && specified_posid != (token + j)->posid) ||
+                    (specified[3] != "" && specified_sposid != (token + j)->spos_id) ||
+                    (specified[4] != "" && specified_formtypeid != (token + j)->form_type_id) ||
+                    (specified[5] != "" && specified_formid != (token + j)->form_id) ))
+                continue;
+            Node *new_node = new Node;
+            read_node_info(*(token + j), &new_node);
+            new_node->token = (Token *)(token + j);
+            new_node->length = result_pair[i].length;
+            new_node->surface = start_str;
+            new_node->char_num = utf8_chars((unsigned char *)start_str, new_node->length);
+            new_node->string_for_print = new std::string(start_str, new_node->length);
+            new_node->original_surface = new std::string(start_str, new_node->length);
+            if (new_node->lcAttr == 1) { // Wikipedia
+                new_node->string = new std::string(UNK_WIKIPEDIA);
+                new_node->stat = MORPH_UNK_NODE;
+            } else {
+                new_node->string = new_node->string_for_print;
+                new_node->stat = MORPH_NORMAL_NODE;
+            }
+            new_node->char_type = check_utf8_char_type((unsigned char *)start_str);
+            new_node->char_family = check_char_family(new_node->char_type);
+            char *end_char = (char *)get_specified_char_pointer((unsigned char *)start_str, new_node->length, new_node->char_num - 1);
+            new_node->end_char_family = check_char_family((unsigned char *)end_char);
+            new_node->end_string = new std::string(end_char, utf8_bytes((unsigned char *)end_char));
+
+            FeatureSet *f = new FeatureSet(ftmpl);
+            f->extract_unigram_feature(new_node);
+            new_node->wcost = f->calc_inner_product_with_weight();
+            new_node->feature = f;
+
+            new_node->bnext = result_node;
+            result_node = new_node;
+        }
+    }
+    return result_node;
+}//}}}
+
 Node *Dic::lookup_lattice(std::vector<Darts::DoubleArray::result_pair_type> &da_search_result,const char *start_str) {//{{{
     return lookup_lattice(da_search_result, start_str, 0, MORPH_DUMMY_POS);
 }//}}}
@@ -310,7 +375,7 @@ Node *Dic::make_unk_pseudo_node(const char *start_str, int byte_len) {//{{{
     return make_unk_pseudo_node(start_str, byte_len, MORPH_DUMMY_POS);
 }//}}}
 
-Node *Dic::make_unk_pseudo_node(const char *start_str, int byte_len, std::string &specified_pos) {//{{{
+Node *Dic::make_unk_pseudo_node(const char *start_str, int byte_len, const std::string &specified_pos) {//{{{
     return make_unk_pseudo_node(start_str, byte_len, posid2pos.get_id(specified_pos));
 }//}}}
 
@@ -362,13 +427,14 @@ Node *Dic::make_unk_pseudo_node_gold(const char *start_str, int byte_len, std::s
 }//}}}
 
 // make an unknown word node
+// 未定義語のノードを生成(ある品詞の候補についてのノード or 未定のままのノード(こちらはどういうタイミングで呼び出されるのか？) )
 Node *Dic::make_unk_pseudo_node(const char *start_str, int byte_len, unsigned short specified_posid) {//{{{
     Node *new_node = new Node;
     new_node->surface = start_str;
     new_node->length = byte_len;
     new_node->char_type = check_utf8_char_type((unsigned char *)new_node->surface);
     new_node->char_family = check_char_family(new_node->char_type);
-
+        
     // 未知語処理をする場合も，ラベルとしては未定義アルファベット，未定義漢字，未定義カタカナ語などのラベルを付けるべき．
     if ((new_node->char_type == (TYPE_FIGURE||TYPE_KANJI_FIGURE)) && (specified_posid == posid2pos.get_id("名詞"))){
         new_node->string = new std::string("<数詞>");
@@ -530,17 +596,18 @@ Node *Dic::make_unk_pseudo_node_list(const char *start_str, unsigned int min_cha
 // make unknown word nodes of some lengths
 Node *Dic::make_unk_pseudo_node_list(const char *start_str, unsigned int min_char_num, unsigned int max_char_num, unsigned short specified_posid) {//{{{
     Node *result_node = NULL;
-    unsigned int length = strlen(start_str), char_num = 0;
+    unsigned int length = strlen(start_str), char_num = 1;
     unsigned long code = 0; 
     unsigned long next_code = 0; 
+    unsigned long last_code = 0; 
     // 
     for (unsigned int pos = 0; pos < length; pos += utf8_bytes((unsigned char *)(start_str + pos))) {
         code = check_utf8_char_type((unsigned char *)(start_str + pos));
         next_code = check_utf8_char_type((unsigned char *)(start_str + pos + utf8_bytes((unsigned char *)(start_str + pos))));
-        //cerr << start_str << code << " " << next_code << "" << ((code & (TYPE_HIRAGANA|TYPE_KANJI|TYPE_KATAKANA|TYPE_ALPH)) & (next_code & (TYPE_HIRAGANA|TYPE_KANJI|TYPE_KATAKANA|TYPE_ALPH)) )<< endl;
+        //cerr << start_str << last_code << " " << code << " " << next_code << " => " << ((code & (TYPE_HIRAGANA|TYPE_KANJI|TYPE_KATAKANA|TYPE_ALPH)) & (last_code & (TYPE_HIRAGANA|TYPE_KANJI|TYPE_KATAKANA|TYPE_ALPH)) )<< endl;
         
         // 異なる文字種が連続する場合には未定義語にしない
-        if (((code & (TYPE_HIRAGANA|TYPE_KANJI|TYPE_KATAKANA|TYPE_ALPH)) & (next_code & (TYPE_HIRAGANA|TYPE_KANJI|TYPE_KATAKANA|TYPE_ALPH))))
+        if (((code & (TYPE_HIRAGANA|TYPE_KANJI|TYPE_KATAKANA|TYPE_ALPH)) & (last_code & (TYPE_HIRAGANA|TYPE_KANJI|TYPE_KATAKANA|TYPE_ALPH))) == 0 && last_code!=0)
             break; 
         
         // figures and alphabets that are processed separately
@@ -549,9 +616,10 @@ Node *Dic::make_unk_pseudo_node_list(const char *start_str, unsigned int min_cha
         // stop if it's a punctuation or a space
         else if (pos > 0 && compare_char_type_in_family(check_utf8_char_type((unsigned char *)(start_str + pos)), TYPE_FAMILY_PUNC | TYPE_FAMILY_SPACE))
             break;
-        else if (char_num >= max_char_num) // max characters as <UNK>
+        else if (char_num > max_char_num) // max characters as <UNK>
             break;
-        else if (char_num < min_char_num - 1) { // skip while the length is shorter than the specified length
+        else if (char_num < min_char_num) { // skip while the length is shorter than the specified length
+            last_code = code;
             char_num++;
             continue;
         }
@@ -563,6 +631,7 @@ Node *Dic::make_unk_pseudo_node_list(const char *start_str, unsigned int min_cha
             tmp_node = tmp_node->bnext;
         tmp_node->bnext = result_node;
         result_node = new_node;
+        last_code = code;
         char_num++;
     }
     return result_node;
@@ -610,6 +679,7 @@ Node *Dic::make_specified_pseudo_node_by_dic_check(const char *start_str, unsign
 }//}}}
 
 // make figure nodes
+// 名前が変？指定した文字種が連続する範囲で全品詞について未定義語ノードを生成
 Node *Dic::make_specified_pseudo_node(const char *start_str, unsigned int specified_length, unsigned short specified_posid, std::vector<unsigned short> *specified_unk_pos, unsigned int type_family) {//{{{
     unsigned int length = strlen(start_str);
     unsigned int pos = 0, char_num = 0;

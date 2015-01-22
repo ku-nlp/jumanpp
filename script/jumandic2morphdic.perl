@@ -68,6 +68,9 @@ while (<STDIN>) {
 
 sub print_entry {
     my ($h, $pos, $spos, $form, $form_type, $midasi, $yomi, $rep, $imis) = @_;
+    if($h eq ','){ $h = '","';}
+    if($midasi eq ','){ $midasi = '","';}
+    if($yomi eq ','){ $yomi = '","';}
     print $h, ',0,0,0,', $pos,',', $spos, ',' , $form, ',', $form_type, ',' , $midasi , ',', $yomi, ',' , $rep, ',' , $imis,"\n"; }
 
 sub get_inflected_forms {

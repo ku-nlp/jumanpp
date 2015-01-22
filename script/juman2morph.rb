@@ -34,12 +34,8 @@ while line=gets
     elsif(~/^@/) #別候補
         #skip
     else
-        spl = line.split(' ')
-        if(spl[5] == '*') #活用アリ
-            morph_str << "#{spl[0]}_#{spl[3]}"#:#{spl[9]}"
-        else
-            morph_str << "#{spl[0]}_#{spl[3]}"#:#{spl[5]}"
-        end
+        sp = line.split(' ')
+        morph_str << "#{sp[0]}_#{sp[3]}:#{sp[5]}"#:#{spl[9]}"
     end
 end
     

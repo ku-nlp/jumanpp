@@ -243,14 +243,91 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str, unsi
     // まず探す
     //Node *dic_node = dic->lookup_lattice(start_str + pos, specified_length, specified_pos); // look up a dictionary with common prefix search
     Node *dic_node = dic->lookup(start_str + pos, specified_length, specified_pos); // look up a dictionary with common prefix search
-
+        
     // 同じ品詞で同じ長さなら使わない
-
+        
     // 訓練データで，長さが分かっている場合か，未知語として選択されていない範囲なら
 	if (specified_length || pos >= reached_pos_of_pseudo_nodes) {
         // 数詞処理
 		// make figure nodes
         // 同じ文字種が続く範囲を一語として入れてくれる
+		result_node = dic->make_specified_pseudo_node(start_str + pos,
+				specified_length, specified_pos, &(param->unk_figure_pos),
+				TYPE_FAMILY_FIGURE);
+        // 長さが指定されたものに合っていれば，そのまま返す
+		if (specified_length && result_node) return result_node;
+
+		// make alphabet nodes
+		if (!result_node) {
+			result_node = dic->make_specified_pseudo_node(start_str + pos,
+					specified_length, specified_pos, &(param->unk_pos),
+					TYPE_FAMILY_ALPH_PUNC);
+			if (specified_length && result_node) return result_node;
+		}
+                
+        // 漢字
+        // 辞書にあれば、辞書にない品詞だけを追加する
+//        kanji_result_node = dic->make_specified_pseudo_node_by_dic_check(start_str + pos,
+//                specified_length, specified_pos, &(param->unk_pos),
+//                TYPE_KANJI|TYPE_KANJI_FIGURE, dic_node);
+//        if (result_node && kanji_result_node) {
+//            //数詞の場合はひとつしか返ってこないことが確定しているので、次のノードに追加すれば大丈夫
+//            result_node->bnext = kanji_result_node;
+//        }else if(!result_node){
+//            result_node = kanji_result_node;
+//        }
+
+        // カタカナ
+        // TODO:適当に切れるところまでで未定義語を作る
+		if (!result_node) {
+			result_node = dic->make_specified_pseudo_node_by_dic_check(start_str + pos,
+					specified_length, specified_pos, &(param->unk_pos),
+					TYPE_KATAKANA , dic_node);
+		}
+
+        // ひらがな
+//		if (!result_node) {
+//			result_node = dic->make_specified_pseudo_node(start_str + pos,
+//					3, specified_pos, &(param->unk_pos), TYPE_HIRAGANA );
+//			if (specified_length && result_node)
+//				return result_node;
+//		}
+
+		if (!specified_length && result_node) // only prediction
+			find_reached_pos_of_pseudo_nodes(pos, result_node);
+	}
+
+    if (dic_node) {
+        Node *tmp_node = dic_node;
+        while (tmp_node->bnext)
+            tmp_node = tmp_node->bnext;
+        tmp_node->bnext = result_node;
+        result_node = dic_node;
+    }
+
+    return result_node;
+}//}}}
+        
+Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str, unsigned int specified_length, const std::vector<std::string>& spec){//{{{
+    Node *result_node = NULL;
+    Node *kanji_result_node = NULL;
+    int pos = 0;
+    // spec
+    // 0: reading, 1:base, 2:pos, 3:spos, 4:type, 5:form
+    auto specified_pos_string = spec[2]; //pos
+    auto specified_pos = &specified_pos_string;
+         
+    // まず探す
+    //Node *dic_node = dic->lookup_lattice(start_str + pos, specified_length, specified_pos); // look up a dictionary with common prefix search
+    Node *dic_node = dic->lookup(start_str, specified_length, spec); // look up a dictionary with common prefix search
+        
+    // 同じ品詞で同じ長さなら使わない
+        
+    // 訓練データで，長さが分かっている場合か，未知語として選択されていない範囲なら
+	if (specified_length || pos >= reached_pos_of_pseudo_nodes) {
+        // 数詞処理
+		// make figure nodes
+        // 同じ文字種が続く範囲を一語とする
 		result_node = dic->make_specified_pseudo_node(start_str + pos,
 				specified_length, specified_pos, &(param->unk_figure_pos),
 				TYPE_FAMILY_FIGURE);
@@ -391,8 +468,6 @@ bool Sentence::lookup_and_analyze() {//{{{
     cl.parse(sentence_c_str);
     
     // TODO:ラティスを作ったあと，空いているpos 間を埋める未定義語を生成
-
-    // lookup あたりを書き換えて，Charlattice 対応版lookup に切り替えるフラグを用意する必要がある
     for (unsigned int pos = 0; pos < length; pos += utf8_bytes((unsigned char *)(sentence_c_str + pos))) {
         if ((*end_node_list)[pos] == NULL) {//pos にたどり着くノードが１つもない
             if (param->unknown_word_detection && pos > 0 && reached_pos <= pos)
@@ -413,6 +488,7 @@ bool Sentence::lookup_and_analyze() {//{{{
                         tmp_node = tmp_node->bnext;
                     tmp_node->bnext = r_onomatope_node;
                 }else{
+                    // TODO: ここは修正しないと辞書にかすりもしないとオノマトペが使えない
                     //r_node = r_onomatope_node;
                 }
             }
@@ -436,6 +512,8 @@ bool Sentence::lookup_and_analyze() {//{{{
         previous_pos = pos;
         char_num++;
     }
+    if (param->debug)
+        print_lattice();
 
     // Viterbi
     if(param->nbest){
@@ -450,8 +528,6 @@ bool Sentence::lookup_and_analyze() {//{{{
         }
         find_best_path();
     }
-    if (param->debug)
-        print_juman_lattice();
     return true;
 }//}}}
 
@@ -967,19 +1043,49 @@ bool Sentence::lookup_gold_data(std::string &word_pos_pair) {//{{{
         cerr << ";; ERROR! Cannot connect at position for gold: " << word_pos_pair << endl;
     }
 
-    std::vector<std::string> line(2);
-    if (word_pos_pair == SPACE_AND_NONE) { // Chiense Treebank: _-NONE-
-        line[0] = " ";
-        line[1] = NONE_POS;
+    std::vector<std::string> line(7);
+    split_string(word_pos_pair, "_", line);
+    std::vector<std::string> spec{line[1],line[2],line[3],line[4],line[5],line[6]}; //reading,base,pos, spos, formtype, form
+
+    // そのまま辞書を引く
+    Node *r_node = lookup_and_make_special_pseudo_nodes(line[0].c_str(), strlen(line[0].c_str()), spec);
+    
+    //
+    if (!r_node && line[6] == "命令形エ形") { // 動詞の名詞化を復元
+        // コーパスでは名詞化した動詞は名詞として扱われる. (kkn では動詞の連用形扱い)
+        // 品詞変更タグがついていない場合の対策
+        // 動詞の活用型不明のまま，基本連用形をチェック
+        std::vector<std::string> mod_spec{line[1],"",line[3],line[4],line[5],"基本連用形"};
+        r_node = lookup_and_make_special_pseudo_nodes(line[0].c_str(), strlen(line[0].c_str()), mod_spec);
+        //cerr << "; restore 命令形エ形 verb:" <<  line[0] << ":" << line[1] << ":" << line[2] << ":" << line[3] << ":" << line[4] << ":" << line[5] << ":" << line[6] << endl;
     }
-    else {
-        split_string(word_pos_pair, "_", line);
+    if (!r_node && line[3] == "名詞") { // 動詞の名詞化を復元
+        // コーパスでは名詞化した動詞は名詞として扱われる. (kkn では動詞の連用形扱い)
+        // 品詞変更タグがついていない場合の対策
+        // 動詞の活用型不明のまま，基本連用形をチェック
+        std::vector<std::string> mod_spec{line[1],line[2],"動詞", "*", "", "基本連用形"};
+        r_node = lookup_and_make_special_pseudo_nodes(line[0].c_str(), strlen(line[0].c_str()), mod_spec);
+        //cerr << "; restore nominalized verb:" <<  line[0] << ":" << line[1] << ":" << line[2] << ":" << line[3] << ":" << line[4] << ":" << line[5] << ":" << line[6] << endl;
+    }
+    // 人名が辞書にない場合// 今は放置
+    
+    if (!r_node) { // 濁音化, 撥音化(?相:しょう,など)しているケース は読みを無視して検索
+        std::vector<std::string> mod_spec{"",line[2],line[3],line[4],line[5],line[6]};
+        r_node = lookup_and_make_special_pseudo_nodes(line[0].c_str(), strlen(line[0].c_str()), mod_spec);
+        //cerr << "; restore voiced reading:" <<  line[0] << ":" << line[1] << ":" << line[2] << ":" << line[3] << ":" << line[4] << ":" << line[5] << ":" << line[6] << endl;
+    }
+     
+    // 名詞が固有名詞化している場合　
+    if (!r_node && line[3] == "名詞") {
+        std::vector<std::string> mod_spec{line[1],line[2],line[3],"",line[5],line[6]};
+        r_node = lookup_and_make_special_pseudo_nodes(line[0].c_str(), strlen(line[0].c_str()), mod_spec);
+        //cerr << "; modify proper noun to noun:" <<  line[0] << ":" << line[1] << ":" << line[2] << ":" << line[3] << ":" << line[4] << ":" << line[5] << ":" << line[6] << endl;
     }
 
-    Node *r_node = lookup_and_make_special_pseudo_nodes(line[0].c_str(), strlen(line[0].c_str()), &line[1]);
-    if (!r_node) {
-        r_node = dic->make_unk_pseudo_node_gold(line[0].c_str(), strlen(line[0].c_str()), line[1]);
-        cerr << ";; lookup failed in gold data:" <<  line[0] << ":" << line[1] << endl;
+    if (!r_node) { // 推定
+        // 細分類以下まで推定するなら，以下も書き換える
+        r_node = dic->make_unk_pseudo_node_gold(line[0].c_str(), strlen(line[0].c_str()), line[3]);
+        cerr << ";; lookup failed in gold data:" <<  line[0] << ":" << line[1] << ":" << line[2] << ":" << line[3] << ":" << line[4] << ":" << line[5] << ":" << line[6] << endl;
     }
     (*begin_node_list)[length] = r_node;
     find_reached_pos(length, r_node);

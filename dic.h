@@ -42,13 +42,16 @@ class Dic {
     Node *lookup(const char *start_str);
     Node *lookup(const char *start_str, unsigned int specified_length, std::string *specified_pos);
     Node *lookup(const char *start_str, unsigned int specified_length, unsigned short specified_posid);
+    Node *lookup(const char *start_str, unsigned int specified_length, const std::vector<std::string>& specified_pos);
+
     Node *lookup_lattice(std::vector<Darts::DoubleArray::result_pair_type> &da_search_result, const char *start_str);
     Node *lookup_lattice(std::vector<Darts::DoubleArray::result_pair_type> &da_search_result, const char *start_str, unsigned int specified_length, std::string *specified_pos); 
     Node *lookup_lattice(std::vector<Darts::DoubleArray::result_pair_type> &da_search_result, const char *start_str, unsigned int specified_length, unsigned short specified_posid);
     Node* recognize_onomatopoeia(const char* start_str);
 
+     
     Node *make_unk_pseudo_node(const char *start_str, int byte_len);
-    Node *make_unk_pseudo_node(const char *start_str, int byte_len, std::string &specified_pos);
+    Node *make_unk_pseudo_node(const char *start_str, int byte_len, const std::string &specified_pos);
     Node *make_unk_pseudo_node(const char *start_str, int byte_len, unsigned short specified_posid);
     
     // 暫定。あとでオプションとして統合する
@@ -59,6 +62,8 @@ class Dic {
 
     Node *make_unk_pseudo_node_list(const char *start_str, unsigned int min_char_num, unsigned int max_char_num);
     Node *make_unk_pseudo_node_list(const char *start_str, unsigned int min_char_num, unsigned int max_char_num, unsigned short specified_posid);
+
+    // 
     Node *make_specified_pseudo_node(const char *start_str, unsigned int specified_length, std::string *specified_pos, std::vector<unsigned short> *specified_unk_pos, unsigned int type_family);
     Node *make_specified_pseudo_node(const char *start_str, unsigned int specified_length, unsigned short specified_posid, std::vector<unsigned short> *specified_unk_pos, unsigned int type_family);
 
