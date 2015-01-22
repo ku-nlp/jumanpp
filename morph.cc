@@ -77,8 +77,9 @@ int main(int argc, char** argv) {
     option_proc(option, argc, argv);
 
     Morph::Parameter param(option.get<std::string>("dict"), option.get<std::string>("feature"), option.get<unsigned int>("iteration"), true, option.exist("shuffle"), option.get<unsigned int>("unk_max_length"), option.exist("debug"), option.exist("nbest")|option.exist("lattice"));
+    //param.N = option.get<unsigned int>("lattice");
+    param.set_N(option.get<unsigned int>("lattice"));
     Morph::Tagger tagger(&param);
-    param.N = option.get<unsigned int>("lattice");
 
     if (MODE_TRAIN) {
         tagger.train(option.get<std::string>("train"));

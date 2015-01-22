@@ -567,7 +567,7 @@ void Sentence::print_juman_lattice() {//{{{
             size_t word_length = node->char_num;
             //cout << "pos:" << pos << " wordlen:" << word_length << endl;
             // ID の表示
-            if( node->used_in_nbest) { //n-best解に使われているもののみ
+            if( node->used_in_nbest ) { //n-best解に使われているもののみ
                 cout << id << " " ;
                 // 接続先
                 num2id[char_num + word_length].push_back(id++);
@@ -788,6 +788,8 @@ bool Sentence::viterbi_at_position_nbest(unsigned int pos, Node *r_node) {//{{{
                         traceSize = param->N_redundant;
 
                     for (int i = 0; i < traceSize; ++i) {
+                        // コストが同じなら続ける
+                        
                         long score = l_node->traceList.at(i).score + bigram_score
                             + r_node->wcost;
                         NbestSearchToken newSearchToken(score, i, l_node);
@@ -829,7 +831,7 @@ bool Sentence::viterbi_at_position_nbest(unsigned int pos, Node *r_node) {//{{{
 }//}}}
 
 void Sentence::print_N_best_path() {//{{{
-
+    // 曖昧性のある形態素の出力
 	std::string output_string_buffer;
 
 	unsigned int N_required = param->N;
@@ -910,12 +912,18 @@ void Sentence::mark_nbest() {//{{{
 	unsigned int N_couter = 0;
 	std::string output_string_buffer;
 
+	unsigned int traceSize_original = (*begin_node_list)[length]->traceList.size();
 	unsigned int traceSize = (*begin_node_list)[length]->traceList.size();
 	if (traceSize > param->N_redundant) {
 		traceSize = param->N_redundant;
 	}
 
-	for (int i = 0; i < traceSize; ++i) {
+    long last_score = LONG_MAX;
+    long output_score = 0;
+    long sample_num=0;
+    int i=0;
+        
+    while(i < traceSize_original){
 		Node *node = (*begin_node_list)[length];
 		std::vector<Node *> result_morphs;
 
@@ -924,7 +932,9 @@ void Sentence::mark_nbest() {//{{{
 
 		Node* temp_node = NULL;
 		long output_score = (*begin_node_list)[length]->traceList.at(i).score;
-
+        if(last_score < output_score) sample_num++;
+        if(sample_num > traceSize ) break;
+        
 		while (node) {
 		    result_morphs.push_back(node);
 
@@ -939,32 +949,51 @@ void Sentence::mark_nbest() {//{{{
 				traceRank = result_morphs.back()->traceList.at(traceRank).rank;
 			}
 		}
-
+            
 		if (!find_bos_node)
 			cerr << ";; cannot analyze:" << sentence << endl;
 
 		size_t printed_num = 0;
+        output_string_buffer = "";
+        unsigned long byte_pos=0;
+        // 後ろから追加しているので、元の順にするために逆向き
 		for (std::vector<Node *>::reverse_iterator it = result_morphs.rbegin();
 				it != result_morphs.rend(); it++) {
 
 			if ((*it)->stat != MORPH_BOS_NODE && (*it)->stat != MORPH_EOS_NODE) {
                 (*it)->used_in_nbest = true;// Nodeにnbestに入っているかをマークするだけ
-                output_string_buffer.append(" ");
-                output_string_buffer.append(*(*it)->string_for_print);
-                output_string_buffer.append("_");
-                output_string_buffer.append(*(*it)->pos);
+//                output_string_buffer.append(" ");
+//                output_string_buffer.append(*(*it)->string_for_print);
+//                output_string_buffer.append("_");
+//                output_string_buffer.append(*(*it)->pos);
+//                output_string_buffer.append("_");
+//                output_string_buffer.append(*(*it)->representation);
+                
+                // TODO:オプション化予定
+                auto tmp = (*begin_node_list)[byte_pos];
+                while(tmp){//同じ長さ(同じ表層)で同じ表層のものをすべて出力する
+                    //cerr << "c:" << *tmp->string_for_print << ":" << *tmp->pos << ":" << *tmp->representation << "," << tmp->length << "," << (*it)->length << ", pos:" << tmp->posid << "," << (*it)->posid << endl;
+                    if(tmp->length == (*it)->length && tmp->posid == (*it)->posid){
+                        tmp->used_in_nbest = true;
+                    }
+                    tmp=tmp->bnext;
+                }
+                byte_pos += (*it)->length;
 			}
 		}
-
-		std::map<std::string, int>::iterator find_output = nbest_duplicate_filter.find(output_string_buffer);
-		if (find_output != nbest_duplicate_filter.end()) {
-		} else {
-			nbest_duplicate_filter.insert(std::make_pair(output_string_buffer, i));
-			++N_couter;
-		}
-
-		if (N_couter >= N_required)
-			break;
+        //std::cerr  << output_score <<  ":" << output_string_buffer << endl;
+            
+//		std::map<std::string, int>::iterator find_output = nbest_duplicate_filter.find(output_string_buffer);
+//		if (find_output != nbest_duplicate_filter.end()) {
+//		} else {
+//			nbest_duplicate_filter.insert(std::make_pair(output_string_buffer, i));
+//			++N_couter;
+//		}
+//
+//		if (N_couter >= N_required)
+//			break;
+        i++;
+        last_score = output_score;
 	}
 }//}}}
 
