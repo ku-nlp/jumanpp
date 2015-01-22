@@ -31,7 +31,7 @@ Node::~Node() {
 }
 
 void Node::print() {
-    cout << *(string_for_print) << "_" << *pos;
+    cout << *(string_for_print) << "_" << *pos << ":" << *spos;
 }
 
 const char *Node::get_first_char() {

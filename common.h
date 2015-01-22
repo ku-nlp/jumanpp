@@ -130,14 +130,14 @@ inline int split_string(const std::string &src, const std::string &key, T &resul
     int i = 0, si = 0, count = 0;
 
     while(i < len) {
-	while (i < len && key.find(src[i]) != std::string::npos) { si++; i++; } // skip beginning spaces
-	while (i < len && key.find(src[i]) == std::string::npos) i++; // skip contents
-	if (split_num && ++count >= split_num) { // reached the specified num
-	    result.push_back(src.substr(si, len - si)); // push the remainder string
-	    break;
-	}
-	result.push_back(src.substr(si, i - si));
-	si = i;
+        while (i < len && key.find(src[i]) != std::string::npos) { si++; i++; } // skip beginning spaces
+        while (i < len && key.find(src[i]) == std::string::npos) i++; // skip contents
+        if (split_num && ++count >= split_num) { // reached the specified num
+            result.push_back(src.substr(si, len - si)); // push the remainder string
+            break;
+        }
+        result.push_back(src.substr(si, i - si));
+        si = i;
     }
 
     return result.size();

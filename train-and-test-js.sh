@@ -21,9 +21,9 @@ feature_def=feature.def
 set_postfix=
 use_unknown=''
 flag_debug=''
-iteration_num=5
+iteration_num=3
 unk_max_length=2
-while getopts msgup:d:f:i:l:h OPT
+while getopts mesgup:d:f:i:l:h OPT
 do
     case $OPT in
         m)  set_head=MixedCorpus
@@ -89,31 +89,43 @@ if [[ ! $skip_train == 'true' ]]; then
         ./kkn${flag_debug} -t data/${set_head}train${set_postfix}.txt ${use_unknown} -a -s -m $model -d data/$dic_base -f data/$feature_def -i $iteration_num -l $unk_max_length
     fi
 
-    # dev
-    echo "./kkn${flag_debug} ${use_unknown} -m $model -f data/$feature_def -l $unk_max_length -d data/$dic_base < data/${set_head}dev${set_postfix}.raw > $out_base.${set_head}dev${set_postfix}.mrp"
-    ./kkn${flag_debug} ${use_unknown} -m $model -f data/$feature_def -l $unk_max_length -d data/$dic_base < data/${set_head}dev${set_postfix}.raw > $out_base.${set_head}dev${set_postfix}.mrp
-    script/eval.pl -v $out_base.${set_head}dev${set_postfix}.mrp data/${set_head}dev${set_postfix}.txt > $out_base.${set_head}dev${set_postfix}.eval
-    echo "dev:"
-    tail -3 $out_base.${set_head}dev${set_postfix}.eval
-    echo
 fi
 
 # testdata 上での評価
-echo "./kkn${flag_debug} -m $model -f data/$feature_def -l $unk_max_length -d data/$dic_base < data/${set_head}test${set_postfix}.raw > $out_base.${set_head}test${set_postfix}.mrp"
-./kkn${flag_debug} ${use_unknown} -m $model -f data/$feature_def -l $unk_max_length -d data/$dic_base < data/${set_head}test${set_postfix}.raw > $out_base.${set_head}test${set_postfix}.mrp
-juman < data/${set_head}test${set_postfix}.raw | ruby script/juman2morph.rb > $out_base.${set_head}test_juman${set_postfix}.mrp
-ldajuman < data/${set_head}test${set_postfix}.raw | ruby script/juman2morph.rb > $out_base.${set_head}test_ldajuman${set_postfix}.mrp
+# kyoto
+echo "./kkn${flag_debug} ${use_unknown} -m $model -f data/$feature_def -l $unk_max_length -d data/$dic_base < data/${set_head}kyoto${set_postfix}.raw > $out_base.${set_head}kyoto${set_postfix}.mrp"
+./kkn${flag_debug} ${use_unknown} -m $model -f data/$feature_def -l $unk_max_length -d data/$dic_base < data/${set_head}kyoto${set_postfix}.raw > $out_base.${set_head}kyoto${set_postfix}.mrp
+juman < data/${set_head}kyoto${set_postfix}.raw | ruby script/juman2morph.rb > $out_base.${set_head}kyoto_juman${set_postfix}.mrp
+ldajuman < data/${set_head}kyoto${set_postfix}.raw | ruby script/juman2morph.rb > $out_base.${set_head}kyoto_ldajuman${set_postfix}.mrp
 
-# 出力を比較して評価
-echo "script/eval.pl -v $out_base.${set_head}test${set_postfix}.mrp data/${set_head}test${set_postfix}.txt > $out_base.${set_head}test${set_postfix}.eval"
-script/eval.pl -v $out_base.${set_head}test${set_postfix}.mrp data/${set_head}test${set_postfix}.txt > $out_base.${set_head}test${set_postfix}.eval
-script/eval.pl -v $out_base.${set_head}test_juman${set_postfix}.mrp data/${set_head}test${set_postfix}.txt > $out_base.${set_head}test_juman${set_postfix}.eval
-script/eval.pl -v $out_base.${set_head}test_ldajuman${set_postfix}.mrp data/${set_head}test${set_postfix}.txt > $out_base.${set_head}test_ldajuman${set_postfix}.eval
-echo "test:"
+echo "script/eval.pl -v $out_base.${set_head}kyoto${set_postfix}.mrp data/${set_head}kyoto${set_postfix}.txt > $out_base.${set_head}kyoto${set_postfix}.eval"
+script/eval.pl -v $out_base.${set_head}kyoto${set_postfix}.mrp data/${set_head}kyoto${set_postfix}.txt > $out_base.${set_head}kyoto${set_postfix}.eval
+script/eval.pl -v $out_base.${set_head}kyoto_juman${set_postfix}.mrp data/${set_head}kyoto${set_postfix}.txt > $out_base.${set_head}kyoto_juman${set_postfix}.eval
+script/eval.pl -v $out_base.${set_head}kyoto_ldajuman${set_postfix}.mrp data/${set_head}kyoto${set_postfix}.txt > $out_base.${set_head}kyoto_ldajuman${set_postfix}.eval
+echo "test kyoto:"
 echo "kkn"
-tail -3 $out_base.${set_head}test${set_postfix}.eval
+tail -3 $out_base.${set_head}kyoto${set_postfix}.eval
 echo "juman"
-tail -3 $out_base.${set_head}test_juman${set_postfix}.eval
+tail -3 $out_base.${set_head}kyoto_juman${set_postfix}.eval
 echo "ldajuman"
-tail -3 $out_base.${set_head}test_ldajuman${set_postfix}.eval
+tail -3 $out_base.${set_head}kyoto_ldajuman${set_postfix}.eval
+echo
+
+# 3bun
+echo "./kkn${flag_debug} -m $model -f data/$feature_def -l $unk_max_length -d data/$dic_base < data/${set_head}3bun${set_postfix}.raw > $out_base.${set_head}3bun${set_postfix}.mrp"
+./kkn${flag_debug} ${use_unknown} -m $model -f data/$feature_def -l $unk_max_length -d data/$dic_base < data/${set_head}3bun${set_postfix}.raw > $out_base.${set_head}3bun${set_postfix}.mrp
+juman < data/${set_head}3bun${set_postfix}.raw | ruby script/juman2morph.rb > $out_base.${set_head}3bun_juman${set_postfix}.mrp
+ldajuman < data/${set_head}3bun${set_postfix}.raw | ruby script/juman2morph.rb > $out_base.${set_head}3bun_ldajuman${set_postfix}.mrp
+
+echo "script/eval.pl -v $out_base.${set_head}3bun${set_postfix}.mrp data/${set_head}3bun${set_postfix}.txt > $out_base.${set_head}3bun${set_postfix}.eval"
+script/eval.pl -v $out_base.${set_head}3bun${set_postfix}.mrp data/${set_head}3bun${set_postfix}.txt > $out_base.${set_head}3bun${set_postfix}.eval
+script/eval.pl -v $out_base.${set_head}3bun_juman${set_postfix}.mrp data/${set_head}3bun${set_postfix}.txt > $out_base.${set_head}3bun_juman${set_postfix}.eval
+script/eval.pl -v $out_base.${set_head}3bun_ldajuman${set_postfix}.mrp data/${set_head}3bun${set_postfix}.txt > $out_base.${set_head}3bun_ldajuman${set_postfix}.eval
+echo "test 3bun:"
+echo "kkn"
+tail -3 $out_base.${set_head}3bun${set_postfix}.eval
+echo "juman"
+tail -3 $out_base.${set_head}3bun_juman${set_postfix}.eval
+echo "ldajuman"
+tail -3 $out_base.${set_head}3bun_ldajuman${set_postfix}.eval
 

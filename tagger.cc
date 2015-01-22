@@ -1,6 +1,7 @@
 #include "common.h"
 #include "tagger.h"
 #include "sentence.h"
+#include <iterator>     // std::distance
 
 namespace Morph {
 
@@ -49,6 +50,7 @@ bool Tagger::train(const std::string &gsd_file) {
         if (param->shuffle_training_data) // shuffle training data
             random_shuffle(sentences_for_train.begin(), sentences_for_train.end());
         for (std::vector<Sentence *>::iterator it = sentences_for_train.begin(); it != sentences_for_train.end(); it++) {
+            cerr << std::distance(sentences_for_train.begin(),it) << "/" << std::distance(sentences_for_train.begin(), sentences_for_train.end()) << "\r";
             new_sentence_analyze((*it)->get_sentence()); // get the best path
             sentence->minus_feature_from_weight(feature_weight); // - prediction
             (*it)->get_feature()->plus_feature_from_weight(feature_weight); // + gold standard
@@ -59,6 +61,7 @@ bool Tagger::train(const std::string &gsd_file) {
             sentence_clear();
             total_iteration_num++;
         }
+        cerr << endl;
     }
 
     if (WEIGHT_AVERAGED) {
@@ -96,7 +99,7 @@ bool Tagger::read_gold_data(const char *gsd_file) {
         split_string(buffer, " ", word_pos_pairs);
 
         Sentence *new_sentence = new Sentence(strlen(buffer.c_str()), &begin_node_list, &end_node_list, &dic, &ftmpl, param);
-        cerr << buffer << endl;
+        //cerr << buffer << endl;
         for (std::vector<std::string>::iterator it = word_pos_pairs.begin(); it != word_pos_pairs.end(); it++) {
             if(it->size()>0)//文末or文頭に空白があると空の文字列が分割に入る
                 new_sentence->lookup_gold_data(*it);
@@ -105,7 +108,7 @@ bool Tagger::read_gold_data(const char *gsd_file) {
         new_sentence->set_feature();
         new_sentence->clear_nodes();
         add_one_sentence_for_train(new_sentence);
-        new_sentence->feature_print();
+        //new_sentence->feature_print();
         sentences_for_train_num++;
     }
 

@@ -5,6 +5,7 @@ CXXFLAGS := --std=c++1y -O3 -g -m64 -w -Wl,-rpath /share/usr-x86_64/lib64 # -pg
 OBJECTS_TEST := kkn_test.ot wvector.ot wvector_test.ot morph.ot dic.ot tagger.ot pos.ot sentence.ot feature.ot node.ot tools.ot charlattice.ot
 OBJECTS := morph.o dic.o tagger.o pos.o sentence.o feature.o node.o tools.o charlattice.o u8string.o
 HEADERS := wvector.h common.h dic.h tagger.h pos.h sentence.h feature.h node.h parameter.h u8string.h
+LIBS := -lprofiler
 
 MKDARTS_OBJECTS := mkdarts.o pos.o
 MKDARTS_HEADERS := tagger.h pos.h
@@ -22,10 +23,10 @@ kkn_test: $(OBJECTS_TEST) $(HEADERS)
 	#$(CXX) $(CXXFLAGS) /usr/local/lib/libboost_unit_test_framework.dylib  -o $@ $(OBJECTS_TEST) -D KKN_UNIT_TEST
 
 kkn: $(OBJECTS) $(HEADERS)
-	$(CXX) $(CXXFLAGS) -o $@ $(OBJECTS)
+	$(CXX) $(CXXFLAGS) $(LIBS) -o $@ $(OBJECTS)
 
 kkn_g: $(OBJECTS) $(HEADERS)
-	$(CXX) $(CXXFLAGS) -o $@ $(OBJECTS)
+	$(CXX) $(CXXFLAGS) $(LIBS) -o $@ $(OBJECTS)
 
 mkdarts: $(MKDARTS_OBJECTS) $(MKDARTS_HEADERS)
 	$(CXX) $(CXXFLAGS) -o $@ $(MKDARTS_OBJECTS)
