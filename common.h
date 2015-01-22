@@ -6,6 +6,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <climits>
 #include <unordered_map>
 #include <map>
 #include <set>

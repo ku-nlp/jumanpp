@@ -605,7 +605,7 @@ Node *Dic::make_unk_pseudo_node_list(const char *start_str, unsigned int min_cha
         code = check_utf8_char_type((unsigned char *)(start_str + pos));
         next_code = check_utf8_char_type((unsigned char *)(start_str + pos + utf8_bytes((unsigned char *)(start_str + pos))));
         //cerr << start_str << last_code << " " << code << " " << next_code << " => " << ((code & (TYPE_HIRAGANA|TYPE_KANJI|TYPE_KATAKANA|TYPE_ALPH)) & (last_code & (TYPE_HIRAGANA|TYPE_KANJI|TYPE_KATAKANA|TYPE_ALPH)) )<< endl;
-        
+            
         // 異なる文字種が連続する場合には未定義語にしない
         if (((code & (TYPE_HIRAGANA|TYPE_KANJI|TYPE_KATAKANA|TYPE_ALPH)) & (last_code & (TYPE_HIRAGANA|TYPE_KANJI|TYPE_KATAKANA|TYPE_ALPH))) == 0 && last_code!=0)
             break; 

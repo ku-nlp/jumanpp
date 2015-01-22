@@ -31,6 +31,11 @@ class Parameter {
     std::vector<unsigned short> unk_pos;
     std::vector<unsigned short> unk_figure_pos;
 
+    int set_N(unsigned int n){
+        N =n;
+		N_redundant = N + (unsigned int)(ceil(N * B_BEST_REDUNDANCY));
+    }
+
     Parameter(const std::string &in_dic_filename, const std::string &in_ftmpl_filename, const int in_iteration_num, const bool in_unknown_word_detection, const bool in_shuffle_training_data, const unsigned int in_unk_max_length, const bool in_debug, const bool in_nbest) {
         darts_filename = in_dic_filename + ".da";
         dic_filename = in_dic_filename + ".bin";
