@@ -71,7 +71,8 @@ class Sentence {
         viterbi_at_position_nbest(length, (*begin_node_list)[length]);
         return (*begin_node_list)[length];
     }
-    void print_juman_lattice();
+    void print_juman_lattice(); // TODO:問題がなければ廃止
+    void print_unified_lattice(); 
     void minus_feature_from_weight(std::map<std::string, double> &in_feature_weight);
     void minus_feature_from_weight(std::map<std::string, double> &in_feature_weight, size_t factor);
     bool lookup_gold_data(std::string &word_pos_pair);

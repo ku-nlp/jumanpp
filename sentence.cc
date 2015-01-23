@@ -656,6 +656,128 @@ void Sentence::print_juman_lattice() {//{{{
     cout << "EOS" << endl;
 }//}}}
 
+void Sentence::print_unified_lattice() {//{{{
+    mark_nbest();
+
+    unsigned int char_num = 0;
+    int id = 1;
+    // - 2 0 0 1 部屋 部屋/へや へや 部屋 名詞 6 普通名詞 1 * 0 * 0 "カテゴリ:場所-施設..."
+    // - 15 2 2 2 に * に に 助詞 9 格助詞 1 * 0 * 0 NIL
+    // wordmark ID fromIDs char_index_begin char_index_end surface rep_form reading pos posid spos sposid form_type typeid form formid imis
+
+    std::vector<std::vector<int>> num2id(length+1); //多めに保持する
+    for (unsigned int pos = 0; pos < length; pos += utf8_bytes((unsigned char *)(sentence_c_str + pos))) {
+        Node *node = (*begin_node_list)[pos];
+        const std::string wordmark{"-"};
+        const std::string delim{"\t"};
+            
+        while (node) {
+            size_t word_length = node->char_num;
+            // ID の表示
+            if( node->used_in_nbest ) { //n-best解に使われているもののみ
+                cout << wordmark << delim << id << delim ;
+                // 接続先
+                num2id[char_num + word_length].push_back(id++);
+                if(num2id[char_num].size()==0){ // 無かったら 0 を出す
+                    cout << "0";
+                }else{
+                    std::string sep= "";
+                    for(auto to_id:num2id[char_num]){
+                        cout << sep << to_id;
+                        sep = ";";
+                    }
+                }
+                cout << delim;
+                // 文字index の表示
+                cout << char_num << delim << char_num + word_length -1 << delim;
+                    
+                // 表層 代表表記 よみ 原形
+                if( *node->reading == "*" ){//読み不明であれば表層を使う
+                    cout << *node->original_surface << delim 
+                        << *node->representation << delim // *
+                        << *node->original_surface << delim 
+                        << *node->original_surface << delim;
+                }else{
+                    cout << *node->original_surface << delim
+                        << *node->representation << delim
+                        << *node->reading << delim 
+                        << *node->base << delim;
+                }
+                // 品詞 品詞id 細分類 細分類id
+                if(*node->spos == UNK_POS){
+                    cout << "未定義語" << delim << 
+                        Dic::pos_map.at("未定義語") << delim;
+                    cout << "その他" << delim << Dic::spos_map.at("その他") << delim;
+                }else{
+                    cout << *node->pos << delim 
+                        << Dic::pos_map.at(*node->pos) << delim;
+                    cout << *node->spos << delim 
+                        << Dic::spos_map.at(*node->spos) << delim;
+                }
+                // 活用型 活用型id
+                cout << *node->form_type << delim 
+                    << Dic::katuyou_type_map.at(*node->form_type) << delim;
+                    
+                // 活用系 活用系id
+                auto type_and_form = (*node->form_type+":"+*node->form);
+                if(Dic::katuyou_form_map.count(type_and_form) == 0 ){//無い場合
+                    cout << *node->form << delim << "0" << delim;
+                }else{
+                    cout << *node->form << delim << 
+                        Dic::katuyou_form_map.at(type_and_form) << delim;
+                }
+                     
+                // 意味情報を再構築して表示
+                U8string ustr(*node->original_surface);
+                if(*node->semantic_feature != "NIL" || *node->spos == UNK_POS || ustr.is_katakana()|| ustr.is_kanji() ||ustr.is_eisuu() ||ustr.is_kigou()){
+                    const std::string sep="|";
+                    bool use_sep = false;
+                        
+                    if(*node->semantic_feature != "NIL" ){
+                        // 一度空白で分割して表示する必要がある.
+                        size_t current = 0, found;
+                        while((found = (*node->semantic_feature).find_first_of(' ', current)) != std::string::npos){
+                            cout << (use_sep?sep:"") << std::string((*node->semantic_feature), current, found - current); //NILでなければ
+                            current = found + 1;
+                            use_sep = true;
+                        }
+                        if(current ==0){
+                            cout << (use_sep?sep:"") << *node->semantic_feature;
+                        }
+                    }
+                    if(*node->spos == UNK_POS){
+                        cout << (use_sep?sep:"")  << "品詞推定:" << *node->pos << ":" << *node->spos ;
+                        use_sep = true;
+                    }
+                    // TODO:これ以降の処理はあとでくくり出してNode 生成時に行う
+                    if(ustr.is_katakana()){
+                        cout << (use_sep?sep:"") << "カタカナ";
+                        use_sep = true;
+                    }
+                    if(ustr.is_kanji()){
+                        cout << (use_sep?sep:"") << "漢字";
+                        use_sep = true;
+                    }
+                    if(ustr.is_eisuu()){
+                        cout << (use_sep?sep:"") << "英数字";
+                        use_sep = true;
+                    }
+                    if(ustr.is_kigou()){
+                        cout << (use_sep?sep:"") << "記号";
+                        use_sep = true;
+                    }
+                    cout << endl;
+                }else{
+                    cout << "NIL" << endl;
+                }
+            }
+            node = node->bnext;
+        }
+        char_num++;
+    }
+    cout << "EOS" << endl;
+}//}}}
+
 Node *Sentence::get_bos_node() {//{{{
 	Node *bos_node = new Node;
 	bos_node->surface = const_cast<const char *>(BOS);
