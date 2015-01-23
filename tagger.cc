@@ -134,7 +134,8 @@ void Tagger::print_N_best_path() {
 }
 
 void Tagger::print_lattice() {
-    sentence->print_juman_lattice();
+    //sentence->print_juman_lattice();
+    sentence->print_unified_lattice(); 
 }
 
 bool Tagger::add_one_sentence_for_train (Sentence *in_sentence) {

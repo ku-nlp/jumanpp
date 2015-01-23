@@ -13,6 +13,7 @@ use strict;
 
 while (<STDIN>) {
     if($_ =~ /^\s*;/){ next;}
+    if($_ =~ /^\s*$/){ next;}
     my $s = new JumanSexp($_);
     my $pos = $s->{data}[0]{element};
     
