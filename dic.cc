@@ -513,7 +513,7 @@ Node *Dic::make_unk_pseudo_node(const char *start_str, int byte_len, unsigned sh
         }
     }
         
-    new_node->reading = readingid2reading.get_pos(new_node->readingid);// 表層と同じにするには
+    new_node->reading = readingid2reading.get_pos(new_node->readingid);
     new_node->representation = repid2rep.get_pos(new_node->repid);
     new_node->semantic_feature = imisid2imis.get_pos(new_node->imisid);
 

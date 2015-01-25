@@ -20,6 +20,7 @@
 #include <math.h>
 #include <string.h>
 #include "feature.h"
+#include "scw.h"
 
 using std::cin;
 using std::cout;
@@ -28,7 +29,8 @@ using std::endl;
 
 extern bool MODE_TRAIN;
 extern bool WEIGHT_AVERAGED;
-extern std::unordered_map<std::string, double> feature_weight;
+//extern std::unordered_map<std::string, double> feature_weight;
+extern FeatureVector feature_weight; // 実質は std::unordered_map<std::string, double>
 extern std::unordered_map<std::string, double> feature_weight_sum;
 
 

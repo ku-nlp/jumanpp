@@ -26,6 +26,7 @@ class Parameter {
     std::string imis_filename;
     std::string reading_filename;
 	unsigned int N = 1;
+    bool use_scw=false;
 	unsigned int N_redundant;
     bool output_ambiguous_word=false;
 
@@ -39,6 +40,9 @@ class Parameter {
     
     void set_output_ambigous_word(bool b){
         output_ambiguous_word = b;
+    }
+    void set_use_scw(bool scw){
+        use_scw = scw;
     }
 
     Parameter(const std::string &in_dic_filename, const std::string &in_ftmpl_filename, const int in_iteration_num, const bool in_unknown_word_detection, const bool in_shuffle_training_data, const unsigned int in_unk_max_length, const bool in_debug, const bool in_nbest) {
