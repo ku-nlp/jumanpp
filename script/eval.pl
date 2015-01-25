@@ -40,6 +40,7 @@ sub calc_score {
     my $rec_c = 0;
     my $token_ok_c = 0;
     my $joint_ok_c = 0;
+    my $sjoint_ok_c = 0;
 
     my $numofsent = scalar(@$output);
     for (my $i = 0; $i < $numofsent; $i++) {
@@ -65,6 +66,7 @@ sub calc_score {
 	my $ref_buffer = "";
 	my $tmp_token_ok_c = 0;
 	my $tmp_joint_ok_c = 0;
+	my $tmp_sjoint_ok_c = 0;
 
 
 	while (1) {
@@ -72,9 +74,17 @@ sub calc_score {
 	    if ($output_token[$output_index] eq $ref_token[$ref_index]) {
 		$tmp_token_ok_c++;
 		if ($output_pos[$output_index] eq $ref_pos[$ref_index]) {
-		    $tmp_joint_ok_c++;
+		    $tmp_sjoint_ok_c++;
+            $tmp_joint_ok_c++;
 		    $output_buffer .= " $output_token[$output_index]_$output_pos[$output_index]";
 		} else {
+            $output_pos[$output_index] =~ /([^:]*):[^:]*$/;
+            my $output_pos_tmp = $1;
+            $ref_pos[$output_index] =~ /([^:]*):[^:]*$/;
+            my $ref_pos_tmp = $1;
+            if( $output_pos_tmp eq $ref_pos_tmp ){
+                $tmp_joint_ok_c++;
+            }
 		    $output_buffer .= " $output_token[$output_index]x$output_pos[$output_index]";
 		}
 		$output_length += length($output_token[$output_index]);
@@ -141,6 +151,7 @@ sub calc_score {
 	    }
 	    $token_ok_c += $tmp_token_ok_c;
 	    $joint_ok_c += $tmp_joint_ok_c;
+	    $sjoint_ok_c += $tmp_sjoint_ok_c;
 	}
     }
 
@@ -148,15 +159,21 @@ sub calc_score {
     my $token_recall = 100*$token_ok_c/$rec_c;
     my $joint_precision = 100*$joint_ok_c/$pre_c;
     my $joint_recall = 100*$joint_ok_c/$rec_c;
+    my $sjoint_precision = 100*$sjoint_ok_c/$pre_c;
+    my $sjoint_recall = 100*$sjoint_ok_c/$rec_c;
     printf "            Precision              Recall          F\n";
-    printf "  Seg: %3.2f (%5d/%5d)  %3.2f (%5d/%5d)  %.2f\n",
+    printf "  Seg:  %3.2f (%5d/%5d)  %3.2f (%5d/%5d)  %.2f\n",
 	$token_precision, $token_ok_c, $pre_c,
 	    $token_recall, $token_ok_c, $rec_c,
 		(2*$token_precision*$token_recall)/($token_precision+$token_recall);
-    printf "Joint: %3.2f (%5d/%5d)  %3.2f (%5d/%5d)  %.2f\n",
+    printf "Joint:  %3.2f (%5d/%5d)  %3.2f (%5d/%5d)  %.2f\n",
 	$joint_precision, $joint_ok_c, $pre_c,
 	    $joint_recall, $joint_ok_c, $rec_c,
 		(2*$joint_precision*$joint_recall)/($joint_precision+$joint_recall);
+    printf "SJoint: %3.2f (%5d/%5d)  %3.2f (%5d/%5d)  %.2f\n",
+	$sjoint_precision, $sjoint_ok_c, $pre_c,
+	    $sjoint_recall, $sjoint_ok_c, $rec_c,
+		(2*$sjoint_precision*$sjoint_recall)/($sjoint_precision+$sjoint_recall);
 }
 
 sub parse_line {

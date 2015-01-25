@@ -131,10 +131,10 @@ class FeatureSet {
     void extract_unigram_feature(Node *node);
     void extract_bigram_feature(Node *l_node, Node *r_node);
     bool append_feature(FeatureSet *in);
-    void minus_feature_from_weight(std::map<std::string, double> &in_feature_weight);
-    void plus_feature_from_weight(std::map<std::string, double> &in_feature_weight);
-    void minus_feature_from_weight(std::map<std::string, double> &in_feature_weight, size_t factor);
-    void plus_feature_from_weight(std::map<std::string, double> &in_feature_weight, size_t factor);
+    void minus_feature_from_weight(std::unordered_map<std::string, double> &in_feature_weight);
+    void plus_feature_from_weight(std::unordered_map<std::string, double> &in_feature_weight);
+    void minus_feature_from_weight(std::unordered_map<std::string, double> &in_feature_weight, size_t factor);
+    void plus_feature_from_weight(std::unordered_map<std::string, double> &in_feature_weight, size_t factor);
     bool print();
 };
 

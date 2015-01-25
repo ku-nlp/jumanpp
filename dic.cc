@@ -440,17 +440,17 @@ Node *Dic::make_unk_pseudo_node(const char *start_str, int byte_len, unsigned sh
         new_node->string = new std::string("<数詞>");
         new_node->base = new std::string("<数詞>");
     } else if (new_node->char_type == TYPE_KANJI){
-        new_node->string = new std::string("未定義漢字");
-        new_node->base = new std::string("未定義漢字");
+        new_node->string = new std::string("未定義語");
+        new_node->base = new std::string("未定義語");
     } else if (new_node->char_type == TYPE_KATAKANA){
         new_node->string = new std::string("未定義カタカナ語");
         new_node->base = new std::string("未定義カタカナ語");
     } else if (new_node->char_type == TYPE_HIRAGANA){
-        new_node->string = new std::string("未定義ひらがな語");
-        new_node->base = new std::string("未定義ひらがな語");
-    } else {//何が来る？記号？
+        new_node->string = new std::string("未定義語");
+        new_node->base = new std::string("未定義語");
+    } else {//アルファベット,記号など？
         new_node->string = new std::string(new_node->surface, new_node->length);
-        new_node->base = new std::string("未定義文字種不明");
+        new_node->base = new std::string("未定義語");
     } //漢字かな交じりはどこに入る？
       
     new_node->original_surface = new std::string(new_node->surface, new_node->length);

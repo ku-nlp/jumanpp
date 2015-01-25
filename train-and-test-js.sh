@@ -23,7 +23,7 @@ use_unknown=''
 flag_debug=''
 iteration_num=3
 unk_max_length=2
-while getopts mesgup:d:f:i:l:h OPT
+while getopts Ss2mesgup:d:f:i:l:h OPT
 do
     case $OPT in
         m)  set_head=MixedCorpus
@@ -48,9 +48,7 @@ do
             ;;
         s)  short_train=1000
             ;;
-        s2)  short_train=2000
-            ;;
-        s3)  short_train=3000
+        S)  short_train=3000
             ;;
     esac
 done
@@ -86,7 +84,7 @@ if [[ ! $skip_train == 'true' ]]; then
         ./kkn${flag_debug} -t <(cat data/${set_head}train${set_postfix}.txt |shuf -n ${short_train} ) ${use_unknown} -a -s -m $model -d data/$dic_base -f data/$feature_def -i $iteration_num -l $unk_max_length
     else
         echo "./kkn${flag_debug} -t data/${set_head}train${set_postfix}.txt -a ${use_unknown}  -s -m $model -d $dic_base -f $feature_def -i $iteration_num -l $unk_max_length"
-        ./kkn${flag_debug} -t data/${set_head}train${set_postfix}.txt ${use_unknown} -a -s -m $model -d data/$dic_base -f data/$feature_def -i $iteration_num -l $unk_max_length
+        CPU_PROFILE=kkn_train_$out_base.prof ./kkn${flag_debug} -t data/${set_head}train${set_postfix}.txt ${use_unknown} -a -s -m $model -d data/$dic_base -f data/$feature_def -i $iteration_num -l $unk_max_length
     fi
 
 fi

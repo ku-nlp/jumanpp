@@ -28,8 +28,8 @@ using std::endl;
 
 extern bool MODE_TRAIN;
 extern bool WEIGHT_AVERAGED;
-extern std::map<std::string, double> feature_weight;
-extern std::map<std::string, double> feature_weight_sum;
+extern std::unordered_map<std::string, double> feature_weight;
+extern std::unordered_map<std::string, double> feature_weight_sum;
 
 
 namespace Morph {
