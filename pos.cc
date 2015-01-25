@@ -41,7 +41,7 @@ bool Pos::write_pos_list(const std::string &pos_filename) {
         return false;
     }
 
-    for (std::map<std::string, unsigned long>::iterator it = dic.begin(); it != dic.end(); it++) {
+    for (std::unordered_map<std::string, unsigned long>::iterator it = dic.begin(); it != dic.end(); it++) {
         pos_out << it->first << "\t" << it->second << endl;
     }
 

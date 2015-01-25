@@ -129,6 +129,7 @@ void Sentence::init(size_t max_byte_length, std::vector<Node *> *in_begin_node_l
 
     begin_node_list = in_begin_node_list;
     end_node_list = in_end_node_list;
+    output_ambiguous_word = in_param->output_ambiguous_word;
 
     if (begin_node_list->capacity() <= max_byte_length) {
         begin_node_list->reserve(max_byte_length + 1);
@@ -255,14 +256,14 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str, unsi
 				specified_length, specified_pos, &(param->unk_figure_pos),
 				TYPE_FAMILY_FIGURE);
         // 長さが指定されたものに合っていれば，そのまま返す
-		if (specified_length && result_node) return result_node;
+		//if (specified_length && result_node) return result_node;
 
 		// make alphabet nodes
 		if (!result_node) {
 			result_node = dic->make_specified_pseudo_node(start_str + pos,
 					specified_length, specified_pos, &(param->unk_pos),
 					TYPE_FAMILY_ALPH_PUNC);
-			if (specified_length && result_node) return result_node;
+			//if (specified_length && result_node) return result_node;
 		}
                 
         // 漢字
@@ -299,9 +300,21 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str, unsi
 
     if (dic_node) {
         Node *tmp_node = dic_node;
-        while (tmp_node->bnext)
+        while (tmp_node->bnext) //末尾にシーク
             tmp_node = tmp_node->bnext;
-        tmp_node->bnext = result_node;
+
+        Node* tmp_result_node = result_node;
+        while(tmp_result_node){
+            //
+            auto next_result = tmp_result_node->bnext;
+            if(check_dict_match(tmp_result_node, dic_node)){
+                tmp_node->bnext =new Node(*tmp_result_node);
+                tmp_node = tmp_node->bnext;
+            }
+            delete tmp_result_node;
+            tmp_result_node = next_result;
+        }
+        tmp_node->bnext = nullptr;
         result_node = dic_node;
     }
 
@@ -318,7 +331,6 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str, unsi
     auto specified_pos = &specified_pos_string;
          
     // まず探す
-    //Node *dic_node = dic->lookup_lattice(start_str + pos, specified_length, specified_pos); // look up a dictionary with common prefix search
     Node *dic_node = dic->lookup(start_str, specified_length, spec); // look up a dictionary with common prefix search
         
     // 同じ品詞で同じ長さなら使わない
@@ -331,15 +343,16 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str, unsi
 		result_node = dic->make_specified_pseudo_node(start_str + pos,
 				specified_length, specified_pos, &(param->unk_figure_pos),
 				TYPE_FAMILY_FIGURE);
-        // 長さが指定されたものに合っていれば，そのまま返す
-		if (specified_length && result_node) return result_node;
+        // 長さが指定されたものに合っていれば，そのまま返す // TYPE_FIGUREに含まれる文字でもでも"数"や"，"は他の品詞になる可能性がある
+		//if (specified_length && result_node) return result_node;
 
 		// make alphabet nodes
 		if (!result_node) {
 			result_node = dic->make_specified_pseudo_node(start_str + pos,
 					specified_length, specified_pos, &(param->unk_pos),
 					TYPE_FAMILY_ALPH_PUNC);
-			if (specified_length && result_node) return result_node;
+            // アルファベットは辞書に載っている可能性がある
+			//if (specified_length && result_node) return result_node;
 		}
                 
         // 漢字
@@ -376,14 +389,50 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str, unsi
 
     if (dic_node) {
         Node *tmp_node = dic_node;
-        while (tmp_node->bnext)
+        while (tmp_node->bnext) //末尾にシーク
             tmp_node = tmp_node->bnext;
-        tmp_node->bnext = result_node;
+
+        Node* tmp_result_node = result_node;
+        while(tmp_result_node){
+            //
+            auto next_result = tmp_result_node->bnext;
+            if(check_dict_match(tmp_result_node, dic_node)){
+                tmp_node->bnext =new Node(*tmp_result_node);
+                tmp_node = tmp_node->bnext;
+            }
+            delete tmp_result_node;
+            tmp_result_node = next_result;
+        }
+        tmp_node->bnext = nullptr;
         result_node = dic_node;
     }
 
     return result_node;
 }//}}}
+
+// TODO::本来はNode あたりに置く
+bool Sentence::check_dict_match(Node* tmp_node, Node* dic_node){//{{{
+
+    //while (tmp_result_node){ //辞書に一致する長さと品詞の形態素がないものだけつなげる．
+    if(! tmp_node)return false;
+
+    Node *tmp_dic_node = dic_node;
+    bool matched = false;
+    while(tmp_dic_node){
+        if(tmp_node->length == tmp_dic_node->length && //length が一致 
+                tmp_node->posid == tmp_dic_node->posid){//pos が一致
+            matched=true;
+            break;
+        }
+        tmp_dic_node = tmp_dic_node->bnext;
+    }
+    if(!matched){
+        return true;
+    }else{
+        return false;
+    }
+}//}}}
+
 
 Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, const char *start_str, unsigned int char_num, unsigned int pos, unsigned int specified_length, std::string *specified_pos) {//{{{
     Node *result_node = NULL;
@@ -406,14 +455,14 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, co
 				specified_length, specified_pos, &(param->unk_figure_pos),
 				TYPE_FAMILY_FIGURE);
         // 長さが指定されたものに合っていれば，そのまま返す
-		if (specified_length && result_node) return result_node;
+		//if (specified_length && result_node) return result_node;
 
 		// make alphabet nodes
 		if (!result_node) {
 			result_node = dic->make_specified_pseudo_node(start_str + pos,
 					specified_length, specified_pos, &(param->unk_pos),
 					TYPE_FAMILY_ALPH_PUNC);
-			if (specified_length && result_node) return result_node;
+			//if (specified_length && result_node) return result_node;
 		}
 
         // 漢字
@@ -450,9 +499,21 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, co
 
     if (dic_node) {
         Node *tmp_node = dic_node;
-        while (tmp_node->bnext)
+        while (tmp_node->bnext) //末尾にシーク
             tmp_node = tmp_node->bnext;
-        tmp_node->bnext = result_node;
+
+        Node* tmp_result_node = result_node;
+        while(tmp_result_node){
+            //
+            auto next_result = tmp_result_node->bnext;
+            if(check_dict_match(tmp_result_node, dic_node)){
+                tmp_node->bnext =new Node(*tmp_result_node);
+                tmp_node = tmp_node->bnext;
+            }
+            delete tmp_result_node;
+            tmp_result_node = next_result;
+        }
+        tmp_node->bnext = nullptr;
         result_node = dic_node;
     }
 
@@ -676,8 +737,7 @@ void Sentence::print_unified_lattice() {//{{{
             // ID の表示
             if( node->used_in_nbest ) { //n-best解に使われているもののみ
                 cout << wordmark << delim << id << delim ;
-                // 接続先
-                num2id[char_num + word_length].push_back(id++);
+                num2id[char_num + word_length].push_back(id++); // 現在，接続先はn-best と関係なく繋がるもの全てを使用
                 if(num2id[char_num].size()==0){ // 無かったら 0 を出す
                     cout << "0";
                 }else{
@@ -694,20 +754,21 @@ void Sentence::print_unified_lattice() {//{{{
                 // 表層 代表表記 よみ 原形
                 if( *node->reading == "*" ){//読み不明であれば表層を使う
                     cout << *node->original_surface << delim 
-                        << *node->representation << delim // *
+                        << *node->representation << delim // 実際は*のはず
                         << *node->original_surface << delim 
                         << *node->original_surface << delim;
                 }else{
                     cout << *node->original_surface << delim
-                        << *node->representation << delim
-                        << *node->reading << delim 
-                        << *node->base << delim;
+                         << *node->representation << delim
+                         << *node->reading << delim 
+                         << *node->base << delim;
                 }
                 // 品詞 品詞id 細分類 細分類id
                 if(*node->spos == UNK_POS){
                     cout << "未定義語" << delim << 
                         Dic::pos_map.at("未定義語") << delim;
-                    cout << "その他" << delim << Dic::spos_map.at("その他") << delim;
+                    cout << "その他" << delim << 
+                        Dic::spos_map.at("その他") << delim;
                 }else{
                     cout << *node->pos << delim 
                         << Dic::pos_map.at(*node->pos) << delim;
@@ -721,10 +782,11 @@ void Sentence::print_unified_lattice() {//{{{
                 // 活用系 活用系id
                 auto type_and_form = (*node->form_type+":"+*node->form);
                 if(Dic::katuyou_form_map.count(type_and_form) == 0 ){//無い場合
-                    cout << *node->form << delim << "0" << delim;
+                    cout << *node->form << delim 
+                        << "0" << delim;
                 }else{
-                    cout << *node->form << delim << 
-                        Dic::katuyou_form_map.at(type_and_form) << delim;
+                    cout << *node->form << delim 
+                        << Dic::katuyou_form_map.at(type_and_form) << delim;
                 }
                      
                 // 意味情報を再構築して表示
@@ -1030,10 +1092,6 @@ void Sentence::print_N_best_path() {//{{{
 }//}}}
 
 void Sentence::mark_nbest() {//{{{
-	unsigned int N_required = param->N;
-	unsigned int N_couter = 0;
-	std::string output_string_buffer;
-
 	unsigned int traceSize_original = (*begin_node_list)[length]->traceList.size();
 	unsigned int traceSize = (*begin_node_list)[length]->traceList.size();
 	if (traceSize > param->N_redundant) {
@@ -1054,7 +1112,7 @@ void Sentence::mark_nbest() {//{{{
 
 		Node* temp_node = NULL;
 		long output_score = (*begin_node_list)[length]->traceList.at(i).score;
-        if(last_score < output_score) sample_num++;
+        if(last_score < output_score) sample_num++; // 同スコアの場合は数に数えず，N-bestに出力
         if(sample_num > traceSize ) break;
         
 		while (node) {
@@ -1076,7 +1134,6 @@ void Sentence::mark_nbest() {//{{{
 			cerr << ";; cannot analyze:" << sentence << endl;
 
 		size_t printed_num = 0;
-        output_string_buffer = "";
         unsigned long byte_pos=0;
         // 後ろから追加しているので、元の順にするために逆向き
 		for (std::vector<Node *>::reverse_iterator it = result_morphs.rbegin();
@@ -1084,36 +1141,21 @@ void Sentence::mark_nbest() {//{{{
 
 			if ((*it)->stat != MORPH_BOS_NODE && (*it)->stat != MORPH_EOS_NODE) {
                 (*it)->used_in_nbest = true;// Nodeにnbestに入っているかをマークするだけ
-//                output_string_buffer.append(" ");
-//                output_string_buffer.append(*(*it)->string_for_print);
-//                output_string_buffer.append("_");
-//                output_string_buffer.append(*(*it)->pos);
-//                output_string_buffer.append("_");
-//                output_string_buffer.append(*(*it)->representation);
                 
-                // TODO:オプション化予定
-                auto tmp = (*begin_node_list)[byte_pos];
-                while(tmp){//同じ長さ(同じ表層)で同じ表層のものをすべて出力する
-                    //cerr << "c:" << *tmp->string_for_print << ":" << *tmp->pos << ":" << *tmp->representation << "," << tmp->length << "," << (*it)->length << ", pos:" << tmp->posid << "," << (*it)->posid << endl;
-                    if(tmp->length == (*it)->length && tmp->posid == (*it)->posid){
-                        tmp->used_in_nbest = true;
+                if(output_ambiguous_word){
+                    // TODO:オプション化する
+                    auto tmp = (*begin_node_list)[byte_pos];
+                    while(tmp){//同じ長さ(同じ表層)で同じ表層のものをすべて出力する
+                        //cerr << "c:" << *tmp->string_for_print << ":" << *tmp->pos << ":" << *tmp->representation << "," << tmp->length << "," << (*it)->length << ", pos:" << tmp->posid << "," << (*it)->posid << endl;
+                        if(tmp->length == (*it)->length && tmp->posid == (*it)->posid){
+                            tmp->used_in_nbest = true;
+                        }
+                        tmp=tmp->bnext;
                     }
-                    tmp=tmp->bnext;
                 }
                 byte_pos += (*it)->length;
 			}
 		}
-        //std::cerr  << output_score <<  ":" << output_string_buffer << endl;
-            
-//		std::map<std::string, int>::iterator find_output = nbest_duplicate_filter.find(output_string_buffer);
-//		if (find_output != nbest_duplicate_filter.end()) {
-//		} else {
-//			nbest_duplicate_filter.insert(std::make_pair(output_string_buffer, i));
-//			++N_couter;
-//		}
-//
-//		if (N_couter >= N_required)
-//			break;
         i++;
         last_score = output_score;
 	}
@@ -1180,12 +1222,12 @@ void Sentence::print_best_path() {//{{{
     cout << endl;
 }//}}}
 
-void Sentence::minus_feature_from_weight(std::map<std::string, double> &in_feature_weight, size_t factor) {//{{{
+void Sentence::minus_feature_from_weight(std::unordered_map<std::string, double> &in_feature_weight, size_t factor) {//{{{
     Node *node = (*begin_node_list)[length]; // EOS
     node->feature->minus_feature_from_weight(in_feature_weight, factor);
 }//}}}
 
-void Sentence::minus_feature_from_weight(std::map<std::string, double> &in_feature_weight) {//{{{
+void Sentence::minus_feature_from_weight(std::unordered_map<std::string, double> &in_feature_weight) {//{{{
     minus_feature_from_weight(in_feature_weight, 1);
 }//}}}
 
@@ -1202,10 +1244,7 @@ bool Sentence::lookup_gold_data(std::string &word_pos_pair) {//{{{
     Node *r_node = lookup_and_make_special_pseudo_nodes(line[0].c_str(), strlen(line[0].c_str()), spec);
     
     //
-    if (!r_node && line[6] == "命令形エ形") { // 動詞の名詞化を復元
-        // コーパスでは名詞化した動詞は名詞として扱われる. (kkn では動詞の連用形扱い)
-        // 品詞変更タグがついていない場合の対策
-        // 動詞の活用型不明のまま，基本連用形をチェック
+    if (!r_node && line[6] == "命令形エ形") { // JUMANの活用になく，３文コーパスでのみ出てくる活用の命令形エ形を連用形だと解釈する.
         std::vector<std::string> mod_spec{line[1],"",line[3],line[4],line[5],"基本連用形"};
         r_node = lookup_and_make_special_pseudo_nodes(line[0].c_str(), strlen(line[0].c_str()), mod_spec);
         //cerr << "; restore 命令形エ形 verb:" <<  line[0] << ":" << line[1] << ":" << line[2] << ":" << line[3] << ":" << line[4] << ":" << line[5] << ":" << line[6] << endl;
@@ -1218,22 +1257,28 @@ bool Sentence::lookup_gold_data(std::string &word_pos_pair) {//{{{
         r_node = lookup_and_make_special_pseudo_nodes(line[0].c_str(), strlen(line[0].c_str()), mod_spec);
         //cerr << "; restore nominalized verb:" <<  line[0] << ":" << line[1] << ":" << line[2] << ":" << line[3] << ":" << line[4] << ":" << line[5] << ":" << line[6] << endl;
     }
-    // 人名が辞書にない場合// 今は放置
+    // 人名, 地名が辞書にない場合 // 未定義語として処理
     
-    if (!r_node) { // 濁音化, 撥音化(?相:しょう,など)しているケース は読みを無視して検索
+    if (!r_node) { // 濁音化, 音便化している(?相:しょう,など)しているケース は読みを無視して検索
         std::vector<std::string> mod_spec{"",line[2],line[3],line[4],line[5],line[6]};
         r_node = lookup_and_make_special_pseudo_nodes(line[0].c_str(), strlen(line[0].c_str()), mod_spec);
         //cerr << "; restore voiced reading:" <<  line[0] << ":" << line[1] << ":" << line[2] << ":" << line[3] << ":" << line[4] << ":" << line[5] << ":" << line[6] << endl;
     }
      
-    // 名詞が固有名詞化している場合　
+    // 名詞が固有名詞, サ変名詞化している場合, 細分類を無視して辞書引き
     if (!r_node && line[3] == "名詞") {
         std::vector<std::string> mod_spec{line[1],line[2],line[3],"",line[5],line[6]};
         r_node = lookup_and_make_special_pseudo_nodes(line[0].c_str(), strlen(line[0].c_str()), mod_spec);
         //cerr << "; modify proper noun to noun:" <<  line[0] << ":" << line[1] << ":" << line[2] << ":" << line[3] << ":" << line[4] << ":" << line[5] << ":" << line[6] << endl;
     }
+    
+    // 記号に読み方が書かれている場合は無視する
+    if (!r_node && line[3] == "特殊") {
+        std::vector<std::string> mod_spec{"",line[2],line[3],line[4],line[5],line[6]};
+        r_node = lookup_and_make_special_pseudo_nodes(line[0].c_str(), strlen(line[0].c_str()), mod_spec);
+    }
 
-    if (!r_node) { // 推定
+    if (!r_node) { // 未定義語として処理
         // 細分類以下まで推定するなら，以下も書き換える
         r_node = dic->make_unk_pseudo_node_gold(line[0].c_str(), strlen(line[0].c_str()), line[3]);
         cerr << ";; lookup failed in gold data:" <<  line[0] << ":" << line[1] << ":" << line[2] << ":" << line[3] << ":" << line[4] << ":" << line[5] << ":" << line[6] << endl;

@@ -14,6 +14,9 @@ MKDARTS_HEADERS := tagger.h pos.h
 %.o: %.cc $(HEADERS)
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
+%.og: %.cc $(HEADERS)
+	$(CXX) $(CXXFLAGS_G) -c -o $@ $<
+
 %.ot: %.cc $(HEADERS)
 	$(CXX) $(CXXFLAGS) -c -o $@ $< -D KKN_UNIT_TEST 
 
@@ -26,8 +29,8 @@ kkn_test: $(OBJECTS_TEST) $(HEADERS)
 kkn: $(OBJECTS) $(HEADERS)
 	$(CXX) $(CXXFLAGS) -o $@ $(OBJECTS)
 
-kkn_g: $(OBJECTS) $(HEADERS)
-	$(CXX) $(CXXFLAGS) $(LIBS) -o $@ $(OBJECTS)
+kkn_g: $(OBJECTS:%.o=%.og) $(HEADERS)
+	$(CXX) $(CXXFLAGS_G) $(LIBS) -o $@ $(OBJECTS:%.o=%.og)
 
 mkdarts: $(MKDARTS_OBJECTS) $(MKDARTS_HEADERS)
 	$(CXX) $(CXXFLAGS) -o $@ $(MKDARTS_OBJECTS)

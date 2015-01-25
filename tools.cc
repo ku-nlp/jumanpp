@@ -120,6 +120,8 @@ unsigned int check_unicode_char_type(int code) {
              code == 0x4e07 || //万
              code == 0x5104 || //億
              code == 0x5146 || //兆
+             code == 0x6570 || //数
+             code == 0xff0c || //，
              //code == 0xff05 ||//％
              // 年月日: code == 0x5e74 || code == 0x6708 || code == 0x65e5 || 
              //code == 0x4ebf || //??
@@ -264,6 +266,7 @@ bool compare_char_type_in_family(unsigned int char_type, unsigned int family_pat
 
 // exceptional expression
 // キロとかここに入れればいい？ペタはjumanでは入ってなかった
+// 数億，数円，数時間をどうするか
 bool check_exceptional_two_chars_in_figure(const char *cp, unsigned int rest_byte_len) {
     if (rest_byte_len >= EXCEPTIONAL_FIGURE_EXPRESSION_LENGTH && 
         !strncmp(cp, EXCEPTIONAL_FIGURE_EXPRESSION, EXCEPTIONAL_FIGURE_EXPRESSION_LENGTH)) {

@@ -7,8 +7,8 @@ namespace Morph {
 
 class Pos {
     unsigned long count;
-    std::map<std::string, unsigned long> dic;
-    std::map<unsigned long, std::string> rdic;
+    std::unordered_map<std::string, unsigned long> dic;
+    std::unordered_map<unsigned long, std::string> rdic;
   public:
     Pos();
 

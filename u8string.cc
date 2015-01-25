@@ -169,6 +169,7 @@ unsigned long U8string::check_unicode_char_type(int code) {//{{{
             code == 0x4e07 || //万
             code == 0x5104 || //億
             code == 0x5146 || //兆
+            code == 0x6570 || //数
             // 京は数字に含めると副作用が大きそう
             //code == 0xff05 ||//％
             // 年月日: code == 0x5e74 || code == 0x6708 || code == 0x65e5 || 
@@ -176,6 +177,7 @@ unsigned long U8string::check_unicode_char_type(int code) {//{{{
             //code == 0x4f59 || //余
             //code == 0x591a || //多
             //code == 0x70b9 //点
+            //数億, は数詞として扱うべきか
             false) {
                 return KANJI_FIGURE;
             }

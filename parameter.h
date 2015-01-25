@@ -27,6 +27,7 @@ class Parameter {
     std::string reading_filename;
 	unsigned int N = 1;
 	unsigned int N_redundant;
+    bool output_ambiguous_word=false;
 
     std::vector<unsigned short> unk_pos;
     std::vector<unsigned short> unk_figure_pos;
@@ -34,6 +35,10 @@ class Parameter {
     int set_N(unsigned int n){
         N =n;
 		N_redundant = N + (unsigned int)(ceil(N * B_BEST_REDUNDANCY));
+    }
+    
+    void set_output_ambigous_word(bool b){
+        output_ambiguous_word = b;
     }
 
     Parameter(const std::string &in_dic_filename, const std::string &in_ftmpl_filename, const int in_iteration_num, const bool in_unknown_word_detection, const bool in_shuffle_training_data, const unsigned int in_unk_max_length, const bool in_debug, const bool in_nbest) {

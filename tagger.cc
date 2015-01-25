@@ -65,7 +65,7 @@ bool Tagger::train(const std::string &gsd_file) {
     }
 
     if (WEIGHT_AVERAGED) {
-        for (std::map<std::string, double>::iterator it = feature_weight_sum.begin(); it != feature_weight_sum.end(); it++) {
+        for (std::unordered_map<std::string, double>::iterator it = feature_weight_sum.begin(); it != feature_weight_sum.end(); it++) {
             feature_weight[it->first] -= it->second / total_iteration_num;
         }
     }
@@ -136,6 +136,10 @@ void Tagger::print_N_best_path() {
 void Tagger::print_lattice() {
     //sentence->print_juman_lattice();
     sentence->print_unified_lattice(); 
+}
+
+void Tagger::print_old_lattice() {
+    sentence->print_juman_lattice();
 }
 
 bool Tagger::add_one_sentence_for_train (Sentence *in_sentence) {

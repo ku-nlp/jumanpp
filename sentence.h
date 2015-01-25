@@ -26,6 +26,7 @@ class Sentence {
     std::vector<Node *> *end_node_list;   // position -> list of nodes that end at this pos
     unsigned int reached_pos;
     unsigned int reached_pos_of_pseudo_nodes;
+    bool output_ambiguous_word;
   public:
     Sentence(std::vector<Node *> *in_begin_node_list, std::vector<Node *> *in_end_node_list, std::string &in_sentence, Dic *in_dic, FeatureTemplateSet *in_ftmpl, Parameter *in_param);
     Sentence(size_t max_byte_length, std::vector<Node *> *in_begin_node_list, std::vector<Node *> *in_end_node_list, Dic *in_dic, FeatureTemplateSet *in_ftmpl, Parameter *in_param);
@@ -73,8 +74,8 @@ class Sentence {
     }
     void print_juman_lattice(); // TODO:問題がなければ廃止
     void print_unified_lattice(); 
-    void minus_feature_from_weight(std::map<std::string, double> &in_feature_weight);
-    void minus_feature_from_weight(std::map<std::string, double> &in_feature_weight, size_t factor);
+    void minus_feature_from_weight(std::unordered_map<std::string, double> &in_feature_weight);
+    void minus_feature_from_weight(std::unordered_map<std::string, double> &in_feature_weight, size_t factor);
     bool lookup_gold_data(std::string &word_pos_pair);
     Node *lookup_and_make_special_pseudo_nodes(const char *start_str, unsigned int pos);
     Node *lookup_and_make_special_pseudo_nodes(const char *start_str, unsigned int specified_length, std::string *specified_pos);
@@ -82,6 +83,7 @@ class Sentence {
     Node *lookup_and_make_special_pseudo_nodes(const char *start_str, unsigned int specified_length, const std::vector<std::string>& spec);
 
     Node *lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, const char *start_str, unsigned int char_num, unsigned int pos, unsigned int specified_length, std::string *specified_pos); 
+    bool check_dict_match(Node* tmp_node, Node* dic_node);
 
     Node *make_unk_pseudo_node_list_from_previous_position(const char *start_str, unsigned int previous_pos);
     Node *make_unk_pseudo_node_list_from_some_positions(const char *start_str, unsigned int pos, unsigned int previous_pos);

@@ -33,6 +33,7 @@ class Tagger {
     void print_best_path();
     void print_N_best_path();
     void print_lattice();
+    void print_old_lattice();
 
     bool train(const std::string &gsd_file);
     bool read_gold_data(const std::string &gsd_file);
