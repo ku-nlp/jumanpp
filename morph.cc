@@ -4,7 +4,8 @@
 
 bool MODE_TRAIN = false;
 bool WEIGHT_AVERAGED = false;
-std::unordered_map<std::string, double> feature_weight;
+//std::unordered_map<std::string, double> feature_weight;
+FeatureVector feature_weight;
 std::unordered_map<std::string, double> feature_weight_sum;
 int num_of_sentences_processed = 0;
 
@@ -19,6 +20,7 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {
     option.add<unsigned int>("unk_max_length", 'l', "maximum length of unknown word detection", false, 7);
     option.add<unsigned int>("lattice", 'L', "output lattice format",false, 1);
     option.add("nbest", 'n', "n-best search");
+    option.add("scw", 0, "use soft confidence weighted");
     option.add("oldstyle", 'o', "print old style lattice");
     option.add("averaged", 'a', "use averaged perceptron for training");
     option.add("ambiguous", 'A', "output ambiguous words on lattice");
@@ -81,6 +83,7 @@ int main(int argc, char** argv) {
     Morph::Parameter param(option.get<std::string>("dict"), option.get<std::string>("feature"), option.get<unsigned int>("iteration"), true, option.exist("shuffle"), option.get<unsigned int>("unk_max_length"), option.exist("debug"), option.exist("nbest")|option.exist("lattice"));
     param.set_N(option.get<unsigned int>("lattice"));
     param.set_output_ambigous_word(option.exist("ambiguous"));
+    param.set_use_scw(option.exist("scw"));
     Morph::Tagger tagger(&param);
 
     if (MODE_TRAIN) {

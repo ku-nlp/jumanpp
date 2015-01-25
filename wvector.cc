@@ -138,3 +138,8 @@ WeightedVector* WeightedVector::operator+ ( vector_imp& r_vec ){
     return tmp;
 }
 
+//double kl_divergence(double mean1, double mean2, const WeightedVector& variance1, const WeightedVector& variance2) {
+//
+//}
+
+

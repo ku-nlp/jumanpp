@@ -413,24 +413,21 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str, unsi
 // TODO::本来はNode あたりに置く
 bool Sentence::check_dict_match(Node* tmp_node, Node* dic_node){//{{{
 
-    //while (tmp_result_node){ //辞書に一致する長さと品詞の形態素がないものだけつなげる．
-    if(! tmp_node)return false;
+    //辞書に一致する長さと品詞の形態素があればなければtrue, あればfalse
+    if(!tmp_node) return false;
 
     Node *tmp_dic_node = dic_node;
     bool matched = false;
     while(tmp_dic_node){
         if(tmp_node->length == tmp_dic_node->length && //length が一致 
-                tmp_node->posid == tmp_dic_node->posid){//pos が一致
+                tmp_node->posid == tmp_dic_node->posid ){//pos が一致
             matched=true;
             break;
         }
         tmp_dic_node = tmp_dic_node->bnext;
     }
-    if(!matched){
-        return true;
-    }else{
-        return false;
-    }
+
+    return !matched;
 }//}}}
 
 
@@ -444,7 +441,6 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, co
     Node *dic_node = dic->lookup_lattice(lattice_result, start_str + pos, specified_length, specified_pos); // look up a dictionary with common prefix search
     //Node *dic_node = dic->lookup(start_str + pos, specified_length, specified_pos); // look up a dictionary with common prefix search
 
-    // 同じ品詞で同じ長さなら使わない
 
     // 訓練データで，長さが分かっている場合か，未知語として選択されていない範囲なら
 	if (specified_length || pos >= reached_pos_of_pseudo_nodes) {
@@ -497,6 +493,7 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, co
 			find_reached_pos_of_pseudo_nodes(pos, result_node);
 	}
 
+    // 辞書にあったものと同じ品詞で同じ長さなら使わない
     if (dic_node) {
         Node *tmp_node = dic_node;
         while (tmp_node->bnext) //末尾にシーク
@@ -805,6 +802,7 @@ void Sentence::print_unified_lattice() {//{{{
                         }
                         if(current ==0){
                             cout << (use_sep?sep:"") << *node->semantic_feature;
+                            use_sep = true;
                         }
                     }
                     if(*node->spos == UNK_POS){
@@ -1292,4 +1290,57 @@ bool Sentence::lookup_gold_data(std::string &word_pos_pair) {//{{{
     return true;
 }//}}}
 
+double Sentence::eval(Sentence& gold){
+    if(length != gold.length){ 
+        cerr << ";; cannot calc loss " << sentence << endl;
+        return 1;
+    }
+
+    Node *node = (*begin_node_list)[length];
+    std::vector<Node *> result_morphs;
+
+    bool find_bos_node = false;
+    while (node) {
+        if (node->stat == MORPH_BOS_NODE)
+            find_bos_node = true;
+        result_morphs.push_back(node);
+        node = node->prev;
+    }
+
+    if (!find_bos_node )
+        cerr << ";; cannot analyze:" << sentence << endl;
+        
+    auto itr = result_morphs.rbegin();
+    auto itr_gold = gold.gold_morphs.rbegin();
+
+    size_t byte      = 0;
+    size_t byte_gold = 0;
+    double score = 0.0;
+    size_t morph_count =0;
+    while (itr_gold != gold.gold_morphs.rend() && itr != result_morphs.rend()){
+        if( byte_gold > byte){
+            byte += (*itr)->length;
+            itr++;
+        }else if( byte > byte_gold){
+            byte_gold += (itr_gold)->length;
+            itr_gold++;
+            morph_count++;
+        }else{
+            // 同じ場所に同じ長さで同じ品詞があればスコア
+            if((*itr)->posid == (itr_gold)->posid && (*itr)->length == (itr_gold)->length){
+                if((*itr)->sposid == (itr_gold)->sposid)
+                    score += 1.0;
+                else
+                    score += 0.5;
+            }
+            //cerr << *(*itr)->base << " "<< *(itr_gold)->base << endl;
+            byte += (*itr)->length;
+            byte_gold += (itr_gold)->length;
+            itr++;
+            itr_gold++;
+            morph_count++;
+        }
+    }
+    return 1.0 - (score / morph_count);
+};
 }

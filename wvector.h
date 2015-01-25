@@ -5,7 +5,7 @@
 #include <vector>
 #include <algorithm>
 #include <unordered_map>
-#include <boost/foreach.hpp>
+//#include <boost/foreach.hpp>
 
 class WeightedVector {
     typedef std::pair<int, double>  Unit;

@@ -126,6 +126,9 @@ class FeatureSet {
   public:
     std::vector<std::string> fset;
     FeatureSet(FeatureTemplateSet *in_ftmpl);
+    FeatureSet(const FeatureSet& f){
+        fset = f.fset;
+    };
     ~FeatureSet();
     int calc_inner_product_with_weight();
     void extract_unigram_feature(Node *node);
@@ -135,6 +138,7 @@ class FeatureSet {
     void plus_feature_from_weight(std::unordered_map<std::string, double> &in_feature_weight);
     void minus_feature_from_weight(std::unordered_map<std::string, double> &in_feature_weight, size_t factor);
     void plus_feature_from_weight(std::unordered_map<std::string, double> &in_feature_weight, size_t factor);
+    inline std::vector<std::string>& get_fset(){return fset;};
     bool print();
 };
 

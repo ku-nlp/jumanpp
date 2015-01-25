@@ -52,16 +52,16 @@ Node::Node(const Node& node) {
 	this->id = node.id;
 	this->starting_pos = node.starting_pos; 
 
-    if (node.string_for_print != node.string)
+    if (node.string_for_print != node.string && node.string_for_print)
         this->string_for_print = new std::string(* node.string_for_print);
-    if (node.end_string != node.string)
+    if (node.end_string != node.string && node.end_string)
         this->end_string = new std::string(* node.end_string);
-    if (node.string)
+    if (node.string && node.string)
         this->string = new std::string(* node.string);
-    if (node.original_surface)
-        this->original_surface = new std::string(* node.string);
+    if (node.original_surface && node.string)
+        this->original_surface = new std::string(* node.original_surface);
     if (node.feature)
-        this->feature = new FeatureSet(* node.feature);
+        this->feature = new FeatureSet(*(node.feature));
 }
 
 Node::~Node() {

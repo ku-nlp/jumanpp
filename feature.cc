@@ -139,7 +139,7 @@ bool FeatureSet::append_feature(FeatureSet *in) {
 int FeatureSet::calc_inner_product_with_weight() {
     double sum = 0;
     for (std::vector<std::string>::iterator it = fset.begin(); it != fset.end(); it++) {
-        if (feature_weight.find(*it) != feature_weight.end()) {
+        if (feature_weight.has_key(*it)) {
             sum += feature_weight[*it];
         }
     }

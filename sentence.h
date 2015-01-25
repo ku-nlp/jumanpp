@@ -16,7 +16,8 @@ class Sentence {
     Dic *dic;
     FeatureTemplateSet *ftmpl;
     bool unknown_word_detection;
-
+    std::vector<Node> gold_morphs; 
+        
     size_t word_num;
     unsigned int length; // length of this sentence
     std::string sentence;
@@ -33,6 +34,23 @@ class Sentence {
     void init(size_t max_byte_length, std::vector<Node *> *in_begin_node_list, std::vector<Node *> *in_end_node_list, Dic *in_dic, FeatureTemplateSet *in_ftmpl, Parameter *in_param);
     ~Sentence();
     void clear_nodes();
+    void set_gold_nodes(){
+        Node* node_gold = (*begin_node_list)[length];
+        bool find_bos_node_gold = false;
+        while (node_gold) {
+            if (node_gold->stat == MORPH_BOS_NODE)
+                find_bos_node_gold = true;
+            Node new_node; 
+            new_node.posid = node_gold->posid;
+            new_node.sposid = node_gold->sposid;
+            new_node.base = node_gold->base;
+            new_node.length = node_gold->length;
+            gold_morphs.push_back(new_node);
+            node_gold = node_gold->prev;
+        }
+        if(!find_bos_node_gold)
+            cerr << ";; gold parse err"<< endl;
+    }
     bool lookup_and_analyze();
     bool add_one_word(std::string &word);
     std::string &get_sentence() {
@@ -45,13 +63,20 @@ class Sentence {
         if (feature)
             delete feature;
         feature = (*begin_node_list)[length]->feature;
-        (*begin_node_list)[length]->feature = NULL;
+        (*begin_node_list)[length]->feature = NULL;//なぜ！？？
         return feature;
     }
     void feature_print();
     unsigned int get_length() {
         return length;
     }
+
+    FeatureSet& get_best_feature() {//{{{
+        Node *node = (*begin_node_list)[length]; // EOS
+        return *node->feature;
+    }//}}}
+
+
     Node *get_bos_node();
     Node *get_eos_node();
     Node *find_best_path();
@@ -72,6 +97,7 @@ class Sentence {
         viterbi_at_position_nbest(length, (*begin_node_list)[length]);
         return (*begin_node_list)[length];
     }
+    double eval(Sentence& gold);
     void print_juman_lattice(); // TODO:問題がなければ廃止
     void print_unified_lattice(); 
     void minus_feature_from_weight(std::unordered_map<std::string, double> &in_feature_weight);

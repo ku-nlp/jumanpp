@@ -45,6 +45,8 @@ bool Tagger::train(const std::string &gsd_file) {
 //                     }
 //             }
     size_t total_iteration_num = 0;
+    SCWClassifier scw(1, 0.8, feature_weight);//C, phi
+    
     for (size_t t = 0; t < param->iteration_num; t++) {
         cerr << "ITERATION:" << t << endl;
         if (param->shuffle_training_data) // shuffle training data
@@ -52,11 +54,24 @@ bool Tagger::train(const std::string &gsd_file) {
         for (std::vector<Sentence *>::iterator it = sentences_for_train.begin(); it != sentences_for_train.end(); it++) {
             cerr << std::distance(sentences_for_train.begin(),it) << "/" << std::distance(sentences_for_train.begin(), sentences_for_train.end()) << "\r";
             new_sentence_analyze((*it)->get_sentence()); // get the best path
-            sentence->minus_feature_from_weight(feature_weight); // - prediction
-            (*it)->get_feature()->plus_feature_from_weight(feature_weight); // + gold standard
-            if (WEIGHT_AVERAGED) { // for average
-                sentence->minus_feature_from_weight(feature_weight_sum, total_iteration_num); // - prediction
-                (*it)->get_feature()->plus_feature_from_weight(feature_weight_sum, total_iteration_num); // + gold standard
+            if(param->use_scw){
+                auto loss = sentence->eval(**it);//単語が異なる割合とか
+                //cerr << "loss:" << loss << endl;
+                if( (*it)->get_feature() ){
+                    //cerr << "it_ok" << endl;
+                    FeatureVector x_vec((*it)->get_feature()->get_fset(), sentence->get_best_feature().get_fset());
+                    //cerr << "update" << endl;
+                    scw.update(loss, x_vec);
+                }else{
+                    cerr << "update failed" << sentence << endl;
+                }
+            }else{
+                sentence->minus_feature_from_weight(feature_weight.get_umap()); // - prediction
+                (*it)->get_feature()->plus_feature_from_weight(feature_weight.get_umap()); // + gold standard
+                if (WEIGHT_AVERAGED) { // for average
+                    sentence->minus_feature_from_weight(feature_weight_sum, total_iteration_num); // - prediction
+                    (*it)->get_feature()->plus_feature_from_weight(feature_weight_sum, total_iteration_num); // + gold standard
+                }
             }
             sentence_clear();
             total_iteration_num++;
@@ -64,7 +79,7 @@ bool Tagger::train(const std::string &gsd_file) {
         cerr << endl;
     }
 
-    if (WEIGHT_AVERAGED) {
+    if (WEIGHT_AVERAGED && !param->use_scw) {
         for (std::unordered_map<std::string, double>::iterator it = feature_weight_sum.begin(); it != feature_weight_sum.end(); it++) {
             feature_weight[it->first] -= it->second / total_iteration_num;
         }
@@ -106,6 +121,7 @@ bool Tagger::read_gold_data(const char *gsd_file) {
         }
         new_sentence->find_best_path();
         new_sentence->set_feature();
+        new_sentence->set_gold_nodes();
         new_sentence->clear_nodes();
         add_one_sentence_for_train(new_sentence);
         //new_sentence->feature_print();
