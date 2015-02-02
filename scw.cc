@@ -1,12 +1,32 @@
 
 #include "scw.h"
 
+FeatureVector::FeatureVector(const std::vector<std::string>& v1, const std::vector<std::string>& v2){
+    for(const auto& s:v1){
+        vec[s] = 1.0;
+    }
+    for(const auto& s:v2){
+        vec[s] -= 1.0;
+    }
+};
+
+double FeatureVector::operator* (const FeatureVector& fv) const{
+    double sum = 0.0;
+    for(const auto& f:fv){
+        auto itr = vec.find(f.first);
+        if(itr != vec.end())
+            sum += f.second * itr->second;
+    }
+    return sum;
+};
+
 void FeatureVector::update(double alpha, double y,const DiagMat& sigma, const FeatureVector& x){//updated mu
     for(const auto& v:x){
         vec[v.first] += alpha * y * sigma.get_value(v.first) * v.second;
         // v の対角要素以外を考える場合は v.first と他のキーの組み合わせを計算
     }
 };
+
 
 void DiagMat::update(double beta, const FeatureVector& x){ // update sigma
     for(auto v:x){
@@ -34,4 +54,20 @@ double DiagMat::get_value(const std::string& sp1)const{
     else
         return 1.0;
 };
+
+
+void SCWClassifier::update(double loss_value, const FeatureVector& vec){
+    int y = 1;
+    double score = mu * vec;
+    double vt = calc_vt(vec);
+    double alphat = calc_alpha(vt,loss_value*score);
+    double ut = calc_ut(alphat, vt);
+    double betat = calc_beta(alphat, ut, vt);
+    //    (double alpha, double y, const DiagMat sigma, const FeatureVector& x)
+    std::cerr << "alpha:" << alphat << " beta:" << betat << " y:" << (double)loss_value;
+    std::cerr << std::endl;
+    mu.update(alphat, loss_value, sigmat, vec);
+    sigmat.update(betat, vec);
+}
+
 

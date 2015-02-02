@@ -235,6 +235,16 @@ class U8string{//{{{
             }
             return true;
         };//}}}
+        
+        bool is_alphabet(){//{{{
+            parse();
+            if(char_size() == 0) return false;
+            for(int i=0;i<char_size();i++){
+                if( (char_type_at(i) & (ALPH)) == 0)
+                    return false;
+            }
+            return true;
+        };//}}}
 
         bool is_kigou(){//{{{
             parse();
