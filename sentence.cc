@@ -733,6 +733,7 @@ void Sentence::print_unified_lattice() {//{{{
             size_t word_length = node->char_num;
             // ID の表示
             if( node->used_in_nbest ) { //n-best解に使われているもののみ
+                U8string ustr(*node->original_surface);
                 cout << wordmark << delim << id << delim ;
                 num2id[char_num + word_length].push_back(id++); // 現在，接続先はn-best と関係なく繋がるもの全てを使用
                 if(num2id[char_num].size()==0){ // 無かったら 0 を出す
@@ -764,8 +765,16 @@ void Sentence::print_unified_lattice() {//{{{
                 if(*node->spos == UNK_POS){
                     cout << "未定義語" << delim << 
                         Dic::pos_map.at("未定義語") << delim;
-                    cout << "その他" << delim << 
-                        Dic::spos_map.at("その他") << delim;
+                    if(ustr.is_katakana()) {
+                        cout << "カタカナ" << delim << 
+                            Dic::spos_map.at("カタカナ") << delim;
+                    }else if(ustr.is_alphabet() ) {
+                        cout << "アルファベット" << delim << 
+                            Dic::spos_map.at("アルファベット") << delim;
+                    }else{
+                        cout << "その他" << delim << 
+                            Dic::spos_map.at("その他") << delim;
+                    }
                 }else{
                     cout << *node->pos << delim 
                         << Dic::pos_map.at(*node->pos) << delim;
@@ -787,7 +796,6 @@ void Sentence::print_unified_lattice() {//{{{
                 }
                      
                 // 意味情報を再構築して表示
-                U8string ustr(*node->original_surface);
                 if(*node->semantic_feature != "NIL" || *node->spos == UNK_POS || ustr.is_katakana()|| ustr.is_kanji() ||ustr.is_eisuu() ||ustr.is_kigou()){
                     const std::string sep="|";
                     bool use_sep = false;

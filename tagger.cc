@@ -56,7 +56,7 @@ bool Tagger::train(const std::string &gsd_file) {
             new_sentence_analyze((*it)->get_sentence()); // get the best path
             if(param->use_scw){
                 auto loss = sentence->eval(**it);//単語が異なる割合とか
-                //cerr << "loss:" << loss << endl;
+                cerr << "loss:" << loss << endl;
                 if( (*it)->get_feature() ){
                     //cerr << "it_ok" << endl;
                     FeatureVector x_vec((*it)->get_feature()->get_fset(), sentence->get_best_feature().get_fset());
