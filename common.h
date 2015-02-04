@@ -21,6 +21,7 @@
 #include <string.h>
 #include "feature.h"
 #include "scw.h"
+#include <float.h>
 
 using std::cin;
 using std::cout;
@@ -32,7 +33,6 @@ extern bool WEIGHT_AVERAGED;
 //extern std::unordered_map<std::string, double> feature_weight;
 extern FeatureVector feature_weight; // 実質は std::unordered_map<std::string, double>
 extern std::unordered_map<std::string, double> feature_weight_sum;
-
 
 namespace Morph {
 
@@ -72,14 +72,15 @@ extern bool check_exceptional_two_chars_in_figure(const char *cp, unsigned int r
 #define UNK_NT "<UNK_NT>"
 #define UNK_WIKIPEDIA "<UNK_WIKIPEDIA>"
 
-#define MORPH_NORMAL_NODE 1
-#define MORPH_BOS_NODE 2
-#define MORPH_EOS_NODE 4
-#define MORPH_UNK_NODE 8
+#define MORPH_NORMAL_NODE 0x0001
+#define MORPH_BOS_NODE 0x0002
+#define MORPH_EOS_NODE 0x0004
+#define MORPH_PSEUDO_NODE 0x0008
+#define MORPH_UNK_NODE 0x0010
+// NORMAL_NODEでもある
+#define MORPH_DEVOICE_NODE 0x0021
+#define MORPH_DUMMY_POS 0xFFFF
 
-#define MORPH_PSEUDO_NODE 6
-
-#define MORPH_DUMMY_POS 65535
 #define MORPH_UNK_COST 1000
 
 #define TYPE_SPACE	1

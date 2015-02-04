@@ -11,6 +11,8 @@ binmode STDERR, ':encoding(utf-8)';
 use strict;
 #(接尾辞 (名詞性名詞接尾辞 ((見出し語 ら)(読み ら)(意味情報 "代表表記:ら/ら"))))
 
+my %dictionary; # 重複チェック用
+
 while (<STDIN>) {
     if($_ =~ /^\s*;/){ next;}
     if($_ =~ /^\s*$/){ next;}
@@ -18,6 +20,8 @@ while (<STDIN>) {
     my $pos = $s->{data}[0]{element};
     
     if($pos eq "連語"){next;} # 連語は飛ばす
+    # 連語の場合は分解して保存し，後で重複のないものだけを追加
+
     my $spos = $s->{data}[1]{element};
     my $yomi = ($s->get_elem('読み'))[0];
     my $type = ($s->get_elem('活用型'))[0];
@@ -36,7 +40,7 @@ while (<STDIN>) {
         $imis = "NIL";
     }
     # $spos = ":$spos" if $spos;
-    for my $midasi ($s->get_elem('見出し語')) {
+    for my $midasi ($s->get_elem('見出し語')) {# 連語から来たものは，同じ表層で同じ品詞のものがない場合のみ使う
         if ($type) {
             if(!$spos){$spos= "*";}
             my @ms =(&get_inflected_forms(Encode::encode('utf-8',$midasi), Encode::encode('utf-8',$type))) ;
@@ -49,10 +53,13 @@ while (<STDIN>) {
                 next unless $mstr;
                 my $form = Encode::decode('utf-8', $m_key->{form});
                 &print_entry($mstr, $pos, $spos ,$form, $type, $midasi, $ystr, $rep, $imis);
+                # 辞書に追加
+                $dictionary{$mstr ."/". $ystr . "/". $pos . "/".$spos} = 1;
             }
         }
-        else {
+        else {# 活用無し
             &print_entry($midasi, $pos, $spos,'*', '*',$midasi, $yomi, $rep, $imis);
+            $dictionary{$midasi . "/". $yomi . "/". $pos . "/".$spos} = 1;
         }
     }
 }

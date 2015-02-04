@@ -71,11 +71,33 @@ class Sentence {
         return length;
     }
 
+    bool check_devoice_condition(Node& node){ //次の形態素が濁音化できるかどうかのチェック
+        /* 濁音化するのは直前の形態素が名詞、または動詞の連用形、名詞性接尾辞の場合のみ */
+        /* 接尾辞の場合を除き直前の形態素が平仮名1文字となるものは不可 */
+        /* 連濁は文の先頭は不可 */
+        
+        bool check_verb = (node.posid == dic->posid2pos.get_id("動詞") && 
+                          node.sposid == dic->sposid2spos.get_id("基本連用系")); // 動詞で連用形. Juman の時点で，連用形は母音動詞の連用形と同じid かどうかだけをチェックしている
+        bool check_noun = (node.posid == dic->posid2pos.get_id("名詞") && 
+                          node.sposid != dic->sposid2spos.get_id("形式名詞")); // 形式名詞以外の名詞
+        bool check_postp = (node.posid == dic->posid2pos.get_id("接尾辞") && 
+                           ( node.sposid == dic->sposid2spos.get_id("名詞性述語接尾辞") || 
+                             node.sposid == dic->sposid2spos.get_id("名詞性名詞接尾辞") || 
+                             node.sposid == dic->sposid2spos.get_id("名詞性名詞助数辞") || 
+                             node.sposid == dic->sposid2spos.get_id("名詞性特殊接尾辞") )); //接尾辞
+        bool check_hiragana =  (!(node.posid != dic->posid2pos.get_id("接尾辞") && 
+                               node.char_type == TYPE_HIRAGANA && 
+                               node.char_num == 1)); //接尾辞以外のひらがな一文字でない
+        bool check_bos = (node.stat & MORPH_BOS_NODE); //文の先頭でない
+        ///* カタカナ複合語の連濁は認めない */ //未実装
+
+        return ( check_bos & check_hiragana & ( check_verb | check_noun | check_postp));
+    };
+
     FeatureSet& get_best_feature() {//{{{
         Node *node = (*begin_node_list)[length]; // EOS
         return *node->feature;
     }//}}}
-
 
     Node *get_bos_node();
     Node *get_eos_node();
@@ -92,11 +114,7 @@ class Sentence {
 	void print_N_best_path();
     void mark_nbest();
     // make EOS node and get N-best path
-    Node* find_N_best_path() {
-        (*begin_node_list)[length] = get_eos_node(); // End Of Sentence
-        viterbi_at_position_nbest(length, (*begin_node_list)[length]);
-        return (*begin_node_list)[length];
-    }
+    Node* find_N_best_path(); 
     double eval(Sentence& gold);
     void print_juman_lattice(); // TODO:問題がなければ廃止
     void print_unified_lattice(); 

@@ -1,6 +1,6 @@
 CXX := g++
 #CXXFLAGS := -O3 -Wall # -g
-CXXFLAGS := --std=c++1y -O3 -m64 -w -Wl,-rpath /share/usr-x86_64/lib64 # -pg
+CXXFLAGS := --std=c++1y -g3 -O3 -m64 -w -Wl,-rpath /share/usr-x86_64/lib64 # -pg
 CXXFLAGS_G := --std=c++1y -g3 -fno-inline -g -m64 -w -Wl,-rpath /share/usr-x86_64/lib64 # -pg
 
 OBJECTS_TEST := kkn_test.ot wvector.ot wvector_test.ot morph.ot dic.ot tagger.ot pos.ot sentence.ot feature.ot node.ot tools.ot charlattice.ot scw.ot

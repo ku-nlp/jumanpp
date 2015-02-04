@@ -50,6 +50,7 @@ bool Dic::open(Parameter *in_param, FeatureTemplateSet *in_ftmpl) {//{{{
     return true;
 }//}}}
 
+// TODO: 非ラティス版のlookup 廃止
 Node *Dic::lookup(const char *start_str) {//{{{
     return lookup(start_str, 0, MORPH_DUMMY_POS);
 }//}}}
@@ -103,6 +104,9 @@ Node *Dic::lookup(const char *start_str, unsigned int specified_length, unsigned
             f->extract_unigram_feature(new_node);
             new_node->wcost = f->calc_inner_product_with_weight();
             new_node->feature = f;
+            if(param->debug){
+                new_node->debug_info["unigram_feature"] = f->str();
+            }
 
             new_node->bnext = result_node;
             result_node = new_node;
@@ -120,8 +124,6 @@ Node *Dic::lookup(const char *start_str, unsigned int specified_length, const st
     auto specified_sposid = sposid2spos.get_id(specified[3]);
     auto specified_formtypeid = formtypeid2formtype.get_id(specified[4]);
     auto specified_formid = formid2form.get_id(specified[5]);
-
-    //cerr << start_str << " " << specified_posid << ", " << specified_sposid << ", " << specified_formid << ", " << specified_formtypeid << endl;
 
     // search double array
     Darts::DoubleArray::result_pair_type result_pair[1024];
@@ -156,7 +158,11 @@ Node *Dic::lookup(const char *start_str, unsigned int specified_length, const st
                 new_node->stat = MORPH_UNK_NODE;
             } else {
                 new_node->string = new_node->string_for_print;
-                new_node->stat = MORPH_NORMAL_NODE;
+                if(new_node->semantic_feature->find("濁音化",0) != std::string::npos){// TODO:意味情報を文字扱いしない
+                    new_node->stat = MORPH_DEVOICE_NODE;
+                }else{
+                    new_node->stat = MORPH_NORMAL_NODE;
+                }
             }
             new_node->char_type = check_utf8_char_type((unsigned char *)start_str);
             new_node->char_family = check_char_family(new_node->char_type);
@@ -167,7 +173,10 @@ Node *Dic::lookup(const char *start_str, unsigned int specified_length, const st
             FeatureSet *f = new FeatureSet(ftmpl);
             f->extract_unigram_feature(new_node);
             new_node->wcost = f->calc_inner_product_with_weight();
-            new_node->feature = f;
+            new_node->feature = f;// 学習に必要
+            if(param->debug){
+                new_node->debug_info["unigram_feature"] = f->str();
+            }
 
             new_node->bnext = result_node;
             result_node = new_node;
@@ -176,6 +185,7 @@ Node *Dic::lookup(const char *start_str, unsigned int specified_length, const st
     return result_node;
 }//}}}
 
+// TODO: デフォルトパラメータ化
 Node *Dic::lookup_lattice(std::vector<Darts::DoubleArray::result_pair_type> &da_search_result,const char *start_str) {//{{{
     return lookup_lattice(da_search_result, start_str, 0, MORPH_DUMMY_POS);
 }//}}}
@@ -188,40 +198,30 @@ Node *Dic::lookup_lattice(std::vector<Darts::DoubleArray::result_pair_type> &da_
 }//}}}
 
 // DA から検索した結果を Node に変換する
-// ラティスを受け取る方法を考える
 Node *Dic::lookup_lattice(std::vector<Darts::DoubleArray::result_pair_type> &da_search_result, const char *start_str, unsigned int specified_length, unsigned short specified_posid) {//{{{
     Node *result_node = NULL;
         
-    // コレを受け取る様にしたほうが依存関係がスッキリする... と思いきや，darts を持ってるのはDic クラスだった
-    // ラティスを受け取った方が良い気がしてきた
-    // auto result_pair = da_search_from_position(int position);
     std::vector<Darts::DoubleArray::result_pair_type> &result_pair = da_search_result; 
         
     if (result_pair.size() == 0)
         return result_node;
     size_t num = result_pair.size();
-    //cerr << "result_num: " << num << endl;
         
-    //以降のコードは完全に同じ？
-    for (size_t i = 0; i < num; i++) { // hit num
-        if (specified_length && specified_length != result_pair[i].length)//ここのlength はbyte? char_num?
+    for (size_t i = 0; i < num; i++) { 
+        if (specified_length && specified_length != result_pair[i].length)
             continue;
         size_t size = token_size(result_pair[i]);
         const Token *token = get_token(result_pair[i]);
 
-        //cerr << "i:" << i << " " << "token: " << *baseid2base.get_pos(token->base_id) << " pos:" << *posid2pos.get_pos(token->posid) << " size:" << size << endl;
-            
         for (size_t j = 0; j < size; j++) { // same key but different value (pos)
             if (specified_posid != MORPH_DUMMY_POS && specified_posid != (token + j)->posid)
                 continue;
-            //cerr << " j:" << j << " " << "token: " << *baseid2base.get_pos((token+j)->base_id) << " pos:" << *posid2pos.get_pos((token+j)->posid) << " rep:" << 
-            //    *repid2rep.get_pos((token+j)->rep_id) << " size:" << size << endl;
 
             Node *new_node = new Node;
             read_node_info(*(token + j), &new_node);
             new_node->token = (Token *)(token + j);
-
-            new_node->length = result_pair[i].length;// ここは変えるべき？
+                
+            new_node->length = result_pair[i].length; // ここは変えるべき？
             new_node->surface = start_str;
             new_node->original_surface = new std::string(start_str, new_node->length);
             new_node->char_num = utf8_chars((unsigned char *)start_str, new_node->length);
@@ -231,7 +231,11 @@ Node *Dic::lookup_lattice(std::vector<Darts::DoubleArray::result_pair_type> &da_
                 new_node->stat = MORPH_UNK_NODE;
             } else {
                 new_node->string = new_node->string_for_print;
-                new_node->stat = MORPH_NORMAL_NODE;
+                if(new_node->semantic_feature->find("濁音化",0) != std::string::npos){// TODO:意味情報を文字扱いしない
+                    new_node->stat = MORPH_DEVOICE_NODE;
+                }else{
+                    new_node->stat = MORPH_NORMAL_NODE;
+                }
             }
             new_node->char_type = check_utf8_char_type((unsigned char *)start_str);
             new_node->char_family = check_char_family(new_node->char_type);
@@ -242,6 +246,9 @@ Node *Dic::lookup_lattice(std::vector<Darts::DoubleArray::result_pair_type> &da_
             FeatureSet *f = new FeatureSet(ftmpl);
             f->extract_unigram_feature(new_node);
             new_node->wcost = f->calc_inner_product_with_weight();
+            if(param->debug){
+                new_node->debug_info["unigram_feature"] = f->str();
+            }
             new_node->feature = f;
                 
             new_node->bnext = result_node;
@@ -251,7 +258,6 @@ Node *Dic::lookup_lattice(std::vector<Darts::DoubleArray::result_pair_type> &da_
     return result_node;
 }//}}}
 
-//Node* Dic::recognize_onomatopoeia(const std::string& in_str) {
 Node* Dic::recognize_onomatopoeia(const char* start_str) {//{{{
     int code, next_code;
     Node *result_node = NULL;
@@ -335,6 +341,9 @@ Node* Dic::recognize_onomatopoeia(const char* start_str) {//{{{
         FeatureSet *f = new FeatureSet(ftmpl);
         f->extract_unigram_feature(new_node);
         new_node->wcost = f->calc_inner_product_with_weight();
+        if(param->debug){
+            new_node->debug_info["unigram_feature"] = f->str();
+        }
         new_node->feature = f;
 
         new_node->bnext = result_node;
@@ -370,6 +379,9 @@ Node* Dic::recognize_onomatopoeia(const char* start_str) {//{{{
     //cerr << endl;
     return result_node;
 }//}}}
+
+
+// TODO: make_**_pseudo_node が多すぎるので，減らすか，クラス化する
 
 Node *Dic::make_unk_pseudo_node(const char *start_str, int byte_len) {//{{{
     return make_unk_pseudo_node(start_str, byte_len, MORPH_DUMMY_POS);
@@ -423,6 +435,8 @@ Node *Dic::make_unk_pseudo_node_gold(const char *start_str, int byte_len, std::s
     new_node->feature = new FeatureSet(ftmpl);
     new_node->feature->extract_unigram_feature(new_node);
     new_node->wcost = new_node->feature->calc_inner_product_with_weight();
+    //new_node->debug_info["unigram_feature"] = new_node->feature->str();
+
     return new_node;
 }//}}}
 
@@ -523,6 +537,9 @@ Node *Dic::make_unk_pseudo_node(const char *start_str, int byte_len, unsigned sh
     new_node->feature = new FeatureSet(ftmpl);
     new_node->feature->extract_unigram_feature(new_node);
     new_node->wcost = new_node->feature->calc_inner_product_with_weight();
+    if(param->debug){
+        new_node->debug_info["unigram_feature"] = new_node->feature->str();
+    }
     // new_node->wcost = MORPH_UNK_COST;
     return new_node;
 }//}}}
@@ -738,7 +755,8 @@ void inline Dic::read_node_info(const Token &token, Node **node) {//{{{
     // 意味情報の読み込み
     (*node)->semantic_feature = imisid2imis.get_pos((*node)->imisid);
 
-    (*node)->wcost = token.wcost;
+    //(*node)->wcost = token.wcost;
+    (*node)->wcost = 0.0;
     (*node)->token = const_cast<Token *>(&token);
 }//}}}
 

@@ -10,8 +10,8 @@
 class FeatureVector;
 class DiagMat;
 
-class FeatureVector{
-    std::unordered_map<std::string,double> vec;
+class FeatureVector{// 基本的に ただのunordered_map のラップ
+    std::unordered_map<std::string, double> vec;
     
     public:
         FeatureVector(){vec.clear();};

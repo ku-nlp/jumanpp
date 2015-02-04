@@ -3,14 +3,16 @@
 
 namespace Morph {
 
+int Node::id_count = 0;
+
 Node::Node() {
-    // これやっていいのだったっけ？
-    memset(this, 0, sizeof(Node));
+    //memset(this, 0, sizeof(Node));
+    this->id = id_count++;
 }
 
-Node::Node(const Node& node) {
-    memset(this, 0, sizeof(Node));
-    // 普通のコピー
+Node::Node(const Node& node) { // 普通のコピー
+    //memset(this, 0, sizeof(Node));
+    
     this->prev = node.prev;
     this->next = node.next;
     this->enext = node.enext;
@@ -18,11 +20,11 @@ Node::Node(const Node& node) {
     this->surface = node.surface;
     this->string_for_print = node.string_for_print;
     this->end_string = node.end_string;
-        
     this->representation = node.representation;
     this->semantic_feature = node.semantic_feature; 
+    this->debug_info = node.debug_info;
     this->length = node.length; /* length of morph */
-    this->char_num = node.char_num ;
+    this->char_num = node.char_num;
     this->rcAttr = node.rcAttr;
     this->lcAttr = node.lcAttr;
 	this->posid = node.posid;
