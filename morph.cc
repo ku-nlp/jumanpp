@@ -84,6 +84,7 @@ int main(int argc, char** argv) {
     param.set_N(option.get<unsigned int>("lattice"));
     param.set_output_ambigous_word(option.exist("ambiguous"));
     param.set_use_scw(option.exist("scw"));
+    //param.set_debug(option.exist("debug"));
     Morph::Tagger tagger(&param);
 
     if (MODE_TRAIN) {

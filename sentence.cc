@@ -2,10 +2,11 @@
 #include "pos.h"
 #include "sentence.h"
 #include "feature.h"
+#include <sstream>
 
 namespace Morph {
 
-//(almost)constant variables 
+// (almost)constant variables 
 // どこのクラスかへ移動する
 //std::unordered_map<std::string,int> pos_map({//{{{
 //    {"*",0}, {"特殊",1}, {"動詞",2}, {"形容詞",3}, {"判定詞",4}, {"助動詞",5}, {"名詞",6}, {"指示詞",7},
@@ -524,14 +525,14 @@ bool Sentence::lookup_and_analyze() {//{{{
     // 文字Lattice の構築
     CharLattice cl;
     cl.parse(sentence_c_str);
+    Node::reset_id_count();
     
-    // TODO:ラティスを作ったあと，空いているpos 間を埋める未定義語を生成
+    // TODO:ラティスを作ったあと，空いている pos 間を埋める未定義語を生成
     for (unsigned int pos = 0; pos < length; pos += utf8_bytes((unsigned char *)(sentence_c_str + pos))) {
         if ((*end_node_list)[pos] == NULL) {//pos にたどり着くノードが１つもない
             if (param->unknown_word_detection && pos > 0 && reached_pos <= pos)
                 make_unk_pseudo_node_list_from_previous_position(sentence_c_str, previous_pos);
-        }
-        else {
+        } else {
             // make figure/alphabet nodes and look up a dictionary
             //cerr << "char_num:" << char_num << ", byte:" << pos  << "< length:" << length<< endl;
             Node *r_node = lookup_and_make_special_pseudo_nodes_lattice(cl,sentence_c_str, char_num, pos, 0, NULL); 
@@ -718,7 +719,7 @@ void Sentence::print_unified_lattice() {//{{{
     mark_nbest();
 
     unsigned int char_num = 0;
-    int id = 1;
+    //int id = 1; //
     // - 2 0 0 1 部屋 部屋/へや へや 部屋 名詞 6 普通名詞 1 * 0 * 0 "カテゴリ:場所-施設..."
     // - 15 2 2 2 に * に に 助詞 9 格助詞 1 * 0 * 0 NIL
     // wordmark ID fromIDs char_index_begin char_index_end surface rep_form reading pos posid spos sposid form_type typeid form formid imis
@@ -734,8 +735,8 @@ void Sentence::print_unified_lattice() {//{{{
             // ID の表示
             if( node->used_in_nbest ) { //n-best解に使われているもののみ
                 U8string ustr(*node->original_surface);
-                cout << wordmark << delim << id << delim ;
-                num2id[char_num + word_length].push_back(id++); // 現在，接続先はn-best と関係なく繋がるもの全てを使用
+                cout << wordmark << delim << node->id << delim ;
+                num2id[char_num + word_length].push_back(node->id); // 現在，接続先はn-best と関係なく繋がるもの全てを使用
                 if(num2id[char_num].size()==0){ // 無かったら 0 を出す
                     cout << "0";
                 }else{
@@ -838,6 +839,30 @@ void Sentence::print_unified_lattice() {//{{{
                 }else{
                     cout << "NIL" << endl;
                 }
+
+                if(param->debug){
+                    // デバッグ出力
+                    cout << "!\twcost:" << node->wcost << "\tcost:" << node->cost << endl;
+                    cout << "!\t" << node->debug_info["unigram_feature"] << endl;
+                    std::stringstream ss_debug;
+                    for(auto to_id:num2id[char_num]){
+                        ss_debug.str("");
+                        ss_debug << to_id << " -> " << node->id;
+                        cout << "!\t" << ss_debug.str() << ": " << node->debug_info[ss_debug.str()] << endl;
+                        cout << "!\t" << ss_debug.str() << ": " << node->debug_info[ss_debug.str()+":bigram_feature"] << endl;
+                    }
+                    // BOS, EOS との接続の表示.. (TODO: 簡潔に書き換え)
+                    ss_debug.str("");
+                    ss_debug << -2 << " -> " << node->id;
+                    if(node->debug_info.find(ss_debug.str()) != node->debug_info.end()){
+                        cout << "!\t" << ss_debug.str() << ": " << node->debug_info[ss_debug.str()] << endl;
+                    }
+                    ss_debug.str("");
+                    ss_debug << node->id << " -> " << -1;
+                    if(node->debug_info.find(ss_debug.str()) != node->debug_info.end()){
+                        cout << "!\t" << ss_debug.str() << ": " << node->debug_info[ss_debug.str()] << endl;
+                    }
+                }
             }
             node = node->bnext;
         }
@@ -860,6 +885,7 @@ Node *Sentence::get_bos_node() {//{{{
 	bos_node->form = new std::string(BOS_STRING);
 	bos_node->form_type = new std::string(BOS_STRING);
 	bos_node->base = new std::string(BOS_STRING);
+    bos_node->id = -2;
 
     FeatureSet *f = new FeatureSet(ftmpl);
     f->extract_unigram_feature(bos_node);
@@ -884,6 +910,8 @@ Node *Sentence::get_eos_node() {//{{{
 	eos_node->form_type = new std::string(EOS_STRING);
 	eos_node->base = new std::string(EOS_STRING);
 
+    eos_node->id = -1;
+
     FeatureSet *f = new FeatureSet(ftmpl);
     f->extract_unigram_feature(eos_node);
     eos_node->wcost = f->calc_inner_product_with_weight();
@@ -899,13 +927,20 @@ Node *Sentence::find_best_path() {//{{{
     return (*begin_node_list)[length];
 }//}}}
 
+Node* Sentence::find_N_best_path() {//{{{
+    (*begin_node_list)[length] = get_eos_node(); // End Of Sentence
+    viterbi_at_position_nbest(length, (*begin_node_list)[length]);
+    return (*begin_node_list)[length];
+}//}}}
+
 void Sentence::set_begin_node_list(unsigned int pos, Node *new_node) {//{{{
     (*begin_node_list)[pos] = new_node;
 }//}}}
 
+// TODO:いずれ廃止 or nbest=1 の場合と統合
 bool Sentence::viterbi_at_position(unsigned int pos, Node *r_node) {//{{{
     while (r_node) {
-        long best_score = -INT_MAX;
+        double best_score = -DBL_MAX;
         Node *best_score_l_node = NULL;
         FeatureSet *best_score_bigram_f = NULL;
         Node *l_node = (*end_node_list)[pos];
@@ -913,7 +948,8 @@ bool Sentence::viterbi_at_position(unsigned int pos, Node *r_node) {//{{{
             FeatureSet *f = new FeatureSet(ftmpl);
             f->extract_bigram_feature(l_node, r_node);
             double bigram_score = f->calc_inner_product_with_weight();
-            long score = l_node->cost + bigram_score + r_node->wcost;
+            double score = l_node->cost + bigram_score + r_node->wcost;
+            
             if (score > best_score) {
                 best_score_l_node = l_node;
                 if (best_score_bigram_f)
@@ -926,7 +962,7 @@ bool Sentence::viterbi_at_position(unsigned int pos, Node *r_node) {//{{{
             }
             l_node = l_node->enext;
         }
-
+            
         if (best_score_l_node) {
             r_node->prev = best_score_l_node;
             r_node->next = NULL;
@@ -948,76 +984,72 @@ bool Sentence::viterbi_at_position(unsigned int pos, Node *r_node) {//{{{
 }//}}}
 
 bool Sentence::viterbi_at_position_nbest(unsigned int pos, Node *r_node) {//{{{
+    std::stringstream ss_key, ss_value;
 	while (r_node) {
 		std::priority_queue<NbestSearchToken> nodeHeap;
 		Node *l_node = (*end_node_list)[pos];
-//        cerr << "r_node: " << *r_node->string_for_print << "_" << *r_node->pos << endl;
-            
+
         while (l_node) {
-                FeatureSet f(ftmpl);
-                f.extract_bigram_feature(l_node, r_node);
-                double bigram_score = f.calc_inner_product_with_weight();
+            // 濁音化の条件チェック
+            if((l_node->stat == MORPH_DEVOICE_NODE) &&  //今の形態素が濁音化している
+                    (!check_devoice_condition(*r_node))){//前の形態素が濁音化の条件を満たさない
+                l_node = l_node->enext;
+                continue;
+            }
 
-                int traceSize = l_node->traceList.size();
+            FeatureSet f(ftmpl);
+            f.extract_bigram_feature(l_node, r_node);
+            double bigram_score = f.calc_inner_product_with_weight();
+            if(param->debug){
+                ss_key.str(""), ss_value.str(""); 
+                ss_key << l_node->id << " -> " << r_node->id;
+                ss_value << bigram_score << " + " << l_node->cost << " = " << l_node->cost + bigram_score;
+                r_node->debug_info[ss_key.str().c_str()] = std::string(ss_value.str().c_str());
+                l_node->debug_info[ss_key.str().c_str()] = std::string(ss_value.str().c_str());
+                r_node->debug_info[ss_key.str() + ":bigram_feature"] = f.str();
+            }
+                
+            int traceSize = l_node->traceList.size();
+                
+            if (traceSize == 0) {
+                double score = l_node->cost + bigram_score + r_node->wcost;
+                NbestSearchToken newSearchToken(score, 0, l_node);
+                nodeHeap.push(newSearchToken);
 
-                if (traceSize == 0) {
-                    long score = l_node->cost + bigram_score + r_node->wcost;
-                    NbestSearchToken newSearchToken(score, 0, l_node);
-                    nodeHeap.push(newSearchToken);
-
-//                        cerr << *(l_node->string_for_print) 
-//                            << "_" << *l_node->pos  
-//                            //<< "_" << *(l_node->representation)
-//                            << "\t" << *(r_node->string_for_print) 
-//                            << "_" << *r_node->pos 
-//                            //<< "_" << *(r_node->representation) 
-//                            << "\t" << r_node->wcost 
-//                            << "\t" << score << "\t" << "rank" << 0 << endl;
-                } else {
-                    if (traceSize > param->N_redundant)
-                        traceSize = param->N_redundant;
-
-                    for (int i = 0; i < traceSize; ++i) {
-                        // コストが同じなら続ける
-                        
-                        long score = l_node->traceList.at(i).score + bigram_score
-                            + r_node->wcost;
-                        NbestSearchToken newSearchToken(score, i, l_node);
-                        nodeHeap.push(newSearchToken);
-//                        cerr << *(l_node->string_for_print) << "_" << *l_node->pos  
-//                            //<< "_" << *(l_node->representation)
-//                            << "\t" << *(r_node->string_for_print) 
-//                            << "_" << *r_node->pos  
-//                            //<< "_" << *(r_node->representation) 
-//                            << "\t" << r_node->wcost << "\t"
-//                            << score << "\t" << "rank" << i << endl;
-                    }
+            } else {
+                double last_score = DBL_MAX;
+                for (int i = 0; i < traceSize; ++i) {
+                    double score = l_node->traceList.at(i).score + bigram_score + r_node->wcost;
+                    if( i > param->N_redundant && last_score > score) break;
+                    nodeHeap.emplace(score,i,l_node);
+                    last_score = score;
                 }
+            }
             l_node = l_node->enext;
         }
 
-		int heapSize = nodeHeap.size();
+        int heapSize = nodeHeap.size();
 
-		if (heapSize > param->N_redundant)
-			heapSize = param->N_redundant;
+        double last_score = DBL_MAX;
+        for (int i = 0; i < heapSize; ++i) {
+            if( i > param->N_redundant && last_score > nodeHeap.top().score) break;
+            r_node->traceList.push_back(nodeHeap.top());
+            nodeHeap.pop();
+            last_score = score;
+        }
+            
+        if (r_node->traceList.size() > 0) {
+            r_node->next = NULL;
+            r_node->prev = r_node->traceList.front().prevNode;
+            r_node->cost = r_node->traceList.front().score;
+        } else {
+            return false;
+        }
 
-		for (int i = 0; i < heapSize; ++i) {
-			r_node->traceList.push_back(nodeHeap.top());
-			nodeHeap.pop();
-		}
+        r_node = r_node->bnext;
+    }
 
-		if (r_node->traceList.size() > 0) {
-			r_node->next = NULL;
-			r_node->prev = r_node->traceList.front().prevNode;
-			r_node->cost = r_node->traceList.front().score;
-		} else {
-			return false;
-		}
-
-		r_node = r_node->bnext;
-	}
-
-	return true;
+    return true;
 }//}}}
 
 void Sentence::print_N_best_path() {//{{{
@@ -1104,22 +1136,23 @@ void Sentence::mark_nbest() {//{{{
 		traceSize = param->N_redundant;
 	}
 
-    long last_score = LONG_MAX;
-    long output_score = 0;
+    // 近いスコアの場合をまとめるために，整数に丸める
+    double last_score = DBL_MAX;
+    //double output_score = 0;
     long sample_num=0;
     int i=0;
         
     while(i < traceSize_original){
 		Node *node = (*begin_node_list)[length];
 		std::vector<Node *> result_morphs;
-
 		bool find_bos_node = false;
 		int traceRank = i;
-
+                 
 		Node* temp_node = NULL;
-		long output_score = (*begin_node_list)[length]->traceList.at(i).score;
-        if(last_score < output_score) sample_num++; // 同スコアの場合は数に数えず，N-bestに出力
-        if(sample_num > traceSize ) break;
+		double output_score = (*begin_node_list)[length]->traceList.at(i).score;
+        if (last_score > output_score) sample_num++; // 同スコアの場合は数に数えず，N-bestに出力
+        if (sample_num > param->N ) break;
+        std::cerr << sample_num << ":"<< i << ":" << last_score << ":" << output_score << ":N " << traceSize << ":torig "<< traceSize_original << std::endl;
         
 		while (node) {
 		    result_morphs.push_back(node);
@@ -1138,18 +1171,17 @@ void Sentence::mark_nbest() {//{{{
             
 		if (!find_bos_node)
 			cerr << ";; cannot analyze:" << sentence << endl;
-
+            
 		size_t printed_num = 0;
         unsigned long byte_pos=0;
         // 後ろから追加しているので、元の順にするために逆向き
 		for (std::vector<Node *>::reverse_iterator it = result_morphs.rbegin();
 				it != result_morphs.rend(); it++) {
-
+                
 			if ((*it)->stat != MORPH_BOS_NODE && (*it)->stat != MORPH_EOS_NODE) {
                 (*it)->used_in_nbest = true;// Nodeにnbestに入っているかをマークするだけ
                 
                 if(output_ambiguous_word){
-                    // TODO:オプション化する
                     auto tmp = (*begin_node_list)[byte_pos];
                     while(tmp){//同じ長さ(同じ表層)で同じ表層のものをすべて出力する
                         //cerr << "c:" << *tmp->string_for_print << ":" << *tmp->pos << ":" << *tmp->representation << "," << tmp->length << "," << (*it)->length << ", pos:" << tmp->posid << "," << (*it)->posid << endl;
@@ -1298,7 +1330,7 @@ bool Sentence::lookup_gold_data(std::string &word_pos_pair) {//{{{
     return true;
 }//}}}
 
-double Sentence::eval(Sentence& gold){
+double Sentence::eval(Sentence& gold){//{{{
     if(length != gold.length){ 
         cerr << ";; cannot calc loss " << sentence << endl;
         return 1;
@@ -1350,5 +1382,5 @@ double Sentence::eval(Sentence& gold){
         }
     }
     return 1.0 - (score / morph_count);
-};
+};//}}}
 }

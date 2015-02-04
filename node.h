@@ -3,6 +3,8 @@
 
 #include "common.h"
 #include "feature.h"
+#include "pos.h"
+#include <map>
 
 namespace Morph {
 class FeatureSet;
@@ -17,6 +19,7 @@ struct morph_token_t {
 	unsigned short form_type_id; // 活用型
 	unsigned long base_id; // 活用型
     unsigned short length; // 単語の長さ
+    // 使用していないはず
 	short wcost; // cost of this morpheme
         
     unsigned long rep_id; // 代表表記
@@ -42,58 +45,64 @@ struct morph_token_t {
 };
 typedef struct morph_token_t Token;
 
+//TODO: posid を grammar と共通化し， ない場合にのみ新しいid を追加するようにする. 
+//TODO: 巨大な定数 mapping も削除する
 class Node {
+  private:
+    static int id_count;
   public:
-    Node *prev; // best previous node determined by Viterbi algorithm
-    Node *next;
-    Node *enext; // next node that ends at this position
-    Node *bnext; // next node that begins at this position
+    Node *prev = nullptr; // best previous node determined by Viterbi algorithm
+    Node *next = nullptr;
+    Node *enext = nullptr; // next node that ends at this position
+    Node *bnext = nullptr; // next node that begins at this position
     // struct morph_path_t  *rpath;
     // struct morph_path_t  *lpath;
     // struct morph_node_t **begin_node_list;
     // struct morph_node_t **end_node_list;
-    const char *surface; // 未定義語の場合など，素性に使うため書き換える可能性がある
-    std::string *original_surface; // 元々現れたままの表層
-    std::string *string;
-    std::string *string_for_print;
-    std::string *end_string;
-    FeatureSet *feature;
+    const char *surface = nullptr; // 未定義語の場合など，素性に使うため書き換える可能性がある
+    std::string *original_surface = nullptr; // 元々現れたままの表層
+    std::string *string = nullptr;
+    std::string *string_for_print = nullptr;
+    std::string *end_string = nullptr;
+    FeatureSet *feature = nullptr;
         
-    std::string *representation;
-    std::string *semantic_feature; 
+    std::string *representation = nullptr;
+    std::string *semantic_feature = nullptr; 
         
-    // const char *feature;
-    // unsigned int id;
-    unsigned short length; /* length of morph */
-    unsigned short char_num;
-    unsigned short rcAttr;
-    unsigned short lcAttr;
-	unsigned short posid;
-	unsigned short sposid;
-	unsigned short formid;
-	unsigned short formtypeid;
-	unsigned long baseid;
-	unsigned long repid;
-	unsigned long imisid;
-	unsigned long readingid;
-    std::string *pos;
-	std::string *spos;
-	std::string *form;
-	std::string *form_type;
-	std::string *base;
-    std::string *reading;
-    unsigned int char_type;
-    unsigned int char_family;
-    unsigned int end_char_family;
-    unsigned char stat;
-    bool used_in_nbest;
-    short wcost; // cost of this morpheme
-    long cost; // total cost to this node
-    struct morph_token_t *token;
+//ifdef DEBUG
+    std::map<std::string, std::string> debug_info; //
+//endif
+        
+    unsigned short length = 0; /* length of morph */
+    unsigned short char_num = 0;
+    unsigned short rcAttr = 0;
+    unsigned short lcAttr = 0;
+	unsigned short posid = 0;
+	unsigned short sposid = 0;
+	unsigned short formid = 0;
+	unsigned short formtypeid = 0;
+	unsigned long baseid = 0;
+	unsigned long repid = 0;
+	unsigned long imisid = 0;
+	unsigned long readingid = 0;
+    std::string *pos = nullptr;
+	std::string *spos = nullptr;
+	std::string *form = nullptr;
+	std::string *form_type = nullptr;
+	std::string *base = nullptr;
+    std::string *reading = nullptr;
+    unsigned int char_type = 0; //先頭文字の文字タイプ
+    unsigned int char_family = 0;
+    unsigned int end_char_family = 0;
+    unsigned char stat = 0; //どのような状態がありるうるのかを書く
+    bool used_in_nbest = false;
+    double wcost = 0; // cost of this morpheme
+    double cost = 0; // total cost to this node
+    struct morph_token_t *token = nullptr;
 
 	//for N-best and Juman-style output
-	unsigned int id;
-	unsigned int starting_pos; // starting position
+	int id = 0;
+	unsigned int starting_pos = 0; // starting position
 	std::priority_queue<unsigned int, std::vector<unsigned int>,
 			std::greater<unsigned int> > connection; // id of previous nodes connected
 	std::vector<NbestSearchToken> traceList; // keep track of n-best paths
@@ -104,28 +113,33 @@ class Node {
     void print();
     const char *get_first_char();
     unsigned short get_char_num();
+
+    static void reset_id_count(){
+        id_count = 0;
+    };
+
 };
 
 //shen版からのコピー
 class NbestSearchToken {
 
 public:
-	long score;
-	Node* prevNode; //access to previous trace-list
-	int rank; //specify an element in previous trace-list
+	double score = 0;
+	Node* prevNode = nullptr; //access to previous trace-list
+	int rank = 0; //specify an element in previous trace-list
 
 	NbestSearchToken(Node* pN) {
 		prevNode = pN;
 	}
 	;
 
-	NbestSearchToken(long s, int r) {
+	NbestSearchToken(double s, int r) {
 		score = s;
 		rank = r;
 	}
 	;
 
-	NbestSearchToken(long s, int r, Node* pN) {
+	NbestSearchToken(double s, int r, Node* pN) {
 		score = s;
 		rank = r;
 		prevNode = pN;

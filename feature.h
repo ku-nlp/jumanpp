@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "node.h"
+#include <sstream>
 
 namespace Morph {
 
@@ -130,7 +131,7 @@ class FeatureSet {
         fset = f.fset;
     };
     ~FeatureSet();
-    int calc_inner_product_with_weight();
+    double calc_inner_product_with_weight();
     void extract_unigram_feature(Node *node);
     void extract_bigram_feature(Node *l_node, Node *r_node);
     bool append_feature(FeatureSet *in);
@@ -140,6 +141,8 @@ class FeatureSet {
     void plus_feature_from_weight(std::unordered_map<std::string, double> &in_feature_weight, size_t factor);
     inline std::vector<std::string>& get_fset(){return fset;};
     bool print();
+
+    std::string str();
 };
 
 }

@@ -136,7 +136,7 @@ bool FeatureSet::append_feature(FeatureSet *in) {
     return true;
 }
 
-int FeatureSet::calc_inner_product_with_weight() {
+double FeatureSet::calc_inner_product_with_weight() {
     double sum = 0;
     for (std::vector<std::string>::iterator it = fset.begin(); it != fset.end(); it++) {
         if (feature_weight.has_key(*it)) {
@@ -307,5 +307,14 @@ bool FeatureTemplateSet::open(const std::string &template_filename) {
 
     return true;
 }
+
+std::string FeatureSet::str(){
+    std::stringstream ss;
+    for (auto it = fset.begin(); it != fset.end(); it++) {
+        ss << *it << " x " << feature_weight[*it] << " ";
+    }
+    return ss.str();
+};
+
 
 }

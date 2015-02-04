@@ -6,6 +6,8 @@ UNIGRAM UPSP:%p,%sp
 UNIGRAM USF:%sf
 UNIGRAM USFT:%sft
 UNIGRAM UL:%l
+UNIGRAM ULP:%l,%p
+UNIGRAM ULPSP:%l,%p,%sp
 UNIGRAM BA:%ba
 UNIGRAM BAP:%ba,%p
 UNIGRAM BAPSP:%ba,%p,%sp
@@ -43,3 +45,5 @@ BIGRAM BP_SP:%Lp,%Rsp
 BIGRAM BSF_P:%Lsf,%Rp
 BIGRAM BP_SF:%Lp,%Rsf
 BIGRAM BL:%Ll,%Rl
+BIGRAM BLPP:%Ll,%Lp,%Rl,%Rp
+BIGRAM BLPSPPSP:%Ll,%Lp,%Lsp,%Rl,%Rp,%Rsp
