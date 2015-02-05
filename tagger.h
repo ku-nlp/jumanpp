@@ -24,6 +24,7 @@ class Tagger {
          
     std::vector<Node *> begin_node_list; // position -> list of nodes that begin at this pos
     std::vector<Node *> end_node_list;   // position -> list of nodes that end at this pos
+    bool write_tmp_model_file(int t);
   public:
     Tagger(Parameter *in_param);
     ~Tagger();
@@ -34,6 +35,7 @@ class Tagger {
     void print_N_best_path();
     void print_lattice();
     void print_old_lattice();
+
 
     bool train(const std::string &gsd_file);
     bool read_gold_data(const std::string &gsd_file);

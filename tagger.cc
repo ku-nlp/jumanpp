@@ -36,17 +36,9 @@ void Tagger::sentence_clear() {
 bool Tagger::train(const std::string &gsd_file) {
     read_gold_data(gsd_file);
 
-//         for iteration 1..5 {
-//                 for sentence 1..N {
-//                          tagger.analyzer(sentence chunked);
-//                          - collected feature;
-//                          feature gold standard;
-//                          +
-//                     }
-//             }
     size_t total_iteration_num = 0;
-    SCWClassifier scw(1, 0.8, feature_weight);//C, phi
-    
+    SCWClassifier scw(param->c_value, param->phi_value, feature_weight);//C, phi
+         
     for (size_t t = 0; t < param->iteration_num; t++) {
         cerr << "ITERATION:" << t << endl;
         if (param->shuffle_training_data) // shuffle training data
@@ -56,12 +48,19 @@ bool Tagger::train(const std::string &gsd_file) {
             new_sentence_analyze((*it)->get_sentence()); // get the best path
             if(param->use_scw){
                 auto loss = sentence->eval(**it);//単語が異なる割合とか
-                cerr << "loss:" << loss << endl;
+                cerr << endl << "loss:" << loss << endl;
                 if( (*it)->get_feature() ){
                     //cerr << "it_ok" << endl;
-                    FeatureVector x_vec((*it)->get_feature()->get_fset(), sentence->get_best_feature().get_fset());
+                    //FeatureVector sub_vec(sentence->get_best_feature().get_fset(), (*it)->get_feature()->get_fset());
+                    //FeatureVector sub_vec( (*it)->get_feature()->get_fset(), sentence->get_best_feature().get_fset());
+                    FeatureVector sys_vec((*it)->get_feature()->get_fset()); // どこかが逆？
+                    FeatureVector gold_vec(sentence->get_best_feature().get_fset());
+                    scw.update( loss, sys_vec);
+                    scw.update( -loss, gold_vec);
+                    
                     //cerr << "update" << endl;
-                    scw.update(loss, x_vec);
+                    //scw.update( 1.0, sub_vec);
+                    //scw.perceptron_update(sub_vec);
                 }else{
                     cerr << "update failed" << sentence << endl;
                 }
@@ -77,6 +76,7 @@ bool Tagger::train(const std::string &gsd_file) {
             total_iteration_num++;
         }
         cerr << endl;
+        write_tmp_model_file(t);
     }
 
     if (WEIGHT_AVERAGED && !param->use_scw) {
@@ -84,12 +84,6 @@ bool Tagger::train(const std::string &gsd_file) {
             feature_weight[it->first] -= it->second / total_iteration_num;
         }
     }
-
-//     for (std::vector<Sentence *>::iterator it = sentences_for_train.begin(); it != sentences_for_train.end(); it++) {
-//         new_sentence_analyze((*it)->get_sentence()); // get the best path
-//         print_best_path();
-//         sentence_clear();
-//     }
 
     clear_gold_data();
     return true;
@@ -101,7 +95,7 @@ bool Tagger::read_gold_data(const std::string &gsd_file) {
 }
 
 // read gold standard data
-bool Tagger::read_gold_data(const char *gsd_file) {
+bool Tagger::read_gold_data(const char *gsd_file) {//{{{
     std::ifstream gsd_in(gsd_file, std::ios::in);
     if (!gsd_in.is_open()) {
         cerr << ";; cannot open gold data for reading" << endl;
@@ -124,21 +118,23 @@ bool Tagger::read_gold_data(const char *gsd_file) {
         new_sentence->set_gold_nodes();
         new_sentence->clear_nodes();
         add_one_sentence_for_train(new_sentence);
-        //new_sentence->feature_print();
+        ////new_sentence->feature_print();
         sentences_for_train_num++;
     }
 
     gsd_in.close();
     return true;
-}
+}//}}}
 
 // clear gold standard data
-void Tagger::clear_gold_data() {
+void Tagger::clear_gold_data() {//{{{
+    std::cerr << "clear_gold_data" << std::endl;
     for (std::vector<Sentence *>::iterator it = sentences_for_train.begin(); it != sentences_for_train.end(); it++) {
-        delete *it;
+        if(*it)
+            delete *it;
     }
     sentences_for_train.clear();
-}
+}//}}}
 
 // print the best path of a test sentence
 void Tagger::print_best_path() {
@@ -160,6 +156,22 @@ void Tagger::print_old_lattice() {
 
 bool Tagger::add_one_sentence_for_train (Sentence *in_sentence) {
     sentences_for_train.push_back(in_sentence);
+    return true;
+}
+
+//途中経過を書き込む. morphのモデル書き込み関数と重複
+bool Tagger::write_tmp_model_file(int t){
+    std::stringstream ss;
+    ss << param->model_filename << "." << t; 
+    std::ofstream model_out(ss.str().c_str(), std::ios::out);
+    if (!model_out.is_open()) {
+        cerr << ";; cannot open " << ss.str() << " for writing" << endl;
+        return false;
+    }
+    for (std::unordered_map<std::string, double>::iterator it = feature_weight.begin(); it != feature_weight.end(); it++) {
+        model_out << it->first << " " << it->second << endl;
+    }
+    model_out.close();
     return true;
 }
 

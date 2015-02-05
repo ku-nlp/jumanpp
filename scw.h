@@ -16,6 +16,7 @@ class FeatureVector{// 基本的に ただのunordered_map のラップ
     public:
         FeatureVector(){vec.clear();};
         FeatureVector(const std::vector<std::string>& v1, const std::vector<std::string>& v2);
+        FeatureVector(const std::vector<std::string>& v1);
         void update(double alpha, double y, const DiagMat& sigma, const FeatureVector& xt);
         double operator* (const FeatureVector& fv) const;
         bool has_key(const std::string& str){
@@ -72,10 +73,10 @@ class SCWClassifier {
         FeatureVector& mu;
         DiagMat sigmat; //本来は二次元だが対角行列だけ扱う
         inline double calc_alpha(double vt, double mt){// scw 1
-            double alpha = 1.0/(vt*zeta) * ( -mt *psi + std::sqrt( (mt*mt) * (phi*phi*phi*phi / 4.0) + vt *phi*phi*zeta ));
+            double alpha = (1.0/(vt*zeta)) * ( -mt *psi + std::sqrt( (mt*mt) * (phi*phi*phi*phi / 4.0) + vt *phi*phi*zeta ));
             if( alpha < 0.0)
                 return 0.0;
-            if( alpha > C)
+            if( alpha > C )
                 return C;
             return alpha;
         };
@@ -94,6 +95,7 @@ class SCWClassifier {
             return sum;
         };
     public:    
-        SCWClassifier(double in_C, double in_phi, FeatureVector& in_mu):C(in_C),phi(in_phi),zeta(1+ in_phi*in_phi),mu(in_mu),psi(1.0 + in_phi*in_phi){ };
+        SCWClassifier(double in_C, double in_phi, FeatureVector& in_mu):C(in_C),phi(in_phi),zeta(1+ in_phi*in_phi),mu(in_mu),psi(1.0 + (in_phi*in_phi)/2.0){ };
         void update(double loss_value, const FeatureVector& vec);
+        void perceptron_update(const FeatureVector& vec);
 };

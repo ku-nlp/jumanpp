@@ -10,7 +10,7 @@ namespace Morph {
 class FeatureSet;
 class NbestSearchToken; 
 
-struct morph_token_t {
+struct morph_token_t {//{{{
 	unsigned short lcAttr;
 	unsigned short rcAttr;
 	unsigned short posid; // id of part of speech
@@ -42,11 +42,12 @@ struct morph_token_t {
 
 	// unsigned int feature;
 	// unsigned int compound;  /* reserved for noun compound */
-};
+};//}}}
 typedef struct morph_token_t Token;
 
 //TODO: posid を grammar と共通化し， ない場合にのみ新しいid を追加するようにする. 
 //TODO: 巨大な定数 mapping も削除する
+//TODO: ポインタ撲滅
 class Node {
   private:
     static int id_count;
@@ -55,13 +56,9 @@ class Node {
     Node *next = nullptr;
     Node *enext = nullptr; // next node that ends at this position
     Node *bnext = nullptr; // next node that begins at this position
-    // struct morph_path_t  *rpath;
-    // struct morph_path_t  *lpath;
-    // struct morph_node_t **begin_node_list;
-    // struct morph_node_t **end_node_list;
-    const char *surface = nullptr; // 未定義語の場合など，素性に使うため書き換える可能性がある
+    const char *surface = nullptr; 
     std::string *original_surface = nullptr; // 元々現れたままの表層
-    std::string *string = nullptr;
+    std::string *string = nullptr; // 未定義語の場合など，素性に使うため書き換える可能性がある
     std::string *string_for_print = nullptr;
     std::string *end_string = nullptr;
     FeatureSet *feature = nullptr;
@@ -99,7 +96,7 @@ class Node {
     double wcost = 0; // cost of this morpheme
     double cost = 0; // total cost to this node
     struct morph_token_t *token = nullptr;
-
+        
 	//for N-best and Juman-style output
 	int id = 0;
 	unsigned int starting_pos = 0; // starting position
@@ -111,6 +108,7 @@ class Node {
     Node(const Node& node);
     ~Node();
     void print();
+    void clear();
     const char *get_first_char();
     unsigned short get_char_num();
 

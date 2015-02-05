@@ -21,14 +21,20 @@ feature_def=feature.def
 set_postfix=
 use_unknown=''
 flag_debug=''
+c_value='1.0'
+p_value='1.65'
 iteration_num=3
 unk_max_length=2
-while getopts Scs2mesgup:d:f:i:l:h OPT
+while getopts Scs2mesgup:d:f:i:l:C:P:h OPT
 do
     case $OPT in
         m)  set_head=MixedCorpus
             ;;
         c)  use_scw='--scw'
+            ;;
+        C)  c_value=${OPTARG}
+            ;;
+        P)  p_value=${OPTARG}
             ;;
         d)  dic_base=$OPTARG
             ;;
@@ -79,14 +85,18 @@ if [ ! -f data/$feature_def ]; then
     usage
 fi
 
+
+echo ${c_value}
+echo ${p_value}
+
 # 訓練
 if [[ ! $skip_train == 'true' ]]; then 
     if [[ $short_train -gt 0 ]]; then
-        echo "./kkn${flag_debug} -t <(cat data/${set_head}train${set_postfix}.txt |shuf -n ${short_train} ) ${use_unknown} ${use_scw} -a -s -m $model -d data/$dic_base -f data/$feature_def -i $iteration_num -l $unk_max_length"
-        ./kkn${flag_debug} -t <(cat data/${set_head}train${set_postfix}.txt |shuf -n ${short_train} ) ${use_unknown} ${use_scw} -a -s -m $model -d data/$dic_base -f data/$feature_def -i $iteration_num -l $unk_max_length
+        echo "./kkn${flag_debug} -t <(cat data/${set_head}train${set_postfix}.txt |shuf -n ${short_train} ) ${use_unknown} ${use_scw} -C ${c_value} -P ${p_value} -a -s -m $model -d data/$dic_base -f data/$feature_def -i $iteration_num -l $unk_max_length"
+        ./kkn${flag_debug} -t <(cat data/${set_head}train${set_postfix}.txt |shuf -n ${short_train} ) ${use_unknown} ${use_scw} -C ${c_value} -P ${p_value} -a -s -m $model -d data/$dic_base -f data/$feature_def -i $iteration_num -l $unk_max_length
     else
-        echo "./kkn${flag_debug} -t data/${set_head}train${set_postfix}.txt -a ${use_unknown} ${use_scw} -s -m $model -d $dic_base -f $feature_def -i $iteration_num -l $unk_max_length"
-        CPU_PROFILE=kkn_train_$out_base.prof ./kkn${flag_debug} -t data/${set_head}train${set_postfix}.txt ${use_unknown} ${use_scw} -a -s -m $model -d data/$dic_base -f data/$feature_def -i $iteration_num -l $unk_max_length
+        echo "./kkn${flag_debug} -t data/${set_head}train${set_postfix}.txt -a ${use_unknown} ${use_scw} -C ${c_value} -P ${p_value} -s -m $model -d $dic_base -f $feature_def -i $iteration_num -l $unk_max_length "
+        CPU_PROFILE=kkn_train_$out_base.prof ./kkn${flag_debug} -t data/${set_head}train${set_postfix}.txt ${use_unknown}  ${use_scw} -C ${c_value} -P ${p_value} -a -s -m $model -d data/$dic_base -f data/$feature_def -i $iteration_num -l $unk_max_length
     fi
 
 fi

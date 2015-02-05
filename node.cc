@@ -6,20 +6,16 @@ namespace Morph {
 int Node::id_count = 0;
 
 Node::Node() {
-    //memset(this, 0, sizeof(Node));
     this->id = id_count++;
 }
 
 Node::Node(const Node& node) { // 普通のコピー
-    //memset(this, 0, sizeof(Node));
     
     this->prev = node.prev;
     this->next = node.next;
     this->enext = node.enext;
     this->bnext = node.bnext;
     this->surface = node.surface;
-    this->string_for_print = node.string_for_print;
-    this->end_string = node.end_string;
     this->representation = node.representation;
     this->semantic_feature = node.semantic_feature; 
     this->debug_info = node.debug_info;
@@ -54,39 +50,43 @@ Node::Node(const Node& node) { // 普通のコピー
 	this->id = node.id;
 	this->starting_pos = node.starting_pos; 
 
-    if (node.string_for_print != node.string && node.string_for_print)
-        this->string_for_print = new std::string(* node.string_for_print);
-    if (node.end_string != node.string && node.end_string)
-        this->end_string = new std::string(* node.end_string);
-    if (node.string && node.string)
+    if (node.string_for_print)
+        this->string_for_print = new std::string(*node.string_for_print);
+    if (node.end_string)
+        this->end_string = new std::string(*node.end_string);
+    if (node.string)
         this->string = new std::string(* node.string);
-    if (node.original_surface && node.string)
+    if (node.original_surface)
         this->original_surface = new std::string(* node.original_surface);
     if (node.feature)
-        this->feature = new FeatureSet(*(node.feature));
+        this->feature = new FeatureSet(*node.feature);
 }
 
 Node::~Node() {
-    if (string_for_print != string)
-        delete string_for_print;
-    if (end_string != string)
-        delete end_string;
     if (string)
         delete string;
+    if (string_for_print)
+        delete string_for_print;
+    if (end_string)
+        delete end_string;
     if (original_surface)
         delete original_surface;
     if (feature)
         delete feature;
-//    if (pos)
-//        delete pos;
-//    if (spos)
-//        delete spos;
-//    if (form)
-//        delete form;
-//    if (form_type)
-//        delete form_type;
-//    if (base)
-//        delete base;
+}
+
+void Node::clear(){
+    if (string)
+        delete string;
+    if (string_for_print)
+        delete string_for_print;
+    if (end_string)
+        delete end_string;
+    if (original_surface)
+        delete original_surface;
+    if (feature)
+        delete feature;
+    //*this = Node();
 }
 
 void Node::print() {
