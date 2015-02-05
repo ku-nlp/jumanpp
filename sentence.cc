@@ -978,6 +978,9 @@ bool Sentence::viterbi_at_position_nbest(unsigned int pos, Node *r_node) {//{{{
             if((r_node->stat == MORPH_DEVOICE_NODE) &&  //今の形態素が濁音化している
                     (!check_devoice_condition(*l_node))){//前の形態素が濁音化の条件を満たさない
                 //std::cerr << *l_node->string_for_print << "=/=" << *r_node->string_for_print << std::endl;
+                
+                NbestSearchToken newSearchToken(-DBL_MAX, 0, l_node);
+                nodeHeap.push(newSearchToken);
                 l_node = l_node->enext;
                 continue;
             }
@@ -1012,7 +1015,7 @@ bool Sentence::viterbi_at_position_nbest(unsigned int pos, Node *r_node) {//{{{
             }
             l_node = l_node->enext;
         }
-
+            
         int heapSize = nodeHeap.size();
 
         double last_score = DBL_MAX;

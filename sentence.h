@@ -77,7 +77,8 @@ class Sentence {
         /* 連濁は文の先頭は不可 */
         
         bool check_verb = (node.posid == dic->posid2pos.get_id("動詞") && 
-                          node.sposid == dic->sposid2spos.get_id("基本連用系")); // 動詞で連用形. Juman の時点で，連用形は母音動詞の連用形と同じid かどうかだけをチェックしている
+                          (node.formid == dic->formid2form.get_id("基本連用形")||
+                           node.formid == dic->formid2form.get_id("タ接連用形"))); // 動詞で連用形. Juman の時点で，連用形は母音動詞の連用形と同じid かどうかだけをチェックしている
         bool check_noun = (node.posid == dic->posid2pos.get_id("名詞") && 
                           node.sposid != dic->sposid2spos.get_id("形式名詞")); // 形式名詞以外の名詞
         bool check_postp = (node.posid == dic->posid2pos.get_id("接尾辞") && 
