@@ -88,7 +88,7 @@ class Sentence {
         bool check_hiragana =  (!(node.posid != dic->posid2pos.get_id("接尾辞") && 
                                node.char_type == TYPE_HIRAGANA && 
                                node.char_num == 1)); //接尾辞以外のひらがな一文字でない
-        bool check_bos = (node.stat & MORPH_BOS_NODE); //文の先頭でない
+        bool check_bos = !(node.stat & MORPH_BOS_NODE); //文の先頭でない
         ///* カタカナ複合語の連濁は認めない */ //未実装
 
         return ( check_bos & check_hiragana & ( check_verb | check_noun | check_postp));

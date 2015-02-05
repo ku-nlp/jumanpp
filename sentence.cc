@@ -975,8 +975,9 @@ bool Sentence::viterbi_at_position_nbest(unsigned int pos, Node *r_node) {//{{{
 
         while (l_node) {
             // 濁音化の条件チェック
-            if((l_node->stat == MORPH_DEVOICE_NODE) &&  //今の形態素が濁音化している
-                    (!check_devoice_condition(*r_node))){//前の形態素が濁音化の条件を満たさない
+            if((r_node->stat == MORPH_DEVOICE_NODE) &&  //今の形態素が濁音化している
+                    (!check_devoice_condition(*l_node))){//前の形態素が濁音化の条件を満たさない
+                //std::cerr << *l_node->string_for_print << "=/=" << *r_node->string_for_print << std::endl;
                 l_node = l_node->enext;
                 continue;
             }
@@ -1154,8 +1155,9 @@ void Sentence::mark_nbest() {//{{{
 			}
 		}
             
-		if (!find_bos_node)
+		if (!find_bos_node){
 			cerr << ";; cannot analyze:" << sentence << endl;
+        }
             
 		size_t printed_num = 0;
         unsigned long byte_pos=0;
