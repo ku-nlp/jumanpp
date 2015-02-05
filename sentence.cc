@@ -136,9 +136,14 @@ void Sentence::init(size_t max_byte_length, std::vector<Node *> *in_begin_node_l
         begin_node_list->reserve(max_byte_length + 1);
         end_node_list->reserve(max_byte_length + 1);
     }
-    memset(&((*begin_node_list)[0]), 0, sizeof((*begin_node_list)[0]) * (max_byte_length + 1));
-    memset(&((*end_node_list)[0]), 0, sizeof((*end_node_list)[0]) * (max_byte_length + 1));
+    // コンストラクタで初期化されるから不要
+    //memset(&((*begin_node_list)[0]), 0, sizeof((*begin_node_list)[0]) * (max_byte_length + 1));
+    //memset(&((*end_node_list)[0]), 0, sizeof((*end_node_list)[0]) * (max_byte_length + 1));
 
+    begin_node_list->clear();
+    begin_node_list->resize(max_byte_length+1,nullptr);
+    end_node_list->clear();
+    end_node_list->resize(max_byte_length+1,nullptr);
     (*end_node_list)[0] = get_bos_node(); // Begin Of Sentence
 }//}}}
 
@@ -149,18 +154,30 @@ Sentence::~Sentence() {//{{{
 }//}}}
 
 void Sentence::clear_nodes() {//{{{
-    if ((*end_node_list)[0])
+    if( end_node_list && end_node_list->size() > 0 && (*end_node_list)[0] ){
         delete (*end_node_list)[0]; // delete BOS
-    for (unsigned int pos = 0; pos <= length; pos++) {
-        Node *tmp_node = (*begin_node_list)[pos];
-        while (tmp_node) {
-            Node *next_node = tmp_node->bnext;
-            delete tmp_node;
-            tmp_node = next_node;
-        }
+    } else {
+        //std::cerr << "skipped: " << this->sentence << " clear_end_nodes" << std::endl;
     }
-    memset(&((*begin_node_list)[0]), 0, sizeof((*begin_node_list)[0]) * (length + 1));
-    memset(&((*end_node_list)[0]), 0, sizeof((*end_node_list)[0]) * (length + 1));
+    if( begin_node_list && begin_node_list->size() > 0 ){
+        for (unsigned int pos = 0; pos <= length; pos++){
+            Node *tmp_node = (*begin_node_list)[pos];
+            while (tmp_node) {
+                //std::cerr << *tmp_node->string_for_print << std::endl;
+                Node *next_node = tmp_node->bnext;
+                delete tmp_node;
+                tmp_node = next_node;
+            }
+        }
+    } else {
+        //std::cerr << "skipped: " << this->sentence << " clear_begin_nodes" << std::endl;
+    }
+    
+    // memset のせいでメンバにあるオブジェクトが死ぬ
+    if(begin_node_list)
+        begin_node_list->clear();
+    if(end_node_list)
+        end_node_list->clear();
 }//}}}
 
 bool Sentence::add_one_word(std::string &word) {//{{{
@@ -251,34 +268,17 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str, unsi
     // 訓練データで，長さが分かっている場合か，未知語として選択されていない範囲なら
 	if (specified_length || pos >= reached_pos_of_pseudo_nodes) {
         // 数詞処理
-		// make figure nodes
         // 同じ文字種が続く範囲を一語として入れてくれる
 		result_node = dic->make_specified_pseudo_node(start_str + pos,
 				specified_length, specified_pos, &(param->unk_figure_pos),
 				TYPE_FAMILY_FIGURE);
-        // 長さが指定されたものに合っていれば，そのまま返す
-		//if (specified_length && result_node) return result_node;
-
 		// make alphabet nodes
 		if (!result_node) {
 			result_node = dic->make_specified_pseudo_node(start_str + pos,
 					specified_length, specified_pos, &(param->unk_pos),
 					TYPE_FAMILY_ALPH_PUNC);
-			//if (specified_length && result_node) return result_node;
 		}
                 
-        // 漢字
-        // 辞書にあれば、辞書にない品詞だけを追加する
-//        kanji_result_node = dic->make_specified_pseudo_node_by_dic_check(start_str + pos,
-//                specified_length, specified_pos, &(param->unk_pos),
-//                TYPE_KANJI|TYPE_KANJI_FIGURE, dic_node);
-//        if (result_node && kanji_result_node) {
-//            //数詞の場合はひとつしか返ってこないことが確定しているので、次のノードに追加すれば大丈夫
-//            result_node->bnext = kanji_result_node;
-//        }else if(!result_node){
-//            result_node = kanji_result_node;
-//        }
-
         // カタカナ
         // TODO:適当に切れるところまでで未定義語を作る
 		if (!result_node) {
@@ -286,14 +286,6 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str, unsi
 					specified_length, specified_pos, &(param->unk_pos),
 					TYPE_KATAKANA , dic_node);
 		}
-
-        // ひらがな
-//		if (!result_node) {
-//			result_node = dic->make_specified_pseudo_node(start_str + pos,
-//					3, specified_pos, &(param->unk_pos), TYPE_HIRAGANA );
-//			if (specified_length && result_node)
-//				return result_node;
-//		}
 
 		if (!specified_length && result_node) // only prediction
 			find_reached_pos_of_pseudo_nodes(pos, result_node);
@@ -305,14 +297,21 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str, unsi
             tmp_node = tmp_node->bnext;
 
         Node* tmp_result_node = result_node;
-        while(tmp_result_node){
-            //
+        while (tmp_result_node){
             auto next_result = tmp_result_node->bnext;
-            if(check_dict_match(tmp_result_node, dic_node)){
-                tmp_node->bnext =new Node(*tmp_result_node);
+//            // 使う場合はコピーして元はdelete，使わない場合は単にdelete
+//            if(check_dict_match(tmp_result_node, dic_node)){ 
+//                tmp_node->bnext = new Node(*tmp_result_node);
+//                tmp_node = tmp_node->bnext;
+//            }
+//            delete tmp_result_node;
+            // 使う場合はコピー，使わない場合はdelete
+            if(check_dict_match(tmp_result_node, dic_node)){ 
+                tmp_node->bnext = tmp_result_node;
                 tmp_node = tmp_node->bnext;
+            }else{
+                delete tmp_result_node;
             }
-            delete tmp_result_node;
             tmp_result_node = next_result;
         }
         tmp_node->bnext = nullptr;
@@ -322,6 +321,7 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str, unsi
     return result_node;
 }//}}}
         
+// GOLD 用の詳細指定版，ほぼ同内容だが，，，
 Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str, unsigned int specified_length, const std::vector<std::string>& spec){//{{{
     Node *result_node = NULL;
     Node *kanji_result_node = NULL;
@@ -355,18 +355,6 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str, unsi
             // アルファベットは辞書に載っている可能性がある
 			//if (specified_length && result_node) return result_node;
 		}
-                
-        // 漢字
-        // 辞書にあれば、辞書にない品詞だけを追加する
-//        kanji_result_node = dic->make_specified_pseudo_node_by_dic_check(start_str + pos,
-//                specified_length, specified_pos, &(param->unk_pos),
-//                TYPE_KANJI|TYPE_KANJI_FIGURE, dic_node);
-//        if (result_node && kanji_result_node) {
-//            //数詞の場合はひとつしか返ってこないことが確定しているので、次のノードに追加すれば大丈夫
-//            result_node->bnext = kanji_result_node;
-//        }else if(!result_node){
-//            result_node = kanji_result_node;
-//        }
 
         // カタカナ
         // TODO:適当に切れるところまでで未定義語を作る
@@ -375,14 +363,6 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str, unsi
 					specified_length, specified_pos, &(param->unk_pos),
 					TYPE_KATAKANA , dic_node);
 		}
-
-        // ひらがな
-//		if (!result_node) {
-//			result_node = dic->make_specified_pseudo_node(start_str + pos,
-//					3, specified_pos, &(param->unk_pos), TYPE_HIRAGANA );
-//			if (specified_length && result_node)
-//				return result_node;
-//		}
 
 		if (!specified_length && result_node) // only prediction
 			find_reached_pos_of_pseudo_nodes(pos, result_node);
@@ -395,13 +375,13 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str, unsi
 
         Node* tmp_result_node = result_node;
         while(tmp_result_node){
-            //
             auto next_result = tmp_result_node->bnext;
-            if(check_dict_match(tmp_result_node, dic_node)){
-                tmp_node->bnext =new Node(*tmp_result_node);
+            if(check_dict_match(tmp_result_node, dic_node)){ 
+                tmp_node->bnext = tmp_result_node;
                 tmp_node = tmp_node->bnext;
+            }else{
+                delete tmp_result_node;
             }
-            delete tmp_result_node;
             tmp_result_node = next_result;
         }
         tmp_node->bnext = nullptr;
@@ -502,13 +482,13 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, co
 
         Node* tmp_result_node = result_node;
         while(tmp_result_node){
-            //
             auto next_result = tmp_result_node->bnext;
-            if(check_dict_match(tmp_result_node, dic_node)){
-                tmp_node->bnext =new Node(*tmp_result_node);
+            if(check_dict_match(tmp_result_node, dic_node)){ 
+                tmp_node->bnext = tmp_result_node;
                 tmp_node = tmp_node->bnext;
+            }else{
+                delete tmp_result_node;
             }
-            delete tmp_result_node;
             tmp_result_node = next_result;
         }
         tmp_node->bnext = nullptr;
@@ -541,7 +521,7 @@ bool Sentence::lookup_and_analyze() {//{{{
             // オノマトペ処理 or lookup_and_make_special_pseudo_nodes 内
             Node *r_onomatope_node = dic->recognize_onomatopoeia(sentence_c_str + pos);
             if( r_onomatope_node != NULL ){
-                if(r_node ){
+                if( r_node ){
                     Node *tmp_node = r_node;
                     while (tmp_node->bnext)
                         tmp_node = tmp_node->bnext;
@@ -783,8 +763,12 @@ void Sentence::print_unified_lattice() {//{{{
                         << Dic::spos_map.at(*node->spos) << delim;
                 }
                 // 活用型 活用型id
-                cout << *node->form_type << delim 
-                    << Dic::katuyou_type_map.at(*node->form_type) << delim;
+                if(Dic::katuyou_type_map.count(*node->form_type) == 0  ){
+                    cout << "*" << delim << "0" << delim;
+                }else{
+                    cout << *node->form_type << delim 
+                        << Dic::katuyou_type_map.at(*node->form_type) << delim;
+                }
                     
                 // 活用系 活用系id
                 auto type_and_form = (*node->form_type+":"+*node->form);
@@ -873,14 +857,14 @@ void Sentence::print_unified_lattice() {//{{{
 
 Node *Sentence::get_bos_node() {//{{{
 	Node *bos_node = new Node;
-	bos_node->surface = const_cast<const char *>(BOS);
+	bos_node->surface = BOS; //const_cast<const char *>(BOS);
 	bos_node->string = new std::string(bos_node->surface);
-	bos_node->string_for_print = bos_node->string;
-	bos_node->end_string = bos_node->string;
+	bos_node->string_for_print = new std::string(bos_node->surface);
+	bos_node->end_string = new std::string(bos_node->surface);
 	// bos_node->isbest = 1;
-	bos_node->stat = MORPH_BOS_NODE;
+	bos_node->stat = MORPH_BOS_NODE; 
 	bos_node->posid = MORPH_DUMMY_POS;
-	bos_node->pos = new std::string(BOS_STRING);
+	bos_node->pos = new std::string(BOS_STRING); //TODO: リーク
 	bos_node->spos = new std::string(BOS_STRING);
 	bos_node->form = new std::string(BOS_STRING);
 	bos_node->form_type = new std::string(BOS_STRING);
@@ -897,10 +881,10 @@ Node *Sentence::get_bos_node() {//{{{
 
 Node *Sentence::get_eos_node() {//{{{
 	Node *eos_node = new Node;
-	eos_node->surface = const_cast<const char *>(EOS);
+	eos_node->surface = EOS; //const_cast<const char *>(EOS);
 	eos_node->string = new std::string(eos_node->surface);
-	eos_node->string_for_print = eos_node->string;
-	eos_node->end_string = eos_node->string;
+	eos_node->string_for_print = new std::string(eos_node->surface);
+	eos_node->end_string = new std::string(eos_node->surface);
 	// eos_node->isbest = 1;
 	eos_node->stat = MORPH_EOS_NODE;
 	eos_node->posid = MORPH_DUMMY_POS;
@@ -922,7 +906,7 @@ Node *Sentence::get_eos_node() {//{{{
 
 // make EOS node and get the best path
 Node *Sentence::find_best_path() {//{{{
-    (*begin_node_list)[length] = get_eos_node(); // End Of Sentence
+    (*begin_node_list)[length]=(get_eos_node()); // End Of Sentence
     viterbi_at_position(length, (*begin_node_list)[length]);
     return (*begin_node_list)[length];
 }//}}}
@@ -1032,7 +1016,8 @@ bool Sentence::viterbi_at_position_nbest(unsigned int pos, Node *r_node) {//{{{
 
         double last_score = DBL_MAX;
         for (int i = 0; i < heapSize; ++i) {
-            if( i > param->N_redundant && last_score > nodeHeap.top().score) break;
+            double score = nodeHeap.top().score;
+            if( i > param->N_redundant && last_score > score) break;
             r_node->traceList.push_back(nodeHeap.top());
             nodeHeap.pop();
             last_score = score;
@@ -1152,7 +1137,7 @@ void Sentence::mark_nbest() {//{{{
 		double output_score = (*begin_node_list)[length]->traceList.at(i).score;
         if (last_score > output_score) sample_num++; // 同スコアの場合は数に数えず，N-bestに出力
         if (sample_num > param->N ) break;
-        std::cerr << sample_num << ":"<< i << ":" << last_score << ":" << output_score << ":N " << traceSize << ":torig "<< traceSize_original << std::endl;
+        //std::cerr << sample_num << ":"<< i << ":" << last_score << ":" << output_score << ":N " << traceSize << ":torig "<< traceSize_original << std::endl;
         
 		while (node) {
 		    result_morphs.push_back(node);
@@ -1333,14 +1318,14 @@ bool Sentence::lookup_gold_data(std::string &word_pos_pair) {//{{{
 double Sentence::eval(Sentence& gold){//{{{
     if(length != gold.length){ 
         cerr << ";; cannot calc loss " << sentence << endl;
-        return 1;
+        return 1.0;
     }
-
+        
     Node *node = (*begin_node_list)[length];
     std::vector<Node *> result_morphs;
 
     bool find_bos_node = false;
-    while (node) {
+    while (node) { //1-best
         if (node->stat == MORPH_BOS_NODE)
             find_bos_node = true;
         result_morphs.push_back(node);
@@ -1357,7 +1342,8 @@ double Sentence::eval(Sentence& gold){//{{{
     size_t byte_gold = 0;
     double score = 0.0;
     size_t morph_count =0;
-    while (itr_gold != gold.gold_morphs.rend() && itr != result_morphs.rend()){
+    //while (itr_gold != gold.gold_morphs.rend() && itr != result_morphs.rend()){
+    while (itr_gold != gold.gold_morphs.rend() ){
         if( byte_gold > byte){
             byte += (*itr)->length;
             itr++;
@@ -1365,10 +1351,11 @@ double Sentence::eval(Sentence& gold){//{{{
             byte_gold += (itr_gold)->length;
             itr_gold++;
             morph_count++;
-        }else{
-            // 同じ場所に同じ長さで同じ品詞があればスコア
-            if((*itr)->posid == (itr_gold)->posid && (*itr)->length == (itr_gold)->length){
-                if((*itr)->sposid == (itr_gold)->sposid)
+        }else{ // byte == byte_gold
+            // 同じ場所に同じ長さがあればスコア
+            if( (*itr)->length == (itr_gold)->length){
+                //同じ品詞 なら追加で0.5点
+                if((*itr)->posid == (itr_gold)->posid && (*itr)->sposid == (itr_gold)->sposid)
                     score += 1.0;
                 else
                     score += 0.5;
@@ -1381,6 +1368,8 @@ double Sentence::eval(Sentence& gold){//{{{
             morph_count++;
         }
     }
+    //TODO:BOS EOS を除く
+    //return 1.0;
     return 1.0 - (score / morph_count);
 };//}}}
 }

@@ -63,7 +63,7 @@ class Sentence {
         if (feature)
             delete feature;
         feature = (*begin_node_list)[length]->feature;
-        (*begin_node_list)[length]->feature = NULL;//なぜ！？？
+        (*begin_node_list)[length]->feature = NULL;
         return feature;
     }
     void feature_print();

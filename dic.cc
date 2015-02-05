@@ -91,7 +91,7 @@ Node *Dic::lookup(const char *start_str, unsigned int specified_length, unsigned
                 new_node->string = new std::string(UNK_WIKIPEDIA);
                 new_node->stat = MORPH_UNK_NODE;
             } else {
-                new_node->string = new_node->string_for_print;
+                new_node->string = new std::string(*new_node->string_for_print);
                 new_node->stat = MORPH_NORMAL_NODE;
             }
             new_node->char_type = check_utf8_char_type((unsigned char *)start_str);
@@ -157,7 +157,7 @@ Node *Dic::lookup(const char *start_str, unsigned int specified_length, const st
                 new_node->string = new std::string(UNK_WIKIPEDIA);
                 new_node->stat = MORPH_UNK_NODE;
             } else {
-                new_node->string = new_node->string_for_print;
+                new_node->string = new std::string(*new_node->string_for_print);
                 if(new_node->semantic_feature->find("濁音化",0) != std::string::npos){// TODO:意味情報を文字扱いしない
                     new_node->stat = MORPH_DEVOICE_NODE;
                 }else{
@@ -174,6 +174,7 @@ Node *Dic::lookup(const char *start_str, unsigned int specified_length, const st
             f->extract_unigram_feature(new_node);
             new_node->wcost = f->calc_inner_product_with_weight();
             new_node->feature = f;// 学習に必要
+                
             if(param->debug){
                 new_node->debug_info["unigram_feature"] = f->str();
             }
@@ -223,14 +224,14 @@ Node *Dic::lookup_lattice(std::vector<Darts::DoubleArray::result_pair_type> &da_
                 
             new_node->length = result_pair[i].length; // ここは変えるべき？
             new_node->surface = start_str;
-            new_node->original_surface = new std::string(start_str, new_node->length);
             new_node->char_num = utf8_chars((unsigned char *)start_str, new_node->length);
+            new_node->original_surface = new std::string(start_str, new_node->length);
             new_node->string_for_print = new std::string(start_str, new_node->length);
             if (new_node->lcAttr == 1) { // Wikipedia
                 new_node->string = new std::string(UNK_WIKIPEDIA);
                 new_node->stat = MORPH_UNK_NODE;
             } else {
-                new_node->string = new_node->string_for_print;
+                new_node->string = new std::string(*new_node->string_for_print);
                 if(new_node->semantic_feature->find("濁音化",0) != std::string::npos){// TODO:意味情報を文字扱いしない
                     new_node->stat = MORPH_DEVOICE_NODE;
                 }else{
@@ -264,45 +265,31 @@ Node* Dic::recognize_onomatopoeia(const char* start_str) {//{{{
 
     U8string key(start_str); // オノマトペかどうかを判定するキー
     int key_length = key.char_size(); /* キーの文字数を数えておく */
-    //cerr << key << " ";
-     
     std::string current_char = key[0];// １文字目
     code = key.char_type_at(0);// 1文字目のタイプ
         
-    //cerr << "code = " << code << " ";
-    //cerr << endl;
     /* 通常の平仮名、片仮名以外から始まるものは不可 */
     if (code != TYPE_HIRAGANA && code != TYPE_KATAKANA) return false;
     //小文字で始まる場合は終了
     if (key.is_lower(0)) return false;
         
-    //cerr << "<char type ok> ";
     /* 反復型オノマトペ */
     for (size_t len = 2; len < 5; len++) {// 反復の長さ
-        //std::cerr << std::endl;
         if (key_length < len * 2) break;
         std::string current_char = key[len-1];
         /* 途中で文字種が変わるものは不可 */
         next_code = key.char_type_at(len-1);
-        //next_code = check_code(String, pos + len * BYTES4CHAR - BYTES4CHAR);
         if (key.is_choon(len-1)) next_code = code; /* 長音は直前の文字種として扱う */
         if (code != next_code) break; // カタカナかつ記号，みたいなor を考慮していない
         code = next_code;
             
         /* 反復があるか判定 */
-        //cerr <<  key.char_substr(0,len) << " == " <<  key.char_substr(len,len);
         if (key.char_substr(0,len) != key.char_substr(len,len)) continue;
-        //cerr << "<detect reptition len=" << len << " > ";
-        //if (strncmp(String + pos, String + pos + len * BYTES4CHAR, len * BYTES4CHAR)) continue;
         /* ただし3文字が同じものは不可 */
         if (key[0] == key[1] && key[1] == key[2]) continue;
-        //cerr << "<repetition of the same character checked> ";
-        //if (!strncmp(String + pos, String + pos + BYTES4CHAR, BYTES4CHAR) &&
-        //        !strncmp(String + pos, String + pos + 2 * BYTES4CHAR, BYTES4CHAR)) continue;
             
         Node *new_node = new Node;
         new_node->length = key.in_byte_index(len*2); //ここはバイト長
-        //cerr << "len=" << new_node->length << " ";
         new_node->surface = start_str;
     
         new_node->string = new std::string(new_node->surface, new_node->length);
@@ -326,13 +313,11 @@ Node* Dic::recognize_onomatopoeia(const char* start_str) {//{{{
         new_node->readingid = readingid2reading.get_id("*");
         new_node->reading = readingid2reading.get_pos(new_node->readingid );
             
-        new_node->original_surface = new std::string(start_str, new_node->length);
         new_node->char_num = utf8_chars((unsigned char *)start_str, new_node->length);
-        new_node->string_for_print = new std::string(start_str, new_node->length);
-        new_node->string = new_node->string_for_print;
-        new_node->stat = MORPH_NORMAL_NODE; // オノマトペは通常ノード？
+        new_node->stat = MORPH_NORMAL_NODE; 
         new_node->char_type = check_utf8_char_type((unsigned char *)start_str);
         new_node->char_family = check_char_family(new_node->char_type);
+        
         // 以下の処理は中国語用
         char *end_char = (char *)get_specified_char_pointer((unsigned char *)start_str, new_node->length, new_node->char_num - 1);
         new_node->end_char_family = check_char_family((unsigned char *)end_char);
@@ -376,7 +361,6 @@ Node* Dic::recognize_onomatopoeia(const char* start_str) {//{{{
 //            m_buffer[m_buffer_num].weight -= KATAKANA_BONUS;
         break; /* 最初にマッチしたもののみ採用 */
     }
-    //cerr << endl;
     return result_node;
 }//}}}
 
@@ -440,107 +424,99 @@ Node *Dic::make_unk_pseudo_node_gold(const char *start_str, int byte_len, std::s
     return new_node;
 }//}}}
 
-// make an unknown word node
+// make an unknown word node 
 // 未定義語のノードを生成(ある品詞の候補についてのノード or 未定のままのノード(こちらはどういうタイミングで呼び出されるのか？) )
+// この関数の整理が必要
 Node *Dic::make_unk_pseudo_node(const char *start_str, int byte_len, unsigned short specified_posid) {//{{{
-    Node *new_node = new Node;
+    Node *new_node = new Node; 
     new_node->surface = start_str;
     new_node->length = byte_len;
     new_node->char_type = check_utf8_char_type((unsigned char *)new_node->surface);
     new_node->char_family = check_char_family(new_node->char_type);
-        
-    // 未知語処理をする場合も，ラベルとしては未定義アルファベット，未定義漢字，未定義カタカナ語などのラベルを付けるべき．
-    if ((new_node->char_type == (TYPE_FIGURE||TYPE_KANJI_FIGURE)) && (specified_posid == posid2pos.get_id("名詞"))){
-        new_node->string = new std::string("<数詞>");
-        new_node->base = new std::string("<数詞>");
-    } else if (new_node->char_type == TYPE_KANJI){
-        new_node->string = new std::string("未定義語");
-        new_node->base = new std::string("未定義語");
-    } else if (new_node->char_type == TYPE_KATAKANA){
-        new_node->string = new std::string("未定義カタカナ語");
-        new_node->base = new std::string("未定義カタカナ語");
-    } else if (new_node->char_type == TYPE_HIRAGANA){
-        new_node->string = new std::string("未定義語");
-        new_node->base = new std::string("未定義語");
-    } else {//アルファベット,記号など？
-        new_node->string = new std::string(new_node->surface, new_node->length);
-        new_node->base = new std::string("未定義語");
-    } //漢字かな交じりはどこに入る？
-      
-    new_node->original_surface = new std::string(new_node->surface, new_node->length);
-    new_node->string_for_print = new std::string(new_node->surface, new_node->length);
+
+    // 整理:
+    // 品詞が指定されていないか，名詞で，文字が数詞なら＝＞数詞
+    // 品詞が指定なしの場合, 表層(string)を未定義語にして流れにまかせる
+    // 指定がある場合, 表層はそのまま？にして流れに任せる
+
+    // 品詞に関係なく共通の処理
     new_node->char_num = utf8_chars((unsigned char *)(new_node->surface), new_node->length);
     char *end_char = (char *)get_specified_char_pointer((unsigned char *)start_str, new_node->length, new_node->char_num - 1);
     new_node->end_char_family = check_char_family((unsigned char *)end_char);
     new_node->end_string = new std::string(end_char, utf8_bytes((unsigned char *)end_char));
     new_node->stat = MORPH_UNK_NODE;
-
-    new_node->readingid = readingid2reading.get_id("*");
-    new_node->formid = formid2form.get_id("*");
-    new_node->formtypeid = formtypeid2formtype.get_id("*");
-    new_node->repid = repid2rep.get_id("*");
+    
+    new_node->sposid = sposid2spos.get_id(UNK_POS);
+    new_node->spos = sposid2spos.get_pos(new_node->sposid);
+    new_node->readingid = readingid2reading.get_id(UNK_POS);
+    new_node->reading = readingid2reading.get_pos(new_node->readingid);
+    new_node->formid = formid2form.get_id(UNK_POS);
+    new_node->form = formid2form.get_pos(new_node->formid);
+    new_node->formtypeid = formtypeid2formtype.get_id(UNK_POS);
+    new_node->form_type = formtypeid2formtype.get_pos(new_node->formtypeid);
+    new_node->repid = repid2rep.get_id(UNK_POS);
+    new_node->representation = repid2rep.get_pos(new_node->repid);
     new_node->imisid = imisid2imis.get_id("NIL");
-                
-    // pos が指定されている場合とそうでない場合で分岐する
-    // 品詞などを埋める
-    if (specified_posid == MORPH_DUMMY_POS) {
-        new_node->posid  = specified_posid;
+    new_node->semantic_feature = imisid2imis.get_pos(new_node->imisid);
+    
+    new_node->original_surface = new std::string(new_node->surface, new_node->length);
+    new_node->string_for_print = new std::string(new_node->surface, new_node->length);
+    
+
+    if((new_node->char_type == TYPE_FIGURE||new_node->char_type == TYPE_KANJI_FIGURE) && (specified_posid == posid2pos.get_id("名詞")|| specified_posid == MORPH_DUMMY_POS)){
+        //数詞の場合
+        new_node->string = new std::string("<数詞>");
+        new_node->baseid = baseid2base.get_id("<数詞>");
+        new_node->base = baseid2base.get_pos(new_node->baseid);
+        new_node->string = new std::string("<数詞>");
+        new_node->posid = posid2pos.get_id("名詞");
         new_node->pos = posid2pos.get_pos(new_node->posid);
-        new_node->sposid = sposid2spos.get_id(UNK_POS);
-        new_node->spos = sposid2spos.get_pos(new_node->sposid);
-        new_node->formid = formid2form.get_id(UNK_POS);
-        new_node->formtypeid = formtypeid2formtype.get_id(UNK_POS);
-        new_node->baseid = baseid2base.get_id(UNK_POS);
-            
-        if ((new_node->char_type == (TYPE_FIGURE)) || (new_node->char_type == (TYPE_KANJI_FIGURE))){
-            //数詞については詳細品詞まで分かるので入れておく
-            new_node->string = new std::string("<数詞>");
-            new_node->posid = posid2pos.get_id("名詞");
-            new_node->pos = posid2pos.get_pos(new_node->posid);
-            new_node->sposid = sposid2spos.get_id("数詞");
-            new_node->spos = sposid2spos.get_pos(new_node->sposid );
-            new_node->formid = formid2form.get_id("*");
-            new_node->form = formid2form.get_pos(new_node->formid);
-            new_node->formtypeid = formtypeid2formtype.get_id("*");
-            //new_node->formtype = formtypeid2formtype.get_pos(new_node->formtypeid );
-            new_node->base = new std::string("<数詞>");
-        } 
-    } else {//品詞が指定されている場合
-        if ((new_node->char_type == TYPE_FIGURE ||new_node->char_type == TYPE_KANJI_FIGURE) && specified_posid == posid2pos.get_id("名詞")){
-            //数詞については詳細品詞まで分かるので入れておく
-            new_node->string = new std::string("<数詞>");
-            new_node->posid = posid2pos.get_id("名詞");
-            new_node->pos = posid2pos.get_pos(new_node->posid );
-            new_node->sposid = sposid2spos.get_id("数詞");
-            new_node->spos = sposid2spos.get_pos(new_node->sposid);
-            new_node->formid = formid2form.get_id("*");
-            new_node->form = formid2form.get_pos(new_node->formid);
-            new_node->formtypeid = formtypeid2formtype.get_id("*");
-            //new_node->formtype = formtypeid2formtype.get_pos(new_node->formtypeid );
-            new_node->base = new std::string("<数詞>");
-        }else{
+        new_node->sposid = sposid2spos.get_id("数詞");
+        new_node->spos = sposid2spos.get_pos(new_node->sposid );
+        new_node->formid = formid2form.get_id("*");
+        new_node->form = formid2form.get_pos(new_node->formid);
+        new_node->formtypeid = formtypeid2formtype.get_id("*");
+        new_node->form_type = formtypeid2formtype.get_pos(new_node->formtypeid );
+        new_node->base = new std::string("<数詞>");
+    }else{
+        // TODO: base でstring new するのはリークになる
+        // 未知語処理をする場合も，ラベルとしては未定義アルファベット，未定義漢字，未定義カタカナ語などのラベルを付けるべき．
+        if (new_node->char_type == TYPE_KANJI){
+            new_node->string = new std::string("未定義漢語");
+            new_node->baseid = baseid2base.get_id("未定義漢語");
+            new_node->base = baseid2base.get_pos(new_node->baseid);
+        } else if (new_node->char_type == TYPE_KATAKANA){
+            new_node->string = new std::string("未定義カタカナ語");
+            new_node->baseid = baseid2base.get_id("未定義カタカナ語");
+            new_node->base = baseid2base.get_pos(new_node->baseid);
+        } else if (new_node->char_type == TYPE_HIRAGANA){
+            new_node->string = new std::string("未定義ひらがな語");
+            new_node->baseid = baseid2base.get_id("未定義ひらがな語");
+            new_node->base = baseid2base.get_pos(new_node->baseid);
+        } else {//アルファベット,記号など？
+            new_node->string = new std::string(new_node->surface, new_node->length);
+            new_node->baseid = baseid2base.get_id("未定義アルファベット語");
+            new_node->base = baseid2base.get_pos(new_node->baseid);
+        } //漢字かな交じりはどこに入る？
+      
+        // pos が指定されている場合とそうでない場合で分岐する
+        // 品詞などを埋める
+        if (specified_posid == MORPH_DUMMY_POS) {
             new_node->posid  = specified_posid;
             new_node->pos = posid2pos.get_pos(new_node->posid);
-            // 細分類
-            new_node->sposid = sposid2spos.get_id(UNK_POS);
-            new_node->spos = sposid2spos.get_pos(new_node->sposid);
+        } else {//品詞が指定されている場合
+            new_node->posid  = specified_posid;
+            new_node->pos = posid2pos.get_pos(new_node->posid);
         }
     }
         
-    new_node->reading = readingid2reading.get_pos(new_node->readingid);
-    new_node->representation = repid2rep.get_pos(new_node->repid);
-    new_node->semantic_feature = imisid2imis.get_pos(new_node->imisid);
-
-    new_node->form = formid2form.get_pos(new_node->formid);
-    new_node->form_type = formtypeid2formtype.get_pos(new_node->formtypeid);
-            
     new_node->feature = new FeatureSet(ftmpl);
     new_node->feature->extract_unigram_feature(new_node);
     new_node->wcost = new_node->feature->calc_inner_product_with_weight();
+
     if(param->debug){
         new_node->debug_info["unigram_feature"] = new_node->feature->str();
     }
-    // new_node->wcost = MORPH_UNK_COST;
     return new_node;
 }//}}}
 

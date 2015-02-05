@@ -13,7 +13,7 @@ FeatureSet::~FeatureSet() {
 	fset.clear();
 }
 
-void FeatureSet::extract_unigram_feature(Node *node) {
+void FeatureSet::extract_unigram_feature(Node *node) {//{{{
     for (std::vector<FeatureTemplate *>::iterator tmpl_it = ftmpl->get_templates()->begin(); tmpl_it != ftmpl->get_templates()->end(); tmpl_it++) {
         if (!((*tmpl_it)->get_is_unigram())) // skip bigram feature template
             continue;
@@ -55,9 +55,9 @@ void FeatureSet::extract_unigram_feature(Node *node) {
         }
         fset.push_back(f);
     }
-}
+}//}}}
 
-void FeatureSet::extract_bigram_feature(Node *l_node, Node *r_node) {
+void FeatureSet::extract_bigram_feature(Node *l_node, Node *r_node) {//{{{
     for (std::vector<FeatureTemplate *>::iterator tmpl_it = ftmpl->get_templates()->begin(); tmpl_it != ftmpl->get_templates()->end(); tmpl_it++) {
         if ((*tmpl_it)->get_is_unigram()) // skip unigram feature template
             continue;
@@ -127,16 +127,16 @@ void FeatureSet::extract_bigram_feature(Node *l_node, Node *r_node) {
         }
         fset.push_back(f);
     }
-}
+}//}}}
 
-bool FeatureSet::append_feature(FeatureSet *in) {
+bool FeatureSet::append_feature(FeatureSet *in) {//{{{
     for (std::vector<std::string>::iterator it = in->fset.begin(); it != in->fset.end(); it++) {
         fset.push_back(*it);
     }
     return true;
-}
+}//}}}
 
-double FeatureSet::calc_inner_product_with_weight() {
+double FeatureSet::calc_inner_product_with_weight() {//{{{
     double sum = 0;
     for (std::vector<std::string>::iterator it = fset.begin(); it != fset.end(); it++) {
         if (feature_weight.has_key(*it)) {
@@ -144,37 +144,37 @@ double FeatureSet::calc_inner_product_with_weight() {
         }
     }
     return sum;
-}
+}//}}}
 
-void FeatureSet::minus_feature_from_weight(std::unordered_map<std::string, double> &in_feature_weight, size_t factor) {
+void FeatureSet::minus_feature_from_weight(std::unordered_map<std::string, double> &in_feature_weight, size_t factor) {//{{{
     for (std::vector<std::string>::iterator it = fset.begin(); it != fset.end(); it++) {
         in_feature_weight[*it] -= factor;
     }
-}
+}//}}}
 
-void FeatureSet::minus_feature_from_weight(std::unordered_map<std::string, double> &in_feature_weight) {
+void FeatureSet::minus_feature_from_weight(std::unordered_map<std::string, double> &in_feature_weight) {//{{{
     minus_feature_from_weight(in_feature_weight, 1);
-}
+}//}}}
 
-void FeatureSet::plus_feature_from_weight(std::unordered_map<std::string, double> &in_feature_weight, size_t factor) {
+void FeatureSet::plus_feature_from_weight(std::unordered_map<std::string, double> &in_feature_weight, size_t factor) {//{{{
     for (std::vector<std::string>::iterator it = fset.begin(); it != fset.end(); it++) {
         in_feature_weight[*it] += factor;
     }
-}
+}//}}}
 
-void FeatureSet::plus_feature_from_weight(std::unordered_map<std::string, double> &in_feature_weight) {
+void FeatureSet::plus_feature_from_weight(std::unordered_map<std::string, double> &in_feature_weight) {//{{{
     plus_feature_from_weight(in_feature_weight, 1);
-}
+}//}}}
 
-bool FeatureSet::print() {
+bool FeatureSet::print() {//{{{
     for (std::vector<std::string>::iterator it = fset.begin(); it != fset.end(); it++) {
         cerr << *it << " ";
     }
     cerr << endl;
     return true;
-}
+}//}}}
 
-FeatureTemplate::FeatureTemplate(std::string &in_name, std::string &feature_string, bool in_is_unigram) {
+FeatureTemplate::FeatureTemplate(std::string &in_name, std::string &feature_string, bool in_is_unigram) {//{{{
     is_unigram = in_is_unigram;
     name = in_name;
     std::vector<std::string> line;
@@ -184,9 +184,9 @@ FeatureTemplate::FeatureTemplate(std::string &in_name, std::string &feature_stri
         if (macro_id)
             features.push_back(macro_id);
     }
-}
+}//}}}
 
-unsigned int FeatureTemplate::interpret_macro(std::string &macro) {
+unsigned int FeatureTemplate::interpret_macro(std::string &macro) {//{{{
     // unigram
     if (is_unigram) {
         if (macro == FEATURE_MACRO_STRING_WORD)
@@ -272,15 +272,15 @@ unsigned int FeatureTemplate::interpret_macro(std::string &macro) {
 
     cerr << ";; cannot understand macro: " << macro << endl;
     return 0;
-}
+}//}}}
 
-FeatureTemplate *FeatureTemplateSet::interpret_template(std::string &template_string, bool is_unigram) {
+FeatureTemplate *FeatureTemplateSet::interpret_template(std::string &template_string, bool is_unigram) {//{{{
     std::vector<std::string> line;
     split_string(template_string, ":", line);
     return new FeatureTemplate(line[0], line[1], is_unigram);
-}
+}//}}}
 
-bool FeatureTemplateSet::open(const std::string &template_filename) {
+bool FeatureTemplateSet::open(const std::string &template_filename) {//{{{
     std::ifstream ft_in(template_filename.c_str(), std::ios::in);
     if (!ft_in.is_open()) {
         cerr << ";; cannot open " << template_filename << " for reading" << endl;
@@ -306,15 +306,15 @@ bool FeatureTemplateSet::open(const std::string &template_filename) {
     }
 
     return true;
-}
+}//}}}
 
-std::string FeatureSet::str(){
+std::string FeatureSet::str(){//{{{
     std::stringstream ss;
     for (auto it = fset.begin(); it != fset.end(); it++) {
         ss << *it << " x " << feature_weight[*it] << " ";
     }
     return ss.str();
-};
+};//}}}
 
 
 }
