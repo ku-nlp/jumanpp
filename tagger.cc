@@ -168,8 +168,8 @@ bool Tagger::write_tmp_model_file(int t){
         cerr << ";; cannot open " << ss.str() << " for writing" << endl;
         return false;
     }
-    for (std::unordered_map<std::string, double>::iterator it = feature_weight.begin(); it != feature_weight.end(); it++) {
-        model_out << it->first << " " << it->second << endl;
+    for (std::unordered_map<std::string, double>::iterator it = feature_weight_sum.begin(); it != feature_weight_sum.end(); it++) {
+        model_out << it->first << " " << it->second/(double)t << endl;
     }
     model_out.close();
     return true;
