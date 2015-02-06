@@ -105,10 +105,11 @@ class Node {
 	std::vector<NbestSearchToken> traceList; // keep track of n-best paths
     
     Node();
-    Node(const Node& node);
+    //Node(const Node& node);
     ~Node();
     void print();
     void clear();
+    bool is_dummy();
     const char *get_first_char();
     unsigned short get_char_num();
 
