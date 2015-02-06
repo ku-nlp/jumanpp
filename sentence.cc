@@ -268,7 +268,7 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str, unsi
     // 訓練データで，長さが分かっている場合か，未知語として選択されていない範囲なら
 	if (specified_length || pos >= reached_pos_of_pseudo_nodes) {
         // 数詞処理
-        // 同じ文字種が続く範囲を一語として入れてくれる
+        // 同じ文字種が続く範囲を一語として入れる
 		result_node = dic->make_specified_pseudo_node(start_str + pos,
 				specified_length, specified_pos, &(param->unk_figure_pos),
 				TYPE_FAMILY_FIGURE);
@@ -322,6 +322,7 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str, unsi
 }//}}}
         
 // GOLD 用の詳細指定版，ほぼ同内容だが，，，
+// 統合する
 Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str, unsigned int specified_length, const std::vector<std::string>& spec){//{{{
     Node *result_node = NULL;
     Node *kanji_result_node = NULL;
@@ -551,8 +552,8 @@ bool Sentence::lookup_and_analyze() {//{{{
         previous_pos = pos;
         char_num++;
     }
-    if (param->debug)
-        print_lattice();
+    //if (param->debug)
+    //    print_lattice();
 
     // Viterbi
     if(param->nbest){
@@ -1117,6 +1118,7 @@ void Sentence::print_N_best_path() {//{{{
 	cout << endl;
 }//}}}
 
+// ラティス出力する時のためにn-best に含まれる形態素をマーキングする
 void Sentence::mark_nbest() {//{{{
 	unsigned int traceSize_original = (*begin_node_list)[length]->traceList.size();
 	unsigned int traceSize = (*begin_node_list)[length]->traceList.size();
@@ -1249,6 +1251,7 @@ void Sentence::print_best_path() {//{{{
     cout << endl;
 }//}}}
 
+// パーセプトロン専用の関数，いずれ撲滅
 void Sentence::minus_feature_from_weight(std::unordered_map<std::string, double> &in_feature_weight, size_t factor) {//{{{
     Node *node = (*begin_node_list)[length]; // EOS
     node->feature->minus_feature_from_weight(in_feature_weight, factor);
@@ -1258,6 +1261,7 @@ void Sentence::minus_feature_from_weight(std::unordered_map<std::string, double>
     minus_feature_from_weight(in_feature_weight, 1);
 }//}}}
 
+// gold 用の辞書引きの亜種
 bool Sentence::lookup_gold_data(std::string &word_pos_pair) {//{{{
     if (reached_pos < length) {
         cerr << ";; ERROR! Cannot connect at position for gold: " << word_pos_pair << endl;

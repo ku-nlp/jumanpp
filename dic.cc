@@ -50,80 +50,24 @@ bool Dic::open(Parameter *in_param, FeatureTemplateSet *in_ftmpl) {//{{{
     return true;
 }//}}}
 
-// TODO: 非ラティス版のlookup 廃止
-Node *Dic::lookup(const char *start_str) {//{{{
-    return lookup(start_str, 0, MORPH_DUMMY_POS);
-}//}}}
+Node *Dic::lookup(const char *start_str, unsigned int specified_length = 0, std::string *specified_pos = nullptr) {//{{{
+    std::vector<std::string> spec = {"", "", "", "", "", "", ""} ;
 
-Node *Dic::lookup(const char *start_str, unsigned int specified_length, std::string *specified_pos) {//{{{
-    if (specified_pos)
-        return lookup(start_str, specified_length, posid2pos.get_id(*specified_pos));
-    else
-        return lookup(start_str, specified_length, MORPH_DUMMY_POS);
-}//}}}
+    if (specified_pos) //品詞のみを指定
+        spec[2] = std::string(*specified_pos);
 
-Node *Dic::lookup(const char *start_str, unsigned int specified_length, unsigned short specified_posid) {//{{{
-    Node *result_node = NULL;
-
-    // search double array
-    Darts::DoubleArray::result_pair_type result_pair[1024];
-    size_t num = darts.commonPrefixSearch(start_str, result_pair, 1024);
-    if (num == 0)
-        return result_node;
-
-    for (size_t i = 0; i < num; i++) { // hit num
-        if (specified_length && specified_length != result_pair[i].length)
-            continue;
-        size_t size  = token_size(result_pair[i]);
-        const Token *token = get_token(result_pair[i]);
-        for (size_t j = 0; j < size; j++) { // same key but different value (pos)
-            if (specified_posid != MORPH_DUMMY_POS && specified_posid != (token + j)->posid)
-                continue;
-            Node *new_node = new Node;
-            read_node_info(*(token + j), &new_node);
-            new_node->token = (Token *)(token + j);
-            new_node->length = result_pair[i].length;
-            new_node->surface = start_str;
-            new_node->char_num = utf8_chars((unsigned char *)start_str, new_node->length);
-            new_node->string_for_print = new std::string(start_str, new_node->length);
-            new_node->original_surface = new std::string(start_str, new_node->length);
-            if (new_node->lcAttr == 1) { // Wikipedia
-                new_node->string = new std::string(UNK_WIKIPEDIA);
-                new_node->stat = MORPH_UNK_NODE;
-            } else {
-                new_node->string = new std::string(*new_node->string_for_print);
-                new_node->stat = MORPH_NORMAL_NODE;
-            }
-            new_node->char_type = check_utf8_char_type((unsigned char *)start_str);
-            new_node->char_family = check_char_family(new_node->char_type);
-            char *end_char = (char *)get_specified_char_pointer((unsigned char *)start_str, new_node->length, new_node->char_num - 1);
-            new_node->end_char_family = check_char_family((unsigned char *)end_char);
-            new_node->end_string = new std::string(end_char, utf8_bytes((unsigned char *)end_char));
-
-            FeatureSet *f = new FeatureSet(ftmpl);
-            f->extract_unigram_feature(new_node);
-            new_node->wcost = f->calc_inner_product_with_weight();
-            new_node->feature = f;
-            if(param->debug){
-                new_node->debug_info["unigram_feature"] = f->str();
-            }
-
-            new_node->bnext = result_node;
-            result_node = new_node;
-        }
-    }
-    return result_node;
+    return lookup(start_str, specified_length, spec);
 }//}}}
 
 Node *Dic::lookup(const char *start_str, unsigned int specified_length, const std::vector<std::string>& specified) {//{{{
     Node *result_node = NULL;
     // surf_read_base_pos_spos_type_form
-    auto specified_readingid = readingid2reading.get_id(specified[0]);
-    auto specified_baseid = baseid2base.get_id(specified[1]);
-    auto specified_posid = posid2pos.get_id(specified[2]);
-    auto specified_sposid = sposid2spos.get_id(specified[3]);
+    auto specified_readingid  = readingid2reading.get_id(specified[0]);
+    auto specified_baseid     = baseid2base.get_id(specified[1]);
+    auto specified_posid      = posid2pos.get_id(specified[2]);
+    auto specified_sposid     = sposid2spos.get_id(specified[3]);
     auto specified_formtypeid = formtypeid2formtype.get_id(specified[4]);
-    auto specified_formid = formid2form.get_id(specified[5]);
+    auto specified_formid     = formid2form.get_id(specified[5]);
 
     // search double array
     Darts::DoubleArray::result_pair_type result_pair[1024];
@@ -137,13 +81,12 @@ Node *Dic::lookup(const char *start_str, unsigned int specified_length, const st
         size_t size  = token_size(result_pair[i]);
         const Token *token = get_token(result_pair[i]);
         for (size_t j = 0; j < size; j++) { // same key but different value (pos)
-            if (specified_posid != MORPH_DUMMY_POS && 
-                   ((specified[0] != "" && specified_readingid != (token + j)->reading_id) ||
-                    (specified[1] != "" && specified_baseid != (token + j)->base_id) ||
-                    (specified[2] != "" && specified_posid != (token + j)->posid) ||
-                    (specified[3] != "" && specified_sposid != (token + j)->spos_id) ||
-                    (specified[4] != "" && specified_formtypeid != (token + j)->form_type_id) ||
-                    (specified[5] != "" && specified_formid != (token + j)->form_id) ))
+            if ((specified[0].size()>0 && specified_readingid != (token + j)->reading_id) ||
+                (specified[1].size()>0 && specified_baseid != (token + j)->base_id) ||
+                (specified[2].size()>0 && specified_posid != (token + j)->posid) ||
+                (specified[3].size()>0 && specified_sposid != (token + j)->spos_id) ||
+                (specified[4].size()>0 && specified_formtypeid != (token + j)->form_type_id) ||
+                (specified[5].size()>0 && specified_formid != (token + j)->form_id) )
                 continue;
             Node *new_node = new Node;
             read_node_info(*(token + j), &new_node);
@@ -178,7 +121,7 @@ Node *Dic::lookup(const char *start_str, unsigned int specified_length, const st
             if(param->debug){
                 new_node->debug_info["unigram_feature"] = f->str();
             }
-
+                
             new_node->bnext = result_node;
             result_node = new_node;
         }
