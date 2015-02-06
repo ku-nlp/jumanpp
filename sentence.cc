@@ -699,7 +699,6 @@ void Sentence::print_unified_lattice() {//{{{
     mark_nbest();
 
     unsigned int char_num = 0;
-    //int id = 1; //
     // - 2 0 0 1 部屋 部屋/へや へや 部屋 名詞 6 普通名詞 1 * 0 * 0 "カテゴリ:場所-施設..."
     // - 15 2 2 2 に * に に 助詞 9 格助詞 1 * 0 * 0 NIL
     // wordmark ID fromIDs char_index_begin char_index_end surface rep_form reading pos posid spos sposid form_type typeid form formid imis
@@ -888,7 +887,7 @@ Node *Sentence::get_eos_node() {//{{{
 	// eos_node->isbest = 1;
 	eos_node->stat = MORPH_EOS_NODE;
 	eos_node->posid = MORPH_DUMMY_POS;
-	eos_node->pos = new std::string(EOS_STRING);
+	eos_node->pos = new std::string(EOS_STRING); //TODO: リーク
 	eos_node->spos = new std::string(EOS_STRING);
 	eos_node->form = new std::string(EOS_STRING);
 	eos_node->form_type = new std::string(EOS_STRING);
