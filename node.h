@@ -98,7 +98,7 @@ class Node {
     struct morph_token_t *token = nullptr;
         
 	//for N-best and Juman-style output
-	int id = 0;
+	int id = 1;
 	unsigned int starting_pos = 0; // starting position
 	std::priority_queue<unsigned int, std::vector<unsigned int>,
 			std::greater<unsigned int> > connection; // id of previous nodes connected
@@ -113,7 +113,7 @@ class Node {
     unsigned short get_char_num();
 
     static void reset_id_count(){
-        id_count = 0;
+        id_count = 1;
     };
 
 };
