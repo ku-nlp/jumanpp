@@ -1086,9 +1086,9 @@ void Sentence::print_unified_lattice() { //{{{
                      << delim;
 
                 // 表層 代表表記 よみ 原形
-                if (*node->reading == "*") { //読み不明であれば表層を使う
+                if (*node->reading == "*" || *node->reading == "<UNK>") { //読み不明であれば表層を使う
                     cout << *node->original_surface << delim
-                         << *node->representation << delim // 実際は*のはず
+                         << *node->original_surface<< "/"<< *node->original_surface << delim // 実際は*のはず <UNK> とどちらか統一する
                          << *node->original_surface << delim
                          << *node->original_surface << delim;
                 } else {
