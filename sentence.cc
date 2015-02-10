@@ -1009,9 +1009,11 @@ void Sentence::print_juman_lattice() { //{{{
                     }
                     U8string ustr(*node->original_surface);
                     // この辺りの処理はあとでくくり出してNode 生成時に行う
+                    bool kieisuuka = false;
                     if (ustr.is_katakana()) {
                         cout << delim << "<カタカナ>";
                         delim = " ";
+                        kieisuuka = true;
                     }
                     if (ustr.is_kanji()) {
                         cout << delim << "<漢字>";
@@ -1020,11 +1022,17 @@ void Sentence::print_juman_lattice() { //{{{
                     if (ustr.is_eisuu()) {
                         cout << delim << "<英数字>";
                         delim = " ";
+                        kieisuuka = true;
                     }
                     if (ustr.is_kigou()) {
                         cout << delim << "<記号>";
                         delim = " ";
+                        kieisuuka = true;
                     }
+                    if (kieisuuka) {
+                        cout << delim << "<記英数カ>";
+                        delim = " ";
+                    };
                     cout << '"' << endl;
                 } else {
                     cout << "NIL" << endl;
@@ -1157,9 +1165,11 @@ void Sentence::print_unified_lattice() { //{{{
                         use_sep = true;
                     }
                     // TODO:これ以降の処理はあとでくくり出してNode 生成時に行う
+                    bool kieisuuka = false;
                     if (ustr.is_katakana()) {
                         cout << (use_sep ? sep : "") << "カタカナ";
                         use_sep = true;
+                        kieisuuka = true;
                     }
                     if (ustr.is_kanji()) {
                         cout << (use_sep ? sep : "") << "漢字";
@@ -1168,10 +1178,15 @@ void Sentence::print_unified_lattice() { //{{{
                     if (ustr.is_eisuu()) {
                         cout << (use_sep ? sep : "") << "英数字";
                         use_sep = true;
+                        kieisuuka = true;
                     }
                     if (ustr.is_kigou()) {
                         cout << (use_sep ? sep : "") << "記号";
                         use_sep = true;
+                        kieisuuka = true;
+                    }
+                    if (kieisuuka) {
+                        cout << (use_sep ? sep : "") << "記英数カ";
                     }
                     cout << endl;
                 } else {
