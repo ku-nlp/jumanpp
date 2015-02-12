@@ -5,15 +5,15 @@
 
 namespace Morph {
 
-Tagger::Tagger(Parameter *in_param) {
+Tagger::Tagger(Parameter *in_param):scw(in_param->c_value, in_param->phi_value, weight), scw_lda(in_param->c_value, in_param->phi_value, weight_with_lda){
     param = in_param;
     ftmpl.open(param->ftmpl_filename); 
 
     dic.open(param, &ftmpl);
-
+        
     begin_node_list.reserve(INITIAL_MAX_INPUT_LENGTH);
     end_node_list.reserve(INITIAL_MAX_INPUT_LENGTH);
-
+        
     sentences_for_train_num = 0;
 }
 
@@ -27,58 +27,88 @@ Sentence *Tagger::new_sentence_analyze(std::string &in_sentence) {
     return sentence;
 }
 
+int Tagger::online_learning(Sentence* gold, Sentence* system ){//{{{
+    if(param->use_scw){
+        double loss = system->eval(*gold); //単語が異なる割合とか
+        cerr << endl << "loss:" << loss << endl;
+        if( gold->get_feature() ){
+            FeatureVector gold_vec(gold->get_feature()->get_fset()); 
+            FeatureVector sys_vec(sentence->get_best_feature().get_fset());
+            scw.update( loss, gold_vec);
+            scw.update( -loss, sys_vec);
+        }else{
+            cerr << "update failed" << sentence << endl;
+            return 1;
+        }
+    }else{
+        sentence->minus_feature_from_weight(feature_weight.get_umap()); // - prediction
+        gold->get_feature()->plus_feature_from_weight(feature_weight.get_umap()); // + gold standard
+        if (WEIGHT_AVERAGED) { // for average
+            sentence->minus_feature_from_weight(feature_weight_sum, total_iteration_num); // - prediction
+            gold->get_feature()->plus_feature_from_weight(feature_weight_sum, total_iteration_num); // + gold standard
+        }
+    }
+    ++total_iteration_num;
+    return 0;
+}//}}}
+
+// 重みを変えるモデルの違いだけだが．．．引数で渡すにはPerceptron とSCWのモデルの違いを吸収しなくてはいけない
+int Tagger::online_learning_lda(Sentence* gold, Sentence* system ){//{{{
+    if(param->use_scw){
+        double loss = system->eval(*gold); //単語が異なる割合とか
+        cerr << endl << "loss:" << loss << endl;
+        if( gold->get_feature() ){
+            FeatureVector gold_vec(gold->get_feature()->get_fset()); 
+            FeatureVector sys_vec(sentence->get_best_feature().get_fset());
+            scw_lda.update( loss, gold_vec);
+            scw_lda.update( -loss, sys_vec);
+        }else{
+            cerr << "update failed" << sentence << endl;
+            return 1;
+        }
+    }else{
+        sentence->minus_feature_from_weight(feature_weight_lda.get_umap()); // - prediction
+        gold->get_feature()->plus_feature_from_weight(feature_weight_lda.get_umap()); // + gold standard
+        if (WEIGHT_AVERAGED) { // for average
+            sentence->minus_feature_from_weight(feature_weight_sum_lda, total_iteration_num); // - prediction
+            gold->get_feature()->plus_feature_from_weight(feature_weight_sum_lda, total_iteration_num); // + gold standard
+        }
+    }
+    ++total_iteration_num;
+    return 0;
+}//}}}
+
 // clear a sentence
-void Tagger::sentence_clear() {
+void Tagger::sentence_clear() {//{{{
     delete sentence;
-}
+}//}}}
 
 // train
 bool Tagger::train(const std::string &gsd_file) {
     read_gold_data(gsd_file);
 
-    size_t total_iteration_num = 0;
-    SCWClassifier scw(param->c_value, param->phi_value, feature_weight);//C, phi
-         
     for (size_t t = 0; t < param->iteration_num; t++) {
         cerr << "ITERATION:" << t << endl;
         if (param->shuffle_training_data) // shuffle training data
             random_shuffle(sentences_for_train.begin(), sentences_for_train.end());
-        for (std::vector<Sentence *>::iterator it = sentences_for_train.begin(); it != sentences_for_train.end(); it++) {
-            cerr << std::distance(sentences_for_train.begin(),it) << "/" << std::distance(sentences_for_train.begin(), sentences_for_train.end()) << "\r";
-            new_sentence_analyze((*it)->get_sentence()); // get the best path
-            if(param->use_scw){
-                auto loss = sentence->eval(**it);//単語が異なる割合とか
-                cerr << endl << "loss:" << loss << endl;
-                if( (*it)->get_feature() ){
-                    //cerr << "it_ok" << endl;
-                    //FeatureVector sub_vec(sentence->get_best_feature().get_fset(), (*it)->get_feature()->get_fset());
-                    //FeatureVector sub_vec( (*it)->get_feature()->get_fset(), sentence->get_best_feature().get_fset());
-                    FeatureVector sys_vec((*it)->get_feature()->get_fset()); // どこかが逆？
-                    FeatureVector gold_vec(sentence->get_best_feature().get_fset());
-                    scw.update( loss, sys_vec);
-                    scw.update( -loss, gold_vec);
-                    
-                    //cerr << "update" << endl;
-                    //scw.update( 1.0, sub_vec);
-                    //scw.perceptron_update(sub_vec);
-                }else{
-                    cerr << "update failed" << sentence << endl;
-                }
-            }else{
-                sentence->minus_feature_from_weight(feature_weight.get_umap()); // - prediction
-                (*it)->get_feature()->plus_feature_from_weight(feature_weight.get_umap()); // + gold standard
-                if (WEIGHT_AVERAGED) { // for average
-                    sentence->minus_feature_from_weight(feature_weight_sum, total_iteration_num); // - prediction
-                    (*it)->get_feature()->plus_feature_from_weight(feature_weight_sum, total_iteration_num); // + gold standard
-                }
-            }
-            sentence_clear();
-            total_iteration_num++;
+        for (std::vector<Sentence *>::iterator gold = sentences_for_train.begin(); gold != sentences_for_train.end(); gold++) {
+            cerr << std::distance(sentences_for_train.begin(),gold) << "/" << std::distance(sentences_for_train.begin(), sentences_for_train.end()) << "\r";
+            // 通常の解析
+            Sentence* sent = new_sentence_analyze((*gold)->get_sentence()); // get the best path
+            online_learning( *gold, sent);
+            TopicVector sent_topic = sent->get_topic();
+                
+            Sentence* sent_lda = new_sentence_analyze((*gold)->get_sentence(), sent_topic); // get the best path
+            online_learning_lda( *gold, sent_lda);
+
+            //sentence_clear(); 内部のsentence をdelete するだけ
+            delete (sent);
+            delete (sent_lda);
         }
         cerr << endl;
         write_tmp_model_file(t);
     }
-
+        
     if (WEIGHT_AVERAGED && !param->use_scw) {
         for (std::unordered_map<std::string, double>::iterator it = feature_weight_sum.begin(); it != feature_weight_sum.end(); it++) {
             feature_weight[it->first] -= it->second / total_iteration_num;

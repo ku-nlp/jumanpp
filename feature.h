@@ -1,9 +1,14 @@
+#pragma once
 #ifndef FEATURE_H
 #define FEATURE_H
 
 #include "common.h"
 #include "node.h"
+extern "C"{
+#include "cdb_juman.h"
+}
 #include <sstream>
+#include <memory>
 
 namespace Morph {
 
@@ -91,7 +96,12 @@ namespace Morph {
 #define FEATURE_MACRO_STRING_RIGHT_BASE_WORD "%Rba"
 #define FEATURE_MACRO_RIGHT_BASE_WORD  215
 
+// topic 関連 TODO:後でクラスにまとめましょう...
+// そもそもファイルから読み込めるようにしておきたい．．．
+#define TOPIC_NUM 50
+#define NUM_OF_FUKUGOUJI 39
 
+//char* hukugouji[];
 
 class FeatureTemplate {
     bool is_unigram;
@@ -124,7 +134,9 @@ class FeatureTemplateSet {
 
 class FeatureSet {
     FeatureTemplateSet *ftmpl;
-  public:
+    constexpr static char* cdb_filename = "/home/morita/work/juman_LDA/dic/all_uniq.cdb";
+    static DBM_FILE topic_cdb;
+  public: 
     std::vector<std::string> fset;
     FeatureSet(FeatureTemplateSet *in_ftmpl);
     FeatureSet(const FeatureSet& f){
@@ -143,6 +155,11 @@ class FeatureSet {
     bool print();
 
     std::string str();
+
+  private:
+    bool topic_available(Node* node);
+    bool topic_available_for_sentence(Node* node);
+    char* read_vector(char* buf, std::vector<double> &vector);
 };
 
 }
