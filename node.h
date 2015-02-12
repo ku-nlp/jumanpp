@@ -107,6 +107,7 @@ class Node {
     Node();
     //Node(const Node& node);
     ~Node();
+    
     void print();
     void clear();
     bool is_dummy();
@@ -116,6 +117,7 @@ class Node {
     static void reset_id_count(){
         id_count = 1;
     };
+    static Node make_dummy_node(){return Node();}
 
 };
 

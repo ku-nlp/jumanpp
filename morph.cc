@@ -5,9 +5,8 @@
 bool MODE_TRAIN = false;
 bool WEIGHT_AVERAGED = false;
 //std::unordered_map<std::string, double> feature_weight;
-FeatureVector feature_weight;
-std::unordered_map<std::string, double> feature_weight_sum;
-int num_of_sentences_processed = 0;
+//FeatureVector feature_weight; // -> Tagger に移さないと複数のモデルを扱えない
+//std::unordered_map<std::string, double> feature_weight_sum;
 
 void option_proc(cmdline::parser &option, int argc, char **argv) {
     option.add<std::string>("dict", 'd', "dict filename", false, "data/japanese_uniq.dic");

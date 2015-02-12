@@ -250,7 +250,7 @@ class U8string{//{{{
             parse();
             if(char_size() == 0) return false;
             for(int i=0;i<char_size();i++){
-                if( (char_type_at(i) & (SYMBOL|BRACKET|COMMA|SLASH|COLON|PERIOD)) == 0)
+                if( (char_type_at(i) & (FAMILY_PUNC_SYMBOL|BRACKET)) == 0)
                     return false;
             }
             return true;
