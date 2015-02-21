@@ -105,7 +105,7 @@ fi
 # kyoto
 echo "./kkn${flag_debug} ${use_unknown} -m $model -f data/$feature_def -l $unk_max_length -d data/$dic_base < data/${set_head}kyoto${set_postfix}.raw > $out_base.${set_head}kyoto${set_postfix}.mrp"
 ./kkn${flag_debug} ${use_unknown} -m $model -f data/$feature_def -l $unk_max_length -d data/$dic_base < data/${set_head}kyoto${set_postfix}.raw > $out_base.${set_head}kyoto${set_postfix}.mrp
-juman < data/${set_head}kyoto${set_postfix}.raw | ruby script/juman2morph.rb > $out_base.${set_head}kyoto_juman${set_postfix}.mrp
+juman -r /mnt/home/morita/.jumanrc.new_wiki < data/${set_head}kyoto${set_postfix}.raw | ruby script/juman2morph.rb > $out_base.${set_head}kyoto_juman${set_postfix}.mrp
 ldajuman < data/${set_head}kyoto${set_postfix}.raw | ruby script/juman2morph.rb > $out_base.${set_head}kyoto_ldajuman${set_postfix}.mrp
 
 echo "script/eval.pl -v $out_base.${set_head}kyoto${set_postfix}.mrp data/${set_head}kyoto${set_postfix}.txt > $out_base.${set_head}kyoto${set_postfix}.eval"
@@ -124,7 +124,7 @@ echo
 # 3bun
 echo "./kkn${flag_debug} -m $model -f data/$feature_def -l $unk_max_length -d data/$dic_base < data/${set_head}3bun${set_postfix}.raw > $out_base.${set_head}3bun${set_postfix}.mrp"
 ./kkn${flag_debug} ${use_unknown} -m $model -f data/$feature_def -l $unk_max_length -d data/$dic_base < data/${set_head}3bun${set_postfix}.raw > $out_base.${set_head}3bun${set_postfix}.mrp
-juman < data/${set_head}3bun${set_postfix}.raw | ruby script/juman2morph.rb > $out_base.${set_head}3bun_juman${set_postfix}.mrp
+juman -r /mnt/home/morita/.jumanrc.new_wiki < data/${set_head}3bun${set_postfix}.raw | ruby script/juman2morph.rb > $out_base.${set_head}3bun_juman${set_postfix}.mrp
 ldajuman < data/${set_head}3bun${set_postfix}.raw | ruby script/juman2morph.rb > $out_base.${set_head}3bun_ldajuman${set_postfix}.mrp
 
 echo "script/eval.pl -v $out_base.${set_head}3bun${set_postfix}.mrp data/${set_head}3bun${set_postfix}.txt > $out_base.${set_head}3bun${set_postfix}.eval"

@@ -164,7 +164,7 @@ Node *Dic::lookup_lattice(std::vector<Darts::DoubleArray::result_pair_type> &da_
             read_node_info(*(token + j), &new_node);
             new_node->token = (Token *)(token + j);
                 
-            new_node->length = result_pair[i].length; // ここは変えるべき？
+            new_node->length = result_pair[i].length; 
             new_node->surface = start_str;
             new_node->char_num = utf8_chars((unsigned char *)start_str, new_node->length);
             new_node->original_surface = new std::string(start_str, new_node->length);
@@ -174,7 +174,7 @@ Node *Dic::lookup_lattice(std::vector<Darts::DoubleArray::result_pair_type> &da_
                 new_node->stat = MORPH_UNK_NODE;
             } else {
                 new_node->string = new std::string(*new_node->string_for_print);
-                if(new_node->semantic_feature->find("濁音化",0) != std::string::npos){// TODO:意味情報を文字扱いしない
+                if(new_node->semantic_feature->find("濁音化",0) != std::string::npos){// TODO:意味情報を文字列扱いしない
                     new_node->stat = MORPH_DEVOICE_NODE;
                 }else{
                     new_node->stat = MORPH_NORMAL_NODE;
@@ -260,7 +260,6 @@ Node* Dic::recognize_onomatopoeia(const char* start_str) {//{{{
         new_node->char_type = check_utf8_char_type((unsigned char *)start_str);
         new_node->char_family = check_char_family(new_node->char_type);
         
-        // 以下の処理は中国語用
         char *end_char = (char *)get_specified_char_pointer((unsigned char *)start_str, new_node->length, new_node->char_num - 1);
         new_node->end_char_family = check_char_family((unsigned char *)end_char);
         new_node->end_string = new std::string(end_char, utf8_bytes((unsigned char *)end_char));
@@ -321,7 +320,6 @@ Node *Dic::make_unk_pseudo_node(const char *start_str, int byte_len, const std::
 }//}}}
 
 // あとでオプションに変更する
-// make an unknown word node
 Node *Dic::make_unk_pseudo_node_gold(const char *start_str, int byte_len, std::string &specified_pos) {//{{{
     unsigned short specified_posid = posid2pos.get_id(specified_pos);
 
@@ -371,7 +369,6 @@ Node *Dic::make_unk_pseudo_node_gold(const char *start_str, int byte_len, std::s
 
 // make an unknown word node 
 // 未定義語のノードを生成(ある品詞の候補についてのノード or 未定のままのノード(こちらはどういうタイミングで呼び出されるのか？) )
-// この関数の整理が必要
 Node *Dic::make_unk_pseudo_node(const char *start_str, int byte_len, unsigned short specified_posid) {//{{{
     Node *new_node = new Node; 
     new_node->surface = start_str;
@@ -381,8 +378,8 @@ Node *Dic::make_unk_pseudo_node(const char *start_str, int byte_len, unsigned sh
 
     // 整理:
     // 品詞が指定されていないか，名詞で，文字が数詞なら＝＞数詞
-    // 品詞が指定なしの場合, 表層(string)を未定義語にして流れにまかせる
-    // 指定がある場合, 表層はそのまま？にして流れに任せる
+    // 品詞が指定なしの場合, 表層(string)を未定義語に
+    // 指定がある場合, 表層はそのまま
 
     // 品詞に関係なく共通の処理
     new_node->char_num = utf8_chars((unsigned char *)(new_node->surface), new_node->length);
@@ -425,7 +422,6 @@ Node *Dic::make_unk_pseudo_node(const char *start_str, int byte_len, unsigned sh
         new_node->base = new std::string("<数詞>");
     }else{
         // TODO: base でstring new するのはリークになる
-        // 未知語処理をする場合も，ラベルとしては未定義アルファベット，未定義漢字，未定義カタカナ語などのラベルを付けるべき．
         if (new_node->char_type == TYPE_KANJI){
             new_node->string = new std::string("未定義漢語");
             new_node->baseid = baseid2base.get_id("未定義漢語");
@@ -442,7 +438,7 @@ Node *Dic::make_unk_pseudo_node(const char *start_str, int byte_len, unsigned sh
             new_node->string = new std::string(new_node->surface, new_node->length);
             new_node->baseid = baseid2base.get_id("未定義アルファベット語");
             new_node->base = baseid2base.get_pos(new_node->baseid);
-        } //漢字かな交じりはどこに入る？
+        } //漢字かな交じりは現状では扱っていない
       
         // pos が指定されている場合とそうでない場合で分岐する
         // 品詞などを埋める
@@ -508,7 +504,9 @@ Node *Dic::make_unk_pseudo_node_list_some_pos_by_dic_check(const char *start_str
     return result_node;
 }//}}}
 
-// ほぼNode 作るだけの関数 TODO: 上(by_dic_check)にマージ
+
+// _list では未定義語としてノードを作る際に品詞候補についてそれぞれノードを生成する
+// ほぼNode 作るだけ( 品詞が指定されていれば、その品詞、UNKなら候補すべて)
 Node *Dic::make_unk_pseudo_node_list_some_pos(const char *start_str, int byte_len, unsigned short specified_posid, std::vector<unsigned short> *specified_unk_pos) {//{{{
     Node *result_node = NULL;
         
@@ -533,6 +531,7 @@ Node *Dic::make_unk_pseudo_node_list(const char *start_str, unsigned int min_cha
     return make_unk_pseudo_node_list(start_str, min_char_num, max_char_num, MORPH_DUMMY_POS);
 }//}}}
 
+// 連続する同じ文字種の文字列を未定義語化
 // make unknown word nodes of some lengths
 Node *Dic::make_unk_pseudo_node_list(const char *start_str, unsigned int min_char_num, unsigned int max_char_num, unsigned short specified_posid) {//{{{
     Node *result_node = NULL;
@@ -577,6 +576,9 @@ Node *Dic::make_unk_pseudo_node_list(const char *start_str, unsigned int min_cha
     return result_node;
 }//}}}
 
+
+// make_specified_pseudo... では, 文字種の連続から未定義語を生成する
+
 Node *Dic::make_specified_pseudo_node(const char *start_str, unsigned int specified_length, std::string *specified_pos, std::vector<unsigned short> *specified_unk_pos, unsigned int type_family) {//{{{
     if (specified_pos)
         return make_specified_pseudo_node(start_str, specified_length, posid2pos.get_id(*specified_pos), specified_unk_pos, type_family);
@@ -584,7 +586,8 @@ Node *Dic::make_specified_pseudo_node(const char *start_str, unsigned int specif
         return make_specified_pseudo_node(start_str, specified_length, MORPH_DUMMY_POS, specified_unk_pos, type_family);
 }//}}}
 
-// 下の by_dic_check がない場合との違いが分からない！
+// 名前が変？指定した文字種が連続する範囲で全品詞について未定義語ノードを生成
+// 辞書をr_node で受け取り、重複をチェック
 Node *Dic::make_specified_pseudo_node_by_dic_check(const char *start_str, unsigned int specified_length, std::string *specified_pos, std::vector<unsigned short> *specified_unk_pos, unsigned int type_family, Node* r_node) {//{{{
     unsigned short specified_posid = MORPH_DUMMY_POS;
     if(specified_pos) specified_posid = posid2pos.get_id(*specified_pos);
@@ -609,8 +612,7 @@ Node *Dic::make_specified_pseudo_node_by_dic_check(const char *start_str, unsign
 
     if (char_num > 0 && (!specified_length || specified_length == pos)) {
 
-        Node *new_node = make_unk_pseudo_node_list_some_pos_by_dic_check(start_str, pos, specified_posid, specified_unk_pos, r_node); // pos == byte_len
-        // cerr << "CAND:" << *(new_node->string_for_print) << endl;
+        Node *new_node = make_unk_pseudo_node_list_some_pos_by_dic_check(start_str, pos, specified_posid, specified_unk_pos, r_node); 
         return new_node;
     }
     else {
@@ -620,7 +622,7 @@ Node *Dic::make_specified_pseudo_node_by_dic_check(const char *start_str, unsign
 }//}}}
 
 // make figure nodes
-// 名前が変？指定した文字種が連続する範囲で全品詞について未定義語ノードを生成
+// TODO: 廃止(まだ、数詞の時のみ利用しているため、問題ないかチェック
 Node *Dic::make_specified_pseudo_node(const char *start_str, unsigned int specified_length, unsigned short specified_posid, std::vector<unsigned short> *specified_unk_pos, unsigned int type_family) {//{{{
     unsigned int length = strlen(start_str);
     unsigned int pos = 0, char_num = 0;

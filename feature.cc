@@ -2,23 +2,22 @@
 #include "pos.h"
 #include "sentence.h"
 #include "feature.h"
+#include "scw.h"
+
+// TODO: featureSet クラスから feature_weight を取り除く．tagger に移す．
 
 namespace Morph {
+std::vector<double>* FeatureSet::topic = nullptr;
 
-DBM_FILE FeatureSet::topic_cdb;
-char* hukugouji[] = { "めぐる", "除く", "のぞく", "通じる", "通ずる", "通す", "含める", "ふくめる", "始める", "はじめる", "絡む", "からむ", "沿う", "そう", "向ける", "伴う", "ともなう", "基づく", "よる", "対する", "関する", "代わる", "おく", "つく", "とる", "加える", "くわえる", "限る", "続く", "つづく", "合わせる", "あわせる", "比べる", "くらべる", "並ぶ", "ならぶ", "おける", "いう", "する" };
 
-FeatureSet::FeatureSet(FeatureTemplateSet *in_ftmpl) {
+FeatureSet::FeatureSet(FeatureTemplateSet *in_ftmpl) {//{{{
 	ftmpl = in_ftmpl;
-    if(topic_cdb == nullptr){
-        topic_cdb = db_read_open(cdb_filename);
-         
-    }
-}
+    weight = in_ftmpl->set_weight;
+}//}}}
 
-FeatureSet::~FeatureSet() {
+FeatureSet::~FeatureSet() {//{{{
 	fset.clear();
-}
+}//}}}
 
 void FeatureSet::extract_unigram_feature(Node *node) {//{{{
     for (std::vector<FeatureTemplate *>::iterator tmpl_it = ftmpl->get_templates()->begin(); tmpl_it != ftmpl->get_templates()->end(); tmpl_it++) {
@@ -62,6 +61,25 @@ void FeatureSet::extract_unigram_feature(Node *node) {//{{{
         }
         fset.push_back(f);
     }
+
+    // Topic 関係の素性を追加
+    extract_topic_feature(node);
+
+}//}}}
+
+void FeatureSet::extract_topic_feature(Node *node) {//{{{
+    if(FeatureSet::topic){ // TOPIC 素性 ( TODO: ハードコードをやめてルール化
+        if(node->topic_available()){
+            TopicVector node_topic = node->get_topic();
+            for(int i = 0; i< node_topic.size();i++){
+                //std::cerr << "TP" << int2string(i) << ":" << binning(node_topic[i] * (*topic)[i]) << " " ;
+                fset.push_back("TP" + int2string(i) + ":"  + binning(node_topic[i] * (*topic)[i]));
+            }
+        }else{
+            fset.push_back(std::string("TOPIC:<NONE>"));
+        }
+    }
+
 }//}}}
 
 void FeatureSet::extract_bigram_feature(Node *l_node, Node *r_node) {//{{{
@@ -145,10 +163,14 @@ bool FeatureSet::append_feature(FeatureSet *in) {//{{{
 
 double FeatureSet::calc_inner_product_with_weight() {//{{{
     double sum = 0;
+    if(!weight) return 0;
     for (std::vector<std::string>::iterator it = fset.begin(); it != fset.end(); it++) {
-        if (feature_weight.has_key(*it)) {
-            sum += feature_weight[*it];
+        auto itr = weight->find(*it);
+        if(itr != weight->end()){
+            sum += itr->second;
         }
+//        if(weight->has_key(*it))
+//            sum += (*weight)[*it];
     }
     return sum;
 }//}}}
@@ -318,117 +340,11 @@ bool FeatureTemplateSet::open(const std::string &template_filename) {//{{{
 std::string FeatureSet::str(){//{{{
     std::stringstream ss;
     for (auto it = fset.begin(); it != fset.end(); it++) {
-        ss << *it << " x " << feature_weight[*it] << " ";
+        ss << *it << "x" << (*weight)[*it] << " ";
     }
     return ss.str();
 };//}}}
 
-bool FeatureSet::topic_available(Node* node){
-    // 複合辞の処理
-    // めぐる 除く のぞく 通じる 通ずる 通す 含める ふくめる 始める はじめる 絡む からむ 沿う そう 向ける 伴う ともなう 基づく よる 対する 関する 代わる おく つく とる 加える くわえる 限る 続く つづく 合わせる あわせる 比べる くらべる 並ぶ ならぶ おける いう する
-    int not_hukugou_ji = 1;
-    for( int j=0; j< NUM_OF_FUKUGOUJI;j++ ){
-        not_hukugou_ji = not_hukugou_ji && (node->representation->compare(0, strlen(hukugouji[j]), hukugouji[j], strlen(hukugouji[j])));
-    }
-        
-    // トピックを見る条件
-    //(strstr(mrph->imis, "付属動詞候補" ) == NULL);
-    int not_huzoku = (node->semantic_feature->find("付属動詞候補") == std::string::npos); //付属動詞でない
-        
-    int not_keisiki = !((*node->pos == "名詞")&&(*node->spos == "形式名詞"));// 形式名詞でない
-        
-    int not_timei_jinmei = (!((*node->pos == "名詞")&&(*node->spos == "人名")) && 
-                           !((*node->pos == "名詞")&&(*node->spos == "地名")));
-        
-    int not_jisou = !((*node->pos == "名詞")&&(*node->spos == "時相名詞"));// 時相名詞でない
-    int not_suuryou = !((*node->pos == "名詞")&&(*node->spos == "数詞"));
-    int focused_hinsi = !(*node->pos == ("特殊")|| //1
-                        // 動詞 2
-                        // 形容詞 3
-                        *node->pos == "判定詞"|| //4
-                        *node->pos == "助動詞"|| //5
-                        // 名詞 6
-                        *node->pos == "指示詞"|| //7
-                        // 副詞 8
-                        *node->pos == "助詞"  || //9
-                        *node->pos == "接続詞"|| //10
-                        *node->pos == "連体詞"|| //11
-                        // 感動詞 12
-                        *node->pos == "接頭辞"|| //13
-                        *node->pos == "接尾辞"|| //14
-                        // mrph->hinsi == 5); //助動詞
-                        // 未定義語 15
-                        0);
-        
-    // 漢字一字，ひらがな一字, 記号にはトピックが関係ない場合が多いはずなので，一文字の形態素はトピックを考えない．
-    int not_one_char = (node->char_num > 1); //表層が日本語1文字以上
-
-    // トピックを読み込む条件
-    int topical_cond = focused_hinsi && not_huzoku && not_suuryou && not_hukugou_ji && not_keisiki && not_timei_jinmei && not_jisou;
-    return topical_cond;
-
-    //auto result = db_get(topic_db, mrph->daihyo);
-
-    // 文のトピックに入れるかどうかの条件
-    //if(result && topical_cond && not_betu_yomi){ mrph->topical = 1; }
-}
-
-bool FeatureSet::topic_available_for_sentence(Node* node)
-{
-    // トピックを読み込む条件
-    bool topical_cond = topic_available(node);
-        
-    // TODO:別の読みがないかどうかのチェック
-    // node->bprev をたどっていけばよいはず．．．
-    bool not_betu_yomi = true;
-          
-    // 読み込むのは後でよいのでは．．
-    //auto result = db_get(topic_cdb, node->representation->c_str());
-        
-    // 文のトピックに入れるかどうかの条件 (現状, topic_available() と同じ)
-    return (topical_cond && not_betu_yomi);
-}
-
-void read_vector(char* buf, std::vector<double> &vector) //topic用
-{
-    char *copy = strdup(buf);  
-    char *copy_str = copy;
-    char *token;
-    char *saveptr1;
-    int i;
-    double drop;
-    double sum=0.0;
-        
-    vector.resize(TOPIC_NUM);
-    for (i = 0; i < TOPIC_NUM ; i++, copy=NULL){
-        token = strtok_r(copy, " ", &saveptr1 );
-        if (token == NULL)
-            break;
-        sscanf(token, "%lf", &(vector[i]));
-//        // テンプレ for all_uniq_50
-//        if (i == 1 || // テンプレート
-//            i == 17|| // ヘッダ・フッダ
-//            i == 27|| // ブログテンプレ
-//            i == 35|| // テンプレ？
-//            i == 46|| // テンプレ
-//            i == 48|| // アフィリエイト
-//            FALSE ){
-//            vector[i] = 0.0;
-//        }
-        sum += vector[i]*vector[i];
-    }
-    sum = sqrt(sum);
-    if(sum == 0.0){//これ役に立っている？
-        //均等なベクトルをとりあえず指定?0ベクトル？
-        //for (i = 0; i < TOPIC_NUM ; i++, copy=NULL){ vector[i] = 1.0; }
-        sum = TOPIC_NUM;
-    }
-    // 正規化
-    for (i = 0; i < TOPIC_NUM ; i++, copy=NULL){
-        vector[i] = vector[i] / sum;
-    }
-    free(copy_str);
-}
 
 
 }

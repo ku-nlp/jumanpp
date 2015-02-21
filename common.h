@@ -19,9 +19,11 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#include <float.h>
+
+typedef std::vector<double> TopicVector; 
 #include "feature.h"
 #include "scw.h"
-#include <float.h>
 
 using std::cin;
 using std::cout;
@@ -30,11 +32,9 @@ using std::endl;
 
 extern bool MODE_TRAIN;
 extern bool WEIGHT_AVERAGED;
-//extern std::unordered_map<std::string, double> feature_weight;
-//extern FeatureVector feature_weight; // 実質は std::unordered_map<std::string, double>
-//extern std::unordered_map<std::string, double> feature_weight_sum;
 
 namespace Morph {
+
 
 extern std::unordered_map<std::string, int> pos_map;
 extern std::unordered_map<std::string, int> spos_map;
@@ -162,6 +162,13 @@ inline std::string int2string(const T i)
 
     o << i;
     return o.str();
+}
+
+inline std::string double2string(double d){
+
+    char buf[6]; 
+    std::snprintf(buf, 5, "%.4f",d);
+    return std::string(buf);
 }
 
 }

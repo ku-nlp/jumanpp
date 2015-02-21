@@ -1,17 +1,13 @@
 #include "common.h"
 #include "tagger.h"
 #include "cmdline.h"
+#include "sentence.h"
 
 bool MODE_TRAIN = false;
 bool WEIGHT_AVERAGED = false;
-//std::unordered_map<std::string, double> feature_weight;
-//FeatureVector feature_weight; // -> Tagger に移さないと複数のモデルを扱えない
-//std::unordered_map<std::string, double> feature_weight_sum;
 
-void option_proc(cmdline::parser &option, int argc, char **argv) {
+void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     option.add<std::string>("dict", 'd', "dict filename", false, "data/japanese_uniq.dic");
-    //option.add<std::string>("bin", 'b', "dicbin filename", false, "data/dic.bin");
-    //option.add<std::string>("pos", 'p', "POS list filename", false, "data/dic.pos");
     option.add<std::string>("model", 'm', "model filename", false, "data/model.dat");
     option.add<std::string>("feature", 'f', "feature template filename", false, "data/feature.def");
     option.add<std::string>("train", 't', "training filename", false, "data/train.txt");
@@ -22,6 +18,7 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {
     option.add<double>("Phi", 'P', "Phi value",false, 1.65);
     option.add("nbest", 'n', "n-best search");
     option.add("scw", 0, "use soft confidence weighted");
+    option.add<std::string>("lda", 0, "use lda", false, "");
     option.add("oldstyle", 'o', "print old style lattice");
     option.add("averaged", 'a', "use averaged perceptron for training");
     option.add("ambiguous", 'A', "output ambiguous words on lattice");
@@ -41,43 +38,12 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {
     if (option.exist("averaged")) {
         WEIGHT_AVERAGED = true;
     }
-}
-
-// write feature weights
-bool write_model_file(const std::string &model_filename) {
-    std::ofstream model_out(model_filename.c_str(), std::ios::out);
-    if (!model_out.is_open()) {
-        cerr << ";; cannot open " << model_filename << " for writing" << endl;
-        return false;
-    }
-    for (std::unordered_map<std::string, double>::iterator it = feature_weight.begin(); it != feature_weight.end(); it++) {
-        model_out << it->first << " " << it->second << endl;
-    }
-    model_out.close();
-    return true;
-}
-
-// read feature weights
-bool read_model_file(const std::string &model_filename) {
-    std::ifstream model_in(model_filename.c_str(), std::ios::in);
-    if (!model_in.is_open()) {
-        cerr << ";; cannot open " << model_filename << " for reading" << endl;
-        exit(1);
-    }
-    std::string buffer;
-    while (getline(model_in, buffer)) {
-        std::vector<std::string> line;
-        Morph::split_string(buffer, " ", line);
-        feature_weight[line[0]] = atof(static_cast<const char *>(line[1].c_str()));
-    }
-    model_in.close();
-    return true;
-}
+}//}}}
 
 // unit_test 時はmainを除く
 #ifndef KKN_UNIT_TEST
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv) {//{{{
     cmdline::parser option;
     option_proc(option, argc, argv);
 
@@ -93,12 +59,53 @@ int main(int argc, char** argv) {
     //param.set_debug(option.exist("debug"));
     Morph::Tagger tagger(&param);
 
-    if (MODE_TRAIN) {
-        tagger.train(option.get<std::string>("train"));
-        write_model_file(option.get<std::string>("model"));
-        feature_weight_sum.clear();
-    } else {
-        read_model_file(option.get<std::string>("model"));
+    if (MODE_TRAIN) {//学習モード{{{
+        if(option.exist("lda")){
+            Morph::Tagger tagger_normal(&param);
+            tagger_normal.read_model_file(option.get<std::string>("lda"));
+
+            tagger.train_lda(option.get<std::string>("train"), tagger_normal);
+            tagger.write_model_file(option.get<std::string>("model"));
+        }else{
+            tagger.train(option.get<std::string>("train"));
+            tagger.write_model_file(option.get<std::string>("model"));
+        }
+      //}}}
+    } else if(option.exist("lda")){//LDAを使う形態素解析{{{
+        Morph::Tagger tagger_normal(&param);
+        tagger_normal.read_model_file(option.get<std::string>("lda"));
+        tagger.read_model_file(option.get<std::string>("model"));
+            
+        std::ifstream is(argv[1]); // input stream
+            
+        // sentence loop
+        std::string buffer;
+        while (getline(is ? is : cin, buffer)) {
+            if (buffer.length() == 0 || buffer.at(0) == '#') { // empty line or comment line
+                cout << buffer << endl;
+                continue;
+            }
+            Morph::Sentence* normal_sent = tagger_normal.new_sentence_analyze(buffer);
+            TopicVector topic = normal_sent->get_topic();
+            Morph::Sentence* lda_sent = tagger.new_sentence_analyze_lda(buffer, topic);
+            if (option.exist("lattice")){
+                if (option.exist("oldstyle"))
+                    tagger.print_old_lattice();
+                else
+                    tagger.print_lattice();
+            }else{
+                if(option.exist("nbest")){
+                    tagger.print_N_best_path();
+                }else{
+                    tagger.print_best_path();
+                }
+            }
+            delete(normal_sent);
+            delete(lda_sent);
+        }
+    //}}}
+    } else {// 通常の形態素解析{{{
+        tagger.read_model_file(option.get<std::string>("model"));
             
         std::ifstream is(argv[1]); // input stream
             
@@ -110,12 +117,12 @@ int main(int argc, char** argv) {
                 continue;
             }
             tagger.new_sentence_analyze(buffer);
-            if (option.exist("lattice"))
+            if (option.exist("lattice")){
                 if (option.exist("oldstyle"))
                     tagger.print_old_lattice();
                 else
                     tagger.print_lattice();
-            else{
+            }else{
                 if(option.exist("nbest")){
                     tagger.print_N_best_path();
                 }else{
@@ -124,10 +131,8 @@ int main(int argc, char** argv) {
             }
             tagger.sentence_clear();
         }
-    }
-
-    feature_weight.clear();
+    }//}}}
     return 0;
-}
+}//}}}
 
 #endif

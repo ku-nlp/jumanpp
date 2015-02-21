@@ -4,6 +4,10 @@
 #include "common.h"
 #include "feature.h"
 #include "pos.h"
+extern "C"{
+#include "cdb_juman.h"
+}
+#include "scw.h" 
 #include <map>
 
 namespace Morph {
@@ -19,13 +23,13 @@ struct morph_token_t {//{{{
 	unsigned short form_type_id; // 活用型
 	unsigned long base_id; // 活用型
     unsigned short length; // 単語の長さ
-    // 使用していないはず
 	short wcost; // cost of this morpheme
         
     unsigned long rep_id; // 代表表記
     unsigned long imis_id; // 意味情報
     unsigned long reading_id; // 読み
         
+    //TODO: 連濁、文字正規化時のコストを素性化
     /* 小書き文字を大文字化、平仮名を長音記号に置換する際の追加コスト */
     //#define NORMALIZED_COST        6
     /* 長音を削除する際の追加コスト */
@@ -39,9 +43,6 @@ struct morph_token_t {//{{{
     //  #define NOUN_GA_VOICED_COST   11  /* "が"から始まる名詞の連濁化のコスト */
     //  #define ADJECTIVE_VOICED_COST  9  /* 形容詞の連濁化のコスト */
     //  #define OTHER_VOICED_COST      5  /* 上記以外の連濁化のコスト */
-
-	// unsigned int feature;
-	// unsigned int compound;  /* reserved for noun compound */
 };//}}}
 typedef struct morph_token_t Token;
 
@@ -51,6 +52,10 @@ typedef struct morph_token_t Token;
 class Node {
   private:
     static int id_count;
+
+    //TODO: Topic 関係はあとで外に出してまとめる
+    constexpr static char* cdb_filename = "/home/morita/work/juman_LDA/dic/all_uniq.cdb";
+    static DBM_FILE topic_cdb;
   public:
     Node *prev = nullptr; // best previous node determined by Viterbi algorithm
     Node *next = nullptr;
@@ -67,7 +72,7 @@ class Node {
     std::string *semantic_feature = nullptr; 
         
 //ifdef DEBUG
-    std::map<std::string, std::string> debug_info; //
+    std::map<std::string, std::string> debug_info; 
 //endif
         
     unsigned short length = 0; /* length of morph */
@@ -91,7 +96,7 @@ class Node {
     unsigned int char_type = 0; //先頭文字の文字タイプ
     unsigned int char_family = 0;
     unsigned int end_char_family = 0;
-    unsigned char stat = 0; //どのような状態がありるうるのかを書く
+    unsigned char stat = 0; //TODO: どのような状態がありるうるのかを列挙
     bool used_in_nbest = false;
     double wcost = 0; // cost of this morpheme
     double cost = 0; // total cost to this node
@@ -103,25 +108,30 @@ class Node {
 	std::priority_queue<unsigned int, std::vector<unsigned int>,
 			std::greater<unsigned int> > connection; // id of previous nodes connected
 	std::vector<NbestSearchToken> traceList; // keep track of n-best paths
-    
+         
     Node();
     //Node(const Node& node);
     ~Node();
-    
+         
     void print();
     void clear();
     bool is_dummy();
     const char *get_first_char();
     unsigned short get_char_num();
-
+        
     static void reset_id_count(){
         id_count = 1;
     };
     static Node make_dummy_node(){return Node();}
+        
+    bool topic_available();
+    bool topic_available_for_sentence();
+    void read_vector(const char* buf, std::vector<double> &vector);
+
+    TopicVector get_topic();
 
 };
 
-//shen版からのコピー
 class NbestSearchToken {
 
 public:

@@ -4,9 +4,6 @@
 
 #include "common.h"
 #include "node.h"
-extern "C"{
-#include "cdb_juman.h"
-}
 #include <sstream>
 #include <memory>
 
@@ -96,14 +93,13 @@ namespace Morph {
 #define FEATURE_MACRO_STRING_RIGHT_BASE_WORD "%Rba"
 #define FEATURE_MACRO_RIGHT_BASE_WORD  215
 
-// topic 関連 TODO:後でクラスにまとめましょう...
-// そもそもファイルから読み込めるようにしておきたい．．．
+// TODO: トピック数はファイルから読み込み時に決定する
 #define TOPIC_NUM 50
 #define NUM_OF_FUKUGOUJI 39
 
 //char* hukugouji[];
 
-class FeatureTemplate {
+class FeatureTemplate {//{{{
     bool is_unigram;
     std::string name;
     std::vector<unsigned int> features;
@@ -120,11 +116,12 @@ class FeatureTemplate {
     std::vector<unsigned int> *get_features() {
         return &features;
     }
-};
+};//}}}
 
 class FeatureTemplateSet {
     std::vector<FeatureTemplate *> templates;
   public:
+    FeatureVector* set_weight;
     bool open(const std::string &template_filename);
     FeatureTemplate *interpret_template(std::string &template_string, bool is_unigram);
     std::vector<FeatureTemplate *> *get_templates() {
@@ -134,9 +131,9 @@ class FeatureTemplateSet {
 
 class FeatureSet {
     FeatureTemplateSet *ftmpl;
-    constexpr static char* cdb_filename = "/home/morita/work/juman_LDA/dic/all_uniq.cdb";
-    static DBM_FILE topic_cdb;
+    FeatureVector* weight;
   public: 
+    static std::vector<double>* topic;
     std::vector<std::string> fset;
     FeatureSet(FeatureTemplateSet *in_ftmpl);
     FeatureSet(const FeatureSet& f){
@@ -145,6 +142,7 @@ class FeatureSet {
     ~FeatureSet();
     double calc_inner_product_with_weight();
     void extract_unigram_feature(Node *node);
+    void extract_topic_feature(Node *node);
     void extract_bigram_feature(Node *l_node, Node *r_node);
     bool append_feature(FeatureSet *in);
     void minus_feature_from_weight(std::unordered_map<std::string, double> &in_feature_weight);
@@ -155,11 +153,39 @@ class FeatureSet {
     bool print();
 
     std::string str();
+    std::string binning(double x){//{{{
+        // 完全に0, 0.01 以下，0.05以下, 0.1 以下, 0.2以下, 0.3以下, 0.4, 0.5, 0.6, 0.7,0.8,0.9,それ以上, の１３通り
+        if(x == 0.0)
+            return std::string("0");
+        else if (x <= 0.01)
+            return std::string("0.01");
+        else if (x <= 0.05)
+            return std::string("0.05");
+        else if (x <= 0.1)
+            return std::string("0.1");
+        else if (x <= 0.2)
+            return std::string("0.2");
+        else if (x <= 0.3)
+            return std::string("0.3");
+        else if (x <= 0.4)
+            return std::string("0.4");
+        else if (x <= 0.5)
+            return std::string("0.5");
+        else if (x <= 0.6)
+            return std::string("0.6");
+        else if (x <= 0.7)
+            return std::string("0.7");
+        else if (x <= 0.7)
+            return std::string("0.7");
+        else if (x <= 0.8)
+            return std::string("0.8");
+        else if (x <= 0.9)
+            return std::string("0.9");
+        else 
+            return std::string("1.0");
+    }//}}}
 
   private:
-    bool topic_available(Node* node);
-    bool topic_available_for_sentence(Node* node);
-    char* read_vector(char* buf, std::vector<double> &vector);
 };
 
 }
