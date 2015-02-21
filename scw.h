@@ -1,3 +1,4 @@
+#pragma once
 
 #include <iostream>
 #include <sstream>
@@ -7,7 +8,7 @@
 #include <utility>
 #include <unordered_map>
 
-class FeatureVector;
+class FeatureVector;// 今後分離したほうが良い？
 class DiagMat;
 
 class FeatureVector{// 基本的に ただのunordered_map のラップ
@@ -25,11 +26,29 @@ class FeatureVector{// 基本的に ただのunordered_map のラップ
         double& operator[](const std::string& s){
             auto itr=vec.find(s);
             if(itr == vec.end()){
+                //insert してイテレータ返したほうが良い
                 vec[s] = 0;
                 return vec[s];
             }else{
                 return itr->second;
             }
+        };
+
+        FeatureVector& merge(const FeatureVector &fv){
+            for(const auto &st:fv){
+                vec[st.first] += st.second;
+            }
+            return *this;
+        }
+        std::unordered_map<std::string, double>::iterator find(std::string& key){ return vec.find(key); }
+        
+        inline std::string str(){  
+            std::stringstream ss;
+            for(const auto &st:vec){
+                ss << st.first << ":" << st.second << " ";
+            }
+            ss << std::endl;
+            return std::move(ss.str());
         };
         inline void clear(){ vec.clear(); };
         //operator std::unordered_map<std::string,double>(){return vec;}

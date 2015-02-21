@@ -1,4 +1,3 @@
-
 #include "scw.h"
 
 FeatureVector::FeatureVector(const std::vector<std::string>& v1, const std::vector<std::string>& v2){

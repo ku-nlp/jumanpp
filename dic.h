@@ -35,9 +35,10 @@ class Dic {
     static const std::unordered_map<std::string,int> katuyou_type_map;
     static const std::unordered_map<std::string,int> katuyou_form_map;
 
-    Dic() {}
+    Dic() { posid2pos.get_id(BOS); posid2pos.get_id(EOS);}
     Dic(Parameter *in_param, FeatureTemplateSet *in_ftmpl);
     ~Dic();
+
     bool open(Parameter *in_param, FeatureTemplateSet *in_ftmpl);
     Node *lookup(const char *start_str, unsigned int specified_length, std::string *specified_pos);
     Node *lookup_specified(const char *start_str, unsigned int specified_length, const std::vector<std::string>& specified_pos);
@@ -60,7 +61,6 @@ class Dic {
     Node *make_unk_pseudo_node_list(const char *start_str, unsigned int min_char_num, unsigned int max_char_num);
     Node *make_unk_pseudo_node_list(const char *start_str, unsigned int min_char_num, unsigned int max_char_num, unsigned short specified_posid);
 
-    // 
     Node *make_specified_pseudo_node(const char *start_str, unsigned int specified_length, std::string *specified_pos, std::vector<unsigned short> *specified_unk_pos, unsigned int type_family);
     Node *make_specified_pseudo_node(const char *start_str, unsigned int specified_length, unsigned short specified_posid, std::vector<unsigned short> *specified_unk_pos, unsigned int type_family);
 
