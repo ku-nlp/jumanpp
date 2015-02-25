@@ -1086,15 +1086,22 @@ void Sentence::print_unified_lattice() { //{{{
                      << delim;
 
                 // 表層 代表表記 よみ 原形
-                if (*node->reading == "*") { //読み不明であれば表層を使う
+                if (*node->reading == "*"|| *node->reading == "<UNK>") { //読み不明であれば表層を使う
                     cout << *node->original_surface << delim
-                         << *node->representation << delim // 実際は*のはず
+                         << *node->original_surface << "/" << *node->original_surface << delim // 擬似代表表記を表示する
                          << *node->original_surface << delim
                          << *node->original_surface << delim;
                 } else {
-                    cout << *node->original_surface << delim
-                         << *node->representation << delim << *node->reading
-                         << delim << *node->base << delim;
+                    if(*node->representation == "*"){ //Wikipedia 数詞など
+                        cout << *node->original_surface << delim
+                            << *node->original_surface << "/" << *node->reading << delim 
+                            << *node->reading << delim 
+                            << *node->base << delim;
+                    }else{
+                        cout << *node->original_surface << delim
+                            << *node->representation << delim << *node->reading
+                            << delim << *node->base << delim;
+                    }
                 }
                 // 品詞 品詞id 細分類 細分類id
                 if (*node->spos == UNK_POS) {
@@ -1126,12 +1133,18 @@ void Sentence::print_unified_lattice() { //{{{
 
                 // 活用系 活用系id
                 auto type_and_form = (*node->form_type + ":" + *node->form);
-                if (Dic::katuyou_form_map.count(type_and_form) ==
-                    0) { //無い場合
-                    cout << *node->form << delim << "0" << delim;
+                if (Dic::katuyou_form_map.count(type_and_form) == 0) { //無い場合
+                    if( *node->form == "<UNK>")
+                        cout << "*" << delim << "0" << delim;
+                    else
+                        cout << *node->form << delim << "0" << delim;
                 } else {
-                    cout << *node->form << delim
-                         << Dic::katuyou_form_map.at(type_and_form) << delim;
+                    if( *node->form == "<UNK>"){
+                        cout << "*" << delim << "0" << delim;
+                    }else{
+                        cout << *node->form << delim
+                             << Dic::katuyou_form_map.at(type_and_form) << delim;
+                    }
                 }
 
                 // 意味情報を再構築して表示
