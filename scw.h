@@ -85,11 +85,11 @@ class SCWClassifier {
 #else
     public:
 #endif
+        double C;
         double phi;
         double zeta;
-        double C;
-        double psi;
         FeatureVector& mu;
+        double psi;
         DiagMat sigmat; //本来は二次元だが対角行列だけ扱う
         inline double calc_alpha(double vt, double mt){// scw 1
             double alpha = (1.0/(vt*zeta)) * ( -mt *psi + std::sqrt( (mt*mt) * (phi*phi*phi*phi / 4.0) + vt *phi*phi*zeta ));

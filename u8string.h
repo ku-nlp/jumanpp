@@ -203,13 +203,13 @@ class U8string{//{{{
 
         bool is_choon(size_t char_ind){//{{{
             parse();
-            return char_type_at(char_ind) & CHOON > 0;
+            return (char_type_at(char_ind) & CHOON) > 0;
         };//}}}
 
         bool is_katakana(){//{{{
             parse();
             if(char_size() == 0) return false;
-            for(int i=0;i<char_size();i++){
+            for(unsigned int i=0;i<char_size();i++){
                 if( (char_type_at(i) & (KATAKANA+HANKAKU_KANA)) == 0 )
                     return false;
             }
@@ -219,7 +219,7 @@ class U8string{//{{{
         bool is_kanji(){//{{{
             parse();
             if(char_size() == 0) return false;
-            for(int i=0;i<char_size();i++){
+            for(unsigned int i=0;i<char_size();i++){
                 if( (char_type_at(i) & (KANJI|KANJI_FIGURE)) == 0)
                     return false;
             }
@@ -229,7 +229,7 @@ class U8string{//{{{
         bool is_eisuu(){//{{{
             parse();
             if(char_size() == 0) return false;
-            for(int i=0;i<char_size();i++){
+            for(unsigned int i=0;i<char_size();i++){
                 if( (char_type_at(i) & (ALPH|FIGURE)) == 0)
                     return false;
             }
@@ -239,7 +239,7 @@ class U8string{//{{{
         bool is_alphabet(){//{{{
             parse();
             if(char_size() == 0) return false;
-            for(int i=0;i<char_size();i++){
+            for(unsigned int i=0;i<char_size();i++){
                 if( (char_type_at(i) & (ALPH)) == 0)
                     return false;
             }
@@ -249,7 +249,7 @@ class U8string{//{{{
         bool is_kigou(){//{{{
             parse();
             if(char_size() == 0) return false;
-            for(int i=0;i<char_size();i++){
+            for(unsigned int i=0;i<char_size();i++){
                 if( (char_type_at(i) & (FAMILY_PUNC_SYMBOL|BRACKET)) == 0)
                     return false;
             }
@@ -258,20 +258,22 @@ class U8string{//{{{
 
     private:
         int next(int pos){//{{{
-            if(!(0 < pos & pos < byte_str.size()))
+            if(!((0 < pos) & (pos < static_cast<int>(byte_str.size()))))
                 return -1;
             int bytes = utf8_bytes(byte_str[pos]);
-            if(pos + bytes > byte_str.size())
+            if(pos + bytes > static_cast<int>(byte_str.size()))
                 return -1;
             return pos + bytes;
         };//}}}
 
         int prev(int pos){//{{{
-            if(!(0 < pos & pos < byte_str.size()))
+            if(!(
+                 (0 < pos) & (pos < static_cast<int>(byte_str.size()))
+                 ))
                 return -1;
             int tmp = pos;
 
-            while( 0x80 <= byte_str[tmp] & byte_str[tmp] < 0xC0 ){//2byte 以降はこの範囲に入る
+            while( (0x80 <= byte_str[tmp]) & (byte_str[tmp] < 0xC0) ){//2byte 以降はこの範囲に入る
                 tmp--;
                 if(tmp < 0) return -1;
             }
@@ -285,7 +287,7 @@ class U8string{//{{{
         inline int utf8_bytes(unsigned char u) {//{{{
             if ( u < 0x80 ) {
                 return 1;
-            } else if ( 0xe0 <= u & u < 0xf0 ){// よく出てくるので先に調べる
+            } else if ( (0xe0 <= u) & (u < 0xf0) ){// よく出てくるので先に調べる
                 return 3;
             } else if ( u < 0xe0) {
                 return 2;

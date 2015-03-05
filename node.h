@@ -54,7 +54,7 @@ class Node {
     static int id_count;
 
     //TODO: Topic 関係はあとで外に出してまとめる
-    constexpr static char* cdb_filename = "/home/morita/work/juman_LDA/dic/all_uniq.cdb";
+    constexpr static const char* cdb_filename = "/home/morita/work/juman_LDA/dic/all_uniq.cdb";
     static DBM_FILE topic_cdb;
   public:
     Node *prev = nullptr; // best previous node determined by Viterbi algorithm
