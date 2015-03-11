@@ -11,10 +11,11 @@ __license__ = "GPL v3"
 
 import codecs
 import sys
+import re
 sys.stdin  = codecs.getreader('UTF-8')(sys.stdin)
 sys.stdout = codecs.getwriter('UTF-8')(sys.stdout)
 
-FEATURES={ u"表層" : u"w", u"頻度" : u"f", u"品詞" : u"p", u"細分類" : u"sp", u"活用形" : u"sf", u"活用型" : u"sft", u"文字数" : u"l", u"原形" : u"ba" }
+FEATURES={ u"表層" : u"w", u"頻度" : u"f", u"品詞" : u"p", u"細分類" : u"sp", u"活用形" : u"sf", u"活用型" : u"sft", u"文字数" : u"l", u"原形" : u"ba" , u"接頭辞":u"prefix" ,u"接尾辞":u"suffix",u"":"dummy" }
 
 def conv(line):
     items = line.split(u"(")
@@ -41,6 +42,7 @@ def conv(line):
         ret = u"BIGRAM %s:%s" % (line, u",".join(features))
 
     else:
+        print line
         raise "Unkowon size"
     return ret
 
@@ -48,8 +50,12 @@ def conv(line):
 import optparse
 import sys
 def main():
+    pat = re.compile(u'^;')
     for line in iter(sys.stdin.readline, ""):
+        if(pat.match(line)):
+            continue
         print conv(line.lstrip().rstrip())
+
 
 if __name__=='__main__':
     main()

@@ -71,15 +71,15 @@ void FeatureSet::extract_topic_feature(Node *node) {//{{{
     if(FeatureSet::topic){ // TOPIC 素性 ( TODO: ハードコードをやめてルール化
         if(node->topic_available()){
             TopicVector node_topic = node->get_topic();
-            for(int i = 0; i< node_topic.size();i++){
+            for(size_t i = 0; i< node_topic.size();i++){
                 //std::cerr << "TP" << int2string(i) << ":" << binning(node_topic[i] * (*topic)[i]) << " " ;
-                fset.push_back("TP" + int2string(i) + ":"  + binning(node_topic[i] * (*topic)[i]));
+                //fset.push_back("TP" + int2string(i) + ":"  + binning(node_topic[i] * (*topic)[i]));
+                fset.push_back("TP" + int2string(i) + ":"  + binning((*topic)[i] - node_topic[i])); //差
             }
         }else{
             fset.push_back(std::string("TOPIC:<NONE>"));
         }
     }
-
 }//}}}
 
 void FeatureSet::extract_bigram_feature(Node *l_node, Node *r_node) {//{{{
@@ -121,6 +121,30 @@ void FeatureSet::extract_bigram_feature(Node *l_node, Node *r_node) {//{{{
                 f += int2string(l_node->char_family);
             else if (*it == FEATURE_MACRO_LEFT_ENDING_CHAR_TYPE)
                 f += int2string(l_node->end_char_family);
+            else if (*it == FEATURE_MACRO_LEFT_PREFIX){ //接頭辞の種類と後続する品詞が一致しているか
+                if( *(l_node->pos) != "接頭辞" )
+                    f += "neg";
+                else if((*(l_node->spos) == "名詞接頭辞" && *(r_node->pos) == "名詞") || 
+                        (*(l_node->spos) == "動詞接頭辞" && *(r_node->pos) == "動詞") || 
+                        (*(l_node->spos) == "イ形容詞接尾辞" && *(r_node->pos) == "形容詞" && 
+                         (*(r_node->form_type) == "イ形容詞アウオ段"|| 
+                          *(r_node->form_type) == "イ形容詞イ段"|| 
+                          *(r_node->form_type) == "イ形容詞イ段特殊")) || 
+                        (*(l_node->spos) == "ナ形容詞接頭辞" && *(r_node->pos) == "形容詞" &&
+                         (*(r_node->form_type) == "ナ形容詞"|| 
+                          *(r_node->form_type) == "ナノ形容詞"|| 
+                          *(r_node->form_type) == "ナ形容詞特殊")) )
+                    f += "1";
+                else
+                    f += "0";
+            }
+            else if (*it == FEATURE_MACRO_LEFT_SUFFIX){ 
+                f += "dummy";
+            }
+            else if (*it == FEATURE_MACRO_LEFT_DUMMY){ 
+                f += "dummy";
+            }
+
             // right
             else if (*it == FEATURE_MACRO_RIGHT_WORD)
                 f += *(r_node->string);
@@ -149,6 +173,30 @@ void FeatureSet::extract_bigram_feature(Node *l_node, Node *r_node) {//{{{
                 f += int2string(r_node->char_family);
             else if (*it == FEATURE_MACRO_RIGHT_ENDING_CHAR_TYPE)
                 f += int2string(r_node->end_char_family);
+            else if (*it == FEATURE_MACRO_RIGHT_SUFFIX){ //接尾辞が直前の品詞と一致しているか
+                if(*(r_node->pos) != "接尾辞" )
+                    f += "neg";
+                else if( (*(l_node->spos) == "数詞" && *(r_node->spos) == "名詞性名詞助数辞") || 
+                    ( ((*(l_node->pos) == "名詞" && *(l_node->spos) != "数詞") || 
+                       (*(l_node->pos) == "動詞" && *(l_node->spos) == "基本連用形") || 
+                       (*(l_node->pos) == "形容詞" ) ) && 
+                        ( *(r_node->spos) == "名詞性名詞接尾辞" || 
+                          *(r_node->spos) == "名詞性特殊接尾辞" || 
+                          *(r_node->spos) == "形容詞性名詞接尾辞"))||
+                    (*(l_node->pos) == "動詞" && 
+                        (*(r_node->spos) == "動詞性接尾辞" || 
+                         *(r_node->spos) == "名詞性述語接尾辞" ||
+                         *(r_node->spos) == "形容詞性述語接尾辞")))
+                    f += "1";
+                else
+                    f += "0";
+            }
+            else if (*it == FEATURE_MACRO_RIGHT_SUFFIX){ 
+                f += "dummy";
+            }
+            else if (*it == FEATURE_MACRO_RIGHT_DUMMY){ 
+                f += "dummy";
+            }
         }
         fset.push_back(f);
     }
@@ -272,6 +320,13 @@ unsigned int FeatureTemplate::interpret_macro(std::string &macro) {//{{{
             return FEATURE_MACRO_LEFT_ENDING_CHAR_TYPE;
         else if(macro == FEATURE_MACRO_STRING_LEFT_BASE_WORD)
             return FEATURE_MACRO_LEFT_BASE_WORD;
+        else if(macro == FEATURE_MACRO_STRING_LEFT_PREFIX)
+            return FEATURE_MACRO_LEFT_PREFIX;
+        else if(macro == FEATURE_MACRO_STRING_LEFT_SUFFIX)
+            return FEATURE_MACRO_LEFT_SUFFIX;
+        else if(macro == FEATURE_MACRO_STRING_LEFT_DUMMY)
+            return FEATURE_MACRO_LEFT_DUMMY;
+        
         // bigram: right
         else if (macro == FEATURE_MACRO_STRING_RIGHT_WORD)
             return FEATURE_MACRO_RIGHT_WORD;
@@ -297,6 +352,12 @@ unsigned int FeatureTemplate::interpret_macro(std::string &macro) {//{{{
             return FEATURE_MACRO_RIGHT_ENDING_CHAR_TYPE;
         else if(macro == FEATURE_MACRO_STRING_RIGHT_BASE_WORD)
             return FEATURE_MACRO_RIGHT_BASE_WORD;
+        else if(macro == FEATURE_MACRO_STRING_RIGHT_PREFIX)
+            return FEATURE_MACRO_RIGHT_PREFIX;
+        else if(macro == FEATURE_MACRO_STRING_RIGHT_SUFFIX)
+            return FEATURE_MACRO_RIGHT_SUFFIX;
+        else if(macro == FEATURE_MACRO_STRING_RIGHT_DUMMY)
+            return FEATURE_MACRO_RIGHT_DUMMY;
     }
 
     cerr << ";; cannot understand macro: " << macro << endl;
@@ -344,7 +405,5 @@ std::string FeatureSet::str(){//{{{
     }
     return ss.str();
 };//}}}
-
-
 
 }

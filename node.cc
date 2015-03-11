@@ -153,10 +153,10 @@ bool Node::topic_available(){//{{{
                         0);
         
     // 漢字一字，ひらがな一字, 記号にはトピックが関係ない場合が多いはずなので，一文字の形態素はトピックを考えない．
-    int not_one_char = (node->char_num > 1); //表層が日本語1文字以上
+    bool not_one_char = (node->char_num > 1); //表層が日本語1文字以上
     char* result = db_get(topic_cdb, node->base->c_str()); // TODO:二回トピックを引くのは無駄なので，キャッシュする
     // トピックを読み込む条件
-    int topical_cond = focused_hinsi && not_huzoku && not_suuryou && not_hukugou_ji && not_keisiki && not_timei_jinmei && not_jisou && result;
+    bool topical_cond = not_one_char && focused_hinsi && not_huzoku && not_suuryou && not_hukugou_ji && not_keisiki && not_timei_jinmei && not_jisou && result;
 
     if(result)
         delete(result);
@@ -165,7 +165,7 @@ bool Node::topic_available(){//{{{
 }//}}}
 
 bool Node::topic_available_for_sentence() {//{{{
-    Node* node = this;
+    //Node* node = this;
     // トピックを読み込む条件
     bool topical_cond = topic_available();
         
@@ -180,7 +180,6 @@ void Node::read_vector(const char* buf, std::vector<double> &vector) { //topic�
     char *token;
     char *saveptr1;
     int i;
-    double drop;
     double sum=0.0;
         
     vector.resize(TOPIC_NUM);

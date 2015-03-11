@@ -39,6 +39,11 @@ class Parameter {
     int set_N(unsigned int n){
         N =n;
 		N_redundant = N + (unsigned int)(ceil(N * B_BEST_REDUNDANCY));
+        return 0;
+    }
+    int set_nbest(bool in_nb){
+        nbest = in_nb;
+        return 0;
     }
     
     void set_output_ambigous_word(bool b){

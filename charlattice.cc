@@ -15,12 +15,12 @@ int CharLattice::parse(std::string sent){//{{{
     size_t next_pos=0;
     std::string last_char = "";
 
-    for (int pos = 0; pos < length; pos+=next_pos) {
+    for (size_t pos = 0; pos < length; pos+=next_pos) {
         unsigned char pos_chr = sent[pos];
         auto bytes = utf8_bytes(& pos_chr);
         char_byte_length.push_back(bytes);
         auto current_char = sent.substr(pos,bytes);
-        auto current_char_type = check_utf8_char_type((unsigned char *)current_char.c_str());
+        //auto current_char_type = check_utf8_char_type((unsigned char *)current_char.c_str());
         //cout << current_char << endl;
             
         // 置き換え挿入の無い普通のコピー
@@ -66,17 +66,17 @@ int CharLattice::parse(std::string sent){//{{{
             if ( pre_char_type > 0){ 
                 //cerr << "<not first>";
                 /* 長音記号で, 直前が削除されたか、直前が平仮名、直前が漢字かつ直後が平仮名 */
-                if ((pre_is_deleted || pre_char_type == TYPE_HIRAGANA || pre_char_type == TYPE_KANJI && post_char_type == TYPE_HIRAGANA) &&
-                        (current_char == DEF_PROLONG_SYMBOL1 || current_char == DEF_PROLONG_SYMBOL2 || current_char == DEF_ELIPSIS_SYMBOL1 || current_char == DEF_ELIPSIS_SYMBOL2) || 
+                if (((pre_is_deleted || pre_char_type == TYPE_HIRAGANA || (pre_char_type == TYPE_KANJI && post_char_type == TYPE_HIRAGANA)) &&
+                        (current_char == DEF_PROLONG_SYMBOL1 || current_char == DEF_PROLONG_SYMBOL2 || current_char == DEF_ELIPSIS_SYMBOL1 || current_char == DEF_ELIPSIS_SYMBOL2)) || 
                         /* 直前が削除されていて、現在文字が"っ"、かつ、直後が文末もしくは記号の場合も削除 */
-                        pre_is_deleted && current_char == DEF_PROLONG_SYMBOL3 && (post_char_type == 0 || post_char_type == TYPE_SYMBOL)) {
+                        (pre_is_deleted && current_char == DEF_PROLONG_SYMBOL3 && (post_char_type == 0 || post_char_type == TYPE_SYMBOL))) {
                     //cerr << "hatsuon del" << endl;
                     node_list[CharNum].emplace_back("", OPT_PROLONG_DEL);
                     next_pre_is_deleted = 1;
                 } else {
                     //cerr << "<check2> " << (lower_map.find(last_char) !=lower_map.end()) << "preisdel:" << pre_is_deleted << " ";
-                    if ( lower_map.find(last_char) !=lower_map.end() && lower_map.find(last_char)->second == current_char ||
-                            pre_is_deleted && lower_list.find(current_char)!=lower_list.end() && current_char == last_char ){
+                    if ( (lower_map.find(last_char) !=lower_map.end() && lower_map.find(last_char)->second == current_char) ||
+                            (pre_is_deleted && lower_list.find(current_char)!=lower_list.end() && current_char == last_char)){
                         //cerr << "<del_cont_prolong> ";
                         /* 直前の文字が対応する平仮名の小書き文字、 ("かぁ" > "か(ぁ)" :()内は削除の意味)
                          * または、削除された同一の小書き文字の場合は削除 ("か(ぁ)ぁ" > "か(ぁぁ)") */
@@ -92,16 +92,18 @@ int CharLattice::parse(std::string sent){//{{{
         pre_is_deleted = next_pre_is_deleted;
         CharNum++;
     }
+    return 0;
 }//}}}
 
 // Dic クラスの中でやった方が良さそう？
 std::vector<Darts::DoubleArray::result_pair_type> CharLattice::da_search_one_step( Darts::DoubleArray &da, int left_position, int right_position) {//{{{
     size_t current_da_node_pos;
     std::vector<CharNode>* left_char_node_list;
-    std::vector<CharNode>* right_char_node_list;
+    //std::vector<CharNode>* right_char_node_list;
     std::vector<Darts::DoubleArray::result_pair_type> result; //value のみ, size は基本的に0
-    char *current_pat_buf, current_node_type;
-
+    //char *current_pat_buf; 
+    //char current_node_type;
+    
     if (left_position < 0) {
         // vector にする
         left_char_node_list = &(CharRootNodeList);
@@ -112,7 +114,7 @@ std::vector<Darts::DoubleArray::result_pair_type> CharLattice::da_search_one_ste
 
     for(CharNode& left_char_node: (*left_char_node_list)){
         //cerr << "l:" << left_char_node.chr << "," << left_char_node.da_node_pos_num << endl; //0はありえない
-        for (int i = 0; i < left_char_node.da_node_pos_num; i++) { /* 現在位置のtrieのノード群から */
+        for (size_t i = 0; i < left_char_node.da_node_pos_num; i++) { /* 現在位置のtrieのノード群から */
             std::vector<CharNode>& right_char_node_list = node_list[right_position];
             for(CharNode& right_char_node: right_char_node_list){
                 //cout << " r:" << right_char_node.chr << "," << right_char_node.da_node_pos_num << endl;
@@ -141,7 +143,7 @@ std::vector<Darts::DoubleArray::result_pair_type> CharLattice::da_search_one_ste
                             (right_char_node.type & OPT_PROLONG_REPLACE && left_position >= 0)) { /* 長音置換ノードは先頭以外である必要がある */
                         //cout << "   da_ind: "<< i <<endl;
                             
-                        current_node_type = left_char_node.node_type[i] | right_char_node.type;
+                        //current_node_type = left_char_node.node_type[i] | right_char_node.type;
                         current_da_node_pos = left_char_node.da_node_pos[i];
                             
                         size_t tmp =0;
@@ -201,9 +203,9 @@ std::vector<Darts::DoubleArray::result_pair_type> CharLattice::da_search_from_po
         pair.length = byte;
         result.push_back(pair);
     }
-    for (int i = position + 1; i < node_list.size(); i++) {// 二文字
+    for (size_t i = position + 1; i < node_list.size(); i++) {// 二文字
         byte += char_byte_length[i];
-        if (MostDistantPosition < i - 1) break; //position まで辿りつけた文字がない場合
+        if (MostDistantPosition < static_cast<int>(i) - 1) break; //position まで辿りつけた文字がない場合
         std::vector<Darts::DoubleArray::result_pair_type> tokens = da_search_one_step(da,i - 1, i);
         
         for(auto &pair: tokens){

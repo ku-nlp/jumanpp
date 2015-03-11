@@ -50,9 +50,12 @@ class Sentence {
             new_node.imisid = node_gold->imisid;
             new_node.semantic_feature = node_gold->semantic_feature;
 
+            //new_node.surface = node_gold->surface; //無意味
+            //new_node.string_for_print = node_gold->string_for_print; //エラー
             new_node.base = node_gold->base;
             new_node.representation = node_gold->representation;
             new_node.length = node_gold->length;
+            new_node.char_num = node_gold->char_num;
             gold_morphs.push_back(new_node);
             node_gold = node_gold->prev;
         }
