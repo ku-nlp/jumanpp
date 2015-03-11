@@ -1,7 +1,14 @@
+
 CXX := g++
 #CXXFLAGS := -O3 -Wall # -g
-CXXFLAGS := --std=c++1y -g3 -O3 -m64 -Wall -Wl,-rpath /share/usr-x86_64/lib64 # -pg
+CXXFLAGS := --std=c++1y -g3 -O3 -m64 -Wall # -pg
 CXXFLAGS_G := --std=c++1y -g3 -fno-inline -g -m64 -WAll # -pg
+
+ifdef LD_RUN_PATH
+LD_FLAGS := $(LD_FLAGS) -Wl,-rpath $(LD_RUN_PATH)
+else
+LD_FLAGS := $(LD_FLAGS)
+endif
 
 OBJECTS_TEST := kkn_test.ot wvector.ot wvector_test.ot morph.ot dic.ot tagger.ot pos.ot sentence.ot feature.ot node.ot tools.ot charlattice.ot scw.ot
 OBJECTS := morph.o dic.o tagger.o pos.o sentence.o feature.o node.o tools.o charlattice.o u8string.o scw.o cdb_juman.o cdb/libcdb.a 
@@ -31,17 +38,17 @@ MKDARTS_HEADERS := tagger.h pos.h
 all: kkn mkdarts 
 
 kkn_test: $(OBJECTS_TEST) $(HEADERS)
-	$(CXX) $(CXXFLAGS) -lboost_unit_test_framework -o $@ $(OBJECTS_TEST) -D KKN_UNIT_TEST
+	$(CXX) $(CXXFLAGS) $(LD_FLAGS) -lboost_unit_test_framework -o $@ $(OBJECTS_TEST) -D KKN_UNIT_TEST
 	#$(CXX) $(CXXFLAGS) /usr/local/lib/libboost_unit_test_framework.dylib  -o $@ $(OBJECTS_TEST) -D KKN_UNIT_TEST
 
 kkn: $(OBJECTS) $(HEADERS)
-	$(CXX) $(CXXFLAGS) -o $@ $(OBJECTS)
+	$(CXX) $(CXXFLAGS) $(LD_FLAGS) -o $@ $(OBJECTS)
 
 kkn_g: $(OBJECTS:%.o=%.og) $(HEADERS)
-	$(CXX) $(CXXFLAGS_G) $(LIBS) -o $@ $(OBJECTS:%.o=%.og)
+	$(CXX) $(CXXFLAGS_G) $(LD_FLAGS) $(LIBS) -o $@ $(OBJECTS:%.o=%.og)
 
 mkdarts: $(MKDARTS_OBJECTS) $(MKDARTS_HEADERS)
-	$(CXX) $(CXXFLAGS) -o $@ $(MKDARTS_OBJECTS)
+	$(CXX) $(CXXFLAGS) $(LD_FLAGS) -o $@ $(MKDARTS_OBJECTS)
 
 clean:
 	rm -f $(OBJECTS_TEST) $(OBJECTS) $(MKDARTS_OBJECTS) kkn kkn_g mkdarts kkn_test
