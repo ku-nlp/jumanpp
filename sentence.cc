@@ -429,7 +429,7 @@ TopicVector Sentence::get_topic(){//{{{
                     TopicVector node_topic = node->get_topic();
                         
                     //count topic
-                    if(used_length.count(node->char_num) == 0){ 
+                    if(used_length.count(node->char_num) == 0){ // 同じ開始位置で同じ長さの場合最初の物だけを使う
                         for(int i=0;i<node_topic.size();i++){ topic[i] += node_topic[i]; }
                         used_length.insert(node->char_num);
                     }
@@ -1342,11 +1342,13 @@ std::vector<std::string> Sentence::get_gold_topic_features(TopicVector *tov){//{
     if(tov){
         std::stringstream topic_feature;
         FeatureSet f(ftmpl);
-        TopicVector *tmp_topic = FeatureSet::topic;
+        TopicVector *tmp_topic = FeatureSet::topic;// 一時保存
         FeatureSet::topic = tov;
         for(Node node: gold_morphs){
-            if(!node.is_dummy())
+            if(!node.is_dummy()){
                 f.extract_topic_feature(&node);
+                //std::cerr << *(node.base) << "(" << node.topic_available() << ")"<< std::endl;
+            }
         }
         FeatureSet::topic = tmp_topic;
 

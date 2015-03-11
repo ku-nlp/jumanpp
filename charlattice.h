@@ -47,8 +47,10 @@ class CharNode{//{{{
             for(auto&c:chr)c='\0';
             type = init_type;
             //chr = str.copy(chr, sizeof(str));
-            str.copy(chr, sizeof(str)); //一文字でない場合に例外を返せないので，コンストラクタで作るべきではない？
-            chr[sizeof(str)] = '\0'; //copy はnull文字を付け加えない
+            size_t str_size = str.size();
+            if(str_size > 7) return;
+            str.copy(chr, str_size); //一文字でない場合に例外を返せないので，コンストラクタで作るべきではない？
+            chr[str_size] = '\0'; //copy はnull文字を付け加えない
         };
 };//}}}
 

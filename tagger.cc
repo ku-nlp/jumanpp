@@ -49,7 +49,7 @@ int Tagger::online_learning(Sentence* gold, Sentence* system ,TopicVector *topic
             FeatureVector gold_vec(gold->get_feature()->get_fset()); 
             FeatureVector gold_topic_vec(gold->get_gold_topic_features(topic)); 
             std::cerr << gold_topic_vec.str() << endl;
-
+                
             FeatureVector sys_vec(system->get_best_feature().get_fset());
             scw.update( loss, gold_vec.merge(gold_topic_vec));
             scw.update( -loss, sys_vec);
@@ -122,7 +122,7 @@ bool Tagger::train_lda(const std::string &gsd_file, Tagger& normal_model) {//{{{
             Sentence* sent_normal = normal_model.new_sentence_analyze((*gold)->get_sentence()); 
             TopicVector sent_topic = sent_normal->get_topic();
             delete (sent_normal); 
-
+                    
             // トピックの表示
             std::cerr << "sent_topic: ";
             for(auto &x:sent_topic){

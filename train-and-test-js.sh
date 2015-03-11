@@ -22,10 +22,11 @@ set_postfix=
 use_unknown=''
 flag_debug=''
 c_value='1.0'
-p_value='1.65'
+#p_value='1.65'
+p_value='5.0'
 iteration_num=3
 unk_max_length=2
-while getopts Scs2mesgup:d:f:i:l:C:P:h OPT
+while getopts Scs2mesguL:p:d:f:i:l:C:P:h OPT
 do
     case $OPT in
         m)  set_head=MixedCorpus
@@ -45,6 +46,8 @@ do
         i)  iteration_num=$OPTARG
             ;;
         l)  unk_max_length=$OPTARG
+            ;;
+        L)  use_LDA=$OPTARG
             ;;
         u)  use_unknown='-u'
             ;;
@@ -92,19 +95,35 @@ echo ${p_value}
 # 訓練
 if [[ ! $skip_train == 'true' ]]; then 
     if [[ $short_train -gt 0 ]]; then
-        echo "./kkn${flag_debug} -t <(cat data/${set_head}train${set_postfix}.txt |shuf -n ${short_train} ) ${use_unknown} ${use_scw} -C ${c_value} -P ${p_value} -a -s -m $model -d data/$dic_base -f data/$feature_def -i $iteration_num -l $unk_max_length"
-        ./kkn${flag_debug} -t <(cat data/${set_head}train${set_postfix}.txt |shuf -n ${short_train} ) ${use_unknown} ${use_scw} -C ${c_value} -P ${p_value} -a -s -m $model -d data/$dic_base -f data/$feature_def -i $iteration_num -l $unk_max_length
+        if [[ -f $use_LDA ]]; then
+            echo "./kkn${flag_debug} -t <(cat data/${set_head}train${set_postfix}.txt |shuf -n ${short_train} ) ${use_unknown} ${use_scw} -C ${c_value} -P ${p_value} -s -m $model -d $dic_base -f $feature_def -i $iteration_num -l $unk_max_length --lda $use_LDA"
+            CPU_PROFILE=kkn_train_$out_base.prof ./kkn${flag_debug} -t <(cat data/${set_head}train${set_postfix}.txt |shuf -n ${short_train} ) ${use_unknown} ${use_scw} -C ${c_value} -P ${p_value}  -s -m $model -d data/$dic_base -f data/$feature_def -i $iteration_num -l $unk_max_length --lda $use_LDA
+        else
+            echo "./kkn${flag_debug} -t <(cat data/${set_head}train${set_postfix}.txt |shuf -n ${short_train} ) ${use_unknown} ${use_scw} -C ${c_value} -P ${p_value} -a -s -m $model -d data/$dic_base -f data/$feature_def -i $iteration_num -l $unk_max_length"
+            ./kkn${flag_debug} -t <(cat data/${set_head}train${set_postfix}.txt |shuf -n ${short_train} ) ${use_unknown} ${use_scw} -C ${c_value} -P ${p_value} -a -s -m $model -d data/$dic_base -f data/$feature_def -i $iteration_num -l $unk_max_length
+        fi
     else
-        echo "./kkn${flag_debug} -t data/${set_head}train${set_postfix}.txt -a ${use_unknown} ${use_scw} -C ${c_value} -P ${p_value} -s -m $model -d $dic_base -f $feature_def -i $iteration_num -l $unk_max_length "
-        CPU_PROFILE=kkn_train_$out_base.prof ./kkn${flag_debug} -t data/${set_head}train${set_postfix}.txt ${use_unknown}  ${use_scw} -C ${c_value} -P ${p_value} -a -s -m $model -d data/$dic_base -f data/$feature_def -i $iteration_num -l $unk_max_length
+        if [[ -f $use_LDA ]]; then
+            echo "./kkn${flag_debug} -t data/${set_head}train${set_postfix}.txt ${use_unknown} ${use_scw} -C ${c_value} -P ${p_value} -s -m $model -d $dic_base -f $feature_def -i $iteration_num -l $unk_max_length -L 5 --lda $use_LDA"
+            CPU_PROFILE=kkn_train_$out_base.prof ./kkn${flag_debug} -t data/${set_head}train${set_postfix}.txt ${use_unknown} ${use_scw} -C ${c_value} -P ${p_value}  -s -m $model -d data/$dic_base -f data/$feature_def -i $iteration_num -l $unk_max_length -L 5 --lda $use_LDA
+        else
+            echo "./kkn${flag_debug} -t data/${set_head}train${set_postfix}.txt -a ${use_unknown} ${use_scw} -C ${c_value} -P ${p_value} -s -m $model -d $dic_base -f $feature_def -i $iteration_num -l $unk_max_length "
+            CPU_PROFILE=kkn_train_$out_base.prof ./kkn${flag_debug} -t data/${set_head}train${set_postfix}.txt ${use_unknown}  ${use_scw} -C ${c_value} -P ${p_value} -a -s -m $model -d data/$dic_base -f data/$feature_def -i $iteration_num -l $unk_max_length
+        fi
     fi
 
 fi
 
 # testdata 上での評価
 # kyoto
-echo "./kkn${flag_debug} ${use_unknown} -m $model -f data/$feature_def -l $unk_max_length -d data/$dic_base < data/${set_head}kyoto${set_postfix}.raw > $out_base.${set_head}kyoto${set_postfix}.mrp"
-./kkn${flag_debug} ${use_unknown} -m $model -f data/$feature_def -l $unk_max_length -d data/$dic_base < data/${set_head}kyoto${set_postfix}.raw > $out_base.${set_head}kyoto${set_postfix}.mrp
+
+if [[ -f $use_LDA ]]; then
+    echo "./kkn${flag_debug} ${use_unknown} -m $model --lda $use_LDA -f data/$feature_def -l $unk_max_length -d data/$dic_base < data/${set_head}kyoto${set_postfix}.raw > $out_base.${set_head}kyoto${set_postfix}.mrp"
+    ./kkn${flag_debug} ${use_unknown} -m $model --lda $use_LDA -f data/$feature_def -l $unk_max_length -d data/$dic_base < data/${set_head}kyoto${set_postfix}.raw > $out_base.${set_head}kyoto${set_postfix}.mrp
+else
+    echo "./kkn${flag_debug} ${use_unknown} -m $model -f data/$feature_def -l $unk_max_length -d data/$dic_base < data/${set_head}kyoto${set_postfix}.raw > $out_base.${set_head}kyoto${set_postfix}.mrp"
+    ./kkn${flag_debug} ${use_unknown} -m $model -f data/$feature_def -l $unk_max_length -d data/$dic_base < data/${set_head}kyoto${set_postfix}.raw > $out_base.${set_head}kyoto${set_postfix}.mrp
+fi
 juman -r /mnt/home/morita/.jumanrc.new_wiki < data/${set_head}kyoto${set_postfix}.raw | ruby script/juman2morph.rb > $out_base.${set_head}kyoto_juman${set_postfix}.mrp
 ldajuman < data/${set_head}kyoto${set_postfix}.raw | ruby script/juman2morph.rb > $out_base.${set_head}kyoto_ldajuman${set_postfix}.mrp
 
@@ -122,8 +141,15 @@ tail -3 $out_base.${set_head}kyoto_ldajuman${set_postfix}.eval
 echo
 
 # 3bun
-echo "./kkn${flag_debug} -m $model -f data/$feature_def -l $unk_max_length -d data/$dic_base < data/${set_head}3bun${set_postfix}.raw > $out_base.${set_head}3bun${set_postfix}.mrp"
-./kkn${flag_debug} ${use_unknown} -m $model -f data/$feature_def -l $unk_max_length -d data/$dic_base < data/${set_head}3bun${set_postfix}.raw > $out_base.${set_head}3bun${set_postfix}.mrp
+if [[ -f $use_LDA ]]; then
+    echo "./kkn${flag_debug} ${use_unknown} -m $model --lda $use_LDA -f data/$feature_def -l $unk_max_length -d data/$dic_base < data/${set_head}3bun${set_postfix}.raw > $out_base.${set_head}3bun${set_postfix}.mrp"
+    ./kkn${flag_debug} ${use_unknown} -m $model --lda $use_LDA -f data/$feature_def -l $unk_max_length -d data/$dic_base < data/${set_head}3bun${set_postfix}.raw > $out_base.${set_head}3bun${set_postfix}.mrp
+else
+    echo "./kkn${flag_debug} ${use_unknown} -m $model -f data/$feature_def -l $unk_max_length -d data/$dic_base < data/${set_head}3bun${set_postfix}.raw > $out_base.${set_head}3bun${set_postfix}.mrp"
+    ./kkn${flag_debug} ${use_unknown} -m $model -f data/$feature_def -l $unk_max_length -d data/$dic_base < data/${set_head}3bun${set_postfix}.raw > $out_base.${set_head}3bun${set_postfix}.mrp
+fi
+#echo "./kkn${flag_debug} -m $model -f data/$feature_def -l $unk_max_length -d data/$dic_base < data/${set_head}3bun${set_postfix}.raw > $out_base.${set_head}3bun${set_postfix}.mrp"
+#./kkn${flag_debug} ${use_unknown} -m $model -f data/$feature_def -l $unk_max_length -d data/$dic_base < data/${set_head}3bun${set_postfix}.raw > $out_base.${set_head}3bun${set_postfix}.mrp
 juman -r /mnt/home/morita/.jumanrc.new_wiki < data/${set_head}3bun${set_postfix}.raw | ruby script/juman2morph.rb > $out_base.${set_head}3bun_juman${set_postfix}.mrp
 ldajuman < data/${set_head}3bun${set_postfix}.raw | ruby script/juman2morph.rb > $out_base.${set_head}3bun_ldajuman${set_postfix}.mrp
 

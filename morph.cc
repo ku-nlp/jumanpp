@@ -48,6 +48,7 @@ int main(int argc, char** argv) {//{{{
     option_proc(option, argc, argv);
 
     Morph::Parameter param(option.get<std::string>("dict"), option.get<std::string>("feature"), option.get<unsigned int>("iteration"), true, option.exist("shuffle"), option.get<unsigned int>("unk_max_length"), option.exist("debug"), option.exist("nbest")|option.exist("lattice"));
+
     param.set_N(option.get<unsigned int>("lattice"));
     param.set_output_ambigous_word(option.exist("ambiguous"));
     param.set_model_filename(option.get<std::string>("model"));
@@ -57,11 +58,15 @@ int main(int argc, char** argv) {//{{{
     if(option.exist("Phi"))
         param.set_Phi(option.get<double>("Phi"));
     //param.set_debug(option.exist("debug"));
+
+    Morph::Parameter normal_param = param;
+    normal_param.set_nbest(true);// nbest を利用するよう設定
+    normal_param.set_N(5);//5-best に設定
     Morph::Tagger tagger(&param);
 
     if (MODE_TRAIN) {//学習モード{{{
         if(option.exist("lda")){
-            Morph::Tagger tagger_normal(&param);
+            Morph::Tagger tagger_normal(&normal_param);
             tagger_normal.read_model_file(option.get<std::string>("lda"));
 
             tagger.train_lda(option.get<std::string>("train"), tagger_normal);
@@ -72,7 +77,7 @@ int main(int argc, char** argv) {//{{{
         }
       //}}}
     } else if(option.exist("lda")){//LDAを使う形態素解析{{{
-        Morph::Tagger tagger_normal(&param);
+        Morph::Tagger tagger_normal(&normal_param);
         tagger_normal.read_model_file(option.get<std::string>("lda"));
         tagger.read_model_file(option.get<std::string>("model"));
             
@@ -87,6 +92,13 @@ int main(int argc, char** argv) {//{{{
             }
             Morph::Sentence* normal_sent = tagger_normal.new_sentence_analyze(buffer);
             TopicVector topic = normal_sent->get_topic();
+
+            std::cerr << "Topic:";
+            for(double d: topic){
+                std::cerr << d << ",";
+            }
+            std::cerr << endl;
+
             Morph::Sentence* lda_sent = tagger.new_sentence_analyze_lda(buffer, topic);
             if (option.exist("lattice")){
                 if (option.exist("oldstyle"))

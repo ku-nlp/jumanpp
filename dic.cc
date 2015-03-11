@@ -206,14 +206,14 @@ Node* Dic::recognize_onomatopoeia(const char* start_str) {//{{{
     Node *result_node = NULL;
 
     U8string key(start_str); // オノマトペかどうかを判定するキー
-    int key_length = key.char_size(); /* キーの文字数を数えておく */
+    size_t key_length = key.char_size(); /* キーの文字数を数えておく */
     std::string current_char = key[0];// １文字目
     code = key.char_type_at(0);// 1文字目のタイプ
         
     /* 通常の平仮名、片仮名以外から始まるものは不可 */
-    if (code != TYPE_HIRAGANA && code != TYPE_KATAKANA) return false;
+    if (code != TYPE_HIRAGANA && code != TYPE_KATAKANA) return nullptr;
     //小文字で始まる場合は終了
-    if (key.is_lower(0)) return false;
+    if (key.is_lower(0)) return nullptr;
         
     /* 反復型オノマトペ */
     for (size_t len = 2; len < 5; len++) {// 反復の長さ
@@ -537,12 +537,12 @@ Node *Dic::make_unk_pseudo_node_list(const char *start_str, unsigned int min_cha
     Node *result_node = NULL;
     unsigned int length = strlen(start_str), char_num = 1;
     unsigned long code = 0; 
-    unsigned long next_code = 0; 
+    //unsigned long next_code = 0; 
     unsigned long last_code = 0; 
     // 
     for (unsigned int pos = 0; pos < length; pos += utf8_bytes((unsigned char *)(start_str + pos))) {
         code = check_utf8_char_type((unsigned char *)(start_str + pos));
-        next_code = check_utf8_char_type((unsigned char *)(start_str + pos + utf8_bytes((unsigned char *)(start_str + pos))));
+        //next_code = check_utf8_char_type((unsigned char *)(start_str + pos + utf8_bytes((unsigned char *)(start_str + pos))));
         //cerr << start_str << last_code << " " << code << " " << next_code << " => " << ((code & (TYPE_HIRAGANA|TYPE_KANJI|TYPE_KATAKANA|TYPE_ALPH)) & (last_code & (TYPE_HIRAGANA|TYPE_KANJI|TYPE_KATAKANA|TYPE_ALPH)) )<< endl;
             
         // 異なる文字種が連続する場合には未定義語にしない

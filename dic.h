@@ -26,9 +26,9 @@ class Dic {
     Pos repid2rep;
     Pos imisid2imis;
     FeatureTemplateSet *ftmpl;
-    static constexpr char* DEF_ONOMATOPOEIA_HINSI = "副詞";
-    static constexpr char* DEF_ONOMATOPOEIA_BUNRUI = "*";
-    static constexpr char* DEF_ONOMATOPOEIA_IMIS = "自動認識";
+    static constexpr const char* DEF_ONOMATOPOEIA_HINSI = "副詞";
+    static constexpr const char* DEF_ONOMATOPOEIA_BUNRUI = "*";
+    static constexpr const char* DEF_ONOMATOPOEIA_IMIS = "自動認識";
   public:
     static const std::unordered_map<std::string,int> pos_map;
     static const std::unordered_map<std::string,int> spos_map;

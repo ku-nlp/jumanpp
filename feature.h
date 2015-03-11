@@ -37,6 +37,9 @@ namespace Morph {
 #define FEATURE_MACRO_STRING_BASE_WORD "%ba"
 #define FEATURE_MACRO_BASE_WORD  15
 
+//#define FEATURE_MACRO_STRING_HAVE_TOPIC "%ht"
+//#define FEATURE_MACRO_HAVE_TOPIC 16
+
 #define FEATURE_MACRO_STRING_LEFT_WORD "%Lw"
 #define FEATURE_MACRO_LEFT_WORD 101
 #define FEATURE_MACRO_STRING_LEFT_POS "%Lp"
@@ -65,6 +68,13 @@ namespace Morph {
 #define FEATURE_MACRO_STRING_LEFT_BASE_WORD "%Lba"
 #define FEATURE_MACRO_LEFT_BASE_WORD  115
 
+#define FEATURE_MACRO_STRING_LEFT_PREFIX "%Lprefix"
+#define FEATURE_MACRO_LEFT_PREFIX  116
+#define FEATURE_MACRO_STRING_LEFT_SUFFIX "%Lsuffix"
+#define FEATURE_MACRO_LEFT_SUFFIX  117
+#define FEATURE_MACRO_STRING_LEFT_DUMMY "%Ldummy"
+#define FEATURE_MACRO_LEFT_DUMMY 118
+
 //------ RIGHT ------
 #define FEATURE_MACRO_STRING_RIGHT_WORD "%Rw"
 #define FEATURE_MACRO_RIGHT_WORD 201
@@ -92,6 +102,14 @@ namespace Morph {
 #define FEATURE_MACRO_RIGHT_FUNCTIONAL_WORD  214
 #define FEATURE_MACRO_STRING_RIGHT_BASE_WORD "%Rba"
 #define FEATURE_MACRO_RIGHT_BASE_WORD  215
+
+#define FEATURE_MACRO_STRING_RIGHT_PREFIX "%Rprefix"
+#define FEATURE_MACRO_RIGHT_PREFIX  216
+#define FEATURE_MACRO_STRING_RIGHT_SUFFIX "%Rsuffix"
+#define FEATURE_MACRO_RIGHT_SUFFIX  217
+
+#define FEATURE_MACRO_STRING_RIGHT_DUMMY "%Rdummy"
+#define FEATURE_MACRO_RIGHT_DUMMY  218
 
 // TODO: トピック数はファイルから読み込み時に決定する
 #define TOPIC_NUM 50
@@ -154,9 +172,34 @@ class FeatureSet {
 
     std::string str();
     std::string binning(double x){//{{{
-        // 完全に0, 0.01 以下，0.05以下, 0.1 以下, 0.2以下, 0.3以下, 0.4, 0.5, 0.6, 0.7,0.8,0.9,それ以上, の１３通り
+        // 完全に0, 0.01 以下，0.05以下, 0.1 以下, 0.2以下, 0.3以下, 0.4, 0.5, 0.6, 0.7,0.8,0.9,それ以上, の１３通り x 符号
+        
         if(x == 0.0)
             return std::string("0");
+        else if (x <= -1.0)
+            return std::string("-1.0");
+        else if (x <= -0.9)
+            return std::string("-0.9");
+        else if (x <= -0.8)
+            return std::string("-0.8");
+        else if (x <= -0.7)
+            return std::string("-0.7");
+        else if (x <= -0.6)
+            return std::string("-0.6");
+        else if (x <= -0.5)
+            return std::string("-0.5");
+        else if (x <= -0.4)
+            return std::string("-0.4");
+        else if (x <= -0.3)
+            return std::string("-0.3");
+        else if (x <= -0.2)
+            return std::string("-0.2");
+        else if (x <= -0.1)
+            return std::string("-0.1");
+        else if (x <= -0.05)
+            return std::string("-0.05");
+        else if (x <= -0.01)
+            return std::string("-0.01");
         else if (x <= 0.01)
             return std::string("0.01");
         else if (x <= 0.05)
