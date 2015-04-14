@@ -39,6 +39,8 @@ namespace Morph {
 
 //#define FEATURE_MACRO_STRING_HAVE_TOPIC "%ht"
 //#define FEATURE_MACRO_HAVE_TOPIC 16
+#define FEATURE_MACRO_STRING_DEVOICE  "%devoice"
+#define FEATURE_MACRO_DEVOICE  17
 
 #define FEATURE_MACRO_STRING_LEFT_WORD "%Lw"
 #define FEATURE_MACRO_LEFT_WORD 101
@@ -148,10 +150,12 @@ class FeatureTemplateSet {
 };
 
 class FeatureSet {
+  friend int main(int argc, char** argv);
     FeatureTemplateSet *ftmpl;
     FeatureVector* weight;
   public: 
     static std::vector<double>* topic;
+    static bool use_total_sim;
     std::vector<std::string> fset;
     FeatureSet(FeatureTemplateSet *in_ftmpl);
     FeatureSet(const FeatureSet& f){

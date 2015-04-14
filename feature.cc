@@ -8,6 +8,7 @@
 
 namespace Morph {
 std::vector<double>* FeatureSet::topic = nullptr;
+bool FeatureSet::use_total_sim = false;
 
 
 FeatureSet::FeatureSet(FeatureTemplateSet *in_ftmpl) {//{{{
@@ -45,7 +46,12 @@ void FeatureSet::extract_unigram_feature(Node *node) {//{{{
             }
             else if (*it == FEATURE_MACRO_BASE_WORD) //原型
                 f += *(node->base);
-            else if (*it == FEATURE_MACRO_LENGTH)
+            else if (*it == FEATURE_MACRO_DEVOICE){ //濁音化
+                if ( node->stat == MORPH_DEVOICE_NODE) //濁音化している
+                    f += "devoice";
+                else
+                    f += "nil";
+            } else if (*it == FEATURE_MACRO_LENGTH)
                 f += int2string(node->get_char_num());
             else if (*it == FEATURE_MACRO_BEGINNING_CHAR)
                 f.append(node->get_first_char(), (node->stat & MORPH_PSEUDO_NODE) ? strlen(node->get_first_char()) : utf8_bytes((unsigned char *)node->get_first_char()));
@@ -70,11 +76,21 @@ void FeatureSet::extract_unigram_feature(Node *node) {//{{{
 void FeatureSet::extract_topic_feature(Node *node) {//{{{
     if(FeatureSet::topic){ // TOPIC 素性 ( TODO: ハードコードをやめてルール化
         if(node->topic_available()){
-            TopicVector node_topic = node->get_topic();
-            for(size_t i = 0; i< node_topic.size();i++){
-                //std::cerr << "TP" << int2string(i) << ":" << binning(node_topic[i] * (*topic)[i]) << " " ;
-                //fset.push_back("TP" + int2string(i) + ":"  + binning(node_topic[i] * (*topic)[i]));
-                fset.push_back("TP" + int2string(i) + ":"  + binning((*topic)[i] - node_topic[i])); //差
+            if(FeatureSet::use_total_sim){
+                TopicVector node_topic = node->get_topic();
+                double sum = 0.0;
+                for(size_t i = 0; i< node_topic.size();i++){
+                    sum += node_topic[i] * (*topic)[i];
+                }
+                fset.push_back("TP_all:" + binning(sum));
+            }else{
+                TopicVector node_topic = node->get_topic();
+                for(size_t i = 0; i< node_topic.size();i++){
+                    //std::cerr << "TP" << int2string(i) << ":" << binning(node_topic[i] * (*topic)[i]) << " " ;
+                    //fset.push_back("TP" + int2string(i) + ":"  + binning(node_topic[i] * (*topic)[i]));
+                    
+                    fset.push_back("TP" + int2string(i) + ":"  + binning((*topic)[i] - node_topic[i])); //差
+                }
             }
         }else{
             fset.push_back(std::string("TOPIC:<NONE>"));
@@ -290,6 +306,8 @@ unsigned int FeatureTemplate::interpret_macro(std::string &macro) {//{{{
             return FEATURE_MACRO_ENDING_CHAR_TYPE;
         else if (macro == FEATURE_MACRO_STRING_FEATURE1)
             return FEATURE_MACRO_FEATURE1;
+        else if (macro == FEATURE_MACRO_STRING_BASE_WORD)
+            return FEATURE_MACRO_BASE_WORD;
         else if (macro == FEATURE_MACRO_STRING_BASE_WORD)
             return FEATURE_MACRO_BASE_WORD;
     }
