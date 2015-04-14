@@ -88,7 +88,7 @@ class CharLattice{//{{{
             "ゃ", "ャ", "ゅ", "ュ", "ょ", "ョ"};
         const std::vector<std::string> uppercase{"あ", "い", "う", "え", "お", "わ", "か"};
         const std::unordered_map<std::string, std::string> lower2upper{
-            {"ぁ", "あ"}, {"ぃ", "い"}, {"ぅ", "う"}, {"ぇ", "え"}, {"ぉ", "お"}, {"ゎ", "わ"}};
+            {"ぁ", "あ"}, {"ぃ", "い"}, {"ぅ", "う"}, {"ぇ", "え"}, {"ぉ", "お"}, {"ゎ", "わ"},{"ヶ","ケ"},{"ケ","ヶ"}};
 
         const std::string DEF_PROLONG_SYMBOL1{"ー"};
         const std::string DEF_PROLONG_SYMBOL2{"〜"};
