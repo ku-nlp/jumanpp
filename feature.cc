@@ -308,8 +308,8 @@ unsigned int FeatureTemplate::interpret_macro(std::string &macro) {//{{{
             return FEATURE_MACRO_FEATURE1;
         else if (macro == FEATURE_MACRO_STRING_BASE_WORD)
             return FEATURE_MACRO_BASE_WORD;
-        else if (macro == FEATURE_MACRO_STRING_BASE_WORD)
-            return FEATURE_MACRO_BASE_WORD;
+        else if (macro == FEATURE_MACRO_STRING_DEVOICE)
+            return FEATURE_MACRO_DEVOICE;
     }
     // bigram
     else {
