@@ -738,8 +738,8 @@ void Sentence::print_unified_lattice() { //{{{
 
                 if (param->debug) {
                     // デバッグ出力
-                    cout << "!\twcost:" << node->wcost
-                         << "\tcost:" << node->cost << endl;
+                    cout << "!\twcost(score):" << node->wcost
+                         << "\tcost(score):" << node->cost << endl;
                     cout << "!\t" << node->debug_info["unigram_feature"]
                          << endl;
                     std::stringstream ss_debug;
@@ -754,18 +754,28 @@ void Sentence::print_unified_lattice() { //{{{
                     }
                     // BOS, EOS との接続の表示.. (TODO: 簡潔に書き換え)
                     ss_debug.str("");
-                    ss_debug << -2 << " -> " << node->id;
+                    ss_debug << -2 << " -> " << node->id; //BOS
                     if (node->debug_info.find(ss_debug.str()) !=
                         node->debug_info.end()) {
-                        cout << "!\t" << ss_debug.str() << ": "
+                        cout << "!\t" << "BOS:"<< ss_debug.str() << ": "
                              << node->debug_info[ss_debug.str()] << endl;
                     }
+                    if (node->debug_info.find(ss_debug.str() + ":bigram_feature") !=
+                        node->debug_info.end()) {
+                        cout << "!\t" << "BOS:"<< ss_debug.str() << ": "
+                             << node->debug_info[ss_debug.str() + ":bigram_feature"] << endl;
+                    }
                     ss_debug.str("");
-                    ss_debug << node->id << " -> " << -1;
+                    ss_debug << node->id << " -> " << -1; //EOS
                     if (node->debug_info.find(ss_debug.str()) !=
                         node->debug_info.end()) {
-                        cout << "!\t" << ss_debug.str() << ": "
+                        cout << "!\t" << "EOS:"<< ss_debug.str() << ": "
                              << node->debug_info[ss_debug.str()] << endl;
+                    }
+                    if (node->debug_info.find(ss_debug.str() + ":bigram_feature") !=
+                        node->debug_info.end()) {
+                        cout << "!\t" << "EOS:"<< ss_debug.str() << ": "
+                             << node->debug_info[ss_debug.str() + ":bigram_feature"] << endl;
                     }
                 }
             }
@@ -922,6 +932,7 @@ bool Sentence::viterbi_at_position_nbest(unsigned int pos, Node *r_node) { //{{{
                 l_node->debug_info[ss_key.str().c_str()] =
                     std::string(ss_value.str().c_str());
                 r_node->debug_info[ss_key.str() + ":bigram_feature"] = f.str();
+                l_node->debug_info[ss_key.str() + ":bigram_feature"] = f.str(); //EOS用
             }
 
             // get_best_bigram_score
@@ -1316,14 +1327,13 @@ double Sentence::eval(Sentence& gold){//{{{
             itr_gold++;
             morph_count++;
         } else { // byte == byte_gold
-            // 同じ場所に同じ長さがあればスコア
-            if ((*itr)->length == (itr_gold)->length) {
-                //同じ品詞 なら追加で0.5点
-                if ((*itr)->posid == (itr_gold)->posid &&
-                    (*itr)->sposid == (itr_gold)->sposid)
-                    score += 1.0;
-                else
-                    score += 0.5;
+            if ((*itr)->length == (itr_gold)->length) { // 同じ場所に同じ長さがあれば0.5点
+                score += 0.5;
+                if ((*itr)->posid == (itr_gold)->posid){ //同じ品詞 なら追加で0.25点
+                    score += 0.25;
+                    if ((*itr)->sposid == (itr_gold)->sposid) //さらに同じ細分類 なら追加で0.25点
+                        score += 0.25;
+                }
             }
             // cerr << *(*itr)->base << " "<< *(itr_gold)->base << endl;
             byte += (*itr)->length;
@@ -1334,7 +1344,6 @@ double Sentence::eval(Sentence& gold){//{{{
         }
     }
     // TODO:BOS EOS を除く
-    // return 1.0;
     return 1.0 - (score / morph_count);
 };//}}}
 
