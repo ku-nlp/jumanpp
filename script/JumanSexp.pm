@@ -23,14 +23,14 @@ sub Sparse {
 
     while ($str) {
 	# 開き括弧
-	if ($str =~ s/^\s*\(\s*([^\s\(\)]*)//) {
+	if ($str =~ s/^ *\( *([^ \(\)]*)//) {
 	    my $elem = $1;
 	    push(@dat, {element => $elem, children => [], parent => scalar(@stack) == 0 ? -1 : $stack[-1]});
 	    push(@{$dat[$stack[-1]]{children}}, $#dat) if scalar(@stack);
 	    push(@stack, $#dat);
 	}
 	# 閉じ括弧
-	elsif ($str =~ s/^\s*([^\s\(\)]*)\)//) {
+	elsif ($str =~ s/^ *([^ \(\)]*)\)//) {
 	    my $elem = $1;
 	    if ($elem) {
 		push(@dat, {element => $elem, children => [], parent => $stack[-1], single => 1});
@@ -39,11 +39,12 @@ sub Sparse {
 	    pop(@stack);
 	}
 	# 要素のみ
-	elsif ($str =~ s/^\s*([^\s\(\)]+)//) {
+	elsif ($str =~ s/^ *([^ \(\)]+)//) {
 	    my $elem = $1;
 	    push(@dat, {element => $elem, children => [], parent => $stack[-1], single => 1});
 	    push(@{$dat[$stack[-1]]{children}}, $#dat);
 	}else{
+        print STDERR "Error\@Sparsing ".$str;
         print $str;
         exit 1;
     }
