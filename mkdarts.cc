@@ -127,10 +127,13 @@ int main(int argc, char **argv) {
   const int max_dic_column= 12;
   char *col[max_dic_column];
   std::string w;
+  unsigned int line_number = 0;
   while (std::getline(*is, line)) {
       const size_t n = tokenizeCSV((char *)line.c_str(), col, max_dic_column);
+      line_number++;
       if (n != max_dic_column) {
-          std::cerr << ";; format error: " << line << endl;
+          std::cerr << ";; format error: "<< line_number << " :" << line << endl;
+          continue;
       }
       if (std::string(col[4]) == std::string(";") ){
           std::cerr << ";; format error: " << line << endl;
