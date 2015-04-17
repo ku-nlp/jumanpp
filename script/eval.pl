@@ -82,10 +82,13 @@ sub calc_score {
             my $output_pos_tmp = $1;
             $ref_pos[$output_index] =~ /([^:]*):[^:]*$/;
             my $ref_pos_tmp = $1;
-            if( $output_pos_tmp eq $ref_pos_tmp ){
+            if( $output_pos_tmp eq $ref_pos_tmp || #品詞が一致 
+                ($output_pos_tmp eq "未定義語" and $ref_pos_tmp eq "名詞") ){ #未定義語は名詞扱い
                 $tmp_joint_ok_c++;
+		        $output_buffer .= " $output_token[$output_index]=$output_pos[$output_index]";
+            }else{
+		        $output_buffer .= " $output_token[$output_index]x$output_pos[$output_index]";
             }
-		    $output_buffer .= " $output_token[$output_index]x$output_pos[$output_index]";
 		}
 		$output_length += length($output_token[$output_index]);
 		$ref_length += length($ref_token[$ref_index]);
