@@ -200,10 +200,11 @@ bool Sentence::check_dict_match(Node* tmp_node, Node* dic_node){//{{{
 }//}}}
 
 // 統合する
+// TODO: 廃止
 Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str, unsigned int specified_length, const std::vector<std::string>& spec){//{{{
     Node *result_node = NULL;
     Node *kanji_result_node = NULL;
-    int pos = 0;
+    unsigned int pos = 0;
     // spec (0: reading, 1:base, 2:pos, 3:spos, 4:type, 5:form)
     auto specified_pos_string = spec[2]; //pos
     auto specified_pos = &specified_pos_string;

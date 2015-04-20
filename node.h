@@ -129,7 +129,6 @@ class Node {
     void read_vector(const char* buf, std::vector<double> &vector);
 
     TopicVector get_topic();
-
 };
 
 class NbestSearchToken {

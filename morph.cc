@@ -1,4 +1,5 @@
 #include "common.h"
+#include "feature.h"
 #include "tagger.h"
 #include "cmdline.h"
 #include "sentence.h"
@@ -21,6 +22,7 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     option.add<std::string>("lda", 0, "use lda", false, "");
     option.add("oldstyle", 'o', "print old style lattice");
     option.add("averaged", 'a', "use averaged perceptron for training");
+    option.add("total", 'T', "use total similarity for LDA");
     option.add("ambiguous", 'A', "output ambiguous words on lattice");
     option.add("shuffle", 's', "shuffle training data for each iteration");
     option.add("unknown", 'u', "apply unknown word detection (obsolete; already default)");
@@ -58,11 +60,16 @@ int main(int argc, char** argv) {//{{{
     if(option.exist("Phi"))
         param.set_Phi(option.get<double>("Phi"));
     //param.set_debug(option.exist("debug"));
+    if(option.exist("total")){
+        param.set_use_total_sim();
+        Morph::FeatureSet::use_total_sim = true;
+    }
 
     Morph::Parameter normal_param = param;
     normal_param.set_nbest(true);// nbest を利用するよう設定
     normal_param.set_N(5);//5-best に設定
     Morph::Tagger tagger(&param);
+    
 
     if (MODE_TRAIN) {//学習モード{{{
         if(option.exist("lda")){
@@ -93,11 +100,11 @@ int main(int argc, char** argv) {//{{{
             Morph::Sentence* normal_sent = tagger_normal.new_sentence_analyze(buffer);
             TopicVector topic = normal_sent->get_topic();
 
-            std::cerr << "Topic:";
-            for(double d: topic){
-                std::cerr << d << ",";
-            }
-            std::cerr << endl;
+            //std::cerr << "Topic:";
+            //for(double d: topic){
+            //    std::cerr << d << ",";
+            //}
+            //std::cerr << endl;
 
             Morph::Sentence* lda_sent = tagger.new_sentence_analyze_lda(buffer, topic);
             if (option.exist("lattice")){

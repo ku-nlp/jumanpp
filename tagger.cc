@@ -44,11 +44,10 @@ Sentence *Tagger::new_sentence_analyze_lda(std::string &in_sentence, TopicVector
 int Tagger::online_learning(Sentence* gold, Sentence* system ,TopicVector *topic=nullptr){//{{{
     if(param->use_scw){
         double loss = system->eval(*gold); //単語が異なる割合など
-        cerr << endl << "loss:" << loss << endl;
         if( gold->get_feature() ){
             FeatureVector gold_vec(gold->get_feature()->get_fset()); 
             FeatureVector gold_topic_vec(gold->get_gold_topic_features(topic)); 
-            std::cerr << gold_topic_vec.str() << endl;
+            // std::cerr << gold_topic_vec.str() << endl;
                 
             FeatureVector sys_vec(system->get_best_feature().get_fset());
             scw.update( loss, gold_vec.merge(gold_topic_vec));
