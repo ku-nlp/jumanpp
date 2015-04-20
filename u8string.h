@@ -19,7 +19,7 @@
  * コンストラクタでは utf8 の解釈は行わず，単に内部に std::string としてコピーするのみ．
  * 文字単位の扱いが必要になった時点で，バイト列を解釈し，文字ごとの配列を生成して内部的に用いる．
  * 単に string として扱ってもそれほどオーバーヘッドがない（はず）．
- * string でよく使いそうな昨日のみをラップしてある．(find, substr, c_str)
+ * string でよく使いそうな機能のみをラップしてある．(find, substr, c_str)
  * size(), length() は何のサイズを返すべきか曖昧なので, 実装しない．代わりに byte_size, char_size を用意した．
  * morita(2015/01/16)
  ******/
@@ -58,8 +58,8 @@ class U8string{//{{{
     // TYPE_FIGURE + TYPE_PERIOD + TYPE_MIDDLE_DOT + TYPE_KANJI_FIGURE + TYPE_SLASH + TYPE_COLON
     static constexpr unsigned long FAMILY_FIGURE      = 0x00003838; 
     // TYPE_PERIOD + TYPE_COMMA + TYPE_IDEOGRAPHIC_PUNC
-    static constexpr unsigned long FAMILY_PUNC        = 0x00000052; 
-    // TYPE_ALPH + TYPE_PERIOD + TYPE_SLASH + TYPE_COLON
+    static constexpr unsigned long FAMILY_PUNC        = 0x00000072; 
+    // TYPE_ALPH + TYPE_PERIOD + TYPE_SLASH + TYPE_COLON + TYPE_MIDDLE_DOT
     static constexpr unsigned long FAMILY_ALPH_PUNC   = 0x00003090; 
     // TYPE_PERIOD + TYPE_COMMA + TYPE_IDEOGRAPHIC_PUNC + TYPE_MIDDLE_DOT + TYPE_SYMBOL + TYPE_SLASH + TYPE_COLON
     static constexpr unsigned long FAMILY_PUNC_SYMBOL = 0x0000315B; 
