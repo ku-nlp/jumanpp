@@ -62,14 +62,15 @@ double DiagMat::get_value(const std::string& sp1)const{
 
 void SCWClassifier::update(double loss_value, const FeatureVector& vec){
     //if(loss_value < 0.00001) return;
-    //loss_value = 1.0; //ロスの使い方？
     double score = mu * vec;
     double vt = calc_vt(vec);
     double alphat = calc_alpha(vt, loss_value*score);
+    //double alphat = calc_alpha(vt, score);
     double ut = calc_ut(alphat, vt);
     double betat = calc_beta(alphat, ut, vt);
     //    (double alpha, double y, const DiagMat sigma, const FeatureVector& x)
-    std::cerr << "alpha:" << alphat << " beta:" << betat << " score:" << score <<" y:"  << (double)loss_value << std::endl;
+    //std::cerr << "alpha:" << alphat << " beta:" << betat << " score:" << score <<" y:"  << (double)loss_value << "\t";
+    //std::cerr << "\ty:"  << (double)loss_value << "\t";
 
     mu.update(alphat, loss_value, sigmat, vec);
     sigmat.update(betat, vec);

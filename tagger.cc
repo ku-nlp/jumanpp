@@ -78,15 +78,19 @@ bool Tagger::train(const std::string &gsd_file) {//{{{
     read_gold_data(gsd_file);
 
     for (size_t t = 0; t < param->iteration_num; t++) {
-        cerr << "ITERATION:" << t << endl;
+        double loss = 0, loss_sum = 0;
+        cerr << "ITERATION:" << t << endl << endl;
         if (param->shuffle_training_data) // shuffle training data
             random_shuffle(sentences_for_train.begin(), sentences_for_train.end());
-        for (std::vector<Sentence *>::iterator gold = sentences_for_train.begin(); gold != sentences_for_train.end(); gold++) {
-            cerr << std::distance(sentences_for_train.begin(),gold) << "/" << std::distance(sentences_for_train.begin(), sentences_for_train.end()) << "\r";
-            // 通常の解析
-            Sentence* sent = new_sentence_analyze((*gold)->get_sentence()); // get the best path
-            online_learning( *gold, sent);
 
+        for (std::vector<Sentence *>::iterator gold = sentences_for_train.begin(); gold != sentences_for_train.end(); gold++) {
+            Sentence* sent = new_sentence_analyze((*gold)->get_sentence()); // 通常の解析
+            loss = sent->eval(**gold); // 表示用にロスを計算
+            loss_sum += loss;
+            cerr << "\r" << std::distance(sentences_for_train.begin(),gold) << "/" << std::distance(sentences_for_train.begin(), sentences_for_train.end());
+            cerr << "    avg:" << loss_sum/std::distance(sentences_for_train.begin(),gold) << " loss:" << loss;
+            online_learning(*gold, sent);
+                
             TopicVector sent_topic = sent->get_topic();
             delete (sent);
         }
