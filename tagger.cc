@@ -87,8 +87,9 @@ bool Tagger::train(const std::string &gsd_file) {//{{{
             Sentence* sent = new_sentence_analyze((*gold)->get_sentence()); // 通常の解析
             loss = sent->eval(**gold); // 表示用にロスを計算
             loss_sum += loss;
-            cerr << "\r" << std::distance(sentences_for_train.begin(),gold) << "/" << std::distance(sentences_for_train.begin(), sentences_for_train.end());
-            cerr << "    avg:" << loss_sum/std::distance(sentences_for_train.begin(),gold) << " loss:" << loss;
+            cerr << "\033[2K\r" //行のクリア
+                 << std::distance(sentences_for_train.begin(),gold) << "/" << std::distance(sentences_for_train.begin(), sentences_for_train.end()) //事例数の表示
+                 << "    avg:" << loss_sum/std::distance(sentences_for_train.begin(),gold) << " loss:" << loss; //イテレーション内の平均ロス，各事例でのロスを表示
             online_learning(*gold, sent);
                 
             TopicVector sent_topic = sent->get_topic();
