@@ -61,10 +61,10 @@ class Dic {
     Node *make_unk_pseudo_node_list(const char *start_str, unsigned int min_char_num, unsigned int max_char_num);
     Node *make_unk_pseudo_node_list(const char *start_str, unsigned int min_char_num, unsigned int max_char_num, unsigned short specified_posid);
 
-    Node *make_specified_pseudo_node(const char *start_str, unsigned int specified_length, std::string *specified_pos, std::vector<unsigned short> *specified_unk_pos, unsigned int type_family);
-    Node *make_specified_pseudo_node(const char *start_str, unsigned int specified_length, unsigned short specified_posid, std::vector<unsigned short> *specified_unk_pos, unsigned int type_family);
+    //Node *make_specified_pseudo_node(const char *start_str, unsigned int specified_length, std::string *specified_pos, std::vector<unsigned short> *specified_unk_pos, unsigned int type_family);
+    //Node *make_specified_pseudo_node(const char *start_str, unsigned int specified_length, unsigned short specified_posid, std::vector<unsigned short> *specified_unk_pos, unsigned int type_family);
 
-    Node *make_specified_pseudo_node_by_dic_check(const char *start_str, unsigned int specified_length, std::string *inspecified_pos, std::vector<unsigned short> *specified_unk_pos, unsigned int type_family, Node* r_node);
+    Node *make_specified_pseudo_node_by_dic_check(const char *start_str, unsigned int specified_length, std::string *inspecified_pos, std::vector<unsigned short> *specified_unk_pos, unsigned int type_family, Node* r_node = nullptr);
 
     const Token *get_token(const Darts::DoubleArray::result_pair_type &n) const {
         return token_head + (n.value >> 8);

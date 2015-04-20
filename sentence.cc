@@ -215,9 +215,9 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str, unsi
     // 同じ文字種が続く範囲を一語とする (同じ品詞で同じ長さなら使わない)
 	if (specified_length || pos >= reached_pos_of_pseudo_nodes) {
         // 数詞処理
-		result_node = dic->make_specified_pseudo_node(start_str + pos,
+		result_node = dic->make_specified_pseudo_node_by_dic_check(start_str + pos,
 				specified_length, specified_pos, &(param->unk_figure_pos),
-				TYPE_FAMILY_FIGURE);
+				TYPE_FAMILY_FIGURE, nullptr);
         // TYPE_FIGUREに含まれる文字でもでも"数"や"，"は他の品詞になる可能性があるため打ち切らない
 		//if (specified_length && result_node) return result_node;
 
@@ -281,13 +281,13 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, co
     // 同じ文字種が続く範囲を一語として入れてくれる
 	if (specified_length || pos >= reached_pos_of_pseudo_nodes) {
         // 数詞処理
-		result_node = dic->make_specified_pseudo_node(start_str + pos,
+		result_node = dic->make_specified_pseudo_node_by_dic_check(start_str + pos,
 				specified_length, specified_pos, &(param->unk_figure_pos),
-				TYPE_FAMILY_FIGURE);
+				TYPE_FAMILY_FIGURE, nullptr);
 
 		// alphabet 
 		if (!result_node) {
-			result_node = dic->make_specified_pseudo_node(start_str + pos,
+			result_node = dic->make_specified_pseudo_node_by_dic_check(start_str + pos,
 					specified_length, specified_pos, &(param->unk_pos),
 					TYPE_FAMILY_ALPH_PUNC);
 		}

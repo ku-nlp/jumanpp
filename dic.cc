@@ -579,12 +579,14 @@ Node *Dic::make_unk_pseudo_node_list(const char *start_str, unsigned int min_cha
 
 // make_specified_pseudo... では, 文字種の連続から未定義語を生成する
 
-Node *Dic::make_specified_pseudo_node(const char *start_str, unsigned int specified_length, std::string *specified_pos, std::vector<unsigned short> *specified_unk_pos, unsigned int type_family) {//{{{
-    if (specified_pos)
-        return make_specified_pseudo_node(start_str, specified_length, posid2pos.get_id(*specified_pos), specified_unk_pos, type_family);
-    else
-        return make_specified_pseudo_node(start_str, specified_length, MORPH_DUMMY_POS, specified_unk_pos, type_family);
-}//}}}
+//Node *Dic::make_specified_pseudo_node(const char *start_str, unsigned int specified_length, std::string *specified_pos, std::vector<unsigned short> *specified_unk_pos, unsigned int type_family) {//{{{
+//    if (specified_pos)
+//        return make_specified_pseudo_node(start_str, specified_length, posid2pos.get_id(*specified_pos), specified_unk_pos, type_family);
+//    else
+//        return make_specified_pseudo_node(start_str, specified_length, MORPH_DUMMY_POS, specified_unk_pos, type_family);
+//}//}}}
+
+// TODO ここから続き
 
 // 名前が変？指定した文字種が連続する範囲で全品詞について未定義語ノードを生成
 // 辞書をr_node で受け取り、重複をチェック
@@ -611,9 +613,10 @@ Node *Dic::make_specified_pseudo_node_by_dic_check(const char *start_str, unsign
     }
 
     if (char_num > 0 && (!specified_length || specified_length == pos)) {
-
-        Node *new_node = make_unk_pseudo_node_list_some_pos_by_dic_check(start_str, pos, specified_posid, specified_unk_pos, r_node); 
-        return new_node;
+        if( r_node ) //辞書が渡されている場合
+            return make_unk_pseudo_node_list_some_pos_by_dic_check(start_str, pos, specified_posid, specified_unk_pos, r_node); 
+        else
+            return make_unk_pseudo_node_list_some_pos(start_str, pos, specified_posid, specified_unk_pos); 
     }
     else {
         return NULL;
@@ -623,34 +626,34 @@ Node *Dic::make_specified_pseudo_node_by_dic_check(const char *start_str, unsign
 
 // make figure nodes
 // TODO: 廃止(まだ、数詞の時のみ利用しているため、問題ないかチェック
-Node *Dic::make_specified_pseudo_node(const char *start_str, unsigned int specified_length, unsigned short specified_posid, std::vector<unsigned short> *specified_unk_pos, unsigned int type_family) {//{{{
-    unsigned int length = strlen(start_str);
-    unsigned int pos = 0, char_num = 0;
-    for (pos = 0; pos < length; pos += utf8_bytes((unsigned char *)(start_str + pos))) {
-        // exceptional figure expression of two characters
-        if ((type_family == TYPE_FAMILY_FIGURE && check_exceptional_two_chars_in_figure((start_str + pos), length - pos))) {
-            pos += utf8_bytes((unsigned char *)(start_str + pos));
-            char_num += 2;
-        }
-        // doesn't start with slash, colon, etc.
-        else if (pos == 0 && compare_char_type_in_family(check_utf8_char_type((unsigned char *)(start_str + pos)), TYPE_FAMILY_PUNC_SYMBOL))
-            break;
-        else if (compare_char_type_in_family(check_utf8_char_type((unsigned char *)(start_str + pos)), type_family)) // this is in specified family
-            char_num++;
-        else
-            break;
-    }
-
-    if (char_num > 0 && 
-        (!specified_length || specified_length == pos)) {
-        Node *new_node = make_unk_pseudo_node_list_some_pos(start_str, pos, specified_posid, specified_unk_pos); // pos == byte_len
-        // cerr << "CAND:" << *(new_node->string_for_print) << endl;
-        return new_node;
-    }
-    else {
-        return NULL;
-    }
-}//}}}
+//Node *Dic::make_specified_pseudo_node(const char *start_str, unsigned int specified_length, unsigned short specified_posid, std::vector<unsigned short> *specified_unk_pos, unsigned int type_family) {//{{{
+//    unsigned int length = strlen(start_str);
+//    unsigned int pos = 0, char_num = 0;
+//    for (pos = 0; pos < length; pos += utf8_bytes((unsigned char *)(start_str + pos))) {
+//        // exceptional figure expression of two characters
+//        if ((type_family == TYPE_FAMILY_FIGURE && check_exceptional_two_chars_in_figure((start_str + pos), length - pos))) {
+//            pos += utf8_bytes((unsigned char *)(start_str + pos));
+//            char_num += 2;
+//        }
+//        // doesn't start with slash, colon, etc.
+//        else if (pos == 0 && compare_char_type_in_family(check_utf8_char_type((unsigned char *)(start_str + pos)), TYPE_FAMILY_PUNC_SYMBOL))
+//            break;
+//        else if (compare_char_type_in_family(check_utf8_char_type((unsigned char *)(start_str + pos)), type_family)) // this is in specified family
+//            char_num++;
+//        else
+//            break;
+//    }
+//
+//    if (char_num > 0 && 
+//        (!specified_length || specified_length == pos)) {
+//        Node *new_node = make_unk_pseudo_node_list_some_pos(start_str, pos, specified_posid, specified_unk_pos); // pos == byte_len
+//        // cerr << "CAND:" << *(new_node->string_for_print) << endl;
+//        return new_node;
+//    }
+//    else {
+//        return NULL;
+//    }
+//}//}}}
 
 // mkdarts => Dic
 void inline Dic::read_node_info(const Token &token, Node **node) {//{{{
