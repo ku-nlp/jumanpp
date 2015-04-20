@@ -586,8 +586,6 @@ Node *Dic::make_unk_pseudo_node_list(const char *start_str, unsigned int min_cha
 //        return make_specified_pseudo_node(start_str, specified_length, MORPH_DUMMY_POS, specified_unk_pos, type_family);
 //}//}}}
 
-// TODO ここから続き
-
 // 名前が変？指定した文字種が連続する範囲で全品詞について未定義語ノードを生成
 // 辞書をr_node で受け取り、重複をチェック
 Node *Dic::make_specified_pseudo_node_by_dic_check(const char *start_str, unsigned int specified_length, std::string *specified_pos, std::vector<unsigned short> *specified_unk_pos, unsigned int type_family, Node* r_node) {//{{{
@@ -614,7 +612,7 @@ Node *Dic::make_specified_pseudo_node_by_dic_check(const char *start_str, unsign
 
     if (char_num > 0 && (!specified_length || specified_length == pos)) {
         if( r_node ) //辞書が渡されている場合
-            return make_unk_pseudo_node_list_some_pos_by_dic_check(start_str, pos, specified_posid, specified_unk_pos, r_node); 
+            return make_unk_pseudo_node_list_some_pos_by_dic_check(start_str, pos, specified_posid, specified_unk_pos, r_node);
         else
             return make_unk_pseudo_node_list_some_pos(start_str, pos, specified_posid, specified_unk_pos); 
     }

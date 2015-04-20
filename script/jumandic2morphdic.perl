@@ -81,7 +81,8 @@ sub print_entry {
     if($h eq ','){ $h = '","';}
     if($midasi eq ','){ $midasi = '","';}
     if($yomi eq ','){ $yomi = '","';}
-    print $h, ',0,0,0,', $pos,',', $spos, ',' , $form, ',', $form_type, ',' , $midasi , ',', $yomi, ',' , $rep, ',' , $imis,"\n"; }
+    print $h, ',0,0,0,', $pos,',', $spos, ',' , $form, ',', $form_type, ',' , $midasi , ',', $yomi, ',' , $rep, ',' , $imis,"\n"; 
+}
 
 sub get_inflected_forms {
     my ($midasi, $type) = @_;

@@ -148,7 +148,6 @@ bool Tagger::train_lda(const std::string &gsd_file, Tagger& normal_model) {//{{{
     return true;
 }//}}}
 
-
 // read gold standard data
 bool Tagger::read_gold_data(const std::string &gsd_file) {//{{{
     return read_gold_data(gsd_file.c_str());
