@@ -32,6 +32,7 @@ class Parameter {
     bool output_ambiguous_word=false;
     double c_value = 1.0;
     double phi_value = 1.0;
+    bool use_total_sim = false;
 
     std::vector<unsigned short> unk_pos;
     std::vector<unsigned short> unk_figure_pos;
@@ -57,6 +58,9 @@ class Parameter {
     }
     void set_Phi(double in_phi){
         phi_value = in_phi;
+    }
+    void set_use_total_sim(){
+        use_total_sim = true;
     }
     void set_model_filename(std::string filename){
         model_filename = filename;
