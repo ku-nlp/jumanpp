@@ -192,17 +192,22 @@ void FeatureSet::extract_bigram_feature(Node *l_node, Node *r_node) {//{{{
             else if (*it == FEATURE_MACRO_RIGHT_SUFFIX){ //接尾辞が直前の品詞と一致しているか
                 if(*(r_node->pos) != "接尾辞" )
                     f += "neg";
-                else if( (*(l_node->spos) == "数詞" && *(r_node->spos) == "名詞性名詞助数辞") || 
-                    ( ((*(l_node->pos) == "名詞" && *(l_node->spos) != "数詞") || 
-                       (*(l_node->pos) == "動詞" && *(l_node->spos) == "基本連用形") || 
-                       (*(l_node->pos) == "形容詞" ) ) && 
-                        ( *(r_node->spos) == "名詞性名詞接尾辞" || 
-                          *(r_node->spos) == "名詞性特殊接尾辞" || 
-                          *(r_node->spos) == "形容詞性名詞接尾辞"))||
-                    (*(l_node->pos) == "動詞" && 
-                        (*(r_node->spos) == "動詞性接尾辞" || 
-                         *(r_node->spos) == "名詞性述語接尾辞" ||
-                         *(r_node->spos) == "形容詞性述語接尾辞")))
+                else if(  (*(l_node->spos) == "数詞" && *(r_node->spos) == "名詞性名詞助数辞") || // ３枚
+                        // 名詞相当 + 名詞接尾辞
+                        (((*(l_node->pos) == "名詞" && *(l_node->spos) != "数詞") || 
+                          (*(l_node->pos) == "動詞" && *(l_node->spos) == "基本連用形") || 
+                          (*(l_node->pos) == "形容詞") ||
+                          (*(l_node->spos) == "名詞性名詞接尾辞")||
+                          (*(l_node->spos) == "名詞性名詞助数字")||
+                          (*(l_node->spos) == "名詞性特殊接尾辞")) && 
+                          ( *(r_node->spos) == "名詞性名詞接尾辞" || // 〜後 〜化
+                            *(r_node->spos) == "名詞性特殊接尾辞" || // 〜さん 〜移行
+                            *(r_node->spos) == "形容詞性名詞接尾辞")) || // 〜的 〜的だ
+                        // 働か+ない 
+                         ((*(l_node->pos) == "動詞"||*(l_node->pos) == "形容詞"||*(l_node->spos) == "動詞性接尾辞")&& 
+                           (*(r_node->spos) == "動詞性接尾辞" || // "させない"の"せ"
+                            *(r_node->spos) == "名詞性述語接尾辞" || // "高さ" の"さ" 聞き手の"手" 食べ放題の"放題"
+                            *(r_node->spos) == "形容詞性述語接尾辞"))) //"させない" の"ない"
                     f += "1";
                 else
                     f += "0";
