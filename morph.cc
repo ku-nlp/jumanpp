@@ -17,7 +17,7 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     option.add<unsigned int>("lattice", 'L', "output lattice format",false, 1);
     option.add<double>("Cvalue", 'C', "C value",false, 1.0);
     option.add<double>("Phi", 'P', "Phi value",false, 1.65);
-    option.add("nbest", 'n', "n-best search");
+    option.add<unsigned int>("nbest", 'n', "n-best search", 5);
     option.add("scw", 0, "use soft confidence weighted");
     option.add<std::string>("lda", 0, "use lda", false, "");
     option.add("oldstyle", 'o', "print old style lattice");
@@ -51,7 +51,12 @@ int main(int argc, char** argv) {//{{{
 
     Morph::Parameter param(option.get<std::string>("dict"), option.get<std::string>("feature"), option.get<unsigned int>("iteration"), true, option.exist("shuffle"), option.get<unsigned int>("unk_max_length"), option.exist("debug"), option.exist("nbest")|option.exist("lattice"));
 
-    param.set_N(option.get<unsigned int>("lattice"));
+    if(option.exist("nbest"))
+        param.set_N(option.get<unsigned int>("nbest"));
+    else if(option.exist("lattice"))
+        param.set_N(option.get<unsigned int>("lattice"));
+    else
+        param.set_N(1);
     param.set_output_ambigous_word(option.exist("ambiguous"));
     param.set_model_filename(option.get<std::string>("model"));
     param.set_use_scw(option.exist("scw"));
