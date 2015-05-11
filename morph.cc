@@ -17,7 +17,7 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     option.add<unsigned int>("lattice", 'L', "output lattice format",false, 1);
     option.add<double>("Cvalue", 'C', "C value",false, 1.0);
     option.add<double>("Phi", 'P', "Phi value",false, 1.65);
-    option.add<unsigned int>("nbest", 'n', "n-best search", 5);
+    option.add<unsigned int>("nbest", 'n', "n-best search", false, 5);
     option.add("scw", 0, "use soft confidence weighted");
     option.add<std::string>("lda", 0, "use lda", false, "");
     option.add("oldstyle", 'o', "print old style lattice");
