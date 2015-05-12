@@ -9,6 +9,7 @@
 #include "charlattice.h"
 #include "u8string.h"
 #include <math.h>
+#include "rnnlm/rnnlmlib.h"
 
 namespace Morph {
 
@@ -126,10 +127,12 @@ class Sentence {
     unsigned int find_reached_pos(unsigned int pos, Node *node);
     unsigned int find_reached_pos_of_pseudo_nodes(unsigned int pos, Node *node);
     void print_best_path();
+    void print_best_path_with_rnn(RNNLM::CRnnLM& model);
     TopicVector get_topic();
     void print_lattice();
 	std::map<std::string, int> nbest_duplicate_filter;
 	void print_N_best_path();
+	void print_N_best_with_rnn(RNNLM::CRnnLM& model);
     void mark_nbest();
     Node* find_N_best_path(); // make EOS node and get N-best path
     double eval(Sentence& gold);

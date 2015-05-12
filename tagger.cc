@@ -79,7 +79,9 @@ bool Tagger::train(const std::string &gsd_file) {//{{{
 
     for (size_t t = 0; t < param->iteration_num; t++) {
         double loss = 0, loss_sum = 0;
-        cerr << "ITERATION:" << t << endl << endl;
+        double loss_sum_first_quarter = 0;
+        double loss_sum_last_quarter = 0;
+        cerr << "ITERATION:" << t << endl;
         if (param->shuffle_training_data) // shuffle training data
             random_shuffle(sentences_for_train.begin(), sentences_for_train.end());
 
@@ -87,15 +89,24 @@ bool Tagger::train(const std::string &gsd_file) {//{{{
             Sentence* sent = new_sentence_analyze((*gold)->get_sentence()); // 通常の解析
             loss = sent->eval(**gold); // 表示用にロスを計算
             loss_sum += loss;
+            if( std::distance(sentences_for_train.begin(),gold) < std::distance(sentences_for_train.begin(), sentences_for_train.end())/4  ){
+                loss_sum_first_quarter += loss;
+            }else if( std::distance(sentences_for_train.begin(),gold) > 3*(std::distance(sentences_for_train.begin(), sentences_for_train.end())/4)  ){
+            }
+
             cerr << "\033[2K\r" //行のクリア
                  << std::distance(sentences_for_train.begin(),gold) << "/" << std::distance(sentences_for_train.begin(), sentences_for_train.end()) //事例数の表示
-                 << "    avg:" << loss_sum/std::distance(sentences_for_train.begin(),gold) << " loss:" << loss; //イテレーション内の平均ロス，各事例でのロスを表示
+                 << " avg:" << loss_sum/std::distance(sentences_for_train.begin(),gold) 
+                 << " loss:" << loss; //イテレーション内の平均ロス，各事例でのロスを表示
             online_learning(*gold, sent);
                 
             TopicVector sent_topic = sent->get_topic();
             delete (sent);
         }
         cerr << endl;
+        cerr << " 1st  quater:" << (loss_sum_first_quarter/(std::distance(sentences_for_train.begin(), sentences_for_train.end())/4)) // 最初の1/4 でのロス
+             << " last quater:" << (loss_sum_last_quarter/(std::distance(sentences_for_train.begin(), sentences_for_train.end())/4)) // 最初の1/4 でのロス
+             << " diff: " << (loss_sum_first_quarter-loss_sum_last_quarter)/(std::distance(sentences_for_train.begin(), sentences_for_train.end())/4) << endl;
         write_tmp_model_file(t);
     }
         
@@ -206,6 +217,14 @@ void Tagger::print_best_path() {//{{{
 
 void Tagger::print_N_best_path() {//{{{
     sentence->print_N_best_path();
+}//}}}
+
+void Tagger::print_best_path_with_rnn(RNNLM::CRnnLM& model){//{{{
+    sentence->print_best_path_with_rnn(model);
+}//}}}
+
+void Tagger::print_N_best_with_rnn(RNNLM::CRnnLM& model) {//{{{
+    sentence->print_N_best_with_rnn(model);
 }//}}}
 
 void Tagger::print_lattice() {//{{{

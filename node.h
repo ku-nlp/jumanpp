@@ -114,6 +114,7 @@ class Node {
     ~Node();
          
     void print();
+    std::string str(); 
     void clear();
     bool is_dummy();
     const char *get_first_char();
