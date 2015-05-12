@@ -18,6 +18,7 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     option.add<double>("Cvalue", 'C', "C value",false, 1.0);
     option.add<double>("Phi", 'P', "Phi value",false, 1.65);
     option.add<unsigned int>("nbest", 'n', "n-best search", false, 5);
+    option.add<unsigned int>("rerank", 'r', "n-best reranking", false, 5);
     option.add("scw", 0, "use soft confidence weighted");
     option.add<std::string>("lda", 0, "use lda", false, "");
     option.add("oldstyle", 'o', "print old style lattice");
@@ -55,8 +56,11 @@ int main(int argc, char** argv) {//{{{
         param.set_N(option.get<unsigned int>("nbest"));
     else if(option.exist("lattice"))
         param.set_N(option.get<unsigned int>("lattice"));
+    else if(option.exist("rerank"))
+        param.set_N(option.get<unsigned int>("rerank"));
     else
         param.set_N(1);
+
     param.set_output_ambigous_word(option.exist("ambiguous"));
     param.set_model_filename(option.get<std::string>("model"));
     param.set_use_scw(option.exist("scw"));
@@ -74,7 +78,22 @@ int main(int argc, char** argv) {//{{{
     normal_param.set_nbest(true);// nbest を利用するよう設定
     normal_param.set_N(5);//5-best に設定
     Morph::Tagger tagger(&param);
-    
+   
+    RNNLM::CRnnLM rnnlm;
+
+
+    rnnlm.setLambda(1.0);
+    rnnlm.setRegularization(0.0000001);
+    rnnlm.setDynamic(0);
+    //rnnlm.setTestFile(test_file);
+    rnnlm.setRnnLMFile("model_t5");
+    rnnlm.setRandSeed(1);
+    rnnlm.useLMProb(0);
+    rnnlm.setDebugMode(0);
+    rnnlm.initialize_test_sent();
+    srand(1);
+
+
 
     if (MODE_TRAIN) {//学習モード{{{
         if(option.exist("lda")){
@@ -129,7 +148,9 @@ int main(int argc, char** argv) {//{{{
         }
     //}}}
     } else {// 通常の形態素解析{{{
+        //std::cerr << "read model file" << std::flush;
         tagger.read_model_file(option.get<std::string>("model"));
+        //std::cerr << "\rread model file" << std::endl;
             
         std::ifstream is(argv[1]); // input stream
             
@@ -148,7 +169,9 @@ int main(int argc, char** argv) {//{{{
                     tagger.print_lattice();
             }else{
                 if(option.exist("nbest")){
-                    tagger.print_N_best_path();
+                    tagger.print_N_best_with_rnn(rnnlm);
+                }else if(option.exist("rerank")){
+                    tagger.print_best_path_with_rnn(rnnlm);
                 }else{
                     tagger.print_best_path();
                 }

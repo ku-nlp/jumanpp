@@ -1,7 +1,10 @@
 #include "common.h"
 #include "pos.h"
 #include "sentence.h"
+#include <utility>
+#include <algorithm>
 //#include "feature.h"
+
 #include <sstream>
 
 namespace Morph {
@@ -88,7 +91,7 @@ void Sentence::clear_nodes() { //{{{
         end_node_list->clear();
 } //}}}
 
-bool Sentence::add_one_word(std::string &word) { //{{{
+bool Sentence::add_one_word(std::string &word) { //コーパス読み込み時に使用 {{{
     word_num++;
     length += strlen(word.c_str());
     sentence += word;
@@ -129,7 +132,7 @@ Node *Sentence::make_unk_pseudo_node_list_by_dic_check(
     return r_node;
 } //}}}
 
-// 現在地までの範囲を未定義語として生成
+// 現在地までの範囲を未定義語として生成 (任意の単語数の未定義語を生成する)
 Node *Sentence::make_unk_pseudo_node_list_from_previous_position(const char *start_str, unsigned int previous_pos) {//{{{
     if ((*end_node_list)[previous_pos] != NULL) {
         Node **node_p = &((*begin_node_list)[previous_pos]);
@@ -146,7 +149,7 @@ Node *Sentence::make_unk_pseudo_node_list_from_previous_position(const char *sta
     }
 } //}}}
 
-// 特定位置からの未定義語を生成
+// 特定位置からの未定義語を生成 (解析中にパスが存在しなくなった時に, 出来なくなった時点から未定義語扱いにしてパスをつなげる)
 Node* Sentence::make_unk_pseudo_node_list_from_some_positions(const char *start_str, unsigned int pos, unsigned int previous_pos) {//{{{
     Node *node;
     node = dic->make_unk_pseudo_node_list(start_str + pos, 1,
@@ -162,15 +165,18 @@ Node* Sentence::make_unk_pseudo_node_list_from_some_positions(const char *start_
     return node;
 } //}}}
 
+// TODO: 廃止
 Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str,
                                                      unsigned int pos) { //{{{
     return lookup_and_make_special_pseudo_nodes(start_str, pos, 0, NULL);
 }//}}}
 
+// TODO: 廃止 
 Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str, unsigned int specified_length, std::string *specified_pos) {//{{{
     return lookup_and_make_special_pseudo_nodes(start_str, 0, specified_length, specified_pos);
 }//}}}
 
+// TODO: 廃止
 Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str, unsigned int pos, unsigned int specified_length, std::string *specified_pos) {//{{{
     std::vector<std::string> spec = {"", "", "", "", "", "", ""} ;
 
@@ -179,31 +185,11 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str, unsi
     return lookup_and_make_special_pseudo_nodes(start_str + pos, specified_length, spec);
 }//}}}
         
-// TODO::本来はNode あたりに置く
-bool Sentence::check_dict_match(Node* tmp_node, Node* dic_node){//{{{
-
-    //辞書に一致する長さと品詞の形態素があればなければtrue, あればfalse
-    if(!tmp_node) return false;
-
-    Node *tmp_dic_node = dic_node;
-    bool matched = false;
-    while(tmp_dic_node){
-        if(tmp_node->length == tmp_dic_node->length && //length が一致 
-                tmp_node->posid == tmp_dic_node->posid ){//pos が一致
-            matched=true;
-            break;
-        }
-        tmp_dic_node = tmp_dic_node->bnext;
-    }
-
-    return !matched;
-}//}}}
-
 // 統合する
 // TODO: 廃止
 Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str, unsigned int specified_length, const std::vector<std::string>& spec){//{{{
     Node *result_node = NULL;
-    Node *kanji_result_node = NULL;
+    //Node *kanji_result_node = NULL;
     unsigned int pos = 0;
     // spec (0: reading, 1:base, 2:pos, 3:spos, 4:type, 5:form)
     auto specified_pos_string = spec[2]; //pos
@@ -266,10 +252,15 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str, unsi
     return result_node;
 } //}}}
 
+// TODO:
+// 統合案: 
+// specified 版の辞書引きをlattice に移行
+// 非lattice の lookup は全廃
+
 // start_str で始まる形態素を列挙する。
 Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, const char *start_str, unsigned int char_num, unsigned int pos, unsigned int specified_length, std::string *specified_pos) {//{{{
     Node *result_node = NULL;
-    Node *kanji_result_node = NULL;
+    //Node *kanji_result_node = NULL;
 
     // まず探す
     auto lattice_result = cl.da_search_from_position(
@@ -331,6 +322,26 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, co
 
     return result_node;
 } //}}}
+
+// TODO::本来はNode あたりに置く
+bool Sentence::check_dict_match(Node* tmp_node, Node* dic_node){//{{{
+
+    //辞書に一致する長さと品詞の形態素があればなければtrue, あればfalse
+    if(!tmp_node) return false;
+
+    Node *tmp_dic_node = dic_node;
+    bool matched = false;
+    while(tmp_dic_node){
+        if(tmp_node->length == tmp_dic_node->length && //length が一致 
+                tmp_node->posid == tmp_dic_node->posid ){//pos が一致
+            matched=true;
+            break;
+        }
+        tmp_dic_node = tmp_dic_node->bnext;
+    }
+
+    return !matched;
+}//}}}
 
 // 文の解析を行う
 bool Sentence::lookup_and_analyze() {//{{{
@@ -394,6 +405,7 @@ bool Sentence::lookup() {//{{{
         previous_pos = pos;
         char_num++;
     }
+    return true;
 }//}}}
 
 // パスの選択
@@ -431,7 +443,7 @@ TopicVector Sentence::get_topic(){//{{{
                         
                     //count topic
                     if(used_length.count(node->char_num) == 0){ // 同じ開始位置で同じ長さの場合最初の物だけを使う
-                        for(int i=0;i<node_topic.size();i++){ topic[i] += node_topic[i]; }
+                        for(unsigned int i=0;i<node_topic.size();i++){ topic[i] += node_topic[i]; }
                         used_length.insert(node->char_num);
                     }
                 }
@@ -902,7 +914,7 @@ bool Sentence::viterbi_at_position(unsigned int pos, Node *r_node) {//{{{
 
 bool Sentence::viterbi_at_position_nbest(unsigned int pos, Node *r_node) { //{{{
     std::stringstream ss_key, ss_value;
-    int traceSize = 0;
+    unsigned int traceSize = 0;
 
 	while (r_node) {
 		std::priority_queue<NbestSearchToken> nodeHeap;
@@ -951,7 +963,7 @@ bool Sentence::viterbi_at_position_nbest(unsigned int pos, Node *r_node) { //{{{
 
             } else {
                 double last_score = DBL_MAX;
-                for (int i = 0; i < traceSize; ++i) {
+                for (unsigned int i = 0; i < traceSize; ++i) {
                     double score = l_node->traceList.at(i).score + bigram_score + r_node->wcost;
                     if( i > param->N_redundant && (last_score > score || i > param->N_redundant*5 )) break;
                     nodeHeap.emplace(score,i,l_node);
@@ -961,10 +973,10 @@ bool Sentence::viterbi_at_position_nbest(unsigned int pos, Node *r_node) { //{{{
             l_node = l_node->enext;
         }
 
-        int heapSize = nodeHeap.size();
+        unsigned int heapSize = nodeHeap.size();
 
         double last_score = DBL_MAX;
-        for (int i = 0; i < heapSize; ++i) {
+        for (unsigned int i = 0; i < heapSize; ++i) {
             double score = nodeHeap.top().score;
             if (i > param->N_redundant && last_score > score)
                 break;
@@ -1004,14 +1016,14 @@ void Sentence::print_N_best_path() {//{{{
 		traceSize = param->N_redundant;
 	}
 
-	for (int i = 0; i < traceSize; ++i) {
+	for (unsigned int i = 0; i < traceSize; ++i) {
 		Node *node = (*begin_node_list)[length];
 		std::vector<Node *> result_morphs;
 
 		bool find_bos_node = false;
 		int traceRank = i;
 
-		Node* temp_node = NULL;
+		//Node* temp_node = NULL;
 		long output_score = (*begin_node_list)[length]->traceList.at(i).score;
 
 		while (node) {
@@ -1051,13 +1063,91 @@ void Sentence::print_N_best_path() {//{{{
 			//duplicate output
 		} else {
 			nbest_duplicate_filter.insert(std::make_pair(output_string_buffer, i));
-			cout << "#" << output_score << endl;
+			cout << "# score:" << output_score << endl;
 			cout << output_string_buffer;
 			cout << endl;
 			++N_couter;
 		}
 
 		output_string_buffer.clear();
+		if (N_couter >= N_required)
+			break;
+	}
+	cout << endl;
+}//}}}
+
+void Sentence::print_N_best_with_rnn(RNNLM::CRnnLM& model) {//{{{
+    // 曖昧性のある形態素の出力
+	std::string output_string_buffer;
+	std::string rnnlm_string_buffer;
+
+	unsigned int N_required = param->N;
+	unsigned int N_couter = 0;
+
+	unsigned int traceSize = (*begin_node_list)[length]->traceList.size();
+	//if (traceSize > param->N_redundant) {
+    //		traceSize = param->N_redundant;
+	//}
+
+	for (unsigned int i = 0; i < traceSize; ++i) {
+		Node *node = (*begin_node_list)[length];
+		std::vector<Node *> result_morphs;
+
+		bool find_bos_node = false;
+		int traceRank = i;
+
+		//Node* temp_node = NULL;
+		double output_score = (*begin_node_list)[length]->traceList.at(i).score;
+
+		while (node) {
+		    result_morphs.push_back(node);
+
+			if (node->traceList.size() == 0) {
+				break;
+			}
+			node = node->traceList.at(traceRank).prevNode;
+			if (node->stat == MORPH_BOS_NODE) {
+				find_bos_node = true;
+				break;
+			} else {
+				traceRank = result_morphs.back()->traceList.at(traceRank).rank;
+			}
+		}
+
+		if (!find_bos_node)
+			cerr << ";; cannot analyze:" << sentence << endl;
+
+		size_t printed_num = 0;
+		for (std::vector<Node *>::reverse_iterator it = result_morphs.rbegin();
+				it != result_morphs.rend(); it++) {
+
+			if ((*it)->stat != MORPH_BOS_NODE && (*it)->stat != MORPH_EOS_NODE) {
+                (*it)->used_in_nbest = true;
+				if (printed_num++){
+                    output_string_buffer.append(" ");
+                    rnnlm_string_buffer.append(" ");
+                }
+                output_string_buffer.append(*(*it)->string_for_print);
+                rnnlm_string_buffer.append(*(*it)->base);
+                output_string_buffer.append("_");
+                output_string_buffer.append(*(*it)->pos);
+			}
+		}
+
+		std::map<std::string, int>::iterator find_output = nbest_duplicate_filter.find(output_string_buffer);
+		if (find_output != nbest_duplicate_filter.end()) {
+			//duplicate output
+		} else {
+			nbest_duplicate_filter.insert(std::make_pair(output_string_buffer, i));
+            double rnnlm_score = model.test_sent(rnnlm_string_buffer);
+			cout << "# score:" << output_score << " rnnlm:" << rnnlm_score << endl;
+			cout << output_string_buffer;
+			cout << endl;
+			++N_couter;
+		}
+
+		output_string_buffer.clear();
+        rnnlm_string_buffer.clear();
 		if (N_couter >= N_required)
 			break;
 	}
@@ -1074,8 +1164,8 @@ void Sentence::mark_nbest() {//{{{
 
     // 近いスコアの場合をまとめるために，整数に丸める
     double last_score = DBL_MAX;
-    long sample_num=0;
-    int i=0;
+    long sample_num = 0;
+    unsigned int i = 0;
         
     while(i < traceSize_original){
 		Node *node = (*begin_node_list)[length];
@@ -1083,7 +1173,7 @@ void Sentence::mark_nbest() {//{{{
 		bool find_bos_node = false;
 		int traceRank = i;
                  
-		Node* temp_node = NULL;
+		//Node* temp_node = NULL;
 		double output_score = (*begin_node_list)[length]->traceList.at(i).score;
         if (last_score > output_score) sample_num++; // 同スコアの場合は数に数えず，N-bestに出力
         if (sample_num > param->N || i > param->N *5 ) break;
@@ -1107,7 +1197,7 @@ void Sentence::mark_nbest() {//{{{
 			cerr << ";; cannot analyze:" << sentence << endl;
         }
 
-        size_t printed_num = 0;
+        //size_t printed_num = 0;
         unsigned long byte_pos = 0;
         // 後ろから追加しているので、元の順にするために逆向き
 		for (std::vector<Node *>::reverse_iterator it = result_morphs.rbegin();
@@ -1196,18 +1286,103 @@ void Sentence::print_best_path() { //{{{
     cout << endl;
 } //}}}
 
+void Sentence::print_best_path_with_rnn(RNNLM::CRnnLM& model) {//{{{
+
+	std::vector<std::pair<double, std::string>> nbest_pathes;
+	
+    std::string output_string_buffer;
+	std::string rnnlm_string_buffer;
+
+	unsigned int N_required = param->N;
+	unsigned int N_couter = 0;
+
+	unsigned int traceSize = (*begin_node_list)[length]->traceList.size();
+
+	for (unsigned int i = 0; i < traceSize; ++i) {
+		Node *node = (*begin_node_list)[length];
+		std::vector<Node *> result_morphs;
+
+		bool find_bos_node = false;
+		int traceRank = i;
+		double output_score = (*begin_node_list)[length]->traceList.at(i).score;
+
+		while (node) {
+		    result_morphs.push_back(node);
+
+			if (node->traceList.size() == 0) {
+				break;
+			}
+			node = node->traceList.at(traceRank).prevNode;
+			if (node->stat == MORPH_BOS_NODE) {
+				find_bos_node = true;
+				break;
+			} else {
+				traceRank = result_morphs.back()->traceList.at(traceRank).rank;
+			}
+		}
+
+		if (!find_bos_node)
+			cerr << ";; cannot analyze:" << sentence << endl;
+
+		size_t printed_num = 0;
+		for (std::vector<Node *>::reverse_iterator it = result_morphs.rbegin();
+				it != result_morphs.rend(); it++) {
+
+			if ((*it)->stat != MORPH_BOS_NODE && (*it)->stat != MORPH_EOS_NODE) {
+                (*it)->used_in_nbest = true;
+				if (printed_num++){
+                    output_string_buffer.append(" ");
+                    rnnlm_string_buffer.append(" ");
+                }
+                output_string_buffer.append((*it)->str());
+                rnnlm_string_buffer.append(*(*it)->base);
+			}
+		}
+
+		std::map<std::string, int>::iterator find_output = nbest_duplicate_filter.find(output_string_buffer);
+		if (find_output != nbest_duplicate_filter.end()) {
+			//duplicate output
+		} else {
+			nbest_duplicate_filter.insert(std::make_pair(output_string_buffer, i));
+            double rnnlm_score = model.test_sent(rnnlm_string_buffer);
+
+            nbest_pathes.push_back(std::make_pair(output_score + rnnlm_score, output_string_buffer));
+
+			//cout << "# score:" << output_score << " rnnlm:" << rnnlm_score << endl;
+			//cout << output_string_buffer;
+			//cout << endl;
+			++N_couter;
+		}
+
+		output_string_buffer.clear();
+        rnnlm_string_buffer.clear();
+		if (N_couter >= N_required)
+			break;
+	}
+
+    // 1-best を出力
+    std::sort(nbest_pathes.begin(), nbest_pathes.end(),[](const auto &x, const auto &y){ return x.first > y.first;});
+
+    cout << nbest_pathes[0].second <<endl;
+
+	//cout << endl;
+}//}}}
+
 // パーセプトロン専用の関数，いずれ撲滅
+// TODO: 廃止
 void Sentence::minus_feature_from_weight(std::unordered_map<std::string, double> &in_feature_weight, size_t factor) {//{{{
     Node *node = (*begin_node_list)[length]; // EOS
     node->feature->minus_feature_from_weight(in_feature_weight, factor);
 } //}}}
 
+// TODO: 廃止
 void Sentence::minus_feature_from_weight(
     std::unordered_map<std::string, double> &in_feature_weight) { //{{{
     minus_feature_from_weight(in_feature_weight, 1);
 } //}}}
 
 // gold 用の辞書引きの亜種
+// TODO:lattice とどうにかして協調しないと，廃止予定の関数が廃止できない
 bool Sentence::lookup_gold_data(std::string &word_pos_pair) {//{{{
     if (reached_pos < length) {
         cerr << ";; ERROR! Cannot connect at position for gold: "
@@ -1218,6 +1393,8 @@ bool Sentence::lookup_gold_data(std::string &word_pos_pair) {//{{{
     split_string(word_pos_pair, "_", line);
     Node::reset_id_count();
     std::vector<std::string> spec{line[1],line[2],line[3],line[4],line[5],line[6]}; //reading,base,pos, spos, formtype, form
+
+    //TODO: 外国人人名 が苗字と名前がくっついていても引けるようにしたい．
 
     // そのまま辞書を引く
     Node *r_node = lookup_and_make_special_pseudo_nodes(line[0].c_str(), strlen(line[0].c_str()), spec);

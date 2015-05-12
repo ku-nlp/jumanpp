@@ -102,6 +102,10 @@ void Node::print() {
     cout << *(string_for_print) << "_" << *pos << ":" << *spos;
 }
 
+std::string Node::str() {
+    return *(string_for_print) + "_" + *pos + ":" + *spos;
+}
+
 const char *Node::get_first_char() {
     return string_for_print->c_str();
 }

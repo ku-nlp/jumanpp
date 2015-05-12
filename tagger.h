@@ -44,6 +44,8 @@ class Tagger {
     void sentence_clear();
     bool viterbi_at_position(unsigned int pos, Node *r_node);
     void print_best_path();
+	void print_best_path_with_rnn(RNNLM::CRnnLM& model);
+    void print_N_best_with_rnn(RNNLM::CRnnLM& model); 
     void print_N_best_path();
     void print_lattice();
     void print_old_lattice();
