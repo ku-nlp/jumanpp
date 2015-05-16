@@ -48,7 +48,7 @@ namespace RNNLM{
         strcpy(test_file, str);
     }
 
-    void CRnnLM::setRnnLMFile(char *str)
+    void CRnnLM::setRnnLMFile(const char *str)
     {
         strcpy(rnnlm_file, str);
     }
@@ -1949,7 +1949,7 @@ namespace RNNLM{
                 //netReset();
                 //computeNet(last_word, 0);
 
-                saveContext2();
+                //saveContext2();
                 break;
             }
         }

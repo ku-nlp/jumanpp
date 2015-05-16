@@ -284,7 +284,7 @@ public:
     void setTrainFile(char *str);
     void setValidFile(char *str);
     void setTestFile(char *str);
-    void setRnnLMFile(char *str);
+    void setRnnLMFile(const char *str);
     void setLMProbFile(char *str) {strcpy(lmprob_file, str);}
     
     void setFileType(int newt) {filetype=newt;}
