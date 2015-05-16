@@ -10,6 +10,8 @@
 #ifndef _RNNLMLIB_H_
 #define _RNNLMLIB_H_
 
+#include "vector"
+
 namespace RNNLM{
 
 const int MAX_STRING=100;
@@ -36,6 +38,12 @@ struct vocab_word {
 
     real prob;
     int class_index;
+};
+
+struct context {
+    char last_word;
+    vector<char> histroy;
+    vector<real> context;
 };
 
 const unsigned int PRIMES[]={108641969, 116049371, 125925907, 133333309, 145678979, 175308587, 197530793, 234567803, 251851741, 264197411, 330864029, 399999781,
@@ -118,10 +126,10 @@ protected:
     
     struct neuron *neu0;		//neurons in input layer
     struct neuron *neu1;		//neurons in hidden layer
-    struct neuron *neuc;		//neurons in hidden layer
+    struct neuron *neuc;		//neurons in hidden layer (for compression)
     struct neuron *neu2;		//neurons in output layer
 
-    struct synapse *syn0;		//weights between input and hidden layer
+    struct synapse *syn0;		//weights between input and hidden layer //単語ベクトルを学習
     struct synapse *syn1;		//weights between hidden and output layer (or hidden and compression if compression>0)
     struct synapse *sync;		//weights between hidden and compression layer
     direct_t *syn_d;		//direct parameters between input and output layer (similar to Maximum Entropy model parameters)

@@ -18,6 +18,22 @@
 #include "fastexp.h"
 #include "rnnlmlib.h"
 
+//基本全部の行列を計算する, ここからここまでとかは厳しい
+int cublasSgemv(void* handle, 
+                void* trans, //行列を転地して使うかどうかのフラグ
+                int m,  // number of rows of matrix A.  
+                int n, // number of columns of matrix A
+                const float *alpha, // scalar used for multiplication
+                const float *A, // array of dimension 
+                int lda, // leading dimension of two-dimensional array used to store matrix A
+                const float *x, // vector with n elements ( m elements otherwise (転置する場合)). 
+                int incx, // stride between consecutive elements of x. //いくつ置きに計算するか？？
+                const float *beta, //いらない
+                float  *y, // いらない
+                int incy); // いらない
+
+
+
 ///// include blas
 #ifdef USE_BLAS
 extern "C" {
@@ -355,6 +371,35 @@ namespace RNNLM{
         int a;
 
         for (a=0; a<layer1_size; a++) neu1b[a].ac=neu1[a].ac;
+    }//}}}
+
+    void CRnnLM::saveFullContext(context *dest)		//useful for n-best decoding
+    {//{{{
+        std::cerr << "saveFullContext"<< std::endl;
+        int a;
+
+        dest->l1_neuron.resize(layer1.size);
+        dest->history.resize(MAX_NGRAM_ORDER);
+        dest->last_word = history[0];
+        //dest->last_word = last_word; //history と同じ内容
+        
+        //vector<real> l1_neuron = layer1_size;
+        //vector<cahr> history = layer1_size;
+        for (a=0; a<layer1_size; a++) dest->l1_neuron[a]=neu1[a].ac;
+        for (a=0; a<MAX_NGRAM_ORDER; a++) dest->history[a] = history[a];
+    }//}}}
+
+    void CRnnLM::restoreFullContext(const context *dest) //useful for n-best decoding
+    {//{{{
+        std::cerr << "restoreFullContext"<< std::endl;
+        int a;
+
+        //dest->l1_neuron.resize(layer1.size);
+        //dest->history.resize(MAX_NGRAM_ORDER);
+        //vector<real> l1_neuron = layer1_size;
+        //vector<cahr> history = layer1_size;
+        for (a=0; a<layer1_size; a++) neu1[a].ac = dest->l1_neuron[a];
+        for (a=0; a<MAX_NGRAM_ORDER; a++) history[a] = dest->history[a] ;
     }//}}}
 
     void CRnnLM::restoreContext()
@@ -1141,19 +1186,26 @@ namespace RNNLM{
 
     void CRnnLM::computeNet(int last_word, int word)
     {//{{{
-        //std::cout << "computeNet"<< last_word << "," << word << std::endl;
+        // 他にもhitsoty が実質引数
         int a, b, c;
         real val;
         double sum;   //sum is used for normalization: it's better to have larger precision as many numbers are summed together here
 
+        // 語彙数次元のベクトル
         if (last_word!=-1) neu0[last_word].ac=1;
 
         //propagate 0->1
         for (a=0; a<layer1_size; a++) neu1[a].ac=0;
         for (a=0; a<layerc_size; a++) neuc[a].ac=0;
 
+        // 0-(vocab)-(layer1)-layer0_size
+        // 0...vocab(layer0_size-layer1_size -1) が語彙の次元
+        // layer0_size-layer1_size > layer0_size がコンテクストの次元
+
+        // コンテクストvectorについての計算
         matrixXvector(neu1, neu0, syn0, layer0_size, 0, layer1_size, layer0_size-layer1_size, layer0_size, 0);
 
+        // 今の単語について計算(one hot)
         for (b=0; b<layer1_size; b++) {
             a=last_word;
             if (a!=-1) neu1[b].ac += neu0[a].ac * syn0[a+b*layer0_size].weight;
@@ -1167,7 +1219,7 @@ namespace RNNLM{
             neu1[a].ac=1/(1+fasterexp(val));
         }
 
-        if (layerc_size>0) {
+        if (layerc_size>0) {//{{{
             matrixXvector(neuc, neu1, syn1, layer1_size, 0, layerc_size, 0, layer1_size, 0);
             //activate compression      --sigmoid
             for (a=0; a<layerc_size; a++) {
@@ -1176,20 +1228,21 @@ namespace RNNLM{
                 val=-neuc[a].ac;
                 neuc[a].ac=1/(1+fasterexp(val));
             }
-        }
+        }//}}}
 
         //1->2 class
         for (b=vocab_size; b<layer2_size; b++) neu2[b].ac=0;
 
-        if (layerc_size>0) {
+        if (layerc_size>0) {//{{{
             matrixXvector(neu2, neuc, sync, layerc_size, vocab_size, layer2_size, 0, layerc_size, 0);
-        }
+        }//}}}
         else
         {
             matrixXvector(neu2, neu1, syn1, layer1_size, vocab_size, layer2_size, 0, layer1_size, 0);
         }
 
-        //apply direct connections to classes
+        // ME と呼んでいる部分 
+        // apply direct connections to classes
         if (direct_size>0) {
             unsigned long long hash[MAX_NGRAM_ORDER];	//this will hold pointers to syn_d that contains hash parameters
 
@@ -1203,15 +1256,16 @@ namespace RNNLM{
                 for (b=1; b<=a; b++) hash[a]+=PRIMES[(a*PRIMES[b]+b)%PRIMES_SIZE]*(unsigned long long)(history[b-1]+1);	//update hash value based on words from the history
                 hash[a]=hash[a]%(direct_size/2);		//make sure that starting hash index is in the first half of syn_d (second part is reserved for history->words features)
             }
-
+                
             for (a=vocab_size; a<layer2_size; a++) {
                 for (b=0; b<direct_order; b++) if (hash[b]) {
                     neu2[a].ac+=syn_d[hash[b]];		//apply current parameter and move to the next one
-                    hash[b]++;
+                    hash[b]++;// 何のためにハッシュの中身を動かす？？ 何語目かで処理を代えるため？　
                 } else break;
             }
         }
-
+            
+        // 中間レイヤーのsoftmax
         //activation 2   --softmax on classes
         // 20130425 - this is now a 'safe' softmax
 
@@ -1226,14 +1280,13 @@ namespace RNNLM{
 
         if (gen>0) return;	//if we generate words, we don't know what current word is -> only classes are estimated and word is selected in testGen()
 
-
         //1->2 word
 
         if (word!=-1) {
             for (c=0; c<class_cn[vocab[word].class_index]; c++) neu2[class_words[vocab[word].class_index][c]].ac=0;
-            if (layerc_size>0) {
+            if (layerc_size>0) {//{{{
                 matrixXvector(neu2, neuc, sync, layerc_size, class_words[vocab[word].class_index][0], class_words[vocab[word].class_index][0]+class_cn[vocab[word].class_index], 0, layerc_size, 0);
-            }
+            }//}}}
             else
             {
                 matrixXvector(neu2, neu1, syn1, layer1_size, class_words[vocab[word].class_index][0], class_words[vocab[word].class_index][0]+class_cn[vocab[word].class_index], 0, layer1_size, 0);
@@ -1261,11 +1314,168 @@ namespace RNNLM{
                 for (b=0; b<direct_order; b++) if (hash[b]) {
                     neu2[a].ac+=syn_d[hash[b]];
                     hash[b]++;
-                    hash[b]=hash[b]%direct_size;
+                    hash[b]=hash[b]%direct_size; //この処理の意味が分からない
                 } else break;
             }
         }
 
+        // output layer のSoftmax
+        //activation 2   --softmax on words
+        // 130425 - this is now a 'safe' softmax
+        sum=0;
+        if (word!=-1) { 
+            maxAc=-FLT_MAX;
+            for (c=0; c<class_cn[vocab[word].class_index]; c++) {
+                a=class_words[vocab[word].class_index][c];
+                if (neu2[a].ac>maxAc) maxAc=neu2[a].ac;
+            }
+            for (c=0; c<class_cn[vocab[word].class_index]; c++) {
+                a=class_words[vocab[word].class_index][c];
+                sum+=fasterexp(neu2[a].ac-maxAc);
+            }
+            for (c=0; c<class_cn[vocab[word].class_index]; c++) {
+                a=class_words[vocab[word].class_index][c];
+                neu2[a].ac=fasterexp(neu2[a].ac-maxAc)/sum; //this prevents the need to check for overflow
+            }
+        }
+    }//}}}
+
+    // context に last_word も入れておくべき
+    void CRnnLM::computeNet(int last_word, int word, context *c)
+    {//{{{
+        int a, b, c;
+        real val;
+        double sum;   //sum is used for normalization: it's better to have larger precision as many numbers are summed together here
+
+        // 語彙数次元のベクトル
+        if (last_word!=-1) neu0[last_word].ac=1;
+
+        //propagate 0->1
+        for (a=0; a<layer1_size; a++) neu1[a].ac=0;
+        for (a=0; a<layerc_size; a++) neuc[a].ac=0;
+
+        // 0-(vocab)-(layer1)-layer0_size
+        // 0...vocab(layer0_size-layer1_size -1) が語彙の次元
+        // layer0_size-layer1_size > layer0_size がコンテクストの次元
+
+        // コンテクストvectorについての計算
+        matrixXvector(neu1, neu0, syn0, layer0_size, 0, layer1_size, layer0_size-layer1_size, layer0_size, 0);
+
+        // 今の単語について計算(one hot)
+        for (b=0; b<layer1_size; b++) {
+            a=last_word;
+            if (a!=-1) neu1[b].ac += neu0[a].ac * syn0[a+b*layer0_size].weight;
+        }
+
+        //activate 1      --sigmoid
+        for (a=0; a<layer1_size; a++) {
+            if (neu1[a].ac>50) neu1[a].ac=50;  //for numerical stability
+            if (neu1[a].ac<-50) neu1[a].ac=-50;  //for numerical stability
+            val=-neu1[a].ac;
+            neu1[a].ac=1/(1+fasterexp(val));
+        }
+
+        if (layerc_size>0) {//{{{
+            matrixXvector(neuc, neu1, syn1, layer1_size, 0, layerc_size, 0, layer1_size, 0);
+            //activate compression      --sigmoid
+            for (a=0; a<layerc_size; a++) {
+                if (neuc[a].ac>50) neuc[a].ac=50;  //for numerical stability
+                if (neuc[a].ac<-50) neuc[a].ac=-50;  //for numerical stability
+                val=-neuc[a].ac;
+                neuc[a].ac=1/(1+fasterexp(val));
+            }
+        }//}}}
+
+        //1->2 class
+        for (b=vocab_size; b<layer2_size; b++) neu2[b].ac=0;
+
+        if (layerc_size>0) {//{{{
+            matrixXvector(neu2, neuc, sync, layerc_size, vocab_size, layer2_size, 0, layerc_size, 0);
+        }//}}}
+        else
+        {
+            matrixXvector(neu2, neu1, syn1, layer1_size, vocab_size, layer2_size, 0, layer1_size, 0);
+        }
+
+        // ME と呼んでいる部分 
+        // apply direct connections to classes
+        if (direct_size>0) {
+            unsigned long long hash[MAX_NGRAM_ORDER];	//this will hold pointers to syn_d that contains hash parameters
+
+            for (a=0; a<direct_order; a++) hash[a]=0;
+
+            for (a=0; a<direct_order; a++) {
+                b=0;
+                if (a>0) if (history[a-1]==-1) break;	//if OOV was in history, do not use this N-gram feature and higher orders
+                hash[a]=PRIMES[0]*PRIMES[1];
+
+                for (b=1; b<=a; b++) hash[a]+=PRIMES[(a*PRIMES[b]+b)%PRIMES_SIZE]*(unsigned long long)(history[b-1]+1);	//update hash value based on words from the history
+                hash[a]=hash[a]%(direct_size/2);		//make sure that starting hash index is in the first half of syn_d (second part is reserved for history->words features)
+            }
+                
+            for (a=vocab_size; a<layer2_size; a++) {
+                for (b=0; b<direct_order; b++) if (hash[b]) {
+                    neu2[a].ac+=syn_d[hash[b]];		//apply current parameter and move to the next one
+                    hash[b]++;// 何のためにハッシュの中身を動かす？？ 何語目かで処理を代えるため？　
+                } else break;
+            }
+        }
+            
+        // 中間レイヤーのsoftmax
+        //activation 2   --softmax on classes
+        // 20130425 - this is now a 'safe' softmax
+
+        sum=0;
+        real maxAc=-FLT_MAX;
+        for (a=vocab_size; a<layer2_size; a++)
+            if (neu2[a].ac>maxAc) maxAc=neu2[a].ac; //this prevents the need to check for overflow
+        for (a=vocab_size; a<layer2_size; a++)
+            sum+=fasterexp(neu2[a].ac-maxAc);
+        for (a=vocab_size; a<layer2_size; a++)
+            neu2[a].ac=fasterexp(neu2[a].ac-maxAc)/sum; 
+
+        if (gen>0) return;	//if we generate words, we don't know what current word is -> only classes are estimated and word is selected in testGen()
+
+        //1->2 word
+
+        if (word!=-1) {
+            for (c=0; c<class_cn[vocab[word].class_index]; c++) neu2[class_words[vocab[word].class_index][c]].ac=0;
+            if (layerc_size>0) {//{{{
+                matrixXvector(neu2, neuc, sync, layerc_size, class_words[vocab[word].class_index][0], class_words[vocab[word].class_index][0]+class_cn[vocab[word].class_index], 0, layerc_size, 0);
+            }//}}}
+            else
+            {
+                matrixXvector(neu2, neu1, syn1, layer1_size, class_words[vocab[word].class_index][0], class_words[vocab[word].class_index][0]+class_cn[vocab[word].class_index], 0, layer1_size, 0);
+            }
+        }
+
+        //apply direct connections to words
+        if (word!=-1) if (direct_size>0) {
+            unsigned long long hash[MAX_NGRAM_ORDER];
+
+            for (a=0; a<direct_order; a++) hash[a]=0;
+
+            for (a=0; a<direct_order; a++) {
+                b=0;
+                if (a>0) if (history[a-1]==-1) break;
+                hash[a]=PRIMES[0]*PRIMES[1]*(unsigned long long)(vocab[word].class_index+1);
+
+                for (b=1; b<=a; b++) hash[a]+=PRIMES[(a*PRIMES[b]+b)%PRIMES_SIZE]*(unsigned long long)(history[b-1]+1);
+                hash[a]=(hash[a]%(direct_size/2))+(direct_size)/2;
+            }
+
+            for (c=0; c<class_cn[vocab[word].class_index]; c++) {
+                a=class_words[vocab[word].class_index][c];
+
+                for (b=0; b<direct_order; b++) if (hash[b]) {
+                    neu2[a].ac+=syn_d[hash[b]];
+                    hash[b]++;
+                    hash[b]=hash[b]%direct_size; //この処理の意味が分からない
+                } else break;
+            }
+        }
+
+        // output layer のSoftmax
         //activation 2   --softmax on words
         // 130425 - this is now a 'safe' softmax
         sum=0;
@@ -1872,6 +2082,7 @@ namespace RNNLM{
     }//}}}
 
     // 単文評価
+    // context + word => context + score
     real CRnnLM::test_sent(std::string sent)
     {//{{{
         int a, word, last_word, wordcn;
@@ -1890,12 +2101,13 @@ namespace RNNLM{
         while (1) {
             if (last_word==0) { //文頭
                 restoreContext2();
-                saveContext();
+                //saveContext();
                 copyHiddenLayerToInput();
             }   
 
             word=readWordIndex(&sent);     //read next word
             computeNet(last_word, word);      //compute probability distribution
+            // OOV の時は何もしない
 
             if (word!=-1) { //OOVでない
                 neu2[word].ac*=neu2[vocab[word].class_index+vocab_size].ac;
@@ -1965,6 +2177,89 @@ namespace RNNLM{
         return senp;
     }//}}}
 
+    void CRnnLM::get_initial_context(context *c)
+    {//{{{
+        //if (debug_mode>0) std::cerr << "initializing RNNLM" << std::flush;
+        restoreNet(); // initialize 重い
+        computeNet(0, 0); // initialize 
+        copyHiddenLayerToInput();
+        //saveContext();
+        //saveContext2();
+        for (int a=0; a<MAX_NGRAM_ORDER; a++) history[a]=0;
+
+        // if (debug_mode>0) std::cerr << "\rinitializing RNNLM finished" << std::endl;
+        saveFullContext(c); //文頭としてInitial context を作成
+    }//}}}
+
+    // context + word => context + score
+    real CRnnLM::test_word(context &c, context &new_c, std::string next_word)
+    {//{{{
+        int word, last_word;
+        last_word = c->last_word;
+        float prob_other; //has to be float so that %f works in fscanf
+        real log_other, log_combine, senp;
+        
+        lambda=1;
+        logp=0;
+        log_other=0;
+        prob_other=0;
+        log_combine=1;
+        senp=0;
+            
+        int word = searchVocab(next_word->c_str());
+        computeNet(last_word, word);      //compute probability distribution
+        
+        if (word!=-1) { //OOVでない
+            neu2[word].ac*=neu2[vocab[word].class_index+vocab_size].ac;
+
+            logp+=log10(neu2[word].ac);
+
+            log_other+=log10(prob_other);
+
+            log_combine+=log10(neu2[word].ac*lambda + prob_other*(1-lambda));
+
+            senp+=log10(neu2[word].ac*lambda + prob_other*(1-lambda));
+
+            wordcn++;
+        } else {
+            //assign to OOVs some score to correctly rescore nbest lists, reasonable value can be less than 1/|V| or backoff LM score (in case it is trained on more data)
+            //this means that PPL results from nbest list rescoring are not true probabilities anymore (as in open vocabulary LMs)
+
+            real oov_penalty=-5;	//log penalty
+
+            if (prob_other!=0) {
+                logp+=log10(prob_other);
+                log_other+=log10(prob_other);
+                log_combine+=log10(prob_other);
+                senp+=log10(prob_other);
+            } else {
+                logp+=oov_penalty;
+                log_other+=oov_penalty;
+                log_combine+=oov_penalty;
+                senp+=oov_penalty;
+            }
+            wordcn++;
+        }
+
+        if (debug_mode>0) {
+            std::cerr << "logp(" << word << "|" << last_word << ") = " << logp << std::endl;
+            std::cerr << "senp:" << senp << std::endl;
+        }
+
+        copyHiddenLayerToInput(); //必要？
+        if (last_word!=-1) neu0[last_word].ac=0;  //delete previous activation
+            
+        // history の更新
+        for (int a=MAX_NGRAM_ORDER-1; a>0; a--) 
+            new_c->history[a] = new_c->history[a-1];
+        new_c->history[0] = word;
+            
+        // context の保存
+        saveFullContext(new_c, word);
+
+        return senp;
+    }//}}}
+
     // nbest オプションを渡した時に呼ばれる
     void CRnnLM::testNbest()
     {//{{{
@@ -1985,10 +2280,10 @@ namespace RNNLM{
         if (use_lmprob) {
             lmprob=fopen(lmprob_file, "rb");
         } else lambda=1;		//!!! for simpler implementation later
-
+            
         //TEST PHASE
         //netFlush();
-
+            
         for (a=0; a<MAX_NGRAM_ORDER; a++) history[a]=0;
 
         // テストファイルを読み込む or なければ標準入力
@@ -1997,7 +2292,7 @@ namespace RNNLM{
         //sprintf(str, "%s.%s.output.txt", rnnlm_file, test_file);
         //flog=fopen(str, "wb");
         flog=stdout;
-
+            
         last_word=0;		//last word = end of sentence
         logp=0;
         log_other=0;
@@ -2009,9 +2304,9 @@ namespace RNNLM{
         while (1) {
             if (last_word==0) { //文頭
                 fscanf(fi, "%s", ut2); //単語を読み込む
-
+                    
                 // 最初の単語は文ID的に使われている
-
+                    
                 if (nbest_cn==1) saveContext2();		//save context after processing first sentence in nbest
 
                 if (strcmp(ut1, ut2)) { // ID が変わった時の処理
