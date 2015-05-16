@@ -1,18 +1,18 @@
 
 CXX := g++
 #CXXFLAGS := -O3 -Wall # -g
-CXXFLAGS := --std=c++1y -g3 -O3 -m64 -Wall # -pg
+CXXFLAGS := --std=c++1y -g3 -O3 -m64 -Wall -Wl,-rpath /share/usr-x86_64/lib64/ # -pg
 CXXFLAGS_G := --std=c++1y -g3 -fno-inline -g -m64 -WAll # -pg
 
-ifdef LD_RUN_PATH
-LD_FLAGS := $(LD_FLAGS) -Wl,-rpath $(LD_RUN_PATH)
-else
-LD_FLAGS := $(LD_FLAGS)
-endif
+#ifdef LD_RUN_PATH
+#CXXFLAGS := $(CXXFLAGS) -Wl,-rpath $(LD_RUN_PATH)
+#else
+#CXXFLAGS := $(CXXFLAGS)
+#endif
 
-OBJECTS_TEST := kkn_test.ot wvector.ot wvector_test.ot morph.ot dic.ot tagger.ot pos.ot sentence.ot feature.ot node.ot tools.ot charlattice.ot scw.ot
-OBJECTS := morph.o dic.o tagger.o pos.o sentence.o feature.o node.o tools.o charlattice.o u8string.o scw.o cdb_juman.o cdb/libcdb.a 
-HEADERS := wvector.h common.h dic.h tagger.h pos.h sentence.h feature.h node.h parameter.h u8string.h scw.h cdb_juman.h
+OBJECTS_TEST := kkn_test.ot wvector.ot wvector_test.ot morph.ot dic.ot tagger.ot pos.ot sentence.ot feature.ot node.ot tools.ot charlattice.ot scw.ot rnnlm/rnnlmlib.ot
+OBJECTS := morph.o dic.o tagger.o pos.o sentence.o feature.o node.o tools.o charlattice.o u8string.o scw.o cdb_juman.o cdb/libcdb.a rnnlm/rnnlmlib.o
+HEADERS := wvector.h common.h dic.h tagger.h pos.h sentence.h feature.h node.h parameter.h u8string.h scw.h cdb_juman.h rnnlm/rnnlmlib.h
 LIBS := -lprofiler
 
 MKDARTS_OBJECTS := mkdarts.o pos.o
@@ -35,7 +35,11 @@ MKDARTS_HEADERS := tagger.h pos.h
 %.ot: %.c $(HEADERS)
 	$(CXX) $(CXXFLAGS) -c -o $@ $< -D KKN_UNIT_TEST 
 
+
 all: kkn mkdarts 
+
+cdb/libcdb.a:
+	cd cdb; make
 
 kkn_test: $(OBJECTS_TEST) $(HEADERS)
 	$(CXX) $(CXXFLAGS) $(LD_FLAGS) -lboost_unit_test_framework -o $@ $(OBJECTS_TEST) -D KKN_UNIT_TEST
