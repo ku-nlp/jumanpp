@@ -47,6 +47,7 @@ class Dic {
     Node *lookup_lattice(std::vector<Darts::DoubleArray::result_pair_type> &da_search_result, const char *start_str);
     Node *lookup_lattice(std::vector<Darts::DoubleArray::result_pair_type> &da_search_result, const char *start_str, unsigned int specified_length, std::string *specified_pos); 
     Node *lookup_lattice(std::vector<Darts::DoubleArray::result_pair_type> &da_search_result, const char *start_str, unsigned int specified_length, unsigned short specified_posid);
+    Node *lookup_lattice_specified(std::vector<Darts::DoubleArray::result_pair_type> &da_search_result, const char *start_str, unsigned int specified_length, const std::vector<std::string>& specified) ;
     Node* recognize_onomatopoeia(const char* start_str);
              
     Node *make_unk_pseudo_node(const char *start_str, int byte_len);

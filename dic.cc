@@ -141,6 +141,82 @@ Node *Dic::lookup_lattice(std::vector<Darts::DoubleArray::result_pair_type> &da_
         return lookup_lattice( da_search_result,start_str, specified_length, MORPH_DUMMY_POS);
 }//}}}
 
+Node *Dic::lookup_lattice_specified(std::vector<Darts::DoubleArray::result_pair_type> &da_search_result, const char *start_str, unsigned int specified_length, const std::vector<std::string>& specified) {//{{{
+    Node *result_node = NULL;
+    
+    // TODO: specified を生のvector からもう少し意味のあるものに変える
+    // surf_read_base_pos_spos_type_form
+    auto specified_readingid  = readingid2reading.get_id(specified[0]);
+    auto specified_baseid     = baseid2base.get_id(specified[1]);
+    auto specified_posid      = posid2pos.get_id(specified[2]);
+    auto specified_sposid     = sposid2spos.get_id(specified[3]);
+    auto specified_formtypeid = formtypeid2formtype.get_id(specified[4]);
+    auto specified_formid     = formid2form.get_id(specified[5]);
+
+    std::vector<Darts::DoubleArray::result_pair_type> &result_pair = da_search_result; 
+        
+    if (result_pair.size() == 0)
+        return result_node;
+    size_t num = result_pair.size();
+        
+    for (size_t i = 0; i < num; i++) { 
+        if (specified_length && specified_length != result_pair[i].length)
+            continue;
+        size_t size = token_size(result_pair[i]);
+        const Token *token = get_token(result_pair[i]);
+                
+        for (size_t j = 0; j < size; j++) { // １つでも異なればskip
+            if ((specified[0].size()>0 && specified_readingid != (token + j)->reading_id) ||
+                (specified[1].size()>0 && specified_baseid != (token + j)->base_id) ||
+                (specified[2].size()>0 && specified_posid != (token + j)->posid) ||
+                (specified[3].size()>0 && specified_sposid != (token + j)->spos_id) ||
+                (specified[4].size()>0 && specified_formtypeid != (token + j)->form_type_id) ||
+                (specified[5].size()>0 && specified_formid != (token + j)->form_id) )
+                continue;
+                
+            Node *new_node = new Node;
+            read_node_info(*(token + j), &new_node);
+            new_node->token = (Token *)(token + j);
+                
+            new_node->length = result_pair[i].length; 
+            new_node->surface = start_str;
+                
+            new_node->char_num = utf8_chars((unsigned char *)start_str, new_node->length);
+            new_node->original_surface = new std::string(start_str, new_node->length);
+            //std::cout << *new_node->original_surface << "_" << *new_node->pos << std::endl;
+            new_node->string_for_print = new std::string(start_str, new_node->length);
+            if (new_node->lcAttr == 1) { // Wikipedia
+                new_node->string = new std::string(UNK_WIKIPEDIA);
+                new_node->stat = MORPH_UNK_NODE;
+            } else {
+                new_node->string = new std::string(*new_node->string_for_print);
+                if(new_node->semantic_feature->find("濁音化",0) != std::string::npos){// TODO:意味情報を文字列扱いしない
+                    new_node->stat = MORPH_DEVOICE_NODE;
+                }else{
+                    new_node->stat = MORPH_NORMAL_NODE;
+                }
+            }
+            new_node->char_type = check_utf8_char_type((unsigned char *)start_str);
+            new_node->char_family = check_char_family(new_node->char_type);
+            char *end_char = (char *)get_specified_char_pointer((unsigned char *)start_str, new_node->length, new_node->char_num - 1);
+            new_node->end_char_family = check_char_family((unsigned char *)end_char);
+            new_node->end_string = new std::string(end_char, utf8_bytes((unsigned char *)end_char));
+                
+            FeatureSet *f = new FeatureSet(ftmpl);
+            f->extract_unigram_feature(new_node);
+            new_node->wcost = f->calc_inner_product_with_weight();
+            if(param->debug){
+                new_node->debug_info["unigram_feature"] = f->str();
+            }
+            new_node->feature = f;
+                
+            new_node->bnext = result_node;
+            result_node = new_node;
+        }
+    }
+    return result_node;
+}//}}}
+
 // DA から検索した結果を Node に変換する //TODO:非ラティス版を廃止
 Node *Dic::lookup_lattice(std::vector<Darts::DoubleArray::result_pair_type> &da_search_result, const char *start_str, unsigned int specified_length, unsigned short specified_posid) {//{{{
     Node *result_node = NULL;
@@ -471,15 +547,17 @@ Node *Dic::make_unk_pseudo_node_list_some_pos_by_dic_check(const char *start_str
         for (std::vector<unsigned short>::iterator it = specified_unk_pos->begin(); it != specified_unk_pos->end(); it++) {
             Node *new_node = make_unk_pseudo_node(start_str, byte_len, *it);
 
+
             bool flag_covered = false;
             Node *tmp_node = r_node;
             if(r_node)
                 while (tmp_node->bnext){
-                    if(tmp_node->length == new_node->length &&
-                            tmp_node->posid == new_node->posid)
+                    if(tmp_node->length == new_node->length && tmp_node->posid == new_node->posid)
                         flag_covered = true;
                     tmp_node = tmp_node->bnext;
                 } //辞書チェック
+                
+            //std::cerr << "gen unk_node:" << *(new_node->original_surface) << "_" << *(new_node->pos) << ":" << flag_covered <<std::endl;
 
             if(!flag_covered){
                 new_node->bnext = result_node;
@@ -518,6 +596,7 @@ Node *Dic::make_unk_pseudo_node_list_some_pos(const char *start_str, int byte_le
         // 未知語の候補POSすべてを生成
         for (std::vector<unsigned short>::iterator it = specified_unk_pos->begin(); it != specified_unk_pos->end(); it++) {
             Node *new_node = make_unk_pseudo_node(start_str, byte_len, *it);
+            //std::cerr << "gen unk_node:" << *(new_node->original_surface) << "_" << *(new_node->pos) << std::endl;
             new_node->bnext = result_node;
             result_node = new_node;
         }

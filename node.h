@@ -98,10 +98,10 @@ class BeamQue {//{{{
                 return;
             }else if(beam.size() == beam_width){//最小のものを置き換えて再ソート
                 beam.back() = std::move(std::move(tok));
-                std::sort(beam.begin(), beam.end(),[](auto x, auto y){return x.score < y.score;});
+                std::sort(beam.begin(), beam.end(),[](auto x, auto y){return x.score > y.score;});
             }else{ //追加してリサイズ
                 beam.emplace_back(std::move(tok));
-                std::sort(beam.begin(), beam.end(),[](auto x, auto y){return x.score < y.score;});
+                std::sort(beam.begin(), beam.end(),[](auto x, auto y){return x.score > y.score;});
                 beam.resize(beam_width);
             }
         }

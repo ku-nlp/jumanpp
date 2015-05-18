@@ -199,8 +199,8 @@ std::vector<Darts::DoubleArray::result_pair_type> CharLattice::da_search_from_po
     //cerr << position << " => " << MostDistantPosition  << endl;//文字
     unsigned char byte= char_byte_length[position];
     auto tokens_one_char = da_search_one_step(da, -1, position); 
-    for(auto &pair: tokens_one_char){
-        pair.length = byte;
+    for(auto &pair: tokens_one_char){ //一文字のノード
+        pair.length = byte; // マッチした表層のバイト数, マッチした辞書の情報は取り出していない. 
         result.push_back(pair);
     }
     for (size_t i = position + 1; i < node_list.size(); i++) {// 二文字
@@ -209,7 +209,7 @@ std::vector<Darts::DoubleArray::result_pair_type> CharLattice::da_search_from_po
         std::vector<Darts::DoubleArray::result_pair_type> tokens = da_search_one_step(da,i - 1, i);
         
         for(auto &pair: tokens){
-            pair.length = byte; 
+            pair.length = byte; // マッチした表層のバイト数, マッチした辞書の情報は取り出していない. 
             //result に追加
             result.push_back(pair);
         }

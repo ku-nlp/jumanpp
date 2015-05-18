@@ -165,30 +165,102 @@ Node* Sentence::make_unk_pseudo_node_list_from_some_positions(const char *start_
     return node;
 } //}}}
 
-// TODO: 廃止
-Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str,
-                                                     unsigned int pos) { //{{{
-    return lookup_and_make_special_pseudo_nodes(start_str, pos, 0, NULL);
-}//}}}
+//// TODO: 廃止
+//Node *Sentence::_lookup_and_make_special_pseudo_nodes(const char *start_str,
+//                                                     unsigned int pos) { //{{{
+//    return lookup_and_make_special_pseudo_nodes(start_str, pos, 0, NULL);
+//}//}}}
+//// TODO: 廃止 
+//Node *Sentence::_lookup_and_make_special_pseudo_nodes(const char *start_str, unsigned int specified_length, std::string *specified_pos) {//{{{
+//    return lookup_and_make_special_pseudo_nodes(start_str, 0, specified_length, specified_pos);
+//}//}}}
+//
+//// TODO: 廃止
+//Node *Sentence::_lookup_and_make_special_pseudo_nodes(const char *start_str, unsigned int pos, unsigned int specified_length, std::string *specified_pos) {//{{{
+//    std::vector<std::string> spec = {"", "", "", "", "", "", ""} ;
+//
+//    if (specified_pos) 
+//        spec[2] = std::string(*specified_pos);
+//    return lookup_and_make_special_pseudo_nodes(start_str + pos, specified_length, spec);
+//}//}}}
+//        
+//// 統合する
+//// TODO: 廃止
+//Node *Sentence::_lookup_and_make_special_pseudo_nodes(const char *start_str, unsigned int specified_length, const std::vector<std::string>& spec){//{{{
+//    Node *result_node = NULL;
+//    //Node *kanji_result_node = NULL;
+//    unsigned int pos = 0;
+//    // spec (0: reading, 1:base, 2:pos, 3:spos, 4:type, 5:form)
+//    auto specified_pos_string = spec[2]; //pos
+//    auto specified_pos = &specified_pos_string;
+//
+//    // まず探す
+//    Node *dic_node = dic->lookup_specified(start_str, specified_length, spec); // look up a dictionary with common prefix search
+//        
+//    // 訓練データで，長さが分かっている場合か，未知語として選択されていない範囲なら
+//    // 同じ文字種が続く範囲を一語とする (同じ品詞で同じ長さなら使わない)
+//	if (specified_length || pos >= reached_pos_of_pseudo_nodes) {
+//        // 数詞処理
+//		result_node = dic->make_specified_pseudo_node_by_dic_check(start_str + pos,
+//				specified_length, specified_pos, &(param->unk_figure_pos),
+//				TYPE_FAMILY_FIGURE, nullptr);
+//        // TYPE_FIGUREに含まれる文字でもでも"数"や"，"は他の品詞になる可能性があるため打ち切らない
+//		//if (specified_length && result_node) return result_node;
+//
+//		// make alphabet nodes 
+//		if (!result_node) {
+//			result_node = dic->make_specified_pseudo_node_by_dic_check(start_str + pos,
+//					specified_length, specified_pos, &(param->unk_pos),
+//					TYPE_FAMILY_ALPH_PUNC, dic_node);
+//            // アルファベットは辞書に載っている可能性があるため処理を打ち切らない
+//			//if (specified_length && result_node) return result_node;
+//		}
+//            
+//        // カタカナ 
+//        // TODO:切れるところまでで未定義語を作る
+//		if (!result_node) {
+//			result_node = dic->make_specified_pseudo_node_by_dic_check(start_str + pos,
+//					specified_length, specified_pos, &(param->unk_pos),
+//					TYPE_KATAKANA , dic_node);
+//		}
+//
+//        if (!specified_length && result_node) // only prediction
+//            find_reached_pos_of_pseudo_nodes(pos, result_node);
+//    }
+//
+//    if (dic_node) {
+//        Node *tmp_node = dic_node;
+//        while (tmp_node->bnext) //末尾にシーク
+//            tmp_node = tmp_node->bnext;
+//
+//        Node *tmp_result_node = result_node;
+//        while (tmp_result_node) {
+//            auto next_result = tmp_result_node->bnext;
+//            if (check_dict_match(tmp_result_node, dic_node)) {
+//                tmp_node->bnext = tmp_result_node;
+//                tmp_node = tmp_result_node;
+//                tmp_node->bnext = nullptr;
+//            } else {
+//                delete tmp_result_node;
+//            }
+//            tmp_result_node = next_result;
+//        }
+//        //tmp_node->bnext = nullptr;
+//        result_node = dic_node;
+//    }
+//
+//    return result_node;
+//} //}}}
 
-// TODO: 廃止 
-Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str, unsigned int specified_length, std::string *specified_pos) {//{{{
-    return lookup_and_make_special_pseudo_nodes(start_str, 0, specified_length, specified_pos);
-}//}}}
+// TODO:
+// 統合案: 
+// specified 版の辞書引きをlattice に移行
+// 非lattice の lookup は全廃
 
-// TODO: 廃止
-Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str, unsigned int pos, unsigned int specified_length, std::string *specified_pos) {//{{{
-    std::vector<std::string> spec = {"", "", "", "", "", "", ""} ;
-
-    if (specified_pos) 
-        spec[2] = std::string(*specified_pos);
-    return lookup_and_make_special_pseudo_nodes(start_str + pos, specified_length, spec);
-}//}}}
-        
-// 統合する
-// TODO: 廃止
-Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str, unsigned int specified_length, const std::vector<std::string>& spec){//{{{
+//specified spec 版 //文字列全体が単語候補の場合のみ
+Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, const char *start_str, unsigned int specified_length, const std::vector<std::string>& spec) {//{{{
     Node *result_node = NULL;
+    unsigned int char_num = 0;
     //Node *kanji_result_node = NULL;
     unsigned int pos = 0;
     // spec (0: reading, 1:base, 2:pos, 3:spos, 4:type, 5:form)
@@ -196,39 +268,40 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str, unsi
     auto specified_pos = &specified_pos_string;
 
     // まず探す
-    Node *dic_node = dic->lookup_specified(start_str, specified_length, spec); // look up a dictionary with common prefix search
-        
+    auto lattice_result = cl.da_search_from_position( dic->darts, char_num ); // こっちは何文字目かが必要
+    // 以下は何バイト目かが必要
+    // look up a dictionary with common prefix search
+    // Node *dic_node = dic->lookup_lattice(lattice_result, start_str + pos, specified_length, specified_pos); 
+
+    Node *dic_node = dic->lookup_lattice_specified(lattice_result, start_str, specified_length, spec); 
+
     // 訓練データで，長さが分かっている場合か，未知語として選択されていない範囲なら
-    // 同じ文字種が続く範囲を一語とする (同じ品詞で同じ長さなら使わない)
-	if (specified_length || pos >= reached_pos_of_pseudo_nodes) {
+    // 同じ文字種が続く範囲を一語として入れてくれる
+	if (specified_length ) {
         // 数詞処理
 		result_node = dic->make_specified_pseudo_node_by_dic_check(start_str + pos,
 				specified_length, specified_pos, &(param->unk_figure_pos),
 				TYPE_FAMILY_FIGURE, nullptr);
-        // TYPE_FIGUREに含まれる文字でもでも"数"や"，"は他の品詞になる可能性があるため打ち切らない
-		//if (specified_length && result_node) return result_node;
 
-		// make alphabet nodes 
+		// alphabet 
 		if (!result_node) {
 			result_node = dic->make_specified_pseudo_node_by_dic_check(start_str + pos,
 					specified_length, specified_pos, &(param->unk_pos),
-					TYPE_FAMILY_ALPH_PUNC, dic_node);
-            // アルファベットは辞書に載っている可能性があるため処理を打ち切らない
-			//if (specified_length && result_node) return result_node;
+					TYPE_FAMILY_ALPH_PUNC);
 		}
-            
-        // カタカナ 
+
+        // 漢字
+
+        // カタカナ
         // TODO:切れるところまでで未定義語を作る
 		if (!result_node) {
 			result_node = dic->make_specified_pseudo_node_by_dic_check(start_str + pos,
 					specified_length, specified_pos, &(param->unk_pos),
 					TYPE_KATAKANA , dic_node);
 		}
+	}
 
-        if (!specified_length && result_node) // only prediction
-            find_reached_pos_of_pseudo_nodes(pos, result_node);
-    }
-
+    // 辞書にあったものと同じ品詞で同じ長さなら使わない
     if (dic_node) {
         Node *tmp_node = dic_node;
         while (tmp_node->bnext) //末尾にシーク
@@ -240,7 +313,9 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str, unsi
             if (check_dict_match(tmp_result_node, dic_node)) {
                 tmp_node->bnext = tmp_result_node;
                 tmp_node = tmp_node->bnext;
+                tmp_node->bnext = nullptr;
             } else {
+                //std::cerr << "del unk_node:" << *(tmp_result_node->original_surface) << "_" << *(tmp_result_node->pos) << std::endl;
                 delete tmp_result_node;
             }
             tmp_result_node = next_result;
@@ -252,10 +327,6 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes(const char *start_str, unsi
     return result_node;
 } //}}}
 
-// TODO:
-// 統合案: 
-// specified 版の辞書引きをlattice に移行
-// 非lattice の lookup は全廃
 
 // start_str で始まる形態素を列挙する。
 Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, const char *start_str, unsigned int char_num, unsigned int pos, unsigned int specified_length, std::string *specified_pos) {//{{{
@@ -263,8 +334,7 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, co
     //Node *kanji_result_node = NULL;
 
     // まず探す
-    auto lattice_result = cl.da_search_from_position(
-        dic->darts, char_num); // こっちは何文字目かが必要
+    auto lattice_result = cl.da_search_from_position( dic->darts, char_num); // こっちは何文字目かが必要
     // 以下は何バイト目かが必要
     // look up a dictionary with common prefix search
     Node *dic_node = dic->lookup_lattice(lattice_result, start_str + pos, specified_length, specified_pos); 
@@ -294,7 +364,6 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, co
 					TYPE_KATAKANA , dic_node);
 		}
         // ひらがな
-
 		if (!specified_length && result_node) // only prediction
 			find_reached_pos_of_pseudo_nodes(pos, result_node);
 	}
@@ -311,7 +380,9 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, co
             if (check_dict_match(tmp_result_node, dic_node)) {
                 tmp_node->bnext = tmp_result_node;
                 tmp_node = tmp_node->bnext;
+                tmp_node->bnext = nullptr;
             } else {
+                //std::cerr << "del unk_node:" << *(tmp_result_node->original_surface) << "_" << *(tmp_result_node->pos) << std::endl;
                 delete tmp_result_node;
             }
             tmp_result_node = next_result;
@@ -331,12 +402,18 @@ bool Sentence::check_dict_match(Node* tmp_node, Node* dic_node){//{{{
 
     Node *tmp_dic_node = dic_node;
     bool matched = false;
+    //std::cerr << "check unk_node:" << *(tmp_node->base) << "_" << (tmp_node->posid) << std::endl;
     while(tmp_dic_node){
+        //std::cerr << "compare dict_node:" << *(tmp_dic_node->base) << "_" << (tmp_dic_node->posid) << " match:";
+
         if(tmp_node->length == tmp_dic_node->length && //length が一致 
                 tmp_node->posid == tmp_dic_node->posid ){//pos が一致
+            //std::cerr << "true" << endl;
             matched=true;
             break;
         }
+
+        //std::cerr << "false" << endl;
         tmp_dic_node = tmp_dic_node->bnext;
     }
 
@@ -599,7 +676,7 @@ void Sentence::print_unified_lattice() { //{{{
 
     std::vector<std::vector<int>> num2id(length + 1); //多めに保持する
     for (unsigned int pos = 0; pos < length;
-         pos += utf8_bytes((unsigned char *)(sentence_c_str + pos))) {
+        pos += utf8_bytes((unsigned char *)(sentence_c_str + pos))) {
         Node *node = (*begin_node_list)[pos];
         const std::string wordmark{"-"};
         const std::string delim{"\t"};
@@ -816,7 +893,9 @@ Node *Sentence::get_bos_node() {//{{{
 	bos_node->form_type = new std::string(BOS_STRING);
 	bos_node->base = new std::string(BOS_STRING);
 	bos_node->representation = new std::string(BOS_STRING);
+	bos_node->original_surface = new std::string(BOS_STRING);
     bos_node->id = -2;
+    bos_node->bq.beam.front().score = 0;
 
     FeatureSet *f = new FeatureSet(ftmpl);
     f->extract_unigram_feature(bos_node);
@@ -841,6 +920,7 @@ Node *Sentence::get_eos_node() {//{{{
 	eos_node->form_type = new std::string(EOS_STRING);
 	eos_node->base = new std::string(EOS_STRING);
 	eos_node->representation = new std::string(EOS_STRING);
+    eos_node->original_surface = new std::string(BOS_STRING);
 
     eos_node->id = -1;
 
@@ -1016,20 +1096,24 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) { //{{{
     std::stringstream ss_key, ss_value;
         
     while (r_node) { // pos から始まる形態素
+        r_node->bq.beam.clear();
         r_node->bq.setN(param->N);
 		Node *l_node = (*end_node_list)[pos];
         FeatureSet best_score_bigram_f(ftmpl); // 訓練時には 1-best が必要になる
         double best_score = -DBL_MAX;
+
+        //std::cerr << "r:" << *(r_node->original_surface) << "_" <<  *(r_node->base) << "_" << *(r_node->pos) << std::endl;
             
         while (l_node) {
             // 1.コンテクスト独立の処理
-                 
             // 濁音化の条件チェック
             if((r_node->stat == MORPH_DEVOICE_NODE) &&  // 今の形態素が濁音化している
                     (!check_devoice_condition(*l_node))){// 前の形態素が濁音化の条件を満たさない
                 l_node = l_node->enext;
                 continue;
             }
+
+            //std::cerr << "l:" << *(l_node->original_surface) << "_" <<  *(l_node->base) << "_" << (*l_node->pos) << std::endl;
                     
             FeatureSet f(ftmpl);
             f.extract_bigram_feature(l_node, r_node);
@@ -1050,20 +1134,21 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) { //{{{
             // 2.コンテクスト依存の処理
             for(auto &l_token_with_state:l_node->bq.beam){ // pos で終わる形態素 top N
                 // コンテクスト素性( RNNLM 関連等 )
-                    
                 double context_score = 0.0;
+                double score = l_token_with_state.score + bigram_score + context_score + r_node->wcost;
                 // get_best_bigram_score
-                if (l_node->cost + bigram_score + context_score + r_node->wcost > best_score) {
-                    best_score = l_node->cost + bigram_score + context_score + r_node->wcost;
+                if (score > best_score) {
+                    best_score = score;
                     best_score_bigram_f = std::move(f);
                 }
                     
                 TokenWithState tok(l_node, l_token_with_state);
+                tok.score = score;
                 //tok.move_state_vector( state );
                 //tok.set_history( history );
                 r_node->bq.push(tok);
             }
-            
+                 
             // l_node->bq.clear(); //メモリが気になるならしてもよい
             l_node = l_node->enext;
         }
@@ -1083,7 +1168,7 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) { //{{{
                 r_node->feature->append_feature(new FeatureSet(std::move(best_score_bigram_f)));
             }
         } else {
-            std::cerr << "failed at BeamSearch: couldn't find path to rnode:" << *r_node->surface << std::endl;
+            //std::cerr << "failed at BeamSearch: couldn't find path to rnode:" << *r_node->surface << std::endl;
             // 濁音化の条件に反するものしか無ければ，空もありうる
             // return false;
         }
@@ -1114,7 +1199,7 @@ void Sentence::print_N_best_path() {//{{{
 		int traceRank = i;
 
 		//Node* temp_node = NULL;
-		long output_score = (*begin_node_list)[length]->traceList.at(i).score;
+		double output_score = (*begin_node_list)[length]->traceList.at(i).score;
 
 		while (node) {
 		    result_morphs.push_back(node);
@@ -1142,9 +1227,18 @@ void Sentence::print_N_best_path() {//{{{
                 (*it)->used_in_nbest = true;
 				if (printed_num++)
 					output_string_buffer.append(" ");
+                 
+                if(param->N > 1){
 					output_string_buffer.append(*(*it)->string_for_print);
 					output_string_buffer.append("_");
 					output_string_buffer.append(*(*it)->pos);
+                }else{
+                    output_string_buffer.append(*(*it)->string_for_print);
+                    output_string_buffer.append("_");
+                    output_string_buffer.append(*(*it)->pos);
+                    output_string_buffer.append(":");
+                    output_string_buffer.append(*(*it)->spos);
+                }
 			}
 		}
             
@@ -1153,7 +1247,8 @@ void Sentence::print_N_best_path() {//{{{
 			//duplicate output
 		} else {
 			nbest_duplicate_filter.insert(std::make_pair(output_string_buffer, i));
-			cout << "# score:" << output_score << endl;
+            if(param->N > 1)
+                cout << "# score:" << output_score << endl;
 			cout << output_string_buffer;
 			cout << endl;
 			++N_couter;
@@ -1163,7 +1258,9 @@ void Sentence::print_N_best_path() {//{{{
 		if (N_couter >= N_required)
 			break;
 	}
-	cout << endl;
+
+    if(param->N > 1)
+        cout << endl;
 }//}}}
 
 void Sentence::print_N_best_with_rnn(RNNLM::CRnnLM& model) {//{{{
@@ -1259,12 +1356,11 @@ void Sentence::print_beam() {//{{{
                 output_string_buffer.append(*(*it)->string_for_print);
                 output_string_buffer.append("_");
                 output_string_buffer.append(*(*it)->pos);
-			}
+            }
 		}
             
 		cout << "# score:" << token.score << endl;
-		cout << output_string_buffer;
-		cout << endl;
+		cout << output_string_buffer << endl;
 		output_string_buffer.clear();
     }
 }//}}}
@@ -1284,12 +1380,13 @@ void Sentence::print_best_beam() {//{{{
                 output_string_buffer.append(*(*it)->string_for_print);
                 output_string_buffer.append("_");
                 output_string_buffer.append(*(*it)->pos);
+                output_string_buffer.append(":");
+                output_string_buffer.append(*(*it)->spos);
 			}
 		}
             
 		//cout << "# score:" << token.score << endl;
-		cout << output_string_buffer;
-		cout << endl;
+        std::cout << output_string_buffer << std::endl;
 		output_string_buffer.clear();
 
         return;
@@ -1538,12 +1635,16 @@ bool Sentence::lookup_gold_data(std::string &word_pos_pair) {//{{{
 
     //TODO: 外国人人名 が苗字と名前がくっついていても引けるようにしたい．
 
+    CharLattice cl;
+    cl.parse(line[0]);
+
     // そのまま辞書を引く
-    Node *r_node = lookup_and_make_special_pseudo_nodes(line[0].c_str(), strlen(line[0].c_str()), spec);
+    //Node *r_node = lookup_and_make_special_pseudo_nodes(line[0].c_str(), strlen(line[0].c_str()), spec);
+    Node *r_node = lookup_and_make_special_pseudo_nodes_lattice(cl, line[0].c_str(), strlen(line[0].c_str()), spec);
     
     if (!r_node && line[6] == "命令形エ形") { // JUMANの活用になく，３文コーパスでのみ出てくる活用の命令形エ形を連用形だと解釈する.
         std::vector<std::string> mod_spec{line[1],"",line[3],line[4],line[5],"基本連用形"};
-        r_node = lookup_and_make_special_pseudo_nodes(line[0].c_str(), strlen(line[0].c_str()), mod_spec);
+        r_node = lookup_and_make_special_pseudo_nodes_lattice(cl,line[0].c_str(), strlen(line[0].c_str()), mod_spec);
         //cerr << "; restore 命令形エ形 verb:" <<  line[0] << ":" << line[1] << ":" << line[2] << ":" << line[3] << ":" << line[4] << ":" << line[5] << ":" << line[6] << endl;
     }
     if (!r_node && line[3] == "名詞") { // 動詞の名詞化を復元
@@ -1553,8 +1654,7 @@ bool Sentence::lookup_gold_data(std::string &word_pos_pair) {//{{{
         // 動詞の活用型不明のまま，基本連用形をチェック
         std::vector<std::string> mod_spec{line[1], line[2], "動詞",
                                           "*",     "",      "基本連用形"};
-        r_node = lookup_and_make_special_pseudo_nodes(
-            line[0].c_str(), strlen(line[0].c_str()), mod_spec);
+        r_node = lookup_and_make_special_pseudo_nodes_lattice(cl, line[0].c_str(), strlen(line[0].c_str()), mod_spec);
         // cerr << "; restore nominalized verb:" <<  line[0] << ":" << line[1]
         // << ":" << line[2] << ":" << line[3] << ":" << line[4] << ":" <<
         // line[5] << ":" << line[6] << endl;
@@ -1565,8 +1665,7 @@ bool Sentence::lookup_gold_data(std::string &word_pos_pair) {//{{{
         // は読みを無視して検索
         std::vector<std::string> mod_spec{"",      line[2], line[3],
                                           line[4], line[5], line[6]};
-        r_node = lookup_and_make_special_pseudo_nodes(
-            line[0].c_str(), strlen(line[0].c_str()), mod_spec);
+        r_node = lookup_and_make_special_pseudo_nodes_lattice(cl, line[0].c_str(), strlen(line[0].c_str()), mod_spec);
         // cerr << "; restore voiced reading:" <<  line[0] << ":" << line[1] <<
         // ":" << line[2] << ":" << line[3] << ":" << line[4] << ":" << line[5]
         // << ":" << line[6] << endl;
@@ -1576,8 +1675,7 @@ bool Sentence::lookup_gold_data(std::string &word_pos_pair) {//{{{
     if (!r_node && line[3] == "名詞") {
         std::vector<std::string> mod_spec{line[1], line[2], line[3],
                                           "",      line[5], line[6]};
-        r_node = lookup_and_make_special_pseudo_nodes(
-            line[0].c_str(), strlen(line[0].c_str()), mod_spec);
+        r_node = lookup_and_make_special_pseudo_nodes_lattice(cl, line[0].c_str(), strlen(line[0].c_str()), mod_spec);
         // cerr << "; modify proper noun to noun:" <<  line[0] << ":" << line[1]
         // << ":" << line[2] << ":" << line[3] << ":" << line[4] << ":" <<
         // line[5] << ":" << line[6] << endl;
@@ -1587,8 +1685,7 @@ bool Sentence::lookup_gold_data(std::string &word_pos_pair) {//{{{
     if (!r_node && line[3] == "特殊") {
         std::vector<std::string> mod_spec{"",      line[2], line[3],
                                           line[4], line[5], line[6]};
-        r_node = lookup_and_make_special_pseudo_nodes(
-            line[0].c_str(), strlen(line[0].c_str()), mod_spec);
+        r_node = lookup_and_make_special_pseudo_nodes_lattice(cl, line[0].c_str(), strlen(line[0].c_str()), mod_spec);
     }
 
     if (!r_node) { // 未定義語として処理
