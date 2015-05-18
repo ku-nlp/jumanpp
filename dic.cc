@@ -1,4 +1,5 @@
 #include "common.h"
+#include "feature.h"
 #include "dic.h"
 
 namespace Morph {
@@ -155,19 +156,21 @@ Node *Dic::lookup_lattice(std::vector<Darts::DoubleArray::result_pair_type> &da_
             continue;
         size_t size = token_size(result_pair[i]);
         const Token *token = get_token(result_pair[i]);
-
+                
         for (size_t j = 0; j < size; j++) { // same key but different value (pos)
             if (specified_posid != MORPH_DUMMY_POS && specified_posid != (token + j)->posid)
                 continue;
-
+                
             Node *new_node = new Node;
             read_node_info(*(token + j), &new_node);
             new_node->token = (Token *)(token + j);
                 
             new_node->length = result_pair[i].length; 
             new_node->surface = start_str;
+                
             new_node->char_num = utf8_chars((unsigned char *)start_str, new_node->length);
             new_node->original_surface = new std::string(start_str, new_node->length);
+            //std::cout << *new_node->original_surface << "_" << *new_node->pos << std::endl;
             new_node->string_for_print = new std::string(start_str, new_node->length);
             if (new_node->lcAttr == 1) { // Wikipedia
                 new_node->string = new std::string(UNK_WIKIPEDIA);

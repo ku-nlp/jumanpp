@@ -19,6 +19,7 @@
 #include "rnnlmlib.h"
 
 //基本全部の行列を計算する, ここからここまでとかは厳しい
+// 現在のメモリ配置をそのままにするなら，転置オプションを使うのが良さそう
 int cublasSgemv(void* handle, 
                 void* trans, //行列を転地して使うかどうかのフラグ
                 int m,  // number of rows of matrix A.  

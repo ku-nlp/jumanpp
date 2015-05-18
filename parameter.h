@@ -12,6 +12,7 @@ class Parameter {
     bool shuffle_training_data;
     bool debug;
     bool nbest;
+    bool beam;
     unsigned int unk_max_length;
     unsigned int iteration_num;
     std::string darts_filename;
@@ -44,6 +45,10 @@ class Parameter {
     }
     int set_nbest(bool in_nb){
         nbest = in_nb;
+        return 0;
+    }
+    int set_beam(bool in_beam){
+        beam = in_beam;
         return 0;
     }
     

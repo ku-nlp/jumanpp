@@ -1,18 +1,23 @@
+#pragma once
 #ifndef NODE_H
 #define NODE_H
 
 #include "common.h"
-#include "feature.h"
 #include "pos.h"
 extern "C"{
 #include "cdb_juman.h"
 }
 #include "scw.h" 
 #include <map>
+#include "parameter.h"
+#include "feature.h"
 
 namespace Morph {
 class FeatureSet;
+class Node;
 class NbestSearchToken; 
+class TokenWithState;
+class BeamQue;
 
 struct morph_token_t {//{{{
 	unsigned short lcAttr;
@@ -44,18 +49,77 @@ struct morph_token_t {//{{{
     //  #define ADJECTIVE_VOICED_COST  9  /* 形容詞の連濁化のコスト */
     //  #define OTHER_VOICED_COST      5  /* 上記以外の連濁化のコスト */
 };//}}}
+
+class TokenWithState{//{{{
+    public:
+        double score = -DBL_MAX;
+        std::vector<double> state_vector;
+        std::vector<char> history;
+        std::vector<Node*> node_history;
+                    
+        TokenWithState(){};
+        TokenWithState(Node* current_node, const TokenWithState &prev_token){
+            node_history = prev_token.node_history; //copy
+            node_history.emplace_back(current_node);
+        };
+        void move_state_vector(std::vector<double> &&state){
+            state_vector = std::move(state);
+        };
+        void set_history(std::vector<char> &&his){
+            history = std::move(his);
+        };
+        ~TokenWithState(){};
+}; //}}}
+
+class BeamQue {//{{{
+    private:
+        unsigned int beam_width = 1;
+    public:
+        std::vector<TokenWithState> beam;
+
+        BeamQue(){
+            beam_width = 1;
+            beam.resize(beam_width);
+        };
+
+        BeamQue(unsigned int n){
+            beam_width = n;
+            beam.resize(n);
+        };
+
+        void setN(unsigned int n){
+            beam_width = n;
+            beam.resize(n);
+        };
+
+        void push(TokenWithState tok){
+            // beam は昇順でソート済み
+            if( !beam.empty() && beam.back().score > tok.score ){ //追加しない
+                return;
+            }else if(beam.size() == beam_width){//最小のものを置き換えて再ソート
+                beam.back() = std::move(std::move(tok));
+                std::sort(beam.begin(), beam.end(),[](auto x, auto y){return x.score < y.score;});
+            }else{ //追加してリサイズ
+                beam.emplace_back(std::move(tok));
+                std::sort(beam.begin(), beam.end(),[](auto x, auto y){return x.score < y.score;});
+                beam.resize(beam_width);
+            }
+        }
+};//}}}
+
 typedef struct morph_token_t Token;
 
 //TODO: posid を grammar と共通化し， ない場合にのみ新しいid を追加するようにする. 
 //TODO: 巨大な定数 mapping も削除する
 //TODO: ポインタ撲滅
-class Node {
+class Node {//{{{
   private:
     static int id_count;
 
     //TODO: Topic 関係はあとで外に出してまとめる
     constexpr static const char* cdb_filename = "/home/morita/work/juman_LDA/dic/all_uniq.cdb";
     static DBM_FILE topic_cdb;
+    static Parameter *param;
   public:
     Node *prev = nullptr; // best previous node determined by Viterbi algorithm
     Node *next = nullptr;
@@ -101,7 +165,8 @@ class Node {
     double wcost = 0; // cost of this morpheme
     double cost = 0; // total cost to this node
     struct morph_token_t *token = nullptr;
-        
+    BeamQue bq;
+                        
 	//for N-best and Juman-style output
 	int id = 1;
 	unsigned int starting_pos = 0; // starting position
@@ -124,15 +189,17 @@ class Node {
         id_count = 1;
     };
     static Node make_dummy_node(){return Node();}
-        
+
+    static void set_param(Parameter *in_param){ param = in_param; };
+                
     bool topic_available();
     bool topic_available_for_sentence();
     void read_vector(const char* buf, std::vector<double> &vector);
-
+        
     TopicVector get_topic();
-};
+};//}}}
 
-class NbestSearchToken {
+class NbestSearchToken {//{{{
 
 public:
 	double score = 0;
@@ -141,26 +208,22 @@ public:
 
 	NbestSearchToken(Node* pN) {
 		prevNode = pN;
-	}
-	;
+	};
 
 	NbestSearchToken(double s, int r) {
 		score = s;
 		rank = r;
-	}
-	;
+	};
 
 	NbestSearchToken(double s, int r, Node* pN) {
 		score = s;
 		rank = r;
 		prevNode = pN;
-	}
-	;
+	};
 
 	~NbestSearchToken() {
 
-	}
-	;
+	};
 
 	bool operator<(const NbestSearchToken &right) const {
 		if ((*this).score < right.score)
@@ -169,7 +232,9 @@ public:
 			return false;
 	}
 
-};
+};//}}}
+
+
 }
 
 #endif

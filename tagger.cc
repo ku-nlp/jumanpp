@@ -215,6 +215,14 @@ void Tagger::print_best_path() {//{{{
     sentence->print_best_path();
 }//}}}
 
+void Tagger::print_best_beam() {//{{{
+    sentence->print_best_beam();
+}//}}}
+
+void Tagger::print_beam() {//{{{
+    sentence->print_beam();
+}//}}}
+
 void Tagger::print_N_best_path() {//{{{
     sentence->print_N_best_path();
 }//}}}
