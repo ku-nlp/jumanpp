@@ -217,6 +217,7 @@ void Tagger::print_best_path() {//{{{
 
 void Tagger::print_best_beam() {//{{{
     sentence->print_best_beam();
+    sentence->print_unified_lattice();
 }//}}}
 
 void Tagger::print_beam() {//{{{

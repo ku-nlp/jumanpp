@@ -22,7 +22,8 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     option.add<unsigned int>("rerank", 'R', "n-best reranking", false, 5);
     option.add("scw", 0, "use soft confidence weighted");
     option.add<std::string>("lda", 0, "use lda", false, "");
-    option.add("beam", 'b', "use beam search");
+    option.add<unsigned int>("beam", 'b', "use beam search",false,1);
+    option.add<unsigned int>("rbeam", 'B', "use beam search and reranking",false,1);
     option.add("oldstyle", 'o', "print old style lattice");
     option.add("averaged", 'a', "use averaged perceptron for training");
     option.add("total", 'T', "use total similarity for LDA");
@@ -56,7 +57,13 @@ int main(int argc, char** argv) {//{{{
 
     if(option.exist("nbest"))
         param.set_N(option.get<unsigned int>("nbest"));
-    else if(option.exist("lattice"))
+    else if(option.exist("beam")){
+        param.set_beam(true);
+        param.set_N(option.get<unsigned int>("beam"));
+    }else if(option.exist("rbeam")){
+        param.set_beam(true);
+        param.set_N(option.get<unsigned int>("rbeam"));
+    }else if(option.exist("lattice"))
         param.set_N(option.get<unsigned int>("lattice"));
     else if(option.exist("rerank"))
         param.set_N(option.get<unsigned int>("rerank"));
@@ -80,6 +87,7 @@ int main(int argc, char** argv) {//{{{
     normal_param.set_nbest(true);// nbest を利用するよう設定
     normal_param.set_N(10);//5-best に設定
     Morph::Tagger tagger(&param);
+    Morph::Node::set_param(&param);
    
     RNNLM::CRnnLM rnnlm;
 
@@ -96,8 +104,6 @@ int main(int argc, char** argv) {//{{{
         rnnlm.initialize_test_sent();
         srand(1);
     }
-
-
 
     if (MODE_TRAIN) {//学習モード{{{
         if(option.exist("lda")){
@@ -161,7 +167,7 @@ int main(int argc, char** argv) {//{{{
         // sentence loop
         std::string buffer;
         while (getline(is ? is : cin, buffer)) {
-            if (buffer.length() == 0 || buffer.at(0) == '#') { // empty line or comment line
+            if (buffer.length() <= 1 || buffer.at(0) == '#') { // empty line or comment line
                 cout << buffer << endl;
                 continue;
             }
@@ -173,20 +179,15 @@ int main(int argc, char** argv) {//{{{
                     tagger.print_lattice();
             }else{
                 if(option.exist("beam")){
-                    if(option.exist("nbest")){
-                        tagger.print_beam();
-                    }else{
-                        tagger.print_best_beam();
-                    }
-
+                    tagger.print_beam();
+                }else if(option.exist("rbeam")){
+                    tagger.print_best_beam();
+                }else if(option.exist("nbest") && option.exist("rnnlm")){
+                    tagger.print_N_best_with_rnn(rnnlm);
+                }else if(option.exist("rerank") && option.exist("rnnlm")){
+                    tagger.print_best_path_with_rnn(rnnlm);
                 }else{
-                    if(option.exist("nbest")){
-                        tagger.print_N_best_with_rnn(rnnlm);
-                    }else if(option.exist("rerank")){
-                        tagger.print_best_path_with_rnn(rnnlm);
-                    }else{
-                        tagger.print_best_path();
-                    }
+                    tagger.print_N_best_path();
                 }
             }
             tagger.sentence_clear();
