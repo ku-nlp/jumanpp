@@ -10,7 +10,7 @@
 #ifndef _RNNLMLIB_H_
 #define _RNNLMLIB_H_
 
-#include "vector"
+#include <vector>
 
 namespace RNNLM{
 
@@ -42,8 +42,8 @@ struct vocab_word {
 
 struct context {
     char last_word;
-    vector<char> histroy;
-    vector<real> context;
+    std::vector<char> history;
+    std::vector<real> l1_neuron;
 };
 
 const unsigned int PRIMES[]={108641969, 116049371, 125925907, 133333309, 145678979, 175308587, 197530793, 234567803, 251851741, 264197411, 330864029, 399999781,
@@ -339,6 +339,9 @@ public:
     void restoreContext();
     void saveContext2();
     void restoreContext2();
+
+    void saveFullContext(context *dest);
+    void restoreFullContext(const context *dest);
     void initNet();
     void saveNet();
     void goToDelimiter(int delim, FILE *fi);
@@ -347,12 +350,18 @@ public:
     void netReset();    //will erase just hidden layer state + bptt history + maxent history (called at end of sentences in the independent mode)
     
     void computeNet(int last_word, int word);
+    void computeNet(int last_word, int word, context *c);
+    void computeNet(int word, context *context);
     void learnNet(int last_word, int word);
     void copyHiddenLayerToInput();
 
+
+    real test_word(context &c, context &new_c, std::string next_word);
+    void get_initial_context(context *c);
     void initialize_test_sent();
     void trainNet();
     void useLMProb(int use) {use_lmprob=use;}
+    real test_word(context *c, context *new_c, std::string next_word);
     void testNet();
     void testNbest();
     void testGen();
