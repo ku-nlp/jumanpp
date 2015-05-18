@@ -1,22 +1,25 @@
 #include "common.h"
+#include "feature.h"
 #include "node.h"
 
 namespace Morph {
 
 int Node::id_count = 1;
 DBM_FILE Node::topic_cdb;
+Parameter *Node::param;
 
 const char* hukugouji[] = { "めぐる", "除く", "のぞく", "通じる", "通ずる", "通す", "含める", "ふくめる", "始める", "はじめる", "絡む", "からむ", "沿う", "そう", "向ける", "伴う", "ともなう", "基づく", "よる", "対する", "関する", "代わる", "おく", "つく", "とる", "加える", "くわえる", "限る", "続く", "つづく", "合わせる", "あわせる", "比べる", "くらべる", "並ぶ", "ならぶ", "おける", "いう", "する" };
 
-Node::Node() {
+Node::Node():bq(param->N) {//{{{
     this->id = id_count++;
     if(topic_cdb == nullptr){
         topic_cdb = db_read_open(cdb_filename);
     }
-}
-bool Node::is_dummy(){
+}//}}}
+
+bool Node::is_dummy(){//{{{
     return (stat == MORPH_DUMMY_POS || stat == MORPH_BOS_NODE || stat ==  MORPH_EOS_NODE); 
-};
+};//}}}
 
 //Node::Node(const Node& node) { // 普通のコピー//{{{
 //    
@@ -71,7 +74,7 @@ bool Node::is_dummy(){
 //        this->feature = new FeatureSet(*node.feature);
 //}//}}}
 
-Node::~Node() {
+Node::~Node() {//{{{
     if (string)
         delete string;
     if (string_for_print)
@@ -82,9 +85,9 @@ Node::~Node() {
         delete original_surface;
     if (feature)
         delete feature;
-}
+}//}}}
 
-void Node::clear(){
+void Node::clear(){//{{{
     if (string)
         delete string;
     if (string_for_print)
@@ -96,26 +99,26 @@ void Node::clear(){
     if (feature)
         delete feature;
     //*this = Node();
-}
+}//}}}
 
-void Node::print() {
+void Node::print() {//{{{
     cout << *(string_for_print) << "_" << *pos << ":" << *spos;
-}
+}//}}}
 
-std::string Node::str() {
+std::string Node::str() {//{{{
     return *(string_for_print) + "_" + *pos + ":" + *spos;
-}
+}//}}}
 
-const char *Node::get_first_char() {
+const char *Node::get_first_char() {//{{{
     return string_for_print->c_str();
-}
+}//}}}
 
-unsigned short Node::get_char_num() {
+unsigned short Node::get_char_num() {//{{{
     if (char_num >= MAX_RESOLVED_CHAR_NUM)
         return MAX_RESOLVED_CHAR_NUM;
     else
         return char_num;
-}
+}//}}}
 
 bool Node::topic_available(){//{{{
     Node* node = this;
@@ -230,6 +233,5 @@ TopicVector Node::get_topic(){//{{{
         delete result;
     return node_topic;
 }//}}}
-
 
 }

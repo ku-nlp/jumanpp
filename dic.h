@@ -1,3 +1,4 @@
+#pragma once
 #ifndef DIC_H
 #define DIC_H
 

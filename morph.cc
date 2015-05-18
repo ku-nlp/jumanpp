@@ -12,15 +12,17 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     option.add<std::string>("model", 'm', "model filename", false, "data/model.dat");
     option.add<std::string>("feature", 'f', "feature template filename", false, "data/feature.def");
     option.add<std::string>("train", 't', "training filename", false, "data/train.txt");
+    option.add<std::string>("rnnlm", 'r', "rnnlm filename", false, "data/rnnlm.model");
     option.add<unsigned int>("iteration", 'i', "iteration number for training", false, 10);
     option.add<unsigned int>("unk_max_length", 'l', "maximum length of unknown word detection", false, 7);
     option.add<unsigned int>("lattice", 'L', "output lattice format",false, 1);
     option.add<double>("Cvalue", 'C', "C value",false, 1.0);
     option.add<double>("Phi", 'P', "Phi value",false, 1.65);
     option.add<unsigned int>("nbest", 'n', "n-best search", false, 5);
-    option.add<unsigned int>("rerank", 'r', "n-best reranking", false, 5);
+    option.add<unsigned int>("rerank", 'R', "n-best reranking", false, 5);
     option.add("scw", 0, "use soft confidence weighted");
     option.add<std::string>("lda", 0, "use lda", false, "");
+    option.add("beam", 'b', "use beam search");
     option.add("oldstyle", 'o', "print old style lattice");
     option.add("averaged", 'a', "use averaged perceptron for training");
     option.add("total", 'T', "use total similarity for LDA");
@@ -76,22 +78,24 @@ int main(int argc, char** argv) {//{{{
 
     Morph::Parameter normal_param = param;
     normal_param.set_nbest(true);// nbest を利用するよう設定
-    normal_param.set_N(5);//5-best に設定
+    normal_param.set_N(10);//5-best に設定
     Morph::Tagger tagger(&param);
    
     RNNLM::CRnnLM rnnlm;
 
+    if(option.exist("rnnlm")){
+        rnnlm.setLambda(1.0);
+        rnnlm.setRegularization(0.0000001);
+        rnnlm.setDynamic(0);
+        //rnnlm.setTestFile(test_file);
 
-    rnnlm.setLambda(1.0);
-    rnnlm.setRegularization(0.0000001);
-    rnnlm.setDynamic(0);
-    //rnnlm.setTestFile(test_file);
-    rnnlm.setRnnLMFile("model_t5");
-    rnnlm.setRandSeed(1);
-    rnnlm.useLMProb(0);
-    rnnlm.setDebugMode(0);
-    rnnlm.initialize_test_sent();
-    srand(1);
+        rnnlm.setRnnLMFile(option.get<std::string>("rnnlm").c_str());
+        rnnlm.setRandSeed(1);
+        rnnlm.useLMProb(0);
+        rnnlm.setDebugMode(0);
+        rnnlm.initialize_test_sent();
+        srand(1);
+    }
 
 
 
@@ -168,12 +172,21 @@ int main(int argc, char** argv) {//{{{
                 else
                     tagger.print_lattice();
             }else{
-                if(option.exist("nbest")){
-                    tagger.print_N_best_with_rnn(rnnlm);
-                }else if(option.exist("rerank")){
-                    tagger.print_best_path_with_rnn(rnnlm);
+                if(option.exist("beam")){
+                    if(option.exist("nbest")){
+                        tagger.print_beam();
+                    }else{
+                        tagger.print_best_beam();
+                    }
+
                 }else{
-                    tagger.print_best_path();
+                    if(option.exist("nbest")){
+                        tagger.print_N_best_with_rnn(rnnlm);
+                    }else if(option.exist("rerank")){
+                        tagger.print_best_path_with_rnn(rnnlm);
+                    }else{
+                        tagger.print_best_path();
+                    }
                 }
             }
             tagger.sentence_clear();

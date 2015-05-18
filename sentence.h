@@ -13,7 +13,7 @@
 
 namespace Morph {
 
-class Sentence {
+class Sentence {//{{{
     Parameter *param;
     Dic *dic;
     FeatureTemplateSet *ftmpl;
@@ -124,8 +124,12 @@ class Sentence {
     void set_end_node_list(unsigned int pos, Node *r_node);
     bool viterbi_at_position(unsigned int pos, Node *r_node);
 	bool viterbi_at_position_nbest(unsigned int pos, Node *r_node);
+	bool beam_at_position(unsigned int pos, Node *r_node);
+    //bool beam_at_position(unsigned int pos, Node *r_node, std::vector<BeamQue> &bq );
     unsigned int find_reached_pos(unsigned int pos, Node *node);
     unsigned int find_reached_pos_of_pseudo_nodes(unsigned int pos, Node *node);
+    void print_beam();
+    void print_best_beam();
     void print_best_path();
     void print_best_path_with_rnn(RNNLM::CRnnLM& model);
     TopicVector get_topic();
@@ -135,6 +139,7 @@ class Sentence {
 	void print_N_best_with_rnn(RNNLM::CRnnLM& model);
     void mark_nbest();
     Node* find_N_best_path(); // make EOS node and get N-best path
+    Node *find_N_best_path_beam();
     double eval(Sentence& gold);
     void print_juman_lattice(); // 互換性の為
     void print_unified_lattice(); 
@@ -151,7 +156,7 @@ class Sentence {
     Node *make_unk_pseudo_node_list_from_previous_position(const char *start_str, unsigned int previous_pos);
     Node *make_unk_pseudo_node_list_from_some_positions(const char *start_str, unsigned int pos, unsigned int previous_pos);
     Node *make_unk_pseudo_node_list_by_dic_check(const char *start_str, unsigned int pos, Node *r_node, unsigned int specified_char_num);
-};
+};//}}}
 
 
 

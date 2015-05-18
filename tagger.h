@@ -2,10 +2,11 @@
 #define TAGGER_H
 
 #include "common.h"
-#include "dic.h"
 #include "sentence.h"
+#include "node.h"
 #include "feature.h"
 #include "parameter.h"
+#include "dic.h"
 #include "scw.h"
 
 namespace Morph {
@@ -47,6 +48,8 @@ class Tagger {
 	void print_best_path_with_rnn(RNNLM::CRnnLM& model);
     void print_N_best_with_rnn(RNNLM::CRnnLM& model); 
     void print_N_best_path();
+    void print_beam();
+    void print_best_beam();
     void print_lattice();
     void print_old_lattice();
         

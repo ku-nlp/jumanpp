@@ -14,6 +14,8 @@
 #include <string>
 #include "tagger.h"
 #include "pos.h"
+#include "node.h"
+#include "feature.h"
 
 using namespace Morph;
 

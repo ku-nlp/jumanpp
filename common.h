@@ -1,3 +1,4 @@
+#pragma once
 #ifndef COMMON_H
 #define COMMON_H
 
@@ -22,8 +23,8 @@
 #include <float.h>
 
 typedef std::vector<double> TopicVector; 
-#include "feature.h"
-#include "scw.h"
+//#include "feature.h"
+//#include "scw.h"
 
 using std::cin;
 using std::cout;
