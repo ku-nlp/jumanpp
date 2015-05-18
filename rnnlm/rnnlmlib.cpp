@@ -378,7 +378,7 @@ namespace RNNLM{
         std::cerr << "saveFullContext"<< std::endl;
         int a;
 
-        dest->l1_neuron.resize(layer1.size);
+        dest->l1_neuron.resize(layer1_size);
         dest->history.resize(MAX_NGRAM_ORDER);
         dest->last_word = history[0];
         //dest->last_word = last_word; //history と同じ内容
@@ -1341,32 +1341,36 @@ namespace RNNLM{
     }//}}}
 
     // context に last_word も入れておくべき
-    void CRnnLM::computeNet(int last_word, int word, context *c)
+    // 今までの状態を上書きし，破壊することに注意
+    void CRnnLM::computeNet(int word, context *context)
     {//{{{
         int a, b, c;
+        int last_word_local = context->history[0];
         real val;
         double sum;   //sum is used for normalization: it's better to have larger precision as many numbers are summed together here
 
         // 語彙数次元のベクトル
-        if (last_word!=-1) neu0[last_word].ac=1;
-
+        if (last_word_local!=-1) neu0[last_word_local].ac=1;
+        // コレでも良いはずだが，元の状態を別のどこかに保存しておきたいかも
+        restoreFullContext(context); // コンテクスト
+            
         //propagate 0->1
         for (a=0; a<layer1_size; a++) neu1[a].ac=0;
         for (a=0; a<layerc_size; a++) neuc[a].ac=0;
-
+            
         // 0-(vocab)-(layer1)-layer0_size
         // 0...vocab(layer0_size-layer1_size -1) が語彙の次元
         // layer0_size-layer1_size > layer0_size がコンテクストの次元
-
+            
         // コンテクストvectorについての計算
         matrixXvector(neu1, neu0, syn0, layer0_size, 0, layer1_size, layer0_size-layer1_size, layer0_size, 0);
-
+            
         // 今の単語について計算(one hot)
         for (b=0; b<layer1_size; b++) {
-            a=last_word;
+            a=last_word_local;
             if (a!=-1) neu1[b].ac += neu0[a].ac * syn0[a+b*layer0_size].weight;
         }
-
+            
         //activate 1      --sigmoid
         for (a=0; a<layer1_size; a++) {
             if (neu1[a].ac>50) neu1[a].ac=50;  //for numerical stability
@@ -1374,7 +1378,7 @@ namespace RNNLM{
             val=-neu1[a].ac;
             neu1[a].ac=1/(1+fasterexp(val));
         }
-
+                        
         if (layerc_size>0) {//{{{
             matrixXvector(neuc, neu1, syn1, layer1_size, 0, layerc_size, 0, layer1_size, 0);
             //activate compression      --sigmoid
@@ -1406,10 +1410,10 @@ namespace RNNLM{
 
             for (a=0; a<direct_order; a++) {
                 b=0;
-                if (a>0) if (history[a-1]==-1) break;	//if OOV was in history, do not use this N-gram feature and higher orders
+                if (a>0) if (context->history[a-1]==-1) break;	//if OOV was in history, do not use this N-gram feature and higher orders
                 hash[a]=PRIMES[0]*PRIMES[1];
 
-                for (b=1; b<=a; b++) hash[a]+=PRIMES[(a*PRIMES[b]+b)%PRIMES_SIZE]*(unsigned long long)(history[b-1]+1);	//update hash value based on words from the history
+                for (b=1; b<=a; b++) hash[a]+=PRIMES[(a*PRIMES[b]+b)%PRIMES_SIZE]*(unsigned long long)(context->history[b-1]+1);	//update hash value based on words from the history
                 hash[a]=hash[a]%(direct_size/2);		//make sure that starting hash index is in the first half of syn_d (second part is reserved for history->words features)
             }
                 
@@ -1457,10 +1461,10 @@ namespace RNNLM{
 
             for (a=0; a<direct_order; a++) {
                 b=0;
-                if (a>0) if (history[a-1]==-1) break;
+                if (a>0) if (context->history[a-1]==-1) break;
                 hash[a]=PRIMES[0]*PRIMES[1]*(unsigned long long)(vocab[word].class_index+1);
 
-                for (b=1; b<=a; b++) hash[a]+=PRIMES[(a*PRIMES[b]+b)%PRIMES_SIZE]*(unsigned long long)(history[b-1]+1);
+                for (b=1; b<=a; b++) hash[a]+=PRIMES[(a*PRIMES[b]+b)%PRIMES_SIZE]*(unsigned long long)(context->history[b-1]+1);
                 hash[a]=(hash[a]%(direct_size/2))+(direct_size)/2;
             }
 
@@ -2192,9 +2196,9 @@ namespace RNNLM{
     }//}}}
 
     // context + word => context + score
-    real CRnnLM::test_word(context &c, context &new_c, std::string next_word)
+    real CRnnLM::test_word(context *c, context *new_c, std::string next_word)
     {//{{{
-        int word, last_word;
+        int last_word;
         last_word = c->last_word;
         float prob_other; //has to be float so that %f works in fscanf
         real log_other, log_combine, senp;
@@ -2206,9 +2210,10 @@ namespace RNNLM{
         log_combine=1;
         senp=0;
             
-        int word = searchVocab(next_word->c_str());
-        computeNet(last_word, word);      //compute probability distribution
-        
+        int word = searchVocab((char*)next_word.c_str());
+        //computeNet(last_word, word);      //compute probability distribution
+        computeNet(word,c);        
+
         if (word!=-1) { //OOVでない
             neu2[word].ac*=neu2[vocab[word].class_index+vocab_size].ac;
 
@@ -2220,7 +2225,6 @@ namespace RNNLM{
 
             senp+=log10(neu2[word].ac*lambda + prob_other*(1-lambda));
 
-            wordcn++;
         } else {
             //assign to OOVs some score to correctly rescore nbest lists, reasonable value can be less than 1/|V| or backoff LM score (in case it is trained on more data)
             //this means that PPL results from nbest list rescoring are not true probabilities anymore (as in open vocabulary LMs)
@@ -2238,7 +2242,6 @@ namespace RNNLM{
                 log_combine+=oov_penalty;
                 senp+=oov_penalty;
             }
-            wordcn++;
         }
 
         if (debug_mode>0) {
@@ -2251,11 +2254,11 @@ namespace RNNLM{
             
         // history の更新
         for (int a=MAX_NGRAM_ORDER-1; a>0; a--) 
-            new_c->history[a] = new_c->history[a-1];
-        new_c->history[0] = word;
+            history[a] = c->history[a-1];
+        history[0] = word;
             
-        // context の保存
-        saveFullContext(new_c, word);
+        // context の保存 // history の渡し方，これでよいのか
+        saveFullContext(new_c);
 
         return senp;
     }//}}}
