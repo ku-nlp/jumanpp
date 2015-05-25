@@ -41,8 +41,8 @@ struct vocab_word {
 };
 
 struct context {
-    char last_word;
-    std::vector<char> history;
+    int last_word;
+    std::vector<int> history;
     std::vector<real> l1_neuron;
 };
 

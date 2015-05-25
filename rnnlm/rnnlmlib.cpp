@@ -376,9 +376,9 @@ namespace RNNLM{
 
     void CRnnLM::saveFullContext(context *dest)		//useful for n-best decoding
     {//{{{
-        std::cerr << "saveFullContext"<< std::endl;
+        //std::cerr << "saveFullContext " << (int)history[0] <<"," << (int)history[1] << std::endl;
         int a;
-
+            
         dest->l1_neuron.resize(layer1_size);
         dest->history.resize(MAX_NGRAM_ORDER);
         dest->last_word = history[0];
@@ -386,21 +386,21 @@ namespace RNNLM{
         
         //vector<real> l1_neuron = layer1_size;
         //vector<cahr> history = layer1_size;
-        for (a=0; a<layer1_size; a++) dest->l1_neuron[a]=neu1[a].ac;
+        for (a=0; a<layer1_size; a++) dest->l1_neuron[a] = neu1[a].ac;
         for (a=0; a<MAX_NGRAM_ORDER; a++) dest->history[a] = history[a];
     }//}}}
 
     void CRnnLM::restoreFullContext(const context *dest) //useful for n-best decoding
     {//{{{
-        std::cerr << "restoreFullContext"<< std::endl;
+        //std::cerr << "restoreFullContext history_size:" << dest->history.size() << " " << (int)dest->last_word << " ," << (int)dest->history[0] << "," << (int)dest->history[1] << std::endl; //H?
         int a;
-
         //dest->l1_neuron.resize(layer1.size);
         //dest->history.resize(MAX_NGRAM_ORDER);
         //vector<real> l1_neuron = layer1_size;
         //vector<cahr> history = layer1_size;
         for (a=0; a<layer1_size; a++) neu1[a].ac = dest->l1_neuron[a];
-        for (a=0; a<MAX_NGRAM_ORDER; a++) history[a] = dest->history[a] ;
+        for (a=0; a<MAX_NGRAM_ORDER; a++) history[a] = dest->history[a];
+        copyHiddenLayerToInput(); // これ入れないと意味がなかった
     }//}}}
 
     void CRnnLM::restoreContext()
@@ -1354,6 +1354,11 @@ namespace RNNLM{
         if (last_word_local!=-1) neu0[last_word_local].ac=1;
         // コレでも良いはずだが，元の状態を別のどこかに保存しておきたいかも
         restoreFullContext(context); // コンテクスト
+
+//        for (a=0; a<direct_order-1; a++) {
+//            std::cout << context->history[a] << " "<< std::flush;
+//        }
+//        std::cout << std::endl;
             
         //propagate 0->1
         for (a=0; a<layer1_size; a++) neu1[a].ac=0;
@@ -1366,7 +1371,7 @@ namespace RNNLM{
         // コンテクストvectorについての計算
         matrixXvector(neu1, neu0, syn0, layer0_size, 0, layer1_size, layer0_size-layer1_size, layer0_size, 0);
             
-        // 今の単語について計算(one hot)
+        // last_word について計算(one hot)
         for (b=0; b<layer1_size; b++) {
             a=last_word_local;
             if (a!=-1) neu1[b].ac += neu0[a].ac * syn0[a+b*layer0_size].weight;
@@ -2071,7 +2076,6 @@ namespace RNNLM{
         fclose(flog);
     }//}}}
 
-
     void CRnnLM::initialize_test_sent()
     {//{{{
 
@@ -2182,16 +2186,18 @@ namespace RNNLM{
         return senp;
     }//}}}
 
-    void CRnnLM::get_initial_context(context *c)
+    void CRnnLM::get_initial_context(context *c) // initialize_test_sent とどちらか
     {//{{{
         //if (debug_mode>0) std::cerr << "initializing RNNLM" << std::flush;
         restoreNet(); // initialize 重い
         computeNet(0, 0); // initialize 
         copyHiddenLayerToInput();
-        //saveContext();
-        //saveContext2();
+        saveContext();
+        saveContext2();
         for (int a=0; a<MAX_NGRAM_ORDER; a++) history[a]=0;
 
+        netReset();
+            
         // if (debug_mode>0) std::cerr << "\rinitializing RNNLM finished" << std::endl;
         saveFullContext(c); //文頭としてInitial context を作成
     }//}}}
@@ -2204,17 +2210,24 @@ namespace RNNLM{
         float prob_other; //has to be float so that %f works in fscanf
         real log_other, log_combine, senp;
         
-        lambda=1;
-        logp=0;
+        real lambda=1;
+        real logp=0;
         log_other=0;
         prob_other=0;
         log_combine=1;
-        senp=0;
+        senp=0; //
             
         int word = searchVocab((char*)next_word.c_str());
-        //computeNet(last_word, word);      //compute probability distribution
-        computeNet(word,c);        
 
+        // 文区切りを0に対応させる アドホックな対処
+        if(next_word == "<EOS>" || next_word == "<BOS>")
+            word = 0;
+        //std::cerr << "compute: " << next_word << ":" << (int)word << std::endl;
+        //computeNet(last_word, word);      //compute probability distribution
+
+        //netReset();// これが怪しい
+        computeNet(word,c);
+                        
         if (word!=-1) { //OOVでない
             neu2[word].ac*=neu2[vocab[word].class_index+vocab_size].ac;
 
@@ -2230,6 +2243,7 @@ namespace RNNLM{
             //assign to OOVs some score to correctly rescore nbest lists, reasonable value can be less than 1/|V| or backoff LM score (in case it is trained on more data)
             //this means that PPL results from nbest list rescoring are not true probabilities anymore (as in open vocabulary LMs)
 
+            // 文字の長さに対してlinear に設定する
             real oov_penalty=-5;	//log penalty
 
             if (prob_other!=0) {

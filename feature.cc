@@ -38,13 +38,12 @@ void FeatureSet::extract_unigram_feature(Node *node) {//{{{
                 f += *(node->form);
             else if (*it == FEATURE_MACRO_FORM_TYPE) //活用型
                 f += *(node->form_type);
-            else if (*it == FEATURE_MACRO_FUNCTIONAL_WORD) {//機能語
+            else if (*it == FEATURE_MACRO_FUNCTIONAL_WORD) { //機能語
                 if( *(node->pos) == "助詞" || *(node->pos) == "助動詞" || *(node->pos) == "判定詞")
                     f += *(node->string) + *(node->pos) + *(node->spos);
                 else
                     f += *(node->pos);
-            }
-            else if (*it == FEATURE_MACRO_BASE_WORD) //原型
+            } else if (*it == FEATURE_MACRO_BASE_WORD) //原型
                 f += *(node->base);
             else if (*it == FEATURE_MACRO_DEVOICE){ //濁音化
                 if ( node->stat == MORPH_DEVOICE_NODE) //濁音化している
@@ -53,12 +52,15 @@ void FeatureSet::extract_unigram_feature(Node *node) {//{{{
                     f += "nil";
             } else if (*it == FEATURE_MACRO_LENGTH)
                 f += int2string(node->get_char_num());
-            else if (*it == FEATURE_MACRO_BEGINNING_CHAR)
+            else if (*it == FEATURE_MACRO_LONGER){ // 辞書に登録されているよりも長い動的生成語彙(未知語, 数詞等)
+                f += int2string(node->longer); // 
+            }else if (*it == FEATURE_MACRO_NUMSTR){ // 数字としても解釈可能な単語につく素性
+                f += int2string(node->longer); // 
+            }else if (*it == FEATURE_MACRO_BEGINNING_CHAR)
                 f.append(node->get_first_char(), (node->stat & MORPH_PSEUDO_NODE) ? strlen(node->get_first_char()) : utf8_bytes((unsigned char *)node->get_first_char()));
             else if (*it == FEATURE_MACRO_ENDING_CHAR) {
                 f += *(node->end_string);
-            }
-            else if (*it == FEATURE_MACRO_BEGINNING_CHAR_TYPE)
+            } else if (*it == FEATURE_MACRO_BEGINNING_CHAR_TYPE)
                 f += int2string(node->char_family);
             else if (*it == FEATURE_MACRO_ENDING_CHAR_TYPE)
                 f += int2string(node->end_char_family);
@@ -127,6 +129,8 @@ void FeatureSet::extract_bigram_feature(Node *l_node, Node *r_node) {//{{{
                 f += *(l_node->base);
             else if (*it == FEATURE_MACRO_LEFT_LENGTH)
                 f += int2string(l_node->get_char_num());
+            else if (*it == FEATURE_MACRO_LEFT_LONGER)
+                f += int2string(l_node->longer);
             else if (*it == FEATURE_MACRO_LEFT_BEGINNING_CHAR)
                 f.append(l_node->get_first_char(), (l_node->stat & MORPH_PSEUDO_NODE) ? strlen(l_node->get_first_char()) : utf8_bytes((unsigned char *)l_node->get_first_char()));
             else if (*it == FEATURE_MACRO_LEFT_ENDING_CHAR) {
@@ -181,6 +185,137 @@ void FeatureSet::extract_bigram_feature(Node *l_node, Node *r_node) {//{{{
                 f += *(r_node->base);
             else if (*it == FEATURE_MACRO_RIGHT_LENGTH)
                 f += int2string(r_node->get_char_num());
+            else if (*it == FEATURE_MACRO_RIGHT_LONGER)
+                f += int2string(r_node->longer);
+            else if (*it == FEATURE_MACRO_RIGHT_BEGINNING_CHAR)
+                f.append(r_node->get_first_char(), (r_node->stat & MORPH_PSEUDO_NODE) ? strlen(r_node->get_first_char()) : utf8_bytes((unsigned char *)r_node->get_first_char()));
+            else if (*it == FEATURE_MACRO_RIGHT_ENDING_CHAR)
+                f += *(r_node->end_string);
+            else if (*it == FEATURE_MACRO_RIGHT_BEGINNING_CHAR_TYPE)
+                f += int2string(r_node->char_family);
+            else if (*it == FEATURE_MACRO_RIGHT_ENDING_CHAR_TYPE)
+                f += int2string(r_node->end_char_family);
+            else if (*it == FEATURE_MACRO_RIGHT_SUFFIX){ //接尾辞が直前の品詞と一致しているか
+                if(*(r_node->pos) != "接尾辞" )
+                    f += "neg";
+                else if(  (*(l_node->spos) == "数詞" && *(r_node->spos) == "名詞性名詞助数辞") || // ３枚
+                        // 名詞相当 + 名詞接尾辞
+                        (((*(l_node->pos) == "名詞" && *(l_node->spos) != "数詞") || 
+                          (*(l_node->pos) == "動詞" && *(l_node->spos) == "基本連用形") || 
+                          (*(l_node->pos) == "形容詞") ||
+                          (*(l_node->spos) == "名詞性名詞接尾辞")||
+                          (*(l_node->spos) == "名詞性名詞助数字")||
+                          (*(l_node->spos) == "名詞性特殊接尾辞")) && 
+                          ( *(r_node->spos) == "名詞性名詞接尾辞" || // 〜後 〜化
+                            *(r_node->spos) == "名詞性特殊接尾辞" || // 〜さん 〜移行
+                            *(r_node->spos) == "形容詞性名詞接尾辞")) || // 〜的 〜的だ
+                        // 働か+ない 
+                         ((*(l_node->pos) == "動詞"||*(l_node->pos) == "形容詞"||*(l_node->spos) == "動詞性接尾辞")&& 
+                           (*(r_node->spos) == "動詞性接尾辞" || // "させない"の"せ"
+                            *(r_node->spos) == "名詞性述語接尾辞" || // "高さ" の"さ" 聞き手の"手" 食べ放題の"放題"
+                            *(r_node->spos) == "形容詞性述語接尾辞"))) //"させない" の"ない"
+                    f += "1";
+                else
+                    f += "0";
+            }
+            else if (*it == FEATURE_MACRO_RIGHT_SUFFIX){ 
+                f += "dummy";
+            }
+            else if (*it == FEATURE_MACRO_RIGHT_DUMMY){ 
+                f += "dummy";
+            }
+        }
+        fset.push_back(f);
+    }
+}//}}}
+
+void FeatureSet::extract_bigram_feature(Node *l_node, Node *m_node,  Node *r_node) {//{{{
+    for (std::vector<FeatureTemplate *>::iterator tmpl_it = ftmpl->get_templates()->begin(); tmpl_it != ftmpl->get_templates()->end(); tmpl_it++) {
+        if ((*tmpl_it)->get_is_unigram()) // skip unigram feature template
+            continue;
+        std::string f = (*tmpl_it)->get_name() + ":";
+        for (std::vector<unsigned int>::iterator it = (*tmpl_it)->get_features()->begin(); it != (*tmpl_it)->get_features()->end(); it++) {
+            if (it != (*tmpl_it)->get_features()->begin())
+                f += ",";
+            // left
+            if (*it == FEATURE_MACRO_LEFT_WORD)
+                f += *(l_node->string);
+            else if (*it == FEATURE_MACRO_LEFT_POS)
+                f += *(l_node->pos);
+            else if (*it == FEATURE_MACRO_LEFT_SPOS)
+                f += *(l_node->spos);
+            else if (*it == FEATURE_MACRO_LEFT_FORM)
+                f += *(l_node->form);
+            else if (*it == FEATURE_MACRO_LEFT_FORM_TYPE)
+                f += *(l_node->form_type);
+            else if (*it == FEATURE_MACRO_LEFT_FUNCTIONAL_WORD){
+                if( *(l_node->pos) == "助詞" || *(l_node->pos) == "助動詞" || *(l_node->pos) == "判定詞")
+                    f += *(l_node->string) + ":" + *(l_node->pos) + ":"+ *(l_node->spos);
+                else
+                    f += *(l_node->pos);
+            }
+            else if (*it == FEATURE_MACRO_LEFT_BASE_WORD) //原型
+                f += *(l_node->base);
+            else if (*it == FEATURE_MACRO_LEFT_LENGTH)
+                f += int2string(l_node->get_char_num());
+            else if (*it == FEATURE_MACRO_LEFT_LONGER)
+                f += int2string(l_node->longer);
+            else if (*it == FEATURE_MACRO_LEFT_BEGINNING_CHAR)
+                f.append(l_node->get_first_char(), (l_node->stat & MORPH_PSEUDO_NODE) ? strlen(l_node->get_first_char()) : utf8_bytes((unsigned char *)l_node->get_first_char()));
+            else if (*it == FEATURE_MACRO_LEFT_ENDING_CHAR) {
+                f += *(l_node->end_string);
+                // cerr << *(l_node->string) << " : " << *(l_node->string_for_print) << " : " << f << endl;
+            }
+            else if (*it == FEATURE_MACRO_LEFT_BEGINNING_CHAR_TYPE)
+                f += int2string(l_node->char_family);
+            else if (*it == FEATURE_MACRO_LEFT_ENDING_CHAR_TYPE)
+                f += int2string(l_node->end_char_family);
+            else if (*it == FEATURE_MACRO_LEFT_PREFIX){ //接頭辞の種類と後続する品詞が一致しているか
+                if( *(l_node->pos) != "接頭辞" )
+                    f += "neg";
+                else if((*(l_node->spos) == "名詞接頭辞" && *(r_node->pos) == "名詞") || 
+                        (*(l_node->spos) == "動詞接頭辞" && *(r_node->pos) == "動詞") || 
+                        (*(l_node->spos) == "イ形容詞接尾辞" && *(r_node->pos) == "形容詞" && 
+                         (*(r_node->form_type) == "イ形容詞アウオ段"|| 
+                          *(r_node->form_type) == "イ形容詞イ段"|| 
+                          *(r_node->form_type) == "イ形容詞イ段特殊")) || 
+                        (*(l_node->spos) == "ナ形容詞接頭辞" && *(r_node->pos) == "形容詞" &&
+                         (*(r_node->form_type) == "ナ形容詞"|| 
+                          *(r_node->form_type) == "ナノ形容詞"|| 
+                          *(r_node->form_type) == "ナ形容詞特殊")) )
+                    f += "1";
+                else
+                    f += "0";
+            }
+            else if (*it == FEATURE_MACRO_LEFT_SUFFIX){ 
+                f += "dummy";
+            }
+            else if (*it == FEATURE_MACRO_LEFT_DUMMY){ 
+                f += "dummy";
+            }
+
+            // right
+            else if (*it == FEATURE_MACRO_RIGHT_WORD)
+                f += *(r_node->string);
+            else if (*it == FEATURE_MACRO_RIGHT_POS)
+                f += *(r_node->pos);
+            else if (*it == FEATURE_MACRO_RIGHT_SPOS)
+                f += *(r_node->spos);
+            else if (*it == FEATURE_MACRO_RIGHT_FORM)
+                f += *(r_node->form);
+            else if (*it == FEATURE_MACRO_RIGHT_FORM_TYPE)
+                f += *(r_node->form_type);
+            else if (*it == FEATURE_MACRO_RIGHT_FUNCTIONAL_WORD)
+                if( *(r_node->pos) == "助詞" || *(r_node->pos) == "助動詞" || *(r_node->pos) == "判定詞")
+                    f += *(r_node->string) + ":" + *(r_node->pos) + ":"+ *(r_node->spos);
+                else
+                    f += *(r_node->pos);
+            else if (*it == FEATURE_MACRO_RIGHT_BASE_WORD) //原型
+                f += *(r_node->base);
+            else if (*it == FEATURE_MACRO_RIGHT_LENGTH)
+                f += int2string(r_node->get_char_num());
+            else if (*it == FEATURE_MACRO_RIGHT_LONGER)
+                f += int2string(r_node->longer);
             else if (*it == FEATURE_MACRO_RIGHT_BEGINNING_CHAR)
                 f.append(r_node->get_first_char(), (r_node->stat & MORPH_PSEUDO_NODE) ? strlen(r_node->get_first_char()) : utf8_bytes((unsigned char *)r_node->get_first_char()));
             else if (*it == FEATURE_MACRO_RIGHT_ENDING_CHAR)
@@ -315,6 +450,10 @@ unsigned int FeatureTemplate::interpret_macro(std::string &macro) {//{{{
             return FEATURE_MACRO_BASE_WORD;
         else if (macro == FEATURE_MACRO_STRING_DEVOICE)
             return FEATURE_MACRO_DEVOICE;
+        else if (macro == FEATURE_MACRO_STRING_LONGER)
+            return FEATURE_MACRO_LONGER;
+        else if (macro == FEATURE_MACRO_STRING_NUMSTR)
+            return FEATURE_MACRO_NUMSTR;
     }
     // bigram
     else {
@@ -349,6 +488,10 @@ unsigned int FeatureTemplate::interpret_macro(std::string &macro) {//{{{
             return FEATURE_MACRO_LEFT_SUFFIX;
         else if(macro == FEATURE_MACRO_STRING_LEFT_DUMMY)
             return FEATURE_MACRO_LEFT_DUMMY;
+        else if (macro == FEATURE_MACRO_STRING_LEFT_LONGER)
+            return FEATURE_MACRO_LEFT_LONGER;
+        else if (macro == FEATURE_MACRO_STRING_LEFT_NUMSTR)
+            return FEATURE_MACRO_LEFT_NUMSTR;
         
         // bigram: right
         else if (macro == FEATURE_MACRO_STRING_RIGHT_WORD)
@@ -381,6 +524,10 @@ unsigned int FeatureTemplate::interpret_macro(std::string &macro) {//{{{
             return FEATURE_MACRO_RIGHT_SUFFIX;
         else if(macro == FEATURE_MACRO_STRING_RIGHT_DUMMY)
             return FEATURE_MACRO_RIGHT_DUMMY;
+        else if (macro == FEATURE_MACRO_STRING_RIGHT_LONGER)
+            return FEATURE_MACRO_RIGHT_LONGER;
+        else if (macro == FEATURE_MACRO_STRING_RIGHT_NUMSTR)
+            return FEATURE_MACRO_RIGHT_NUMSTR;
     }
 
     cerr << ";; cannot understand macro: " << macro << endl;

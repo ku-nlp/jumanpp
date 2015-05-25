@@ -71,6 +71,7 @@ int Tagger::online_learning(Sentence* gold, Sentence* system ,TopicVector *topic
 // clear a sentence
 void Tagger::sentence_clear() {//{{{
     delete sentence;
+    sentence = nullptr;
 }//}}}
 
 // train
@@ -89,9 +90,12 @@ bool Tagger::train(const std::string &gsd_file) {//{{{
             Sentence* sent = new_sentence_analyze((*gold)->get_sentence()); // 通常の解析
             loss = sent->eval(**gold); // 表示用にロスを計算
             loss_sum += loss;
+
+            // 表示用の loss の区間平均
             if( std::distance(sentences_for_train.begin(),gold) < std::distance(sentences_for_train.begin(), sentences_for_train.end())/4  ){
                 loss_sum_first_quarter += loss;
             }else if( std::distance(sentences_for_train.begin(),gold) > 3*(std::distance(sentences_for_train.begin(), sentences_for_train.end())/4)  ){
+                loss_sum_last_quarter += loss;
             }
 
             cerr << "\033[2K\r" //行のクリア
@@ -100,7 +104,7 @@ bool Tagger::train(const std::string &gsd_file) {//{{{
                  << " loss:" << loss; //イテレーション内の平均ロス，各事例でのロスを表示
             online_learning(*gold, sent);
                 
-            TopicVector sent_topic = sent->get_topic();
+            //TopicVector sent_topic = sent->get_topic();
             delete (sent);
         }
         cerr << endl;
@@ -181,13 +185,13 @@ bool Tagger::read_gold_data(const char *gsd_file) {//{{{
     while (getline(gsd_in, buffer)) {
         std::vector<std::string> word_pos_pairs;
         split_string(buffer, " ", word_pos_pairs);
-
+            
         Sentence *new_sentence = new Sentence(strlen(buffer.c_str()), &begin_node_list, &end_node_list, &dic, &ftmpl, param);
         for (std::vector<std::string>::iterator it = word_pos_pairs.begin(); it != word_pos_pairs.end(); it++) {
             if(it->size()>0)
                 new_sentence->lookup_gold_data(*it);
         }
-        new_sentence->find_best_path();
+        new_sentence->find_best_path(); //１つしかpath 無いからなんでもよい
         new_sentence->set_feature();
         new_sentence->set_gold_nodes();
         new_sentence->clear_nodes();
@@ -204,8 +208,10 @@ bool Tagger::read_gold_data(const char *gsd_file) {//{{{
 void Tagger::clear_gold_data() {//{{{
     std::cerr << "clear_gold_data" << std::endl;
     for (std::vector<Sentence *>::iterator it = sentences_for_train.begin(); it != sentences_for_train.end(); it++) {
-        if(*it)
+        if(*it){
             delete *it;
+            *it = nullptr;
+        }
     }
     sentences_for_train.clear();
 }//}}}
@@ -217,11 +223,16 @@ void Tagger::print_best_path() {//{{{
 
 void Tagger::print_best_beam() {//{{{
     sentence->print_best_beam();
-    sentence->print_unified_lattice();
+    if(param->debug){
+        sentence->print_unified_lattice();
+    }
 }//}}}
 
 void Tagger::print_beam() {//{{{
     sentence->print_beam();
+    if(param->debug){
+        sentence->print_unified_lattice();
+    }
 }//}}}
 
 void Tagger::print_N_best_path() {//{{{
@@ -258,9 +269,12 @@ bool Tagger::write_tmp_model_file(int t){//{{{
         cerr << ";; cannot open " << ss.str() << " for writing" << endl;
         return false;
     }
-    for (std::unordered_map<std::string, double>::iterator it = feature_weight_sum.begin(); it != feature_weight_sum.end(); it++) {
-        model_out << it->first << " " << it->second/(double)t << endl;
+    for (auto &w:weight){
+        model_out << w.first << " " << w.second << endl;
     }
+    //for (std::unordered_map<std::string, double>::iterator it = feature_weight_sum.begin(); it != feature_weight_sum.end(); it++) {
+    //    model_out << it->first << " " << it->second/(double)t << endl;
+    //}
     model_out.close();
     return true;
 }//}}}

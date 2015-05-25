@@ -13,6 +13,7 @@ class Parameter {
     bool debug;
     bool nbest;
     bool beam;
+    bool rnnlm;
     unsigned int unk_max_length;
     unsigned int iteration_num;
     std::string darts_filename;
@@ -49,6 +50,10 @@ class Parameter {
     }
     int set_beam(bool in_beam){
         beam = in_beam;
+        return 0;
+    }
+    int set_rnnlm(bool in_rnnlm){
+        rnnlm = in_rnnlm;
         return 0;
     }
     

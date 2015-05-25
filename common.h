@@ -55,6 +55,8 @@ extern unsigned int check_char_family(unsigned int char_type);
 extern bool compare_char_type_in_family(unsigned int char_type, unsigned int family_pattern);
 extern bool check_exceptional_two_chars_in_figure(const char *cp, unsigned int rest_byte_len);
 
+extern size_t is_suuji(unsigned char *ucp);
+
 #define VERSION "0.90"
 
 #ifndef INT_MAX
@@ -118,7 +120,8 @@ extern bool check_exceptional_two_chars_in_figure(const char *cp, unsigned int r
 //#define SPACE " "
 #define NONE_POS "-NONE-"
 #define UNK_POS "<UNK>"
-#define UNK_POSS "名詞,副詞,感動詞,動詞"
+// #define UNK_POSS "名詞,副詞,感動詞,動詞"
+#define UNK_POSS "名詞"
 #define UNK_FIGURE_POS "<UNK_CD>"
 #define UNK_FIGURE_POSS "名詞"
 #define UNK_FIGURE_SPOS "数詞"

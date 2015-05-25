@@ -8,9 +8,12 @@ extern "C"{
 #include "cdb_juman.h"
 }
 #include "scw.h" 
+#include <memory>
 #include <map>
 #include "parameter.h"
 #include "feature.h"
+#include "rnnlm/rnnlmlib.h"
+
 
 namespace Morph {
 class FeatureSet;
@@ -53,8 +56,10 @@ struct morph_token_t {//{{{
 class TokenWithState{//{{{
     public:
         double score = -DBL_MAX;
-        std::vector<double> state_vector;
-        std::vector<char> history;
+        double context_score = -DBL_MAX;
+        std::shared_ptr<RNNLM::context> context;
+        //std::vector<double> state_vector;
+        //std::vector<char> history;
         std::vector<Node*> node_history;
                     
         TokenWithState(){};
@@ -62,12 +67,13 @@ class TokenWithState{//{{{
             node_history = prev_token.node_history; //copy
             node_history.emplace_back(current_node);
         };
-        void move_state_vector(std::vector<double> &&state){
-            state_vector = std::move(state);
-        };
-        void set_history(std::vector<char> &&his){
-            history = std::move(his);
-        };
+         
+        //void move_state_vector(std::vector<double> &&state){
+        //    state_vector = std::move(state);
+        //};
+        //void set_history(std::vector<char> &&his){
+        //    history = std::move(his);
+        //};
         ~TokenWithState(){};
 }; //}}}
 
@@ -79,30 +85,32 @@ class BeamQue {//{{{
 
         BeamQue(){
             beam_width = 1;
-            beam.resize(beam_width);
+            beam.resize(0);
         };
 
         BeamQue(unsigned int n){
             beam_width = n;
-            beam.resize(n);
+            beam.resize(0);
         };
 
         void setN(unsigned int n){
             beam_width = n;
-            beam.resize(n);
+            beam.resize(0);
         };
 
         void push(TokenWithState tok){
             // beam は昇順でソート済み
-            if( !beam.empty() && beam.back().score > tok.score ){ //追加しない
+            if( beam.size() == beam_width && beam.back().score > tok.score ){ //追加しない
                 return;
             }else if(beam.size() == beam_width){//最小のものを置き換えて再ソート
                 beam.back() = std::move(std::move(tok));
-                std::sort(beam.begin(), beam.end(),[](auto x, auto y){return x.score > y.score;});
+                std::sort(beam.begin(), beam.end(),[](auto x, auto y){return x.score + x.context_score> y.score + y.context_score ;});
             }else{ //追加してリサイズ
                 beam.emplace_back(std::move(tok));
-                std::sort(beam.begin(), beam.end(),[](auto x, auto y){return x.score > y.score;});
-                beam.resize(beam_width);
+                std::sort(beam.begin(), beam.end(),[](auto x, auto y){return x.score + x.context_score> y.score + y.context_score ;});
+                //std::sort(beam.begin(), beam.end(),[](auto x, auto y){return x.score > y.score;});
+                if(beam.size() > beam_width)
+                    beam.resize(beam_width);
             }
         }
 };//}}}
@@ -126,10 +134,10 @@ class Node {//{{{
     Node *enext = nullptr; // next node that ends at this position
     Node *bnext = nullptr; // next node that begins at this position
     const char *surface = nullptr; 
-    std::string *original_surface = nullptr; // 元々現れたままの表層
     std::string *string = nullptr; // 未定義語の場合など，素性に使うため書き換える可能性がある
     std::string *string_for_print = nullptr;
     std::string *end_string = nullptr;
+    std::string *original_surface = nullptr; // 元々現れたままの表層
     FeatureSet *feature = nullptr;
         
     std::string *representation = nullptr;
@@ -151,7 +159,7 @@ class Node {//{{{
 	unsigned long repid = 0;
 	unsigned long imisid = 0;
 	unsigned long readingid = 0;
-    std::string *pos = nullptr;
+    std::string *pos = nullptr; //weak ptr
 	std::string *spos = nullptr;
 	std::string *form = nullptr;
 	std::string *form_type = nullptr;
@@ -162,6 +170,8 @@ class Node {//{{{
     unsigned int end_char_family = 0;
     unsigned char stat = 0; //TODO: どのような状態がありるうるのかを列挙
     bool used_in_nbest = false;
+    bool longer = false;
+    bool suuji = false;
     double wcost = 0; // cost of this morpheme
     double cost = 0; // total cost to this node
     struct morph_token_t *token = nullptr;

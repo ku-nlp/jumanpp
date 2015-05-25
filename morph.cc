@@ -49,9 +49,14 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
 // unit_test 時はmainを除く
 #ifndef KKN_UNIT_TEST
 
+
+//終了時にdartsのclearでbus errorが出てる
+
 int main(int argc, char** argv) {//{{{
     cmdline::parser option;
     option_proc(option, argc, argv);
+
+    std::cerr << "initializing models ... " << std::flush;
 
     Morph::Parameter param(option.get<std::string>("dict"), option.get<std::string>("feature"), option.get<unsigned int>("iteration"), true, option.exist("shuffle"), option.get<unsigned int>("unk_max_length"), option.exist("debug"), option.exist("nbest")|option.exist("lattice"));
 
@@ -85,26 +90,28 @@ int main(int argc, char** argv) {//{{{
 
     Morph::Parameter normal_param = param;
     normal_param.set_nbest(true);// nbest を利用するよう設定
-    normal_param.set_N(10);//5-best に設定
+    normal_param.set_N(10); // 10-best に設定
+    param.set_rnnlm(option.exist("rnnlm"));
     Morph::Tagger tagger(&param);
     Morph::Node::set_param(&param);
    
     RNNLM::CRnnLM rnnlm;
-
     if(option.exist("rnnlm")){
         rnnlm.setLambda(1.0);
         rnnlm.setRegularization(0.0000001);
         rnnlm.setDynamic(0);
         //rnnlm.setTestFile(test_file);
-
         rnnlm.setRnnLMFile(option.get<std::string>("rnnlm").c_str());
         rnnlm.setRandSeed(1);
         rnnlm.useLMProb(0);
         rnnlm.setDebugMode(0);
-        rnnlm.initialize_test_sent();
         srand(1);
+        //rnnlm.initialize_test_sent();
+        Morph::Sentence::init_rnnlm(&rnnlm);
     }
 
+    std::cerr << "done" << std::endl;
+        
     if (MODE_TRAIN) {//学習モード{{{
         if(option.exist("lda")){
             Morph::Tagger tagger_normal(&normal_param);
@@ -112,7 +119,7 @@ int main(int argc, char** argv) {//{{{
 
             tagger.train_lda(option.get<std::string>("train"), tagger_normal);
             tagger.write_model_file(option.get<std::string>("model"));
-        }else{
+        }else{ //通常の学習
             tagger.train(option.get<std::string>("train"));
             tagger.write_model_file(option.get<std::string>("model"));
         }
@@ -184,6 +191,8 @@ int main(int argc, char** argv) {//{{{
                     tagger.print_best_beam();
                 }else if(option.exist("nbest") && option.exist("rnnlm")){
                     tagger.print_N_best_with_rnn(rnnlm);
+                }else if(option.exist("nbest") && !option.exist("rnnlm")){
+                    tagger.print_N_best_path();
                 }else if(option.exist("rerank") && option.exist("rnnlm")){
                     tagger.print_best_path_with_rnn(rnnlm);
                 }else{
