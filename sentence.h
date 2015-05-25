@@ -181,7 +181,7 @@ class Sentence {//{{{
 	void print_N_best_with_rnn(RNNLM::CRnnLM& model);
     void mark_nbest();
     Node* find_N_best_path(); // make EOS node and get N-best path
-    Node *find_N_best_path_beam();
+    Node *find_best_beam();
     double eval(Sentence& gold);
     void print_juman_lattice(); // 互換性の為
     void print_unified_lattice(); 

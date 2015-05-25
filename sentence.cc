@@ -476,7 +476,7 @@ bool Sentence::analyze() {//{{{
         for (unsigned int pos = 0; pos < length; pos += utf8_bytes((unsigned char *) (sentence_c_str + pos))) {
             beam_at_position(pos, (*begin_node_list)[pos]);
         }
-        find_N_best_path_beam();
+        find_best_beam();
     }else{ //普通のnbest
         for (unsigned int pos = 0; pos < length; pos += utf8_bytes((unsigned char *) (sentence_c_str + pos))) {
             viterbi_at_position_nbest(pos, (*begin_node_list)[pos]);
@@ -930,7 +930,7 @@ Node *Sentence::find_N_best_path() {             //{{{
     return (*begin_node_list)[length];
 } //}}}
 
-Node *Sentence::find_N_best_path_beam() { //{{{
+Node *Sentence::find_best_beam() { //{{{
     (*begin_node_list)[length] = get_eos_node(); // End Of Sentence
     beam_at_position(length, (*begin_node_list)[length]);
     return (*begin_node_list)[length];
