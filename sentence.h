@@ -41,6 +41,38 @@ class Sentence {//{{{
     void init(size_t max_byte_length, std::vector<Node *> *in_begin_node_list, std::vector<Node *> *in_end_node_list, Dic *in_dic, FeatureTemplateSet *in_ftmpl, Parameter *in_param);
     ~Sentence();
     void clear_nodes();
+
+    // beam の場合はhistory をたどるように変更
+    void set_gold_nodes_beam(){//{{{
+        Node* node_gold = (*begin_node_list)[length];
+        std::vector<Node *> history = node_gold->bq.beam.back().node_history;
+
+        bool find_bos_node_gold = false;
+		for (auto node_gold = history.begin(); node_gold != history.end(); node_gold++) {
+            if ((*node_gold)->stat == MORPH_BOS_NODE)
+                find_bos_node_gold = true;
+			if ((*node_gold)->stat != MORPH_BOS_NODE && (*node_gold)->stat != MORPH_EOS_NODE) {
+                Node new_node; 
+                new_node.stat = (*node_gold)->stat;
+                new_node.posid = (*node_gold)->posid;
+                new_node.pos = (*node_gold)->pos;
+                new_node.sposid = (*node_gold)->sposid;
+                new_node.spos = (*node_gold)->spos;
+                new_node.imisid = (*node_gold)->imisid;
+                new_node.semantic_feature = (*node_gold)->semantic_feature;
+                    
+                new_node.base = (*node_gold)->base;
+                new_node.representation = (*node_gold)->representation;
+                new_node.length = (*node_gold)->length;
+                new_node.char_num = (*node_gold)->char_num;
+                gold_morphs.push_back(new_node);
+            }
+        }
+
+        if(!find_bos_node_gold)
+            cerr << ";; gold parse err"<< endl;
+    }//}}}
+
     void set_gold_nodes(){//{{{
         Node* node_gold = (*begin_node_list)[length];
         bool find_bos_node_gold = false;
@@ -126,7 +158,7 @@ class Sentence {//{{{
         Node *node = (*begin_node_list)[length]; // EOS
         return *node->feature;
     }//}}}
-
+        
     Node *get_bos_node();
     Node *get_eos_node();
     Node *find_best_path();
