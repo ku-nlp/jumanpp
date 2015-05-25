@@ -191,15 +191,23 @@ bool Tagger::read_gold_data(const char *gsd_file) {//{{{
             if(it->size()>0)
                 new_sentence->lookup_gold_data(*it);
         }
-        new_sentence->find_best_path(); //１つしかpath 無いからなんでもよい
-        new_sentence->set_feature();
-        new_sentence->set_gold_nodes();
+
+        if( param->beam ){//beam オプション
+            new_sentence->find_best_beam(); // tri-gram 素性を抽出するために beam の方を呼ぶ;
+            new_sentence->set_feature();
+            new_sentence->set_gold_nodes_beam();
+        }else{
+            new_sentence->find_best_path(); 
+            new_sentence->set_feature();
+            new_sentence->set_gold_nodes();
+        }
+        
         new_sentence->clear_nodes();
         add_one_sentence_for_train(new_sentence);
         //new_sentence->feature_print();
         sentences_for_train_num++;
     }
-
+        
     gsd_in.close();
     return true;
 }//}}}
