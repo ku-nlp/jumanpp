@@ -73,7 +73,7 @@ unsigned int check_unicode_char_type(int code) {
 	return TYPE_HIRAGANA;
     }
     /* KATAKANA and "ー"(0x30fc) */
-    else if (code > 0x309f && code < 0x30fb || code == 0x30fc) {
+    else if ( (code > 0x309f && code < 0x30fb) || code == 0x30fc) {
 	return TYPE_KATAKANA;
     }
     /* "・"(0x30fb) */
