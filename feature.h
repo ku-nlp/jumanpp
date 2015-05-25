@@ -33,9 +33,9 @@ namespace Morph {
 #define FEATURE_MACRO_STRING_FORM_TYPE "%sft"
 #define FEATURE_MACRO_FORM_TYPE 13
 #define FEATURE_MACRO_STRING_FUNCTIONAL_WORD "%f"
-#define FEATURE_MACRO_FUNCTIONAL_WORD  14
+#define FEATURE_MACRO_FUNCTIONAL_WORD 14
 #define FEATURE_MACRO_STRING_BASE_WORD "%ba"
-#define FEATURE_MACRO_BASE_WORD  15
+#define FEATURE_MACRO_BASE_WORD 15
 
 //#define FEATURE_MACRO_STRING_HAVE_TOPIC "%ht"
 //#define FEATURE_MACRO_HAVE_TOPIC 16
@@ -70,7 +70,6 @@ namespace Morph {
 
 #define FEATURE_MACRO_STRING_LEFT_FUNCTIONAL_WORD "%Lf"
 #define FEATURE_MACRO_LEFT_FUNCTIONAL_WORD  114
-
 #define FEATURE_MACRO_STRING_LEFT_BASE_WORD "%Lba"
 #define FEATURE_MACRO_LEFT_BASE_WORD  115
 
@@ -114,57 +113,20 @@ namespace Morph {
 #define FEATURE_MACRO_RIGHT_BASE_WORD  215
 
 #define FEATURE_MACRO_STRING_RIGHT_PREFIX "%Rprefix"
-#define FEATURE_MACRO_RIGHT_PREFIX  216
+#define FEATURE_MACRO_RIGHT_PREFIX 216
 #define FEATURE_MACRO_STRING_RIGHT_SUFFIX "%Rsuffix"
-#define FEATURE_MACRO_RIGHT_SUFFIX  217
+#define FEATURE_MACRO_RIGHT_SUFFIX 217
 
 #define FEATURE_MACRO_STRING_RIGHT_DUMMY "%Rdummy"
 #define FEATURE_MACRO_RIGHT_DUMMY  218
 #define FEATURE_MACRO_STRING_RIGHT_LONGER "%Rlonger"
-#define FEATURE_MACRO_RIGHT_LONGER  219
+#define FEATURE_MACRO_RIGHT_LONGER 219
 #define FEATURE_MACRO_STRING_RIGHT_NUMSTR "%Rnumstr"
 #define FEATURE_MACRO_RIGHT_NUMSTR 220
 
 //----- middle  ----- (left middle right) の並び
-#define FEATURE_MACRO_STRING_MIDDLE_WORD "%Mw"
-#define FEATURE_MACRO_MIDDLE_WORD 301
-#define FEATURE_MACRO_STRING_MIDDLE_POS "%Mp"
-#define FEATURE_MACRO_MIDDLE_POS 302
-#define FEATURE_MACRO_STRING_MIDDLE_LENGTH "%Ml"
-#define FEATURE_MACRO_MIDDLE_LENGTH 303
-#define FEATURE_MACRO_STRING_MIDDLE_BEGINNING_CHAR "%Mbc"
-#define FEATURE_MACRO_MIDDLE_BEGINNING_CHAR 304
-#define FEATURE_MACRO_STRING_MIDDLE_ENDING_CHAR "%Mec"
-#define FEATURE_MACRO_MIDDLE_ENDING_CHAR 305
-#define FEATURE_MACRO_STRING_MIDDLE_BEGINNING_CHAR_TYPE "%Mbt"
-#define FEATURE_MACRO_MIDDLE_BEGINNING_CHAR_TYPE 306
-#define FEATURE_MACRO_STRING_MIDDLE_ENDING_CHAR_TYPE "%Met"
-#define FEATURE_MACRO_MIDDLE_ENDING_CHAR_TYPE 307
-
-#define FEATURE_MACRO_STRING_MIDDLE_SPOS "%Msp"
-#define FEATURE_MACRO_MIDDLE_SPOS 311
-#define FEATURE_MACRO_STRING_MIDDLE_FORM "%Msf"
-#define FEATURE_MACRO_MIDDLE_FORM 312
-#define FEATURE_MACRO_STRING_MIDDLE_FORM_TYPE "%Msft"
-#define FEATURE_MACRO_MIDDLE_FORM_TYPE 313
-
-#define FEATURE_MACRO_STRING_MIDDLE_FUNCTIONAL_WORD "%Mf"
-#define FEATURE_MACRO_MIDDLE_FUNCTIONAL_WORD  314
-#define FEATURE_MACRO_STRING_MIDDLE_BASE_WORD "%Mba"
-#define FEATURE_MACRO_MIDDLE_BASE_WORD  315
-
-#define FEATURE_MACRO_STRING_MIDDLE_PREFIX "%Mprefix"
-#define FEATURE_MACRO_MIDDLE_PREFIX  316
-#define FEATURE_MACRO_STRING_MIDDLE_SUFFIX "%Msuffix"
-#define FEATURE_MACRO_MIDDLE_SUFFIX  317
-
-#define FEATURE_MACRO_STRING_MIDDLE_DUMMY "%Mdummy"
-#define FEATURE_MACRO_MIDDLE_DUMMY  318
-#define FEATURE_MACRO_STRING_MIDDLE_LONGER "%Mlonger"
-#define FEATURE_MACRO_MIDDLE_LONGER  319
-#define FEATURE_MACRO_STRING_MIDDLE_NUMSTR "%Mnumstr"
-#define FEATURE_MACRO_MIDDLE_NUMSTR 320
-
+//とりあえず, middle は unigram のテンプレートを流用する. 
+// TODO: define で定義する形式をやめる
 
 // TODO: トピック数はファイルから読み込み時に決定する
 #define TOPIC_NUM 50
@@ -179,9 +141,15 @@ class FeatureTemplate {//{{{
     std::string name;
     std::vector<unsigned int> features;
   public:
-    FeatureTemplate(std::string &in_name, std::string &feature_string, bool in_is_unigram);
+    FeatureTemplate(std::string &in_name, std::string &feature_string, int in_n_gram);
     bool get_is_unigram() {
         return is_unigram;
+    }
+    bool get_is_bigram() {
+        return is_bigram;
+    }
+    bool get_is_trigram() {
+        return is_trigram;
     }
 
     unsigned int interpret_macro(std::string &macro);
@@ -198,7 +166,7 @@ class FeatureTemplateSet {
   public:
     FeatureVector* set_weight;
     bool open(const std::string &template_filename);
-    FeatureTemplate *interpret_template(std::string &template_string, bool is_unigram);
+    FeatureTemplate *interpret_template(std::string &template_string, int n_gram);
     std::vector<FeatureTemplate *> *get_templates() {
         return &templates;
     }
@@ -221,8 +189,6 @@ class FeatureSet {
     void extract_unigram_feature(Node *node);
     void extract_topic_feature(Node *node);
     void extract_bigram_feature(Node *l_node, Node *r_node);
-
-    // N-gram に一般化する？
     void extract_trigram_feature(Node *l_node, Node *m_node, Node *r_node);
 
     bool append_feature(FeatureSet *in);

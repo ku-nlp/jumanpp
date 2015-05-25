@@ -58,9 +58,9 @@ class TokenWithState{//{{{
         double score = -DBL_MAX;
         double context_score = -DBL_MAX;
         std::shared_ptr<RNNLM::context> context;
+        std::vector<Node*> node_history;
         //std::vector<double> state_vector;
         //std::vector<char> history;
-        std::vector<Node*> node_history;
                     
         TokenWithState(){};
         TokenWithState(Node* current_node, const TokenWithState &prev_token){

@@ -22,7 +22,7 @@ FeatureSet::~FeatureSet() {//{{{
 
 void FeatureSet::extract_unigram_feature(Node *node) {//{{{
     for (std::vector<FeatureTemplate *>::iterator tmpl_it = ftmpl->get_templates()->begin(); tmpl_it != ftmpl->get_templates()->end(); tmpl_it++) {
-        if (!((*tmpl_it)->get_is_unigram())) // skip bigram feature template
+        if (!((*tmpl_it)->get_is_unigram())) // skip bigram and trigram feature template
             continue;
         std::string f = (*tmpl_it)->get_name() + ":";
         for (std::vector<unsigned int>::iterator it = (*tmpl_it)->get_features()->begin(); it != (*tmpl_it)->get_features()->end(); it++) {
@@ -102,7 +102,7 @@ void FeatureSet::extract_topic_feature(Node *node) {//{{{
 
 void FeatureSet::extract_bigram_feature(Node *l_node, Node *r_node) {//{{{
     for (std::vector<FeatureTemplate *>::iterator tmpl_it = ftmpl->get_templates()->begin(); tmpl_it != ftmpl->get_templates()->end(); tmpl_it++) {
-        if ((*tmpl_it)->get_is_unigram()) // skip unigram feature template
+        if (!(*tmpl_it)->get_is_bigram()) // skip unigram and trigram feature template
             continue;
         std::string f = (*tmpl_it)->get_name() + ":";
         for (std::vector<unsigned int>::iterator it = (*tmpl_it)->get_features()->begin(); it != (*tmpl_it)->get_features()->end(); it++) {
@@ -229,9 +229,9 @@ void FeatureSet::extract_bigram_feature(Node *l_node, Node *r_node) {//{{{
     }
 }//}}}
 
-void FeatureSet::extract_bigram_feature(Node *l_node, Node *m_node,  Node *r_node) {//{{{
+void FeatureSet::extract_trigram_feature(Node *l_node, Node *m_node,  Node *r_node) {//{{{
     for (std::vector<FeatureTemplate *>::iterator tmpl_it = ftmpl->get_templates()->begin(); tmpl_it != ftmpl->get_templates()->end(); tmpl_it++) {
-        if ((*tmpl_it)->get_is_unigram()) // skip unigram feature template
+        if (! (*tmpl_it)->get_is_trigram()) // skip unigram and bigram feature template
             continue;
         std::string f = (*tmpl_it)->get_name() + ":";
         for (std::vector<unsigned int>::iterator it = (*tmpl_it)->get_features()->begin(); it != (*tmpl_it)->get_features()->end(); it++) {
@@ -273,16 +273,16 @@ void FeatureSet::extract_bigram_feature(Node *l_node, Node *m_node,  Node *r_nod
             else if (*it == FEATURE_MACRO_LEFT_PREFIX){ //接頭辞の種類と後続する品詞が一致しているか
                 if( *(l_node->pos) != "接頭辞" )
                     f += "neg";
-                else if((*(l_node->spos) == "名詞接頭辞" && *(r_node->pos) == "名詞") || 
-                        (*(l_node->spos) == "動詞接頭辞" && *(r_node->pos) == "動詞") || 
-                        (*(l_node->spos) == "イ形容詞接尾辞" && *(r_node->pos) == "形容詞" && 
-                         (*(r_node->form_type) == "イ形容詞アウオ段"|| 
-                          *(r_node->form_type) == "イ形容詞イ段"|| 
-                          *(r_node->form_type) == "イ形容詞イ段特殊")) || 
-                        (*(l_node->spos) == "ナ形容詞接頭辞" && *(r_node->pos) == "形容詞" &&
-                         (*(r_node->form_type) == "ナ形容詞"|| 
-                          *(r_node->form_type) == "ナノ形容詞"|| 
-                          *(r_node->form_type) == "ナ形容詞特殊")) )
+                else if((*(l_node->spos) == "名詞接頭辞" && *(m_node->pos) == "名詞") || 
+                        (*(l_node->spos) == "動詞接頭辞" && *(m_node->pos) == "動詞") || 
+                        (*(l_node->spos) == "イ形容詞接尾辞" && *(m_node->pos) == "形容詞" && 
+                         (*(m_node->form_type) == "イ形容詞アウオ段"|| 
+                          *(m_node->form_type) == "イ形容詞イ段"|| 
+                          *(m_node->form_type) == "イ形容詞イ段特殊")) || 
+                        (*(l_node->spos) == "ナ形容詞接頭辞" && *(m_node->pos) == "形容詞" &&
+                         (*(m_node->form_type) == "ナ形容詞"|| 
+                          *(m_node->form_type) == "ナノ形容詞"|| 
+                          *(m_node->form_type) == "ナ形容詞特殊")) )
                     f += "1";
                 else
                     f += "0";
@@ -293,7 +293,6 @@ void FeatureSet::extract_bigram_feature(Node *l_node, Node *m_node,  Node *r_nod
             else if (*it == FEATURE_MACRO_LEFT_DUMMY){ 
                 f += "dummy";
             }
-
             // right
             else if (*it == FEATURE_MACRO_RIGHT_WORD)
                 f += *(r_node->string);
@@ -324,22 +323,22 @@ void FeatureSet::extract_bigram_feature(Node *l_node, Node *m_node,  Node *r_nod
                 f += int2string(r_node->char_family);
             else if (*it == FEATURE_MACRO_RIGHT_ENDING_CHAR_TYPE)
                 f += int2string(r_node->end_char_family);
-            else if (*it == FEATURE_MACRO_RIGHT_SUFFIX){ //接尾辞が直前の品詞と一致しているか
+            else if (*it == FEATURE_MACRO_RIGHT_SUFFIX){ //接尾辞が直前の品詞と一致しているか // trigram では使わない方向で
                 if(*(r_node->pos) != "接尾辞" )
                     f += "neg";
-                else if(  (*(l_node->spos) == "数詞" && *(r_node->spos) == "名詞性名詞助数辞") || // ３枚
+                else if(  (*(m_node->spos) == "数詞" && *(r_node->spos) == "名詞性名詞助数辞") || // ３枚
                         // 名詞相当 + 名詞接尾辞
-                        (((*(l_node->pos) == "名詞" && *(l_node->spos) != "数詞") || 
-                          (*(l_node->pos) == "動詞" && *(l_node->spos) == "基本連用形") || 
-                          (*(l_node->pos) == "形容詞") ||
-                          (*(l_node->spos) == "名詞性名詞接尾辞")||
-                          (*(l_node->spos) == "名詞性名詞助数字")||
-                          (*(l_node->spos) == "名詞性特殊接尾辞")) && 
+                        (((*(m_node->pos) == "名詞" && *(m_node->spos) != "数詞") || 
+                          (*(m_node->pos) == "動詞" && *(m_node->spos) == "基本連用形") || 
+                          (*(m_node->pos) == "形容詞") ||
+                          (*(m_node->spos) == "名詞性名詞接尾辞")||
+                          (*(m_node->spos) == "名詞性名詞助数字")||
+                          (*(m_node->spos) == "名詞性特殊接尾辞")) && 
                           ( *(r_node->spos) == "名詞性名詞接尾辞" || // 〜後 〜化
                             *(r_node->spos) == "名詞性特殊接尾辞" || // 〜さん 〜移行
                             *(r_node->spos) == "形容詞性名詞接尾辞")) || // 〜的 〜的だ
                         // 働か+ない 
-                         ((*(l_node->pos) == "動詞"||*(l_node->pos) == "形容詞"||*(l_node->spos) == "動詞性接尾辞")&& 
+                         ((*(m_node->pos) == "動詞"||*(m_node->pos) == "形容詞"||*(m_node->spos) == "動詞性接尾辞")&& 
                            (*(r_node->spos) == "動詞性接尾辞" || // "させない"の"せ"
                             *(r_node->spos) == "名詞性述語接尾辞" || // "高さ" の"さ" 聞き手の"手" 食べ放題の"放題"
                             *(r_node->spos) == "形容詞性述語接尾辞"))) //"させない" の"ない"
@@ -353,6 +352,45 @@ void FeatureSet::extract_bigram_feature(Node *l_node, Node *m_node,  Node *r_nod
             else if (*it == FEATURE_MACRO_RIGHT_DUMMY){ 
                 f += "dummy";
             }
+            else if (*it == FEATURE_MACRO_WORD)
+                f += *(m_node->string);
+            else if (*it == FEATURE_MACRO_POS)
+                f += *(m_node->pos);
+            else if (*it == FEATURE_MACRO_SPOS) //品詞細分類
+                f += *(m_node->spos);
+            else if (*it == FEATURE_MACRO_FORM) //活用形
+                f += *(m_node->form);
+            else if (*it == FEATURE_MACRO_FORM_TYPE) //活用型
+                f += *(m_node->form_type);
+            else if (*it == FEATURE_MACRO_FUNCTIONAL_WORD) { //機能語
+                if( *(m_node->pos) == "助詞" || *(m_node->pos) == "助動詞" || *(m_node->pos) == "判定詞")
+                    f += *(m_node->string) + *(m_node->pos) + *(m_node->spos);
+                else
+                    f += *(m_node->pos);
+            } else if (*it == FEATURE_MACRO_BASE_WORD) //原型
+                f += *(m_node->base);
+            else if (*it == FEATURE_MACRO_DEVOICE){ //濁音化
+                if ( m_node->stat == MORPH_DEVOICE_NODE) //濁音化している
+                    f += "devoice";
+                else
+                    f += "nil";
+            } else if (*it == FEATURE_MACRO_LENGTH)
+                f += int2string(m_node->get_char_num());
+            else if (*it == FEATURE_MACRO_LONGER){ // 辞書に登録されているよりも長い動的生成語彙(未知語, 数詞等)
+                f += int2string(m_node->longer); // 
+            }else if (*it == FEATURE_MACRO_NUMSTR){ // 数字としても解釈可能な単語につく素性
+                f += int2string(m_node->longer); // 
+            }else if (*it == FEATURE_MACRO_BEGINNING_CHAR)
+                f.append(m_node->get_first_char(), (m_node->stat & MORPH_PSEUDO_NODE) ? strlen(m_node->get_first_char()) : utf8_bytes((unsigned char *)m_node->get_first_char()));
+            else if (*it == FEATURE_MACRO_ENDING_CHAR) {
+                f += *(m_node->end_string);
+            } else if (*it == FEATURE_MACRO_BEGINNING_CHAR_TYPE)
+                f += int2string(m_node->char_family);
+            else if (*it == FEATURE_MACRO_ENDING_CHAR_TYPE)
+                f += int2string(m_node->end_char_family);
+            else if (*it == FEATURE_MACRO_FEATURE1) // Wikipedia (test)
+                f += int2string(m_node->lcAttr);
+
         }
         fset.push_back(f);
     }
@@ -407,8 +445,10 @@ bool FeatureSet::print() {//{{{
     return true;
 }//}}}
 
-FeatureTemplate::FeatureTemplate(std::string &in_name, std::string &feature_string, bool in_is_unigram) {//{{{
-    is_unigram = in_is_unigram;
+FeatureTemplate::FeatureTemplate(std::string &in_name, std::string &feature_string, int in_n_gram) {//{{{
+    is_unigram = (in_n_gram == 1);
+    is_bigram = (in_n_gram == 2);
+    is_trigram = (in_n_gram == 3);
     name = in_name;
     std::vector<std::string> line;
     split_string(feature_string, ",", line);
@@ -534,10 +574,10 @@ unsigned int FeatureTemplate::interpret_macro(std::string &macro) {//{{{
     return 0;
 }//}}}
 
-FeatureTemplate *FeatureTemplateSet::interpret_template(std::string &template_string, bool is_unigram) {//{{{
+FeatureTemplate *FeatureTemplateSet::interpret_template(std::string &template_string, int n_gram) {//{{{
     std::vector<std::string> line;
     split_string(template_string, ":", line);
-    return new FeatureTemplate(line[0], line[1], is_unigram);
+    return new FeatureTemplate(line[0], line[1], n_gram);
 }//}}}
 
 bool FeatureTemplateSet::open(const std::string &template_filename) {//{{{
@@ -555,10 +595,13 @@ bool FeatureTemplateSet::open(const std::string &template_filename) {//{{{
         split_string(buffer, " ", line);
 
         if (line[0] == "UNIGRAM") {
-            templates.push_back(interpret_template(line[1], true));
+            templates.push_back(interpret_template(line[1], 1));
         }
         else if (line[0] == "BIGRAM") {
-            templates.push_back(interpret_template(line[1], false));
+            templates.push_back(interpret_template(line[1], 2));
+        }
+        else if (line[0] == "TRIGRAM") {
+            templates.push_back(interpret_template(line[1], 3));
         }
         else {
             cerr << ";; cannot understand: " << line[0] << endl;

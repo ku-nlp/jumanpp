@@ -1091,16 +1091,19 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) { //{{{
         }else{
             duplicate_filter.insert(key);
         }
-
+            
         r_node->bq.beam.clear();
         r_node->bq.setN(param->N);
 		Node *l_node = (*end_node_list)[pos];
-        FeatureSet best_score_bigram_f(ftmpl); // 訓練時には 1-best が必要になる
+
+        // 訓練時に必要になる trigram素性 の best
+        FeatureSet best_score_bigram_f(ftmpl);  // 訓練時には 1-best が必要になる
+        FeatureSet best_score_trigram_f(ftmpl); // 訓練時には 1-best が必要になる
         double best_score = -DBL_MAX;
 
         //std::cerr << "r:" << *(r_node->original_surface) << "_" <<  *(r_node->base) << "_" << *(r_node->pos) << std::endl;
             
-        while (l_node) { 
+        while (l_node) {
             if(l_node->bq.beam.size() == 0){
                 l_node = l_node->enext;
                 continue;
@@ -1134,37 +1137,55 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) { //{{{
             //std::cerr << *l_node->string << "  beam size:" << l_node->bq.beam.size() << std::endl;
                 
             // 2.コンテクスト依存の処理
-            for(auto &l_token_with_state:l_node->bq.beam){ // pos で終わる形態素 top N
-                // コンテクスト素性( RNNLM 関連等 )
+            for(auto &l_token_with_state:l_node->bq.beam){ // l_node で終わる形態素 top N
+                // コンテクスト素性( RNNLM, tri-gram )
                 RNNLM::context new_c;
+                FeatureSet tri_f(ftmpl);
                 //std::cout << "lw:" << *l_node->original_surface << ":" << *l_node->pos << " rw:" << *r_node->original_surface << ":" << *r_node->pos << std::endl;
                 //std::cout << "last_word:" << (int)l_token_with_state.context->last_word << std::endl;
                 //std::cout << "history_size:" << l_token_with_state.context->history.size() << std::endl;
-                    
-                double rnnscore = 0.0;
-                double context_score = 0.0;
-                if(param->rnnlm){
-                    rnnscore = rnnlm->test_word( l_token_with_state.context.get(), &new_c, *(r_node->base));
-                    context_score = l_token_with_state.context_score + rnnscore;
                 
-                    if(param->debug)
-                        std::cout << "lw:" << *l_node->original_surface << ":" << *l_node->pos << " rw:" << *r_node->original_surface << ":" << *r_node->pos << " => " << rnnscore << std::endl;
-                }
+                double trigram_score = 0.0;
+                double rnn_score = 0.0;
+                double context_score = l_token_with_state.context_score;
                 double score = l_token_with_state.score + bigram_score + r_node->wcost;
+
+                if(param->rnnlm){
+                    rnn_score = rnnlm->test_word( l_token_with_state.context.get(), &new_c, *(r_node->base));
+                    context_score += rnn_score;
+                             
+                    if(param->debug)
+                        std::cout << "lw:" << *l_node->original_surface << ":" << *l_node->pos << " rw:" << *r_node->original_surface << ":" << *r_node->pos << " => " << rnn_score << std::endl;
+                }
+
+                size_t history_size = l_token_with_state.node_history.size();
+                if( history_size > 1 ){ // 2つ前のノードがあれば.
+                    tri_f.extract_trigram_feature(l_token_with_state.node_history[history_size - 2] ,l_node, r_node);
+                    trigram_score = tri_f.calc_inner_product_with_weight();
+                    context_score += trigram_score;
+                    if (param->debug) {//{{{
+                        ss_key.str(""), ss_value.str("");
+                        ss_key << l_token_with_state.node_history[history_size - 2]->id << " -> "  << l_node->id << " -> " << r_node->id;
+                        ss_value << "cost:" << l_node->cost << " + bi:" << bigram_score  << " + tri:" << trigram_score << " + rnn:" << rnn_score  << " = " << context_score + score;
+                        r_node->debug_info[ss_key.str().c_str()] = ss_value.str();
+                        l_node->debug_info[ss_key.str().c_str()] = ss_value.str();
+                        r_node->debug_info[ss_key.str() + ":trigram_feature"] = tri_f.str();
+                        l_node->debug_info[ss_key.str() + ":trigram_feature"] = tri_f.str(); //EOS用
+                    }//}}}
+                }
                     
                 // get_best_bigram_score
-                if (score + context_score > best_score){
+                if (score + context_score > best_score) {
                     best_score = score + context_score;
                     best_score_bigram_f = std::move(f);
+                    best_score_trigram_f = std::move(tri_f);
                 }
                     
-                TokenWithState tok(l_node, l_token_with_state);
+                TokenWithState tok(r_node, l_token_with_state);
                 tok.score = score;
                 tok.context_score = context_score;
                 if(param->rnnlm)
                     tok.context = std::make_shared<RNNLM::context>(std::move(new_c));
-                //tok.move_state_vector( state );
-                //tok.set_history( history );
                 r_node->bq.push(tok);
             }
                  
@@ -1186,6 +1207,7 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) { //{{{
             if (MODE_TRAIN) { // feature collection
                 r_node->feature->append_feature(r_node->prev->feature);
                 r_node->feature->append_feature(&(best_score_bigram_f));
+                r_node->feature->append_feature(&(best_score_trigram_f));
             }
         } else {
             //std::cerr << "failed at BeamSearch: couldn't find path to rnode:" << *r_node->surface << std::endl;
