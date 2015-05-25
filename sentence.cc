@@ -11,6 +11,15 @@ namespace Morph {
 
 std::string BOS_STRING = BOS;
 std::string EOS_STRING = EOS;
+std::shared_ptr<RNNLM::context> Sentence::initial_context;
+RNNLM::CRnnLM* Sentence::rnnlm;
+
+void Sentence::init_rnnlm(RNNLM::CRnnLM *in_rnnlm){
+    rnnlm = in_rnnlm;
+    RNNLM::context tmp; 
+    rnnlm->get_initial_context(&tmp);
+    initial_context = std::make_shared<RNNLM::context>(tmp);
+}
 
 // for test sentence
 Sentence::Sentence(std::vector<Node *> *in_begin_node_list,
@@ -59,18 +68,23 @@ void Sentence::init(size_t max_byte_length, std::vector<Node *> *in_begin_node_l
 } //}}}
 
 Sentence::~Sentence() { //{{{
-    if (feature)
+    if (feature){
         delete feature;
+        feature = nullptr;
+    }
     clear_nodes();
 } //}}}
 
 void Sentence::clear_nodes() { //{{{
+    // EOS 以外基本的にbegin_node_list と同じノードを指しているはず
     if (end_node_list && end_node_list->size() > 0 && (*end_node_list)[0]) {
         delete (*end_node_list)[0]; // delete BOS
+        (*end_node_list)[0] = nullptr;
     } else {
         // std::cerr << "skipped: " << this->sentence << " clear_end_nodes" <<
         // std::endl;
     }
+
     if (begin_node_list && begin_node_list->size() > 0) {
         for (unsigned int pos = 0; pos <= length; pos++) {
             Node *tmp_node = (*begin_node_list)[pos];
@@ -87,7 +101,7 @@ void Sentence::clear_nodes() { //{{{
     
     if(begin_node_list)
         begin_node_list->clear();
-    if (end_node_list)
+    if(end_node_list)
         end_node_list->clear();
 } //}}}
 
@@ -97,6 +111,7 @@ bool Sentence::add_one_word(std::string &word) { //コーパス読み込み時�
     sentence += word;
     return true;
 } //}}}
+
 
 void Sentence::feature_print() { //{{{
     feature->print();
@@ -165,98 +180,6 @@ Node* Sentence::make_unk_pseudo_node_list_from_some_positions(const char *start_
     return node;
 } //}}}
 
-//// TODO: 廃止
-//Node *Sentence::_lookup_and_make_special_pseudo_nodes(const char *start_str,
-//                                                     unsigned int pos) { //{{{
-//    return lookup_and_make_special_pseudo_nodes(start_str, pos, 0, NULL);
-//}//}}}
-//// TODO: 廃止 
-//Node *Sentence::_lookup_and_make_special_pseudo_nodes(const char *start_str, unsigned int specified_length, std::string *specified_pos) {//{{{
-//    return lookup_and_make_special_pseudo_nodes(start_str, 0, specified_length, specified_pos);
-//}//}}}
-//
-//// TODO: 廃止
-//Node *Sentence::_lookup_and_make_special_pseudo_nodes(const char *start_str, unsigned int pos, unsigned int specified_length, std::string *specified_pos) {//{{{
-//    std::vector<std::string> spec = {"", "", "", "", "", "", ""} ;
-//
-//    if (specified_pos) 
-//        spec[2] = std::string(*specified_pos);
-//    return lookup_and_make_special_pseudo_nodes(start_str + pos, specified_length, spec);
-//}//}}}
-//        
-//// 統合する
-//// TODO: 廃止
-//Node *Sentence::_lookup_and_make_special_pseudo_nodes(const char *start_str, unsigned int specified_length, const std::vector<std::string>& spec){//{{{
-//    Node *result_node = NULL;
-//    //Node *kanji_result_node = NULL;
-//    unsigned int pos = 0;
-//    // spec (0: reading, 1:base, 2:pos, 3:spos, 4:type, 5:form)
-//    auto specified_pos_string = spec[2]; //pos
-//    auto specified_pos = &specified_pos_string;
-//
-//    // まず探す
-//    Node *dic_node = dic->lookup_specified(start_str, specified_length, spec); // look up a dictionary with common prefix search
-//        
-//    // 訓練データで，長さが分かっている場合か，未知語として選択されていない範囲なら
-//    // 同じ文字種が続く範囲を一語とする (同じ品詞で同じ長さなら使わない)
-//	if (specified_length || pos >= reached_pos_of_pseudo_nodes) {
-//        // 数詞処理
-//		result_node = dic->make_specified_pseudo_node_by_dic_check(start_str + pos,
-//				specified_length, specified_pos, &(param->unk_figure_pos),
-//				TYPE_FAMILY_FIGURE, nullptr);
-//        // TYPE_FIGUREに含まれる文字でもでも"数"や"，"は他の品詞になる可能性があるため打ち切らない
-//		//if (specified_length && result_node) return result_node;
-//
-//		// make alphabet nodes 
-//		if (!result_node) {
-//			result_node = dic->make_specified_pseudo_node_by_dic_check(start_str + pos,
-//					specified_length, specified_pos, &(param->unk_pos),
-//					TYPE_FAMILY_ALPH_PUNC, dic_node);
-//            // アルファベットは辞書に載っている可能性があるため処理を打ち切らない
-//			//if (specified_length && result_node) return result_node;
-//		}
-//            
-//        // カタカナ 
-//        // TODO:切れるところまでで未定義語を作る
-//		if (!result_node) {
-//			result_node = dic->make_specified_pseudo_node_by_dic_check(start_str + pos,
-//					specified_length, specified_pos, &(param->unk_pos),
-//					TYPE_KATAKANA , dic_node);
-//		}
-//
-//        if (!specified_length && result_node) // only prediction
-//            find_reached_pos_of_pseudo_nodes(pos, result_node);
-//    }
-//
-//    if (dic_node) {
-//        Node *tmp_node = dic_node;
-//        while (tmp_node->bnext) //末尾にシーク
-//            tmp_node = tmp_node->bnext;
-//
-//        Node *tmp_result_node = result_node;
-//        while (tmp_result_node) {
-//            auto next_result = tmp_result_node->bnext;
-//            if (check_dict_match(tmp_result_node, dic_node)) {
-//                tmp_node->bnext = tmp_result_node;
-//                tmp_node = tmp_result_node;
-//                tmp_node->bnext = nullptr;
-//            } else {
-//                delete tmp_result_node;
-//            }
-//            tmp_result_node = next_result;
-//        }
-//        //tmp_node->bnext = nullptr;
-//        result_node = dic_node;
-//    }
-//
-//    return result_node;
-//} //}}}
-
-// TODO:
-// 統合案: 
-// specified 版の辞書引きをlattice に移行
-// 非lattice の lookup は全廃
-
 //specified spec 版 //文字列全体が単語候補の場合のみ
 Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, const char *start_str, unsigned int specified_length, const std::vector<std::string>& spec) {//{{{
     Node *result_node = NULL;
@@ -268,6 +191,7 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, co
     auto specified_pos = &specified_pos_string;
 
     // まず探す
+    //std::cerr << start_str << std::endl;
     auto lattice_result = cl.da_search_from_position( dic->darts, char_num ); // こっちは何文字目かが必要
     // 以下は何バイト目かが必要
     // look up a dictionary with common prefix search
@@ -282,7 +206,7 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, co
 		result_node = dic->make_specified_pseudo_node_by_dic_check(start_str + pos,
 				specified_length, specified_pos, &(param->unk_figure_pos),
 				TYPE_FAMILY_FIGURE, nullptr);
-
+            
 		// alphabet 
 		if (!result_node) {
 			result_node = dic->make_specified_pseudo_node_by_dic_check(start_str + pos,
@@ -297,7 +221,7 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, co
 		if (!result_node) {
 			result_node = dic->make_specified_pseudo_node_by_dic_check(start_str + pos,
 					specified_length, specified_pos, &(param->unk_pos),
-					TYPE_KATAKANA , dic_node);
+					TYPE_KATAKANA , nullptr);
 		}
 	}
 
@@ -322,11 +246,27 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, co
         }
         tmp_node->bnext = nullptr;
         result_node = dic_node;
+    }else{
+        Node *tmp_result_node = result_node;
+        while (tmp_result_node) {
+            tmp_result_node->longer = true;
+            // 素性の再生成
+            FeatureSet *f = new FeatureSet(ftmpl);
+            f->extract_unigram_feature(tmp_result_node);
+            tmp_result_node->wcost = f->calc_inner_product_with_weight();
+            if(param->debug){
+                tmp_result_node->debug_info["unigram_feature"] = f->str();
+            }
+            if(tmp_result_node->feature)
+                delete(tmp_result_node->feature);
+            tmp_result_node->feature = f;
+
+            tmp_result_node = tmp_result_node->bnext;
+        }
     }
 
     return result_node;
 } //}}}
-
 
 // start_str で始まる形態素を列挙する。
 Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, const char *start_str, unsigned int char_num, unsigned int pos, unsigned int specified_length, std::string *specified_pos) {//{{{
@@ -338,7 +278,7 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, co
     // 以下は何バイト目かが必要
     // look up a dictionary with common prefix search
     Node *dic_node = dic->lookup_lattice(lattice_result, start_str + pos, specified_length, specified_pos); 
-
+        
     // 訓練データで，長さが分かっている場合か，未知語として選択されていない範囲なら
     // 同じ文字種が続く範囲を一語として入れてくれる
 	if (specified_length || pos >= reached_pos_of_pseudo_nodes) {
@@ -361,14 +301,15 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, co
 		if (!result_node) {
 			result_node = dic->make_specified_pseudo_node_by_dic_check(start_str + pos,
 					specified_length, specified_pos, &(param->unk_pos),
-					TYPE_KATAKANA , dic_node);
+					TYPE_KATAKANA , nullptr);
 		}
         // ひらがな
 		if (!specified_length && result_node) // only prediction
 			find_reached_pos_of_pseudo_nodes(pos, result_node);
 	}
 
-    // 辞書にあったものと同じ品詞で同じ長さなら使わない
+    // 辞書にあったものと同じ品詞で同じ長さなら使わない & 辞書の長さより長いなら素性を追加
+    // ここで一括チェックする方針
     if (dic_node) {
         Node *tmp_node = dic_node;
         while (tmp_node->bnext) //末尾にシーク
@@ -389,34 +330,78 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, co
         }
         tmp_node->bnext = nullptr;
         result_node = dic_node;
+    }else{//辞書に無い場合
+        Node *tmp_result_node = result_node;
+        while (tmp_result_node) {
+            tmp_result_node->longer = true;
+
+            // 素性の再生成
+            FeatureSet *f = new FeatureSet(ftmpl);
+            f->extract_unigram_feature(tmp_result_node);
+            tmp_result_node->wcost = f->calc_inner_product_with_weight();
+            if(param->debug){
+                tmp_result_node->debug_info["unigram_feature"] = f->str();
+            }
+            if(tmp_result_node->feature)
+                delete(tmp_result_node->feature);
+            tmp_result_node->feature = f;
+            tmp_result_node = tmp_result_node->bnext;
+        }
     }
+
+//    Node *tmp_result_node = result_node;
+//    while (tmp_result_node) {
+//        std::cerr << "lookup:" << *tmp_result_node->original_surface << ":" << tmp_result_node->longer << std::endl;
+//        tmp_result_node = tmp_result_node->bnext;
+//    }
 
     return result_node;
 } //}}}
 
-// TODO::本来はNode あたりに置く
+// TODO::本来はDic あたりに置く
 bool Sentence::check_dict_match(Node* tmp_node, Node* dic_node){//{{{
 
     //辞書に一致する長さと品詞の形態素があればなければtrue, あればfalse
     if(!tmp_node) return false;
+    if(tmp_node->sposid == dic->sposid2spos.get_id("数詞")) return true;//数詞はチェックなしで使う
+
 
     Node *tmp_dic_node = dic_node;
     bool matched = false;
+    unsigned longest_word = 0;
+    //bool longer = false;
+
     //std::cerr << "check unk_node:" << *(tmp_node->base) << "_" << (tmp_node->posid) << std::endl;
     while(tmp_dic_node){
         //std::cerr << "compare dict_node:" << *(tmp_dic_node->base) << "_" << (tmp_dic_node->posid) << " match:";
+
+        // 辞書の中で最長の語長を保存
+        if(longest_word < tmp_dic_node->length)
+            longest_word = tmp_dic_node->length;
 
         if(tmp_node->length == tmp_dic_node->length && //length が一致 
                 tmp_node->posid == tmp_dic_node->posid ){//pos が一致
             //std::cerr << "true" << endl;
             matched=true;
-            break;
+//                break;
         }
-
-        //std::cerr << "false" << endl;
         tmp_dic_node = tmp_dic_node->bnext;
     }
 
+    if( tmp_node->length > longest_word ){
+        tmp_node->longer = true;
+        // 素性の再生成
+        FeatureSet *f = new FeatureSet(ftmpl);
+        f->extract_unigram_feature(tmp_node);
+        tmp_node->wcost = f->calc_inner_product_with_weight();
+        if(param->debug){
+            tmp_node->debug_info["unigram_feature"] = f->str();
+        }
+        if(tmp_node->feature)
+            delete(tmp_node->feature);
+        tmp_node->feature = f;
+    }
+        
     return !matched;
 }//}}}
 
@@ -464,11 +449,9 @@ bool Sentence::lookup() {//{{{
             set_begin_node_list(pos, r_node);
             find_reached_pos(pos, r_node);
             if (param->unknown_word_detection) { // make unknown word candidates
-                if (reached_pos <= pos) {
-                    // cerr << ";; Cannot connect at position:" << pos << " ("
-                    // << in_sentence << ")" << endl;
-                    r_node = make_unk_pseudo_node_list_from_some_positions(
-                        sentence_c_str, pos, previous_pos);
+                if (reached_pos <= pos) { // ≒ pos で始まる単語が１つも無い場合
+                    // cerr << ";; Cannot connect at position:" << pos << " (" << in_sentence << ")" << endl;
+                    r_node = make_unk_pseudo_node_list_from_some_positions(sentence_c_str, pos, previous_pos);
                 } else if (r_node && pos >= reached_pos_of_pseudo_nodes) {
                     for (unsigned int i = 2; i <= param->unk_max_length; i++) {
                         r_node = make_unk_pseudo_node_list_by_dic_check(
@@ -840,8 +823,7 @@ void Sentence::print_unified_lattice() { //{{{
                         cout << "!\t" << ss_debug.str() << ": "
                              << node->debug_info[ss_debug.str()] << endl;
                         cout << "!\t" << ss_debug.str() << ": "
-                             << node->debug_info[ss_debug.str() +
-                                                 ":bigram_feature"] << endl;
+                             << node->debug_info[ss_debug.str() + ":bigram_feature"] << endl;
                     }
                     // BOS, EOS との接続の表示.. (TODO: 簡潔に書き換え)
                     ss_debug.str("");
@@ -884,24 +866,27 @@ Node *Sentence::get_bos_node() {//{{{
 	bos_node->string = new std::string(bos_node->surface);
 	bos_node->string_for_print = new std::string(bos_node->surface);
 	bos_node->end_string = new std::string(bos_node->surface);
+	bos_node->original_surface = new std::string(BOS_STRING); // ここはdelte される
 	// bos_node->isbest = 1;
 	bos_node->stat = MORPH_BOS_NODE; 
 	bos_node->posid = MORPH_DUMMY_POS;
-	bos_node->pos = new std::string(BOS_STRING); //TODO: リークの原因
-	bos_node->spos = new std::string(BOS_STRING);
-	bos_node->form = new std::string(BOS_STRING);
-	bos_node->form_type = new std::string(BOS_STRING);
-	bos_node->base = new std::string(BOS_STRING);
-	bos_node->representation = new std::string(BOS_STRING);
-	bos_node->original_surface = new std::string(BOS_STRING);
+	bos_node->pos = &(BOS_STRING); 
+	bos_node->spos = &(BOS_STRING);
+	bos_node->form = &(BOS_STRING);
+	bos_node->form_type = &(BOS_STRING);
+	bos_node->base = &(BOS_STRING);
+	bos_node->representation = &(BOS_STRING);
     bos_node->id = -2;
+    bos_node->bq.beam.resize(1);
     bos_node->bq.beam.front().score = 0;
-
+    bos_node->bq.beam.front().context_score = 0;
+    bos_node->bq.beam.front().context = (Sentence::initial_context); 
+        
     FeatureSet *f = new FeatureSet(ftmpl);
     f->extract_unigram_feature(bos_node);
     bos_node->wcost = f->calc_inner_product_with_weight();
     bos_node->feature = f;
-
+        
     return bos_node;
 }//}}}
 
@@ -911,16 +896,16 @@ Node *Sentence::get_eos_node() {//{{{
 	eos_node->string = new std::string(eos_node->surface);
 	eos_node->string_for_print = new std::string(eos_node->surface);
 	eos_node->end_string = new std::string(eos_node->surface);
+    eos_node->original_surface = new std::string(EOS_STRING);
 	// eos_node->isbest = 1;
 	eos_node->stat = MORPH_EOS_NODE;
 	eos_node->posid = MORPH_DUMMY_POS;
-	eos_node->pos = new std::string(EOS_STRING); //TODO: リーク
-	eos_node->spos = new std::string(EOS_STRING);
-	eos_node->form = new std::string(EOS_STRING);
-	eos_node->form_type = new std::string(EOS_STRING);
-	eos_node->base = new std::string(EOS_STRING);
-	eos_node->representation = new std::string(EOS_STRING);
-    eos_node->original_surface = new std::string(BOS_STRING);
+	eos_node->pos = &(EOS_STRING); 
+	eos_node->spos = &(EOS_STRING);
+	eos_node->form = &(EOS_STRING);
+	eos_node->form_type = &(EOS_STRING);
+	eos_node->base = &(EOS_STRING);
+	eos_node->representation = &(EOS_STRING);
 
     eos_node->id = -1;
 
@@ -1022,7 +1007,7 @@ bool Sentence::viterbi_at_position_nbest(unsigned int pos, Node *r_node) { //{{{
             FeatureSet f(ftmpl);
             f.extract_bigram_feature(l_node, r_node);
             double bigram_score = f.calc_inner_product_with_weight();
-            if (param->debug) {
+            if (param->debug) {//{{{
                 ss_key.str(""), ss_value.str("");
                 ss_key << l_node->id << " -> " << r_node->id;
                 ss_value << bigram_score << " + " << l_node->cost << " = "
@@ -1033,7 +1018,7 @@ bool Sentence::viterbi_at_position_nbest(unsigned int pos, Node *r_node) { //{{{
                     std::string(ss_value.str().c_str());
                 r_node->debug_info[ss_key.str() + ":bigram_feature"] = f.str();
                 l_node->debug_info[ss_key.str() + ":bigram_feature"] = f.str(); //EOS用
-            }
+            }//}}}
 
             // get_best_bigram_score
             if (l_node->cost + bigram_score + r_node->wcost > best_score) {
@@ -1079,7 +1064,7 @@ bool Sentence::viterbi_at_position_nbest(unsigned int pos, Node *r_node) { //{{{
 
             if (MODE_TRAIN) { // feature collection
                 r_node->feature->append_feature(r_node->traceList.front().prevNode->feature);
-                r_node->feature->append_feature(new FeatureSet(std::move(best_score_bigram_f)));
+                r_node->feature->append_feature(&(best_score_bigram_f));
             }
         } else {
             return false;
@@ -1094,8 +1079,19 @@ bool Sentence::viterbi_at_position_nbest(unsigned int pos, Node *r_node) { //{{{
 // 各形態素ノードごとにbeam_width 個もっておき，beam_search
 bool Sentence::beam_at_position(unsigned int pos, Node *r_node) { //{{{
     std::stringstream ss_key, ss_value;
+    std::unordered_set<std::string> duplicate_filter;
         
+    // r_node の重複を除外 (細分類まで一致する形態素を除外する)
     while (r_node) { // pos から始まる形態素
+        std::string key = (*r_node->original_surface + *r_node->base + "_" + *r_node->pos + "_" + *r_node->spos + "_" + *r_node->form_type + "_" + *r_node->form);
+        //std::cerr << key << std::endl;
+        if( duplicate_filter.find(key) != duplicate_filter.end() ){ //重複がある
+            r_node = r_node->bnext;
+            continue;
+        }else{
+            duplicate_filter.insert(key);
+        }
+
         r_node->bq.beam.clear();
         r_node->bq.setN(param->N);
 		Node *l_node = (*end_node_list)[pos];
@@ -1104,7 +1100,11 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) { //{{{
 
         //std::cerr << "r:" << *(r_node->original_surface) << "_" <<  *(r_node->base) << "_" << *(r_node->pos) << std::endl;
             
-        while (l_node) {
+        while (l_node) { 
+            if(l_node->bq.beam.size() == 0){
+                l_node = l_node->enext;
+                continue;
+            }
             // 1.コンテクスト独立の処理
             // 濁音化の条件チェック
             if((r_node->stat == MORPH_DEVOICE_NODE) &&  // 今の形態素が濁音化している
@@ -1112,9 +1112,9 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) { //{{{
                 l_node = l_node->enext;
                 continue;
             }
-
+                
             //std::cerr << "l:" << *(l_node->original_surface) << "_" <<  *(l_node->base) << "_" << (*l_node->pos) << std::endl;
-                    
+                        
             FeatureSet f(ftmpl);
             f.extract_bigram_feature(l_node, r_node);
             double bigram_score = f.calc_inner_product_with_weight();
@@ -1130,28 +1130,48 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) { //{{{
                 r_node->debug_info[ss_key.str() + ":bigram_feature"] = f.str();
                 l_node->debug_info[ss_key.str() + ":bigram_feature"] = f.str(); //EOS用
             }//}}}
+                                
+            //std::cerr << *l_node->string << "  beam size:" << l_node->bq.beam.size() << std::endl;
                 
             // 2.コンテクスト依存の処理
             for(auto &l_token_with_state:l_node->bq.beam){ // pos で終わる形態素 top N
                 // コンテクスト素性( RNNLM 関連等 )
+                RNNLM::context new_c;
+                //std::cout << "lw:" << *l_node->original_surface << ":" << *l_node->pos << " rw:" << *r_node->original_surface << ":" << *r_node->pos << std::endl;
+                //std::cout << "last_word:" << (int)l_token_with_state.context->last_word << std::endl;
+                //std::cout << "history_size:" << l_token_with_state.context->history.size() << std::endl;
+                    
+                double rnnscore = 0.0;
                 double context_score = 0.0;
-                double score = l_token_with_state.score + bigram_score + context_score + r_node->wcost;
+                if(param->rnnlm){
+                    rnnscore = rnnlm->test_word( l_token_with_state.context.get(), &new_c, *(r_node->base));
+                    context_score = l_token_with_state.context_score + rnnscore;
+                
+                    if(param->debug)
+                        std::cout << "lw:" << *l_node->original_surface << ":" << *l_node->pos << " rw:" << *r_node->original_surface << ":" << *r_node->pos << " => " << rnnscore << std::endl;
+                }
+                double score = l_token_with_state.score + bigram_score + r_node->wcost;
+                    
                 // get_best_bigram_score
-                if (score > best_score) {
-                    best_score = score;
+                if (score + context_score > best_score){
+                    best_score = score + context_score;
                     best_score_bigram_f = std::move(f);
                 }
                     
                 TokenWithState tok(l_node, l_token_with_state);
                 tok.score = score;
+                tok.context_score = context_score;
+                if(param->rnnlm)
+                    tok.context = std::make_shared<RNNLM::context>(std::move(new_c));
                 //tok.move_state_vector( state );
                 //tok.set_history( history );
                 r_node->bq.push(tok);
             }
                  
-            // l_node->bq.clear(); //メモリが気になるならしてもよい
+            // l_node->bq.beam.clear(); //メモリが気になるならしてもよい
             l_node = l_node->enext;
         }
+        //std::cout << "bq.size = " << r_node->bq.beam.size() << std::endl;
             
         // 各r_node ごとにベストの素性を保存しておく
         if (r_node->bq.beam.size() > 0) {
@@ -1165,7 +1185,7 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) { //{{{
 
             if (MODE_TRAIN) { // feature collection
                 r_node->feature->append_feature(r_node->prev->feature);
-                r_node->feature->append_feature(new FeatureSet(std::move(best_score_bigram_f)));
+                r_node->feature->append_feature(&(best_score_bigram_f));
             }
         } else {
             //std::cerr << "failed at BeamSearch: couldn't find path to rnode:" << *r_node->surface << std::endl;
@@ -1344,6 +1364,10 @@ void Sentence::print_N_best_with_rnn(RNNLM::CRnnLM& model) {//{{{
 // beam サーチ用の出力関数
 void Sentence::print_beam() {//{{{
 	std::string output_string_buffer;
+    std::unordered_set<std::string> nbest_duplicate_filter;
+    auto &beam = (*begin_node_list)[length]->bq.beam;
+
+    //std::sort(beam.begin(), beam.end(),[](auto &x, auto &y){return x.score+x.context_score > y.score+y.context_score;});
     for (auto& token: (*begin_node_list)[length]->bq.beam ){ //最後は必ず EOS のみ
 		std::vector<Node *> result_morphs = token.node_history;
 
@@ -1356,11 +1380,16 @@ void Sentence::print_beam() {//{{{
                 output_string_buffer.append(*(*it)->string_for_print);
                 output_string_buffer.append("_");
                 output_string_buffer.append(*(*it)->pos);
+                output_string_buffer.append(":");
+                output_string_buffer.append(*(*it)->spos);
             }
 		}
             
-		cout << "# score:" << token.score << endl;
-		cout << output_string_buffer << endl;
+		//auto find_output = nbest_duplicate_filter.find(output_string_buffer);
+        //if(find_output == nbest_duplicate_filter.end()){
+        cout << "# score:" << token.score << " # context: " << token.context_score << endl;
+        cout << output_string_buffer << endl;
+        //}
 		output_string_buffer.clear();
     }
 }//}}}
@@ -1621,11 +1650,9 @@ void Sentence::print_best_path_with_rnn(RNNLM::CRnnLM& model) {//{{{
 
 
 // gold 用の辞書引きの亜種
-// TODO:lattice とどうにかして協調しないと，廃止予定の関数が廃止できない
 bool Sentence::lookup_gold_data(std::string &word_pos_pair) {//{{{
     if (reached_pos < length) {
-        cerr << ";; ERROR! Cannot connect at position for gold: "
-             << word_pos_pair << endl;
+        cerr << ";; ERROR! Cannot connect at position for gold: " << word_pos_pair << endl;
     }
 
     std::vector<std::string> line(7);
@@ -1642,18 +1669,36 @@ bool Sentence::lookup_gold_data(std::string &word_pos_pair) {//{{{
     //Node *r_node = lookup_and_make_special_pseudo_nodes(line[0].c_str(), strlen(line[0].c_str()), spec);
     Node *r_node = lookup_and_make_special_pseudo_nodes_lattice(cl, line[0].c_str(), strlen(line[0].c_str()), spec);
     
-    if (!r_node && line[6] == "命令形エ形") { // JUMANの活用になく，３文コーパスでのみ出てくる活用の命令形エ形を連用形だと解釈する.
+    if (!r_node && (line[6] == "命令形エ形" || line[6] == "命令形") ) { // JUMANの活用になく，３文コーパスでのみ出てくる活用の命令形エ形を連用形だと解釈する.
         std::vector<std::string> mod_spec{line[1],"",line[3],line[4],line[5],"基本連用形"};
         r_node = lookup_and_make_special_pseudo_nodes_lattice(cl,line[0].c_str(), strlen(line[0].c_str()), mod_spec);
         //cerr << "; restore 命令形エ形 verb:" <<  line[0] << ":" << line[1] << ":" << line[2] << ":" << line[3] << ":" << line[4] << ":" << line[5] << ":" << line[6] << endl;
     }
+
     if (!r_node && line[3] == "名詞") { // 動詞の名詞化を復元
         // コーパスでは名詞化した動詞は名詞として扱われる. (kkn
         // では動詞の連用形扱い)
         // 品詞変更タグがついていない場合の対策
         // 動詞の活用型不明のまま，基本連用形をチェック
-        std::vector<std::string> mod_spec{line[1], line[2], "動詞",
-                                          "*",     "",      "基本連用形"};
+        std::vector<std::string> mod_spec{line[1], "", "動詞", "*",     "",      "基本連用形"};
+        r_node = lookup_and_make_special_pseudo_nodes_lattice(cl, line[0].c_str(), strlen(line[0].c_str()), mod_spec);
+        // cerr << "; restore nominalized verb:" <<  line[0] << ":" << line[1]
+        // << ":" << line[2] << ":" << line[3] << ":" << line[4] << ":" <<
+        // line[5] << ":" << line[6] << endl;
+    }
+    
+    if (!r_node && line[3] == "名詞") { // 形容詞語幹を名詞と表記している場合
+        // コーパスでは"綺麗"などが名詞として使われることがあるが，辞書では"綺麗"は形容詞のみの場合
+        std::vector<std::string> mod_spec{line[1], "", "形容詞", "",  "ナ形容詞",  "語幹"};
+        r_node = lookup_and_make_special_pseudo_nodes_lattice(cl, line[0].c_str(), strlen(line[0].c_str()), mod_spec);
+        // cerr << "; restore nominalized verb:" <<  line[0] << ":" << line[1]
+        // << ":" << line[2] << ":" << line[3] << ":" << line[4] << ":" <<
+        // line[5] << ":" << line[6] << endl;
+    }
+
+    if (!r_node && line[3] == "名詞") { // 名詞扱いの副詞
+        // コーパスでは"事実"などが名詞として使われるが，辞書では"事実"は副詞のみ
+        std::vector<std::string> mod_spec{line[1], line[2], "副詞", "",     "",      ""};
         r_node = lookup_and_make_special_pseudo_nodes_lattice(cl, line[0].c_str(), strlen(line[0].c_str()), mod_spec);
         // cerr << "; restore nominalized verb:" <<  line[0] << ":" << line[1]
         // << ":" << line[2] << ":" << line[3] << ":" << line[4] << ":" <<
@@ -1661,10 +1706,18 @@ bool Sentence::lookup_gold_data(std::string &word_pos_pair) {//{{{
     }
     // 人名, 地名が辞書にない場合 // 未定義語として処理
 
+    if (!r_node ) { // 活用型が誤っている場合があるので，活用型を無視する
+        std::vector<std::string> mod_spec{line[1], line[2], line[3], line[4], "", line[6] };
+        r_node = lookup_and_make_special_pseudo_nodes_lattice(cl, line[0].c_str(), strlen(line[0].c_str()), mod_spec);
+        //cerr << "; restore nominalized verb:" <<  line[0] << ":" << line[1]
+        // << ":" << line[2] << ":" << line[3] << ":" << line[4] << ":" <<
+        // line[5] << ":" << line[6] << endl;
+    }
+
+
     if (!r_node) { // 濁音化, 音便化している(?相:しょう,など)しているケース
         // は読みを無視して検索
-        std::vector<std::string> mod_spec{"",      line[2], line[3],
-                                          line[4], line[5], line[6]};
+        std::vector<std::string> mod_spec{"",      line[2], line[3], line[4], line[5], line[6]};
         r_node = lookup_and_make_special_pseudo_nodes_lattice(cl, line[0].c_str(), strlen(line[0].c_str()), mod_spec);
         // cerr << "; restore voiced reading:" <<  line[0] << ":" << line[1] <<
         // ":" << line[2] << ":" << line[3] << ":" << line[4] << ":" << line[5]
@@ -1672,9 +1725,9 @@ bool Sentence::lookup_gold_data(std::string &word_pos_pair) {//{{{
     }
 
     // 名詞が固有名詞, サ変名詞化している場合, 細分類を無視して辞書引き
+    // Wikipedia 辞書で読みが正しく付与されていない場合があるので，読みも無視
     if (!r_node && line[3] == "名詞") {
-        std::vector<std::string> mod_spec{line[1], line[2], line[3],
-                                          "",      line[5], line[6]};
+        std::vector<std::string> mod_spec{"", line[2], line[3], "", line[5], line[6]};
         r_node = lookup_and_make_special_pseudo_nodes_lattice(cl, line[0].c_str(), strlen(line[0].c_str()), mod_spec);
         // cerr << "; modify proper noun to noun:" <<  line[0] << ":" << line[1]
         // << ":" << line[2] << ":" << line[3] << ":" << line[4] << ":" <<
@@ -1684,6 +1737,13 @@ bool Sentence::lookup_gold_data(std::string &word_pos_pair) {//{{{
     // 記号に読み方が書かれている場合は無視する
     if (!r_node && line[3] == "特殊") {
         std::vector<std::string> mod_spec{"",      line[2], line[3],
+                                          line[4], line[5], line[6]};
+        r_node = lookup_and_make_special_pseudo_nodes_lattice(cl, line[0].c_str(), strlen(line[0].c_str()), mod_spec);
+    }
+    
+    // 長音が挿入されている場合, 読みと原形を無視する
+    if (!r_node && (line[0].find("〜",0) != std::string::npos || line[0].find("ー",0) != std::string::npos ) ) { 
+        std::vector<std::string> mod_spec{"",      "", line[3],
                                           line[4], line[5], line[6]};
         r_node = lookup_and_make_special_pseudo_nodes_lattice(cl, line[0].c_str(), strlen(line[0].c_str()), mod_spec);
     }

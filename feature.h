@@ -41,6 +41,10 @@ namespace Morph {
 //#define FEATURE_MACRO_HAVE_TOPIC 16
 #define FEATURE_MACRO_STRING_DEVOICE  "%devoice"
 #define FEATURE_MACRO_DEVOICE  17
+#define FEATURE_MACRO_STRING_LONGER  "%longer"
+#define FEATURE_MACRO_LONGER  19
+#define FEATURE_MACRO_STRING_NUMSTR  "%numstr"
+#define FEATURE_MACRO_NUMSTR  20
 
 #define FEATURE_MACRO_STRING_LEFT_WORD "%Lw"
 #define FEATURE_MACRO_LEFT_WORD 101
@@ -76,6 +80,10 @@ namespace Morph {
 #define FEATURE_MACRO_LEFT_SUFFIX  117
 #define FEATURE_MACRO_STRING_LEFT_DUMMY "%Ldummy"
 #define FEATURE_MACRO_LEFT_DUMMY 118
+#define FEATURE_MACRO_STRING_LEFT_LONGER "%Llonger"
+#define FEATURE_MACRO_LEFT_LONGER 119
+#define FEATURE_MACRO_STRING_LEFT_NUMSTR "%Lnumstr"
+#define FEATURE_MACRO_LEFT_NUMSTR 120
 
 //------ RIGHT ------
 #define FEATURE_MACRO_STRING_RIGHT_WORD "%Rw"
@@ -112,6 +120,51 @@ namespace Morph {
 
 #define FEATURE_MACRO_STRING_RIGHT_DUMMY "%Rdummy"
 #define FEATURE_MACRO_RIGHT_DUMMY  218
+#define FEATURE_MACRO_STRING_RIGHT_LONGER "%Rlonger"
+#define FEATURE_MACRO_RIGHT_LONGER  219
+#define FEATURE_MACRO_STRING_RIGHT_NUMSTR "%Rnumstr"
+#define FEATURE_MACRO_RIGHT_NUMSTR 220
+
+//----- middle  ----- (left middle right) の並び
+#define FEATURE_MACRO_STRING_MIDDLE_WORD "%Mw"
+#define FEATURE_MACRO_MIDDLE_WORD 301
+#define FEATURE_MACRO_STRING_MIDDLE_POS "%Mp"
+#define FEATURE_MACRO_MIDDLE_POS 302
+#define FEATURE_MACRO_STRING_MIDDLE_LENGTH "%Ml"
+#define FEATURE_MACRO_MIDDLE_LENGTH 303
+#define FEATURE_MACRO_STRING_MIDDLE_BEGINNING_CHAR "%Mbc"
+#define FEATURE_MACRO_MIDDLE_BEGINNING_CHAR 304
+#define FEATURE_MACRO_STRING_MIDDLE_ENDING_CHAR "%Mec"
+#define FEATURE_MACRO_MIDDLE_ENDING_CHAR 305
+#define FEATURE_MACRO_STRING_MIDDLE_BEGINNING_CHAR_TYPE "%Mbt"
+#define FEATURE_MACRO_MIDDLE_BEGINNING_CHAR_TYPE 306
+#define FEATURE_MACRO_STRING_MIDDLE_ENDING_CHAR_TYPE "%Met"
+#define FEATURE_MACRO_MIDDLE_ENDING_CHAR_TYPE 307
+
+#define FEATURE_MACRO_STRING_MIDDLE_SPOS "%Msp"
+#define FEATURE_MACRO_MIDDLE_SPOS 311
+#define FEATURE_MACRO_STRING_MIDDLE_FORM "%Msf"
+#define FEATURE_MACRO_MIDDLE_FORM 312
+#define FEATURE_MACRO_STRING_MIDDLE_FORM_TYPE "%Msft"
+#define FEATURE_MACRO_MIDDLE_FORM_TYPE 313
+
+#define FEATURE_MACRO_STRING_MIDDLE_FUNCTIONAL_WORD "%Mf"
+#define FEATURE_MACRO_MIDDLE_FUNCTIONAL_WORD  314
+#define FEATURE_MACRO_STRING_MIDDLE_BASE_WORD "%Mba"
+#define FEATURE_MACRO_MIDDLE_BASE_WORD  315
+
+#define FEATURE_MACRO_STRING_MIDDLE_PREFIX "%Mprefix"
+#define FEATURE_MACRO_MIDDLE_PREFIX  316
+#define FEATURE_MACRO_STRING_MIDDLE_SUFFIX "%Msuffix"
+#define FEATURE_MACRO_MIDDLE_SUFFIX  317
+
+#define FEATURE_MACRO_STRING_MIDDLE_DUMMY "%Mdummy"
+#define FEATURE_MACRO_MIDDLE_DUMMY  318
+#define FEATURE_MACRO_STRING_MIDDLE_LONGER "%Mlonger"
+#define FEATURE_MACRO_MIDDLE_LONGER  319
+#define FEATURE_MACRO_STRING_MIDDLE_NUMSTR "%Mnumstr"
+#define FEATURE_MACRO_MIDDLE_NUMSTR 320
+
 
 // TODO: トピック数はファイルから読み込み時に決定する
 #define TOPIC_NUM 50
@@ -121,6 +174,8 @@ namespace Morph {
 
 class FeatureTemplate {//{{{
     bool is_unigram;
+    bool is_bigram;
+    bool is_trigram;
     std::string name;
     std::vector<unsigned int> features;
   public:
@@ -166,6 +221,10 @@ class FeatureSet {
     void extract_unigram_feature(Node *node);
     void extract_topic_feature(Node *node);
     void extract_bigram_feature(Node *l_node, Node *r_node);
+
+    // N-gram に一般化する？
+    void extract_trigram_feature(Node *l_node, Node *m_node, Node *r_node);
+
     bool append_feature(FeatureSet *in);
     void minus_feature_from_weight(std::unordered_map<std::string, double> &in_feature_weight);
     void plus_feature_from_weight(std::unordered_map<std::string, double> &in_feature_weight);

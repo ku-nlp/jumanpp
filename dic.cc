@@ -95,7 +95,7 @@ Node *Dic::lookup_specified(const char *start_str, unsigned int specified_length
                 continue;
             Node *new_node = new Node;
             read_node_info(*(token + j), &new_node);
-            new_node->token = (Token *)(token + j);
+            //new_node->token = (Token *)(token + j);
             new_node->length = result_pair[i].length;
             new_node->surface = start_str;
             new_node->char_num = utf8_chars((unsigned char *)start_str, new_node->length);
@@ -114,6 +114,8 @@ Node *Dic::lookup_specified(const char *start_str, unsigned int specified_length
             }
             new_node->char_type = check_utf8_char_type((unsigned char *)start_str);
             new_node->char_family = check_char_family(new_node->char_type);
+            new_node->suuji = is_suuji((unsigned char *)start_str);
+
             char *end_char = (char *)get_specified_char_pointer((unsigned char *)start_str, new_node->length, new_node->char_num - 1);
             new_node->end_char_family = check_char_family((unsigned char *)end_char);
             new_node->end_string = new std::string(end_char, utf8_bytes((unsigned char *)end_char));
@@ -144,7 +146,7 @@ Node *Dic::lookup_lattice(std::vector<Darts::DoubleArray::result_pair_type> &da_
 Node *Dic::lookup_lattice_specified(std::vector<Darts::DoubleArray::result_pair_type> &da_search_result, const char *start_str, unsigned int specified_length, const std::vector<std::string>& specified) {//{{{
     Node *result_node = NULL;
     
-    // TODO: specified を生のvector からもう少し意味のあるものに変える
+    // TODO: specified を生の vector からもう少し意味のあるものに変える
     // surf_read_base_pos_spos_type_form
     auto specified_readingid  = readingid2reading.get_id(specified[0]);
     auto specified_baseid     = baseid2base.get_id(specified[1]);
@@ -154,20 +156,28 @@ Node *Dic::lookup_lattice_specified(std::vector<Darts::DoubleArray::result_pair_
     auto specified_formid     = formid2form.get_id(specified[5]);
 
     std::vector<Darts::DoubleArray::result_pair_type> &result_pair = da_search_result; 
+
         
     if (result_pair.size() == 0)
         return result_node;
     size_t num = result_pair.size();
         
     for (size_t i = 0; i < num; i++) { 
+
+        //const Token *token = get_token(result_pair[i]);// deb
+        //std::cerr << start_str << "_" << *baseid2base.get_pos(token->base_id) << "_" << specified_length << "-" << result_pair[i].length << std::endl;
         if (specified_length && specified_length != result_pair[i].length)
             continue;
         size_t size = token_size(result_pair[i]);
         const Token *token = get_token(result_pair[i]);
+
+        bool modified_word = false; // 長音が挿入されていることを調べる方法が無い
                 
+        // std::cerr << start_str << "_" << *baseid2base.get_pos(token->base_id) << "_" << specified_length << "-" << result_pair[i].length << ":" << modified_word << std::endl;
+
         for (size_t j = 0; j < size; j++) { // １つでも異なればskip
-            if ((specified[0].size()>0 && specified_readingid != (token + j)->reading_id) ||
-                (specified[1].size()>0 && specified_baseid != (token + j)->base_id) ||
+            if ((!modified_word && specified[0].size()>0 && specified_readingid != (token + j)->reading_id) ||
+                (!modified_word && specified[1].size()>0 && specified_baseid != (token + j)->base_id) ||
                 (specified[2].size()>0 && specified_posid != (token + j)->posid) ||
                 (specified[3].size()>0 && specified_sposid != (token + j)->spos_id) ||
                 (specified[4].size()>0 && specified_formtypeid != (token + j)->form_type_id) ||
@@ -198,6 +208,7 @@ Node *Dic::lookup_lattice_specified(std::vector<Darts::DoubleArray::result_pair_
             }
             new_node->char_type = check_utf8_char_type((unsigned char *)start_str);
             new_node->char_family = check_char_family(new_node->char_type);
+            new_node->suuji = is_suuji((unsigned char *)start_str);
             char *end_char = (char *)get_specified_char_pointer((unsigned char *)start_str, new_node->length, new_node->char_num - 1);
             new_node->end_char_family = check_char_family((unsigned char *)end_char);
             new_node->end_string = new std::string(end_char, utf8_bytes((unsigned char *)end_char));
@@ -255,12 +266,13 @@ Node *Dic::lookup_lattice(std::vector<Darts::DoubleArray::result_pair_type> &da_
                 new_node->string = new std::string(*new_node->string_for_print);
                 if(new_node->semantic_feature->find("濁音化",0) != std::string::npos){// TODO:意味情報を文字列扱いしない
                     new_node->stat = MORPH_DEVOICE_NODE;
-                }else{
+                } else {
                     new_node->stat = MORPH_NORMAL_NODE;
                 }
             }
             new_node->char_type = check_utf8_char_type((unsigned char *)start_str);
             new_node->char_family = check_char_family(new_node->char_type);
+            new_node->suuji = is_suuji((unsigned char *)start_str);
             char *end_char = (char *)get_specified_char_pointer((unsigned char *)start_str, new_node->length, new_node->char_num - 1);
             new_node->end_char_family = check_char_family((unsigned char *)end_char);
             new_node->end_string = new std::string(end_char, utf8_bytes((unsigned char *)end_char));
@@ -419,12 +431,36 @@ Node *Dic::make_unk_pseudo_node_gold(const char *start_str, int byte_len, std::s
         cerr << ";; error there are unknown words on gold data" << endl;
     } else {
         new_node->posid  = specified_posid;
-        new_node->sposid = sposid2spos.get_id(UNK_POS);//文字種に置き換える
+        new_node->sposid = sposid2spos.get_id(UNK_POS);
         new_node->formid = formid2form.get_id("*");
         new_node->formtypeid = formtypeid2formtype.get_id("*");
-        new_node->baseid = baseid2base.get_id(UNK_POS);
+        new_node->baseid = baseid2base.get_id(UNK_POS); //文字種に置き換える
         new_node->readingid = readingid2reading.get_id("*");
-                
+
+
+        // 却って悪くなるかも？05/25
+        if (new_node->char_type == TYPE_KANJI){
+            delete new_node->string;
+            new_node->string = new std::string("未定義漢語");
+            new_node->baseid = baseid2base.get_id("未定義漢語");
+            new_node->base = baseid2base.get_pos(new_node->baseid);
+        } else if (new_node->char_type == TYPE_KATAKANA){
+            delete new_node->string;
+            new_node->string = new std::string("未定義カタカナ語");
+            new_node->baseid = baseid2base.get_id("未定義カタカナ語");
+            new_node->base = baseid2base.get_pos(new_node->baseid);
+        } else if (new_node->char_type == TYPE_HIRAGANA){
+            delete new_node->string;
+            new_node->string = new std::string("未定義ひらがな語");
+            new_node->baseid = baseid2base.get_id("未定義ひらがな語");
+            new_node->base = baseid2base.get_pos(new_node->baseid);
+        } else {//アルファベット,記号など？
+            delete new_node->string;
+            new_node->string = new std::string(new_node->surface, new_node->length);
+            new_node->baseid = baseid2base.get_id("未定義アルファベット語");
+            new_node->base = baseid2base.get_pos(new_node->baseid);
+        } //漢字かな交じりは現状では扱っていない
+
         new_node->repid = repid2rep.get_id("*");
         new_node->imisid = imisid2imis.get_id("NIL");
     }
@@ -500,7 +536,6 @@ Node *Dic::make_unk_pseudo_node(const char *start_str, int byte_len, unsigned sh
         new_node->form_type = formtypeid2formtype.get_pos(new_node->formtypeid );
         new_node->base = new std::string("<数詞>");
     }else{
-        // TODO: base でstring new するのはリークになる
         if (new_node->char_type == TYPE_KANJI){
             new_node->string = new std::string("未定義漢語");
             new_node->baseid = baseid2base.get_id("未定義漢語");
@@ -541,12 +576,13 @@ Node *Dic::make_unk_pseudo_node(const char *start_str, int byte_len, unsigned sh
 }//}}}
 
 // 辞書と重複しないものだけを作る
+// 重複してるとき，delteしてないからリークしてる疑惑
+// 人名と数詞が重複していると，数詞が出てこない問題
 Node *Dic::make_unk_pseudo_node_list_some_pos_by_dic_check(const char *start_str, int byte_len, unsigned short specified_posid, std::vector<unsigned short> *specified_unk_pos, Node* r_node) {//{{{
     Node *result_node = NULL;
     if (specified_posid == MORPH_DUMMY_POS ) {
         for (std::vector<unsigned short>::iterator it = specified_unk_pos->begin(); it != specified_unk_pos->end(); it++) {
             Node *new_node = make_unk_pseudo_node(start_str, byte_len, *it);
-
 
             bool flag_covered = false;
             Node *tmp_node = r_node;
@@ -559,7 +595,7 @@ Node *Dic::make_unk_pseudo_node_list_some_pos_by_dic_check(const char *start_str
                 
             //std::cerr << "gen unk_node:" << *(new_node->original_surface) << "_" << *(new_node->pos) << ":" << flag_covered <<std::endl;
 
-            if(!flag_covered){
+            if(!flag_covered || new_node->sposid == sposid2spos.get_id("数詞") ){
                 new_node->bnext = result_node;
                 result_node = new_node;
             }
@@ -577,7 +613,7 @@ Node *Dic::make_unk_pseudo_node_list_some_pos_by_dic_check(const char *start_str
             }
             tmp_node = tmp_node->bnext;
         } 
-        if(!flag_covered){
+        if(!flag_covered || new_node->sposid == sposid2spos.get_id("数詞") ){
             new_node->bnext = result_node;
             result_node = new_node;
         }
@@ -674,6 +710,8 @@ Node *Dic::make_specified_pseudo_node_by_dic_check(const char *start_str, unsign
     unsigned short specified_posid = MORPH_DUMMY_POS;
     if(specified_pos) specified_posid = posid2pos.get_id(*specified_pos);
 
+    U8string ustart_str = (std::string(start_str));
+
     unsigned int length = strlen(start_str);
     unsigned int pos = 0, char_num = 0;
     for (pos = 0; pos < length; pos += utf8_bytes((unsigned char *)(start_str + pos))) {
@@ -686,13 +724,15 @@ Node *Dic::make_specified_pseudo_node_by_dic_check(const char *start_str, unsign
         // doesn't start with slash, colon, etc.
         else if (pos == 0 && compare_char_type_in_family(check_utf8_char_type((unsigned char *)(start_str + pos)), TYPE_FAMILY_PUNC_SYMBOL))
             break;
+        else if (pos == 0 && ustart_str.is_choon(0) )//一文字目が伸ばし棒
+            break;
         else if (compare_char_type_in_family(check_utf8_char_type((unsigned char *)(start_str + pos)), type_family)) // this is in specified family
             char_num++;
         else
             break;
     }
 
-    if (char_num > 0 && (!specified_length || specified_length == pos)) {
+    if (char_num > 0 && (specified_length == 0 || specified_length == pos)) {
         if( r_node ) //辞書が渡されている場合
             return make_unk_pseudo_node_list_some_pos_by_dic_check(start_str, pos, specified_posid, specified_unk_pos, r_node);
         else
@@ -766,7 +806,7 @@ void inline Dic::read_node_info(const Token &token, Node **node) {//{{{
 
     //(*node)->wcost = token.wcost;
     (*node)->wcost = 0.0;
-    (*node)->token = const_cast<Token *>(&token);
+    //(*node)->token = const_cast<Token *>(&token); //保存する必要無い
 }//}}}
 
 // constant mappings

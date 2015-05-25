@@ -9,6 +9,7 @@
 #include "charlattice.h"
 #include "u8string.h"
 #include <math.h>
+#include <memory>
 #include "rnnlm/rnnlmlib.h"
 
 namespace Morph {
@@ -30,7 +31,11 @@ class Sentence {//{{{
     unsigned int reached_pos;
     unsigned int reached_pos_of_pseudo_nodes;
     bool output_ambiguous_word;
+            
+    static std::shared_ptr<RNNLM::context> initial_context; 
+    static RNNLM::CRnnLM* rnnlm;
   public:
+    static void init_rnnlm(RNNLM::CRnnLM* model);
     Sentence(std::vector<Node *> *in_begin_node_list, std::vector<Node *> *in_end_node_list, std::string &in_sentence, Dic *in_dic, FeatureTemplateSet *in_ftmpl, Parameter *in_param);
     Sentence(size_t max_byte_length, std::vector<Node *> *in_begin_node_list, std::vector<Node *> *in_end_node_list, Dic *in_dic, FeatureTemplateSet *in_ftmpl, Parameter *in_param);
     void init(size_t max_byte_length, std::vector<Node *> *in_begin_node_list, std::vector<Node *> *in_end_node_list, Dic *in_dic, FeatureTemplateSet *in_ftmpl, Parameter *in_param);
@@ -76,13 +81,18 @@ class Sentence {//{{{
     FeatureSet *get_feature() {//{{{
         return feature;
     }//}}}
+
+    // ベストのパスのfeature を 文のfeature に移す
     FeatureSet *set_feature() {//{{{
-        if (feature)
+        if (feature){
             delete feature;
+            feature =nullptr;
+        }
         feature = (*begin_node_list)[length]->feature;
-        (*begin_node_list)[length]->feature = NULL;
+        (*begin_node_list)[length]->feature = nullptr;
         return feature;
     }//}}}
+
     void feature_print();
     unsigned int get_length() {
         return length;

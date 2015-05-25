@@ -286,4 +286,16 @@ bool check_exceptional_two_chars_in_figure(const char *cp, unsigned int rest_byt
     }
 }
 
+// すべて数字かどうかチェック *u8strにもうつす
+size_t is_suuji(unsigned char *ucp){
+    size_t byte_length = strlen((const char *)ucp);
+    if(byte_length == 0)
+        return false;
+    for (unsigned int pos = 0; pos < byte_length; pos += utf8_bytes((unsigned char *)(ucp + pos))) {
+         if(check_char_family(check_utf8_char_type((unsigned char *)(ucp + pos))) != TYPE_FAMILY_FIGURE )
+             return false;
+    }
+    return true;
+}
+
 }

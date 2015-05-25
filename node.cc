@@ -75,16 +75,28 @@ bool Node::is_dummy(){//{{{
 //}//}}}
 
 Node::~Node() {//{{{
-    if (string)
+    if (string){
         delete string;
-    if (string_for_print)
+        string = nullptr;
+    }
+    if (string_for_print){
         delete string_for_print;
-    if (end_string)
+        string_for_print = nullptr;
+    }
+    if (end_string){
         delete end_string;
-    if (original_surface)
+        end_string = nullptr;
+    }
+    if (original_surface){
         delete original_surface;
-    if (feature)
+        original_surface = nullptr;
+    }
+    if (feature){
         delete feature;
+        feature = nullptr;
+    }
+    //if (token) //開放する必要無し
+    //    delete token;
 }//}}}
 
 void Node::clear(){//{{{
