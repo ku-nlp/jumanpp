@@ -17,7 +17,7 @@ FeatureSet::FeatureSet(FeatureTemplateSet *in_ftmpl) {//{{{
 }//}}}
 
 FeatureSet::~FeatureSet() {//{{{
-	fset.clear();
+	fset.clear(); //ここでdouble free? 
 }//}}}
 
 void FeatureSet::extract_unigram_feature(Node *node) {//{{{
@@ -55,7 +55,7 @@ void FeatureSet::extract_unigram_feature(Node *node) {//{{{
             else if (*it == FEATURE_MACRO_LONGER){ // 辞書に登録されているよりも長い動的生成語彙(未知語, 数詞等)
                 f += int2string(node->longer); // 
             }else if (*it == FEATURE_MACRO_NUMSTR){ // 数字としても解釈可能な単語につく素性
-                f += int2string(node->longer); // 
+                f += int2string(node->suuji); // 
             }else if (*it == FEATURE_MACRO_BEGINNING_CHAR)
                 f.append(node->get_first_char(), (node->stat & MORPH_PSEUDO_NODE) ? strlen(node->get_first_char()) : utf8_bytes((unsigned char *)node->get_first_char()));
             else if (*it == FEATURE_MACRO_ENDING_CHAR) {
@@ -460,118 +460,114 @@ FeatureTemplate::FeatureTemplate(std::string &in_name, std::string &feature_stri
 }//}}}
 
 unsigned int FeatureTemplate::interpret_macro(std::string &macro) {//{{{
-    // unigram
-    if (is_unigram) {
-        if (macro == FEATURE_MACRO_STRING_WORD)
-            return FEATURE_MACRO_WORD;
-        else if (macro == FEATURE_MACRO_STRING_POS)
-            return FEATURE_MACRO_POS;
-		else if (macro == FEATURE_MACRO_STRING_SPOS)
-			return FEATURE_MACRO_SPOS;
-		else if (macro == FEATURE_MACRO_STRING_FORM)
-			return FEATURE_MACRO_FORM;
-		else if (macro == FEATURE_MACRO_STRING_FORM_TYPE)
-			return FEATURE_MACRO_FORM_TYPE;
-		else if (macro == FEATURE_MACRO_STRING_FUNCTIONAL_WORD)
-			return FEATURE_MACRO_FUNCTIONAL_WORD;
-        else if (macro == FEATURE_MACRO_STRING_LENGTH)
-            return FEATURE_MACRO_LENGTH;
-        else if (macro == FEATURE_MACRO_STRING_BEGINNING_CHAR)
-            return FEATURE_MACRO_BEGINNING_CHAR;
-        else if (macro == FEATURE_MACRO_STRING_ENDING_CHAR)
-            return FEATURE_MACRO_ENDING_CHAR;
-        else if (macro == FEATURE_MACRO_STRING_BEGINNING_CHAR_TYPE)
-            return FEATURE_MACRO_BEGINNING_CHAR_TYPE;
-        else if (macro == FEATURE_MACRO_STRING_ENDING_CHAR_TYPE)
-            return FEATURE_MACRO_ENDING_CHAR_TYPE;
-        else if (macro == FEATURE_MACRO_STRING_FEATURE1)
-            return FEATURE_MACRO_FEATURE1;
-        else if (macro == FEATURE_MACRO_STRING_BASE_WORD)
-            return FEATURE_MACRO_BASE_WORD;
-        else if (macro == FEATURE_MACRO_STRING_DEVOICE)
-            return FEATURE_MACRO_DEVOICE;
-        else if (macro == FEATURE_MACRO_STRING_LONGER)
-            return FEATURE_MACRO_LONGER;
-        else if (macro == FEATURE_MACRO_STRING_NUMSTR)
-            return FEATURE_MACRO_NUMSTR;
-    }
-    // bigram
-    else {
-        // bigram: left
-        if (macro == FEATURE_MACRO_STRING_LEFT_WORD)
-            return FEATURE_MACRO_LEFT_WORD;
-        else if (macro == FEATURE_MACRO_STRING_LEFT_POS)
-            return FEATURE_MACRO_LEFT_POS;
-		else if (macro == FEATURE_MACRO_STRING_LEFT_SPOS)
-			return FEATURE_MACRO_LEFT_SPOS;
-		else if (macro == FEATURE_MACRO_STRING_LEFT_FORM)
-			return FEATURE_MACRO_LEFT_FORM;
-		else if (macro == FEATURE_MACRO_STRING_LEFT_FORM_TYPE)
-			return FEATURE_MACRO_LEFT_FORM_TYPE;
-        else if(macro == FEATURE_MACRO_STRING_LEFT_FUNCTIONAL_WORD)
-            return FEATURE_MACRO_LEFT_FUNCTIONAL_WORD;
-        else if (macro == FEATURE_MACRO_STRING_LEFT_LENGTH)
-            return FEATURE_MACRO_LEFT_LENGTH;
-        else if (macro == FEATURE_MACRO_STRING_LEFT_BEGINNING_CHAR)
-            return FEATURE_MACRO_LEFT_BEGINNING_CHAR;
-        else if (macro == FEATURE_MACRO_STRING_LEFT_ENDING_CHAR)
-            return FEATURE_MACRO_LEFT_ENDING_CHAR;
-        else if (macro == FEATURE_MACRO_STRING_LEFT_BEGINNING_CHAR_TYPE)
-            return FEATURE_MACRO_LEFT_BEGINNING_CHAR_TYPE;
-        else if (macro == FEATURE_MACRO_STRING_LEFT_ENDING_CHAR_TYPE)
-            return FEATURE_MACRO_LEFT_ENDING_CHAR_TYPE;
-        else if(macro == FEATURE_MACRO_STRING_LEFT_BASE_WORD)
-            return FEATURE_MACRO_LEFT_BASE_WORD;
-        else if(macro == FEATURE_MACRO_STRING_LEFT_PREFIX)
-            return FEATURE_MACRO_LEFT_PREFIX;
-        else if(macro == FEATURE_MACRO_STRING_LEFT_SUFFIX)
-            return FEATURE_MACRO_LEFT_SUFFIX;
-        else if(macro == FEATURE_MACRO_STRING_LEFT_DUMMY)
-            return FEATURE_MACRO_LEFT_DUMMY;
-        else if (macro == FEATURE_MACRO_STRING_LEFT_LONGER)
-            return FEATURE_MACRO_LEFT_LONGER;
-        else if (macro == FEATURE_MACRO_STRING_LEFT_NUMSTR)
-            return FEATURE_MACRO_LEFT_NUMSTR;
-        
-        // bigram: right
-        else if (macro == FEATURE_MACRO_STRING_RIGHT_WORD)
-            return FEATURE_MACRO_RIGHT_WORD;
-        else if (macro == FEATURE_MACRO_STRING_RIGHT_POS)
-            return FEATURE_MACRO_RIGHT_POS;
-		else if (macro == FEATURE_MACRO_STRING_RIGHT_SPOS)
-			return FEATURE_MACRO_RIGHT_SPOS;
-		else if (macro == FEATURE_MACRO_STRING_RIGHT_FORM)
-			return FEATURE_MACRO_RIGHT_FORM;
-		else if (macro == FEATURE_MACRO_STRING_RIGHT_FORM_TYPE)
-			return FEATURE_MACRO_RIGHT_FORM_TYPE;
-        else if(macro == FEATURE_MACRO_STRING_RIGHT_FUNCTIONAL_WORD)
-            return FEATURE_MACRO_RIGHT_FUNCTIONAL_WORD;
-        else if (macro == FEATURE_MACRO_STRING_RIGHT_LENGTH)
-            return FEATURE_MACRO_RIGHT_LENGTH;
-        else if (macro == FEATURE_MACRO_STRING_RIGHT_BEGINNING_CHAR)
-            return FEATURE_MACRO_RIGHT_BEGINNING_CHAR;
-        else if (macro == FEATURE_MACRO_STRING_RIGHT_ENDING_CHAR)
-            return FEATURE_MACRO_RIGHT_ENDING_CHAR;
-        else if (macro == FEATURE_MACRO_STRING_RIGHT_BEGINNING_CHAR_TYPE)
-            return FEATURE_MACRO_RIGHT_BEGINNING_CHAR_TYPE;
-        else if (macro == FEATURE_MACRO_STRING_RIGHT_ENDING_CHAR_TYPE)
-            return FEATURE_MACRO_RIGHT_ENDING_CHAR_TYPE;
-        else if(macro == FEATURE_MACRO_STRING_RIGHT_BASE_WORD)
-            return FEATURE_MACRO_RIGHT_BASE_WORD;
-        else if(macro == FEATURE_MACRO_STRING_RIGHT_PREFIX)
-            return FEATURE_MACRO_RIGHT_PREFIX;
-        else if(macro == FEATURE_MACRO_STRING_RIGHT_SUFFIX)
-            return FEATURE_MACRO_RIGHT_SUFFIX;
-        else if(macro == FEATURE_MACRO_STRING_RIGHT_DUMMY)
-            return FEATURE_MACRO_RIGHT_DUMMY;
-        else if (macro == FEATURE_MACRO_STRING_RIGHT_LONGER)
-            return FEATURE_MACRO_RIGHT_LONGER;
-        else if (macro == FEATURE_MACRO_STRING_RIGHT_NUMSTR)
-            return FEATURE_MACRO_RIGHT_NUMSTR;
-    }
+    // unigram, trigram
+    if (macro == FEATURE_MACRO_STRING_WORD)
+        return FEATURE_MACRO_WORD;
+    else if (macro == FEATURE_MACRO_STRING_POS)
+        return FEATURE_MACRO_POS;
+    else if (macro == FEATURE_MACRO_STRING_SPOS)
+        return FEATURE_MACRO_SPOS;
+    else if (macro == FEATURE_MACRO_STRING_FORM)
+        return FEATURE_MACRO_FORM;
+    else if (macro == FEATURE_MACRO_STRING_FORM_TYPE)
+        return FEATURE_MACRO_FORM_TYPE;
+    else if (macro == FEATURE_MACRO_STRING_FUNCTIONAL_WORD)
+        return FEATURE_MACRO_FUNCTIONAL_WORD;
+    else if (macro == FEATURE_MACRO_STRING_LENGTH)
+        return FEATURE_MACRO_LENGTH;
+    else if (macro == FEATURE_MACRO_STRING_BEGINNING_CHAR)
+        return FEATURE_MACRO_BEGINNING_CHAR;
+    else if (macro == FEATURE_MACRO_STRING_ENDING_CHAR)
+        return FEATURE_MACRO_ENDING_CHAR;
+    else if (macro == FEATURE_MACRO_STRING_BEGINNING_CHAR_TYPE)
+        return FEATURE_MACRO_BEGINNING_CHAR_TYPE;
+    else if (macro == FEATURE_MACRO_STRING_ENDING_CHAR_TYPE)
+        return FEATURE_MACRO_ENDING_CHAR_TYPE;
+    else if (macro == FEATURE_MACRO_STRING_FEATURE1)
+        return FEATURE_MACRO_FEATURE1;
+    else if (macro == FEATURE_MACRO_STRING_BASE_WORD)
+        return FEATURE_MACRO_BASE_WORD;
+    else if (macro == FEATURE_MACRO_STRING_DEVOICE)
+        return FEATURE_MACRO_DEVOICE;
+    else if (macro == FEATURE_MACRO_STRING_LONGER)
+        return FEATURE_MACRO_LONGER;
+    else if (macro == FEATURE_MACRO_STRING_NUMSTR)
+        return FEATURE_MACRO_NUMSTR;
 
-    cerr << ";; cannot understand macro: " << macro << endl;
-    return 0;
+    // bigram: left
+    else if (macro == FEATURE_MACRO_STRING_LEFT_WORD)
+        return FEATURE_MACRO_LEFT_WORD;
+    else if (macro == FEATURE_MACRO_STRING_LEFT_POS)
+        return FEATURE_MACRO_LEFT_POS;
+    else if (macro == FEATURE_MACRO_STRING_LEFT_SPOS)
+        return FEATURE_MACRO_LEFT_SPOS;
+    else if (macro == FEATURE_MACRO_STRING_LEFT_FORM)
+        return FEATURE_MACRO_LEFT_FORM;
+    else if (macro == FEATURE_MACRO_STRING_LEFT_FORM_TYPE)
+        return FEATURE_MACRO_LEFT_FORM_TYPE;
+    else if(macro == FEATURE_MACRO_STRING_LEFT_FUNCTIONAL_WORD)
+        return FEATURE_MACRO_LEFT_FUNCTIONAL_WORD;
+    else if (macro == FEATURE_MACRO_STRING_LEFT_LENGTH)
+        return FEATURE_MACRO_LEFT_LENGTH;
+    else if (macro == FEATURE_MACRO_STRING_LEFT_BEGINNING_CHAR)
+        return FEATURE_MACRO_LEFT_BEGINNING_CHAR;
+    else if (macro == FEATURE_MACRO_STRING_LEFT_ENDING_CHAR)
+        return FEATURE_MACRO_LEFT_ENDING_CHAR;
+    else if (macro == FEATURE_MACRO_STRING_LEFT_BEGINNING_CHAR_TYPE)
+        return FEATURE_MACRO_LEFT_BEGINNING_CHAR_TYPE;
+    else if (macro == FEATURE_MACRO_STRING_LEFT_ENDING_CHAR_TYPE)
+        return FEATURE_MACRO_LEFT_ENDING_CHAR_TYPE;
+    else if(macro == FEATURE_MACRO_STRING_LEFT_BASE_WORD)
+        return FEATURE_MACRO_LEFT_BASE_WORD;
+    else if(macro == FEATURE_MACRO_STRING_LEFT_PREFIX)
+        return FEATURE_MACRO_LEFT_PREFIX;
+    else if(macro == FEATURE_MACRO_STRING_LEFT_SUFFIX)
+        return FEATURE_MACRO_LEFT_SUFFIX;
+    else if(macro == FEATURE_MACRO_STRING_LEFT_DUMMY)
+        return FEATURE_MACRO_LEFT_DUMMY;
+    else if (macro == FEATURE_MACRO_STRING_LEFT_LONGER)
+        return FEATURE_MACRO_LEFT_LONGER;
+    else if (macro == FEATURE_MACRO_STRING_LEFT_NUMSTR)
+        return FEATURE_MACRO_LEFT_NUMSTR;
+
+    // bigram: right
+    else if (macro == FEATURE_MACRO_STRING_RIGHT_WORD)
+        return FEATURE_MACRO_RIGHT_WORD;
+    else if (macro == FEATURE_MACRO_STRING_RIGHT_POS)
+        return FEATURE_MACRO_RIGHT_POS;
+    else if (macro == FEATURE_MACRO_STRING_RIGHT_SPOS)
+        return FEATURE_MACRO_RIGHT_SPOS;
+    else if (macro == FEATURE_MACRO_STRING_RIGHT_FORM)
+        return FEATURE_MACRO_RIGHT_FORM;
+    else if (macro == FEATURE_MACRO_STRING_RIGHT_FORM_TYPE)
+        return FEATURE_MACRO_RIGHT_FORM_TYPE;
+    else if(macro == FEATURE_MACRO_STRING_RIGHT_FUNCTIONAL_WORD)
+        return FEATURE_MACRO_RIGHT_FUNCTIONAL_WORD;
+    else if (macro == FEATURE_MACRO_STRING_RIGHT_LENGTH)
+        return FEATURE_MACRO_RIGHT_LENGTH;
+    else if (macro == FEATURE_MACRO_STRING_RIGHT_BEGINNING_CHAR)
+        return FEATURE_MACRO_RIGHT_BEGINNING_CHAR;
+    else if (macro == FEATURE_MACRO_STRING_RIGHT_ENDING_CHAR)
+        return FEATURE_MACRO_RIGHT_ENDING_CHAR;
+    else if (macro == FEATURE_MACRO_STRING_RIGHT_BEGINNING_CHAR_TYPE)
+        return FEATURE_MACRO_RIGHT_BEGINNING_CHAR_TYPE;
+    else if (macro == FEATURE_MACRO_STRING_RIGHT_ENDING_CHAR_TYPE)
+        return FEATURE_MACRO_RIGHT_ENDING_CHAR_TYPE;
+    else if(macro == FEATURE_MACRO_STRING_RIGHT_BASE_WORD)
+        return FEATURE_MACRO_RIGHT_BASE_WORD;
+    else if(macro == FEATURE_MACRO_STRING_RIGHT_PREFIX)
+        return FEATURE_MACRO_RIGHT_PREFIX;
+    else if(macro == FEATURE_MACRO_STRING_RIGHT_SUFFIX)
+        return FEATURE_MACRO_RIGHT_SUFFIX;
+    else if(macro == FEATURE_MACRO_STRING_RIGHT_DUMMY)
+        return FEATURE_MACRO_RIGHT_DUMMY;
+    else if (macro == FEATURE_MACRO_STRING_RIGHT_LONGER)
+        return FEATURE_MACRO_RIGHT_LONGER;
+    else if (macro == FEATURE_MACRO_STRING_RIGHT_NUMSTR)
+        return FEATURE_MACRO_RIGHT_NUMSTR;
+
+cerr << ";; cannot understand macro: " << macro << endl;
+return 0;
 }//}}}
 
 FeatureTemplate *FeatureTemplateSet::interpret_template(std::string &template_string, int n_gram) {//{{{

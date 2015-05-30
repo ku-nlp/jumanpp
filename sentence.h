@@ -31,9 +31,11 @@ class Sentence {//{{{
     unsigned int reached_pos;
     unsigned int reached_pos_of_pseudo_nodes;
     bool output_ambiguous_word;
+    std::unique_ptr<FeatureSet> beam_feature;
             
     static std::shared_ptr<RNNLM::context> initial_context; 
     static RNNLM::CRnnLM* rnnlm;
+    explicit Sentence(const Sentence &s){ };
   public:
     static void init_rnnlm(RNNLM::CRnnLM* model);
     Sentence(std::vector<Node *> *in_begin_node_list, std::vector<Node *> *in_end_node_list, std::string &in_sentence, Dic *in_dic, FeatureTemplateSet *in_ftmpl, Parameter *in_param);
@@ -44,29 +46,34 @@ class Sentence {//{{{
 
     // beam の場合はhistory をたどるように変更
     void set_gold_nodes_beam(){//{{{
-        Node* node_gold = (*begin_node_list)[length];
-        std::vector<Node *> history = node_gold->bq.beam.back().node_history;
+        auto& eos_beam = (*begin_node_list)[length]->bq.beam;
+
+        if(eos_beam.size() == 0){
+            cerr << ";; gold parse err"<< endl;
+            return;
+        }
+
+        auto& eos_tok = eos_beam.back(); 
+        std::vector<Node *> history = eos_tok.node_history;
 
         bool find_bos_node_gold = false;
-		for (auto node_gold = history.begin(); node_gold != history.end(); node_gold++) {
+		for (auto node_gold = history.rbegin(); node_gold != history.rend(); node_gold++) {
             if ((*node_gold)->stat == MORPH_BOS_NODE)
                 find_bos_node_gold = true;
-			if ((*node_gold)->stat != MORPH_BOS_NODE && (*node_gold)->stat != MORPH_EOS_NODE) {
-                Node new_node; 
-                new_node.stat = (*node_gold)->stat;
-                new_node.posid = (*node_gold)->posid;
-                new_node.pos = (*node_gold)->pos;
-                new_node.sposid = (*node_gold)->sposid;
-                new_node.spos = (*node_gold)->spos;
-                new_node.imisid = (*node_gold)->imisid;
-                new_node.semantic_feature = (*node_gold)->semantic_feature;
-                    
-                new_node.base = (*node_gold)->base;
-                new_node.representation = (*node_gold)->representation;
-                new_node.length = (*node_gold)->length;
-                new_node.char_num = (*node_gold)->char_num;
-                gold_morphs.push_back(new_node);
-            }
+            Node new_node; 
+            new_node.stat = (*node_gold)->stat;
+            new_node.posid = (*node_gold)->posid;
+            new_node.pos = (*node_gold)->pos;
+            new_node.sposid = (*node_gold)->sposid;
+            new_node.spos = (*node_gold)->spos;
+            new_node.imisid = (*node_gold)->imisid;
+            new_node.semantic_feature = (*node_gold)->semantic_feature;
+
+            new_node.base = (*node_gold)->base;
+            new_node.representation = (*node_gold)->representation;
+            new_node.length = (*node_gold)->length;
+            new_node.char_num = (*node_gold)->char_num;
+            gold_morphs.push_back(new_node);
         }
 
         if(!find_bos_node_gold)
@@ -110,8 +117,35 @@ class Sentence {//{{{
     std::string &get_sentence() {
         return sentence;
     }
+
+    // gold でしか使わない
     FeatureSet *get_feature() {//{{{
-        return feature;
+        if(beam_feature)
+            return beam_feature.get();
+        else
+            return feature;
+    }//}}}
+
+    void  generate_beam_feature(){//{{{
+        if(beam_feature) return;
+        if(feature != nullptr) return;
+            
+        std::unique_ptr<FeatureSet> fs(new FeatureSet(ftmpl));
+        auto token = (*begin_node_list)[length]->bq.beam.front();
+        std::vector<Node *> result_morphs = token.node_history;
+        Node* last_node = nullptr;
+        Node* last_last_node = nullptr;
+        for(auto n_ptr:result_morphs){
+            fs->extract_unigram_feature(n_ptr);
+            if(last_node)
+                fs->extract_bigram_feature(last_node,n_ptr);
+            if(last_last_node)
+                fs->extract_trigram_feature(last_last_node, last_node, n_ptr);
+            last_last_node = last_node;
+            last_node = n_ptr;
+        }
+        beam_feature = std::move(fs); 
+        return;
     }//}}}
 
     // ベストのパスのfeature を 文のfeature に移す
@@ -120,8 +154,26 @@ class Sentence {//{{{
             delete feature;
             feature =nullptr;
         }
-        feature = (*begin_node_list)[length]->feature;
-        (*begin_node_list)[length]->feature = nullptr;
+        feature = new FeatureSet(*(*begin_node_list)[length]->feature); //コピー
+        //(*begin_node_list)[length]->feature = nullptr;
+        return feature;
+    }//}}}
+    
+    bool set_feature_beam(){//{{{
+        if (feature){ //beam では feature は使わない
+            delete feature;
+            feature = nullptr;
+        }
+        generate_beam_feature();
+        //feature = beam_feature.release(); //((*begin_node_list)[length]->bq.beam.front().f.release());
+        return true;
+    }//}}}
+
+    FeatureSet *set_feature_so() {//{{{
+        if (feature)
+            delete feature;
+        feature = new FeatureSet(*(*begin_node_list)[length + 1]->get_bigram_feature((*begin_node_list)[length])); //コピー
+        //(*begin_node_list)[length + 1]->set_bigram_feature((*begin_node_list)[length], NULL);
         return feature;
     }//}}}
 
@@ -156,7 +208,15 @@ class Sentence {//{{{
 
     FeatureSet& get_best_feature() {//{{{
         Node *node = (*begin_node_list)[length]; // EOS
-        return *node->feature;
+        //if(node->bq.beam.size()> 0)
+        if(param->beam){
+            generate_beam_feature();
+            return *beam_feature; //参照を返す
+            //return *node->bq.beam.front().f; //参照を返す
+        }else if(param->use_so)
+            return (*(*begin_node_list)[length + 1]->get_bigram_feature((*begin_node_list)[length]));
+        else
+            return *node->feature; // beam 探索していない場合
     }//}}}
         
     Node *get_bos_node();
@@ -164,6 +224,9 @@ class Sentence {//{{{
     Node *find_best_path();
     void set_begin_node_list(unsigned int pos, Node *new_node);
     void set_end_node_list(unsigned int pos, Node *r_node);
+
+    bool so_viterbi_at_position(unsigned int pos, Node *r_node);
+    //so_viterbi_at_position_nbest(pos, (*begin_node_list)[pos]);
     bool viterbi_at_position(unsigned int pos, Node *r_node);
 	bool viterbi_at_position_nbest(unsigned int pos, Node *r_node);
 	bool beam_at_position(unsigned int pos, Node *r_node);
@@ -199,6 +262,49 @@ class Sentence {//{{{
     Node *make_unk_pseudo_node_list_from_previous_position(const char *start_str, unsigned int previous_pos);
     Node *make_unk_pseudo_node_list_from_some_positions(const char *start_str, unsigned int pos, unsigned int previous_pos);
     Node *make_unk_pseudo_node_list_by_dic_check(const char *start_str, unsigned int pos, Node *r_node, unsigned int specified_char_num);
+
+    Node *find_best_path_so() {//{{{
+
+        (*begin_node_list)[length] = get_eos_node(); // End Of Sentence
+
+        set_bigram_info(length, (*begin_node_list)[length]);
+        so_viterbi_at_position(length, (*begin_node_list)[length ]);
+        (*end_node_list)[length + 1] = (*begin_node_list)[length]; //EOS ノード
+
+        set_end_node_list(length, (*begin_node_list)[length + 1]);
+        (*begin_node_list)[length + 1] = get_eos_node(); // End Of Sentence
+        set_bigram_info(length + 1, (*begin_node_list)[length + 1]);
+        so_viterbi_at_position(length + 1, (*begin_node_list)[length + 1]);
+
+        return (*begin_node_list)[length + 1];
+    }//}}}
+    
+    // Second order viterbi 用
+    void set_bigram_info(unsigned int pos, Node *r_node) {//{{{
+        while (r_node) {
+            if( r_node->init_bigram_info == true){
+                r_node = r_node->bnext;
+                continue;
+            }
+            r_node->reserve_best_bigram();
+            Node *l_node = (*end_node_list)[pos];
+            while (l_node) {
+                // r_node->best_bigram.insert(std::map<unsigned int, BigramInfo *>::value_type(l_node->id, new BigramInfo()));
+                r_node->best_bigram.insert(std::make_pair(l_node->id, new BigramInfo()));
+                // r_node->best_bigram[l_node->id] = new BigramInfo();
+                r_node->best_bigram[l_node->id]->feature = new FeatureSet(ftmpl);
+                r_node->best_bigram[l_node->id]->feature->extract_bigram_feature(l_node, r_node);
+                r_node->best_bigram[l_node->id]->cost = r_node->best_bigram[l_node->id]->feature->calc_inner_product_with_weight();
+                r_node->best_bigram[l_node->id]->cost += l_node->wcost;
+                r_node->best_bigram[l_node->id]->feature->append_feature(l_node->feature); // unigram feature of l_node
+                r_node->best_bigram[l_node->id]->total_cost = r_node->best_bigram[l_node->id]->cost;
+                l_node = l_node->enext;
+            }
+            r_node->init_bigram_info = true;
+            r_node = r_node->bnext;
+        }
+    }//}}}
+
 };//}}}
 
 

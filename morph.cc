@@ -18,9 +18,14 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     option.add<unsigned int>("lattice", 'L', "output lattice format",false, 1);
     option.add<double>("Cvalue", 'C', "C value",false, 1.0);
     option.add<double>("Phi", 'P', "Phi value",false, 1.65);
+    option.add<double>("Rweight", 0, "linear interpolation parameter for KKN score and RNN score",false, 0.5);
+    option.add("lpenalty", 0, "use linear penalty");
+    option.add<double>("Lweight", 0, "linear penalty parameter for unknown words in RNNLM",false, 1.0);
     option.add<unsigned int>("nbest", 'n', "n-best search", false, 5);
     option.add<unsigned int>("rerank", 'R', "n-best reranking", false, 5);
     option.add("scw", 0, "use soft confidence weighted");
+    option.add("so", 0, "use second order viterbi algorithm");
+    option.add("trigram", 0, "use trigram feature");
     option.add<std::string>("lda", 0, "use lda", false, "");
     option.add<unsigned int>("beam", 'b', "use beam search",false,1);
     option.add<unsigned int>("rbeam", 'B', "use beam search and reranking",false,1);
@@ -49,7 +54,6 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
 // unit_test 時はmainを除く
 #ifndef KKN_UNIT_TEST
 
-
 //終了時にdartsのclearでbus errorが出てる
 
 int main(int argc, char** argv) {//{{{
@@ -62,7 +66,9 @@ int main(int argc, char** argv) {//{{{
 
     if(option.exist("nbest"))
         param.set_N(option.get<unsigned int>("nbest"));
-    else if(option.exist("beam")){
+    else if(option.exist("so")){
+        param.set_so(true);
+    }else if(option.exist("beam")){
         param.set_beam(true);
         param.set_N(option.get<unsigned int>("beam"));
     }else if(option.exist("rbeam")){
@@ -78,6 +84,9 @@ int main(int argc, char** argv) {//{{{
     param.set_output_ambigous_word(option.exist("ambiguous"));
     param.set_model_filename(option.get<std::string>("model"));
     param.set_use_scw(option.exist("scw"));
+    param.set_lpenalty(option.exist("lpenalty")); //矛盾している場合、lweight が優先する
+    if(option.exist("Lweight"))
+        param.set_lweight(option.get<double>("Lweight"));
     if(option.exist("Cvalue"))
         param.set_C(option.get<double>("Cvalue"));
     if(option.exist("Phi"))
@@ -87,6 +96,9 @@ int main(int argc, char** argv) {//{{{
         param.set_use_total_sim();
         Morph::FeatureSet::use_total_sim = true;
     }
+
+    param.set_trigram(option.exist("trigram"));
+    param.set_rweight(option.get<double>("Rweight"));
 
     Morph::Parameter normal_param = param;
     normal_param.set_nbest(true);// nbest を利用するよう設定
@@ -105,14 +117,16 @@ int main(int argc, char** argv) {//{{{
         rnnlm.setRandSeed(1);
         rnnlm.useLMProb(0);
         rnnlm.setDebugMode(0);
+        if(param.lpenalty)
+            rnnlm.setLweight(param.lweight);
         srand(1);
         //rnnlm.initialize_test_sent();
         Morph::Sentence::init_rnnlm(&rnnlm);
     }
 
-    std::cerr << "done" << std::endl;
         
     if (MODE_TRAIN) {//学習モード{{{
+        std::cerr << "done" << std::endl;
         if(option.exist("lda")){
             Morph::Tagger tagger_normal(&normal_param);
             tagger_normal.read_model_file(option.get<std::string>("lda"));
@@ -128,6 +142,7 @@ int main(int argc, char** argv) {//{{{
         Morph::Tagger tagger_normal(&normal_param);
         tagger_normal.read_model_file(option.get<std::string>("lda"));
         tagger.read_model_file(option.get<std::string>("model"));
+        std::cerr << "done" << std::endl;
             
         std::ifstream is(argv[1]); // input stream
             
@@ -168,6 +183,7 @@ int main(int argc, char** argv) {//{{{
         //std::cerr << "read model file" << std::flush;
         tagger.read_model_file(option.get<std::string>("model"));
         //std::cerr << "\rread model file" << std::endl;
+        std::cerr << "done" << std::endl;
             
         std::ifstream is(argv[1]); // input stream
             

@@ -9,6 +9,7 @@ OPTS = {}
 opt= OptionParser.new
 
 opt.on('-t'){|v| OPTS[:test]=v}
+opt.on('-b'){|v| OPTS[:base]=v}
 opt.parse!(ARGV)
 
 # 品詞-品詞id のマップ
@@ -114,6 +115,8 @@ Hash katuyou_form_map = {#{{{
 def print_word(sp)
     if(OPTS[:test])
         print "#{sp[0]}_#{sp[3]}:#{sp[4]} "
+    elsif(OPTS[:base])
+        print "#{sp[2]} "
     else
         print "#{sp[0]}_#{sp[1]}_#{sp[2]}_#{sp[3]}_#{sp[4]}_#{sp[5]}_#{sp[6]} "
     end

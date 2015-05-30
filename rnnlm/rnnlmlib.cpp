@@ -2194,6 +2194,11 @@ namespace RNNLM{
         copyHiddenLayerToInput();
         saveContext();
         saveContext2();
+
+        if (use_lmprob) {
+            mem_lmprob=fopen(lmprob_file, "rb");
+        } else lambda=1;		//!!! for simpler implementation later
+
         for (int a=0; a<MAX_NGRAM_ORDER; a++) history[a]=0;
 
         netReset();
@@ -2209,6 +2214,8 @@ namespace RNNLM{
         last_word = c->last_word;
         float prob_other; //has to be float so that %f works in fscanf
         real log_other, log_combine, senp;
+
+        FILE *fi, *flog, *lmprob=NULL;
         
         real lambda=1;
         real logp=0;
@@ -2216,8 +2223,13 @@ namespace RNNLM{
         prob_other=0;
         log_combine=1;
         senp=0; //
-            
+
         int word = searchVocab((char*)next_word.c_str());
+
+        if (use_lmprob) {
+            fscanf(lmprob, "%f", &prob_other);
+            goToDelimiter('\n', lmprob);
+        }
 
         // 文区切りを0に対応させる アドホックな対処
         if(next_word == "<EOS>" || next_word == "<BOS>")
@@ -2245,6 +2257,9 @@ namespace RNNLM{
 
             // 文字の長さに対してlinear に設定する
             real oov_penalty=-5;	//log penalty
+            if(lpenalty){ //penalty を文字の長さに対して線形に与える.
+               oov_penalty -= lweight * (next_word.length()/3.0); //TODO: utf8 の正確な対処
+            }
 
             if (prob_other!=0) {
                 logp+=log10(prob_other);

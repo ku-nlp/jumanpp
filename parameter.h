@@ -13,7 +13,12 @@ class Parameter {
     bool debug;
     bool nbest;
     bool beam;
+    bool use_so;
+    bool trigram;
     bool rnnlm;
+    bool lpenalty=false;
+    double rweight;
+    double lweight;
     unsigned int unk_max_length;
     unsigned int iteration_num;
     std::string darts_filename;
@@ -56,12 +61,33 @@ class Parameter {
         rnnlm = in_rnnlm;
         return 0;
     }
+    int set_rweight(double rvalue){
+        rweight = rvalue;
+        return 0;
+    }
+
+    int set_lpenalty(bool lp){
+        lpenalty = lp;
+        return 0;
+    }
+
+    int set_lweight(double lvalue){
+        lpenalty = true;
+        lweight = lvalue;
+        return 0;
+    }
     
     void set_output_ambigous_word(bool b){
         output_ambiguous_word = b;
     }
     void set_use_scw(bool scw){
         use_scw = scw;
+    }
+    void set_so(bool in_so){
+        use_so = in_so;
+    }
+    void set_trigram(bool tri){
+        trigram = tri;
     }
     void set_C(double in_c){
         c_value = in_c;

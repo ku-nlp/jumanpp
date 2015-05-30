@@ -13,13 +13,21 @@ use strict;
 
 my %dictionary; # 重複チェック用
 
+my $number = 0;
 while (<STDIN>) {
+    print STDERR "\r".$number;
+    $number = $number +1;
     if($_ =~ /^\s*;/){ next;}
     if($_ =~ /^\s*$/){ next;}
     $_ =~ s/\s*$//; # 末尾の空白削除
 
+    #print STDERR $_;
+    #print STDERR "=";
+    # (名詞 (副詞的名詞 ((読み とこ)(見出し語 とこ)(意味情報 "代表表記:とこ/とこ"))))
     my $s = new JumanSexp($_);
     my $pos = $s->{data}[0]{element};
+
+    print STDERR "a";
     
     if($pos eq "連語"){next;} # 連語は飛ばす
     # 連語の場合は分解して保存し，後で重複のないものだけを追加
@@ -34,19 +42,24 @@ while (<STDIN>) {
     if($imis =~ s/代表表記:([^ "]*) ?//){
         $rep = $1;
     }
-    if($imis =~ /,/){# フォーマットが崩れる
-        $STDERR.print("err: 意味情報が','を含む.");
+        
+    print STDERR "b";
+    if($imis =~ /,/){ #フォーマットが崩れる
+        print STDERR "\n".$number."\n";
+        print STDERR "err: 意味情報が','を含む.";
         exit(1);
     }
     if($imis eq ""){
         $imis = "NIL";
     }
+         
+    print STDERR "c";
     # $spos = ":$spos" if $spos;
     for my $midasi ($s->get_elem('見出し語')) {# 連語から来たものは，同じ表層で同じ品詞のものがない場合のみ使う
         if ($type) {
             if(!$spos){$spos= "*";}
-            my @ms =(&get_inflected_forms(Encode::encode('utf-8',$midasi), Encode::encode('utf-8',$type))) ;
-            my @ys =(&get_inflected_forms(Encode::encode('utf-8',$yomi), Encode::encode('utf-8',$type))) ;
+            my @ms =(&get_inflected_forms(Encode::encode('utf-8',$midasi), Encode::encode('utf-8',$type)));
+            my @ys =(&get_inflected_forms(Encode::encode('utf-8',$yomi), Encode::encode('utf-8',$type)));
             #my %hash = map {$ms[$_], $ys[$_]}(0..$#ms); 
             my %hash; @hash{@ms}=@ys;
             for my $m_key (@ms){
@@ -64,6 +77,8 @@ while (<STDIN>) {
             $dictionary{$midasi . "/". $yomi . "/". $pos . "/".$spos} = 1;
         }
     }
+
+    print STDERR "d";
 }
 
 #(名詞 (普通名詞 ((読み き゜)(見出し語 (き゜ 1.6))(意味情報 "自動獲得:Wikipedia Wikipedia多義"))))

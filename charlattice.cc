@@ -67,7 +67,9 @@ int CharLattice::parse(std::string sent){//{{{
                 //cerr << "<not first>";
                 /* 長音記号で, 直前が削除されたか、直前が平仮名、直前が漢字かつ直後が平仮名 */
                 if (((pre_is_deleted || pre_char_type == TYPE_HIRAGANA || (pre_char_type == TYPE_KANJI && post_char_type == TYPE_HIRAGANA)) &&
-                        (current_char == DEF_PROLONG_SYMBOL1 || current_char == DEF_PROLONG_SYMBOL2 || current_char == DEF_ELIPSIS_SYMBOL1 || current_char == DEF_ELIPSIS_SYMBOL2)) || 
+                        (current_char == DEF_PROLONG_SYMBOL1 || current_char == DEF_PROLONG_SYMBOL2 
+                         // || current_char == DEF_ELIPSIS_SYMBOL1 || current_char == DEF_ELIPSIS_SYMBOL2
+                         )) || 
                         /* 直前が削除されていて、現在文字が"っ"、かつ、直後が文末もしくは記号の場合も削除 */
                         (pre_is_deleted && current_char == DEF_PROLONG_SYMBOL3 && (post_char_type == 0 || post_char_type == TYPE_SYMBOL))) {
                     //cerr << "hatsuon del" << endl;
