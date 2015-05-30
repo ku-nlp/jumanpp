@@ -10,13 +10,16 @@ extern "C"{
 #include "scw.h" 
 #include <memory>
 #include <map>
+
 #include "parameter.h"
 #include "feature.h"
 #include "rnnlm/rnnlmlib.h"
 
 
 namespace Morph {
+//TODO: ヘッダ間の依存関係の整理
 class FeatureSet;
+class FeatureTemplateSet;
 class Node;
 class NbestSearchToken; 
 class TokenWithState;
@@ -52,29 +55,49 @@ struct morph_token_t {//{{{
     //  #define ADJECTIVE_VOICED_COST  9  /* 形容詞の連濁化のコスト */
     //  #define OTHER_VOICED_COST      5  /* 上記以外の連濁化のコスト */
 };//}}}
-
+ 
 class TokenWithState{//{{{
     public:
+        explicit TokenWithState(){};
+        TokenWithState(const TokenWithState& tmp){//{{{
+            if(tmp.f.get() != nullptr)
+                f = std::make_unique<FeatureSet>(*(tmp.f)); //unique_ptr
+            score = tmp.score;
+            context_score = tmp.context_score;
+            context = tmp.context;
+            node_history = tmp.node_history;
+        };//}}}
+        TokenWithState& operator=(const TokenWithState& tmp){//{{{
+            if(tmp.f.get() != nullptr)
+                f = std::make_unique<FeatureSet>(*(tmp.f)); //unique_ptr
+            score = tmp.score;
+            context_score = tmp.context_score;
+            context = tmp.context;
+            node_history = tmp.node_history;
+            return *this;
+        };//}}}
+        ~TokenWithState(){};
+            
         double score = -DBL_MAX;
         double context_score = -DBL_MAX;
         std::shared_ptr<RNNLM::context> context;
         std::vector<Node*> node_history;
-        //std::vector<double> state_vector;
-        //std::vector<char> history;
+        std::unique_ptr<FeatureSet> f;
+            
+        void init_feature(FeatureTemplateSet *ftmpl);
                     
-        TokenWithState(){};
         TokenWithState(Node* current_node, const TokenWithState &prev_token){
             node_history = prev_token.node_history; //copy
             node_history.emplace_back(current_node);
+            f = std::make_unique<FeatureSet>(*(prev_token.f)); //copy
         };
-         
-        //void move_state_vector(std::vector<double> &&state){
-        //    state_vector = std::move(state);
-        //};
+            
+//        void move_state_vector(std::vector<double> &&state){
+//            context = std::move(state);
+//        };
         //void set_history(std::vector<char> &&his){
         //    history = std::move(his);
         //};
-        ~TokenWithState(){};
 }; //}}}
 
 class BeamQue {//{{{
@@ -82,7 +105,7 @@ class BeamQue {//{{{
         unsigned int beam_width = 1;
     public:
         std::vector<TokenWithState> beam;
-
+            
         BeamQue(){
             beam_width = 1;
             beam.resize(0);
@@ -98,17 +121,32 @@ class BeamQue {//{{{
             beam.resize(0);
         };
 
-        void push(TokenWithState tok){
+//        void push(TokenWithState tok){
+//            // beam は昇順でソート済み
+//            if( beam.size() == beam_width && beam.back().score > tok.score ){ //追加しない
+//                return;
+//            }else if(beam.size() == beam_width){//最小のものを置き換えて再ソート
+//                beam.back() = std::move(std::move(tok));
+//                std::sort(beam.begin(), beam.end(),[](auto x, auto y){return x.score + x.context_score> y.score + y.context_score ;});
+//            }else{ //追加してリサイズ
+//                beam.emplace_back(std::move(tok));
+//                std::sort(beam.begin(), beam.end(),[](auto x, auto y){return x.score + x.context_score> y.score + y.context_score ;});
+//                //std::sort(beam.begin(), beam.end(),[](auto x, auto y){return x.score > y.score;});
+//                if(beam.size() > beam_width)
+//                    beam.resize(beam_width);
+//            }
+//        }
+
+        void push(TokenWithState&& tok){
             // beam は昇順でソート済み
-            if( beam.size() == beam_width && beam.back().score > tok.score ){ //追加しない
+            if( beam.size() == beam_width && (beam.back().score + beam.back().context_score > tok.score + tok.context_score )){ //追加しない
                 return;
             }else if(beam.size() == beam_width){//最小のものを置き換えて再ソート
-                beam.back() = std::move(std::move(tok));
-                std::sort(beam.begin(), beam.end(),[](auto x, auto y){return x.score + x.context_score> y.score + y.context_score ;});
+                beam.back() = (tok);
+                std::sort(beam.begin(), beam.end(),[](auto x, auto y){return x.score + x.context_score > y.score + y.context_score ;});
             }else{ //追加してリサイズ
-                beam.emplace_back(std::move(tok));
-                std::sort(beam.begin(), beam.end(),[](auto x, auto y){return x.score + x.context_score> y.score + y.context_score ;});
-                //std::sort(beam.begin(), beam.end(),[](auto x, auto y){return x.score > y.score;});
+                beam.emplace_back((tok));
+                std::sort(beam.begin(), beam.end(),[](auto x, auto y){return x.score + x.context_score > y.score + y.context_score ;});
                 if(beam.size() > beam_width)
                     beam.resize(beam_width);
             }
@@ -116,10 +154,23 @@ class BeamQue {//{{{
 };//}}}
 
 typedef struct morph_token_t Token;
+    
+class BigramInfo {//Second order Viterbi用  {{{
+  public: long cost;
+    long total_cost;
+    FeatureSet *feature;
+    Node *prev;
+    BigramInfo() {
+        cost = total_cost = 0;
+        feature = NULL;
+        prev = NULL;
+    }
+};//}}}
 
 //TODO: posid を grammar と共通化し， ない場合にのみ新しいid を追加するようにする. 
 //TODO: 巨大な定数 mapping も削除する
 //TODO: ポインタ撲滅
+
 class Node {//{{{
   private:
     static int id_count;
@@ -128,7 +179,9 @@ class Node {//{{{
     constexpr static const char* cdb_filename = "/home/morita/work/juman_LDA/dic/all_uniq.cdb";
     static DBM_FILE topic_cdb;
     static Parameter *param;
+
   public:
+    bool init_bigram_info = false;
     Node *prev = nullptr; // best previous node determined by Viterbi algorithm
     Node *next = nullptr;
     Node *enext = nullptr; // next node that ends at this position
@@ -146,7 +199,41 @@ class Node {//{{{
 //ifdef DEBUG
     std::map<std::string, std::string> debug_info; 
 //endif
-        
+
+    // codes for second order bigram
+    std::map<unsigned int, BigramInfo *> best_bigram;
+    // std::vector<BigramInfo *> best_bigram;
+    long get_bigram_cost(Node *left_node) {
+        return best_bigram[left_node->id]->cost;
+    }
+    void set_bigram_cost(Node *left_node, long in_cost) {
+        best_bigram[left_node->id]->cost = in_cost;
+    }
+    long get_bigram_total_cost(Node *left_node) {
+        auto tmp = best_bigram[left_node->id];
+        return tmp->total_cost;
+    }
+    void set_bigram_total_cost(Node *left_node, long in_cost) {
+        best_bigram[left_node->id]->total_cost = in_cost;
+    }
+    Node *get_bigram_best_prev(Node *left_node) {
+        return best_bigram[left_node->id]->prev;
+    }
+    void set_bigram_best_prev(Node *left_node, Node *best_l2_node) {
+        best_bigram[left_node->id]->prev = best_l2_node;
+        left_node->prev = best_l2_node;
+    }
+    FeatureSet *get_bigram_feature(Node *left_node) {
+        return best_bigram[left_node->id]->feature;
+    }
+    ///void set_bigram_feature(Node *left_node, FeatureSet *in_feature) {
+    //    best_bigram[left_node->id]->feature = in_feature;
+    //}
+    void append_bigram_feature(Node *left_node, FeatureSet *in_feature);
+    void reserve_best_bigram(){};
+    // ----
+
+
     unsigned short length = 0; /* length of morph */
     unsigned short char_num = 0;
     unsigned short rcAttr = 0;

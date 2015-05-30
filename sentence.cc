@@ -3,6 +3,7 @@
 #include "sentence.h"
 #include <utility>
 #include <algorithm>
+#include <memory>
 //#include "feature.h"
 
 #include <sstream>
@@ -61,9 +62,9 @@ void Sentence::init(size_t max_byte_length, std::vector<Node *> *in_begin_node_l
     }
 
     begin_node_list->clear();
-    begin_node_list->resize(max_byte_length + 1, nullptr);
+    begin_node_list->resize(max_byte_length + 4, nullptr);
     end_node_list->clear();
-    end_node_list->resize(max_byte_length + 1, nullptr);
+    end_node_list->resize(max_byte_length + 4, nullptr);
     (*end_node_list)[0] = get_bos_node(); // Begin Of Sentence
 } //}}}
 
@@ -111,7 +112,6 @@ bool Sentence::add_one_word(std::string &word) { //コーパス読み込み時�
     sentence += word;
     return true;
 } //}}}
-
 
 void Sentence::feature_print() { //{{{
     feature->print();
@@ -461,6 +461,8 @@ bool Sentence::lookup() {//{{{
                 }
             }
             set_end_node_list(pos, r_node);
+            if(param->use_so)
+                set_bigram_info(pos, r_node);
         }
         previous_pos = pos;
         char_num++;
@@ -477,13 +479,17 @@ bool Sentence::analyze() {//{{{
             beam_at_position(pos, (*begin_node_list)[pos]);
         }
         find_best_beam();
+    }else if(param->use_so) { // second order viterbi
+        for (unsigned int pos = 0; pos < length; pos += utf8_bytes((unsigned char *) (sentence_c_str + pos))) {
+            so_viterbi_at_position(pos, (*begin_node_list)[pos]);
+        }
+        find_best_path_so();
     }else{ //普通のnbest
         for (unsigned int pos = 0; pos < length; pos += utf8_bytes((unsigned char *) (sentence_c_str + pos))) {
             viterbi_at_position_nbest(pos, (*begin_node_list)[pos]);
         }
         find_N_best_path();
     }
-
     return true;
 } //}}}
 
@@ -670,9 +676,8 @@ void Sentence::print_unified_lattice() { //{{{
             if (node->used_in_nbest) { // n-best解に使われているもののみ
                 U8string ustr(*node->original_surface);
                 cout << wordmark << delim << node->id << delim;
-                num2id[char_num + word_length].push_back(
-                    node->id); // 現在，接続先はn-best
-                               // と関係なく繋がるもの全てを使用
+                num2id[char_num + word_length].push_back( node->id); // 現在，接続先はn-best
+                                                                     // と関係なく繋がるもの全てを使用
                 if (num2id[char_num].size() == 0) { // 無かったら 0 を出す
                     cout << "0";
                 } else {
@@ -824,6 +829,17 @@ void Sentence::print_unified_lattice() { //{{{
                              << node->debug_info[ss_debug.str()] << endl;
                         cout << "!\t" << ss_debug.str() << ": "
                              << node->debug_info[ss_debug.str() + ":bigram_feature"] << endl;
+
+                        // node のbeam に残っているhistoryをたどる
+                        for ( auto tok: node->bq.beam ) {
+                            auto hist = tok.node_history;
+                            if(hist.size() > 3 && hist[hist.size()-2]->id == to_id){
+                                ss_debug.str("");
+                                ss_debug << hist[hist.size()-3]->id << " -> " << hist[hist.size()-2]->id << " -> " << node->id;
+                                cout << "!\t" << ss_debug.str() << ": "
+                                    << node->debug_info[ss_debug.str() + ":trigram_feature"] << endl;
+                            }
+                        }
                     }
                     // BOS, EOS との接続の表示.. (TODO: 簡潔に書き換え)
                     ss_debug.str("");
@@ -867,6 +883,7 @@ Node *Sentence::get_bos_node() {//{{{
 	bos_node->string_for_print = new std::string(bos_node->surface);
 	bos_node->end_string = new std::string(bos_node->surface);
 	bos_node->original_surface = new std::string(BOS_STRING); // ここはdelte される
+    bos_node->length = 0;
 	// bos_node->isbest = 1;
 	bos_node->stat = MORPH_BOS_NODE; 
 	bos_node->posid = MORPH_DUMMY_POS;
@@ -876,10 +893,14 @@ Node *Sentence::get_bos_node() {//{{{
 	bos_node->form_type = &(BOS_STRING);
 	bos_node->base = &(BOS_STRING);
 	bos_node->representation = &(BOS_STRING);
-    bos_node->id = -2;
+    bos_node->id = 0;
+
+    // 初期 beam の作成
     bos_node->bq.beam.resize(1);
     bos_node->bq.beam.front().score = 0;
     bos_node->bq.beam.front().context_score = 0;
+    bos_node->bq.beam.front().init_feature(ftmpl);
+    bos_node->bq.beam.front().node_history.push_back(bos_node);
     bos_node->bq.beam.front().context = (Sentence::initial_context); 
         
     FeatureSet *f = new FeatureSet(ftmpl);
@@ -897,6 +918,7 @@ Node *Sentence::get_eos_node() {//{{{
 	eos_node->string_for_print = new std::string(eos_node->surface);
 	eos_node->end_string = new std::string(eos_node->surface);
     eos_node->original_surface = new std::string(EOS_STRING);
+    eos_node->length = 1; //dummy
 	// eos_node->isbest = 1;
 	eos_node->stat = MORPH_EOS_NODE;
 	eos_node->posid = MORPH_DUMMY_POS;
@@ -907,7 +929,8 @@ Node *Sentence::get_eos_node() {//{{{
 	eos_node->base = &(EOS_STRING);
 	eos_node->representation = &(EOS_STRING);
 
-    eos_node->id = -1;
+    if(!param->use_so) // so では eos のid が必要になるため
+        eos_node->id = -1;
 
     FeatureSet *f = new FeatureSet(ftmpl);
     f->extract_unigram_feature(eos_node);
@@ -940,7 +963,7 @@ void Sentence::set_begin_node_list(unsigned int pos, Node *new_node) { //{{{
     (*begin_node_list)[pos] = new_node;
 } //}}}
 
-// TODO:いずれ nbest=1 の場合と統合(現在は training にのみ利用)
+// TODO:いずれ nbest=1 の場合と統合 (現在は training にのみ利用)
 bool Sentence::viterbi_at_position(unsigned int pos, Node *r_node) {//{{{
     while (r_node) {
         double best_score = -DBL_MAX;
@@ -950,9 +973,12 @@ bool Sentence::viterbi_at_position(unsigned int pos, Node *r_node) {//{{{
         while (l_node) {
             FeatureSet *f = new FeatureSet(ftmpl);
             f->extract_bigram_feature(l_node, r_node);
+            if(param->trigram && l_node->prev != nullptr) //l_node よりも前がある
+                f->extract_trigram_feature(l_node->prev ,l_node, r_node);
+
             double bigram_score = f->calc_inner_product_with_weight();
             double score = l_node->cost + bigram_score + r_node->wcost;
-
+                
             if (score > best_score) {
                 best_score_l_node = l_node;
                 if (best_score_bigram_f)
@@ -964,7 +990,7 @@ bool Sentence::viterbi_at_position(unsigned int pos, Node *r_node) {//{{{
             }
             l_node = l_node->enext;
         }
-
+            
         if (best_score_l_node) {
             r_node->prev = best_score_l_node;
             r_node->next = NULL;
@@ -983,6 +1009,64 @@ bool Sentence::viterbi_at_position(unsigned int pos, Node *r_node) {//{{{
 
     return true;
 } //}}}
+
+bool Sentence::so_viterbi_at_position(unsigned int pos, Node *r_node) {//{{{
+    set_bigram_info(pos, r_node);
+        
+    if (pos == 0)
+        return false;
+        
+    while (r_node) {
+        Node *l_node = (*end_node_list)[pos];
+        //set_bigram_info(pos-l_node->length, l_node);//チェックのため
+        while (l_node) {
+            Node *l2_node = (*end_node_list)[pos - l_node->length]; //l1_node のlength を1にした分を引く?
+
+            double best_score = -DBL_MAX;
+            Node *best_score_l2_node = nullptr;
+            FeatureSet *best_score_trigram_f = nullptr;
+            while (l2_node) {
+                //std::cerr << *l2_node->original_surface << " -> " << *l_node->original_surface << " -> " << *r_node->original_surface << std::endl;
+                FeatureSet *f = new FeatureSet(ftmpl);
+                f->extract_trigram_feature(l2_node, l_node, r_node);
+                double trigram_score = f->calc_inner_product_with_weight();
+                double score = l_node->get_bigram_total_cost(l2_node) + r_node->get_bigram_cost(l_node) + trigram_score + r_node->wcost; 
+                // l2_node->costは、l2_nodeとl_nodeにおけるbest_score (l_node->wcostを含む; l2_nodeとl_nodeのbigram_scoreも含む)
+                if (score > best_score) {
+                    best_score_l2_node = l2_node;
+                    if (best_score_trigram_f)
+                        delete best_score_trigram_f;
+                    best_score_trigram_f = f;
+                    best_score = score;
+                }
+                else {
+                    delete f;
+                }
+                l2_node = l2_node->enext;
+            }
+
+            if (best_score_l2_node) {
+                //std::cerr << "best:" << *best_score_l2_node->original_surface << " -> " << *l_node->original_surface << " -> " << *r_node->original_surface << std::endl;
+                r_node->set_bigram_best_prev(l_node, best_score_l2_node); // このl_nodeとr_nodeに対するbest_l2_node
+                r_node->set_bigram_total_cost(l_node, best_score); // このl_nodeとr_nodeに対するbest_score
+                if (MODE_TRAIN) { // feature collection: このl_nodeとr_nodeに対するfeature
+                    r_node->append_bigram_feature(l_node, l_node->get_bigram_feature(best_score_l2_node));
+                    r_node->append_bigram_feature(l_node, best_score_trigram_f);
+                }
+                delete best_score_trigram_f;
+            }
+            else {
+
+                std::cerr << "so viterbi failed!" << std::endl;
+                return false;
+            }
+            l_node = l_node->enext;
+        }
+        r_node = r_node->bnext;
+    }
+
+    return true;
+}//}}}
 
 bool Sentence::viterbi_at_position_nbest(unsigned int pos, Node *r_node) { //{{{
     std::stringstream ss_key, ss_value;
@@ -1084,7 +1168,7 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) { //{{{
     // r_node の重複を除外 (細分類まで一致する形態素を除外する)
     while (r_node) { // pos から始まる形態素
         std::string key = (*r_node->original_surface + *r_node->base + "_" + *r_node->pos + "_" + *r_node->spos + "_" + *r_node->form_type + "_" + *r_node->form);
-        //std::cerr << key << std::endl;
+        //std::cerr << "key:" << key << std::endl;
         if( duplicate_filter.find(key) != duplicate_filter.end() ){ //重複がある
             r_node = r_node->bnext;
             continue;
@@ -1095,32 +1179,55 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) { //{{{
         r_node->bq.beam.clear();
         r_node->bq.setN(param->N);
 		Node *l_node = (*end_node_list)[pos];
-
-        // 訓練時に必要になる trigram素性 の best
+            
+        // 訓練時に必要になる trigram素性 の best も context に含める必要がある(もしくは探索語に再生成)
         FeatureSet best_score_bigram_f(ftmpl);  // 訓練時には 1-best が必要になる
         FeatureSet best_score_trigram_f(ftmpl); // 訓練時には 1-best が必要になる
-        double best_score = -DBL_MAX;
-
+        //double best_score = -DBL_MAX;
         //std::cerr << "r:" << *(r_node->original_surface) << "_" <<  *(r_node->base) << "_" << *(r_node->pos) << std::endl;
             
-        while (l_node) {
+        while (l_node) { //pos で終わる形態素
             if(l_node->bq.beam.size() == 0){
                 l_node = l_node->enext;
                 continue;
             }
             // 1.コンテクスト独立の処理
-            // 濁音化の条件チェック
-            if((r_node->stat == MORPH_DEVOICE_NODE) &&  // 今の形態素が濁音化している
-                    (!check_devoice_condition(*l_node))){// 前の形態素が濁音化の条件を満たさない
-                l_node = l_node->enext;
-                continue;
-            }
-                
             //std::cerr << "l:" << *(l_node->original_surface) << "_" <<  *(l_node->base) << "_" << (*l_node->pos) << std::endl;
                         
-            FeatureSet f(ftmpl);
-            f.extract_bigram_feature(l_node, r_node);
-            double bigram_score = f.calc_inner_product_with_weight();
+            FeatureSet bi_f(ftmpl);
+            bi_f.extract_bigram_feature(l_node, r_node);
+            double bigram_score = (1.0 - param->rweight) * bi_f.calc_inner_product_with_weight();
+            
+            // 濁音化の条件チェック
+            if((r_node->stat == MORPH_DEVOICE_NODE) &&  // 今の形態素が濁音化している
+                    (!check_devoice_condition(*l_node))){// 前の形態素が濁音化の条件を満たさない//{{{
+
+                // 解析できないことを防ぐため，l_node の TOP 1 だけ一応処理する
+                TokenWithState tok(r_node, l_node->bq.beam.front());
+                tok.score = l_node->bq.beam.front().score + bigram_score + (1.0 - param->rweight) *r_node->wcost - 10000; // invalid devoice penalty 
+                tok.context_score = l_node->bq.beam.front().score -10000;
+                    
+                tok.f->append_feature(r_node->feature); //unigram
+                tok.f->append_feature(&bi_f);
+                if( param->trigram && l_node->bq.beam.front().node_history.size() > 1){
+                    FeatureSet tri_f(ftmpl);
+                    tri_f.extract_trigram_feature( l_node->bq.beam.front().node_history[l_node->bq.beam.front().node_history.size() - 2] ,l_node, r_node);
+                    tok.context_score += tri_f.calc_inner_product_with_weight();
+                    tok.f->append_feature(&tri_f); 
+                }
+                    
+                if(param->rnnlm){
+                    RNNLM::context new_c;
+                    double rnn_score = (param->rweight) * rnnlm->test_word( l_node->bq.beam.front().context.get(), &new_c, *(r_node->base));
+                    tok.context_score += (1.0 - param->rweight) * rnn_score;
+                    tok.context = std::make_shared<RNNLM::context>(std::move(new_c));
+                }
+                    
+                r_node->bq.push(std::move(tok));
+                l_node = l_node->enext;
+                continue;
+            }//}}}
+
             if (param->debug) {//{{{
                 ss_key.str(""), ss_value.str("");
                 ss_key << l_node->id << " -> " << r_node->id;
@@ -1130,8 +1237,8 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) { //{{{
                     std::string(ss_value.str().c_str());
                 l_node->debug_info[ss_key.str().c_str()] =
                     std::string(ss_value.str().c_str());
-                r_node->debug_info[ss_key.str() + ":bigram_feature"] = f.str();
-                l_node->debug_info[ss_key.str() + ":bigram_feature"] = f.str(); //EOS用
+                r_node->debug_info[ss_key.str() + ":bigram_feature"] = bi_f.str();
+                l_node->debug_info[ss_key.str() + ":bigram_feature"] = bi_f.str(); //EOS用
             }//}}}
                                 
             //std::cerr << *l_node->string << "  beam size:" << l_node->bq.beam.size() << std::endl;
@@ -1144,24 +1251,24 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) { //{{{
                 //std::cout << "lw:" << *l_node->original_surface << ":" << *l_node->pos << " rw:" << *r_node->original_surface << ":" << *r_node->pos << std::endl;
                 //std::cout << "last_word:" << (int)l_token_with_state.context->last_word << std::endl;
                 //std::cout << "history_size:" << l_token_with_state.context->history.size() << std::endl;
-                
+                     
                 double trigram_score = 0.0;
                 double rnn_score = 0.0;
                 double context_score = l_token_with_state.context_score;
-                double score = l_token_with_state.score + bigram_score + r_node->wcost;
-
+                double score = l_token_with_state.score + bigram_score + (1.0 - param->rweight)*r_node->wcost;
+                        
                 if(param->rnnlm){
-                    rnn_score = rnnlm->test_word( l_token_with_state.context.get(), &new_c, *(r_node->base));
+                    rnn_score = (param->rweight)*rnnlm->test_word(l_token_with_state.context.get(), &new_c, *(r_node->base));
                     context_score += rnn_score;
                              
                     if(param->debug)
                         std::cout << "lw:" << *l_node->original_surface << ":" << *l_node->pos << " rw:" << *r_node->original_surface << ":" << *r_node->pos << " => " << rnn_score << std::endl;
                 }
-
+                        
                 size_t history_size = l_token_with_state.node_history.size();
-                if( history_size > 1 ){ // 2つ前のノードがあれば.
+                if( param->trigram && history_size > 1 ){ // 2つ前のノードがあれば.
                     tri_f.extract_trigram_feature(l_token_with_state.node_history[history_size - 2] ,l_node, r_node);
-                    trigram_score = tri_f.calc_inner_product_with_weight();
+                    trigram_score = (1.0 - param->rweight)*tri_f.calc_inner_product_with_weight();
                     context_score += trigram_score;
                     if (param->debug) {//{{{
                         ss_key.str(""), ss_value.str("");
@@ -1174,27 +1281,26 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) { //{{{
                     }//}}}
                 }
                     
-                // get_best_bigram_score
-                if (score + context_score > best_score) {
-                    best_score = score + context_score;
-                    best_score_bigram_f = std::move(f);
-                    best_score_trigram_f = std::move(tri_f);
-                }
-                    
                 TokenWithState tok(r_node, l_token_with_state);
                 tok.score = score;
                 tok.context_score = context_score;
+                    
+                // save the feature
+                //tok.f->append_feature(r_node->feature); //unigram
+                //tok.f->append_feature(&bi_f);
+                //if(param->trigram)
+                //    tok.f->append_feature(&tri_f); 
+                    
                 if(param->rnnlm)
                     tok.context = std::make_shared<RNNLM::context>(std::move(new_c));
-                r_node->bq.push(tok);
+                r_node->bq.push(std::move(tok));
             }
                  
-            // l_node->bq.beam.clear(); //メモリが気になるならしてもよい
             l_node = l_node->enext;
         }
         //std::cout << "bq.size = " << r_node->bq.beam.size() << std::endl;
             
-        // 各r_node ごとにベストの素性を保存しておく
+        // 各r_node のnext prev ポインタ, featureを設定
         if (r_node->bq.beam.size() > 0) {
             r_node->next = nullptr;
             if(r_node->bq.beam.front().node_history.size() > 1){
@@ -1202,22 +1308,16 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) { //{{{
             }else{
                 r_node->prev = nullptr;
             }
-            r_node->cost = r_node->bq.beam.front().score;
-
-            if (MODE_TRAIN) { // feature collection
-                r_node->feature->append_feature(r_node->prev->feature);
-                r_node->feature->append_feature(&(best_score_bigram_f));
-                r_node->feature->append_feature(&(best_score_trigram_f));
+            r_node->cost = r_node->bq.beam.front().score; //context_score を入れる？ ほぼ表示用なので必要ない？
+            if (MODE_TRAIN) {
+                //(*r_node->feature) = (*r_node->bq.beam.front().f); //コピー //使わないかも
             }
-        } else {
-            //std::cerr << "failed at BeamSearch: couldn't find path to rnode:" << *r_node->surface << std::endl;
-            // 濁音化の条件に反するものしか無ければ，空もありうる
-            // return false;
-        }
+        } 
             
         r_node = r_node->bnext;
     }
-        
+
+    //l_node->bq.beam.clear(); //メモリが気になるならしてもよい?
     return true;
 }//}}}
 
@@ -1670,7 +1770,6 @@ void Sentence::print_best_path_with_rnn(RNNLM::CRnnLM& model) {//{{{
 	//cout << endl;
 }//}}}
 
-
 // gold 用の辞書引きの亜種
 bool Sentence::lookup_gold_data(std::string &word_pos_pair) {//{{{
     if (reached_pos < length) {
@@ -1726,6 +1825,20 @@ bool Sentence::lookup_gold_data(std::string &word_pos_pair) {//{{{
         // << ":" << line[2] << ":" << line[3] << ":" << line[4] << ":" <<
         // line[5] << ":" << line[6] << endl;
     }
+
+    if (!r_node && line[3] == "副詞") { // 副詞扱いの名詞
+        std::vector<std::string> mod_spec{line[1], line[2], "名詞", "",     "",      ""};
+        r_node = lookup_and_make_special_pseudo_nodes_lattice(cl, line[0].c_str(), strlen(line[0].c_str()), mod_spec);
+    }
+
+    if (!r_node && line[3] == "副詞") { // 副詞扱いの形容詞 名詞も
+        // コーパスでは"真実"などが副詞として使われるが，辞書では"事実"は形容詞のみ
+        std::vector<std::string> mod_spec{line[1], line[2], "形容詞", "",     "",      ""};
+        r_node = lookup_and_make_special_pseudo_nodes_lattice(cl, line[0].c_str(), strlen(line[0].c_str()), mod_spec);
+        // cerr << "; restore nominalized verb:" <<  line[0] << ":" << line[1]
+        // << ":" << line[2] << ":" << line[3] << ":" << line[4] << ":" <<
+        // line[5] << ":" << line[6] << endl;
+    }
     // 人名, 地名が辞書にない場合 // 未定義語として処理
 
     if (!r_node ) { // 活用型が誤っている場合があるので，活用型を無視する
@@ -1735,7 +1848,6 @@ bool Sentence::lookup_gold_data(std::string &word_pos_pair) {//{{{
         // << ":" << line[2] << ":" << line[3] << ":" << line[4] << ":" <<
         // line[5] << ":" << line[6] << endl;
     }
-
 
     if (!r_node) { // 濁音化, 音便化している(?相:しょう,など)しているケース
         // は読みを無視して検索
@@ -1772,15 +1884,28 @@ bool Sentence::lookup_gold_data(std::string &word_pos_pair) {//{{{
 
     if (!r_node) { // 未定義語として処理
         // 細分類以下まで推定するなら，以下も書き換える
-        r_node = dic->make_unk_pseudo_node_gold(
-            line[0].c_str(), strlen(line[0].c_str()), line[3]);
+        r_node = dic->make_unk_pseudo_node_gold( line[0].c_str(), strlen(line[0].c_str()), line[3]);
         cerr << ";; lookup failed in gold data:" << line[0] << ":" << line[1]
              << ":" << line[2] << ":" << line[3] << ":" << line[4] << ":"
              << line[5] << ":" << line[6] << endl;
     }
+
+    //auto tmp_node = r_node;
+    //while(tmp_node){// 全部表示
+    //    std::cerr << *tmp_node->original_surface << " " << *tmp_node->base << " " <<  *tmp_node->pos << " " << *tmp_node->spos << " " << *tmp_node->semantic_feature << std::endl;
+    //    tmp_node=tmp_node->bnext;
+    //}
+
     (*begin_node_list)[length] = r_node;
     find_reached_pos(length, r_node);
-    viterbi_at_position(length, r_node);
+
+    if(param->beam){
+        beam_at_position(length, r_node);
+    }else if(param->use_so){
+        so_viterbi_at_position(length, r_node);
+    }else{
+        viterbi_at_position(length, r_node);
+    }
     set_end_node_list(length, r_node);
 
     add_one_word(line[0]);
@@ -1793,7 +1918,7 @@ double Sentence::eval(Sentence& gold){//{{{
         cerr << ";; cannot calc loss " << sentence << endl;
         return 1.0;
     }
-
+        
     Node *node = (*begin_node_list)[length];
     std::vector<Node *> result_morphs;
 
@@ -1805,8 +1930,14 @@ double Sentence::eval(Sentence& gold){//{{{
         node = node->prev;
     }
 
-    if (!find_bos_node)
+    if (!find_bos_node){
         cerr << ";; cannot analyze:" << sentence << endl;
+        for(auto&m : result_morphs){
+            cerr << *(m->original_surface) << "  ";
+        }
+        cerr << endl;
+        cerr << gold.sentence << endl;
+    }
 
     auto itr = result_morphs.rbegin();
     auto itr_gold = gold.gold_morphs.rbegin();
@@ -1865,7 +1996,6 @@ std::vector<std::string> Sentence::get_gold_topic_features(TopicVector *tov){//{
         return std::vector<std::string>(); 
     }
 }//}}}
-
 
 // パーセプトロン専用の関数，いずれ撲滅
 // TODO: 廃止

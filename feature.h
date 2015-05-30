@@ -161,7 +161,7 @@ class FeatureTemplate {//{{{
     }
 };//}}}
 
-class FeatureTemplateSet {
+class FeatureTemplateSet {//{{{
     std::vector<FeatureTemplate *> templates;
   public:
     FeatureVector* set_weight;
@@ -170,9 +170,9 @@ class FeatureTemplateSet {
     std::vector<FeatureTemplate *> *get_templates() {
         return &templates;
     }
-};
+};//}}}
 
-class FeatureSet {
+class FeatureSet { //{{{
   friend int main(int argc, char** argv);
     FeatureTemplateSet *ftmpl;
     FeatureVector* weight;
@@ -182,9 +182,12 @@ class FeatureSet {
     std::vector<std::string> fset;
     FeatureSet(FeatureTemplateSet *in_ftmpl);
     FeatureSet(const FeatureSet& f){
+        ftmpl = f.ftmpl;
+        weight = f.weight;
         fset = f.fset;
     };
     ~FeatureSet();
+    void clear(){fset.clear();};
     double calc_inner_product_with_weight();
     void extract_unigram_feature(Node *node);
     void extract_topic_feature(Node *node);
@@ -260,6 +263,6 @@ class FeatureSet {
   private:
 };
 
-}
+}//}}}
 
 #endif

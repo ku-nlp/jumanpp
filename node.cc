@@ -95,8 +95,29 @@ Node::~Node() {//{{{
         delete feature;
         feature = nullptr;
     }
+    //best_bigram
+    if(param->use_so){
+        for (std::map<unsigned int, BigramInfo *>::iterator it = best_bigram.begin(); it != best_bigram.end(); it++) {
+            if ((*it).second->feature){
+                delete (*it).second->feature;
+                (*it).second->feature = nullptr;
+            }
+            delete((*it).second);
+            (*it).second = nullptr;
+        }
+    }
     //if (token) //開放する必要無し
     //    delete token;
+}//}}}
+
+void TokenWithState::init_feature(FeatureTemplateSet *ftmpl) {//{{{
+    FeatureSet fset(ftmpl);
+    f = std::make_unique<FeatureSet>(std::move(fset));
+};//}}}
+
+void Node::append_bigram_feature(Node *left_node, FeatureSet *in_feature) {//{{{
+        best_bigram[left_node->id]->feature->append_feature(in_feature);
+        // left_node->feature = best_bigram[left_node->id]->feature; //とりあえずのコピー 二重deleteされる
 }//}}}
 
 void Node::clear(){//{{{

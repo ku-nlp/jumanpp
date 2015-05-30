@@ -71,6 +71,7 @@ protected:
     int filetype;
     
     int use_lmprob;
+    File* mem_lmprob;
     real lambda;
     real gradient_cutoff;
     
@@ -152,6 +153,9 @@ protected:
 public:
 
     int alpha_set, train_file_set;
+
+    double lpenalty = false; 
+    double lweight = 1.0; // linear penalty for UNK
 
     CRnnLM()		//constructor initializes variables
     {
@@ -319,6 +323,7 @@ public:
     void setAntiKasparek(int newAnti) {anti_k=newAnti;}
     void setOneIter(int newOneIter) {one_iter=newOneIter;}
     void setMaxIter(int newMaxIter) {maxIter=newMaxIter;}
+    void setLweight(double newLw) {lpenalty=true; lweight=newLw;}
     
     int getWordHash(char *word);
     void readWord(char *word, FILE *fin);

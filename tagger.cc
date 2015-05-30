@@ -47,16 +47,17 @@ int Tagger::online_learning(Sentence* gold, Sentence* system ,TopicVector *topic
         if( gold->get_feature() ){
             FeatureVector gold_vec(gold->get_feature()->get_fset()); 
             FeatureVector gold_topic_vec(gold->get_gold_topic_features(topic)); 
-            // std::cerr << gold_topic_vec.str() << endl;
+            //std::cerr << "<gold>" << gold_vec.str() <<  "</gold>" << endl;
                 
             FeatureVector sys_vec(system->get_best_feature().get_fset());
+            //std::cerr << "<sys>" << sys_vec.str() << "</sys>" << endl;
             scw.update( loss, gold_vec.merge(gold_topic_vec));
             scw.update( -loss, sys_vec);
         }else{
             cerr << "update failed" << sentence << endl;
             return 1;
         }
-    }else{//パーセプトロン
+    }else{//パーセプトロン 
         sentence->minus_feature_from_weight(weight.get_umap()); // - prediction
         gold->get_feature()->plus_feature_from_weight(weight.get_umap()); // + gold standard
         if (WEIGHT_AVERAGED) { // for average
@@ -191,11 +192,15 @@ bool Tagger::read_gold_data(const char *gsd_file) {//{{{
             if(it->size()>0)
                 new_sentence->lookup_gold_data(*it);
         }
-
+            
         if( param->beam ){//beam オプション
             new_sentence->find_best_beam(); // tri-gram 素性を抽出するために beam の方を呼ぶ;
-            new_sentence->set_feature();
+            new_sentence->set_feature_beam(); // beam のベストの素性を sentence にコピーする;
             new_sentence->set_gold_nodes_beam();
+        }else if(param->use_so){
+            new_sentence->find_best_path_so(); 
+            new_sentence->set_feature_so();
+            new_sentence->set_gold_nodes();
         }else{
             new_sentence->find_best_path(); 
             new_sentence->set_feature();
@@ -204,7 +209,7 @@ bool Tagger::read_gold_data(const char *gsd_file) {//{{{
         
         new_sentence->clear_nodes();
         add_one_sentence_for_train(new_sentence);
-        //new_sentence->feature_print();
+        //new_sentence->feature_print();// trigram 素性もできている
         sentences_for_train_num++;
     }
         

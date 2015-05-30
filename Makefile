@@ -2,7 +2,7 @@
 CXX := g++
 #CXXFLAGS := -O3 -Wall # -g
 CXXFLAGS := --std=c++1y -g3 -O3 -m64 -Wall -Wl,-rpath /share/usr-x86_64/lib64/ # -pg
-CXXFLAGS_G := --std=c++1y -g3 -fno-inline -g -m64 -WAll # -pg
+CXXFLAGS_G := --std=c++1y -g3 -fno-inline -g -m64 -Wall  -Wl,-rpath /share/usr-x86_64/lib64/ # -pg
 
 #ifdef LD_RUN_PATH
 #CXXFLAGS := $(CXXFLAGS) -Wl,-rpath $(LD_RUN_PATH)
@@ -23,6 +23,9 @@ MKDARTS_HEADERS := tagger.h pos.h
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 %.og: %.cc $(HEADERS)
+	$(CXX) $(CXXFLAGS_G) -c -o $@ $<
+
+%.og: %.cpp $(HEADERS)
 	$(CXX) $(CXXFLAGS_G) -c -o $@ $<
 
 %.ot: %.cc $(HEADERS)
