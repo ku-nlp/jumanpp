@@ -71,7 +71,7 @@ protected:
     int filetype;
     
     int use_lmprob;
-    File* mem_lmprob;
+    //File* mem_lmprob;
     real lambda;
     real gradient_cutoff;
     

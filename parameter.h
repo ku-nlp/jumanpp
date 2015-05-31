@@ -16,6 +16,7 @@ class Parameter {
     bool use_so;
     bool trigram;
     bool rnnlm;
+    bool srilm;
     bool lpenalty=false;
     double rweight;
     double lweight;
@@ -59,6 +60,10 @@ class Parameter {
     }
     int set_rnnlm(bool in_rnnlm){
         rnnlm = in_rnnlm;
+        return 0;
+    }
+    int set_srilm(bool in_srilm){
+        srilm = in_srilm;
         return 0;
     }
     int set_rweight(double rvalue){
