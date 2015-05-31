@@ -3,6 +3,12 @@
 #include "tagger.h"
 #include "cmdline.h"
 #include "sentence.h"
+#include <memory.h>
+
+namespace SRILM {
+#include "srilm/Ngram.h"
+#include "srilm/Vocab.h"
+}
 
 bool MODE_TRAIN = false;
 bool WEIGHT_AVERAGED = false;
@@ -13,6 +19,7 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     option.add<std::string>("feature", 'f', "feature template filename", false, "data/feature.def");
     option.add<std::string>("train", 't', "training filename", false, "data/train.txt");
     option.add<std::string>("rnnlm", 'r', "rnnlm filename", false, "data/rnnlm.model");
+    option.add<std::string>("srilm", 'I', "srilm filename", false, "srilm.arpa");
     option.add<unsigned int>("iteration", 'i', "iteration number for training", false, 10);
     option.add<unsigned int>("unk_max_length", 'l', "maximum length of unknown word detection", false, 7);
     option.add<unsigned int>("lattice", 'L', "output lattice format",false, 1);
@@ -104,6 +111,7 @@ int main(int argc, char** argv) {//{{{
     normal_param.set_nbest(true);// nbest を利用するよう設定
     normal_param.set_N(10); // 10-best に設定
     param.set_rnnlm(option.exist("rnnlm"));
+    param.set_srilm(option.exist("srilm"));
     Morph::Tagger tagger(&param);
     Morph::Node::set_param(&param);
    
@@ -124,7 +132,29 @@ int main(int argc, char** argv) {//{{{
         Morph::Sentence::init_rnnlm(&rnnlm);
     }
 
-        
+    SRILM::Vocab *vocab;
+    SRILM::Ngram *ngramLM;
+    if(option.exist("srilm")){
+        vocab = new SRILM::Vocab;
+        vocab->unkIsWord() = true; // use unknown <unk> 
+        //File file(vocabFile, "r"); // vocabFile
+        //vocab->read(file); //オプションでは指定してない
+        ngramLM = new SRILM::Ngram(*vocab, 3); //order = 3,or 4?
+
+        std::string lmfile = "./srilm.vocab";
+        SRILM::File file(lmfile.c_str(), "r");//
+        bool limitVocab = false; //?
+
+	    if (!ngramLM->read(file, limitVocab)) {
+            cerr << "format error in lm file " << lmfile << endl;
+            exit(1);
+	    }
+
+        Morph::Sentence::init_srilm(ngramLM, vocab);
+        //std::make_unique<SRILM::Vocab>(SRILM::Vocab());
+        //std::make_unique<Ngram::Ngram> srilm(Ngram::Ngram())
+    }
+
     if (MODE_TRAIN) {//学習モード{{{
         std::cerr << "done" << std::endl;
         if(option.exist("lda")){

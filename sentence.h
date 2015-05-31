@@ -12,6 +12,11 @@
 #include <memory>
 #include "rnnlm/rnnlmlib.h"
 
+namespace SRILM {
+#include "srilm/Ngram.h"
+#include "srilm/Vocab.h"
+}
+
 namespace Morph {
 
 class Sentence {//{{{
@@ -35,9 +40,12 @@ class Sentence {//{{{
             
     static std::shared_ptr<RNNLM::context> initial_context; 
     static RNNLM::CRnnLM* rnnlm;
+    static SRILM::Ngram*  srilm;
+    static SRILM::Vocab*  vocab;
     explicit Sentence(const Sentence &s){ };
   public:
     static void init_rnnlm(RNNLM::CRnnLM* model);
+    static void init_srilm(SRILM::Ngram* model, SRILM::Vocab* vocab);
     Sentence(std::vector<Node *> *in_begin_node_list, std::vector<Node *> *in_end_node_list, std::string &in_sentence, Dic *in_dic, FeatureTemplateSet *in_ftmpl, Parameter *in_param);
     Sentence(size_t max_byte_length, std::vector<Node *> *in_begin_node_list, std::vector<Node *> *in_end_node_list, Dic *in_dic, FeatureTemplateSet *in_ftmpl, Parameter *in_param);
     void init(size_t max_byte_length, std::vector<Node *> *in_begin_node_list, std::vector<Node *> *in_end_node_list, Dic *in_dic, FeatureTemplateSet *in_ftmpl, Parameter *in_param);

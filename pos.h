@@ -9,7 +9,8 @@ class Pos {
     unsigned long count;
     std::unordered_map<std::string, unsigned long> dic;
     std::unordered_map<unsigned long, std::string> rdic;
-  public:
+
+   public:
     Pos();
 
     unsigned long get_id(const std::string &pos_str);
@@ -18,7 +19,6 @@ class Pos {
     bool write_pos_list(const std::string &pos_filename);
     bool read_pos_list(const std::string &pos_filename);
 };
-
 }
 
 #endif
