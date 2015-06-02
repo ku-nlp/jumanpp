@@ -1426,8 +1426,7 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
                 if (param->rnnlm) {
                     rnn_score =
                         (param->rweight) *
-                        rnnlm->test_word(l_token_with_state.context.get(),
-                                         &new_c, *(r_node->base));
+                        rnnlm->test_word(l_token_with_state.context.get(), &new_c, (*r_node->spos == UNK_POS)?*(r_node->original_surface):*(r_node->base));
                     context_score += rnn_score;
 
                     if (param->debug)
