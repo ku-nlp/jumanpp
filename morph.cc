@@ -5,10 +5,10 @@
 #include "sentence.h"
 #include <memory.h>
 
-namespace SRILM {
+//namespace SRILM {
 #include "srilm/Ngram.h"
 #include "srilm/Vocab.h"
-}
+//}
 
 bool MODE_TRAIN = false;
 bool WEIGHT_AVERAGED = false;
@@ -132,25 +132,38 @@ int main(int argc, char** argv) {//{{{
         Morph::Sentence::init_rnnlm(&rnnlm);
     }
 
-    SRILM::Vocab *vocab;
-    SRILM::Ngram *ngramLM;
+    //SRILM::
+        Vocab *vocab;
+    //SRILM::
+        Ngram *ngramLM;
     if(option.exist("srilm")){
-        vocab = new SRILM::Vocab;
+        vocab = new Vocab;
         vocab->unkIsWord() = true; // use unknown <unk> 
         //File file(vocabFile, "r"); // vocabFile
         //vocab->read(file); //オプションでは指定してない
-        ngramLM = new SRILM::Ngram(*vocab, 3); //order = 3,or 4?
+        ngramLM = new Ngram(*vocab, 3); //order = 3,or 4?
 
-        std::string lmfile = "./srilm.vocab";
-        SRILM::File file(lmfile.c_str(), "r");//
+        std::string lmfile = option.get<std::string>("srilm"); // "./srilm.vocab";
+        //SRILM::
+        File file(lmfile.c_str(), "r");//
         bool limitVocab = false; //?
 
 	    if (!ngramLM->read(file, limitVocab)) {
             cerr << "format error in lm file " << lmfile << endl;
             exit(1);
 	    }
+        //ngramLM->skipOOVs() = true; 
+        ngramLM->linearPenalty() = true; // 未知語のスコアの付け方を変更
 
         Morph::Sentence::init_srilm(ngramLM, vocab);
+
+//        std::cerr << "num_vocab: " << vocab->numWords() << endl;
+//        std::cerr << "ind(人): " << vocab->getIndex("人") << std::endl;
+//        std::cerr << "word(ind(人)): " << vocab->getWord(vocab->getIndex("人")) << std::endl;
+//        
+//        std::cerr << "ind(人): " << vocab->getIndex("人") << std::endl;
+//        std::cerr << "word(ind(人)): " << vocab->getWord(vocab->getIndex("人")) << std::endl;
+
         //std::make_unique<SRILM::Vocab>(SRILM::Vocab());
         //std::make_unique<Ngram::Ngram> srilm(Ngram::Ngram())
     }

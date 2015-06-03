@@ -18,6 +18,10 @@
 #include "fastexp.h"
 #include "rnnlmlib.h"
 
+#ifndef exp10
+    #define exp10(x) pow((double)10, (x))
+#endif
+
 //基本全部の行列を計算する, ここからここまでとかは厳しい
 // 現在のメモリ配置をそのままにするなら，転置オプションを使うのが良さそう
 int cublasSgemv(void* handle, 
