@@ -1,7 +1,7 @@
 #include "common.h"
+#include "cmdline.h"
 #include "feature.h"
 #include "tagger.h"
-#include "cmdline.h"
 #include "sentence.h"
 #include <memory.h>
 
