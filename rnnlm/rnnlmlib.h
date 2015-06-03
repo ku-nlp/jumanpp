@@ -11,6 +11,7 @@
 #define _RNNLMLIB_H_
 
 #include <vector>
+#include <math.h>
 
 namespace RNNLM{
 

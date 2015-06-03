@@ -34,8 +34,8 @@ std::string BOS_STRING = BOS;
 std::string EOS_STRING = EOS;
 std::shared_ptr<RNNLM::context> Sentence::initial_context;
 RNNLM::CRnnLM *Sentence::rnnlm;
-SRILM::Ngram *Sentence::srilm;
-SRILM::Vocab *Sentence::vocab;
+Ngram *Sentence::srilm;
+Vocab *Sentence::vocab;
 
 void Sentence::init_rnnlm(RNNLM::CRnnLM *in_rnnlm) {
     rnnlm = in_rnnlm;
@@ -43,7 +43,8 @@ void Sentence::init_rnnlm(RNNLM::CRnnLM *in_rnnlm) {
     rnnlm->get_initial_context(&tmp);
     initial_context = std::make_shared<RNNLM::context>(tmp);
 }
-void Sentence::init_srilm(SRILM::Ngram *model, SRILM::Vocab *in_vocab) {
+void Sentence::init_srilm(Ngram *model, Vocab *in_vocab) {
+    srand48((long)1);
     srilm = model;
     vocab = in_vocab;
 }
@@ -1439,19 +1440,29 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
                     unsigned int hist_size =
                         l_token_with_state.node_history.size();
                     unsigned int last_word = vocab->getIndex(
-                        l_token_with_state.node_history.back()->base->c_str());
-                    unsigned int last_but_one_word = vocab->getIndex(
-                        l_token_with_state.node_history[hist_size - 3]
-                            ->base->c_str());
+                        l_token_with_state.node_history.back()->base->c_str(), vocab->getIndex(Vocab_Unknown)); //<BOS>とかも変換する必要がある
+                    //std::cerr << "hist_size: " << hist_size << std::endl;
+                    unsigned int last_but_one_word = (hist_size > 3)? vocab->getIndex( 
+                        l_token_with_state.node_history[hist_size - 3] ->base->c_str()): vocab->getIndex("<s>"); 
+                    auto cur_base = (*r_node->spos == UNK_POS)?*(r_node->original_surface):*(r_node->base);
                     unsigned int cur_word =
-                        vocab->getIndex((r_node->base)->c_str());
+                        vocab->getIndex(cur_base.c_str(), vocab->getIndex(Vocab_Unknown));
                     unsigned int context_word[] = {
                         last_word,
                         last_but_one_word};  // l_token_with_state.context
                                              // からvocab.getIndex(word)
                                              // で取り出す
-                    srilm_score = (param->rweight) *
-                                  srilm->wordProb(cur_word, context_word);
+
+                    //std::cout << "cur_word(" << *r_node->base <<  ") = "  << cur_word << ", last_word = " << last_word << ", last_but_one_word = " << last_but_one_word << std::endl;
+                        
+                    // LogP Ngram::wordProb_Lpenalty(VocabIndex word, double Lpenalty, double cpenalty, int length,  const VocabIndex *context) {
+                    //srilm_score = (param->rweight) * srilm->wordProb(cur_word, context_word);
+
+                    //context_word の扱い, １つ前の単語，２つ前の単語, ... , n 前の単語
+                    if (cur_word == vocab->unkIndex() || (context_word[0] == vocab->unkIndex()) || (context_word[1] == vocab->unkIndex())) 
+                        srilm_score = ( -5.0 -(param->lweight * cur_base.length()/3.0)); //線形ペナルティ
+                    else
+                        srilm_score = (param->rweight) * srilm->wordProb(cur_word, context_word);
                     context_score += srilm_score;
                 }
 
