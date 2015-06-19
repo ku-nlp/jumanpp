@@ -1449,7 +1449,9 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
                         vocab->getIndex(cur_base.c_str(), vocab->getIndex(Vocab_Unknown));
                     unsigned int context_word[] = {
                         last_word,
-                        last_but_one_word};  // l_token_with_state.context
+                        last_but_one_word,
+                        Vocab_None
+                    };  // l_token_with_state.context
                                              // からvocab.getIndex(word)
                                              // で取り出す
 
@@ -1460,9 +1462,13 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
 
                     //context_word の扱い, １つ前の単語，２つ前の単語, ... , n 前の単語
                     if (cur_word == vocab->unkIndex() || (context_word[0] == vocab->unkIndex()) || (context_word[1] == vocab->unkIndex())) 
-                        srilm_score = ( -5.0 -(param->lweight * cur_base.length()/3.0)); //線形ペナルティ
-                    else
+                        srilm_score = (param->rweight) * ( -5.0 -(param->lweight * cur_base.length()/3.0)); //線形ペナルティ
+                    else{
+                        //std::cerr << "wordProb(" << cur_word << "," << context_word[0] << "," << context_word[1] <<  ")" << std::endl;
+                        //srilm->setorder(2);
+                        //std::cerr << "set order" << std::endl;
                         srilm_score = (param->rweight) * srilm->wordProb(cur_word, context_word);
+                    }
                     context_score += srilm_score;
                 }
 

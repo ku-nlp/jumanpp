@@ -8,7 +8,7 @@ while line=gets
   sp = line.split(/[ \n]/)
   sp.each{|fmrp|
     msp = fmrp.split('_')
-    print "#{msp[2]} "
+    print "#{msp[2]}"
   }
   print "\n"
 end

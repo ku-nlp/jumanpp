@@ -153,7 +153,7 @@ int main(int argc, char** argv) {//{{{
             exit(1);
 	    }
         //ngramLM->skipOOVs() = true; 
-        ngramLM->linearPenalty() = true; // 未知語のスコアの付け方を変更
+        //ngramLM->linearPenalty() = true; // 未知語のスコアの付け方を変更
 
         Morph::Sentence::init_srilm(ngramLM, vocab);
 
