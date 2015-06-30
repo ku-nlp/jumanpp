@@ -252,6 +252,10 @@ void Tagger::print_N_best_path() {//{{{
     sentence->print_N_best_path();
 }//}}}
 
+void Tagger::print_best_beam_juman() {//{{{
+    sentence->print_best_beam_juman();
+}//}}}
+
 void Tagger::print_best_path_with_rnn(RNNLM::CRnnLM& model){//{{{
     sentence->print_best_path_with_rnn(model);
 }//}}}

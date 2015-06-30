@@ -48,6 +48,7 @@ class Tagger {
 	void print_best_path_with_rnn(RNNLM::CRnnLM& model);
     void print_N_best_with_rnn(RNNLM::CRnnLM& model); 
     void print_N_best_path();
+    void print_best_beam_juman(); 
     void print_beam();
     void print_best_beam();
     void print_lattice();

@@ -1427,7 +1427,7 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
                 if (param->rnnlm) {
                     rnn_score =
                         (param->rweight) *
-                        rnnlm->test_word(l_token_with_state.context.get(), &new_c, (*r_node->spos == UNK_POS)?*(r_node->original_surface):*(r_node->base));
+                        rnnlm->test_word(l_token_with_state.context.get(), &new_c, (*r_node->spos == UNK_POS|| *r_node->spos == "数詞" )?*(r_node->original_surface):*(r_node->base));
                     context_score += rnn_score;
 
                     if (param->debug)
@@ -1787,6 +1787,82 @@ void Sentence::print_best_beam() {  //{{{
         // cout << "# score:" << token.score << endl;
         std::cout << output_string_buffer << std::endl;
         output_string_buffer.clear();
+
+        return;
+    }
+}  //}}}
+
+void Sentence::print_best_beam_juman() {  //{{{
+    std::stringstream output_string_buffer;
+
+    for (auto &token :
+         (*begin_node_list)[length]->bq.beam) {  //最後は必ず EOS のみ
+        std::vector<Node *> result_morphs = token.node_history;
+
+        size_t printed_num = 0;
+        for (auto it = result_morphs.begin(); it != result_morphs.end(); it++) {
+            auto & node = (*it);
+            if ((*it)->stat != MORPH_BOS_NODE &&
+                (*it)->stat != MORPH_EOS_NODE) {
+
+                if (*node->reading == "*"|| *node->spos == UNK_POS || *node->spos == "数詞") {  //読み不明であれば表層を使う
+                    output_string_buffer << *node->original_surface << " "
+                        << *node->original_surface << " "
+                        << *node->original_surface << " ";
+                } else {
+                    output_string_buffer << *node->original_surface << " " << *node->reading
+                         << " " << *node->base << " ";
+                }
+                if (*node->spos == UNK_POS) {
+                    // 品詞 品詞id
+                    output_string_buffer << "未定義語" << " " << Dic::pos_map.at( "未定義語") << " ";
+                    // 細分類 細分類id
+                    output_string_buffer << "その他 " << Dic::spos_map.at( "その他") << " ";
+                } else {
+                    // 品詞 品詞id
+                    output_string_buffer << *node->pos << " " << Dic::pos_map.at(*node->pos) << " ";
+                    // 細分類 細分類id
+                    output_string_buffer << *node->spos << " " << Dic::spos_map.at(*node->spos) << " ";
+                }
+                // 活用型 活用型id
+                if (Dic::katuyou_type_map.count(*node->form_type) == 0)  //無い場合
+                    output_string_buffer << "*" << " " << 0 << " ";
+                else
+                    output_string_buffer << *node->form_type << " " << Dic::katuyou_type_map.at(*node->form_type) << " ";
+                // 活用系 活用系id
+                auto type_and_form = (*node->form_type + ":" + *node->form);
+                if (Dic::katuyou_form_map.count(type_and_form) == 0)  //無い場合
+                    output_string_buffer << "*" << " " << 0 << " ";
+                else
+                    output_string_buffer << *node->form << " "
+                         << Dic::katuyou_form_map.at(type_and_form) << " ";
+
+                // 意味情報を再構築して表示
+                if (*node->representation != "*" ||
+                    *node->semantic_feature != "NIL" ||
+                    *node->spos == UNK_POS) {
+                    std::string delim = "";
+                    output_string_buffer << '"';
+                    if (*node->representation != "*") {
+                        output_string_buffer << "代表表記:" << *node->representation;  //*ならスキップ
+                        delim = " ";
+                    }
+                    if (*node->semantic_feature != "NIL") {
+                        output_string_buffer << delim << *node->semantic_feature; // NILならNIL
+                        delim = " ";
+                    }
+                    if (*node->spos == UNK_POS) {
+                        output_string_buffer << delim << "品詞推定:" << *node->pos << ":" << *node->spos;
+                        delim = " ";
+                    }
+                    output_string_buffer << std::string("\"") << endl;
+                } else {
+                    output_string_buffer << std::string("NIL") << endl;
+                }
+            }
+        }
+            
+        std::cout << output_string_buffer.str() << "EOS" << std::endl;
 
         return;
     }
