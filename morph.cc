@@ -37,6 +37,7 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     option.add<unsigned int>("beam", 'b', "use beam search",false,1);
     option.add<unsigned int>("rbeam", 'B', "use beam search and reranking",false,1);
     option.add("oldstyle", 'o', "print old style lattice");
+    option.add("juman", 'j', "print juman style");
     option.add("averaged", 'a', "use averaged perceptron for training");
     option.add("total", 'T', "use total similarity for LDA");
     option.add("ambiguous", 'A', "output ambiguous words on lattice");
@@ -46,16 +47,16 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     option.add("version", 'v', "print version");
     option.add("help", 'h', "print this message");
     option.parse_check(argc, argv);
-    if (option.exist("version")) {
+    if (option.exist("version")) {//{{{
         cout << "KKN " << VERSION << endl;
         exit(0);
-    }
-    if (option.exist("train")) {
+    }//}}}
+    if (option.exist("train")) {//{{{
         MODE_TRAIN = true;
-    }
-    if (option.exist("averaged")) {
+    }//}}}
+    if (option.exist("averaged")) {//{{{
         WEIGHT_AVERAGED = true;
-    }
+    }//}}}
 }//}}}
 
 // unit_test 時はmainを除く
@@ -136,7 +137,7 @@ int main(int argc, char** argv) {//{{{
         Vocab *vocab;
     //SRILM::
         Ngram *ngramLM;
-    if(option.exist("srilm")){
+    if(option.exist("srilm")){//{{{
         vocab = new Vocab;
         vocab->unkIsWord() = true; // use unknown <unk> 
         //File file(vocabFile, "r"); // vocabFile
@@ -166,7 +167,7 @@ int main(int argc, char** argv) {//{{{
 
         //std::make_unique<SRILM::Vocab>(SRILM::Vocab());
         //std::make_unique<Ngram::Ngram> srilm(Ngram::Ngram())
-    }
+    }//}}}
 
     if (MODE_TRAIN) {//学習モード{{{
         std::cerr << "done" << std::endl;
@@ -235,6 +236,7 @@ int main(int argc, char** argv) {//{{{
         while (getline(is ? is : cin, buffer)) {
             if (buffer.length() <= 1 || buffer.at(0) == '#') { // empty line or comment line
                 cout << buffer << endl;
+                buffer.clear();
                 continue;
             }
             tagger.new_sentence_analyze(buffer);
@@ -247,7 +249,10 @@ int main(int argc, char** argv) {//{{{
                 if(option.exist("beam")){
                     tagger.print_beam();
                 }else if(option.exist("rbeam")){
-                    tagger.print_best_beam();
+                    if(option.exist("juman"))
+                        tagger.print_best_beam_juman();
+                    else
+                        tagger.print_best_beam();
                 }else if(option.exist("nbest") && option.exist("rnnlm")){
                     tagger.print_N_best_with_rnn(rnnlm);
                 }else if(option.exist("nbest") && !option.exist("rnnlm")){
@@ -255,7 +260,10 @@ int main(int argc, char** argv) {//{{{
                 }else if(option.exist("rerank") && option.exist("rnnlm")){
                     tagger.print_best_path_with_rnn(rnnlm);
                 }else{
-                    tagger.print_N_best_path();
+                    if(option.exist("juman"))
+                        tagger.print_best_beam_juman();
+                    else
+                        tagger.print_N_best_path();
                 }
             }
             tagger.sentence_clear();
