@@ -148,29 +148,43 @@ void Sentence::feature_print() {  //{{{
 
 // make unknown word candidates of specified length if it's not found in dic
 Node *Sentence::make_unk_pseudo_node_list_by_dic_check(const char *start_str, unsigned int pos, Node *r_node, unsigned int specified_char_num) {  //{{{
-    bool find_this_length = false;
-    Node *tmp_node = r_node;
-    while (tmp_node) {
-        if (tmp_node->char_num == specified_char_num) {
-            find_this_length = true;
-            break;
-        }
-        tmp_node = tmp_node->bnext;
-    }
 
-    if (!find_this_length) {  // if a node of this length is not found in dic
-        Node *result_node = dic->make_unk_pseudo_node_list(
-            start_str + pos, specified_char_num, specified_char_num);
-        if (result_node) {
-            if (r_node) {
-                tmp_node = result_node;
-                while (tmp_node->bnext) tmp_node = tmp_node->bnext;
-                tmp_node->bnext = r_node;
-            }
-            return result_node;
+    auto result_node = dic->make_unk_pseudo_node_list_some_pos_by_dic_check(start_str + pos, specified_char_num, MORPH_DUMMY_POS, &(param->unk_pos), r_node);
+
+    if(result_node){
+        auto tmp_node = result_node;
+        while (tmp_node->bnext) {
+            tmp_node = tmp_node->bnext;
+            std::cout << tmp_node->string_for_print << std::endl;
         }
-    }
-    return r_node;
+        tmp_node->bnext = r_node;
+        return result_node;
+    }else
+        return r_node;
+    
+//
+//    bool find_this_length = false;
+//    Node *tmp_node = r_node;
+//    while (tmp_node) {
+//        if (tmp_node->char_num == specified_char_num) {
+//            find_this_length = true;
+//            break;
+//        }
+//        tmp_node = tmp_node->bnext;
+//    }
+//
+//    if (!find_this_length) {  // if a node of this length is not found in dic
+//        Node *result_node = dic->make_unk_pseudo_node_list( start_str + pos, specified_char_num, specified_char_num);
+//        if (result_node) {
+//            if (r_node) {
+//                tmp_node = result_node;
+//                while (tmp_node->bnext) tmp_node = tmp_node->bnext;
+//                tmp_node->bnext = r_node;
+//            }
+//            return result_node;
+//        }
+//    }
+//    return r_node;
 }  //}}}
 
 // 現在地までの範囲を未定義語として生成 (任意の単語数の未定義語を生成する)
@@ -180,8 +194,7 @@ Node *Sentence::make_unk_pseudo_node_list_from_previous_position(const char *sta
         while (*node_p) {
             node_p = &((*node_p)->bnext);
         }
-        *node_p = dic->make_unk_pseudo_node_list(start_str + previous_pos, 2,
-                                                 param->unk_max_length);
+        *node_p = dic->make_pseudo_node_list_in_range(start_str + previous_pos, 2, param->unk_max_length);
         find_reached_pos(previous_pos, *node_p);
         set_end_node_list(previous_pos, *node_p);
         return *node_p;
@@ -194,8 +207,7 @@ Node *Sentence::make_unk_pseudo_node_list_from_previous_position(const char *sta
 // 出来なくなった時点から未定義語扱いにしてパスをつなげる)
 Node *Sentence::make_unk_pseudo_node_list_from_some_positions(const char *start_str, unsigned int pos, unsigned int previous_pos) {  //{{{
     Node *node;
-    node = dic->make_unk_pseudo_node_list(start_str + pos, 1,
-                                          param->unk_max_length);
+    node = dic->make_pseudo_node_list_in_range(start_str + pos, 1, param->unk_max_length);
     set_begin_node_list(pos, node);
     find_reached_pos(pos, node);
 
@@ -239,7 +251,7 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, co
         if (!result_node) {
             result_node = dic->make_specified_pseudo_node_by_dic_check(
                 start_str + pos, specified_length, specified_pos,
-                &(param->unk_pos), TYPE_FAMILY_ALPH_PUNC);
+                &(param->unk_pos), TYPE_FAMILY_ALPH_PUNC);//r_node 指定してない
         }
 
         // 漢字
@@ -249,7 +261,7 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, co
         if (!result_node) {
             result_node = dic->make_specified_pseudo_node_by_dic_check(
                 start_str + pos, specified_length, specified_pos,
-                &(param->unk_pos), TYPE_KATAKANA, nullptr);
+                &(param->unk_pos), TYPE_KATAKANA, nullptr); //ここも
         }
     }
 
@@ -307,12 +319,23 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(  //{{{
     // Node *kanji_result_node = NULL;
 
     // まず探す
-    auto lattice_result = cl.da_search_from_position(
-        dic->darts, char_num);  // こっちは何文字目かが必要
+    auto lattice_result = cl.da_search_from_position( dic->darts, char_num);  // こっちは何文字目かが必要
+
     // 以下は何バイト目かが必要
     // look up a dictionary with common prefix search
-    Node *dic_node = dic->lookup_lattice(lattice_result, start_str + pos,
-                                         specified_length, specified_pos);
+    Node *dic_node = dic->lookup_lattice(lattice_result, start_str + pos, specified_length, specified_pos);
+
+    // オノマトペ処理
+    Node *r_onomatope_node = dic->recognize_onomatopoeia(start_str + pos);
+    if (r_onomatope_node != NULL) {
+        if (dic_node) {  // 辞書の末尾につける
+            Node *tmp_node = dic_node;
+            while (tmp_node->bnext) tmp_node = tmp_node->bnext;
+            tmp_node->bnext = r_onomatope_node;
+        } else {
+            dic_node = r_onomatope_node;
+        }
+    }
 
     // 訓練データで，長さが分かっている場合か，未知語として選択されていない範囲なら
     // 同じ文字種が続く範囲を一語として入れてくれる
@@ -322,23 +345,23 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(  //{{{
             start_str + pos, specified_length, specified_pos,
             &(param->unk_figure_pos), TYPE_FAMILY_FIGURE, nullptr);
 
-        // alphabet
-        if (!result_node) {
-            result_node = dic->make_specified_pseudo_node_by_dic_check(
-                start_str + pos, specified_length, specified_pos,
-                &(param->unk_pos), TYPE_FAMILY_ALPH_PUNC);
-        }
-
-        // 漢字
-
-        // カタカナ
-        // TODO:切れるところまでで未定義語を作る
-        if (!result_node) {
-            result_node = dic->make_specified_pseudo_node_by_dic_check(
-                start_str + pos, specified_length, specified_pos,
-                &(param->unk_pos), TYPE_KATAKANA, nullptr);
-        }
-        // ひらがな
+//        // alphabet
+//        if (!result_node) {
+//            result_node = dic->make_specified_pseudo_node_by_dic_check(
+//                start_str + pos, specified_length, specified_pos,
+//                &(param->unk_pos), TYPE_FAMILY_ALPH_PUNC);
+//        }
+//
+//        // 漢字
+//
+//        // カタカナ
+//        // TODO:切れるところまでで未定義語を作る
+//        if (!result_node) {
+//            result_node = dic->make_specified_pseudo_node_by_dic_check(
+//                start_str + pos, specified_length, specified_pos,
+//                &(param->unk_pos), TYPE_KATAKANA, nullptr);
+//        }
+//        // ひらがな
         if (!specified_length && result_node)  // only prediction
             find_reached_pos_of_pseudo_nodes(pos, result_node);
     }
@@ -468,42 +491,48 @@ bool Sentence::lookup() {  //{{{
     // TODO:ラティスを作った後，空いている pos 間を埋める未定義語を生成
     for (unsigned int pos = 0; pos < length;
          pos += utf8_bytes((unsigned char *)(sentence_c_str + pos))) {
-        if ((*end_node_list)[pos] ==
-            NULL) {  // pos にたどり着くノードが１つもない
+        if ((*end_node_list)[pos] == NULL) {  // pos にたどり着くノードが１つもない
             if (param->unknown_word_detection && pos > 0 && reached_pos <= pos)
-                make_unk_pseudo_node_list_from_previous_position(sentence_c_str,
-                                                                 previous_pos);
+                make_unk_pseudo_node_list_from_previous_position(sentence_c_str, previous_pos);
         } else {
             // make figure/alphabet nodes and look up a dictionary
-            Node *r_node = lookup_and_make_special_pseudo_nodes_lattice(
-                cl, sentence_c_str, char_num, pos, 0, NULL);
+            Node *r_node = lookup_and_make_special_pseudo_nodes_lattice(cl, sentence_c_str, char_num, pos, 0, NULL);
 
-            // オノマトペ処理
-            Node *r_onomatope_node =
-                dic->recognize_onomatopoeia(sentence_c_str + pos);
-            if (r_onomatope_node != NULL) {
-                if (r_node) {  // 辞書の末尾につける
-                    Node *tmp_node = r_node;
-                    while (tmp_node->bnext) tmp_node = tmp_node->bnext;
-                    tmp_node->bnext = r_onomatope_node;
-                } else {
-                    r_node = r_onomatope_node;
-                }
-            }
 
             set_begin_node_list(pos, r_node);
             find_reached_pos(pos, r_node);
-            if (param
-                    ->unknown_word_detection) {  // make unknown word candidates
+            if (param->unknown_word_detection) {  // make unknown word candidates
                 if (reached_pos <= pos) {        // ≒ pos で始まる単語が１つも無い場合
                     // cerr << ";; Cannot connect at position:" << pos << " ("
                     // << in_sentence << ")" << endl;
-                    r_node = make_unk_pseudo_node_list_from_some_positions(
-                        sentence_c_str, pos, previous_pos);
+                    Node *result_node = NULL;
+                    r_node = make_unk_pseudo_node_list_from_some_positions(sentence_c_str, pos, previous_pos);
+                         
+                    Node *tmp_node = r_node;
+                    while (tmp_node->bnext)  //末尾にシーク
+                        tmp_node = tmp_node->bnext;
+                    
+                    // カタカナなどの未定義語処理(仮
+                    // alphabet
+                    result_node = dic->make_specified_pseudo_node_by_dic_check(
+                            sentence_c_str, 
+                            0, 
+                            nullptr,
+                            &(param->unk_pos), 
+                            TYPE_FAMILY_ALPH_PUNC,
+                            nullptr);
+                        
+                    // カタカナ
+                    if (!result_node) {
+                        result_node = dic->make_specified_pseudo_node_by_dic_check( sentence_c_str, 0, nullptr, &(param->unk_pos), TYPE_KATAKANA, nullptr);
+                    }
+                    if (result_node){  
+                        find_reached_pos_of_pseudo_nodes(pos, result_node);
+                        tmp_node->bnext = result_node;
+                    }
                 } else if (r_node && pos >= reached_pos_of_pseudo_nodes) {
                     for (unsigned int i = 2; i <= param->unk_max_length; i++) {
-                        r_node = make_unk_pseudo_node_list_by_dic_check(
-                            sentence_c_str, pos, r_node, i);
+                        r_node = make_unk_pseudo_node_list_by_dic_check(sentence_c_str, pos, r_node, i);
                     }
                     set_begin_node_list(pos, r_node);
                 }
@@ -979,6 +1008,265 @@ void Sentence::print_unified_lattice() {  //{{{
     cout << "EOS" << endl;
 }  //}}}
 
+void Sentence::print_unified_lattice_rbeam(unsigned int nbest) {  //{{{
+    mark_nbest_rbeam(nbest);
+
+    unsigned int char_num = 0;
+    // - 2 0 0 1 部屋 部屋/へや へや 部屋 名詞 6 普通名詞 1 * 0 * 0
+    // "カテゴリ:場所-施設..."
+    // - 15 2 2 2 に * に に 助詞 9 格助詞 1 * 0 * 0 NIL
+    // wordmark ID fromIDs char_index_begin char_index_end surface rep_form
+    // reading pos posid spos sposid form_type typeid form formid imis
+
+    std::vector<std::vector<int>> num2id(length + 1);  //多めに保持する
+    for (unsigned int pos = 0; pos < length;
+         pos += utf8_bytes((unsigned char *)(sentence_c_str + pos))) {
+        Node *node = (*begin_node_list)[pos];
+        const std::string wordmark{
+            "-"};
+        const std::string delim{
+            "\t"};
+
+        while (node) {
+            size_t word_length = node->char_num;
+            // ID の表示
+            if (node->used_in_nbest) {  // n-best解に使われているもののみ
+                U8string ustr(*node->original_surface);
+                cout << wordmark << delim << node->id << delim;
+                num2id[char_num + word_length].push_back(
+                    node->id);                       // 現在，接続先はn-best
+                                                     // と関係なく繋がるもの全てを使用
+                if (num2id[char_num].size() == 0) {  // 無かったら 0 を出す
+                    cout << "0";
+                } else {
+                    std::string sep =
+                        "";
+                    for (auto to_id : num2id[char_num]) {
+                        cout << sep << to_id;
+                        sep =
+                            ";";
+                    }
+                }
+                cout << delim;
+                // 文字index の表示
+                cout << char_num << delim << char_num + word_length - 1
+                     << delim;
+
+                // 表層 代表表記 よみ 原形
+                if (*node->reading ==
+                    "*") {                                    //読み不明であれば表層を使う
+                    cout << *node->original_surface << delim  // 表層
+                         // 擬似代表表記を表示する
+                         << *node->original_surface << "/"
+                         << *node->original_surface << delim
+                         << *node->original_surface << delim   // 読み
+                         << *node->original_surface << delim;  // 原形
+                } else {
+                    if (*node->representation ==
+                        "*") {  // Wikipedia 数詞など
+                        cout << *node->original_surface << delim
+                             << *node->original_surface << "/" << *node->reading
+                             << delim << *node->reading << delim << *node->base
+                             << delim;
+                    } else {
+                        cout << *node->original_surface << delim
+                             << *node->representation << delim << *node->reading
+                             << delim << *node->base << delim;
+                    }
+                }
+                // 品詞 品詞id 細分類 細分類id
+                if (*node->spos == UNK_POS) {
+                    cout << "未定義語" << delim << Dic::pos_map.at(
+                                                       "未定義語")
+                         << delim;
+                    if (ustr.is_katakana()) {
+                        cout << "カタカナ" << delim
+                             << Dic::spos_map.at(
+                                    "カタカナ") << delim;
+                    } else if (ustr.is_alphabet()) {
+                        cout << "アルファベット" << delim
+                             << Dic::spos_map.at(
+                                    "アルファベット") << delim;
+                    } else {
+                        cout << "その他" << delim << Dic::spos_map.at(
+                                                         "その他")
+                             << delim;
+                    }
+                } else {
+                    cout << *node->pos << delim << Dic::pos_map.at(*node->pos)
+                         << delim;
+                    cout << *node->spos << delim
+                         << Dic::spos_map.at(*node->spos) << delim;
+                }
+                // 活用型 活用型id
+                if (Dic::katuyou_type_map.count(*node->form_type) == 0) {
+                    cout << "*" << delim << "0" << delim;
+                } else {
+                    cout << *node->form_type << delim
+                         << Dic::katuyou_type_map.at(*node->form_type) << delim;
+                }
+
+                // 活用系 活用系id
+                auto type_and_form = (*node->form_type +
+                                      ":" + *node->form);
+                if (Dic::katuyou_form_map.count(type_and_form) ==
+                    0) {  //無い場合
+                    if (*node->form ==
+                        "<UNK>")
+                        cout << "*" << delim << "0" << delim;
+                    else
+                        cout << *node->form << delim << "0" << delim;
+                } else {
+                    if (*node->form ==
+                        "<UNK>") {
+                        cout << "*" << delim << "0" << delim;
+                    } else {
+                        cout << *node->form << delim
+                             << Dic::katuyou_form_map.at(type_and_form)
+                             << delim;
+                    }
+                }
+
+                // 意味情報を再構築して表示
+                if (*node->semantic_feature != "NIL" ||
+                    *node->spos == UNK_POS || ustr.is_katakana() ||
+                    ustr.is_kanji() || ustr.is_eisuu() || ustr.is_kigou()) {
+                    const std::string sep =
+                        "|";
+                    bool use_sep = false;
+
+                    if (*node->semantic_feature != "NIL") {
+                        // 一度空白で分割し,表示する
+                        size_t current = 0, found;
+                        while ((found = (*node->semantic_feature)
+                                            .find_first_of(' ', current)) !=
+                               std::string::npos) {
+                            cout << (use_sep ? sep : "")
+                                 << std::string(
+                                        (*node->semantic_feature), current,
+                                        found - current);  // NILでなければ
+                            current = found + 1;
+                            use_sep = true;
+                        }
+                        if (current == 0) {
+                            cout << (use_sep ? sep : "")
+                                 << *node->semantic_feature;
+                            use_sep = true;
+                        }
+                    }
+                    if (*node->spos == UNK_POS) {
+                        cout << (use_sep ? sep : "")
+                             << "品詞推定:" << *node->pos << ":" << *node->spos;
+                        use_sep = true;
+                    }
+                    // TODO:これ以降の処理はあとでくくり出してNode 生成時に行う
+                    bool kieisuuka = false;
+                    if (ustr.is_katakana()) {
+                        cout << (use_sep ? sep : "") << "カタカナ";
+                        use_sep = true;
+                        kieisuuka = true;
+                    }
+                    if (ustr.is_kanji()) {
+                        cout << (use_sep ? sep : "") << "漢字";
+                        use_sep = true;
+                    }
+                    if (ustr.is_eisuu()) {
+                        cout << (use_sep ? sep : "") << "英数字";
+                        use_sep = true;
+                        kieisuuka = true;
+                    }
+                    if (ustr.is_kigou()) {
+                        cout << (use_sep ? sep : "") << "記号";
+                        use_sep = true;
+                        kieisuuka = true;
+                    }
+                    if (kieisuuka) {
+                        cout << (use_sep ? sep : "") << "記英数カ";
+                    }
+                    cout << endl;
+                } else {
+                    cout << "NIL" << endl;
+                }
+
+                if (param->debug) {
+                    // デバッグ出力
+                    cout << "!\twcost(score):" << node->wcost
+                         << "\tcost(score):" << node->cost << endl;
+                    cout << "!\t" << node->debug_info[
+                                         "unigram_feature"]
+                         << endl;
+                    std::stringstream ss_debug;
+                    for (auto to_id : num2id[char_num]) {
+                        ss_debug.str(
+                            "");
+                        ss_debug << to_id << " -> " << node->id;
+                        cout << "!\t" << ss_debug.str() << ": "
+                             << node->debug_info[ss_debug.str()] << endl;
+                        cout << "!\t" << ss_debug.str() << ": "
+                             << node->debug_info[ss_debug.str() +
+                                                 ":bigram_feature"] << endl;
+
+                        // node のbeam に残っているhistoryをたどる
+                        for (auto tok : node->bq.beam) {
+                            auto hist = tok.node_history;
+                            if (hist.size() > 3 &&
+                                hist[hist.size() - 2]->id == to_id) {
+                                ss_debug.str(
+                                    "");
+                                ss_debug << hist[hist.size() - 3]->id << " -> "
+                                         << hist[hist.size() - 2]->id << " -> "
+                                         << node->id;
+                                cout << "!\t" << ss_debug.str() << ": "
+                                     << node->debug_info[ss_debug.str() +
+                                                         ":trigram_feature"]
+                                     << endl;
+                            }
+                        }
+                    }
+                    // BOS, EOS との接続の表示.. (TODO: 簡潔に書き換え)
+                    ss_debug.str(
+                        "");
+                    ss_debug << -2 << " -> " << node->id;  // BOS
+                    if (node->debug_info.find(ss_debug.str()) !=
+                        node->debug_info.end()) {
+                        cout << "!\t"
+                             << "BOS:" << ss_debug.str() << ": "
+                             << node->debug_info[ss_debug.str()] << endl;
+                    }
+                    if (node->debug_info.find(ss_debug.str() +
+                                              ":bigram_feature") !=
+                        node->debug_info.end()) {
+                        cout << "!\t"
+                             << "BOS:" << ss_debug.str() << ": "
+                             << node->debug_info[ss_debug.str() +
+                                                 ":bigram_feature"] << endl;
+                    }
+                    ss_debug.str(
+                        "");
+                    ss_debug << node->id << " -> " << -1;  // EOS
+                    if (node->debug_info.find(ss_debug.str()) !=
+                        node->debug_info.end()) {
+                        cout << "!\t"
+                             << "EOS:" << ss_debug.str() << ": "
+                             << node->debug_info[ss_debug.str()] << endl;
+                    }
+                    if (node->debug_info.find(ss_debug.str() +
+                                              ":bigram_feature") !=
+                        node->debug_info.end()) {
+                        cout << "!\t"
+                             << "EOS:" << ss_debug.str() << ": "
+                             << node->debug_info[ss_debug.str() +
+                                                 ":bigram_feature"] << endl;
+                    }
+                }
+            }
+            node = node->bnext;
+        }
+        char_num++;
+    }
+    cout << "EOS" << endl;
+}  //}}}
+
 // Node か Dic でやるべき処理(get ではなく、BOSノードの生成)
 Node *Sentence::get_bos_node() {  //{{{
     Node *bos_node = new Node;
@@ -990,9 +1278,9 @@ Node *Sentence::get_bos_node() {  //{{{
         new std::string(BOS_STRING);  // ここはdelte される
     bos_node->length = 0;
     // bos_node->isbest = 1;
-    bos_node->stat = MORPH_BOS_NODE;
-    bos_node->posid = MORPH_DUMMY_POS;
-    bos_node->pos = &(BOS_STRING);
+    bos_node->stat  = MORPH_BOS_NODE;
+    bos_node->posid = MORPH_DUMMY_POS; //TODO: これ未知語と同じ品詞扱いになっている..
+    bos_node->pos  = &(BOS_STRING);
     bos_node->spos = &(BOS_STRING);
     bos_node->form = &(BOS_STRING);
     bos_node->form_type = &(BOS_STRING);
@@ -1026,7 +1314,7 @@ Node *Sentence::get_eos_node() {  //{{{
     eos_node->length = 1;  // dummy
     // eos_node->isbest = 1;
     eos_node->stat = MORPH_EOS_NODE;
-    eos_node->posid = MORPH_DUMMY_POS;
+    eos_node->posid = MORPH_DUMMY_POS; //TODO: これも
     eos_node->pos = &(EOS_STRING);
     eos_node->spos = &(EOS_STRING);
     eos_node->form = &(EOS_STRING);
@@ -1763,8 +2051,7 @@ void Sentence::print_beam() {  //{{{
 void Sentence::print_best_beam() {  //{{{
     std::string output_string_buffer;
 
-    for (auto &token :
-         (*begin_node_list)[length]->bq.beam) {  //最後は必ず EOS のみ
+    for (auto &token : (*begin_node_list)[length]->bq.beam) {  //最後は必ず EOS のみ
         std::vector<Node *> result_morphs = token.node_history;
 
         size_t printed_num = 0;
@@ -1799,7 +2086,6 @@ void Sentence::print_best_beam_juman() {  //{{{
          (*begin_node_list)[length]->bq.beam) {  //最後は必ず EOS のみ
         std::vector<Node *> result_morphs = token.node_history;
 
-        size_t printed_num = 0;
         for (auto it = result_morphs.begin(); it != result_morphs.end(); it++) {
             auto & node = (*it);
             if ((*it)->stat != MORPH_BOS_NODE &&
@@ -1939,6 +2225,45 @@ void Sentence::mark_nbest() {  //{{{
         }
         i++;
         last_score = output_score;
+    }
+}  //}}}
+
+void Sentence::mark_nbest_rbeam(unsigned int nbest) {  //{{{
+    auto &beam = (*begin_node_list)[length]->bq.beam;
+    unsigned int traceSize = beam.size();
+    if (traceSize > nbest){
+        traceSize = nbest;
+    }
+        
+    unsigned int i = 0;
+
+    for (auto &token : (*begin_node_list)[length]->bq.beam) {  //最後は必ず EOS のみ
+        std::vector<Node *> result_morphs = token.node_history;
+        if(++i > traceSize)break;
+
+        unsigned int byte_pos = 0;
+        for (auto it = result_morphs.begin(); it != result_morphs.end(); it++) {
+            if ((*it)->stat != MORPH_BOS_NODE && (*it)->stat != MORPH_EOS_NODE) {
+                (*it)->used_in_nbest = true;
+
+                if (output_ambiguous_word) {
+                    auto tmp = (*begin_node_list)[byte_pos];
+                    // cout << *((*it)->representation) << " " << byte_pos << endl;
+                    while (tmp) {  //同じ長さ(同じ表層)で同じ品詞のものをすべて出力する
+                        if (tmp->length == (*it)->length &&
+                            tmp->posid == (*it)->posid &&
+                            tmp->baseid == (*it)->baseid &&
+                            tmp->formid == (*it)->formid 
+                            //tmp->formtypeid == (*it)->formtypeid
+                            ) {
+                            tmp->used_in_nbest = true;
+                        }
+                        tmp = tmp->bnext;
+                    }
+                }
+                byte_pos += (*it)->length;
+            }
+        }
     }
 }  //}}}
 
@@ -2406,14 +2731,14 @@ std::vector<std::string> Sentence::get_gold_topic_features(
 // パーセプトロン専用の関数，いずれ撲滅
 // TODO: 廃止
 void Sentence::minus_feature_from_weight(
-    std::unordered_map<std::string, double> &in_feature_weight, size_t factor) {  //{{{
+    Umap &in_feature_weight, size_t factor) {  //{{{
     Node *node = (*begin_node_list)[length];                                      // EOS
     node->feature->minus_feature_from_weight(in_feature_weight, factor);
 }  //}}}
 
 // TODO: 廃止
 void Sentence::minus_feature_from_weight(
-    std::unordered_map<std::string, double> &in_feature_weight) {  //{{{
+    Umap &in_feature_weight) {  //{{{
     minus_feature_from_weight(in_feature_weight, 1);
 }  //}}}
 }
