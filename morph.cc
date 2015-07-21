@@ -16,6 +16,7 @@ bool WEIGHT_AVERAGED = false;
 void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     option.add<std::string>("dict", 'd', "dict filename", false, "data/japanese_uniq.dic");
     option.add<std::string>("model", 'm', "model filename", false, "data/model.dat");
+    option.add<std::string>("binmodel", '\0', "bin model filename", false, "data/model.dat");
     option.add<std::string>("feature", 'f', "feature template filename", false, "data/feature.def");
     option.add<std::string>("train", 't', "training filename", false, "data/train.txt");
     option.add<std::string>("rnnlm", 'r', "rnnlm filename", false, "data/rnnlm.model");
@@ -43,6 +44,7 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     option.add("ambiguous", 'A', "output ambiguous words on lattice");
     option.add("shuffle", 's', "shuffle training data for each iteration");
     option.add("unknown", 'u', "apply unknown word detection (obsolete; already default)");
+    option.add("passiveunk", '\0', "apply passive unknown word detection. The option use unknown word detection only if it cannot make any node.");
     option.add("debug", '\0', "debug mode");
     option.add("version", 'v', "print version");
     option.add("help", 'h', "print this message");
@@ -82,7 +84,7 @@ int main(int argc, char** argv) {//{{{
     }else if(option.exist("rbeam")){
         param.set_beam(true);
         param.set_N(option.get<unsigned int>("rbeam"));
-    }else if(option.exist("lattice"))
+    }else if(option.exist("lattice")) // rbeam が設定されていたら，lattice のN は表示のみに使う
         param.set_N(option.get<unsigned int>("lattice"));
     else if(option.exist("rerank"))
         param.set_N(option.get<unsigned int>("rerank"));
@@ -90,6 +92,8 @@ int main(int argc, char** argv) {//{{{
         param.set_N(1);
 
     param.set_output_ambigous_word(option.exist("ambiguous"));
+    if(option.exist("passiveunk"))
+        param.set_passive_unknown(true);
     param.set_model_filename(option.get<std::string>("model"));
     param.set_use_scw(option.exist("scw"));
     param.set_lpenalty(option.exist("lpenalty")); //矛盾している場合、lweight が優先する
@@ -99,7 +103,6 @@ int main(int argc, char** argv) {//{{{
         param.set_C(option.get<double>("Cvalue"));
     if(option.exist("Phi"))
         param.set_Phi(option.get<double>("Phi"));
-    //param.set_debug(option.exist("debug"));
     if(option.exist("total")){
         param.set_use_total_sim();
         Morph::FeatureSet::use_total_sim = true;
@@ -109,7 +112,7 @@ int main(int argc, char** argv) {//{{{
     param.set_rweight(option.get<double>("Rweight"));
 
     Morph::Parameter normal_param = param;
-    normal_param.set_nbest(true);// nbest を利用するよう設定
+    normal_param.set_nbest(true); // nbest を利用するよう設定
     normal_param.set_N(10); // 10-best に設定
     param.set_rnnlm(option.exist("rnnlm"));
     param.set_srilm(option.exist("srilm"));
@@ -225,8 +228,10 @@ int main(int argc, char** argv) {//{{{
     //}}}
     } else {// 通常の形態素解析{{{
         //std::cerr << "read model file" << std::flush;
-        tagger.read_model_file(option.get<std::string>("model"));
-        //std::cerr << "\rread model file" << std::endl;
+        if(option.exist("binmodel"))
+            tagger.read_bin_model_file(option.get<std::string>("binmodel"));
+        else
+            tagger.read_model_file(option.get<std::string>("model"));
         std::cerr << "done" << std::endl;
             
         std::ifstream is(argv[1]); // input stream
@@ -236,15 +241,18 @@ int main(int argc, char** argv) {//{{{
         while (getline(is ? is : cin, buffer)) {
             if (buffer.length() <= 1 || buffer.at(0) == '#') { // empty line or comment line
                 cout << buffer << endl;
-                buffer.clear();
                 continue;
             }
             tagger.new_sentence_analyze(buffer);
             if (option.exist("lattice")){
-                if (option.exist("oldstyle"))
-                    tagger.print_old_lattice();
-                else
-                    tagger.print_lattice();
+                if(option.exist("rbeam")){
+                    tagger.print_lattice_rbeam(option.get<unsigned int>("lattice"));
+                }else{
+                    if (option.exist("oldstyle"))
+                        tagger.print_old_lattice();
+                    else
+                        tagger.print_lattice();
+                }
             }else{
                 if(option.exist("beam")){
                     tagger.print_beam();
