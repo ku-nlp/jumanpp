@@ -36,6 +36,7 @@ class Parameter {
     std::string model_filename;
 	unsigned int N = 1;
     bool use_scw=false;
+    bool passive_unknown=false;
 	unsigned int N_redundant;
     bool output_ambiguous_word=false;
     double c_value = 1.0;
@@ -50,8 +51,13 @@ class Parameter {
 		N_redundant = N + (unsigned int)(ceil(N * B_BEST_REDUNDANCY));
         return 0;
     }
+
     int set_nbest(bool in_nb){
         nbest = in_nb;
+        return 0;
+    }
+    int set_passive_unknown(bool in_pas_unk){
+        passive_unknown = in_pas_unk;
         return 0;
     }
     int set_beam(bool in_beam){
@@ -70,12 +76,10 @@ class Parameter {
         rweight = rvalue;
         return 0;
     }
-
     int set_lpenalty(bool lp){
         lpenalty = lp;
         return 0;
     }
-
     int set_lweight(double lvalue){
         lpenalty = true;
         lweight = lvalue;

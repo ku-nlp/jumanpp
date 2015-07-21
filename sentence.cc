@@ -147,7 +147,7 @@ void Sentence::feature_print() {  //{{{
 }  //}}}
 
 // make unknown word candidates of specified length if it's not found in dic
-Node *Sentence::make_unk_pseudo_node_list_by_dic_check(const char *start_str, unsigned int pos, Node *r_node, unsigned int specified_char_num) {  //{{{
+Node *Sentence::make_unk_pseudo_node_list_by_dic_check(const char *start_str, unsigned int pos, Node *r_node, unsigned int specified_char_num) {//{{{
 
     auto result_node = dic->make_unk_pseudo_node_list_some_pos_by_dic_check(start_str + pos, specified_char_num, MORPH_DUMMY_POS, &(param->unk_pos), r_node);
 
@@ -162,7 +162,7 @@ Node *Sentence::make_unk_pseudo_node_list_by_dic_check(const char *start_str, un
     }else
         return r_node;
     
-//
+
 //    bool find_this_length = false;
 //    Node *tmp_node = r_node;
 //    while (tmp_node) {
@@ -174,7 +174,7 @@ Node *Sentence::make_unk_pseudo_node_list_by_dic_check(const char *start_str, un
 //    }
 //
 //    if (!find_this_length) {  // if a node of this length is not found in dic
-//        Node *result_node = dic->make_unk_pseudo_node_list( start_str + pos, specified_char_num, specified_char_num);
+//        Node *result_node = dic->make_pseudo_node_list_in_range( start_str + pos, specified_char_num, specified_char_num);
 //        if (result_node) {
 //            if (r_node) {
 //                tmp_node = result_node;
@@ -345,24 +345,23 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(  //{{{
             start_str + pos, specified_length, specified_pos,
             &(param->unk_figure_pos), TYPE_FAMILY_FIGURE, nullptr);
 
-//        // alphabet
-//        if (!result_node) {
-//            result_node = dic->make_specified_pseudo_node_by_dic_check(
-//                start_str + pos, specified_length, specified_pos,
-//                &(param->unk_pos), TYPE_FAMILY_ALPH_PUNC);
-//        }
-//
-//        // 漢字
-//
-//        // カタカナ
-//        // TODO:切れるところまでで未定義語を作る
-//        if (!result_node) {
-//            result_node = dic->make_specified_pseudo_node_by_dic_check(
-//                start_str + pos, specified_length, specified_pos,
-//                &(param->unk_pos), TYPE_KATAKANA, nullptr);
-//        }
-//        // ひらがな
-        if (!specified_length && result_node)  // only prediction
+        // alphabet
+        if (!(param->passive_unknown) &&!result_node) {
+            result_node = dic->make_specified_pseudo_node_by_dic_check(
+                start_str + pos, specified_length, specified_pos,
+                &(param->unk_pos), TYPE_FAMILY_ALPH_PUNC);
+        }
+//      // 漢字
+//      // カタカナ
+//      // TODO:切れるところまでで未定義語を作る
+        if (!(param->passive_unknown) && !result_node) {
+            result_node = dic->make_specified_pseudo_node_by_dic_check(
+                start_str + pos, specified_length, specified_pos,
+                &(param->unk_pos), TYPE_KATAKANA, nullptr);
+        }
+
+        //
+        if (!specified_length && result_node) // only prediction
             find_reached_pos_of_pseudo_nodes(pos, result_node);
     }
 
@@ -498,41 +497,43 @@ bool Sentence::lookup() {  //{{{
             // make figure/alphabet nodes and look up a dictionary
             Node *r_node = lookup_and_make_special_pseudo_nodes_lattice(cl, sentence_c_str, char_num, pos, 0, NULL);
 
-
             set_begin_node_list(pos, r_node);
             find_reached_pos(pos, r_node);
             if (param->unknown_word_detection) {  // make unknown word candidates
                 if (reached_pos <= pos) {        // ≒ pos で始まる単語が１つも無い場合
                     // cerr << ";; Cannot connect at position:" << pos << " ("
                     // << in_sentence << ")" << endl;
-                    Node *result_node = NULL;
                     r_node = make_unk_pseudo_node_list_from_some_positions(sentence_c_str, pos, previous_pos);
                          
-                    Node *tmp_node = r_node;
-                    while (tmp_node->bnext)  //末尾にシーク
-                        tmp_node = tmp_node->bnext;
-                    
-                    // カタカナなどの未定義語処理(仮
-                    // alphabet
-                    result_node = dic->make_specified_pseudo_node_by_dic_check(
-                            sentence_c_str, 
-                            0, 
-                            nullptr,
-                            &(param->unk_pos), 
-                            TYPE_FAMILY_ALPH_PUNC,
-                            nullptr);
-                        
-                    // カタカナ
-                    if (!result_node) {
-                        result_node = dic->make_specified_pseudo_node_by_dic_check( sentence_c_str, 0, nullptr, &(param->unk_pos), TYPE_KATAKANA, nullptr);
-                    }
-                    if (result_node){  
-                        find_reached_pos_of_pseudo_nodes(pos, result_node);
-                        tmp_node->bnext = result_node;
-                    }
                 } else if (r_node && pos >= reached_pos_of_pseudo_nodes) {
                     for (unsigned int i = 2; i <= param->unk_max_length; i++) {
                         r_node = make_unk_pseudo_node_list_by_dic_check(sentence_c_str, pos, r_node, i);
+                    }
+                    
+                    if(param->passive_unknown){
+                        Node *result_node = NULL;
+                        Node *tmp_node = r_node;
+                        while (tmp_node->bnext)  //末尾にシーク
+                            tmp_node = tmp_node->bnext;
+                        
+                        // カタカナなどの未定義語処理(仮
+                        // alphabet
+                        result_node = dic->make_specified_pseudo_node_by_dic_check(
+                                sentence_c_str + pos, 
+                                0, 
+                                nullptr,
+                                &(param->unk_pos), 
+                                TYPE_FAMILY_ALPH_PUNC,
+                                nullptr);
+                            
+                        // カタカナ
+                        if (!result_node) {
+                            result_node = dic->make_specified_pseudo_node_by_dic_check( sentence_c_str+pos, 0, nullptr, &(param->unk_pos), TYPE_KATAKANA, nullptr);
+                        }
+                        if (result_node){  
+                            find_reached_pos_of_pseudo_nodes(pos, result_node);
+                            tmp_node->bnext = result_node;
+                        }
                     }
                     set_begin_node_list(pos, r_node);
                 }
@@ -1403,6 +1404,7 @@ bool Sentence::viterbi_at_position(unsigned int pos, Node *r_node) {  //{{{
     return true;
 }  //}}}
 
+// Second order viterbi (使用していない)
 bool Sentence::so_viterbi_at_position(unsigned int pos, Node *r_node) {  //{{{
     set_bigram_info(pos, r_node);
 
@@ -2249,10 +2251,12 @@ void Sentence::mark_nbest_rbeam(unsigned int nbest) {  //{{{
                 if (output_ambiguous_word) {
                     auto tmp = (*begin_node_list)[byte_pos];
                     // cout << *((*it)->representation) << " " << byte_pos << endl;
-                    while (tmp) {  //同じ長さ(同じ表層)で同じ品詞のものをすべて出力する
+                    while (tmp) { //同じ長さ(同じ表層)で同じ品詞のものをすべて出力する
                         if (tmp->length == (*it)->length &&
                             tmp->posid == (*it)->posid &&
+                            tmp->sposid == (*it)->sposid &&
                             tmp->baseid == (*it)->baseid &&
+                            // 助詞と判定詞の異なりを含める
                             tmp->formid == (*it)->formid 
                             //tmp->formtypeid == (*it)->formtypeid
                             ) {
