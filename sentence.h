@@ -10,6 +10,7 @@
 #include "u8string.h"
 #include <math.h>
 #include <memory>
+#include <boost/tr1/unordered_map.hpp>
 #include "rnnlm/rnnlmlib.h"
 
 //namespace SRILM {
@@ -253,13 +254,15 @@ class Sentence {//{{{
 	void print_N_best_path();
 	void print_N_best_with_rnn(RNNLM::CRnnLM& model);
     void mark_nbest();
+    void mark_nbest_rbeam(unsigned int nbest); 
     Node* find_N_best_path(); // make EOS node and get N-best path
     Node *find_best_beam();
     double eval(Sentence& gold);
     void print_juman_lattice(); // 互換性の為
     void print_unified_lattice(); 
-    void minus_feature_from_weight(std::unordered_map<std::string, double> &in_feature_weight);
-    void minus_feature_from_weight(std::unordered_map<std::string, double> &in_feature_weight, size_t factor);
+    void print_unified_lattice_rbeam(unsigned int nbest); 
+    void minus_feature_from_weight(Umap &in_feature_weight);
+    void minus_feature_from_weight(Umap &in_feature_weight, size_t factor);
     bool lookup_gold_data(std::string &word_pos_pair);
     Node *lookup_and_make_special_pseudo_nodes(const char *start_str, unsigned int pos);
     Node *lookup_and_make_special_pseudo_nodes(const char *start_str, unsigned int specified_length, std::string *specified_pos);
