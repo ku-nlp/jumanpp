@@ -22,6 +22,11 @@
 #include <string.h>
 #include <float.h>
 
+#include <boost/tr1/unordered_map.hpp>
+//typedef std::tr1::unordered_map Umap;
+typedef std::tr1::unordered_map<std::string,double> Umap;
+
+
 typedef std::vector<double> TopicVector; 
 //#include "feature.h"
 //#include "scw.h"

@@ -14,6 +14,10 @@ Tagger::Tagger(Parameter *in_param):weight(),scw(in_param->c_value, in_param->ph
     end_node_list.reserve(INITIAL_MAX_INPUT_LENGTH);
         
     sentences_for_train_num = 0;
+
+    lzma_stream initial_lzma = LZMA_STREAM_INIT;
+    lzma_ = initial_lzma;
+
 }//}}}
 
 Tagger::~Tagger() {//{{{
@@ -117,7 +121,7 @@ bool Tagger::train(const std::string &gsd_file) {//{{{
         
     if (WEIGHT_AVERAGED && !param->use_scw) {
         // 通常のモデルに書き出し
-        for (std::unordered_map<std::string, double>::iterator it = weight_sum.begin(); it != weight_sum.end(); it++) {
+        for (Umap::iterator it = weight_sum.begin(); it != weight_sum.end(); it++) {
             weight[it->first] -= it->second / total_iteration_num;
         }
     }
@@ -160,7 +164,7 @@ bool Tagger::train_lda(const std::string &gsd_file, Tagger& normal_model) {//{{{
     }
         
     if (WEIGHT_AVERAGED && !param->use_scw) {// パーセプトロンとの互換性のため
-        for (std::unordered_map<std::string, double>::iterator it = weight_sum.begin(); it != weight_sum.end(); it++) {
+        for (Umap::iterator it = weight_sum.begin(); it != weight_sum.end(); it++) {
             weight[it->first] -= it->second / total_iteration_num;
         }
     }
@@ -268,6 +272,10 @@ void Tagger::print_lattice() {//{{{
     sentence->print_unified_lattice(); 
 }//}}}
 
+void Tagger::print_lattice_rbeam(unsigned int nbest) {//{{{
+    sentence->print_unified_lattice_rbeam(nbest); 
+}//}}}
+
 void Tagger::print_old_lattice() {//{{{
     sentence->print_juman_lattice();
 }//}}}
@@ -289,7 +297,7 @@ bool Tagger::write_tmp_model_file(int t){//{{{
     for (auto &w:weight){
         model_out << w.first << " " << w.second << endl;
     }
-    //for (std::unordered_map<std::string, double>::iterator it = feature_weight_sum.begin(); it != feature_weight_sum.end(); it++) {
+    //for (Umap::iterator it = feature_weight_sum.begin(); it != feature_weight_sum.end(); it++) {
     //    model_out << it->first << " " << it->second/(double)t << endl;
     //}
     model_out.close();

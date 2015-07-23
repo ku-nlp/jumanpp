@@ -417,23 +417,23 @@ double FeatureSet::calc_inner_product_with_weight() {//{{{
     return sum;
 }//}}}
 
-void FeatureSet::minus_feature_from_weight(std::unordered_map<std::string, double> &in_feature_weight, size_t factor) {//{{{
+void FeatureSet::minus_feature_from_weight(Umap &in_feature_weight, size_t factor) {//{{{
     for (std::vector<std::string>::iterator it = fset.begin(); it != fset.end(); it++) {
         in_feature_weight[*it] -= factor;
     }
 }//}}}
 
-void FeatureSet::minus_feature_from_weight(std::unordered_map<std::string, double> &in_feature_weight) {//{{{
+void FeatureSet::minus_feature_from_weight(Umap &in_feature_weight) {//{{{
     minus_feature_from_weight(in_feature_weight, 1);
 }//}}}
 
-void FeatureSet::plus_feature_from_weight(std::unordered_map<std::string, double> &in_feature_weight, size_t factor) {//{{{
+void FeatureSet::plus_feature_from_weight(Umap &in_feature_weight, size_t factor) {//{{{
     for (std::vector<std::string>::iterator it = fset.begin(); it != fset.end(); it++) {
         in_feature_weight[*it] += factor;
     }
 }//}}}
 
-void FeatureSet::plus_feature_from_weight(std::unordered_map<std::string, double> &in_feature_weight) {//{{{
+void FeatureSet::plus_feature_from_weight(Umap &in_feature_weight) {//{{{
     plus_feature_from_weight(in_feature_weight, 1);
 }//}}}
 
