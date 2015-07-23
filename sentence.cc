@@ -1132,8 +1132,7 @@ void Sentence::print_unified_lattice_rbeam(unsigned int nbest) {  //{{{
                 if (*node->semantic_feature != "NIL" ||
                     *node->spos == UNK_POS || ustr.is_katakana() ||
                     ustr.is_kanji() || ustr.is_eisuu() || ustr.is_kigou()) {
-                    const std::string sep =
-                        "|";
+                    const std::string sep = "|";
                     bool use_sep = false;
 
                     if (*node->semantic_feature != "NIL") {
@@ -1153,6 +1152,9 @@ void Sentence::print_unified_lattice_rbeam(unsigned int nbest) {  //{{{
                             cout << (use_sep ? sep : "")
                                  << *node->semantic_feature;
                             use_sep = true;
+                        }else if(current < (*node->semantic_feature).size() ){
+                            cout << (use_sep ? sep : "")
+                                 << std::string( (*node->semantic_feature), current,  (*node->semantic_feature).size() - current);
                         }
                     }
                     if (*node->spos == UNK_POS) {
