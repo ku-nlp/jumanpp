@@ -231,8 +231,6 @@ class Node {//{{{
     //}
     void append_bigram_feature(Node *left_node, FeatureSet *in_feature);
     void reserve_best_bigram(){};
-    // ----
-
 
     unsigned short length = 0; /* length of morph */
     unsigned short char_num = 0;
