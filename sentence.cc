@@ -372,7 +372,7 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(  //{{{
         Node *tmp_node = dic_node;
         while (tmp_node->bnext)  //末尾にシーク
             tmp_node = tmp_node->bnext;
-
+            
         Node *tmp_result_node = result_node;
         while (tmp_result_node) {
             auto next_result = tmp_result_node->bnext;
@@ -504,11 +504,6 @@ bool Sentence::lookup() {  //{{{
                     // cerr << ";; Cannot connect at position:" << pos << " ("
                     // << in_sentence << ")" << endl;
                     r_node = make_unk_pseudo_node_list_from_some_positions(sentence_c_str, pos, previous_pos);
-                         
-                } else if (r_node && pos >= reached_pos_of_pseudo_nodes) {
-                    for (unsigned int i = 2; i <= param->unk_max_length; i++) {
-                        r_node = make_unk_pseudo_node_list_by_dic_check(sentence_c_str, pos, r_node, i);
-                    }
                     
                     if(param->passive_unknown){
                         Node *result_node = NULL;
@@ -530,11 +525,18 @@ bool Sentence::lookup() {  //{{{
                         if (!result_node) {
                             result_node = dic->make_specified_pseudo_node_by_dic_check( sentence_c_str+pos, 0, nullptr, &(param->unk_pos), TYPE_KATAKANA, nullptr);
                         }
-                        if (result_node){  
+                        if (result_node){ 
                             find_reached_pos_of_pseudo_nodes(pos, result_node);
                             tmp_node->bnext = result_node;
                         }
                     }
+
+
+                } else if (r_node && pos >= reached_pos_of_pseudo_nodes) {
+                    for (unsigned int i = 2; i <= param->unk_max_length; i++) {
+                        r_node = make_unk_pseudo_node_list_by_dic_check(sentence_c_str, pos, r_node, i);
+                    }
+                    
                     set_begin_node_list(pos, r_node);
                 }
             }
