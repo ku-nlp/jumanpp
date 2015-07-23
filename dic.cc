@@ -157,7 +157,7 @@ Node* Dic::recognize_onomatopoeia(const char* start_str) {//{{{
 }//}}}
 
 // lookup_lattice の wrapper
-Node *Dic::lookup_lattice(std::vector<Darts::DoubleArray::result_pair_type> &da_search_result, const char *start_str, unsigned int specified_length = 0, std::string *specified_pos = nullptr) {//{{{
+Node *Dic::lookup_lattice(std::vector<CharLattice::da_result_pair_type> &da_search_result, const char *start_str, unsigned int specified_length = 0, std::string *specified_pos = nullptr) {//{{{
     if (specified_pos)
         return lookup_lattice( da_search_result,start_str, specified_length, posid2pos.get_id(*specified_pos));
     else
@@ -165,17 +165,17 @@ Node *Dic::lookup_lattice(std::vector<Darts::DoubleArray::result_pair_type> &da_
 }//}}}
 
 // DA から検索した結果を Node に変換する 
-Node *Dic::lookup_lattice(std::vector<Darts::DoubleArray::result_pair_type> &da_search_result, const char *start_str, unsigned int specified_length, unsigned short specified_posid) {//{{{
+Node *Dic::lookup_lattice(std::vector<CharLattice::da_result_pair_type> &da_search_result, const char *start_str, unsigned int specified_length, unsigned short specified_posid) {//{{{
     Node *result_node = NULL;
         
-    std::vector<Darts::DoubleArray::result_pair_type> &result_pair = da_search_result; 
+    std::vector<CharLattice::da_result_pair_type> &result_pair = da_search_result; 
         
     if (result_pair.size() == 0)
         return result_node;
     size_t num = result_pair.size();
         
     for (size_t i = 0; i < num; i++) { 
-        if (specified_length && specified_length != result_pair[i].length)
+        if (specified_length && specified_length != get_length(result_pair[i]))
             continue;
         size_t size = token_size(result_pair[i]);
         const Token *token = get_token(result_pair[i]);
@@ -183,15 +183,40 @@ Node *Dic::lookup_lattice(std::vector<Darts::DoubleArray::result_pair_type> &da_
         for (size_t j = 0; j < size; j++) { // same key but different value (pos)
             if (specified_posid != MORPH_DUMMY_POS && specified_posid != (token + j)->posid)
                 continue;
-                
+                    
+                    
             Node *new_node = new Node;
             read_node_info(*(token + j), &new_node);
+            
+            // 基本情報
             new_node->token = (Token *)(token + j);
-                
-            new_node->length = result_pair[i].length; 
             new_node->surface = start_str;
-                
+            new_node->length = get_length(result_pair[i]); 
             new_node->char_num = utf8_chars((unsigned char *)start_str, new_node->length);
+
+            // 文字種関連
+            new_node->char_type = check_utf8_char_type((unsigned char *)start_str);
+            new_node->char_family = check_char_family(new_node->char_type);
+            new_node->suuji = is_suuji((unsigned char *)start_str);
+            char *end_char = (char *)get_specified_char_pointer((unsigned char *)start_str, new_node->length, new_node->char_num - 1);
+            new_node->end_char_family = check_char_family((unsigned char *)end_char);
+            new_node->end_string = new std::string(end_char, utf8_bytes((unsigned char *)end_char));
+                 
+            // 末尾から二文字目を取り出す
+            char *lb2_char = nullptr;
+            if(new_node->char_num > 2)
+                lb2_char = (char *)get_specified_char_pointer((unsigned char *)start_str, new_node->length, new_node->char_num - 2);
+
+            // ここで，NODE_PROLONG_DEL_LAST でなく，NODE_PROLONG_DEL なカタカナ語を削除する
+            if( ((get_stat(result_pair[i]) & OPT_PROLONG_DEL_LAST) || (get_stat(result_pair[i]) & OPT_PROLONG_DEL)) && // 長音を付加している
+                lb2_char && check_utf8_char_type((unsigned char *)start_str) == TYPE_KATAKANA && check_utf8_char_type((unsigned char *)lb2_char) == TYPE_KATAKANA){ // カタカナ語である
+
+                // このうち，以下の条件を満たすもの以外のノードは廃棄する
+                if(!((!(get_stat(result_pair[i]) & OPT_PROLONG_DEL)) && // 途中で長音を付加していない
+                    new_node->posid == posid2pos.get_id("名詞"))) // 名詞である
+                    continue;
+            }
+                
             new_node->original_surface = new std::string(start_str, new_node->length);
             //std::cout << *new_node->original_surface << "_" << *new_node->pos << std::endl;
             new_node->string_for_print = new std::string(start_str, new_node->length);
@@ -206,12 +231,6 @@ Node *Dic::lookup_lattice(std::vector<Darts::DoubleArray::result_pair_type> &da_
                     new_node->stat = MORPH_NORMAL_NODE;
                 }
             }
-            new_node->char_type = check_utf8_char_type((unsigned char *)start_str);
-            new_node->char_family = check_char_family(new_node->char_type);
-            new_node->suuji = is_suuji((unsigned char *)start_str);
-            char *end_char = (char *)get_specified_char_pointer((unsigned char *)start_str, new_node->length, new_node->char_num - 1);
-            new_node->end_char_family = check_char_family((unsigned char *)end_char);
-            new_node->end_string = new std::string(end_char, utf8_bytes((unsigned char *)end_char));
                 
             FeatureSet *f = new FeatureSet(ftmpl);
             f->extract_unigram_feature(new_node);
@@ -229,7 +248,7 @@ Node *Dic::lookup_lattice(std::vector<Darts::DoubleArray::result_pair_type> &da_
 }//}}}
 
 // 品詞情報を詳細に指定し, 辞書引き
-Node *Dic::lookup_lattice_specified(std::vector<Darts::DoubleArray::result_pair_type> &da_search_result, const char *start_str, unsigned int specified_length, const std::vector<std::string>& specified) {//{{{
+Node *Dic::lookup_lattice_specified(std::vector<CharLattice::da_result_pair_type> &da_search_result, const char *start_str, unsigned int specified_length, const std::vector<std::string>& specified) {//{{{
     Node *result_node = NULL;
     
     // TODO: specified を生の vector からもう少し意味のあるものに変える
@@ -241,7 +260,7 @@ Node *Dic::lookup_lattice_specified(std::vector<Darts::DoubleArray::result_pair_
     auto specified_formtypeid = formtypeid2formtype.get_id(specified[4]);
     auto specified_formid     = formid2form.get_id(specified[5]);
 
-    std::vector<Darts::DoubleArray::result_pair_type> &result_pair = da_search_result; 
+    std::vector<CharLattice::da_result_pair_type> &result_pair = da_search_result; 
 
         
     if (result_pair.size() == 0)
@@ -252,7 +271,7 @@ Node *Dic::lookup_lattice_specified(std::vector<Darts::DoubleArray::result_pair_
 
         //const Token *token = get_token(result_pair[i]);// deb
         //std::cerr << start_str << "_" << *baseid2base.get_pos(token->base_id) << "_" << specified_length << "-" << result_pair[i].length << std::endl;
-        if (specified_length && specified_length != result_pair[i].length)
+        if (specified_length && specified_length != get_length(result_pair[i]))
             continue;
         size_t size = token_size(result_pair[i]);
         const Token *token = get_token(result_pair[i]);
@@ -274,7 +293,7 @@ Node *Dic::lookup_lattice_specified(std::vector<Darts::DoubleArray::result_pair_
             read_node_info(*(token + j), &new_node);
             new_node->token = (Token *)(token + j);
                 
-            new_node->length = result_pair[i].length; 
+            new_node->length = get_length(result_pair[i]); 
             new_node->surface = start_str;
                 
             new_node->char_num = utf8_chars((unsigned char *)start_str, new_node->length);
