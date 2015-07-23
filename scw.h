@@ -6,13 +6,32 @@
 #include <vector>
 #include <algorithm>
 #include <utility>
-#include <unordered_map>
+
+#include <boost/tr1/unordered_map.hpp>
+#include <boost/serialization/string.hpp>
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/base_object.hpp>
+#include <boost/serialization/unordered_map.hpp>
+#include "unordered_map_serialization.hpp"
+
+#include <boost/serialization/unordered_collections_load_imp.hpp>
+#include <boost/serialization/unordered_collections_save_imp.hpp>
+//#include <boost/serialization/hash_map.hpp>
+
+//#include "unordered_map.hpp"
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>
+
+typedef std::tr1::unordered_map<std::string,double> Umap;
+
+//#include <unordered_map>
+//using Umap;
 
 class FeatureVector;// 今後分離したほうが良い？
 class DiagMat;
 
 class FeatureVector{// 基本的に ただのunordered_map のラップ
-    std::unordered_map<std::string, double> vec;
+    Umap vec;
     
     public:
         FeatureVector(){vec.clear();};
@@ -40,7 +59,7 @@ class FeatureVector{// 基本的に ただのunordered_map のラップ
             }
             return *this;
         }
-        std::unordered_map<std::string, double>::iterator find(std::string& key){ return vec.find(key); }
+        Umap::iterator find(std::string& key){ return vec.find(key); }
         
         inline std::string str(){  
             std::stringstream ss;
@@ -51,31 +70,40 @@ class FeatureVector{// 基本的に ただのunordered_map のラップ
             return std::move(ss.str());
         };
         inline void clear(){ vec.clear(); };
-        //operator std::unordered_map<std::string,double>(){return vec;}
-        std::unordered_map<std::string, double>& get_umap(){return vec;}
-        std::unordered_map<std::string, double>::iterator begin(){return vec.begin();};
-        std::unordered_map<std::string, double>::iterator end(){return vec.end();};
-        std::unordered_map<std::string, double>::const_iterator begin()const{return vec.cbegin();};
-        std::unordered_map<std::string, double>::const_iterator end()const{return vec.cend();};
-        std::unordered_map<std::string, double>::const_iterator cbegin()const{return vec.cbegin();};
-        std::unordered_map<std::string, double>::const_iterator cend()const{return vec.cend();};
+        //operator Umap(){return vec;}
+        Umap& get_umap(){return vec;}
+        Umap::iterator begin(){return vec.begin();};
+        Umap::iterator end(){return vec.end();};
+        Umap::const_iterator begin()const{return vec.cbegin();};
+        Umap::const_iterator end()const{return vec.cend();};
+        Umap::const_iterator cbegin()const{return vec.cbegin();};
+        Umap::const_iterator cend()const{return vec.cend();};
+
+private:
+    friend class boost::serialization::access;
+    template<class Archive>
+        void serialize(Archive& ar, const unsigned int version)
+        {
+            ar & vec;
+        }
+
 };
 
 class DiagMat{
     private:
-        std::unordered_map<std::string, double> vec;
+        Umap vec;
     public:
         void update(double beta, const FeatureVector& x);
         double get_value(const std::string& sp1)const;
         inline double& operator[](const std::string& s){ return ref_value(s);};
         double& ref_value(const std::string sp1, const std::string sp2);
         double& ref_value(const std::string sp1){ return ref_value(sp1,sp1);};
-        std::unordered_map<std::string, double>::iterator begin(){return vec.begin();};
-        std::unordered_map<std::string, double>::iterator end(){return vec.end();};
-        std::unordered_map<std::string, double>::const_iterator begin()const{return vec.cbegin();};
-        std::unordered_map<std::string, double>::const_iterator end()const{return vec.cend();};
-        std::unordered_map<std::string, double>::const_iterator cbegin()const{return vec.cbegin();};
-        std::unordered_map<std::string, double>::const_iterator cend()const{return vec.cend();};
+        Umap::iterator begin(){return vec.begin();};
+        Umap::iterator end(){return vec.end();};
+        Umap::const_iterator begin()const{return vec.cbegin();};
+        Umap::const_iterator end()const{return vec.cend();};
+        Umap::const_iterator cbegin()const{return vec.cbegin();};
+        Umap::const_iterator cend()const{return vec.cend();};
 };
 
 

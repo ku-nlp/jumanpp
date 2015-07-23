@@ -195,10 +195,10 @@ class FeatureSet { //{{{
     void extract_trigram_feature(Node *l_node, Node *m_node, Node *r_node);
 
     bool append_feature(FeatureSet *in);
-    void minus_feature_from_weight(std::unordered_map<std::string, double> &in_feature_weight);
-    void plus_feature_from_weight(std::unordered_map<std::string, double> &in_feature_weight);
-    void minus_feature_from_weight(std::unordered_map<std::string, double> &in_feature_weight, size_t factor);
-    void plus_feature_from_weight(std::unordered_map<std::string, double> &in_feature_weight, size_t factor);
+    void minus_feature_from_weight(Umap &in_feature_weight);
+    void plus_feature_from_weight(Umap &in_feature_weight);
+    void minus_feature_from_weight(Umap &in_feature_weight, size_t factor);
+    void plus_feature_from_weight(Umap &in_feature_weight, size_t factor);
     inline std::vector<std::string>& get_fset(){return fset;};
     bool print();
 

@@ -8,6 +8,12 @@
 #include "parameter.h"
 #include "dic.h"
 #include "scw.h"
+#include <boost/tr1/unordered_map.hpp>
+#include <boost/serialization/string.hpp>
+#include <boost/serialization/unordered_map.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>
+#include <lzma.h>
 
 namespace Morph {
 
@@ -18,13 +24,15 @@ class Tagger {
     FeatureTemplateSet ftmpl;
     bool unknown_word_detection;
     bool shuffle_training_data;
+
+    lzma_stream lzma_;
         
     FeatureVector weight; 
     FeatureVector weight_sum; 
     SCWClassifier scw;
     unsigned int num_of_sentences_processed = 0; //static?
     unsigned int total_iteration_num = 0;
-    std::unordered_map<std::string, double> feature_weight_sum;
+    Umap feature_weight_sum;
         
     Sentence *sentence; // current input sentence
         
@@ -52,6 +60,7 @@ class Tagger {
     void print_beam();
     void print_best_beam();
     void print_lattice();
+    void print_lattice_rbeam(unsigned int nbest);
     void print_old_lattice();
         
     bool train(const std::string &gsd_file);
@@ -75,7 +84,29 @@ class Tagger {
         model_out.close();
         return true;
     }
-
+    bool write_bin_model_file(const std::string &model_filename) {
+        std::ofstream model_out(model_filename.c_str());
+        if (!model_out.is_open()) {
+            cerr << ";; cannot open " << model_filename << " for writing" << endl;
+            return false;
+        }
+        boost::archive::binary_oarchive oa(model_out);
+        oa << weight;
+        model_out.close();
+        return true;
+    }
+    bool read_bin_model_file(const std::string &model_filename) {
+        std::ifstream model_in(model_filename.c_str());
+        if (!model_in.is_open()) {
+            cerr << ";; cannot open " << model_filename << " for reading" << endl;
+            return false;
+        }
+        boost::archive::binary_iarchive ia(model_in);
+        ia >> weight;
+        model_in.close();
+        return true;
+    }
+            
     // read feature weights
     bool read_model_file(const std::string &model_filename) {
         std::ifstream model_in(model_filename.c_str(), std::ios::in);
@@ -92,7 +123,6 @@ class Tagger {
         model_in.close();
         return true;
     }
-
 };
 
 }
