@@ -233,11 +233,19 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, co
     // std::cerr << start_str << std::endl;
     auto lattice_result = cl.da_search_from_position(dic->darts, char_num);  // こっちは何文字目かが必要
     // 以下は何バイト目かが必要
-    // look up a dictionary with common prefix search
-    // Node *dic_node = dic->lookup_lattice(lattice_result, start_str + pos,
-    // specified_length, specified_pos);
-
     Node *dic_node = dic->lookup_lattice_specified(lattice_result, start_str, specified_length, spec);
+
+    // オノマトペ処理 // spec 処理... 
+    if (dic_node == nullptr && specified_pos_string == "副詞") { //副詞の場合のみ
+        Node *r_onomatope_node = dic->recognize_onomatopoeia(start_str, specified_length);
+
+        //std::cerr << "check 副詞 " << start_str << std::endl;
+        if (r_onomatope_node != NULL) {
+            //std::cerr << "found 副詞 len" << (r_onomatope_node->length) << std::endl;
+            //std::cerr << "found 副詞 str" << *(r_onomatope_node->string_for_print) << std::endl;
+            dic_node = r_onomatope_node;
+        }
+    }
 
     // 訓練データで，長さが分かっている場合か，未知語として選択されていない範囲なら
     // 同じ文字種が続く範囲を一語として入れてくれる
@@ -248,21 +256,19 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, co
             &(param->unk_figure_pos), TYPE_FAMILY_FIGURE, nullptr);
 
         // alphabet
-        if (!result_node) {
-            result_node = dic->make_specified_pseudo_node_by_dic_check(
-                start_str + pos, specified_length, specified_pos,
-                &(param->unk_pos), TYPE_FAMILY_ALPH_PUNC);//r_node 指定してない
-        }
+//        if (!result_node) {
+//            result_node = dic->make_specified_pseudo_node_by_dic_check(
+//                start_str + pos, specified_length, specified_pos,
+//                &(param->unk_pos), TYPE_FAMILY_ALPH_PUNC);//r_node 指定してない
+//        }
 
-        // 漢字
-
-        // カタカナ
+        // カタカナ specified 版ではカタカナの未定義語を作る意味が無い
         // TODO:切れるところまでで未定義語を作る
-        if (!result_node) {
-            result_node = dic->make_specified_pseudo_node_by_dic_check(
-                start_str + pos, specified_length, specified_pos,
-                &(param->unk_pos), TYPE_KATAKANA, nullptr); //ここも
-        }
+//        if (!result_node) {
+//            result_node = dic->make_specified_pseudo_node_by_dic_check(
+//                start_str + pos, specified_length, specified_pos,
+//                &(param->unk_pos), TYPE_KATAKANA, nullptr); //ここも
+//        }
     }
 
     // 辞書にあったものと同じ品詞で同じ長さなら使わない
@@ -364,7 +370,7 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(  //{{{
         if (!specified_length && result_node) // only prediction
             find_reached_pos_of_pseudo_nodes(pos, result_node);
     }
-
+            
     // 辞書にあったものと同じ品詞で同じ長さなら使わない &
     // 辞書の長さより長いなら素性を追加
     // ここで一括チェックする方針
@@ -381,9 +387,6 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(  //{{{
                 tmp_node = tmp_node->bnext;
                 tmp_node->bnext = nullptr;
             } else {
-                // std::cerr << "del unk_node:" <<
-                // *(tmp_result_node->original_surface) << "_" <<
-                // *(tmp_result_node->pos) << std::endl;
                 delete tmp_result_node;
             }
             tmp_result_node = next_result;
@@ -408,13 +411,6 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(  //{{{
             tmp_result_node = tmp_result_node->bnext;
         }
     }
-
-    //    Node *tmp_result_node = result_node;
-    //    while (tmp_result_node) {
-    //        std::cerr << "lookup:" << *tmp_result_node->original_surface <<
-    //        ":" << tmp_result_node->longer << std::endl;
-    //        tmp_result_node = tmp_result_node->bnext;
-    //    }
 
     return result_node;
 }  //}}}
@@ -2443,8 +2439,7 @@ bool Sentence::lookup_gold_data(std::string &word_pos_pair) {  //{{{
     }
 
     std::vector<std::string> line(7);
-    split_string(word_pos_pair,
-                 "_", line);
+    split_string(word_pos_pair, "_", line);
     Node::reset_id_count();
     std::vector<std::string> spec{
         line[1], line[2], line[3],
@@ -2462,10 +2457,8 @@ bool Sentence::lookup_gold_data(std::string &word_pos_pair) {  //{{{
         cl, line[0].c_str(), strlen(line[0].c_str()), spec);
 
     if (!r_node &&
-        (line[6] ==
-             "命令形エ形" ||
-         line[6] ==
-             "命令形")) {  // JUMANの活用になく，３文コーパスでのみ出てくる活用の命令形エ形を連用形だと解釈する.
+        (line[6] == "命令形エ形" ||
+         line[6] == "命令形")) {  // JUMANの活用になく，３文コーパスでのみ出てくる活用の命令形エ形を連用形だと解釈する.
         std::vector<std::string> mod_spec{line[1],
                                           "", line[3],
                                           line[4], line[5],

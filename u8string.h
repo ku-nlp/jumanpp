@@ -173,6 +173,8 @@ class U8string{//{{{
         // i 文字目が文字列の何バイト目かを返す
         size_t in_byte_index(size_t char_index){//{{{
             parse();
+            if(char_index >= char_size())
+                return byte_size();
             return char_index2byte_index[char_index];
         }//}}}
 
