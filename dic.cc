@@ -52,18 +52,18 @@ bool Dic::open(Parameter *in_param, FeatureTemplateSet *in_ftmpl) {//{{{
 }//}}}
 
 // 繰り返し系のオノマトペを自動生成する
-Node* Dic::recognize_onomatopoeia(const char* start_str) {//{{{
+Node* Dic::recognize_onomatopoeia(const char* start_str, size_t specified_length) {//{{{
     int code, next_code;
     Node *result_node = NULL;
-
+        
     U8string key(start_str); // オノマトペかどうかを判定するキー
     size_t key_length = key.char_size(); /* キーの文字数を数えておく */
-    std::string current_char = key[0];// １文字目
-    code = key.char_type_at(0);// 1文字目のタイプ
-        
+    std::string current_char = key[0]; // １文字目
+    code = key.char_type_at(0); // 1文字目のタイプ
+
     /* 通常の平仮名、片仮名以外から始まるものは不可 */
     if (code != TYPE_HIRAGANA && code != TYPE_KATAKANA) return nullptr;
-    //小文字で始まる場合は終了
+    // 小文字で始まる場合は終了
     if (key.is_lower(0)) return nullptr;
         
     /* 反復型オノマトペ */
@@ -80,11 +80,14 @@ Node* Dic::recognize_onomatopoeia(const char* start_str) {//{{{
         if (key.char_substr(0,len) != key.char_substr(len,len)) continue;
         /* ただし3文字が同じものは不可 */
         if (key[0] == key[1] && key[1] == key[2]) continue;
-            
+        
+        // specified_length を指定している場合は長さが異なる場合スキップ
+        if (specified_length > 0 && (len * 2 * BYTES4CHAR) != specified_length) continue;
+
         Node *new_node = new Node;
         new_node->length = key.in_byte_index(len*2); //ここはバイト長
         new_node->surface = start_str;
-    
+             
         new_node->string = new std::string(new_node->surface, new_node->length);
         new_node->original_surface = new std::string(new_node->surface, new_node->length);
         new_node->string_for_print = new std::string(new_node->surface, new_node->length);
@@ -110,7 +113,7 @@ Node* Dic::recognize_onomatopoeia(const char* start_str) {//{{{
         new_node->stat = MORPH_NORMAL_NODE; 
         new_node->char_type = check_utf8_char_type((unsigned char *)start_str);
         new_node->char_family = check_char_family(new_node->char_type);
-        
+             
         char *end_char = (char *)get_specified_char_pointer((unsigned char *)start_str, new_node->length, new_node->char_num - 1);
         new_node->end_char_family = check_char_family((unsigned char *)end_char);
         new_node->end_string = new std::string(end_char, utf8_bytes((unsigned char *)end_char));
@@ -123,7 +126,7 @@ Node* Dic::recognize_onomatopoeia(const char* start_str) {//{{{
         }
         new_node->feature = f;
 
-        new_node->bnext = result_node;
+        new_node->bnext = nullptr;
         result_node = new_node;
         
 //        // 以下は素性に置き換える
