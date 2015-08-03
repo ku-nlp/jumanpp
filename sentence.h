@@ -246,6 +246,7 @@ class Sentence {//{{{
     void print_best_beam();
     void print_best_path();
 
+    void generate_juman_line(Node* node, std::stringstream &output_string_buffer, std::string prefix = "");
     void print_best_beam_juman();
     void print_best_path_with_rnn(RNNLM::CRnnLM& model);
     TopicVector get_topic();
