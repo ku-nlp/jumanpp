@@ -17,7 +17,9 @@ class Parameter {
     bool trigram;
     bool rnnlm;
     bool srilm;
+    bool useoldloss=false;
     bool lpenalty=false;
+    bool no_posmatch=false;
     double rweight;
     double lweight;
     unsigned int unk_max_length;
