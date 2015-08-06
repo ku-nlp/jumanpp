@@ -14,8 +14,11 @@
 #include "rnnlm/rnnlmlib.h"
 
 //namespace SRILM {
+#ifdef USE_SRILM
 #include "srilm/Ngram.h"
 #include "srilm/Vocab.h"
+#endif
+
 //}
 
 namespace Morph {
@@ -41,12 +44,16 @@ class Sentence {//{{{
             
     static std::shared_ptr<RNNLM::context> initial_context; 
     static RNNLM::CRnnLM* rnnlm;
+#ifdef USE_SRILM
     static Ngram*  srilm;
     static Vocab*  vocab;
+#endif
     explicit Sentence(const Sentence &s){ };
   public:
     static void init_rnnlm(RNNLM::CRnnLM* model);
+#ifdef USE_SRILM
     static void init_srilm(Ngram* model, Vocab* vocab);
+#endif
     Sentence(std::vector<Node *> *in_begin_node_list, std::vector<Node *> *in_end_node_list, std::string &in_sentence, Dic *in_dic, FeatureTemplateSet *in_ftmpl, Parameter *in_param);
     Sentence(size_t max_byte_length, std::vector<Node *> *in_begin_node_list, std::vector<Node *> *in_end_node_list, Dic *in_dic, FeatureTemplateSet *in_ftmpl, Parameter *in_param);
     void init(size_t max_byte_length, std::vector<Node *> *in_begin_node_list, std::vector<Node *> *in_end_node_list, Dic *in_dic, FeatureTemplateSet *in_ftmpl, Parameter *in_param);
@@ -75,6 +82,10 @@ class Sentence {//{{{
             new_node.pos = (*node_gold)->pos;
             new_node.sposid = (*node_gold)->sposid;
             new_node.spos = (*node_gold)->spos;
+            new_node.form = (*node_gold)->form;
+            new_node.formid = (*node_gold)->formid;
+            new_node.form_type = (*node_gold)->form_type;
+            new_node.formtypeid = (*node_gold)->formtypeid;
             new_node.imisid = (*node_gold)->imisid;
             new_node.semantic_feature = (*node_gold)->semantic_feature;
 
@@ -85,10 +96,10 @@ class Sentence {//{{{
             gold_morphs.push_back(new_node);
 
             // debug 用出力
-            cerr << *new_node.base << "_"<< *new_node.pos << ":" << *new_node.spos << " ";
+            //cerr << *new_node.base << "_"<< *new_node.pos << ":" << *new_node.spos << " ";
         }
         //debug 用
-        cerr << endl;
+        //cerr << endl;
 
         if(!find_bos_node_gold)
             cerr << ";; gold parse err"<< endl;

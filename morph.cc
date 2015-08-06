@@ -6,8 +6,8 @@
 #include <memory.h>
 
 //namespace SRILM {
-#include "srilm/Ngram.h"
-#include "srilm/Vocab.h"
+//#include "srilm/Ngram.h"
+//#include "srilm/Vocab.h"
 //}
 
 bool MODE_TRAIN = false;
@@ -20,7 +20,9 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     option.add<std::string>("feature", 'f', "feature template filename", false, "data/feature.def");
     option.add<std::string>("train", 't', "training filename", false, "data/train.txt");
     option.add<std::string>("rnnlm", 'r', "rnnlm filename", false, "data/rnnlm.model");
+#ifdef USE_SRILM
     option.add<std::string>("srilm", 'I', "srilm filename", false, "srilm.arpa");
+#endif
     option.add<unsigned int>("iteration", 'i', "iteration number for training", false, 10);
     option.add<unsigned int>("unk_max_length", 'l', "maximum length of unknown word detection", false, 7);
     option.add<unsigned int>("lattice", 'L', "output lattice format",false, 1);
@@ -32,6 +34,7 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     option.add<unsigned int>("nbest", 'n', "n-best search", false, 5);
     option.add<unsigned int>("rerank", 'R', "n-best reranking", false, 5);
     option.add("scw", 0, "use soft confidence weighted");
+    option.add("oldloss", 0, "use old loss function");
     option.add("so", 0, "use second order viterbi algorithm");
     option.add("trigram", 0, "use trigram feature (default)");
     option.add("notrigram", 0, "do NOT use trigram feature");
@@ -46,6 +49,7 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     option.add("shuffle", 's', "shuffle training data for each iteration");
     option.add("unknown", 'u', "apply unknown word detection (obsolete; already default)");
     option.add("passiveunk", '\0', "apply passive unknown word detection. The option use unknown word detection only if it cannot make any node.");
+    option.add("no_posmatch", '\0', "do not use unknown words listed in dictionary even if the pos is not matched");
     option.add("debug", '\0', "debug mode");
     option.add("version", 'v', "print version");
     option.add("help", 'h', "print this message");
@@ -112,11 +116,20 @@ int main(int argc, char** argv) {//{{{
     param.set_trigram(!option.exist("notrigram"));
     param.set_rweight(option.get<double>("Rweight"));
 
+    if(option.exist("oldloss")){
+        param.useoldloss = true;
+    }
+    if(option.exist("no_posmatch")){
+        param.no_posmatch = true;
+    }
+
     Morph::Parameter normal_param = param;
     normal_param.set_nbest(true); // nbest を利用するよう設定
     normal_param.set_N(10); // 10-best に設定
     param.set_rnnlm(option.exist("rnnlm"));
+#ifdef USE_SRILM
     param.set_srilm(option.exist("srilm"));
+#endif
     Morph::Tagger tagger(&param);
     Morph::Node::set_param(&param);
    
@@ -137,10 +150,9 @@ int main(int argc, char** argv) {//{{{
         Morph::Sentence::init_rnnlm(&rnnlm);
     }
 
-    //SRILM::
-        Vocab *vocab;
-    //SRILM::
-        Ngram *ngramLM;
+#ifdef USE_SRILM
+    Vocab *vocab;
+    Ngram *ngramLM;
     if(option.exist("srilm")){//{{{
         vocab = new Vocab;
         vocab->unkIsWord() = true; // use unknown <unk> 
@@ -172,6 +184,7 @@ int main(int argc, char** argv) {//{{{
         //std::make_unique<SRILM::Vocab>(SRILM::Vocab());
         //std::make_unique<Ngram::Ngram> srilm(Ngram::Ngram())
     }//}}}
+#endif
 
     if (MODE_TRAIN) {//学習モード{{{
         std::cerr << "done" << std::endl;
