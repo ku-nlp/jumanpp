@@ -37,17 +37,18 @@ RNNLM::CRnnLM *Sentence::rnnlm;
 Ngram *Sentence::srilm;
 Vocab *Sentence::vocab;
 
-void Sentence::init_rnnlm(RNNLM::CRnnLM *in_rnnlm) {
+void Sentence::init_rnnlm(RNNLM::CRnnLM *in_rnnlm) {/*{{{*/
     rnnlm = in_rnnlm;
     RNNLM::context tmp;
     rnnlm->get_initial_context(&tmp);
     initial_context = std::make_shared<RNNLM::context>(tmp);
-}
-void Sentence::init_srilm(Ngram *model, Vocab *in_vocab) {
+}/*}}}*/
+
+void Sentence::init_srilm(Ngram *model, Vocab *in_vocab) {/*{{{*/
     srand48((long)1);
     srilm = model;
     vocab = in_vocab;
-}
+}/*}}}*/
 
 // for test sentence
 Sentence::Sentence(std::vector<Node *> *in_begin_node_list,
@@ -239,10 +240,10 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, co
     if (dic_node == nullptr && specified_pos_string == "副詞") { //副詞の場合のみ
         Node *r_onomatope_node = dic->recognize_onomatopoeia(start_str, specified_length);
 
-        //std::cerr << "check 副詞 " << start_str << std::endl;
+        std::cerr << "check unknown 副詞 " << start_str << std::endl;
         if (r_onomatope_node != NULL) {
             //std::cerr << "found 副詞 len" << (r_onomatope_node->length) << std::endl;
-            //std::cerr << "found 副詞 str" << *(r_onomatope_node->string_for_print) << std::endl;
+            std::cerr << "found オノマトペ str" << *(r_onomatope_node->string_for_print) << std::endl;
             dic_node = r_onomatope_node;
         }
     }
@@ -250,27 +251,15 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, co
     // 訓練データで，長さが分かっている場合か，未知語として選択されていない範囲なら
     // 同じ文字種が続く範囲を一語として入れてくれる
     if (specified_length) {
-        // 数詞処理
+        // 数詞処理 //TODO:辞書から引けなかったら必ず作る
         result_node = dic->make_specified_pseudo_node_by_dic_check(
             start_str + pos, specified_length, specified_pos,
             &(param->unk_figure_pos), TYPE_FAMILY_FIGURE, nullptr);
 
-        // alphabet
-//        if (!result_node) {
-//            result_node = dic->make_specified_pseudo_node_by_dic_check(
-//                start_str + pos, specified_length, specified_pos,
-//                &(param->unk_pos), TYPE_FAMILY_ALPH_PUNC);//r_node 指定してない
-//        }
-
         // カタカナ specified 版ではカタカナの未定義語を作る意味が無い
-        // TODO:切れるところまでで未定義語を作る
-//        if (!result_node) {
-//            result_node = dic->make_specified_pseudo_node_by_dic_check(
-//                start_str + pos, specified_length, specified_pos,
-//                &(param->unk_pos), TYPE_KATAKANA, nullptr); //ここも
-//        }
     }
 
+    // TODO:この処理必要ない
     // 辞書にあったものと同じ品詞で同じ長さなら使わない
     if (dic_node) {
         Node *tmp_node = dic_node;
@@ -358,6 +347,11 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(  //{{{
                 &(param->unk_pos), TYPE_FAMILY_ALPH_PUNC);
         }
 //      // 漢字
+        if (!(param->passive_unknown) &&!result_node) {
+            result_node = dic->make_specified_pseudo_node_by_dic_check(
+                start_str + pos, specified_length, specified_pos,
+                &(param->unk_pos), TYPE_FAMILY_KANJI);
+        }
 //      // カタカナ
 //      // TODO:切れるところまでで未定義語を作る
         if (!(param->passive_unknown) && !result_node) {
@@ -2499,8 +2493,7 @@ bool Sentence::lookup_gold_data(std::string &word_pos_pair) {  //{{{
         // << ":" << line[6] << endl;
     }
 
-    if (!r_node && line[3] ==
-                       "名詞") {  // 動詞の名詞化を復元
+    if (!r_node && line[3] == "名詞") {  // 動詞の名詞化を復元
         // コーパスでは名詞化した動詞は名詞として扱われる. (kkn
         // では動詞の連用形扱い)
         // 品詞変更タグがついていない場合の対策
@@ -2530,6 +2523,20 @@ bool Sentence::lookup_gold_data(std::string &word_pos_pair) {  //{{{
         r_node = lookup_and_make_special_pseudo_nodes_lattice(
             cl, line[0].c_str(), strlen(line[0].c_str()), mod_spec);
         // cerr << "; restore nominalized verb:" <<  line[0] << ":" << line[1]
+        // << ":" << line[2] << ":" << line[3] << ":" << line[4] << ":" <<
+        // line[5] << ":" << line[6] << endl;
+    }
+
+    // 名詞が固有名詞, サ変名詞化している場合, 細分類を無視して辞書引き
+    // Wikipedia 辞書で読みが正しく付与されていない場合があるので，読みも無視
+    if (!r_node && line[3] ==
+                       "名詞") {
+        std::vector<std::string> mod_spec{
+            "", line[2], line[3],
+            "", line[5], line[6]};
+        r_node = lookup_and_make_special_pseudo_nodes_lattice(
+            cl, line[0].c_str(), strlen(line[0].c_str()), mod_spec);
+        // cerr << "; modify proper noun to noun:" <<  line[0] << ":" << line[1]
         // << ":" << line[2] << ":" << line[3] << ":" << line[4] << ":" <<
         // line[5] << ":" << line[6] << endl;
     }
@@ -2599,19 +2606,6 @@ bool Sentence::lookup_gold_data(std::string &word_pos_pair) {  //{{{
         // << ":" << line[6] << endl;
     }
 
-    // 名詞が固有名詞, サ変名詞化している場合, 細分類を無視して辞書引き
-    // Wikipedia 辞書で読みが正しく付与されていない場合があるので，読みも無視
-    if (!r_node && line[3] ==
-                       "名詞") {
-        std::vector<std::string> mod_spec{
-            "", line[2], line[3],
-            "", line[5], line[6]};
-        r_node = lookup_and_make_special_pseudo_nodes_lattice(
-            cl, line[0].c_str(), strlen(line[0].c_str()), mod_spec);
-        // cerr << "; modify proper noun to noun:" <<  line[0] << ":" << line[1]
-        // << ":" << line[2] << ":" << line[3] << ":" << line[4] << ":" <<
-        // line[5] << ":" << line[6] << endl;
-    }
 
     // 記号に読み方が書かれている場合は無視する
     if (!r_node && line[3] ==

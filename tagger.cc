@@ -211,6 +211,7 @@ bool Tagger::read_gold_data(const char *gsd_file) {//{{{
             new_sentence->set_gold_nodes();
         }
         
+        //new_sentence->print_lattice();
         new_sentence->clear_nodes();
         add_one_sentence_for_train(new_sentence);
         //new_sentence->feature_print();// trigram 素性もできている

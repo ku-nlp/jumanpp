@@ -83,7 +83,12 @@ class Sentence {//{{{
             new_node.length = (*node_gold)->length;
             new_node.char_num = (*node_gold)->char_num;
             gold_morphs.push_back(new_node);
+
+            // debug 用出力
+            cerr << *new_node.base << "_"<< *new_node.pos << ":" << *new_node.spos << " ";
         }
+        //debug 用
+        cerr << endl;
 
         if(!find_bos_node_gold)
             cerr << ";; gold parse err"<< endl;

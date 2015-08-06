@@ -33,7 +33,8 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     option.add<unsigned int>("rerank", 'R', "n-best reranking", false, 5);
     option.add("scw", 0, "use soft confidence weighted");
     option.add("so", 0, "use second order viterbi algorithm");
-    option.add("trigram", 0, "use trigram feature");
+    option.add("trigram", 0, "use trigram feature (default)");
+    option.add("notrigram", 0, "do NOT use trigram feature");
     option.add<std::string>("lda", 0, "use lda", false, "");
     option.add<unsigned int>("beam", 'b', "use beam search",false,1);
     option.add<unsigned int>("rbeam", 'B', "use beam search and reranking",false,1);
@@ -108,7 +109,7 @@ int main(int argc, char** argv) {//{{{
         Morph::FeatureSet::use_total_sim = true;
     }
 
-    param.set_trigram(option.exist("trigram"));
+    param.set_trigram(!option.exist("notrigram"));
     param.set_rweight(option.get<double>("Rweight"));
 
     Morph::Parameter normal_param = param;
