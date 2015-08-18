@@ -2727,6 +2727,10 @@ double Sentence::eval(Sentence &gold) {  //{{{
                     if ((*itr)->formid == (itr_gold)->formid) 
                         score += 0.2;
                 }
+            }else if ((*itr)->sposid == dic->sposid2spos.get_id(UNK_POS) &&
+                    (*itr)->length == (itr_gold)->length &&
+                    (*itr)->posid == (itr_gold)->posid ) {// ２つ一致して 1.0 点
+                score += 1.0;
             }else if ((*itr)->length == (itr_gold)->length &&
                     (*itr)->posid == (itr_gold)->posid &&
                     (*itr)->sposid == (itr_gold)->sposid &&

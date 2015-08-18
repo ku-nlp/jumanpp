@@ -626,10 +626,10 @@ Node *Dic::make_unk_pseudo_node_gold(const char *start_str, int byte_len, std::s
     } else {
         new_node->posid  = specified_posid;
         new_node->sposid = sposid2spos.get_id(UNK_POS);
-        new_node->formid = formid2form.get_id("*");
-        new_node->formtypeid = formtypeid2formtype.get_id("*");
+        new_node->formid = formid2form.get_id(UNK_POS);
+        new_node->formtypeid = formtypeid2formtype.get_id(UNK_POS);
         new_node->baseid = baseid2base.get_id(UNK_POS); //文字種に置き換える
-        new_node->readingid = readingid2reading.get_id("*");
+        new_node->readingid = readingid2reading.get_id(UNK_POS);
 
 
         // 却って悪くなるかも？05/25
