@@ -133,9 +133,9 @@ extern size_t is_suuji(unsigned char *ucp);
 #define UNK_FIGURE_SPOS "数詞"
 
 #define EXCEPTIONAL_FIGURE_EXPRESSION "分の"
-#define EXCEPTIONAL_FIGURE_EXPRESSION2 "ぶんの"
+#define EXCEPTIONAL_FIGURE_EXPRESSION_2 "ぶんの"
 #define EXCEPTIONAL_FIGURE_EXPRESSION_LENGTH 6
-#define EXCEPTIONAL_FIGURE_EXPRESSION_LENGTH2 9
+#define EXCEPTIONAL_FIGURE_EXPRESSION_LENGTH_2 9
 
 // split function with split_num
 template<class T>

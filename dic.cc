@@ -465,14 +465,14 @@ Node *Dic::make_specified_pseudo_node_by_dic_check(const char *start_str, unsign
         unsigned int used_chars = 0;
         // exceptional figure expression of two characters
         // 数字を指定していて、かつ数字の例外に当たる場合
-        if ( pos != 0  && (type_family == TYPE_FAMILY_FIGURE && ( (used_chars = check_exceptional_chars_in_figure(start_str + pos , length - pos)) > 0 ))) {
+        if ( pos != 0  && type_family == TYPE_FAMILY_FIGURE && (used_chars = check_exceptional_chars_in_figure(start_str + pos , length - pos)) > 0 ) {
             if(used_chars == 2)
                 pos += utf8_bytes((unsigned char *)(start_str + pos));
-            else{
+            else if(used_chars == 3){
                 pos += utf8_bytes((unsigned char *)(start_str + pos));
                 pos += utf8_bytes((unsigned char *)(start_str + pos));
             }
-
+                
             char_num += used_chars;
         }
         // doesn't start with slash, colon, etc.

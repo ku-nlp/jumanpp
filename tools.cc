@@ -268,22 +268,22 @@ bool compare_char_type_in_family(unsigned int char_type, unsigned int family_pat
 // キロとかここに入れればいい？ペタはjumanでは入ってなかった
 // 数億，数円，数時間をどうするか
 unsigned int check_exceptional_chars_in_figure(const char *cp, unsigned int rest_byte_len) {
-    if (rest_byte_len >= EXCEPTIONAL_FIGURE_EXPRESSION_LENGTH && 
+    if (rest_byte_len >= EXCEPTIONAL_FIGURE_EXPRESSION_LENGTH && //分の
         !strncmp(cp, EXCEPTIONAL_FIGURE_EXPRESSION, EXCEPTIONAL_FIGURE_EXPRESSION_LENGTH)) {
         return 2;
-    }else if (rest_byte_len >= EXCEPTIONAL_FIGURE_EXPRESSION_LENGTH2 && 
-        !strncmp(cp, EXCEPTIONAL_FIGURE_EXPRESSION2, EXCEPTIONAL_FIGURE_EXPRESSION_LENGTH2)) {
+    }else if (rest_byte_len >= EXCEPTIONAL_FIGURE_EXPRESSION_LENGTH_2 && //ぶんの
+        strncmp(cp, EXCEPTIONAL_FIGURE_EXPRESSION_2, EXCEPTIONAL_FIGURE_EXPRESSION_LENGTH_2) == 0) {
         return 3;
-    }else if(rest_byte_len >= 6 && !strncmp(cp, "キロ", 2)){
-        return 6;
-    }else if(rest_byte_len >= 6 && !strncmp(cp, "メガ", 2)){
-        return 6;
-    }else if(rest_byte_len >= 6 && !strncmp(cp, "ギガ", 2)){
-        return 6;
-    }else if(rest_byte_len >= 6 && !strncmp(cp, "テラ", 2)){
-        return 6;
-    }else if(rest_byte_len >= 6 && !strncmp(cp, "ミリ", 2)){
-        return 6;
+    }else if(rest_byte_len >= 6 && !strncmp(cp, "キロ", 6)){
+        return 2;
+    }else if(rest_byte_len >= 6 && !strncmp(cp, "メガ", 6)){
+        return 2;
+    }else if(rest_byte_len >= 6 && !strncmp(cp, "ギガ", 6)){
+        return 2;
+    }else if(rest_byte_len >= 6 && !strncmp(cp, "テラ", 6)){
+        return 2;
+    }else if(rest_byte_len >= 6 && !strncmp(cp, "ミリ", 6)){
+        return 2;
     }else {
         return 0;
     }
