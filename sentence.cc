@@ -1773,7 +1773,7 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
                         l_node, r_node);
                     trigram_score = (1.0 - param->rweight) *
                                     tri_f.calc_inner_product_with_weight();
-                    context_score += trigram_score;
+                    score += trigram_score;
                     if (param->debug) {  //{{{
                         ss_key.str(
                             ""),
@@ -1831,8 +1831,7 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
             } else {
                 r_node->prev = nullptr;
             }
-            r_node->cost =
-                r_node->bq.beam.front().score;  // context_score を入れる？
+            r_node->cost = r_node->bq.beam.front().score;  // context_score を入れる？
             // ほぼ表示用なので必要ない？
             if (MODE_TRAIN) {
                 //(*r_node->feature) = (*r_node->bq.beam.front().f); //コピー
@@ -2644,7 +2643,7 @@ bool Sentence::lookup_gold_data(std::string &word_pos_pair) {  //{{{
             line[0].c_str(), strlen(line[0].c_str()), line[3]);
         cerr << ";; lookup failed in gold data:" << line[0] << ":" << line[1]
              << ":" << line[2] << ":" << line[3] << ":" << line[4] << ":"
-             << line[5] << ":" << line[6] << endl;
+             << line[5] << ":" << line[6] << "\r";
     }
 
     // auto tmp_node = r_node;

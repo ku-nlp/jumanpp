@@ -219,6 +219,7 @@ bool Tagger::read_gold_data(const char *gsd_file) {//{{{
     }
         
     gsd_in.close();
+    std::cout << std::endl;
     return true;
 }//}}}
 
