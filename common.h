@@ -58,7 +58,7 @@ extern unsigned int check_utf8_char_type(unsigned char *ucp);
 extern unsigned int check_char_family(unsigned char *ucp);
 extern unsigned int check_char_family(unsigned int char_type);
 extern bool compare_char_type_in_family(unsigned int char_type, unsigned int family_pattern);
-extern bool check_exceptional_two_chars_in_figure(const char *cp, unsigned int rest_byte_len);
+extern unsigned int check_exceptional_chars_in_figure(const char *cp, unsigned int rest_byte_len);
 
 extern size_t is_suuji(unsigned char *ucp);
 
@@ -133,7 +133,9 @@ extern size_t is_suuji(unsigned char *ucp);
 #define UNK_FIGURE_SPOS "数詞"
 
 #define EXCEPTIONAL_FIGURE_EXPRESSION "分の"
+#define EXCEPTIONAL_FIGURE_EXPRESSION2 "ぶんの"
 #define EXCEPTIONAL_FIGURE_EXPRESSION_LENGTH 6
+#define EXCEPTIONAL_FIGURE_EXPRESSION_LENGTH2 9
 
 // split function with split_num
 template<class T>
