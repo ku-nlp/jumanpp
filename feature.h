@@ -6,9 +6,12 @@
 #include "node.h"
 #include <sstream>
 #include <memory>
+#include <tuple>
+#include <unordered_set>
 
 namespace Morph {
 
+//------ UNIGRAM ------
 #define FEATURE_MACRO_STRING_WORD "%w"
 #define FEATURE_MACRO_WORD 1
 #define FEATURE_MACRO_STRING_POS "%p"
@@ -37,8 +40,6 @@ namespace Morph {
 #define FEATURE_MACRO_STRING_BASE_WORD "%ba"
 #define FEATURE_MACRO_BASE_WORD 15
 
-//#define FEATURE_MACRO_STRING_HAVE_TOPIC "%ht"
-//#define FEATURE_MACRO_HAVE_TOPIC 16
 #define FEATURE_MACRO_STRING_DEVOICE  "%devoice"
 #define FEATURE_MACRO_DEVOICE  17
 #define FEATURE_MACRO_STRING_LONGER  "%longer"
@@ -46,6 +47,10 @@ namespace Morph {
 #define FEATURE_MACRO_STRING_NUMSTR  "%numstr"
 #define FEATURE_MACRO_NUMSTR  20
 
+#define FEATURE_MACRO_STRING_LEXICAL  "%lexical"
+#define FEATURE_MACRO_LEXICAL  21
+
+//------ LEFT ------
 #define FEATURE_MACRO_STRING_LEFT_WORD "%Lw"
 #define FEATURE_MACRO_LEFT_WORD 101
 #define FEATURE_MACRO_STRING_LEFT_POS "%Lp"
@@ -83,6 +88,8 @@ namespace Morph {
 #define FEATURE_MACRO_LEFT_LONGER 119
 #define FEATURE_MACRO_STRING_LEFT_NUMSTR "%Lnumstr"
 #define FEATURE_MACRO_LEFT_NUMSTR 120
+#define FEATURE_MACRO_STRING_LEFT_LEXICAL  "%Llexical"
+#define FEATURE_MACRO_LEFT_LEXICAL  121
 
 //------ RIGHT ------
 #define FEATURE_MACRO_STRING_RIGHT_WORD "%Rw"
@@ -123,6 +130,9 @@ namespace Morph {
 #define FEATURE_MACRO_RIGHT_LONGER 219
 #define FEATURE_MACRO_STRING_RIGHT_NUMSTR "%Rnumstr"
 #define FEATURE_MACRO_RIGHT_NUMSTR 220
+
+#define FEATURE_MACRO_STRING_RIGHT_LEXICAL  "%Rlexical"
+#define FEATURE_MACRO_RIGHT_LEXICAL  221
 
 //----- middle  ----- (left middle right) の並び
 //とりあえず, middle は unigram のテンプレートを流用する. 
@@ -176,6 +186,9 @@ class FeatureSet { //{{{
   friend int main(int argc, char** argv);
     FeatureTemplateSet *ftmpl;
     FeatureVector* weight;
+    //                            base       , pos        , spos       , form_type
+    std::unordered_set<std::tuple<std::string, std::string, std::string, std::string>> freq_word_set.
+    bool open_freq_word_set(const std::string &list_filename); 
   public: 
     static std::vector<double>* topic;
     static bool use_total_sim;

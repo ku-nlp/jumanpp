@@ -5,6 +5,8 @@
 #include "scw.h"
 
 // TODO: featureSet クラスから feature_weight を取り除く．tagger に移す．
+// TODO: 素性テンプレートの手書き感を無くす．テンプレートとextract..feature のみの書き換えで，素性が追加できるようにする．
+// TODO: unigram 用とbigram 用で素性を個別に書かなくて良いようにする．
 
 namespace Morph {
 std::vector<double>* FeatureSet::topic = nullptr;
@@ -66,6 +68,14 @@ void FeatureSet::extract_unigram_feature(Node *node) {//{{{
                 f += int2string(node->end_char_family);
             else if (*it == FEATURE_MACRO_FEATURE1) // Wikipedia (test)
                 f += int2string(node->lcAttr);
+            else if (*it == FEATURE_MACRO_FEATURE1) // Wikipedia (test)
+                f += int2string(node->lcAttr);
+            else if (*it == FEATURE_MACRO_LEXICAL){ // 
+                if( freq_word_set.count(std::make_tuple(*(node->base),*(node->pos),*(node->spos),*(node->form_type))) > 0)
+                    f += *(node->string) + "_" + *(node->pos) + "_" + *(node->spos) + "_" + *(node->form_type) + "_" + *(node->form);
+                else
+                    f += *(node->pos);
+            }
         }
         fset.push_back(f);
     }
@@ -141,7 +151,7 @@ void FeatureSet::extract_bigram_feature(Node *l_node, Node *r_node) {//{{{
                 f += int2string(l_node->char_family);
             else if (*it == FEATURE_MACRO_LEFT_ENDING_CHAR_TYPE)
                 f += int2string(l_node->end_char_family);
-            else if (*it == FEATURE_MACRO_LEFT_PREFIX){ //接頭辞の種類と後続する品詞が一致しているか
+            else if (*it == FEATURE_MACRO_LEFT_PREFIX){ //接頭辞の種類と後続する品詞が一致しているか //廃止
                 if( *(l_node->pos) != "接頭辞" )
                     f += "neg";
                 else if((*(l_node->spos) == "名詞接頭辞" && *(r_node->pos) == "名詞") || 
@@ -164,7 +174,12 @@ void FeatureSet::extract_bigram_feature(Node *l_node, Node *r_node) {//{{{
             else if (*it == FEATURE_MACRO_LEFT_DUMMY){ 
                 f += "dummy";
             }
-
+            else if (*it == FEATURE_MACRO_LEFT_LEXICAL){ // 
+                if( freq_word_set.count(std::make_tuple(*(l_node->base),*(l_node->pos),*(l_node->spos),*(l_node->form_type))) > 0 )
+                    f += *(l_node->string) + "_" + *(l_node->pos) + "_" + *(l_node->spos) + "_" + *(l_node->form_type) + "_" + *(l_node->form);
+                else
+                    f += *(l_node->pos);
+            }
             // right
             else if (*it == FEATURE_MACRO_RIGHT_WORD)
                 f += *(r_node->string);
@@ -223,6 +238,12 @@ void FeatureSet::extract_bigram_feature(Node *l_node, Node *r_node) {//{{{
             }
             else if (*it == FEATURE_MACRO_RIGHT_DUMMY){ 
                 f += "dummy";
+            }
+            else if (*it == FEATURE_MACRO_RIGHT_LEXICAL){ // 
+                if( freq_word_set.count(std::make_tuple(*(r_node->base),*(r_node->pos),*(r_node->spos),*(r_node->form_type))) > 0 )
+                    f += *(r_node->string) + "_" + *(r_node->pos) + "_" + *(r_node->spos) + "_" + *(r_node->form_type) + "_" + *(r_node->form);
+                else
+                    f += *(r_node->pos);
             }
         }
         fset.push_back(f);
@@ -293,6 +314,13 @@ void FeatureSet::extract_trigram_feature(Node *l_node, Node *m_node,  Node *r_no
             else if (*it == FEATURE_MACRO_LEFT_DUMMY){ 
                 f += "dummy";
             }
+            else if (*it == FEATURE_MACRO_LEFT_LEXICAL){ // 
+                if( freq_word_set.count(std::make_tuple(*(l_node->base),*(l_node->pos),*(l_node->spos),*(l_node->form_type))) > 0 )
+                    f += *(l_node->string) + "_" + *(l_node->pos) + "_" + *(l_node->spos) + "_" + *(l_node->form_type) + "_" + *(l_node->form);
+                else
+                    f += *(l_node->pos);
+            }
+
             // right
             else if (*it == FEATURE_MACRO_RIGHT_WORD)
                 f += *(r_node->string);
@@ -352,6 +380,12 @@ void FeatureSet::extract_trigram_feature(Node *l_node, Node *m_node,  Node *r_no
             else if (*it == FEATURE_MACRO_RIGHT_DUMMY){ 
                 f += "dummy";
             }
+            else if (*it == FEATURE_MACRO_RIGHT_LEXICAL){ // 
+                if( freq_word_set.count(std::make_tuple(*(r_node->base),*(r_node->pos),*(r_node->spos),*(r_node->form_type))) > 0 )
+                    f += *(r_node->string) + "_" + *(r_node->pos) + "_" + *(r_node->spos) + "_" + *(r_node->form_type) + "_" + *(r_node->form);
+                else
+                    f += *(r_node->pos) + "_" + "_" + *(r_node->spos) + "_" + *(r_node->form_type) + "_" + *(r_node->form);
+            }
             else if (*it == FEATURE_MACRO_WORD)
                 f += *(m_node->string);
             else if (*it == FEATURE_MACRO_POS)
@@ -390,6 +424,12 @@ void FeatureSet::extract_trigram_feature(Node *l_node, Node *m_node,  Node *r_no
                 f += int2string(m_node->end_char_family);
             else if (*it == FEATURE_MACRO_FEATURE1) // Wikipedia (test)
                 f += int2string(m_node->lcAttr);
+            else if (*it == FEATURE_MACRO_LEXICAL){ // 
+                if( freq_word_set.count(std::make_tuple(*(m_node->base),*(m_node->pos),*(m_node->spos),*(m_node->form_type))) > 0)
+                    f += *(m_node->string) + "_" + *(m_node->pos) + "_" + *(m_node->spos) + "_" + *(m_node->form_type) + "_" + *(m_node->form);
+                else
+                    f += *(m_node->pos);
+            }
 
         }
         fset.push_back(f);
@@ -493,6 +533,8 @@ unsigned int FeatureTemplate::interpret_macro(std::string &macro) {//{{{
         return FEATURE_MACRO_LONGER;
     else if (macro == FEATURE_MACRO_STRING_NUMSTR)
         return FEATURE_MACRO_NUMSTR;
+    else if (macro == FEATURE_MACRO_STRING_LEXICAL)
+        return FEATURE_MACRO_LEXICAL;
 
     // bigram: left
     else if (macro == FEATURE_MACRO_STRING_LEFT_WORD)
@@ -529,6 +571,8 @@ unsigned int FeatureTemplate::interpret_macro(std::string &macro) {//{{{
         return FEATURE_MACRO_LEFT_LONGER;
     else if (macro == FEATURE_MACRO_STRING_LEFT_NUMSTR)
         return FEATURE_MACRO_LEFT_NUMSTR;
+    else if (macro == FEATURE_MACRO_STRING_LEFT_LEXICAL)
+        return FEATURE_MACRO_LEFT_LEXICAL;
 
     // bigram: right
     else if (macro == FEATURE_MACRO_STRING_RIGHT_WORD)
@@ -565,6 +609,8 @@ unsigned int FeatureTemplate::interpret_macro(std::string &macro) {//{{{
         return FEATURE_MACRO_RIGHT_LONGER;
     else if (macro == FEATURE_MACRO_STRING_RIGHT_NUMSTR)
         return FEATURE_MACRO_RIGHT_NUMSTR;
+    else if (macro == FEATURE_MACRO_STRING_RIGHT_LEXICAL)
+        return FEATURE_MACRO_RIGHT_LEXICAL;
 
 cerr << ";; cannot understand macro: " << macro << endl;
 return 0;
@@ -582,7 +628,7 @@ bool FeatureTemplateSet::open(const std::string &template_filename) {//{{{
         cerr << ";; cannot open " << template_filename << " for reading" << endl;
         return false;
     }
-
+        
     std::string buffer;
     while (getline(ft_in, buffer)) {
         if (buffer.at(0) == '#') // comment line
@@ -604,6 +650,25 @@ bool FeatureTemplateSet::open(const std::string &template_filename) {//{{{
         }
     }
 
+    return true;
+}//}}}
+
+bool FeatureSet::open_freq_word_set(const std::string &list_filename) {//{{{
+    std::ifstream ft_in(list_filename.c_str(), std::ios::in);
+    if (!ft_in.is_open()) {
+        cerr << ";; cannot open " << list_filename << " for reading" << endl;
+        return false;
+    }
+        
+    std::string buffer;
+    while (getline(ft_in, buffer)) {
+        if (buffer.at(0) == '#') // comment line
+            continue;
+        std::vector<std::string> line;
+        split_string(buffer, " ", line);
+
+        freq_word_set.insert(std::make_tuple(line[0],line[1],line[2],line[3]) )
+    }
     return true;
 }//}}}
 
