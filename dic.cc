@@ -474,13 +474,23 @@ Node *Dic::make_specified_pseudo_node_by_dic_check(const char *start_str, unsign
             }
                 
             char_num += used_chars;
-        }
-        // doesn't start with slash, colon, etc.
+        } // doesn't start with slash, colon, etc.
         else if (pos == 0 && compare_char_type_in_family(check_utf8_char_type((unsigned char *)(start_str + pos)), TYPE_FAMILY_PUNC_SYMBOL))
             break;
         else if (pos == 0 && ustart_str.is_choon(0) )//一文字目が伸ばし棒
             break;
-        else if (compare_char_type_in_family(check_utf8_char_type((unsigned char *)(start_str + pos)), type_family)) // this is in specified family
+        else if (( param->use_suu_rule && (pos == 0 && ustart_str.is_figure_exception(0)) ) &&  // 数が先頭に出現している
+                 (ustart_str.char_size()==1 ||                                // 続く文字がない場合(数は単体で数詞として辞書に登録済み) ，もしくは
+                 (ustart_str.is_suuji(1) && !ustart_str.is_suuji_digit(1)))){ // 次が桁を表す数字でない場合
+            // 数十，数百への対応
+            // 数の次に桁を表す文字が来ない場合は，ひとかたまりの数詞として扱わない．
+            // 数キロ，等は先に上のif文でチェックしているため，ここでは考慮しない
+            break;
+        } else if ( param->use_suu_rule && char_num > 0 && ustart_str.is_figure_exception(char_num) && !ustart_str.is_suuji_digit(char_num-1)){ 
+            // 十数人，などへの対応
+            // 十や百など，桁の次に"数" が出てきた場合には，ひとかたまりの数詞として扱う
+            break;
+        } else if (compare_char_type_in_family(check_utf8_char_type((unsigned char *)(start_str + pos)), type_family)) // this is in specified family
             char_num++;
         else
             break;

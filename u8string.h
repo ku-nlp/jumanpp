@@ -54,6 +54,8 @@ class U8string{//{{{
     static constexpr unsigned long CHOON           =0x00008000; // ー, 〜
     static constexpr unsigned long HANKAKU_KANA    =0x00010000; // 半角カタカナ
     static constexpr unsigned long BRACKET         =0x00020000; // 括弧, 引用符
+    static constexpr unsigned long FIGURE_EXCEPTION=0x00040000; // 数
+    static constexpr unsigned long FIGURE_DIGIT    =0x00080000; // 十，百，千，万，億
 
     // TYPE_FIGURE + TYPE_PERIOD + TYPE_MIDDLE_DOT + TYPE_KANJI_FIGURE + TYPE_SLASH + TYPE_COLON
     static constexpr unsigned long FAMILY_FIGURE      = 0x00003838; 
@@ -208,6 +210,24 @@ class U8string{//{{{
             return (char_type_at(char_ind) & CHOON) > 0;
         };//}}}
 
+        bool is_suuji(size_t char_ind){//{{{
+            parse();
+            if(char_size() == 0) return false;
+            return (char_type_at(char_ind) & (FIGURE|KANJI_FIGURE)) > 0;
+        };//}}}
+        
+        bool is_suuji_digit(size_t char_ind){//{{{
+            parse();
+            if(char_size() == 0) return false;
+            return (char_type_at(char_ind) & (FIGURE_DIGIT)) > 0;
+        };//}}}
+
+        bool is_figure_exception(size_t char_ind){//{{{
+            parse();
+            if(char_size() == 0) return false;
+            return (char_type_at(char_ind) & (FIGURE_EXCEPTION)) > 0;
+        };//}}}
+
         bool is_katakana(){//{{{
             parse();
             if(char_size() == 0) return false;
@@ -237,6 +257,7 @@ class U8string{//{{{
             }
             return true;
         };//}}}
+        
         
         bool is_alphabet(){//{{{
             parse();

@@ -163,23 +163,21 @@ unsigned long U8string::check_unicode_char_type(int code) {//{{{
             code == 0x4e03 || //七
             code == 0x516b || //八
             code == 0x4e5d || //九
-            code == 0x5341 || //十
+            false) {
+                return KANJI_FIGURE;
+            }
+    else if(code == 0x5341 || //十
             code == 0x767e || //百
             code == 0x5343 || //千
             code == 0x4e07 || //万
             code == 0x5104 || //億
             code == 0x5146 || //兆
             code == 0x6570 || //数
-            // 京は数字に含めると副作用が大きそう
-            //code == 0xff05 ||//％
-            // 年月日: code == 0x5e74 || code == 0x6708 || code == 0x65e5 || 
-            //code == 0x4ebf || //??
-            //code == 0x4f59 || //余
-            //code == 0x591a || //多
-            //code == 0x70b9 //点
-            //数億, は数詞として扱うべきか
             false) {
-                return KANJI_FIGURE;
+                if(code == 0x6570) // 数
+                    return KANJI_FIGURE + FIGURE_EXCEPTION;
+                else
+                    return KANJI_FIGURE + FIGURE_DIGIT;
             }
     /* ALPHABET (A-Z, a-z, Umlaut etc., Ａ-Ｚ, ａ-ｚ) */
     else if ((code > 0x40 && code < 0x5b) || 

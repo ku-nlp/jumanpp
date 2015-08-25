@@ -50,6 +50,7 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     option.add("unknown", 'u', "apply unknown word detection (obsolete; already default)");
     option.add("passiveunk", '\0', "apply passive unknown word detection. The option use unknown word detection only if it cannot make any node.");
     option.add("no_posmatch", '\0', "do not use unknown words listed in dictionary even if the pos is not matched");
+    option.add("use_suu_rule", '\0', "use_suu_rule");
     option.add("debug", '\0', "debug mode");
     option.add("version", 'v', "print version");
     option.add("help", 'h', "print this message");
@@ -118,6 +119,9 @@ int main(int argc, char** argv) {//{{{
 
     if(option.exist("oldloss")){
         param.useoldloss = true;
+    }
+    if(option.exist("use_suu_rule")){
+        param.use_suu_rule = true;
     }
     if(option.exist("no_posmatch")){
         param.no_posmatch = true;

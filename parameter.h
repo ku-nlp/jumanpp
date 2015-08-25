@@ -14,12 +14,13 @@ class Parameter {
     bool nbest;
     bool beam;
     bool use_so;
-    bool trigram;
+    bool trigram=true;
     bool rnnlm;
     bool srilm;
     bool useoldloss=false;
     bool lpenalty=false;
-    bool no_posmatch=false;
+    bool no_posmatch=true;
+    bool use_suu_rule=false;
     double rweight;
     double lweight;
     unsigned int unk_max_length;
