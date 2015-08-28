@@ -15,6 +15,7 @@
 #include <math.h>
 #include <time.h>
 #include <cfloat>
+#include <unordered_map>
 #include "fastexp.h"
 #include "rnnlmlib.h"
 
@@ -48,6 +49,8 @@ extern "C" {
 //
 
 namespace RNNLM{
+
+
 
     real CRnnLM::random(real min, real max)
     {
@@ -167,12 +170,18 @@ namespace RNNLM{
         if (vocab_hash[hash]==-1) return -1;
         if (!strcmp(word, vocab[vocab_hash[hash]].word)) return vocab_hash[hash];
 
-        for (a=0; a<vocab_size; a++) {				//search in vocabulary
-            if (!strcmp(word, vocab[a].word)) {
-                vocab_hash[hash]=a;
-                return a;
-            }
-        }
+        // ハッシュマップになかったら全探索している！！？
+//        for (a=0; a<vocab_size; a++) {				//search in vocabulary
+//            if (!strcmp(word, vocab[a].word)) {
+//                vocab_hash[hash]=a;
+//                return a;
+//            }
+//        }
+        auto vitr = vocab_map.find(word);
+        if( vitr == vocab_map.end())
+            return -1;
+        else
+            return vitr->second;
 
         return -1;							//return OOV if not found
     }//}}}
@@ -211,6 +220,7 @@ namespace RNNLM{
 
         hash=getWordHash(word);
         vocab_hash[hash]=vocab_size-1;
+        vocab_map[word] = vocab_size+1;
 
         return vocab_size-1;
     }//}}}
@@ -1196,18 +1206,20 @@ namespace RNNLM{
         real val;
         double sum;   //sum is used for normalization: it's better to have larger precision as many numbers are summed together here
 
-        // 語彙数次元のベクトル
+        // 語彙数次元のベクトル (1hot)
         if (last_word!=-1) neu0[last_word].ac=1;
-
+        
         //propagate 0->1
-        for (a=0; a<layer1_size; a++) neu1[a].ac=0;
-        for (a=0; a<layerc_size; a++) neuc[a].ac=0;
-
+        for (a=0; a<layer1_size; a++) neu1[a].ac=0; // コンテクスト
+        for (a=0; a<layerc_size; a++) neuc[a].ac=0; //とりあえず無視
+            
         // 0-(vocab)-(layer1)-layer0_size
-        // 0...vocab(layer0_size-layer1_size -1) が語彙の次元
+        // 0...vocab(layer0_size-layer1_size -1) が語彙の次元 
         // layer0_size-layer1_size > layer0_size がコンテクストの次元
+        // neu0 は語彙とコンテクストがくっついている
 
         // コンテクストvectorについての計算
+        // neu0(source vector) x syn0(source matrix) => neu1(vector) に書き込み
         matrixXvector(neu1, neu0, syn0, layer0_size, 0, layer1_size, layer0_size-layer1_size, layer0_size, 0);
 
         // 今の単語について計算(one hot)
@@ -1223,8 +1235,8 @@ namespace RNNLM{
             val=-neu1[a].ac;
             neu1[a].ac=1/(1+fasterexp(val));
         }
-
-        if (layerc_size>0) {//{{{
+            
+        if (layerc_size>0) {// compression  {{{
             matrixXvector(neuc, neu1, syn1, layer1_size, 0, layerc_size, 0, layer1_size, 0);
             //activate compression      --sigmoid
             for (a=0; a<layerc_size; a++) {
@@ -1235,7 +1247,7 @@ namespace RNNLM{
             }
         }//}}}
 
-        //1->2 class
+        //1->2 class //context => output layer
         for (b=vocab_size; b<layer2_size; b++) neu2[b].ac=0;
 
         if (layerc_size>0) {//{{{
@@ -1243,6 +1255,8 @@ namespace RNNLM{
         }//}}}
         else
         {
+            // neu1 x syn1 => neu2
+            // vocab_class (vocab_size .. layer2_size)  x layer1 全部 
             matrixXvector(neu2, neu1, syn1, layer1_size, vocab_size, layer2_size, 0, layer1_size, 0);
         }
 
@@ -1262,7 +1276,7 @@ namespace RNNLM{
                 hash[a]=hash[a]%(direct_size/2);		//make sure that starting hash index is in the first half of syn_d (second part is reserved for history->words features)
             }
                 
-            for (a=vocab_size; a<layer2_size; a++) {
+            for (a=vocab_size; a<layer2_size; a++) { // word class について
                 for (b=0; b<direct_order; b++) if (hash[b]) {
                     neu2[a].ac+=syn_d[hash[b]];		//apply current parameter and move to the next one
                     hash[b]++;// 何のためにハッシュの中身を動かす？？ 何語目かで処理を代えるため？　
@@ -1270,7 +1284,7 @@ namespace RNNLM{
             }
         }
             
-        // 中間レイヤーのsoftmax
+        // neu2 (output?) のsoftmax
         //activation 2   --softmax on classes
         // 20130425 - this is now a 'safe' softmax
 
@@ -1286,14 +1300,13 @@ namespace RNNLM{
         if (gen>0) return;	//if we generate words, we don't know what current word is -> only classes are estimated and word is selected in testGen()
 
         //1->2 word
-
         if (word!=-1) {
             for (c=0; c<class_cn[vocab[word].class_index]; c++) neu2[class_words[vocab[word].class_index][c]].ac=0;
             if (layerc_size>0) {//{{{
                 matrixXvector(neu2, neuc, sync, layerc_size, class_words[vocab[word].class_index][0], class_words[vocab[word].class_index][0]+class_cn[vocab[word].class_index], 0, layerc_size, 0);
             }//}}}
             else
-            {
+            {   // あるクラスに属する単語のみについて計算...  100語程度か
                 matrixXvector(neu2, neu1, syn1, layer1_size, class_words[vocab[word].class_index][0], class_words[vocab[word].class_index][0]+class_cn[vocab[word].class_index], 0, layer1_size, 0);
             }
         }
@@ -1319,12 +1332,12 @@ namespace RNNLM{
                 for (b=0; b<direct_order; b++) if (hash[b]) {
                     neu2[a].ac+=syn_d[hash[b]];
                     hash[b]++;
-                    hash[b]=hash[b]%direct_size; //この処理の意味が分からない
+                    hash[b]=hash[b]%direct_size; 
                 } else break;
             }
         }
 
-        // output layer のSoftmax
+        // word class 内でのSoftmax
         //activation 2   --softmax on words
         // 130425 - this is now a 'safe' softmax
         sum=0;

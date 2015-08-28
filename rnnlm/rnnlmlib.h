@@ -63,6 +63,8 @@ protected:
     char test_file[MAX_STRING];
     char rnnlm_file[MAX_STRING];
     char lmprob_file[MAX_STRING];
+
+    std::unordered_map<std::string,int> vocab_map;
     
     int rand_seed;
     
