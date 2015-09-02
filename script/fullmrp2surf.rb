@@ -5,6 +5,7 @@
 
 morph_str = []
 while line=gets
+  line.gsub!(/#.*$/,"")
   sp = line.split(/[ \n]/)
   sp.each{|fmrp|
     msp = fmrp.split('_')

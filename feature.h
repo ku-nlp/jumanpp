@@ -144,6 +144,29 @@ namespace Morph {
 
 //char* hukugouji[];
 
+// unordered_map で tuple を扱うための hash 関数
+struct tuple_hash : public std::unary_function<std::tuple<std::string, std::string, std::string, std::string>, std::size_t>
+{
+    std::size_t operator()(const std::tuple<std::string, std::string, std::string, std::string>& k) const
+    { 
+        std::hash<std::string> hash_str;
+        // このハッシュだと衝突が多そう
+        return hash_str(std::get<0>(k)) ^ hash_str(std::get<1>(k)) ^ hash_str(std::get<2>(k)) ^ hash_str(std::get<3>(k));
+    }
+};
+ 
+struct tuple_equal : public std::binary_function<std::tuple<std::string, std::string, std::string, std::string>, std::tuple<std::string, std::string, std::string, std::string>, bool>
+{
+    bool operator()(const std::tuple<std::string, std::string, std::string, std::string>& v0, const std::tuple<std::string, std::string, std::string, std::string>& v1) const
+    {
+        return (std::get<0>(v0) == std::get<0>(v1) &&
+                std::get<1>(v0) == std::get<1>(v1) &&
+                std::get<2>(v0) == std::get<2>(v1) &&
+                std::get<3>(v0) == std::get<3>(v1) );
+    }
+};
+
+
 class FeatureTemplate {//{{{
     bool is_unigram;
     bool is_bigram;
@@ -187,11 +210,13 @@ class FeatureSet { //{{{
     FeatureTemplateSet *ftmpl;
     FeatureVector* weight;
     //                            base       , pos        , spos       , form_type
-    std::unordered_set<std::tuple<std::string, std::string, std::string, std::string>> freq_word_set.
-    bool open_freq_word_set(const std::string &list_filename); 
   public: 
     static std::vector<double>* topic;
     static bool use_total_sim;
+    static bool open_freq_word_set(const std::string &list_filename); 
+    static std::unordered_set<std::tuple<std::string, std::string, std::string, std::string>, tuple_hash, tuple_equal> freq_word_set;
+    //static std::unordered_set<std::string> freq_word_set;
+
     std::vector<std::string> fset;
     FeatureSet(FeatureTemplateSet *in_ftmpl);
     FeatureSet(const FeatureSet& f){

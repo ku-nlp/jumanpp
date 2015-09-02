@@ -20,14 +20,18 @@ dic_base=japanese.dic
 feature_def=feature.def
 set_postfix=
 use_unknown=''
+rnnlm=''
+rnnlmarg=''
 flag_debug=''
 totalsim=''
 c_value='1.0'
+rerank=''
+rerank_arg=''
 #p_value='1.65'
 p_value='5.0'
 iteration_num=1
 unk_max_length=2
-while getopts STcs2mesguL:p:d:f:i:l:C:P:h OPT
+while getopts STcs2mesguBL:p:d:f:i:l:C:P:R:h OPT
 do
     case $OPT in
         m)  set_head=MixedCorpus
@@ -45,6 +49,14 @@ do
         f)  feature_def=$OPTARG
             ;;
         i)  iteration_num=$OPTARG
+            ;;
+        R)  rnnlm="--rnnlm"
+            rnnlmarg=$OPTARG
+            rerank="rerank"
+            rerank_arg="1000"
+            ;;
+        B)  beam="--rbeam"
+            beam_arg="20"
             ;;
         l)  unk_max_length=$OPTARG
             ;;
@@ -111,7 +123,7 @@ if [[ ! $skip_train == 'true' ]]; then
             CPU_PROFILE=kkn_train_$out_base.prof ./kkn${flag_debug} -t data/${set_head}train${set_postfix}.txt ${use_unknown} ${use_scw} -C ${c_value} -P ${p_value}  -s -m $model -d data/$dic_base -f data/$feature_def -i $iteration_num -l $unk_max_length -L 5 --lda $use_LDA ${total_sim}
         else
             echo "./kkn${flag_debug} -t data/${set_head}train${set_postfix}.txt -a ${use_unknown} ${use_scw} -C ${c_value} -P ${p_value} -s -m $model -d $dic_base -f $feature_def -i $iteration_num -l $unk_max_length "
-            CPU_PROFILE=kkn_train_$out_base.prof ./kkn${flag_debug} -t data/${set_head}train${set_postfix}.txt ${use_unknown}  ${use_scw} -C ${c_value} -P ${p_value} -a -s -m $model -d data/$dic_base -f data/$feature_def -i $iteration_num -l $unk_max_length
+            CPU_PROFILE=kkn_train_$out_base.prof ./kkn${flag_debug} -t data/${set_head}train${set_postfix}.txt ${use_unknown} ${use_scw} -C ${c_value} -P ${p_value} -a -s -m $model -d data/$dic_base -f data/$feature_def -i $iteration_num -l $unk_max_length
         fi
     fi
 

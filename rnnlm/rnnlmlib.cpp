@@ -167,21 +167,24 @@ namespace RNNLM{
 
         hash=getWordHash(word);
 
-        if (vocab_hash[hash]==-1) return -1;
-        if (!strcmp(word, vocab[vocab_hash[hash]].word)) return vocab_hash[hash];
+        auto vitr = vocab_map.find(std::string(word));
+        if( vitr == vocab_map.end()){
+            //if(vocab_map.size() < 100)
+            //    std::cout << "vocab_map.size() = " << vocab_map.size() << std::endl;
+            return -1;
+        }else{
+            return vitr->second;
+        }
 
-        // ハッシュマップになかったら全探索している！！？
+//       ハッシュが被ったら全探索している！！？
+//        if (vocab_hash[hash]==-1) return -1;
+//        if (!strcmp(word, vocab[vocab_hash[hash]].word)) return vocab_hash[hash];
 //        for (a=0; a<vocab_size; a++) {				//search in vocabulary
 //            if (!strcmp(word, vocab[a].word)) {
 //                vocab_hash[hash]=a;
 //                return a;
 //            }
 //        }
-        auto vitr = vocab_map.find(word);
-        if( vitr == vocab_map.end())
-            return -1;
-        else
-            return vitr->second;
 
         return -1;							//return OOV if not found
     }//}}}
@@ -220,7 +223,7 @@ namespace RNNLM{
 
         hash=getWordHash(word);
         vocab_hash[hash]=vocab_size-1;
-        vocab_map[word] = vocab_size+1;
+        vocab_map[std::string(word)] = vocab_size-1;
 
         return vocab_size-1;
     }//}}}
@@ -911,6 +914,7 @@ namespace RNNLM{
             //fscanf(fi, "%d%d%s%d", &b, &vocab[a].cn, vocab[a].word, &vocab[a].class_index);
             fscanf(fi, "%d%d", &b, &vocab[a].cn);
             readWord(vocab[a].word, fi);
+            vocab_map[vocab[a].word] = a; //追加？
             fscanf(fi, "%d", &vocab[a].class_index);
             //printf("%d  %d  %s  %d\n", b, vocab[a].cn, vocab[a].word, vocab[a].class_index);
         }
@@ -1250,6 +1254,12 @@ namespace RNNLM{
         //1->2 class //context => output layer
         for (b=vocab_size; b<layer2_size; b++) neu2[b].ac=0;
 
+        // void cublasSsymv (char uplo, int n, float alpha, const float *A, int lda, const float *x, int incx, float beta, float *y, int incy)
+        // に置き換えを検討する
+        // この関数は、nxn行列A と要素数nのベクトルとを掛け算し、各要素をalpha倍したものに、 各要素をbeta倍したyを 足す、という演算を行います。数式で表すと、
+        // y = alpha * A * x + beta * y
+        //  後ろのyが ME の出力，Aがsyn1, x がneu1, alpha,beta=1.0 
+
         if (layerc_size>0) {//{{{
             matrixXvector(neu2, neuc, sync, layerc_size, vocab_size, layer2_size, 0, layerc_size, 0);
         }//}}}
@@ -1549,7 +1559,7 @@ namespace RNNLM{
         }
         neu2[vocab[word].class_index+vocab_size].er=(1-neu2[vocab[word].class_index+vocab_size].ac);	//class part
 
-        //
+        // ME model
         if (direct_size>0) {	//learn direct connections between words
             if (word!=-1) {
                 unsigned long long hash[MAX_NGRAM_ORDER];
@@ -1576,7 +1586,7 @@ namespace RNNLM{
                 }
             }
         }
-        //
+        // ME 
         //learn direct connections to classes
         if (direct_size>0) {	//learn direct connections between words and classes
             unsigned long long hash[MAX_NGRAM_ORDER];
@@ -1602,7 +1612,7 @@ namespace RNNLM{
         //
 
 
-        if (layerc_size>0) {
+        if (layerc_size>0) {/*{{{*/
             matrixXvector(neuc, neu2, sync, layerc_size, class_words[vocab[word].class_index][0], class_words[vocab[word].class_index][0]+class_cn[vocab[word].class_index], 0, layerc_size, 1);
 
             t=class_words[vocab[word].class_index][0]*layerc_size;
@@ -1637,7 +1647,7 @@ namespace RNNLM{
             for (b=0; b<layerc_size; b++) {
                 for (a=0; a<layer1_size; a++) syn1[a+b*layer1_size].weight+=alpha*neuc[b].er*neu1[a].ac;	//weight 1->c update
             }
-        }
+        }/*}}}*/
         else
         {
             matrixXvector(neu1, neu2, syn1, layer1_size, class_words[vocab[word].class_index][0], class_words[vocab[word].class_index][0]+class_cn[vocab[word].class_index], 0, layer1_size, 1);
@@ -1670,7 +1680,7 @@ namespace RNNLM{
 
         ///////////////
 
-        if (bptt<=1) {		//bptt==1 -> normal BP
+        if (bptt<=1) {		//bptt==1 -> normal BP/*{{{*/
             for (a=0; a<layer1_size; a++) neu1[a].er=neu1[a].er*neu1[a].ac*(1-neu1[a].ac);    //error derivation at layer 1
 
             //weight update 1->0
@@ -1688,7 +1698,7 @@ namespace RNNLM{
             else {
                 for (b=0; b<layer1_size; b++) for (a=layer0_size-layer1_size; a<layer0_size; a++) syn0[a+b*layer0_size].weight+=alpha*neu1[b].er*neu0[a].ac;
             }
-        }
+        }/*}}}*/
         else		//BPTT
         {
             for (b=0; b<layer1_size; b++) bptt_hidden[b].ac=neu1[b].ac;
@@ -1728,9 +1738,7 @@ namespace RNNLM{
                     bptt_hidden[a].er=0;
                 }
 
-
                 for (b=0; b<layer1_size; b++) neu1[b].ac=bptt_hidden[b].ac;		//restore hidden layer after bptt
-
 
                 //
                 for (b=0; b<layer1_size; b++) {		//copy temporary syn0

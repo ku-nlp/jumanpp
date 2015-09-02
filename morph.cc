@@ -24,20 +24,18 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     option.add<std::string>("srilm", 'I', "srilm filename", false, "srilm.arpa");
 #endif
     option.add<unsigned int>("iteration", 'i', "iteration number for training", false, 10);
-    option.add<unsigned int>("unk_max_length", 'l', "maximum length of unknown word detection", false, 7);
+    option.add<unsigned int>("unk_max_length", 'l', "maximum length of unknown word detection", false, 2);
     option.add<unsigned int>("lattice", 'L', "output lattice format",false, 1);
     option.add<double>("Cvalue", 'C', "C value",false, 1.0);
     option.add<double>("Phi", 'P', "Phi value",false, 1.65);
-    option.add<double>("Rweight", 0, "linear interpolation parameter for KKN score and RNN score",false, 0.5);
-    option.add("lpenalty", 0, "use linear penalty");
-    option.add<double>("Lweight", 0, "linear penalty parameter for unknown words in RNNLM",false, 1.0);
+    option.add<double>("Rweight", 0, "linear interpolation parameter for KKN score and RNN score",false, 0.3);
+    //option.add("lpenalty", 0, "use linear penalty"); //廃止
+    option.add<double>("Lweight", 0, "linear penalty parameter for unknown words in RNNLM",false, 1.5);
     option.add<unsigned int>("nbest", 'n', "n-best search", false, 5);
     option.add<unsigned int>("rerank", 'R', "n-best reranking", false, 5);
     option.add("scw", 0, "use soft confidence weighted");
     option.add("oldloss", 0, "use old loss function");
     option.add("so", 0, "use second order viterbi algorithm");
-    option.add("trigram", 0, "use trigram feature (default)");
-    option.add("notrigram", 0, "do NOT use trigram feature");
     option.add<std::string>("lda", 0, "use lda", false, "");
     option.add<unsigned int>("beam", 'b', "use beam search",false,1);
     option.add<unsigned int>("rbeam", 'B', "use beam search and reranking",false,1);
@@ -47,10 +45,13 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     option.add("total", 'T', "use total similarity for LDA");
     option.add("ambiguous", 'A', "output ambiguous words on lattice");
     option.add("shuffle", 's', "shuffle training data for each iteration");
+    option.add("passiveunk", '\0', "apply passive unknown word detection. The option use unknown word detection only if it cannot make any node."); 
+    option.add("no_posmatch", '\0', "do not use unknown words listed in dictionary even if the pos is not matched"); // デフォルトに
+    option.add("notrigram", 0, "do NOT use trigram feature");
+    option.add("trigram", 0, "use trigram feature (default)");
     option.add("unknown", 'u', "apply unknown word detection (obsolete; already default)");
-    option.add("passiveunk", '\0', "apply passive unknown word detection. The option use unknown word detection only if it cannot make any node.");
-    option.add("no_posmatch", '\0', "do not use unknown words listed in dictionary even if the pos is not matched");
-    option.add("use_suu_rule", '\0', "use_suu_rule");
+    option.add("use_suu_rule", '\0', "use_suu_rule"); // 結果を確認次第，default に
+    option.add<std::string>("use_lexical_feature", '\0', "use_lexical_feature",false,"freq_words.list"); // 結果を確認次第，default に
     option.add("debug", '\0', "debug mode");
     option.add("version", 'v', "print version");
     option.add("help", 'h', "print this message");
@@ -102,9 +103,9 @@ int main(int argc, char** argv) {//{{{
         param.set_passive_unknown(true);
     param.set_model_filename(option.get<std::string>("model"));
     param.set_use_scw(option.exist("scw"));
-    param.set_lpenalty(option.exist("lpenalty")); //矛盾している場合、lweight が優先する
-    if(option.exist("Lweight"))
+    if(option.exist("Lweight")){
         param.set_lweight(option.get<double>("Lweight"));
+    }
     if(option.exist("Cvalue"))
         param.set_C(option.get<double>("Cvalue"));
     if(option.exist("Phi"))
@@ -112,6 +113,12 @@ int main(int argc, char** argv) {//{{{
     if(option.exist("total")){
         param.set_use_total_sim();
         Morph::FeatureSet::use_total_sim = true;
+    }
+
+    if(option.exist("use_lexical_feature")){
+        param.use_lexical_feature=true;
+        param.freq_word_list = option.get<std::string>("use_lexical_feature");
+        Morph::FeatureSet::open_freq_word_set(param.freq_word_list);
     }
 
     param.set_trigram(!option.exist("notrigram"));
@@ -258,9 +265,10 @@ int main(int argc, char** argv) {//{{{
         std::string buffer;
         while (getline(is ? is : cin, buffer)) {
             if (buffer.length() <= 1 || buffer.at(0) == '#') { // empty line or comment line
-                cout << buffer << endl;
+                std::cout << buffer << std::endl;
                 continue;
             }
+
             tagger.new_sentence_analyze(buffer);
             if (option.exist("lattice")){
                 if(option.exist("rbeam")){

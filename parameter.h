@@ -20,7 +20,8 @@ class Parameter {
     bool useoldloss=false;
     bool lpenalty=false;
     bool no_posmatch=true;
-    bool use_suu_rule=false;
+    bool use_suu_rule=true;
+    bool use_lexical_feature=false;
     double rweight;
     double lweight;
     unsigned int unk_max_length;
@@ -37,6 +38,7 @@ class Parameter {
     std::string imis_filename;
     std::string reading_filename;
     std::string model_filename;
+    std::string freq_word_list;
 	unsigned int N = 1;
     bool use_scw=false;
     bool passive_unknown=false;

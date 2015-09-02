@@ -11,6 +11,9 @@
 namespace Morph {
 std::vector<double>* FeatureSet::topic = nullptr;
 bool FeatureSet::use_total_sim = false;
+std::unordered_set<std::tuple<std::string, std::string, std::string, std::string>, tuple_hash, tuple_equal> FeatureSet::freq_word_set;
+//std::unordered_set<std::string> FeatureSet::freq_word_set;
+
 
 
 FeatureSet::FeatureSet(FeatureTemplateSet *in_ftmpl) {//{{{
@@ -382,9 +385,10 @@ void FeatureSet::extract_trigram_feature(Node *l_node, Node *m_node,  Node *r_no
             }
             else if (*it == FEATURE_MACRO_RIGHT_LEXICAL){ // 
                 if( freq_word_set.count(std::make_tuple(*(r_node->base),*(r_node->pos),*(r_node->spos),*(r_node->form_type))) > 0 )
+                //if( freq_word_set.count(*(r_node->base)+"_"+ *(r_node->pos)+ "_"+*(r_node->spos) +"_"+ *(r_node->form_type)) > 0)
                     f += *(r_node->string) + "_" + *(r_node->pos) + "_" + *(r_node->spos) + "_" + *(r_node->form_type) + "_" + *(r_node->form);
                 else
-                    f += *(r_node->pos) + "_" + "_" + *(r_node->spos) + "_" + *(r_node->form_type) + "_" + *(r_node->form);
+                    f += *(r_node->pos);
             }
             else if (*it == FEATURE_MACRO_WORD)
                 f += *(m_node->string);
@@ -666,8 +670,10 @@ bool FeatureSet::open_freq_word_set(const std::string &list_filename) {//{{{
             continue;
         std::vector<std::string> line;
         split_string(buffer, " ", line);
-
-        freq_word_set.insert(std::make_tuple(line[0],line[1],line[2],line[3]) )
+            
+        //std::cerr << "f: " << line[0] << "_" << line[1] << "_" << line[2] << "_" << line[3] << std::endl;
+        freq_word_set.insert(std::make_tuple(line[0],line[1],line[2],line[3]));
+        //freq_word_set.insert(line[0] + "_" + line[1] + "_" + line[2] + "_" + line[3]);
     }
     return true;
 }//}}}
@@ -681,3 +687,4 @@ std::string FeatureSet::str(){//{{{
 };//}}}
 
 }
+

@@ -10,6 +10,7 @@ opt= OptionParser.new
 
 opt.on('-t'){|v| OPTS[:test]=v}
 opt.on('-b'){|v| OPTS[:base]=v}
+opt.on('-i'){|v| OPTS[:id]=v}
 opt.parse!(ARGV)
 
 # 品詞-品詞id のマップ
@@ -122,12 +123,14 @@ def print_word(sp)
     end
 end
 
+id = ""
 while line = STDIN.gets
     line = line.encode("utf-8","utf-8")
 
     if(line =~ /^EOS/)
         # 一文出力
-        print("\n")
+        print("# #{id}\n")
+        id = ""
     elsif(line =~ /^([^\*\+\#]|EOS)/ ) #単語なら
         # 品詞変更タグ
         # 0      1        2      3    4 5            6
@@ -172,8 +175,8 @@ while line = STDIN.gets
             print_word([sp[0], sp[1],sp[2],sp[3], sp[5], sp[7],sp[9]])
             #print "#{sp[0]}_#{sp[1]}_#{sp[2]}_#{sp[3]}_#{sp[5]}_#{sp[7]}_#{sp[9]} " 
         end
-    elsif(line =~ /^#/) 
-        #STDERR.puts line
+    elsif(line =~ /^# (S-ID:\S*) /) 
+        id = $1
     end
 end
 
