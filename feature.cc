@@ -29,7 +29,7 @@ void FeatureSet::extract_unigram_feature(Node *node) {//{{{
     for (std::vector<FeatureTemplate *>::iterator tmpl_it = ftmpl->get_templates()->begin(); tmpl_it != ftmpl->get_templates()->end(); tmpl_it++) {
         if (!((*tmpl_it)->get_is_unigram())) // skip bigram and trigram feature template
             continue;
-        std::string f = (*tmpl_it)->get_name() + ":";
+        std::string f = (*tmpl_it)->get_name() + ":"; //appendで6%程度を使っている．
         for (std::vector<unsigned int>::iterator it = (*tmpl_it)->get_features()->begin(); it != (*tmpl_it)->get_features()->end(); it++) {
             if (it != (*tmpl_it)->get_features()->begin())
                 f += ",";

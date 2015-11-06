@@ -51,6 +51,7 @@ class Sentence {//{{{
     explicit Sentence(const Sentence &s){ };
   public:
     static void init_rnnlm(RNNLM::CRnnLM* model);
+    static void init_rnnlm_FR(RNNLM::CRnnLM* model);
 #ifdef USE_SRILM
     static void init_srilm(Ngram* model, Vocab* vocab);
 #endif

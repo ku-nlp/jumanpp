@@ -47,6 +47,13 @@ void Sentence::init_rnnlm(RNNLM::CRnnLM *in_rnnlm) {/*{{{*/
     initial_context = std::make_shared<RNNLM::context>(tmp);
 }/*}}}*/
 
+void Sentence::init_rnnlm_FR(RNNLM::CRnnLM *in_rnnlm) {/*{{{*/
+    rnnlm = in_rnnlm;
+    RNNLM::context tmp;
+    rnnlm->get_initial_context_FR(&tmp);
+    initial_context = std::make_shared<RNNLM::context>(tmp);
+}/*}}}*/
+
 
 #ifdef USE_SRILM
 void Sentence::init_srilm(Ngram *model, Vocab *in_vocab) {/*{{{*/
@@ -1603,7 +1610,7 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
         Node *l_node = (*end_node_list)[pos];
 
         // 訓練時に必要になる trigram素性 の best も context
-        // に含める必要がある(もしくは探索語に再生成)
+        // に含める必要がある (もしくは探索語に再生成)
         FeatureSet best_score_bigram_f(
             ftmpl);  // 訓練時には 1-best が必要になる
         FeatureSet best_score_trigram_f(
@@ -1632,7 +1639,7 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
                 (!check_devoice_condition(
                      *l_node))) {  // 前の形態素が濁音化の条件を満たさない//{{{
 
-                // 解析できないことを防ぐため，l_node の TOP 1 だけ一応処理する
+                // 解析できない状態を防ぐため，l_node の TOP 1 だけ一応処理する
                 TokenWithState tok(r_node, l_node->bq.beam.front());
                 tok.score = l_node->bq.beam.front().score + bigram_score +
                             (1.0 - param->rweight) * r_node->wcost -
@@ -1652,12 +1659,19 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
                     tok.f->append_feature(&tri_f);
                 }
 
-                if (param->rnnlm) {
+                if (param->nce) {
                     RNNLM::context new_c;
-                    double rnn_score =
-                        (param->rweight) *
-                        rnnlm->test_word(l_node->bq.beam.front().context.get(),
+                    double rnn_score = (param->rweight) * rnnlm->test_word_selfnm(l_node->bq.beam.front().context.get(),
                                          &new_c, *(r_node->base));
+
+                    tok.context_score += (1.0 - param->rweight) * rnn_score;
+                    tok.context =
+                        std::make_shared<RNNLM::context>(std::move(new_c));
+                }else if (param->rnnlm) {
+                    RNNLM::context new_c;
+                    double rnn_score = (param->rweight) * rnnlm->test_word(l_node->bq.beam.front().context.get(),
+                                         &new_c, *(r_node->base));
+
                     tok.context_score += (1.0 - param->rweight) * rnn_score;
                     tok.context =
                         std::make_shared<RNNLM::context>(std::move(new_c));
@@ -1714,7 +1728,19 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
                 double score = l_token_with_state.score + bigram_score +
                                (1.0 - param->rweight) * r_node->wcost;
 
-                if (param->rnnlm) {
+                if (param->nce){
+                    rnn_score =
+                        (param->rweight) *
+                        rnnlm->test_word_selfnm(l_token_with_state.context.get(), &new_c, (*r_node->spos == UNK_POS|| *r_node->spos == "数詞" )?*(r_node->original_surface):*(r_node->base));
+                    context_score += rnn_score;
+
+                    if (param->debug)
+                        std::cout << "lw:" << *l_node->original_surface << ":"
+                                  << *l_node->pos
+                                  << " rw:" << *r_node->original_surface << ":"
+                                  << *r_node->pos << " => " << rnn_score
+                                  << std::endl;
+                } else if (param->rnnlm) {
                     rnn_score =
                         (param->rweight) *
                         rnnlm->test_word(l_token_with_state.context.get(), &new_c, (*r_node->spos == UNK_POS|| *r_node->spos == "数詞" )?*(r_node->original_surface):*(r_node->base));
@@ -2127,7 +2153,7 @@ void Sentence::generate_juman_line(Node* node, std::stringstream &output_string_
             *node->spos == UNK_POS) {
         std::string delim = "";
         output_string_buffer << '"';
-        if (*node->representation != "*" && *node->representation != "<UNK>" ) {
+        if (*node->representation != "*" && *node->representation != "<UNK>" && *node->representation != "" ) {
             output_string_buffer << "代表表記:" << *node->representation;  //*や<UNK>ならスキップ
             delim = " ";
         }

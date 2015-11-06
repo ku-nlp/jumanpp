@@ -16,6 +16,7 @@ class Parameter {
     bool use_so;
     bool trigram=true;
     bool rnnlm;
+    bool nce=true;
     bool srilm;
     bool useoldloss=false;
     bool lpenalty=false;
@@ -71,6 +72,10 @@ class Parameter {
     }
     int set_rnnlm(bool in_rnnlm){
         rnnlm = in_rnnlm;
+        return 0;
+    }
+    int set_nce(bool in_nce){
+        nce = in_nce;
         return 0;
     }
     int set_srilm(bool in_srilm){

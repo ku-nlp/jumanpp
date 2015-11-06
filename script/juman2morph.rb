@@ -4,6 +4,7 @@
 #usage: juman | juman2morph.rb 
 
 # JUMANの出力形式
+# S-ID:w201106-0000060050-1 JUMAN:8.0 (Revision.06f73dd on 2015-01-07)
 #隣 となり 隣 名詞 6 普通名詞 1 * 0 * 0 "代表表記:隣り/となり カテゴリ:場所-その他"
 #の の の 助詞 9 接続助詞 3 * 0 * 0 NIL
 #客 きゃく 客 名詞 6 普通名詞 1 * 0 * 0 "代表表記:客/きゃく 漢字読み:音 カテゴリ:人 ドメイン:家庭・暮らし;ビジネス"
@@ -33,6 +34,8 @@ while line=gets
         morph_str = []
     elsif(~/^@/) #別候補
         #skip
+    elsif(~/^#/) #コメント
+        puts line.gsub(/JUMAN:.*/,"")
     else
         sp = line.split(' ')
         morph_str << "#{sp[0]}_#{sp[3]}:#{sp[5]}"#:#{spl[9]}"

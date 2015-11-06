@@ -17,6 +17,7 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     option.add<std::string>("dict", 'd', "dict filename", false, "data/japanese_uniq.dic");
     option.add<std::string>("model", 'm', "model filename", false, "data/model.dat");
     option.add<std::string>("binmodel", '\0', "bin model filename", false, "data/model.dat");
+    option.add<std::string>("frmodel", '\0', "bin model filename", false, "fmmodel");
     option.add<std::string>("feature", 'f', "feature template filename", false, "data/feature.def");
     option.add<std::string>("train", 't', "training filename", false, "data/train.txt");
     option.add<std::string>("rnnlm", 'r', "rnnlm filename", false, "data/rnnlm.model");
@@ -35,7 +36,7 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     option.add<unsigned int>("rerank", 'R', "n-best reranking", false, 5);
     option.add("scw", 0, "use soft confidence weighted");
     option.add("oldloss", 0, "use old loss function");
-    option.add("so", 0, "use second order viterbi algorithm");
+    option.add("so", 0, "use second order viterbi algorithm"); //廃止を検討
     option.add<std::string>("lda", 0, "use lda", false, "");
     option.add<unsigned int>("beam", 'b', "use beam search",false,1);
     option.add<unsigned int>("rbeam", 'B', "use beam search and reranking",false,1);
@@ -46,13 +47,14 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     option.add("ambiguous", 'A', "output ambiguous words on lattice");
     option.add("shuffle", 's', "shuffle training data for each iteration");
     option.add("passiveunk", '\0', "apply passive unknown word detection. The option use unknown word detection only if it cannot make any node."); 
-    option.add("no_posmatch", '\0', "do not use unknown words listed in dictionary even if the pos is not matched"); // デフォルトに
+    //option.add("no_posmatch", '\0', "do not use unknown words listed in dictionary even if the pos is not matched"); // デフォルトに
     option.add("notrigram", 0, "do NOT use trigram feature");
-    option.add("trigram", 0, "use trigram feature (default)");
+    //option.add("trigram", 0, "use trigram feature (default)");// もう見ていないオプション
     option.add("unknown", 'u', "apply unknown word detection (obsolete; already default)");
-    option.add("use_suu_rule", '\0', "use_suu_rule"); // 結果を確認次第，default に
+    //option.add("use_suu_rule", '\0', "use_suu_rule"); // 結果を確認次第，default に
     option.add<std::string>("use_lexical_feature", '\0', "use_lexical_feature",false,"freq_words.list"); // 結果を確認次第，default に
     option.add("debug", '\0', "debug mode");
+    option.add("rnndebug", '\0', "show rnnlm debug message");
     option.add("version", 'v', "print version");
     option.add("help", 'h', "print this message");
     option.parse_check(argc, argv);
@@ -127,17 +129,19 @@ int main(int argc, char** argv) {//{{{
     if(option.exist("oldloss")){
         param.useoldloss = true;
     }
-    if(option.exist("use_suu_rule")){
+    //if(option.exist("use_suu_rule")){ //デフォルトに
         param.use_suu_rule = true;
-    }
-    if(option.exist("no_posmatch")){
+    //}
+    //if(option.exist("no_posmatch")){
         param.no_posmatch = true;
-    }
+    //}
 
     Morph::Parameter normal_param = param;
     normal_param.set_nbest(true); // nbest を利用するよう設定
     normal_param.set_N(10); // 10-best に設定
-    param.set_rnnlm(option.exist("rnnlm"));
+    param.set_rnnlm(option.exist("rnnlm")||option.exist("frmodel"));
+    param.set_nce(option.exist("frmodel"));
+
 #ifdef USE_SRILM
     param.set_srilm(option.exist("srilm"));
 #endif
@@ -145,19 +149,35 @@ int main(int argc, char** argv) {//{{{
     Morph::Node::set_param(&param);
    
     RNNLM::CRnnLM rnnlm;
-    if(option.exist("rnnlm")){
+    if(option.exist("frmodel")){
         rnnlm.setLambda(1.0);
         rnnlm.setRegularization(0.0000001);
         rnnlm.setDynamic(0);
-        //rnnlm.setTestFile(test_file);
-        rnnlm.setRnnLMFile(option.get<std::string>("rnnlm").c_str());
+        rnnlm.setRnnLMFile(option.get<std::string>("frmodel").c_str());
         rnnlm.setRandSeed(1);
         rnnlm.useLMProb(0);
-        rnnlm.setDebugMode(0);
+        if(option.exist("rnndebug"))
+            rnnlm.setDebugMode(1);
+        else
+            rnnlm.setDebugMode(0);
         if(param.lpenalty)
             rnnlm.setLweight(param.lweight);
         srand(1);
-        //rnnlm.initialize_test_sent();
+        Morph::Sentence::init_rnnlm_FR(&rnnlm);
+    } else if(option.exist("rnnlm")){
+        rnnlm.setLambda(1.0);
+        rnnlm.setRegularization(0.0000001);
+        rnnlm.setDynamic(0);
+        rnnlm.setRnnLMFile(option.get<std::string>("rnnlm").c_str());
+        rnnlm.setRandSeed(1);
+        rnnlm.useLMProb(0);
+        if(option.exist("rnndebug"))
+            rnnlm.setDebugMode(1);
+        else
+            rnnlm.setDebugMode(0);
+        if(param.lpenalty)
+            rnnlm.setLweight(param.lweight);
+        srand(1);
         Morph::Sentence::init_rnnlm(&rnnlm);
     }
 
@@ -292,7 +312,8 @@ int main(int argc, char** argv) {//{{{
                 }else if(option.exist("nbest") && !option.exist("rnnlm")){
                     tagger.print_N_best_path();
                 }else if(option.exist("rerank") && option.exist("rnnlm")){
-                    tagger.print_best_path_with_rnn(rnnlm);
+                    std::cerr << "廃止" << std::endl;
+                    //tagger.print_best_path_with_rnn(rnnlm);
                 }else{
                     if(option.exist("juman"))
                         tagger.print_best_beam_juman();

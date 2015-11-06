@@ -1,7 +1,7 @@
 
 CXX := g++
-CXXFLAGS := --std=c++1y -g3 -O3 -m64 -Wno-c++11-narrowing -lm -lpthread -DINSTANTIATE_TEMPLATES -Isrilm/include -DUSE_SRILM -Wall 
-CXXFLAGS_G := --std=c++1y -g3 -fno-inline -g -I srilm/include -DINSTANTIATE_TEMPLATES -DHAVE_ZOPEN -m64 -Wall 
+CXXFLAGS := --std=c++1y -Ofast -m64 -Wno-c++11-narrowing -lm -Wall -funroll-loops -ffast-math #-DUSE_SRILM -DINSTANTIATE_TEMPLATES -lpthread -Isrilm/include  # -funroll-loops -ffast-math
+CXXFLAGS_G := --std=c++1y -g -Og -m64 -Wno-c++11-narrowing -ltcmalloc -lm -fno-omit-frame-pointer -Wall -funroll-loops -ffast-math
 
 SRILM_PATH := /home/morita/archive/srilm
 

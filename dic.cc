@@ -186,8 +186,8 @@ Node *Dic::lookup_lattice(std::vector<CharLattice::da_result_pair_type> &da_sear
         for (size_t j = 0; j < size; j++) { // same key but different value (pos)
             if (specified_posid != MORPH_DUMMY_POS && specified_posid != (token + j)->posid)
                 continue;
-                    
-                    
+            //result_pair の (value(32bit) << 8) + j(最大8bit) が形態素に対する unique な ID になる．
+              
             Node *new_node = new Node;
             read_node_info(*(token + j), &new_node);
             

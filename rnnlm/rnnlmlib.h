@@ -10,6 +10,10 @@
 #ifndef _RNNLMLIB_H_
 #define _RNNLMLIB_H_
 
+#include <inttypes.h>
+#include <stddef.h>
+#include <stdio.h>
+
 #include <vector>
 #include <math.h>
 
@@ -18,7 +22,7 @@ namespace RNNLM{
 const int MAX_STRING=100;
 
 #ifndef WEIGHTTYPE
-#define WEIGHTTYPE double
+#define WEIGHTTYPE float
 #endif
 
 typedef WEIGHTTYPE real;	// NN weights
@@ -43,14 +47,28 @@ struct vocab_word {
 
 struct context {
     int last_word;
+    bool have_recurrent;
     std::vector<int> history;
     std::vector<real> l1_neuron;
+    std::vector<real> recurrent;
 };
 
-const unsigned int PRIMES[]={108641969, 116049371, 125925907, 133333309, 145678979, 175308587, 197530793, 234567803, 251851741, 264197411, 330864029, 399999781,
-407407183, 459258997, 479012069, 545678687, 560493491, 607407037, 629629243, 656789717, 716048933, 718518067, 725925469, 733332871, 753085943, 755555077,
-782715551, 790122953, 812345159, 814814293, 893826581, 923456189, 940740127, 953085797, 985184539, 990122807};
-const unsigned int PRIMES_SIZE=sizeof(PRIMES)/sizeof(PRIMES[0]);
+//faster
+//static const uint64_t PRIMES[] = {
+//    108641969, 116049371, 125925907, 133333309, 145678979, 175308587, 197530793, 234567803,
+//    251851741, 264197411, 330864029, 399999781, 407407183, 459258997, 479012069, 545678687,
+//    560493491, 607407037, 629629243, 656789717, 716048933, 718518067, 725925469, 733332871,
+//    753085943, 755555077, 782715551, 790122953, 812345159, 814814293, 893826581, 923456189,
+//    940740127, 953085797, 985184539, 990122807};
+//static const uint64_t PRIMES_SIZE = sizeof(PRIMES) / sizeof(PRIMES[0]);
+
+const uint64_t PRIMES[]={
+    108641969, 116049371, 125925907, 133333309, 145678979, 175308587, 197530793, 234567803, 
+    251851741, 264197411, 330864029, 399999781, 407407183, 459258997, 479012069, 545678687, 
+    560493491, 607407037, 629629243, 656789717, 716048933, 718518067, 725925469, 733332871, 
+    753085943, 755555077, 782715551, 790122953, 812345159, 814814293, 893826581, 923456189, 
+    940740127, 953085797, 985184539, 990122807};
+const uint64_t PRIMES_SIZE=sizeof(PRIMES)/sizeof(PRIMES[0]);
 
 const int MAX_NGRAM_ORDER=20;
 
@@ -114,7 +132,7 @@ protected:
     int layerc_size;
     int layer2_size;
     
-    long long direct_size;
+    uint64_t direct_size;
     int direct_order;
     int history[MAX_NGRAM_ORDER];
     
@@ -123,6 +141,9 @@ protected:
     int *bptt_history;
     neuron *bptt_hidden;
     struct synapse *bptt_syn0;
+
+    bool use_nce;
+    real nce_lnz;
     
     int gen;
 
@@ -204,6 +225,8 @@ public:
 	bptt_history=NULL;
 	bptt_hidden=NULL;
 	bptt_syn0=NULL;
+
+    use_nce=false;
 	
 	gen=0;
 
@@ -296,6 +319,11 @@ public:
     
     real random(real min, real max);
 
+
+    void ReadFRHeader(FILE* file); // faster rnnlm 用のモデルファイル読込
+
+    real calc_direct_score(int word, context* c);
+
     void setTrainFile(char *str);
     void setValidFile(char *str);
     void setTestFile(char *str);
@@ -345,12 +373,17 @@ public:
     //void restoreWeights2();		
     void saveContext();
     void restoreContext();
+    void CacheRecurrent(context *dest);
     void saveContext2();
     void restoreContext2();
+
+    // Faster rnnlm 用のモデルを読み込む
+    void restoreNet_FR(); 
 
     void saveFullContext(context *dest);
     void restoreFullContext(const context *dest);
     void initNet();
+    void initNetFR();
     void saveNet();
     void goToDelimiter(int delim, FILE *fi);
     void restoreNet();
@@ -360,16 +393,19 @@ public:
     void computeNet(int last_word, int word);
     void computeNet(int last_word, int word, context *c);
     void computeNet(int word, context *context);
+    void computeNet_selfnm(int word, context *context);
     void learnNet(int last_word, int word);
     void copyHiddenLayerToInput();
 
 
     real test_word(context &c, context &new_c, std::string next_word);
     void get_initial_context(context *c);
+    void get_initial_context_FR(context *c);
     void initialize_test_sent();
     void trainNet();
     void useLMProb(int use) {use_lmprob=use;}
     real test_word(context *c, context *new_c, std::string next_word);
+    real test_word_selfnm(context *c, context *new_c, std::string next_word);
     void testNet();
     void testNbest();
     void testGen();
