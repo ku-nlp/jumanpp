@@ -27,6 +27,7 @@ Tagger::~Tagger() {//{{{
 Sentence *Tagger::new_sentence_analyze(std::string &in_sentence) {//{{{
     begin_node_list.clear();
     end_node_list.clear();
+    // TODO: このnew が，メモリ確保&開放の手間がかかるため無駄, clear 程度でなんとかならないか．
     sentence = new Sentence(&begin_node_list, &end_node_list, in_sentence, &dic, &ftmpl, param);
     FeatureSet::topic = nullptr;
     sentence->lookup_and_analyze();
@@ -50,12 +51,14 @@ int Tagger::online_learning(Sentence* gold, Sentence* system ,TopicVector *topic
         double loss = system->eval(*gold); //単語が異なる割合など
         if( gold->get_feature() ){
             FeatureVector gold_vec(gold->get_feature()->get_fset()); 
-            FeatureVector gold_topic_vec(gold->get_gold_topic_features(topic)); 
+            //FeatureVector gold_topic_vec(gold->get_gold_topic_features(topic));  
             //std::cerr << "<gold>" << gold_vec.str() <<  "</gold>" << endl;
                 
             FeatureVector sys_vec(system->get_best_feature().get_fset());
             //std::cerr << "<sys>" << sys_vec.str() << "</sys>" << endl;
-            scw.update( loss, gold_vec.merge(gold_topic_vec));
+            //scw.update( loss, gold_vec.merge(gold_topic_vec));
+            // TODO: 差分を取る
+            scw.update( loss, gold_vec);
             scw.update( -loss, sys_vec);
         }else{
             cerr << "update failed" << sentence << endl;

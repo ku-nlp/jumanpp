@@ -2,6 +2,9 @@
 #include "feature.h"
 #include "node.h"
 
+// topic 関係の読込を無効化する
+#define NO_USE_TOPIC_DB
+
 namespace Morph {
 
 int Node::id_count = 1;
@@ -12,13 +15,15 @@ const char* hukugouji[] = { "めぐる", "除く", "のぞく", "通じる", "�
 
 Node::Node():bq(param->N) {//{{{
     this->id = id_count++;
+#ifndef NO_USE_TOPIC_DB
     if(topic_cdb == nullptr){
         topic_cdb = db_read_open(cdb_filename);
     }
+#endif
 }//}}}
 
 bool Node::is_dummy(){//{{{
-    return (stat == MORPH_DUMMY_POS || stat == MORPH_BOS_NODE || stat ==  MORPH_EOS_NODE); 
+    return (stat == MORPH_DUMMY_NODE || stat == MORPH_BOS_NODE || stat ==  MORPH_EOS_NODE); 
 };//}}}
 
 //Node::Node(const Node& node) { // 普通のコピー//{{{
@@ -155,6 +160,11 @@ unsigned short Node::get_char_num() {//{{{
 
 bool Node::topic_available(){//{{{
     Node* node = this;
+#ifdef NO_USE_TOPIC_DB
+    return false;
+#endif
+
+#ifndef NO_USET_TOPIC_DB
     if(!node->representation) return false;
 
     // 複合辞の処理
@@ -202,6 +212,7 @@ bool Node::topic_available(){//{{{
         delete(result);
 
     return topical_cond;
+#endif
 }//}}}
 
 bool Node::topic_available_for_sentence() {//{{{
@@ -253,6 +264,8 @@ void Node::read_vector(const char* buf, std::vector<double> &vector) { //topic�
 
 TopicVector Node::get_topic(){//{{{
     TopicVector node_topic;
+
+#ifndef NO_USE_TOPIC_DB
     node_topic.resize(TOPIC_NUM, 0.0);
     if(!representation)
         return node_topic;
@@ -264,6 +277,8 @@ TopicVector Node::get_topic(){//{{{
     read_vector(result, node_topic); 
     if(result)
         delete result;
+#endif
+
     return node_topic;
 }//}}}
 

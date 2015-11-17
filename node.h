@@ -28,10 +28,10 @@ class BeamQue;
 struct morph_token_t {//{{{
 	unsigned short lcAttr;
 	unsigned short rcAttr;
-	unsigned short posid; // id of part of speech
-	unsigned short spos_id; // 細分類
-	unsigned short form_id; // 活用形
-	unsigned short form_type_id; // 活用型
+	unsigned long posid; // id of part of speech
+	unsigned long spos_id; // 細分類
+	unsigned long form_id; // 活用形
+	unsigned long form_type_id; // 活用型
 	unsigned long base_id; // 活用型
     unsigned short length; // 単語の長さ
 	short wcost; // cost of this morpheme
@@ -236,10 +236,10 @@ class Node {//{{{
     unsigned short char_num = 0;
     unsigned short rcAttr = 0;
     unsigned short lcAttr = 0;
-	unsigned short posid = 0;
-	unsigned short sposid = 0;
-	unsigned short formid = 0;
-	unsigned short formtypeid = 0;
+	unsigned long posid = 0;
+	unsigned long sposid = 0;
+	unsigned long formid = 0;
+	unsigned long formtypeid = 0;
 	unsigned long baseid = 0;
 	unsigned long repid = 0;
 	unsigned long imisid = 0;

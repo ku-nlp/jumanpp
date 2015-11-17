@@ -205,9 +205,12 @@ int main(int argc, char **argv) {
   len.push_back(dic[idx].first.size());
   val.push_back(bsize +(idx << 8));
 
-  if (da.build(str.size(), &str[0],
-               &len[0], &val[0], &progress_bar) != 0
-      || da.save(index.c_str()) != 0) {
+  auto ret = da.build(str.size(), &str[0], &len[0], &val[0], &progress_bar); 
+  if(ret != 0){
+    std::cerr << "Error: cannot build double array (err code =" << ret << ") " << file << std::endl;
+  }
+
+  if ( da.save(index.c_str()) != 0) {
     std::cerr << "Error: cannot build double array  " << file << std::endl;
     return -1;
   };

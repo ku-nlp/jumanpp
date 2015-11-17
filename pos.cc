@@ -2,15 +2,22 @@
 #include "pos.h"
 
 namespace Morph {
-Pos::Pos() : count(0) {}
+Pos::Pos() {}
+
+
 
 unsigned long Pos::get_id(const std::string& pos_str) {
     if (dic.find(pos_str) == dic.end()) {
-        // cerr << "DEBUG: " << pos_str << " -> " << count << " (new)" << endl;
-        dic[pos_str] = count++;
+        // count する代わりにハッシュを計算することで，辞書に項目を追加しても学習したモデルを再利用できる
+        dic[pos_str] = str_hash(pos_str); 
+       
+        // DEBUG: 衝突していないか，チェックする. //2015/11/06 チェックしたが衝突は無し
+//        if( rdic.find(dic[pos_str]) != rdic.end() ){
+//            std::cerr << "pos_str:" << pos_str << ", prev_str:" << rdic[dic[pos_str]] << std::endl;
+//        }
         rdic[dic[pos_str]] = pos_str;
     } else {
-        // cerr << "DEBUG: " << pos_str << " -> " << dic[pos_str] << endl;
+        // 何もしない
     }
     return dic[pos_str];
 }
@@ -21,12 +28,19 @@ unsigned long Pos::get_id(const char* pos_str) {
 }
 
 std::string* Pos::get_pos(unsigned long posid) {
-    if (posid < count) {
-        return &(rdic[posid]);
-    } else {
+//    if (posid < count) {
+//        return &(rdic[posid]);
+//    } else {
+//        cerr << ";; invalid posid:" << posid << endl;
+//        return NULL;
+//    }
+      if(rdic.count(posid) == 0){
         cerr << ";; invalid posid:" << posid << endl;
+        assert(rdic.count(posid) != 0);
         return NULL;
-    }
+      }else{
+        return &(rdic[posid]);
+      }
 }
 
 bool Pos::write_pos_list(const std::string& pos_filename) {
@@ -58,9 +72,11 @@ bool Pos::read_pos_list(const std::string& pos_filename) {
     while (getline(pos_in, buffer)) {
         std::vector<std::string> line;
         split_string(buffer, "\t", line);
-        dic[line[0]] = atoi(static_cast<const char*>(line[1].c_str()));
-        rdic[atoi(static_cast<const char*>(line[1].c_str()))] = line[0];
-        count++;
+        //dic[line[0]] = atoi(static_cast<const char*>(line[1].c_str()));
+        //rdic[atoi(static_cast<const char*>(line[1].c_str()))] = line[0];
+        dic[line[0]] = strtoul(static_cast<const char*>(line[1].c_str()),nullptr,10);
+        rdic[dic[line[0]]] = line[0];
+        //count++;
     }
 
     pos_in.close();

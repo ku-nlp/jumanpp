@@ -1,22 +1,25 @@
 #include "scw.h"
+//Fimap FeatureVector::str2id;
 
-FeatureVector::FeatureVector(const std::vector<std::string>& v1, const std::vector<std::string>& v2){
+// 訓練時用だが，実際に使う？？
+FeatureVector::FeatureVector(const std::vector<unsigned long>& v1, const std::vector<unsigned long>& v2){
     for(const auto& s:v1){
-        vec[s] = 1.0;
+        vec[s] += 1.0;
     }
     for(const auto& s:v2){
         vec[s] -= 1.0;
     }
 };
 
-FeatureVector::FeatureVector(const std::vector<std::string>& v1){
+FeatureVector::FeatureVector(const std::vector<unsigned long>& v1){
     for(const auto& s:v1){
-        vec[s] = 1.0;
+        vec[s] += 1.0;
     }
 };
 
 double FeatureVector::operator* (const FeatureVector& fv) const{
     double sum = 0.0;
+    // サイズを見て，小さい方と大きい方をかける様にしたほうが？
     for(const auto& f:fv){
         auto itr = vec.find(f.first);
         if(itr != vec.end())
@@ -32,7 +35,6 @@ void FeatureVector::update(double alpha, double y,const DiagMat& sigma, const Fe
     }
 };
 
-
 void DiagMat::update(double beta, const FeatureVector& x){ // update sigma
     for(const auto& v:x){
         this->ref_value(v.first,v.first) -= beta * this->ref_value(v.first) * v.second * v.second * this->ref_value(v.first);
@@ -40,20 +42,33 @@ void DiagMat::update(double beta, const FeatureVector& x){ // update sigma
     }
 };
 
-double& DiagMat::ref_value(const std::string sp1, const std::string sp2){
-    std::string sp = sp1 + "=" + sp2;
-    auto itr = vec.find(sp);
-    if( itr == vec.end() ){// キーが無い場合
-        if(sp1 == sp2) //対角行列は1.0
-            vec[sp] = 1.0;
-        else
-            vec[sp] = 0.0;
+double& DiagMat::ref_value(const unsigned long sp1, const unsigned long sp2){
+    auto key = sp1;
+    // 対角行列以外は非サポートだが，とりあえず計算する
+    boost::hash_combine(key,sp2);
+
+    auto itr = vec.find(key);
+    if(itr != vec.cend()){
+        return itr->second;
+    }else{
+        if(sp1 == sp2){
+            auto& ref = vec[key];
+            ref = 1.0;
+            return ref;
+        }else{
+            auto &ref = vec[key];
+            ref = 0.0;
+            std::cerr << "Error@DiagMat. unsupported method. " << std::endl;
+            return ref;
+        }
     }
-    return vec[sp];
 };
 
-double DiagMat::get_value(const std::string& sp1)const{ 
-    auto itr = vec.find(sp1+"="+sp1);
+double DiagMat::get_value(const unsigned long sp1)const{ 
+    auto key = sp1;
+    boost::hash_combine(key,sp1);
+        
+    auto itr = vec.find(key);
     if(itr != vec.cend())
         return itr->second;
     else

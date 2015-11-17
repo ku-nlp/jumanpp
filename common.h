@@ -87,7 +87,10 @@ extern size_t is_suuji(unsigned char *ucp);
 #define MORPH_UNK_NODE 0x0010
 // NORMAL_NODEでもある
 #define MORPH_DEVOICE_NODE 0x0021
-#define MORPH_DUMMY_POS 0xFFFF
+
+// 廃止
+// #define MORPH_DUMMY_POS 0xFFFF
+#define MORPH_DUMMY_NODE 0xFFFF
 
 #define MORPH_UNK_COST 1000
 

@@ -126,15 +126,11 @@ int main(int argc, char** argv) {//{{{
     param.set_trigram(!option.exist("notrigram"));
     param.set_rweight(option.get<double>("Rweight"));
 
-    if(option.exist("oldloss")){
+    if(option.exist("oldloss")){ //廃止予定
         param.useoldloss = true;
     }
-    //if(option.exist("use_suu_rule")){ //デフォルトに
-        param.use_suu_rule = true;
-    //}
-    //if(option.exist("no_posmatch")){
-        param.no_posmatch = true;
-    //}
+    param.use_suu_rule = true;
+    param.no_posmatch = true;
 
     Morph::Parameter normal_param = param;
     normal_param.set_nbest(true); // nbest を利用するよう設定
@@ -220,17 +216,21 @@ int main(int argc, char** argv) {//{{{
     if (MODE_TRAIN) {//学習モード{{{
         std::cerr << "done" << std::endl;
         if(option.exist("lda")){
+            std::cerr << "LDA training is obsoleted" << std::endl;
+            return 0;
             Morph::Tagger tagger_normal(&normal_param);
             tagger_normal.read_model_file(option.get<std::string>("lda"));
-
+                
             tagger.train_lda(option.get<std::string>("train"), tagger_normal);
-            tagger.write_model_file(option.get<std::string>("model"));
+            tagger.write_bin_model_file(option.get<std::string>("model"));
         }else{ //通常の学習
             tagger.train(option.get<std::string>("train"));
-            tagger.write_model_file(option.get<std::string>("model"));
+            tagger.write_bin_model_file(option.get<std::string>("model"));
         }
       //}}}
     } else if(option.exist("lda")){//LDAを使う形態素解析{{{
+        std::cerr << "LDA mode is obsoleted" << std::endl;
+        return 0;
         Morph::Tagger tagger_normal(&normal_param);
         tagger_normal.read_model_file(option.get<std::string>("lda"));
         tagger.read_model_file(option.get<std::string>("model"));
@@ -273,10 +273,10 @@ int main(int argc, char** argv) {//{{{
     //}}}
     } else {// 通常の形態素解析{{{
         //std::cerr << "read model file" << std::flush;
-        if(option.exist("binmodel"))
-            tagger.read_bin_model_file(option.get<std::string>("binmodel"));
-        else
-            tagger.read_model_file(option.get<std::string>("model"));
+        //if(option.exist("binmodel"))
+        tagger.read_bin_model_file(option.get<std::string>("model"));
+        //else
+        //    tagger.read_model_file(option.get<std::string>("model"));
         std::cerr << "done" << std::endl;
             
         std::ifstream is(argv[1]); // input stream

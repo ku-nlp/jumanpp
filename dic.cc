@@ -3,6 +3,7 @@
 #include "dic.h"
 
 namespace Morph {
+unsigned long Dic::MORPH_DUMMY_POS;
 
 Dic::~Dic() {//{{{
     MMAP_CLOSE(char, dmmap);
@@ -168,7 +169,7 @@ Node *Dic::lookup_lattice(std::vector<CharLattice::da_result_pair_type> &da_sear
 }//}}}
 
 // DA から検索した結果を Node に変換する 
-Node *Dic::lookup_lattice(std::vector<CharLattice::da_result_pair_type> &da_search_result, const char *start_str, unsigned int specified_length, unsigned short specified_posid) {//{{{
+Node *Dic::lookup_lattice(std::vector<CharLattice::da_result_pair_type> &da_search_result, const char *start_str, unsigned int specified_length, unsigned long specified_posid) {//{{{
     Node *result_node = NULL;
         
     std::vector<CharLattice::da_result_pair_type> &result_pair = da_search_result; 
@@ -256,15 +257,14 @@ Node *Dic::lookup_lattice_specified(std::vector<CharLattice::da_result_pair_type
     
     // TODO: specified を生の vector からもう少し意味のあるものに変える
     // surf_read_base_pos_spos_type_form
-    auto specified_readingid  = readingid2reading.get_id(specified[0]);
-    auto specified_baseid     = baseid2base.get_id(specified[1]);
-    auto specified_posid      = posid2pos.get_id(specified[2]);
-    auto specified_sposid     = sposid2spos.get_id(specified[3]);
-    auto specified_formtypeid = formtypeid2formtype.get_id(specified[4]);
-    auto specified_formid     = formid2form.get_id(specified[5]);
+    unsigned long specified_readingid  = readingid2reading.get_id(specified[0]);
+    unsigned long specified_baseid     = baseid2base.get_id(specified[1]);
+    unsigned long specified_posid      = posid2pos.get_id(specified[2]);
+    unsigned long specified_sposid     = sposid2spos.get_id(specified[3]);
+    unsigned long specified_formtypeid = formtypeid2formtype.get_id(specified[4]);
+    unsigned long specified_formid     = formid2form.get_id(specified[5]);
 
     std::vector<CharLattice::da_result_pair_type> &result_pair = da_search_result; 
-
         
     if (result_pair.size() == 0)
         return result_node;
@@ -282,15 +282,21 @@ Node *Dic::lookup_lattice_specified(std::vector<CharLattice::da_result_pair_type
         bool modified_word = false; // 長音が挿入されていることを調べる方法が無い
                 
         // std::cerr << start_str << "_" << *baseid2base.get_pos(token->base_id) << "_" << specified_length << "-" << result_pair[i].length << ":" << modified_word << std::endl;
-
+            
         for (size_t j = 0; j < size; j++) { // １つでも異なればskip
             if ((!modified_word && specified[0].size()>0 && specified_readingid != (token + j)->reading_id) ||
                 (!modified_word && specified[1].size()>0 && specified_baseid != (token + j)->base_id) ||
                 (specified[2].size()>0 && specified_posid != (token + j)->posid) ||
                 (specified[3].size()>0 && specified_sposid != (token + j)->spos_id) ||
                 (specified[4].size()>0 && specified_formtypeid != (token + j)->form_type_id) ||
-                (specified[5].size()>0 && specified_formid != (token + j)->form_id) )
+                (specified[5].size()>0 && specified_formid != (token + j)->form_id) ){
+
+//                std::cerr << "spec  baseid:" << specified_baseid << std::endl << "token baseid:" <<  (token + j)->base_id << std::endl;
+//                std::cerr << "spec  base:" << *baseid2base.get_pos(specified_baseid) << std::endl << "token base:" << specified[1] << std::endl;
+//                std::cerr << "spec  base:" << *baseid2base.get_pos(specified_baseid) << std::endl << "token base:" <<  baseid2base.get_pos((token + j)->base_id) << std::endl;
+//                std::cerr << "spec  posid:" << specified_posid << std::endl << "token posid:" <<  (token + j)->posid << std::endl;
                 continue;
+            }
                 
             Node *new_node = new Node;
             read_node_info(*(token + j), &new_node);
@@ -352,7 +358,7 @@ Node *Dic::lookup_lattice_specified(std::vector<CharLattice::da_result_pair_type
 
 // make an unknown word node 
 // 未定義語のノードを生成(ある品詞の候補についてのノード or 未定のままのノード(こちらはどういうタイミングで呼び出されるのか？) )
-Node *Dic::make_unk_pseudo_node(const char *start_str, int byte_len, unsigned short specified_posid) {//{{{
+Node *Dic::make_unk_pseudo_node(const char *start_str, int byte_len, unsigned long specified_posid) {//{{{
     Node *new_node = new Node; 
     new_node->surface = start_str;
     new_node->length = byte_len;
@@ -452,8 +458,8 @@ Node *Dic::make_unk_pseudo_node(const char *start_str, int byte_len, unsigned sh
 //sentence.cc:339: 
 // 名前が変？指定した文字種が連続する範囲で全品詞について未定義語ノードを生成
 // 辞書をr_node で受け取り、重複をチェック
-Node *Dic::make_specified_pseudo_node_by_dic_check(const char *start_str, unsigned int specified_length, std::string *specified_pos, std::vector<unsigned short> *specified_unk_pos, unsigned int type_family, Node* r_node) {//{{{
-    unsigned short specified_posid = MORPH_DUMMY_POS;
+Node *Dic::make_specified_pseudo_node_by_dic_check(const char *start_str, unsigned int specified_length, std::string *specified_pos, std::vector<unsigned long> *specified_unk_pos, unsigned int type_family, Node* r_node) {//{{{
+    unsigned long specified_posid = MORPH_DUMMY_POS;
     if(specified_pos) specified_posid = posid2pos.get_id(*specified_pos);
 
     U8string ustart_str = (std::string(start_str));
@@ -512,11 +518,11 @@ Node *Dic::make_specified_pseudo_node_by_dic_check(const char *start_str, unsign
 // 作ってr_node に足すことはしない
 // 何も作られなかった場合は nullptr を返す
 // 重複してるとき，delteしてないからリークしてる疑惑
-Node *Dic::make_unk_pseudo_node_list_some_pos_by_dic_check(const char *start_str, int byte_len, unsigned short specified_posid, std::vector<unsigned short> *specified_unk_pos, Node* r_node) {//{{{
+Node *Dic::make_unk_pseudo_node_list_some_pos_by_dic_check(const char *start_str, int byte_len, unsigned long specified_posid, std::vector<unsigned long> *specified_unk_pos, Node* r_node) {//{{{
     Node *result_node = nullptr;
     if (specified_posid == MORPH_DUMMY_POS ) {
         //result_node = r_node; // こうするべきか，しないべきか??
-        for (std::vector<unsigned short>::iterator it = specified_unk_pos->begin(); it != specified_unk_pos->end(); it++) {
+        for (std::vector<unsigned long>::iterator it = specified_unk_pos->begin(); it != specified_unk_pos->end(); it++) {
             Node *new_node = make_unk_pseudo_node(start_str, byte_len, *it);
 
             bool flag_covered = false;
@@ -556,13 +562,13 @@ Node *Dic::make_unk_pseudo_node_list_some_pos_by_dic_check(const char *start_str
 
 // _list では未定義語としてノードを作る際に品詞候補についてそれぞれノードを生成する
 // ほぼNode 作るだけ( 品詞が指定されていれば、その品詞、UNKなら候補すべて)
-Node *Dic::make_unk_pseudo_node_list_some_pos(const char *start_str, int byte_len, unsigned short specified_posid, std::vector<unsigned short> *specified_unk_pos) {//{{{
+Node *Dic::make_unk_pseudo_node_list_some_pos(const char *start_str, int byte_len, unsigned long specified_posid, std::vector<unsigned long> *specified_unk_pos) {//{{{
     Node *result_node = NULL;
         
     if (specified_posid == MORPH_DUMMY_POS) {
         // POSが分からない場合(テスト時)
         // 未知語の候補POSすべてを生成
-        for (std::vector<unsigned short>::iterator it = specified_unk_pos->begin(); it != specified_unk_pos->end(); it++) {
+        for (std::vector<unsigned long>::iterator it = specified_unk_pos->begin(); it != specified_unk_pos->end(); it++) {
             Node *new_node = make_unk_pseudo_node(start_str, byte_len, *it);
             new_node->bnext = result_node;
             result_node = new_node;
@@ -581,7 +587,7 @@ Node *Dic::make_unk_pseudo_node_list_some_pos(const char *start_str, int byte_le
 // min_char_num から max_char_num までの範囲におさまるもののみ
 // make unknown word nodes of some lengths
 // TODO make_unk_pseudo_node_list_some_pos を長さの範囲だけ呼び出してマージするようにする
-Node *Dic::make_pseudo_node_list_in_range(const char *start_str, unsigned int min_char_num, unsigned int max_char_num, unsigned short specified_posid) {//{{{
+Node *Dic::make_pseudo_node_list_in_range(const char *start_str, unsigned int min_char_num, unsigned int max_char_num, unsigned long specified_posid) {//{{{
     Node *result_node = NULL;
     unsigned int length = strlen(start_str), char_num = 1;
     unsigned long code = 0; 
@@ -623,7 +629,7 @@ Node *Dic::make_pseudo_node_list_in_range(const char *start_str, unsigned int mi
 
 // あとでオプションに変更する
 Node *Dic::make_unk_pseudo_node_gold(const char *start_str, int byte_len, std::string &specified_pos) {//{{{
-    unsigned short specified_posid = posid2pos.get_id(specified_pos);
+    unsigned long specified_posid = posid2pos.get_id(specified_pos);
 
     Node *new_node = new Node;
     new_node->surface = start_str;

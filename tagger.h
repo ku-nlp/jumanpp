@@ -73,15 +73,16 @@ class Tagger {
 
     // write feature weights
     bool write_model_file(const std::string &model_filename) {
-        std::ofstream model_out(model_filename.c_str(), std::ios::out);
-        if (!model_out.is_open()) {
-            cerr << ";; cannot open " << model_filename << " for writing" << endl;
-            return false;
-        }
-        for (auto &w:weight){
-            model_out << w.first << " " << w.second << endl;
-        }
-        model_out.close();
+        std::cerr << "Error@write_model_file: not implemented" << std::endl;
+//        std::ofstream model_out(model_filename.c_str(), std::ios::out);
+//        if (!model_out.is_open()) {
+//            cerr << ";; cannot open " << model_filename << " for writing" << endl;
+//            return false;
+//        }
+//        for (auto &w:weight){
+//            model_out << w.first << " " << w.second << endl;
+//        }
+//        model_out.close();
         return true;
     }
     bool write_bin_model_file(const std::string &model_filename) {
@@ -109,18 +110,19 @@ class Tagger {
             
     // read feature weights
     bool read_model_file(const std::string &model_filename) {
-        std::ifstream model_in(model_filename.c_str(), std::ios::in);
-        if (!model_in.is_open()) {
-            cerr << ";; cannot open " << model_filename << " for reading" << endl;
-            exit(1);
-        }
-        std::string buffer;
-        while (getline(model_in, buffer)) {
-            std::vector<std::string> line;
-            Morph::split_string(buffer, " ", line);
-            weight[line[0]] = atof(static_cast<const char *>(line[1].c_str()));
-        }
-        model_in.close();
+        std::cerr << "Error@read_model_file: not implemented" << std::endl;
+//        std::ifstream model_in(model_filename.c_str(), std::ios::in);
+//        if (!model_in.is_open()) {
+//            cerr << ";; cannot open " << model_filename << " for reading" << endl;
+//            exit(1);
+//        }
+//        std::string buffer;
+//        while (getline(model_in, buffer)) {
+//            std::vector<std::string> line;
+//            Morph::split_string(buffer, " ", line);
+//            weight[line[0]] = atof(static_cast<const char *>(line[1].c_str()));
+//        }
+//        model_in.close();
         return true;
     }
 };

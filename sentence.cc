@@ -163,7 +163,7 @@ void Sentence::feature_print() {  //{{{
 // make unknown word candidates of specified length if it's not found in dic
 Node *Sentence::make_unk_pseudo_node_list_by_dic_check(const char *start_str, unsigned int pos, Node *r_node, unsigned int specified_char_num) {//{{{
 
-    auto result_node = dic->make_unk_pseudo_node_list_some_pos_by_dic_check(start_str + pos, specified_char_num, MORPH_DUMMY_POS, &(param->unk_pos), r_node);
+    auto result_node = dic->make_unk_pseudo_node_list_some_pos_by_dic_check(start_str + pos, specified_char_num, Dic::MORPH_DUMMY_POS, &(param->unk_pos), r_node);
 
     if(result_node){
         auto tmp_node = result_node;
@@ -1285,7 +1285,7 @@ Node *Sentence::get_bos_node() {  //{{{
     bos_node->length = 0;
     // bos_node->isbest = 1;
     bos_node->stat  = MORPH_BOS_NODE;
-    bos_node->posid = MORPH_DUMMY_POS; //TODO: これ未知語と同じ品詞扱いになっている..
+    bos_node->posid = Dic::MORPH_DUMMY_POS; //TODO: れ未知語と同じ品詞扱いになっている
     bos_node->pos  = &(BOS_STRING);
     bos_node->spos = &(BOS_STRING);
     bos_node->form = &(BOS_STRING);
@@ -1320,7 +1320,7 @@ Node *Sentence::get_eos_node() {  //{{{
     eos_node->length = 1;  // dummy
     // eos_node->isbest = 1;
     eos_node->stat = MORPH_EOS_NODE;
-    eos_node->posid = MORPH_DUMMY_POS; //TODO: これも
+    eos_node->posid = Dic::MORPH_DUMMY_POS; //TODO: これも
     eos_node->pos = &(EOS_STRING);
     eos_node->spos = &(EOS_STRING);
     eos_node->form = &(EOS_STRING);
@@ -2089,14 +2089,11 @@ void Sentence::print_best_beam() {  //{{{
             if ((*it)->stat != MORPH_BOS_NODE &&
                 (*it)->stat != MORPH_EOS_NODE) {
                 (*it)->used_in_nbest = true;
-                if (printed_num++) output_string_buffer.append(
-                    " ");
+                if (printed_num++) output_string_buffer.append(" ");
                 output_string_buffer.append(*(*it)->string_for_print);
-                output_string_buffer.append(
-                    "_");
+                output_string_buffer.append("_");
                 output_string_buffer.append(*(*it)->pos);
-                output_string_buffer.append(
-                    ":");
+                output_string_buffer.append(":");
                 output_string_buffer.append(*(*it)->spos);
             }
         }

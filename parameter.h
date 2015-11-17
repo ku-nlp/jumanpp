@@ -49,8 +49,8 @@ class Parameter {
     double phi_value = 1.0;
     bool use_total_sim = false;
 
-    std::vector<unsigned short> unk_pos;
-    std::vector<unsigned short> unk_figure_pos;
+    std::vector<unsigned long> unk_pos;
+    std::vector<unsigned long> unk_figure_pos;
 
     int set_N(unsigned int n){
         N =n;
