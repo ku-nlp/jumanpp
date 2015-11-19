@@ -14,13 +14,13 @@ bool MODE_TRAIN = false;
 bool WEIGHT_AVERAGED = false;
 
 void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
-    option.add<std::string>("dict", 'd', "dict filename", false, "data/japanese_uniq.dic");
-    option.add<std::string>("model", 'm', "model filename", false, "data/model.dat");
-    option.add<std::string>("binmodel", '\0', "bin model filename", false, "data/model.dat");
-    option.add<std::string>("frmodel", '\0', "bin model filename", false, "fmmodel");
+    option.add<std::string>("dict", 'd', "dict filename", false, "data/japanese.dic");
+    option.add<std::string>("model", 'm', "model filename", false, "data/model.mdl");
+    //option.add<std::string>("binmodel", '\0', "bin model filename", false, "data/model.dat"); //全てのモデルがバイナリ化されたので廃止
+    //option.add<std::string>("frmodel", '\0', "bin model filename", false, "fmmodel"); // 旧 rnnlm を廃止したので，rnnlm モデルに統合
+    option.add<std::string>("rnnlm", 'r', "rnnlm filename", false, "data/lang.mdl"); 
     option.add<std::string>("feature", 'f', "feature template filename", false, "data/feature.def");
     option.add<std::string>("train", 't', "training filename", false, "data/train.txt");
-    option.add<std::string>("rnnlm", 'r', "rnnlm filename", false, "data/rnnlm.model");
 #ifdef USE_SRILM
     option.add<std::string>("srilm", 'I', "srilm filename", false, "srilm.arpa");
 #endif
@@ -30,14 +30,13 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     option.add<double>("Cvalue", 'C', "C value",false, 1.0);
     option.add<double>("Phi", 'P', "Phi value",false, 1.65);
     option.add<double>("Rweight", 0, "linear interpolation parameter for KKN score and RNN score",false, 0.3);
-    //option.add("lpenalty", 0, "use linear penalty"); //廃止
     option.add<double>("Lweight", 0, "linear penalty parameter for unknown words in RNNLM",false, 1.5);
     option.add<unsigned int>("nbest", 'n', "n-best search", false, 5);
     option.add<unsigned int>("rerank", 'R', "n-best reranking", false, 5);
     option.add("scw", 0, "use soft confidence weighted");
     option.add("oldloss", 0, "use old loss function");
     option.add("so", 0, "use second order viterbi algorithm"); //廃止を検討
-    option.add<std::string>("lda", 0, "use lda", false, "");
+    option.add<std::string>("lda", 0, "use lda", false, ""); //廃止予定
     option.add<unsigned int>("beam", 'b', "use beam search",false,1);
     option.add<unsigned int>("rbeam", 'B', "use beam search and reranking",false,1);
     option.add("oldstyle", 'o', "print old style lattice");
@@ -47,12 +46,9 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     option.add("ambiguous", 'A', "output ambiguous words on lattice");
     option.add("shuffle", 's', "shuffle training data for each iteration");
     option.add("passiveunk", '\0', "apply passive unknown word detection. The option use unknown word detection only if it cannot make any node."); 
-    //option.add("no_posmatch", '\0', "do not use unknown words listed in dictionary even if the pos is not matched"); // デフォルトに
     option.add("notrigram", 0, "do NOT use trigram feature");
-    //option.add("trigram", 0, "use trigram feature (default)");// もう見ていないオプション
     option.add("unknown", 'u', "apply unknown word detection (obsolete; already default)");
-    //option.add("use_suu_rule", '\0', "use_suu_rule"); // 結果を確認次第，default に
-    option.add<std::string>("use_lexical_feature", '\0', "use_lexical_feature",false,"freq_words.list"); // 結果を確認次第，default に
+    option.add<std::string>("use_lexical_feature", '\0', "use_lexical_feature",false,"data/freq_words.list"); 
     option.add("debug", '\0', "debug mode");
     option.add("rnndebug", '\0', "show rnnlm debug message");
     option.add("version", 'v', "print version");
@@ -117,11 +113,9 @@ int main(int argc, char** argv) {//{{{
         Morph::FeatureSet::use_total_sim = true;
     }
 
-    if(option.exist("use_lexical_feature")){
-        param.use_lexical_feature=true;
-        param.freq_word_list = option.get<std::string>("use_lexical_feature");
-        Morph::FeatureSet::open_freq_word_set(param.freq_word_list);
-    }
+    param.use_lexical_feature=true;
+    param.freq_word_list = option.get<std::string>("use_lexical_feature");
+    Morph::FeatureSet::open_freq_word_set(param.freq_word_list);
 
     param.set_trigram(!option.exist("notrigram"));
     param.set_rweight(option.get<double>("Rweight"));
@@ -135,8 +129,8 @@ int main(int argc, char** argv) {//{{{
     Morph::Parameter normal_param = param;
     normal_param.set_nbest(true); // nbest を利用するよう設定
     normal_param.set_N(10); // 10-best に設定
-    param.set_rnnlm(option.exist("rnnlm")||option.exist("frmodel"));
-    param.set_nce(option.exist("frmodel"));
+    param.set_rnnlm(option.exist("rnnlm"));
+    param.set_nce(option.exist("rnnlm"));
 
 #ifdef USE_SRILM
     param.set_srilm(option.exist("srilm"));
@@ -145,22 +139,7 @@ int main(int argc, char** argv) {//{{{
     Morph::Node::set_param(&param);
    
     RNNLM::CRnnLM rnnlm;
-    if(option.exist("frmodel")){
-        rnnlm.setLambda(1.0);
-        rnnlm.setRegularization(0.0000001);
-        rnnlm.setDynamic(0);
-        rnnlm.setRnnLMFile(option.get<std::string>("frmodel").c_str());
-        rnnlm.setRandSeed(1);
-        rnnlm.useLMProb(0);
-        if(option.exist("rnndebug"))
-            rnnlm.setDebugMode(1);
-        else
-            rnnlm.setDebugMode(0);
-        if(param.lpenalty)
-            rnnlm.setLweight(param.lweight);
-        srand(1);
-        Morph::Sentence::init_rnnlm_FR(&rnnlm);
-    } else if(option.exist("rnnlm")){
+    if(option.exist("rnnlm")){
         rnnlm.setLambda(1.0);
         rnnlm.setRegularization(0.0000001);
         rnnlm.setDynamic(0);
@@ -174,9 +153,8 @@ int main(int argc, char** argv) {//{{{
         if(param.lpenalty)
             rnnlm.setLweight(param.lweight);
         srand(1);
-        Morph::Sentence::init_rnnlm(&rnnlm);
-    }
-
+        Morph::Sentence::init_rnnlm_FR(&rnnlm);
+    } 
 #ifdef USE_SRILM
     Vocab *vocab;
     Ngram *ngramLM;
