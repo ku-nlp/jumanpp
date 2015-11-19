@@ -4,11 +4,11 @@
 
 #include "common.h"
 #include "node.h"
-#include "parameter.h"
 #include <sstream>
 #include <memory>
 #include <tuple>
 #include <unordered_set>
+#include <boost/tr1/unordered_map.hpp>
 #include <functional>
 
 namespace Morph {
@@ -230,25 +230,22 @@ class FeatureTemplateSet {//{{{
     }
 };//}}}
 
-// 使っていないメンバの削除
-// weight をよそに移譲
 class FeatureSet { //{{{
-  friend int ::main(int argc, char** argv);
+  friend int main(int argc, char** argv);
     FeatureTemplateSet *ftmpl;
     FeatureVector* weight;
-  private:
-    static std::unordered_map<long int,std::string> feature_map; //sub_feature_map
-    static bool debug_flag;
-    static bool use_total_sim;
+  static std::unordered_map<std::string,long int> feature_map; //sub_feature_map
+  static std::tr1::unordered_map<std::vector<long int>,unsigned long> feature_id_map;
 
   public: 
     static std::vector<double>* topic;
+    static bool use_total_sim;
     static bool open_freq_word_set(const std::string &list_filename); 
     static std::unordered_set<std::tuple<std::string, std::string, std::string, std::string>, tuple_hash, tuple_equal> freq_word_set;
-        
+    //static std::unordered_set<std::string> freq_word_set;
+
     std::vector<std::string> fset;
-    FeatureVector fvec; //暫定
-        
+    FeatureVector fvec;//暫定
     FeatureSet(FeatureTemplateSet *in_ftmpl);
     FeatureSet(const FeatureSet& f){
         ftmpl = f.ftmpl;
@@ -260,14 +257,24 @@ class FeatureSet { //{{{
     void clear(){fset.clear();};
     double calc_inner_product_with_weight();
     void extract_unigram_feature(Node *node);
+    //void extract_unigram_feature_hash(Node *node);
     void extract_topic_feature(Node *node);
     void extract_bigram_feature(Node *l_node, Node *r_node);
+    //void extract_bigram_feature_hash(Node *l_node, Node *r_node);
+    //void extract_bigram_feature_nohash(Node *l_node, Node *r_node);
     void extract_trigram_feature(Node *l_node, Node *m_node, Node *r_node);
+    void extract_context_feature(double context_score); 
+    //void extract_trigram_feature_hash(Node *l_node, Node *m_node, Node *r_node);
 
     bool append_feature(FeatureSet *in);
 
     // 廃止予定
+    void minus_feature_from_weight(Umap &in_feature_weight);
+    void plus_feature_from_weight(Umap &in_feature_weight);
+    void minus_feature_from_weight(Umap &in_feature_weight, size_t factor);
+    void plus_feature_from_weight(Umap &in_feature_weight, size_t factor);
     //inline std::vector<std::string>& get_fset(){return fset;};
+    
 
     // 廃止予定
     inline long int get_feature_id(const std::string& s){
@@ -275,7 +282,7 @@ class FeatureSet { //{{{
         return hash_func(s);
     };
 
-    // 表示,学習用
+    // 表示用
     inline FeatureVector& get_fset(){return fvec;};
     bool print();
     std::string str();

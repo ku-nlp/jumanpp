@@ -35,20 +35,6 @@ Sentence *Tagger::new_sentence_analyze(std::string &in_sentence) {//{{{
     return sentence;
 }//}}}
 
-// analyze partially annotated sentence
-Sentence *Tagger::partial_annotation_analyze(std::string &in_sentence) {//{{{
-    begin_node_list.clear();
-    end_node_list.clear();
-     
-    // param に user_partial_annotate オプションが渡る
-    std::string delimiter = "\t"; // param.delimiterとする？
-    sentence = new Sentence(&begin_node_list, &end_node_list, in_sentence, &dic, &ftmpl, param, delimiter);
-    FeatureSet::topic = nullptr;
-    sentence->lookup_and_analyze_partial();
-    FeatureSet::topic = nullptr;
-    return sentence;
-}//}}}
-
 Sentence *Tagger::new_sentence_analyze_lda(std::string &in_sentence, TopicVector& topic) {//{{{
     begin_node_list.clear();
     end_node_list.clear();
@@ -63,19 +49,23 @@ Sentence *Tagger::new_sentence_analyze_lda(std::string &in_sentence, TopicVector
 int Tagger::online_learning(Sentence* gold, Sentence* system ,TopicVector *topic=nullptr){//{{{
     if(param->use_scw){
         double loss = system->eval(*gold); //単語が異なる割合など
-        if (loss > 0.0){
-            if( gold->get_feature() ){
-                FeatureVector gold_vec(gold->get_feature()->get_fset()); 
-                FeatureVector sys_vec(system->get_best_feature().get_fset());
-
-                scw.update(loss, gold_vec.diff(sys_vec));
-            }else{
-                cerr << "update failed" << sentence << endl;
-                return 1;
-            }
+        if( gold->get_feature() ){
+            FeatureVector gold_vec(gold->get_feature()->get_fset()); 
+            //FeatureVector gold_topic_vec(gold->get_gold_topic_features(topic));  
+            //std::cerr << "<gold>" << gold_vec.str() <<  "</gold>" << endl;
+                
+            FeatureVector sys_vec(system->get_best_feature().get_fset());
+            //std::cerr << "<sys>" << sys_vec.str() << "</sys>" << endl;
+            //scw.update( loss, gold_vec.merge(gold_topic_vec));
+            // TODO: 差分を取る
+            scw.update( loss, gold_vec);
+            scw.update( -loss, sys_vec);
+        }else{
+            cerr << "update failed" << sentence << endl;
+            return 1;
         }
     }else{//パーセプトロン 
-        std::cerr << "perceptron is not implemented. " << std::endl;
+        std::cerr << "perceptron is not implemented now. " << std::endl;
 //        sentence->minus_feature_from_weight(weight.get_umap()); // - prediction
 //        gold->get_feature()->plus_feature_from_weight(weight.get_umap()); // + gold standard
 //        if (WEIGHT_AVERAGED) { // for average
@@ -144,52 +134,7 @@ bool Tagger::train(const std::string &gsd_file) {//{{{
     return true;
 }//}}}
 
-// train on partially annotated data (仮タイトル)
-bool Tagger::ptrain(const std::string &gsd_file) {//{{{
-    read_partial_gold_data(gsd_file.c_str());
-
-    for (size_t t = 0; t < param->iteration_num; t++) {
-        double loss = 0, loss_sum = 0;
-        double loss_sum_first_quarter = 0;
-        double loss_sum_last_quarter = 0;
-        cerr << "ITERATION:" << t << endl;
-        if (param->shuffle_training_data){ // shuffle training data
-            random_shuffle(sentences_for_train.begin(), sentences_for_train.end());
-            // 部分アノテーションの場合は順番が重要かもしれないので要検討
-        }
-
-        for (std::vector<Sentence *>::iterator gold = sentences_for_train.begin(); gold != sentences_for_train.end(); gold++) {
-            // Goldも随時解析しなおす
-            Sentence* gold_analysis = partial_annotation_analyze((*gold)->get_orig_sentence()); //ここでdelimiter が除かれていないものが必要
-            Sentence* sent_analysis = new_sentence_analyze((*gold)->get_sentence()); // 通常の解析
-
-            loss = sent_analysis->eval(*gold_analysis); // 表示用にロスを計算
-            loss_sum += loss;
-                
-            // 表示用の loss の区間平均
-            if( std::distance(sentences_for_train.begin(),gold) < std::distance(sentences_for_train.begin(), sentences_for_train.end())/4  ){
-                loss_sum_first_quarter += loss;
-            }else if( std::distance(sentences_for_train.begin(),gold) > 3*(std::distance(sentences_for_train.begin(), sentences_for_train.end())/4)  ){
-                loss_sum_last_quarter += loss;
-            }
-                
-            cerr << "\033[2K\r" //行のクリア
-                 << std::distance(sentences_for_train.begin(),gold) << "/" << std::distance(sentences_for_train.begin(), sentences_for_train.end()) //事例数の表示
-                 << " avg:" << loss_sum/std::distance(sentences_for_train.begin(),gold) 
-                 << " loss:" << loss; //イテレーション内の平均ロス，各事例でのロスを表示
-            online_learning(gold_analysis, sent_analysis);
-                
-            //TopicVector sent_topic = sent->get_topic();
-            delete (sent_analysis);
-        }
-        cerr << endl;
-    }
-        
-    clear_partial_gold_data();
-    return true;
-}//}}}
-
-// train lda 廃止予定
+// train lda
 bool Tagger::train_lda(const std::string &gsd_file, Tagger& normal_model) {//{{{
     read_gold_data(gsd_file);
 
@@ -232,7 +177,7 @@ bool Tagger::train_lda(const std::string &gsd_file, Tagger& normal_model) {//{{{
     return true;
 }//}}}
 
-// read gold standard data (wrapper)
+// read gold standard data
 bool Tagger::read_gold_data(const std::string &gsd_file) {//{{{
     return read_gold_data(gsd_file.c_str());
 }//}}}
@@ -241,7 +186,7 @@ bool Tagger::read_gold_data(const std::string &gsd_file) {//{{{
 bool Tagger::read_gold_data(const char *gsd_file) {//{{{
     std::ifstream gsd_in(gsd_file, std::ios::in);
     if (!gsd_in.is_open()) {
-        cerr << ";; failed to open gold data for reading" << endl;
+        cerr << ";; cannot open gold data for reading" << endl;
         return false;
     }
 
@@ -265,28 +210,7 @@ bool Tagger::read_gold_data(const char *gsd_file) {//{{{
         //new_sentence->print_lattice();
         new_sentence->clear_nodes();
         add_one_sentence_for_train(new_sentence);
-        sentences_for_train_num++;
-    }
-        
-    gsd_in.close();
-    std::cout << std::endl;
-    return true;
-}//}}}
-
-// read parcially annotated data
-bool Tagger::read_partial_gold_data(const char *gsd_file) {//{{{
-    std::ifstream gsd_in(gsd_file, std::ios::in);
-    if (!gsd_in.is_open()) {
-        cerr << ";; failed to open gold data for reading" << endl;
-        return false;
-    }
-
-    std::string buffer;
-    while (getline(gsd_in, buffer)) {
-        Sentence* new_sentence = partial_annotation_analyze(buffer);
-        //new_sentence->print_lattice();
-        new_sentence->clear_nodes();
-        add_one_sentence_for_train(new_sentence);
+        //new_sentence->feature_print();// trigram 素性もできている
         sentences_for_train_num++;
     }
         
@@ -307,6 +231,11 @@ void Tagger::clear_gold_data() {//{{{
     sentences_for_train.clear();
 }//}}}
 
+// print the best path of a test sentence
+void Tagger::print_best_path() {//{{{
+    sentence->print_best_path();
+}//}}}
+
 void Tagger::print_best_beam() {//{{{
     sentence->print_best_beam();
     if(param->debug){
@@ -321,8 +250,20 @@ void Tagger::print_beam() {//{{{
     }
 }//}}}
 
+void Tagger::print_N_best_path() {//{{{
+    sentence->print_N_best_path();
+}//}}}
+
 void Tagger::print_best_beam_juman() {//{{{
     sentence->print_best_beam_juman();
+}//}}}
+
+void Tagger::print_best_path_with_rnn(RNNLM::CRnnLM& model){//{{{
+    sentence->print_best_path_with_rnn(model);
+}//}}}
+
+void Tagger::print_N_best_with_rnn(RNNLM::CRnnLM& model) {//{{{
+    sentence->print_N_best_with_rnn(model);
 }//}}}
 
 void Tagger::print_lattice() {//{{{
@@ -346,7 +287,18 @@ bool Tagger::add_one_sentence_for_train (Sentence *in_sentence) {//{{{
 bool Tagger::write_tmp_model_file(int t){//{{{
     std::stringstream ss;
     ss << param->model_filename << "." << t; 
-    write_bin_model_file(ss.str().c_str());     
+    std::ofstream model_out(ss.str().c_str(), std::ios::out);
+    if (!model_out.is_open()) {
+        cerr << ";; cannot open " << ss.str() << " for writing" << endl;
+        return false;
+    }
+    for (auto &w:weight){
+        model_out << w.first << " " << w.second << endl;
+    }
+    //for (Umap::iterator it = feature_weight_sum.begin(); it != feature_weight_sum.end(); it++) {
+    //    model_out << it->first << " " << it->second/(double)t << endl;
+    //}
+    model_out.close();
     return true;
 }//}}}
 
