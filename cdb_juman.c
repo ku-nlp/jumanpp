@@ -33,7 +33,7 @@ DBM_FILE db_read_open(const char *filename)
 {
     DBM_FILE db;
 
-    db = (DBM_FILE)malloc_data(sizeof(CDB_FILE), "db_read_open");
+    db = (DBM_FILE)malloc_data(sizeof(CDB_FILE), (char*)"db_read_open");
     db->mode = O_RDONLY;
 
     if ((db->fd = open(filename, db->mode)) < 0) {
@@ -72,7 +72,7 @@ char *db_get(DBM_FILE db, const char *buf)
         unsigned int datalen;
 
         datalen = cdb_datalen(&(db->cdb));
-        rbuf = (char *)malloc_data(datalen + 1, "db_get");
+        rbuf = (char *)malloc_data(datalen + 1, (char*)"db_get");
         cdb_read(&(db->cdb), rbuf, datalen, cdb_datapos(&(db->cdb)));
         *(rbuf + datalen) = '\0';
         return rbuf;

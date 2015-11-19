@@ -142,19 +142,19 @@ int main(int argc, char **argv) {
           exit(1);
       }
       if ( std::string(col[5]).size() == 0 ){
-          col[5] = "*";
+          col[5] = (char*)"*";
       }
       if ( std::string(col[6]).size() == 0 ){
-          col[6] = "*";
+          col[6] = (char*)"*";
       }
       if ( std::string(col[7]).size() == 0 ){
-          col[5] = "*";
+          col[5] = (char*)"*";
       }
       if ( std::string(col[9]).size() == 0 ){//代表表記がない場合
-          col[10] = "*";
+          col[10] = (char*)"*";
       }
       if ( std::string(col[10]).size() == 0 ){//意味情報がない場合
-          col[11] = "*";
+          col[11] = (char*)"*";
       }
         
       w = col[0];
