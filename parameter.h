@@ -23,6 +23,7 @@ class Parameter {
     bool no_posmatch=true;
     bool use_suu_rule=true;
     bool use_lexical_feature=false;
+    bool use_rnnlm_as_feature=false;
     double rweight;
     double lweight;
     unsigned int unk_max_length;

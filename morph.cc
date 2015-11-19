@@ -34,10 +34,9 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     option.add<unsigned int>("rerank", 'R', "n-best reranking", false, 5);
     option.add("scw", 0, "use soft confidence weighted");
     option.add("oldloss", 0, "use old loss function");
-    option.add("so", 0, "use second order viterbi algorithm"); //廃止を検討
     option.add<std::string>("lda", 0, "use lda", false, ""); //廃止予定
-    option.add<unsigned int>("beam", 'b', "use beam search",false,1);
-    option.add<unsigned int>("rbeam", 'B', "use beam search and reranking",false,1);
+    option.add<unsigned int>("beam", 'b', "use beam search",false,5);
+    option.add<unsigned int>("rbeam", 'B', "use beam search and reranking",false,5);
     option.add("oldstyle", 'o', "print old style lattice");
     option.add("juman", 'j', "print juman style");
     option.add("averaged", 'a', "use averaged perceptron for training");
@@ -46,6 +45,7 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     option.add("shuffle", 's', "shuffle training data for each iteration");
     option.add("passiveunk", '\0', "apply passive unknown word detection. The option use unknown word detection only if it cannot make any node."); 
     option.add("notrigram", 0, "do NOT use trigram feature");
+    option.add("rnnasfeature", 0, "use rnnlm score as feature");
     option.add("unknown", 'u', "apply unknown word detection (obsolete; already default)");
     option.add<std::string>("use_lexical_feature", '\0', "change frequent word list for lexical feature",false,"data/freq_words.list"); 
     option.add("part", '\0', "use partical annotation");
@@ -77,11 +77,15 @@ int main(int argc, char** argv) {//{{{
 
     Morph::Parameter param(option.get<std::string>("dict"), option.get<std::string>("feature"), option.get<unsigned int>("iteration"), true, option.exist("shuffle"), option.get<unsigned int>("unk_max_length"), option.exist("debug"), option.exist("nbest")|option.exist("lattice"));
 
-    if(param.debug)
-        std::cerr << "initializing models ... " << std::flush;
-
+    // 基本的にbeam は使う
     param.set_beam(true);
-    if(option.exist("beam")){
+    param.set_N(5); //初期値
+
+    // beam, rbeam 以外のオプションを廃止予定
+    if(option.exist("nbest"))
+        param.set_N(option.get<unsigned int>("nbest"));
+    else if(option.exist("beam")){
+        param.set_beam(true);
         param.set_N(option.get<unsigned int>("beam"));
     }else if(option.exist("rbeam")){
         param.set_N(option.get<unsigned int>("rbeam"));
@@ -112,6 +116,10 @@ int main(int argc, char** argv) {//{{{
     if(option.exist("total")){ // LDA用, 廃止予定
         param.set_use_total_sim();
         Morph::FeatureSet::use_total_sim = true;
+    }
+
+    if(option.exist("rnnasfeature") && option.exist("rnnlm")){
+        param.use_rnnlm_as_feature = true;
     }
 
     param.use_lexical_feature=true;

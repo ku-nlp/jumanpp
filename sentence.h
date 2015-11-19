@@ -254,7 +254,6 @@ class Sentence {//{{{
         
     Node *get_bos_node();
     Node *get_eos_node();
-    Node *find_best_path();
     void set_begin_node_list(unsigned int pos, Node *new_node);
     void set_end_node_list(unsigned int pos, Node *r_node);
 

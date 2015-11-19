@@ -1580,7 +1580,6 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
                            "_" +
                            *r_node->form_type +
                            "_" + *r_node->form);
-        // std::cerr << "key:" << key << std::endl;
         if (duplicate_filter.find(key) !=
             duplicate_filter.end()) {  //重複がある
             r_node = r_node->bnext;
@@ -1595,13 +1594,9 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
 
         // 訓練時に必要になる trigram素性 の best も context
         // に含める必要がある (もしくは探索語に再生成)
-        FeatureSet best_score_bigram_f(
-            ftmpl);  // 訓練時には 1-best が必要になる
-        FeatureSet best_score_trigram_f(
-            ftmpl);  // 訓練時には 1-best が必要になる
-        // double best_score = -DBL_MAX;
-        // std::cerr << "r:" << *(r_node->original_surface) << "_" <<
-        // *(r_node->base) << "_" << *(r_node->pos) << std::endl;
+        // 訓練時には 1-best が必要になる
+        FeatureSet best_score_bigram_f( ftmpl);  
+        FeatureSet best_score_trigram_f( ftmpl);  
 
         while (l_node) {  // pos で終わる形態素
             if (l_node->bq.beam.size() == 0) {
@@ -1609,15 +1604,13 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
                 continue;
             }
             // 1.コンテクスト独立の処理
-            // std::cerr << "l:" << *(l_node->original_surface) << "_" <<
-            // *(l_node->base) << "_" << (*l_node->pos) << std::endl;
-
             FeatureSet bi_f(ftmpl);
             bi_f.extract_bigram_feature(l_node, r_node);
             double bigram_score =
                 (1.0 - param->rweight) * bi_f.calc_inner_product_with_weight();
 
             // 濁音化の条件チェック
+            // 満たさなかった場合も，TOP1のみペナルティを付けて実行する
             if ((r_node->stat ==
                  MORPH_DEVOICE_NODE) &&  // 今の形態素が濁音化している
                 (!check_devoice_condition(
@@ -1680,22 +1673,13 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
                 l_node->debug_info[ss_key.str() + ":bigram_feature"] = bi_f.str();  // EOS用
             }                    //}}}
 
-            // std::cerr << *l_node->string << "  beam size:" <<
-            // l_node->bq.beam.size() << std::endl;
-
             // 2.コンテクスト依存の処理
             for (auto &l_token_with_state :
                  l_node->bq.beam) {  // l_node で終わる形態素 top N
                 // コンテクスト素性( RNNLM, tri-gram )
                 RNNLM::context new_c;
                 FeatureSet tri_f(ftmpl);
-                // std::cout << "lw:" << *l_node->original_surface << ":" <<
-                // *l_node->pos << " rw:" << *r_node->original_surface << ":" <<
-                // *r_node->pos << std::endl;
-                // std::cout << "last_word:" <<
-                // (int)l_token_with_state.context->last_word << std::endl;
-                // std::cout << "history_size:" <<
-                // l_token_with_state.context->history.size() << std::endl;
+                FeatureSet context_f(ftmpl);
 
                 double trigram_score = 0.0;
                 double rnn_score = 0.0;
@@ -1724,7 +1708,6 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
                         l_token_with_state.node_history.size();
                     unsigned int last_word = vocab->getIndex(
                         l_token_with_state.node_history.back()->base->c_str(), vocab->getIndex(Vocab_Unknown)); //<BOS>とかも変換する必要がある
-                    //std::cerr << "hist_size: " << hist_size << std::endl;
                     unsigned int last_but_one_word = (hist_size > 3)? vocab->getIndex( 
                         l_token_with_state.node_history[hist_size - 3] ->base->c_str()): vocab->getIndex("<s>"); 
                     auto cur_base = (*r_node->spos == UNK_POS)?*(r_node->original_surface):*(r_node->base);
@@ -1735,30 +1718,20 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
                         last_but_one_word,
                         Vocab_None
                     };  // l_token_with_state.context
-                                             // からvocab.getIndex(word)
-                                             // で取り出す
-
-                    //std::cout << "cur_word(" << *r_node->base <<  ") = "  << cur_word << ", last_word = " << last_word << ", last_but_one_word = " << last_but_one_word << std::endl;
-                        
-                    // LogP Ngram::wordProb_Lpenalty(VocabIndex word, double Lpenalty, double cpenalty, int length,  const VocabIndex *context) {
-                    //srilm_score = (param->rweight) * srilm->wordProb(cur_word, context_word);
+                        // からvocab.getIndex(word)
+                        // で取り出す
 
                     //context_word の扱い, １つ前の単語，２つ前の単語, ... , n 前の単語
                     if (cur_word == vocab->unkIndex() || (context_word[0] == vocab->unkIndex()) || (context_word[1] == vocab->unkIndex())) 
                         srilm_score = (param->rweight) * ( -5.0 -(param->lweight * cur_base.length()/3.0)); //線形ペナルティ
                     else{
-                        //std::cerr << "wordProb(" << cur_word << "," << context_word[0] << "," << context_word[1] <<  ")" << std::endl;
-                        //srilm->setorder(2);
-                        //std::cerr << "set order" << std::endl;
                         srilm_score = (param->rweight) * srilm->wordProb(cur_word, context_word);
                     }
                     context_score += srilm_score;
                 }/*}}}*/
 #endif
-
                 size_t history_size = l_token_with_state.node_history.size();
-                if (param->trigram &&
-                    history_size > 1) {  // 2つ前のノードがあれば.
+                if (param->trigram && history_size > 1) { // 2つ前のノードがあれば.
                     tri_f.extract_trigram_feature(
                         l_token_with_state.node_history[history_size - 2],
                         l_node, r_node);
@@ -1789,7 +1762,6 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
 
             l_node = l_node->enext;
         }
-        // std::cout << "bq.size = " << r_node->bq.beam.size() << std::endl;
 
         // 各r_node のnext prev ポインタ, featureを設定
         if (r_node->bq.beam.size() > 0) {
