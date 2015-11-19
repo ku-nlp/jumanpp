@@ -2635,17 +2635,4 @@ std::vector<std::string> Sentence::get_gold_topic_features(
     }
 }  //}}}
 
-// パーセプトロン専用の関数，いずれ撲滅
-// TODO: 廃止
-void Sentence::minus_feature_from_weight(
-    Umap &in_feature_weight, size_t factor) {  //{{{
-    Node *node = (*begin_node_list)[length];                                      // EOS
-    node->feature->minus_feature_from_weight(in_feature_weight, factor);
-}  //}}}
-
-// TODO: 廃止
-void Sentence::minus_feature_from_weight(
-    Umap &in_feature_weight) {  //{{{
-    minus_feature_from_weight(in_feature_weight, 1);
-}  //}}}
 }
