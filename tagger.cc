@@ -172,7 +172,7 @@ bool Tagger::ptrain(const std::string &gsd_file) {//{{{
             }else if( std::distance(sentences_for_train.begin(),gold) > 3*(std::distance(sentences_for_train.begin(), sentences_for_train.end())/4)  ){
                 loss_sum_last_quarter += loss;
             }
-                
+
             cerr << "\033[2K\r" //行のクリア
                  << std::distance(sentences_for_train.begin(),gold) << "/" << std::distance(sentences_for_train.begin(), sentences_for_train.end()) //事例数の表示
                  << " avg:" << loss_sum/std::distance(sentences_for_train.begin(),gold) 
@@ -283,7 +283,21 @@ bool Tagger::read_partial_gold_data(const char *gsd_file) {//{{{
 
     std::string buffer;
     while (getline(gsd_in, buffer)) {
-        Sentence* new_sentence = partial_annotation_analyze(buffer);
+        std::vector<std::string> word_pos_pairs;
+        split_string(buffer, " ", word_pos_pairs);
+            
+        Sentence *new_sentence = new Sentence(strlen(buffer.c_str()), &begin_node_list, &end_node_list, &dic, &ftmpl, param);
+        for (std::vector<std::string>::iterator it = word_pos_pairs.begin(); it != word_pos_pairs.end(); it++) {
+            if(it->size()>0)
+                new_sentence->lookup_gold_data(*it);
+        }
+            
+        if( param->beam ){//beam オプション
+            new_sentence->find_best_beam(); // tri-gram 素性を抽出するために beam の方を呼ぶ;
+            new_sentence->set_feature_beam(); // beam のベストの素性を sentence にコピーする;
+            new_sentence->set_gold_nodes_beam();
+        }       
+
         //new_sentence->print_lattice();
         new_sentence->clear_nodes();
         add_one_sentence_for_train(new_sentence);
