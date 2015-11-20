@@ -61,7 +61,7 @@ int Tagger::online_learning(Sentence* gold, Sentence* system ,TopicVector *topic
             }
         }
     }else{//パーセプトロン 
-        std::cerr << "perceptron is not implemented now. " << std::endl;
+        std::cerr << "perceptron is not implemented. " << std::endl;
 //        sentence->minus_feature_from_weight(weight.get_umap()); // - prediction
 //        gold->get_feature()->plus_feature_from_weight(weight.get_umap()); // + gold standard
 //        if (WEIGHT_AVERAGED) { // for average
@@ -130,7 +130,48 @@ bool Tagger::train(const std::string &gsd_file) {//{{{
     return true;
 }//}}}
 
-// train lda
+// train on partially annotated data (仮タイトル)
+bool Tagger::ptrain(const std::string &gsd_file) {//{{{
+    read_partial_gold_data(gsd_file.c_str());
+
+    for (size_t t = 0; t < param->iteration_num; t++) {
+        double loss = 0, loss_sum = 0;
+        double loss_sum_first_quarter = 0;
+        double loss_sum_last_quarter = 0;
+        cerr << "ITERATION:" << t << endl;
+        if (param->shuffle_training_data) // shuffle training data
+            random_shuffle(sentences_for_train.begin(), sentences_for_train.end());
+
+        for (std::vector<Sentence *>::iterator gold = sentences_for_train.begin(); gold != sentences_for_train.end(); gold++) {
+            // Goldも随時解析しなおすほうがいいかもしれない？
+            Sentence* sent = new_sentence_analyze((*gold)->get_sentence()); // 通常の解析
+            loss = sent->eval(**gold); // 表示用にロスを計算
+            loss_sum += loss;
+                
+            // 表示用の loss の区間平均
+            if( std::distance(sentences_for_train.begin(),gold) < std::distance(sentences_for_train.begin(), sentences_for_train.end())/4  ){
+                loss_sum_first_quarter += loss;
+            }else if( std::distance(sentences_for_train.begin(),gold) > 3*(std::distance(sentences_for_train.begin(), sentences_for_train.end())/4)  ){
+                loss_sum_last_quarter += loss;
+            }
+
+            cerr << "\033[2K\r" //行のクリア
+                 << std::distance(sentences_for_train.begin(),gold) << "/" << std::distance(sentences_for_train.begin(), sentences_for_train.end()) //事例数の表示
+                 << " avg:" << loss_sum/std::distance(sentences_for_train.begin(),gold) 
+                 << " loss:" << loss; //イテレーション内の平均ロス，各事例でのロスを表示
+            online_learning(*gold, sent);
+                
+            //TopicVector sent_topic = sent->get_topic();
+            delete (sent);
+        }
+        cerr << endl;
+    }
+        
+    clear_partial_gold_data();
+    return true;
+}//}}}
+
+// train lda 廃止予定
 bool Tagger::train_lda(const std::string &gsd_file, Tagger& normal_model) {//{{{
     read_gold_data(gsd_file);
 
@@ -173,7 +214,7 @@ bool Tagger::train_lda(const std::string &gsd_file, Tagger& normal_model) {//{{{
     return true;
 }//}}}
 
-// read gold standard data
+// read gold standard data (wrapper)
 bool Tagger::read_gold_data(const std::string &gsd_file) {//{{{
     return read_gold_data(gsd_file.c_str());
 }//}}}
@@ -182,7 +223,43 @@ bool Tagger::read_gold_data(const std::string &gsd_file) {//{{{
 bool Tagger::read_gold_data(const char *gsd_file) {//{{{
     std::ifstream gsd_in(gsd_file, std::ios::in);
     if (!gsd_in.is_open()) {
-        cerr << ";; cannot open gold data for reading" << endl;
+        cerr << ";; failed to open gold data for reading" << endl;
+        return false;
+    }
+
+    std::string buffer;
+    while (getline(gsd_in, buffer)) {
+        std::vector<std::string> word_pos_pairs;
+        split_string(buffer, " ", word_pos_pairs);
+            
+        Sentence *new_sentence = new Sentence(strlen(buffer.c_str()), &begin_node_list, &end_node_list, &dic, &ftmpl, param);
+        for (std::vector<std::string>::iterator it = word_pos_pairs.begin(); it != word_pos_pairs.end(); it++) {
+            if(it->size()>0)
+                new_sentence->lookup_gold_data(*it);
+        }
+            
+        if( param->beam ){//beam オプション
+            new_sentence->find_best_beam(); // tri-gram 素性を抽出するために beam の方を呼ぶ;
+            new_sentence->set_feature_beam(); // beam のベストの素性を sentence にコピーする;
+            new_sentence->set_gold_nodes_beam();
+        }       
+
+        //new_sentence->print_lattice();
+        new_sentence->clear_nodes();
+        add_one_sentence_for_train(new_sentence);
+        sentences_for_train_num++;
+    }
+        
+    gsd_in.close();
+    std::cout << std::endl;
+    return true;
+}//}}}
+
+// read parcially annotated data
+bool Tagger::read_partial_gold_data(const char *gsd_file) {//{{{
+    std::ifstream gsd_in(gsd_file, std::ios::in);
+    if (!gsd_in.is_open()) {
+        cerr << ";; failed to open gold data for reading" << endl;
         return false;
     }
 
@@ -204,7 +281,6 @@ bool Tagger::read_gold_data(const char *gsd_file) {//{{{
         //new_sentence->print_lattice();
         new_sentence->clear_nodes();
         add_one_sentence_for_train(new_sentence);
-        //new_sentence->feature_print();// trigram 素性もできている
         sentences_for_train_num++;
     }
         

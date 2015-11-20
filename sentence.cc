@@ -1451,22 +1451,8 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
 
                 if (param->nce){
                     rnn_score =
-                        (param->rweight) *
                         rnnlm->test_word_selfnm(l_token_with_state.context.get(), &new_c, (*r_node->spos == UNK_POS|| *r_node->spos == "数詞" )?*(r_node->original_surface):*(r_node->base));
-                    context_score += rnn_score;
-
-//                    if (param->debug)
-//                        std::cout << "lw:" << *l_node->original_surface << "(" << l_node->wcost << "):"
-//                                  << *l_node->pos << " " << *l_node->spos
-//                                  << " rw:" << *r_node->original_surface << "(" << r_node->wcost << "):"
-//                                  << *r_node->pos << " " << *l_node->spos
-//                                  << " => " << rnn_score
-//                                  << std::endl;
-                } else if (param->rnnlm) {
-                    rnn_score =
-                        (param->rweight) *
-                        rnnlm->test_word(l_token_with_state.context.get(), &new_c, (*r_node->spos == UNK_POS|| *r_node->spos == "数詞" )?*(r_node->original_surface):*(r_node->base));
-                    context_score += rnn_score;
+                        context_score += (param->rweight) * rnn_score;
 
 //                    if (param->debug)
 //                        std::cout << "lw:" << *l_node->original_surface << ":"

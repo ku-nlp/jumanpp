@@ -55,12 +55,15 @@ class Tagger {
     void print_old_lattice();
         
     bool train(const std::string &gsd_file);
+    bool ptrain(const std::string &gsd_file); 
     bool train_lda(const std::string &gsd_file, Tagger& normal_model);
     bool read_gold_data(const std::string &gsd_file);
     bool read_gold_data(const char *gsd_file);
+    bool read_partial_gold_data(const char *gsd_file); 
     bool lookup_gold_data(Sentence *sentence, std::string &word_pos_pair);
     bool add_one_sentence_for_train(Sentence *in_sentence);
     void clear_gold_data();
+    void clear_partial_gold_data(){};
 
     // write feature weights
     bool write_model_file(const std::string &model_filename) {
