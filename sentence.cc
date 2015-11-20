@@ -1576,14 +1576,13 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
 
                 if (param->nce){
                     rnn_score =
-                        (param->rweight) *
                         rnnlm->test_word_selfnm(l_token_with_state.context.get(), &new_c, (*r_node->spos == UNK_POS|| *r_node->spos == "数詞" )?*(r_node->original_surface):*(r_node->base));
                     
                     if(param->use_rnnlm_as_feature){ // rnn_score のlog をとって，(if(score != 0)) bin 詰めする
                         context_f.extract_context_feature(rnn_score); 
                         context_score += context_f.calc_inner_product_with_weight();
                     }else{ //生のスコアを足す
-                        context_score += rnn_score;
+                        context_score += (param->rweight) *rnn_score;
                     }
 
                     if (param->debug)

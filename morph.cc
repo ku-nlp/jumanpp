@@ -16,14 +16,12 @@ bool WEIGHT_AVERAGED = false;
 void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     option.add<std::string>("dict", 'd', "dict filename", false, "data/japanese.dic");
     option.add<std::string>("model", 'm', "model filename", false, "data/model.mdl");
-    //option.add<std::string>("binmodel", '\0', "bin model filename", false, "data/model.dat"); //全てのモデルがバイナリ化されたので廃止
-    //option.add<std::string>("frmodel", '\0', "bin model filename", false, "fmmodel"); // 旧 rnnlm を廃止したので，rnnlm モデルに統合
     option.add<std::string>("rnnlm", 'r', "rnnlm filename", false, "data/lang.mdl"); 
     option.add<std::string>("feature", 'f', "feature template filename", false, "data/feature.def");
-    option.add<std::string>("train", 't', "training filename", false, "data/train.txt");
 #ifdef USE_SRILM
     option.add<std::string>("srilm", 'I', "srilm filename", false, "srilm.arpa");
 #endif
+    option.add<std::string>("train", 't', "training filename", false, "data/train.txt");
     option.add<unsigned int>("iteration", 'i', "iteration number for training", false, 10);
     option.add<unsigned int>("unk_max_length", 'l', "maximum length of unknown word detection", false, 2);
     option.add<unsigned int>("lattice", 'L', "output lattice format",false, 1);
@@ -48,7 +46,7 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     option.add("notrigram", 0, "do NOT use trigram feature");
     option.add("rnnasfeature", 0, "use rnnlm score as feature");
     option.add("unknown", 'u', "apply unknown word detection (obsolete; already default)");
-    option.add<std::string>("use_lexical_feature", '\0', "use_lexical_feature",false,"data/freq_words.list"); 
+    option.add<std::string>("use_lexical_feature", '\0', "change frequent word list for lexical feature",false,"data/freq_words.list"); 
     option.add("debug", '\0', "debug mode");
     option.add("rnndebug", '\0', "show rnnlm debug message");
     option.add("version", 'v', "print version");
@@ -104,14 +102,14 @@ int main(int argc, char** argv) {//{{{
         param.set_passive_unknown(true);
     param.set_model_filename(option.get<std::string>("model"));
     param.set_use_scw(option.exist("scw"));
-    if(option.exist("Lweight")){
+    //if(option.exist("Lweight")){
         param.set_lweight(option.get<double>("Lweight"));
-    }
+    //}
     if(option.exist("Cvalue"))
         param.set_C(option.get<double>("Cvalue"));
     if(option.exist("Phi"))
         param.set_Phi(option.get<double>("Phi"));
-    if(option.exist("total")){
+    if(option.exist("total")){ // LDA用, 廃止予定
         param.set_use_total_sim();
         Morph::FeatureSet::use_total_sim = true;
     }
@@ -124,6 +122,7 @@ int main(int argc, char** argv) {//{{{
     param.freq_word_list = option.get<std::string>("use_lexical_feature");
     Morph::FeatureSet::open_freq_word_set(param.freq_word_list);
 
+    // trigram は基本的に使う
     param.set_trigram(!option.exist("notrigram"));
     param.set_rweight(option.get<double>("Rweight"));
 
@@ -162,10 +161,10 @@ int main(int argc, char** argv) {//{{{
         srand(1);
         Morph::Sentence::init_rnnlm_FR(&rnnlm);
     } 
-#ifdef USE_SRILM
+#ifdef USE_SRILM /*{{{*/
     Vocab *vocab;
     Ngram *ngramLM;
-    if(option.exist("srilm")){//{{{
+    if(option.exist("srilm")){//
         vocab = new Vocab;
         vocab->unkIsWord() = true; // use unknown <unk> 
         //File file(vocabFile, "r"); // vocabFile
@@ -195,8 +194,8 @@ int main(int argc, char** argv) {//{{{
 
         //std::make_unique<SRILM::Vocab>(SRILM::Vocab());
         //std::make_unique<Ngram::Ngram> srilm(Ngram::Ngram())
-    }//}}}
-#endif
+    }
+#endif /*}}}*/
 
     if (MODE_TRAIN) {//学習モード{{{
         std::cerr << "done" << std::endl;
@@ -214,7 +213,7 @@ int main(int argc, char** argv) {//{{{
         }
       //}}}
     } else if(option.exist("lda")){//LDAを使う形態素解析{{{
-        std::cerr << "LDA mode is obsoleted" << std::endl;
+        std::cerr << "LDA mode is depreciated" << std::endl;
         return 0;
         Morph::Tagger tagger_normal(&normal_param);
         tagger_normal.read_model_file(option.get<std::string>("lda"));
@@ -257,11 +256,7 @@ int main(int argc, char** argv) {//{{{
         }
     //}}}
     } else {// 通常の形態素解析{{{
-        //std::cerr << "read model file" << std::flush;
-        //if(option.exist("binmodel"))
         tagger.read_bin_model_file(option.get<std::string>("model"));
-        //else
-        //    tagger.read_model_file(option.get<std::string>("model"));
         std::cerr << "done" << std::endl;
             
         std::ifstream is(argv[1]); // input stream
@@ -278,7 +273,7 @@ int main(int argc, char** argv) {//{{{
             if (option.exist("lattice")){
                 if(option.exist("rbeam")){
                     tagger.print_lattice_rbeam(option.get<unsigned int>("lattice"));
-                }else{
+                }else{ //以下も廃止の予定
                     if (option.exist("oldstyle"))
                         tagger.print_old_lattice();
                     else
@@ -292,6 +287,7 @@ int main(int argc, char** argv) {//{{{
                         tagger.print_best_beam_juman();
                     else
                         tagger.print_best_beam();
+                // 以下は廃止の予定    
                 }else if(option.exist("nbest") && option.exist("rnnlm")){
                     tagger.print_N_best_with_rnn(rnnlm);
                 }else if(option.exist("nbest") && !option.exist("rnnlm")){
