@@ -2,38 +2,46 @@
 //Fimap FeatureVector::str2id;
 
 // 訓練時用だが，実際に使う？？
-FeatureVector::FeatureVector(const std::vector<unsigned long>& v1, const std::vector<unsigned long>& v2){
+FeatureVector::FeatureVector(const std::vector<unsigned long>& v1, const std::vector<unsigned long>& v2){/*{{{*/
     for(const auto& s:v1){
         vec[s] += 1.0;
     }
     for(const auto& s:v2){
         vec[s] -= 1.0;
     }
-};
+};/*}}}*/
 
-FeatureVector::FeatureVector(const std::vector<unsigned long>& v1){
+FeatureVector::FeatureVector(const std::vector<unsigned long>& v1){/*{{{*/
     for(const auto& s:v1){
         vec[s] += 1.0;
     }
-};
+};/*}}}*/
 
-double FeatureVector::operator* (const FeatureVector& fv) const{
+double FeatureVector::operator* (const FeatureVector& fv) const{/*{{{*/
     double sum = 0.0;
-    // サイズを見て，小さい方と大きい方をかける様にしたほうが？
-    for(const auto& f:fv){
-        auto itr = vec.find(f.first);
-        if(itr != vec.end())
-            sum += f.second * itr->second;
+    if(vec.size() > fv.size()){
+        for(const auto& f:fv){
+            auto itr = vec.find(f.first);
+            if(itr != vec.end())
+                sum += f.second * itr->second;
+        }
+    }else{
+        for(const auto& f:vec){
+            auto itr = fv.find(f.first);
+            if(itr != fv.end())
+                sum += f.second * itr->second;
+        }
     }
     return sum;
-};
+};/*}}}*/
 
-void FeatureVector::update(double alpha, double y,const DiagMat& sigma, const FeatureVector& x){//updated mu
+//updated mu
+void FeatureVector::update(double alpha, double y,const DiagMat& sigma, const FeatureVector& x){/*{{{*/
     for(const auto& v:x){
         vec[v.first] += alpha * y * sigma.get_value(v.first) * v.second;
         // v の対角要素以外を考える場合は v.first と他のキーの組み合わせを計算
     }
-};
+};/*}}}*/
 
 void DiagMat::update(double beta, const FeatureVector& x){ // update sigma
     for(const auto& v:x){

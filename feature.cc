@@ -500,15 +500,6 @@ double FeatureSet::calc_inner_product_with_weight() {//{{{
     if(!weight) return 0;
     return (*weight)*fvec; 
 
-    // for string feature vector
-    //double sum = 0;
-//    for (std::vector<std::string>::iterator it = fset.begin(); it != fset.end(); it++) {
-//        auto itr = weight->find(*it);
-//        if(itr != weight->end()){
-//            sum += itr->second;
-//        }
-//    }
-    //return sum;
 }//}}}
 
 bool FeatureSet::print() {//{{{
