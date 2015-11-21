@@ -19,7 +19,7 @@ FeatureVector::FeatureVector(const std::vector<unsigned long>& v1){/*{{{*/
 
 double FeatureVector::operator* (const FeatureVector& fv) const{/*{{{*/
     double sum = 0.0;
-    if(vec.size() > fv.vec.size()){
+    if(vec.size() > fv.size()){
         for(const auto& f:fv){
             auto itr = vec.find(f.first);
             if(itr != vec.end())
@@ -27,7 +27,7 @@ double FeatureVector::operator* (const FeatureVector& fv) const{/*{{{*/
         }
     }else{
         for(const auto& f:vec){
-            auto itr = fv.vec.find(f.first);
+            auto itr = fv.find(f.first);
             if(itr != fv.end())
                 sum += f.second * itr->second;
         }
@@ -84,20 +84,17 @@ double DiagMat::get_value(const unsigned long sp1)const{
 };
 
 void SCWClassifier::update(double loss_value, const FeatureVector& vec){
-    if(loss_value < 0.00001) return;
+    //if(loss_value < 0.00001) return;
     double score = mu * vec;
-    if(score == 0.0) return;
-
     double vt = calc_vt(vec);
     double alphat = calc_alpha(vt, loss_value*score);
     //double alphat = calc_alpha(vt, score);
     double ut = calc_ut(alphat, vt);
     double betat = calc_beta(alphat, ut, vt);
     //    (double alpha, double y, const DiagMat sigma, const FeatureVector& x)
-    std::cerr << "alpha:" << alphat << " beta:" << betat << " score:" << score <<" y:"  << (double)loss_value << "\t";
-    std::cerr << "\ty:"  << (double)loss_value << "\t";
+    //std::cerr << "alpha:" << alphat << " beta:" << betat << " score:" << score <<" y:"  << (double)loss_value << "\t";
+    //std::cerr << "\ty:"  << (double)loss_value << "\t";
 
-    if( vt == 0.0 ) return;
     mu.update(alphat, loss_value, sigmat, vec);
     sigmat.update(betat, vec);
 }

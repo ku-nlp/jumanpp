@@ -474,11 +474,6 @@ void FeatureSet::extract_context_feature(double context_score) {//{{{
     }
 
     double logalistic_score = std::log(context_score);
-//    std::stringstream ss;
-//    std::cerr << logalistic_score << " => ";
-//    ss << std::setprecision(2) << logalistic_score;
-//    std::cerr << ss.str() << " => ";
-//    fv.push_back(get_feature_id(ss.str()));
         
     int bin_index = static_cast<int>( std::round(logalistic_score * 10));
     if(bin_index > -10) bin_index = -10; //極端に高いスコアは珍しく，意味が薄い
