@@ -54,6 +54,8 @@ class CharNode{//{{{
 };//}}}
 
 class CharLattice{//{{{
+    private:
+        bool constructed = false;
     public:
 
         //typedef Darts::DoubleArray::result_pair_type da_result_pair_type;

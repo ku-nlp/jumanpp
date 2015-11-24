@@ -98,6 +98,7 @@ int CharLattice::parse(std::string sent){//{{{
         pre_is_deleted = next_pre_is_deleted;
         CharNum++;
     }
+    constructed = true;
     return 0;
 }//}}}
 
@@ -119,7 +120,7 @@ std::vector<CharLattice::da_result_pair_type> CharLattice::da_search_one_step( D
         // vector にする
         left_char_node_list = &(CharRootNodeList);
     } else {
-        // todo:ラティスが構築されているかチェックを行う
+        // TODO:ラティスが構築されているかチェックを行う
         left_char_node_list = &(node_list[left_position]);
     }
 
@@ -192,9 +193,9 @@ std::vector<CharLattice::da_result_pair_type> CharLattice::da_search_one_step( D
 }//}}}
 
 std::vector<CharLattice::da_result_pair_type> CharLattice::da_search_from_position(Darts::DoubleArray &da,int position) {//{{{
-    // TODO:lattice 構築済みかどうかのチェック
-      
     std::vector<da_result_pair_type> result;
+    if (!constructed)
+        return result;
     /* initialization */
     CharLattice::MostDistantPosition = position - 1; //並列化の障害にもなるのでローカル変数にできないか？
     for (auto char_node = node_list.begin() + position /*?*/; char_node < node_list.end(); char_node++) {
@@ -203,7 +204,7 @@ std::vector<CharLattice::da_result_pair_type> CharLattice::da_search_from_positi
             cnode.node_type.clear();
             cnode.da_node_pos_num = 0;
         }
-    }   
+    }
         
     // root から始まり，次の文字が node_list[position] のいずれかであるDAを探す.
     /* search double array by traverse */
@@ -218,7 +219,7 @@ std::vector<CharLattice::da_result_pair_type> CharLattice::da_search_from_positi
         byte += char_byte_length[i];
         if (MostDistantPosition < static_cast<int>(i) - 1) break; //position まで辿りつけた文字がない場合
         std::vector<da_result_pair_type> tokens = da_search_one_step(da,i - 1, i);
-        
+         
         for(auto &pair: tokens){
             std::get<1>(pair) = byte;
             result.push_back(pair);
@@ -226,6 +227,5 @@ std::vector<CharLattice::da_result_pair_type> CharLattice::da_search_from_positi
     }
     return result;
 }//}}}
-
 
 }
