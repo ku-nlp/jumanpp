@@ -318,6 +318,86 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, co
     return result_node;
 }  //}}}
 
+
+// lookup_and_make_special_pseudo_nodes_lattice_with_max_length
+// ノードとして作る単語の長さ上限を設定して探索
+// TODO: 簡潔な名称
+Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice_with_max_length(  //{{{
+    CharLattice &cl, const char *start_str, unsigned int char_num,
+    unsigned int pos, unsigned int specified_length, std::string *specified_pos, unsigned int max_length) {
+
+    // init
+    Node *result_node;
+
+    // 方針としては普通に探索して，最大長を超えるノードを削除する
+    auto lattice_node = lookup_and_make_special_pseudo_nodes_lattice(cl,start_str,char_num,pos,specified_length,specified_pos);
+    
+    // 最大長までの範囲で未定義語生成をする (カタカナ語を途中で切る場合などのため)
+    if (specified_length || pos >= reached_pos_of_pseudo_nodes) {
+        // 数詞処理
+        result_node = dic->make_specified_pseudo_node_by_dic_check(
+            start_str + pos, specified_length, specified_pos,
+            &(param->unk_figure_pos), TYPE_FAMILY_FIGURE, nullptr,max_length);
+
+        // alphabet
+        if (!(param->passive_unknown) &&!result_node) {
+            result_node = dic->make_specified_pseudo_node_by_dic_check(
+                start_str + pos, specified_length, specified_pos,
+                &(param->unk_pos), TYPE_FAMILY_ALPH_PUNC,nullptr,max_length);
+        }
+        // カタカナ
+        if (!(param->passive_unknown) && !result_node) {
+            result_node = dic->make_specified_pseudo_node_by_dic_check(
+                start_str + pos, specified_length, specified_pos,
+                &(param->unk_pos), TYPE_KATAKANA, nullptr,max_length);
+        }
+        
+        if (!specified_length && result_node) // only prediction
+            find_reached_pos_of_pseudo_nodes(pos, result_node);
+    }
+    
+    // TODO: ここで最大長を超えるノードを同じく削除する
+    if (dic_node) {
+        Node *tmp_node = result_node;
+        while (tmp_node->bnext)  //末尾にシーク
+            tmp_node = tmp_node->bnext;
+            
+        Node *tmp_result_node = lattice_node;
+        while (tmp_result_node) {
+            auto next_result = tmp_result_node->bnext;
+            if (check_dict_match(tmp_result_node, dic_node)) {
+                tmp_node->bnext = tmp_result_node;
+                tmp_node = tmp_node->bnext;
+                tmp_node->bnext = nullptr;
+            } else {
+                delete tmp_result_node;
+            }
+            tmp_result_node = next_result;
+        }
+        tmp_node->bnext = nullptr;
+        result_node = dic_node;
+    } else {  //辞書に無い場合
+        Node *tmp_result_node = result_node;
+        while (tmp_result_node) {
+            tmp_result_node->longer = true;
+
+            // 素性の再生成
+            FeatureSet *f = new FeatureSet(ftmpl);
+            f->extract_unigram_feature(tmp_result_node);
+            tmp_result_node->wcost = f->calc_inner_product_with_weight();
+            if (param->debug) {
+                tmp_result_node->debug_info[
+                    "unigram_feature"] = f->str();
+            }
+            if (tmp_result_node->feature) delete (tmp_result_node->feature);
+            tmp_result_node->feature = f;
+            tmp_result_node = tmp_result_node->bnext;
+        }
+    }
+
+    return result_node;
+}  //}}}
+
 // start_str で始まる形態素を列挙する。
 Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(  //{{{
     CharLattice &cl, const char *start_str, unsigned int char_num,
