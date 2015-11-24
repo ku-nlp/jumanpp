@@ -69,8 +69,6 @@ class Dic {
 
     Node *make_specified_pseudo_node_by_dic_check(const char *start_str, unsigned int specified_length, std::string *inspecified_pos, std::vector<unsigned long> *specified_unk_pos, unsigned int type_family, Node* r_node = nullptr, unsigned int max_length = 0);
 
-    //Node *make_specified_pseudo_node_by_dic_check(const char *start_str, unsigned int specified_length, std::string *specified_pos, std::vector<unsigned long> *specified_unk_pos, unsigned int type_family, Node* r_node); 
-
     // result_pair_type は 上位24 bit が DA 上の位置を示す
     const Token *get_token(const CharLattice::da_result_pair_type &n) const {
         return token_head + (std::get<0>(n) >> 8); 
