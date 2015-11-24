@@ -158,7 +158,7 @@ bool Tagger::ptrain(const std::string &gsd_file) {//{{{
             }else if( std::distance(sentences_for_train.begin(),gold) > 3*(std::distance(sentences_for_train.begin(), sentences_for_train.end())/4)  ){
                 loss_sum_last_quarter += loss;
             }
-
+                
             cerr << "\033[2K\r" //行のクリア
                  << std::distance(sentences_for_train.begin(),gold) << "/" << std::distance(sentences_for_train.begin(), sentences_for_train.end()) //事例数の表示
                  << " avg:" << loss_sum/std::distance(sentences_for_train.begin(),gold) 

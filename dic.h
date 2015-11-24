@@ -64,12 +64,12 @@ class Dic {
     Node *make_unk_pseudo_node_list_some_pos_by_dic_check(const char *start_str, int byte_len, unsigned long specified_posid, std::vector<unsigned long> *specified_unk_pos, Node* r_node);
 
     //Node *make_unk_pseudo_node_list(const char *start_str, unsigned int min_char_num, unsigned int max_char_num);
+    //
     Node *make_unk_pseudo_node_list(const char *start_str, unsigned int min_char_num, unsigned int max_char_num, unsigned long specified_posid = MORPH_DUMMY_POS);
     Node *make_pseudo_node_list_in_range(const char *start_str, unsigned int min_char_num, unsigned int max_char_num, unsigned long specified_posid = MORPH_DUMMY_POS); 
 
     Node *make_specified_pseudo_node_by_dic_check(const char *start_str, unsigned int specified_length, std::string *inspecified_pos, std::vector<unsigned long> *specified_unk_pos, unsigned int type_family, Node* r_node = nullptr, unsigned int max_length = 0);
-
-    //Node *make_specified_pseudo_node_by_dic_check(const char *start_str, unsigned int specified_length, std::string *specified_pos, std::vector<unsigned long> *specified_unk_pos, unsigned int type_family, Node* r_node); 
+    //Node* make_specified_pseudo_node_by_dic_check(const char *start_str, unsigned int specified_length, std::string *specified_pos, std::vector<unsigned long> *specified_unk_pos, unsigned int type_family, Node* r_node); 
 
     // result_pair_type は 上位24 bit が DA 上の位置を示す
     const Token *get_token(const CharLattice::da_result_pair_type &n) const {

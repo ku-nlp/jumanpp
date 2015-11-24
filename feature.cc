@@ -478,7 +478,7 @@ void FeatureSet::extract_context_feature(double context_score) {//{{{
     int bin_index = static_cast<int>( std::round(logalistic_score * 10));
     if(bin_index > -10) bin_index = -10; //極端に高いスコアは珍しく，意味が薄い
     if(bin_index < -100) bin_index = -100; //極端に低いスコアも同様
-    fv.push_back(bin_index);
+    fv.push_back(bin_index/10);
         
     auto feature_key = boost::hash_range(fv.begin(),fv.end()); 
     fvec[feature_key]+=1;
