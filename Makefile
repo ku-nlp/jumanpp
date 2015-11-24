@@ -12,6 +12,10 @@ CXXFLAGS_G += -DGITVER=\"$(GIT_VER)\"
 GIT_VER = $(shell git log -1 --format="%h")
 CXXFLAGS += -DGITVER=\"$(GIT_VER)\"
 
+# GIT の version を渡す
+GIT_VER = $(shell git log -1 --format="%h")
+CXXFLAGS += -DGITVER=\"$(GIT_VER)\"
+
 SRILM_PATH := /home/morita/archive/srilm
 
 #OBJECTS_TEST := kkn_test.ot wvector.ot wvector_test.ot morph.ot dic.ot tagger.ot pos.ot sentence.ot feature.ot node.ot tools.ot charlattice.ot scw.ot rnnlm/rnnlmlib.ot

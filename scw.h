@@ -61,6 +61,12 @@ class FeatureVector{// ただのunordered_map のラップ/*{{{*/
             return vec.find(key); 
         }/*}}}*/
         
+        Ulmap::const_iterator find(const unsigned long key)const{ /*{{{*/
+            return vec.find(key); 
+        }/*}}}*/
+        
+        const size_t size() const{return vec.size();};
+
         inline std::string str(){  /*{{{*/
             std::stringstream ss;
             for(const auto &st:vec){
