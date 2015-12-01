@@ -55,7 +55,7 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     option.add("help", 'h', "print this message");
     option.parse_check(argc, argv);
     if (option.exist("version")) {//{{{
-        cout << "KKN " << VERSION << endl;
+        cout << "KKN " << VERSION << "(" << GITVER <<")" << endl;
         exit(0);
     }//}}}
     if (option.exist("train")) {//{{{
