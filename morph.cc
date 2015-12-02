@@ -75,9 +75,11 @@ int main(int argc, char** argv) {//{{{
     cmdline::parser option;
     option_proc(option, argc, argv);
 
-    std::cerr << "initializing models ... " << std::flush;
 
     Morph::Parameter param(option.get<std::string>("dict"), option.get<std::string>("feature"), option.get<unsigned int>("iteration"), true, option.exist("shuffle"), option.get<unsigned int>("unk_max_length"), option.exist("debug"), option.exist("nbest")|option.exist("lattice"));
+
+    if(param.debug)
+        std::cerr << "initializing models ... " << std::flush;
 
     if(option.exist("nbest"))
         param.set_N(option.get<unsigned int>("nbest"));
@@ -255,7 +257,8 @@ int main(int argc, char** argv) {//{{{
         tagger.read_bin_model_file(option.get<std::string>("model"));
         //else
         //    tagger.read_model_file(option.get<std::string>("model"));
-        std::cerr << "done" << std::endl;
+        if(param.debug)
+            std::cerr << "done" << std::endl;
             
         std::ifstream is(argv[1]); // input stream
             

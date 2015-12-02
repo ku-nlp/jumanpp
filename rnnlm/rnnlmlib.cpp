@@ -1354,7 +1354,9 @@ namespace RNNLM{
         //std::cout << "read header file" << std::endl;
         ReadFRHeader(model_file);
          
-        std::cerr << "reading model file" << std::endl;
+
+        if (debug_mode>0) 
+            std::cerr << "reading model file" << std::endl;
         if (neu0==NULL) initNetFR(); //memory allocation here
 
         if (use_nce != true){
@@ -1362,7 +1364,8 @@ namespace RNNLM{
             exit(1); //DEB
         }
 
-        std::cerr << "reading embedding" << std::endl;
+        if(debug_mode>0)
+            std::cerr << "reading embedding" << std::endl;
         // embedding //Row-major // embeddings.resize(vocab.size(), cfg.layer_size);
         for (a=0; a<vocab_size; a++) { //vocab_size < layer_0.size
             for (b=0; b<layer1_size; b++) {
@@ -1376,7 +1379,8 @@ namespace RNNLM{
             neu1[a].ac=0; 
         }
 
-        std::cerr << "reading NCE layer " << std::endl; 
+        if(debug_mode>0)
+            std::cerr << "reading NCE layer " << std::endl; 
         // W:layer1 -> output (word embedding => layer1
         for (b=0; b<layer2_size; b++) { 
             for (a=0; a<layer1_size; a++) {
@@ -1386,7 +1390,8 @@ namespace RNNLM{
         }
         
         //std::cerr << "reccurrent: begin " << ftell(model_file) << std::endl;
-        std::cerr << "reading reccurent weight" << std::endl;
+        if(debug_mode>0)
+            std::cerr << "reading reccurent weight" << std::endl;
         // Recurrent weight
         for (b=vocab_size; b<vocab_size + layer1_size; b++) {
             for (a=0; a<layer1_size; a++) {
@@ -1395,7 +1400,8 @@ namespace RNNLM{
             }
         }
          
-        std::cerr << "reading direct weight" << std::endl;
+        if(debug_mode>0)
+            std::cerr << "reading direct weight" << std::endl;
         FreadAllOrDie(syn_d,sizeof(real),direct_size,model_file,"direct");
         
         //saveWeights();
