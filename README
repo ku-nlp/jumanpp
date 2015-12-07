@@ -1,6 +1,20 @@
 ====================================
-KKN - Chinese Morphological Analyzer
+KKN
 ====================================
+
+Required libraries
+-----------
+* gperftool
+ https://github.com/gperftools/gperftools
+** libunwind (required by gperftool in 64bit environment) 
+ http://download.savannah.gnu.org/releases/libunwind/libunwind-0.99-beta.tar.gz
+* Boost C++ Libraries (1.57 or later)
+ for serialization, unordered_map, hashing
+
+Install
+-----------
+git clone git@bitbucket.org:ku_nlp/kkn.git
+make
 
 Quick start
 -----------
