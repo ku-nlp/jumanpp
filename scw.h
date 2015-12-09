@@ -56,6 +56,13 @@ class FeatureVector{// ただのunordered_map のラップ/*{{{*/
             }
             return *this;
         }/*}}}*/
+        
+        FeatureVector& diff(const FeatureVector &fv){/*{{{*/
+            for(const auto &st:fv){
+                vec[st.first] -= st.second;
+            }
+            return *this;
+        }/*}}}*/
 
         Ulmap::iterator find(const unsigned long key){ /*{{{*/
             return vec.find(key); 

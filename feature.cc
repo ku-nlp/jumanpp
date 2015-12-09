@@ -431,6 +431,7 @@ bool FeatureSet::append_feature(FeatureSet *in) {//{{{
     return true;
 }//}}}
 
+// 廃止を検討中
 double FeatureSet::calc_inner_product_with_weight() {//{{{
     if(!weight) return 0;
     return (*weight)*fvec; 

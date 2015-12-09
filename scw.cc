@@ -76,8 +76,10 @@ double DiagMat::get_value(const unsigned long sp1)const{
 };
 
 void SCWClassifier::update(double loss_value, const FeatureVector& vec){
-    //if(loss_value < 0.00001) return;
+    if(loss_value < 0.00001) return;
     double score = mu * vec;
+    if(score == 0.0) return;
+
     double vt = calc_vt(vec);
     double alphat = calc_alpha(vt, loss_value*score);
     //double alphat = calc_alpha(vt, score);

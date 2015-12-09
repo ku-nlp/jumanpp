@@ -49,20 +49,16 @@ Sentence *Tagger::new_sentence_analyze_lda(std::string &in_sentence, TopicVector
 int Tagger::online_learning(Sentence* gold, Sentence* system ,TopicVector *topic=nullptr){//{{{
     if(param->use_scw){
         double loss = system->eval(*gold); //単語が異なる割合など
-        if( gold->get_feature() ){
-            FeatureVector gold_vec(gold->get_feature()->get_fset()); 
-            //FeatureVector gold_topic_vec(gold->get_gold_topic_features(topic));  
-            //std::cerr << "<gold>" << gold_vec.str() <<  "</gold>" << endl;
-                
-            FeatureVector sys_vec(system->get_best_feature().get_fset());
-            //std::cerr << "<sys>" << sys_vec.str() << "</sys>" << endl;
-            //scw.update( loss, gold_vec.merge(gold_topic_vec));
-            // TODO: 差分を取る
-            scw.update( loss, gold_vec);
-            scw.update( -loss, sys_vec);
-        }else{
-            cerr << "update failed" << sentence << endl;
-            return 1;
+        if (loss > 0.0){
+            if( gold->get_feature() ){
+                FeatureVector gold_vec(gold->get_feature()->get_fset()); 
+                FeatureVector sys_vec(system->get_best_feature().get_fset());
+
+                scw.update(loss, gold_vec.diff(sys_vec));
+            }else{
+                cerr << "update failed" << sentence << endl;
+                return 1;
+            }
         }
     }else{//パーセプトロン 
         std::cerr << "perceptron is not implemented now. " << std::endl;
