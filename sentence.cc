@@ -562,12 +562,6 @@ bool Sentence::analyze() {  //{{{
             beam_at_position(pos, (*begin_node_list)[pos]);
         }
         find_best_beam();
-    } else if (param->use_so) {  // second order viterbi
-        for (unsigned int pos = 0; pos < length;
-             pos += utf8_bytes((unsigned char *)(sentence_c_str + pos))) {
-            so_viterbi_at_position(pos, (*begin_node_list)[pos]);
-        }
-        find_best_path_so();
     } else {  //普通のnbest
         for (unsigned int pos = 0; pos < length;
              pos += utf8_bytes((unsigned char *)(sentence_c_str + pos))) {
@@ -1403,75 +1397,6 @@ bool Sentence::viterbi_at_position(unsigned int pos, Node *r_node) {  //{{{
             return false;
         }
 
-        r_node = r_node->bnext;
-    }
-
-    return true;
-}  //}}}
-
-// Second order viterbi (使用していない)
-bool Sentence::so_viterbi_at_position(unsigned int pos, Node *r_node) {  //{{{
-    set_bigram_info(pos, r_node);
-
-    if (pos == 0) return false;
-
-    while (r_node) {
-        Node *l_node = (*end_node_list)[pos];
-        // set_bigram_info(pos-l_node->length, l_node);//チェックのため
-        while (l_node) {
-            Node *l2_node =
-                (*end_node_list)[pos - l_node->length];  // l1_node のlength
-            // を1にした分を引く?
-
-            double best_score = -DBL_MAX;
-            Node *best_score_l2_node = nullptr;
-            FeatureSet *best_score_trigram_f = nullptr;
-            while (l2_node) {
-                // std::cerr << *l2_node->original_surface << " -> " <<
-                // *l_node->original_surface << " -> " <<
-                // *r_node->original_surface << std::endl;
-                FeatureSet *f = new FeatureSet(ftmpl);
-                f->extract_trigram_feature(l2_node, l_node, r_node);
-                double trigram_score = f->calc_inner_product_with_weight();
-                double score = l_node->get_bigram_total_cost(l2_node) +
-                               r_node->get_bigram_cost(l_node) + trigram_score +
-                               r_node->wcost;
-                // l2_node->costは、l2_nodeとl_nodeにおけるbest_score
-                // (l_node->wcostを含む; l2_nodeとl_nodeのbigram_scoreも含む)
-                if (score > best_score) {
-                    best_score_l2_node = l2_node;
-                    if (best_score_trigram_f) delete best_score_trigram_f;
-                    best_score_trigram_f = f;
-                    best_score = score;
-                } else {
-                    delete f;
-                }
-                l2_node = l2_node->enext;
-            }
-
-            if (best_score_l2_node) {
-                // std::cerr << "best:" << *best_score_l2_node->original_surface
-                // << " -> " << *l_node->original_surface << " -> " <<
-                // *r_node->original_surface << std::endl;
-                r_node->set_bigram_best_prev(
-                    l_node,
-                    best_score_l2_node);  // このl_nodeとr_nodeに対するbest_l2_node
-                r_node->set_bigram_total_cost(
-                    l_node,
-                    best_score);   // このl_nodeとr_nodeに対するbest_score
-                if (MODE_TRAIN) {  // feature collection:
-                                   // このl_nodeとr_nodeに対するfeature
-                    r_node->append_bigram_feature(
-                        l_node, l_node->get_bigram_feature(best_score_l2_node));
-                    r_node->append_bigram_feature(l_node, best_score_trigram_f);
-                }
-                delete best_score_trigram_f;
-            } else {
-                std::cerr << "so viterbi failed!" << std::endl;
-                return false;
-            }
-            l_node = l_node->enext;
-        }
         r_node = r_node->bnext;
     }
 
@@ -2682,8 +2607,6 @@ bool Sentence::lookup_gold_data(std::string &word_pos_pair) {  //{{{
 
     if (param->beam) {
         beam_at_position(length, r_node);
-    } else if (param->use_so) {
-        so_viterbi_at_position(length, r_node);
     } else {
         viterbi_at_position(length, r_node);
     }
@@ -2796,17 +2719,4 @@ std::vector<std::string> Sentence::get_gold_topic_features(
     }
 }  //}}}
 
-// パーセプトロン専用の関数，いずれ撲滅
-// TODO: 廃止
-void Sentence::minus_feature_from_weight(
-    Umap &in_feature_weight, size_t factor) {  //{{{
-    Node *node = (*begin_node_list)[length];                                      // EOS
-    node->feature->minus_feature_from_weight(in_feature_weight, factor);
-}  //}}}
-
-// TODO: 廃止
-void Sentence::minus_feature_from_weight(
-    Umap &in_feature_weight) {  //{{{
-    minus_feature_from_weight(in_feature_weight, 1);
-}  //}}}
 }

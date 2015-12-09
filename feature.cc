@@ -677,25 +677,25 @@ return 0;
 }//}}}
 
 // 以降の関数は廃止予定　
-void FeatureSet::minus_feature_from_weight(Umap &in_feature_weight, size_t factor) {//{{{
-    for (std::vector<std::string>::iterator it = fset.begin(); it != fset.end(); it++) {
-        in_feature_weight[*it] -= factor;
-    }
-}//}}}
-
-void FeatureSet::minus_feature_from_weight(Umap &in_feature_weight) {//{{{
-    minus_feature_from_weight(in_feature_weight, 1);
-}//}}}
-
-void FeatureSet::plus_feature_from_weight(Umap &in_feature_weight, size_t factor) {//{{{
-    for (std::vector<std::string>::iterator it = fset.begin(); it != fset.end(); it++) {
-        in_feature_weight[*it] += factor;
-    }
-}//}}}
-
-void FeatureSet::plus_feature_from_weight(Umap &in_feature_weight) {//{{{
-    plus_feature_from_weight(in_feature_weight, 1);
-}//}}}
+//void FeatureSet::minus_feature_from_weight(Umap &in_feature_weight, size_t factor) {//{{{
+//    for (std::vector<std::string>::iterator it = fset.begin(); it != fset.end(); it++) {
+//        in_feature_weight[*it] -= factor;
+//    }
+//}//}}}
+//
+//void FeatureSet::minus_feature_from_weight(Umap &in_feature_weight) {//{{{
+//    minus_feature_from_weight(in_feature_weight, 1);
+//}//}}}
+//
+//void FeatureSet::plus_feature_from_weight(Umap &in_feature_weight, size_t factor) {//{{{
+//    for (std::vector<std::string>::iterator it = fset.begin(); it != fset.end(); it++) {
+//        in_feature_weight[*it] += factor;
+//    }
+//}//}}}
+//
+//void FeatureSet::plus_feature_from_weight(Umap &in_feature_weight) {//{{{
+//    plus_feature_from_weight(in_feature_weight, 1);
+//}//}}}
 
 // 以下は保留
 

@@ -205,10 +205,6 @@ bool Tagger::read_gold_data(const char *gsd_file) {//{{{
             new_sentence->find_best_beam(); // tri-gram 素性を抽出するために beam の方を呼ぶ;
             new_sentence->set_feature_beam(); // beam のベストの素性を sentence にコピーする;
             new_sentence->set_gold_nodes_beam();
-        }else if(param->use_so){
-            new_sentence->find_best_path_so(); 
-            new_sentence->set_feature_so();
-            new_sentence->set_gold_nodes();
         }else{
             new_sentence->find_best_path(); 
             new_sentence->set_feature();

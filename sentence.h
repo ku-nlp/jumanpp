@@ -251,7 +251,7 @@ class Sentence {//{{{
     void set_begin_node_list(unsigned int pos, Node *new_node);
     void set_end_node_list(unsigned int pos, Node *r_node);
 
-    bool so_viterbi_at_position(unsigned int pos, Node *r_node);
+    //bool so_viterbi_at_position(unsigned int pos, Node *r_node);
     //so_viterbi_at_position_nbest(pos, (*begin_node_list)[pos]);
     bool viterbi_at_position(unsigned int pos, Node *r_node);
 	bool viterbi_at_position_nbest(unsigned int pos, Node *r_node);
@@ -279,8 +279,6 @@ class Sentence {//{{{
     void print_juman_lattice(); // 互換性の為
     void print_unified_lattice(); 
     void print_unified_lattice_rbeam(unsigned int nbest); 
-    void minus_feature_from_weight(Umap &in_feature_weight);
-    void minus_feature_from_weight(Umap &in_feature_weight, size_t factor);
     bool lookup_gold_data(std::string &word_pos_pair);
     Node *lookup_and_make_special_pseudo_nodes(const char *start_str, unsigned int pos);
     Node *lookup_and_make_special_pseudo_nodes(const char *start_str, unsigned int specified_length, std::string *specified_pos);
@@ -294,21 +292,21 @@ class Sentence {//{{{
     Node *make_unk_pseudo_node_list_from_some_positions(const char *start_str, unsigned int pos, unsigned int previous_pos);
     Node *make_unk_pseudo_node_list_by_dic_check(const char *start_str, unsigned int pos, Node *r_node, unsigned int specified_char_num);
 
-    Node *find_best_path_so() {//{{{
-
-        (*begin_node_list)[length] = get_eos_node(); // End Of Sentence
-
-        set_bigram_info(length, (*begin_node_list)[length]);
-        so_viterbi_at_position(length, (*begin_node_list)[length ]);
-        (*end_node_list)[length + 1] = (*begin_node_list)[length]; //EOS ノード
-
-        set_end_node_list(length, (*begin_node_list)[length + 1]);
-        (*begin_node_list)[length + 1] = get_eos_node(); // End Of Sentence
-        set_bigram_info(length + 1, (*begin_node_list)[length + 1]);
-        so_viterbi_at_position(length + 1, (*begin_node_list)[length + 1]);
-
-        return (*begin_node_list)[length + 1];
-    }//}}}
+//    Node *find_best_path_so() {//{{{
+//
+//        (*begin_node_list)[length] = get_eos_node(); // End Of Sentence
+//
+//        set_bigram_info(length, (*begin_node_list)[length]);
+//        so_viterbi_at_position(length, (*begin_node_list)[length ]);
+//        (*end_node_list)[length + 1] = (*begin_node_list)[length]; //EOS ノード
+//
+//        set_end_node_list(length, (*begin_node_list)[length + 1]);
+//        (*begin_node_list)[length + 1] = get_eos_node(); // End Of Sentence
+//        set_bigram_info(length + 1, (*begin_node_list)[length + 1]);
+//        so_viterbi_at_position(length + 1, (*begin_node_list)[length + 1]);
+//
+//        return (*begin_node_list)[length + 1];
+//    }//}}}
     
     // Second order viterbi 用
     void set_bigram_info(unsigned int pos, Node *r_node) {//{{{
