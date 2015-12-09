@@ -143,6 +143,9 @@ class Sentence {//{{{
     std::string &get_sentence() {
         return sentence;
     }
+    unsigned int get_length() {
+        return length;
+    }
 
     // gold でしか使わない
     FeatureSet *get_feature() {//{{{
@@ -173,6 +176,19 @@ class Sentence {//{{{
         beam_feature = std::move(fs); 
         return;
     }//}}}
+    
+    FeatureSet& get_best_feature() {//{{{
+        Node *node = (*begin_node_list)[length]; // EOS
+        //if(node->bq.beam.size()> 0)
+        if(param->beam){
+            generate_beam_feature();
+            return *beam_feature; //参照を返す
+            //return *node->bq.beam.front().f; //参照を返す
+        }else if(param->use_so)
+            return (*(*begin_node_list)[length + 1]->get_bigram_feature((*begin_node_list)[length]));
+        else
+            return *node->feature; // beam 探索していない場合
+    }//}}}
 
     // ベストのパスのfeature を 文のfeature に移す
     FeatureSet *set_feature() {//{{{
@@ -195,18 +211,7 @@ class Sentence {//{{{
         return true;
     }//}}}
 
-    FeatureSet *set_feature_so() {//{{{
-        if (feature)
-            delete feature;
-        feature = new FeatureSet(*(*begin_node_list)[length + 1]->get_bigram_feature((*begin_node_list)[length])); //コピー
-        //(*begin_node_list)[length + 1]->set_bigram_feature((*begin_node_list)[length], NULL);
-        return feature;
-    }//}}}
-
     void feature_print();
-    unsigned int get_length() {
-        return length;
-    }
 
     bool check_devoice_condition(Node& node){ //次の形態素が濁音化できるかどうかのチェック//{{{
         /* 濁音化するのは直前の形態素が名詞、または動詞の連用形、名詞性接尾辞の場合のみ */
@@ -231,19 +236,6 @@ class Sentence {//{{{
 
         return ( check_bos & check_hiragana & ( check_verb | check_noun | check_postp));
     };//}}}
-
-    FeatureSet& get_best_feature() {//{{{
-        Node *node = (*begin_node_list)[length]; // EOS
-        //if(node->bq.beam.size()> 0)
-        if(param->beam){
-            generate_beam_feature();
-            return *beam_feature; //参照を返す
-            //return *node->bq.beam.front().f; //参照を返す
-        }else if(param->use_so)
-            return (*(*begin_node_list)[length + 1]->get_bigram_feature((*begin_node_list)[length]));
-        else
-            return *node->feature; // beam 探索していない場合
-    }//}}}
         
     Node *get_bos_node();
     Node *get_eos_node();
@@ -251,29 +243,19 @@ class Sentence {//{{{
     void set_begin_node_list(unsigned int pos, Node *new_node);
     void set_end_node_list(unsigned int pos, Node *r_node);
 
-    //bool so_viterbi_at_position(unsigned int pos, Node *r_node);
-    //so_viterbi_at_position_nbest(pos, (*begin_node_list)[pos]);
-    bool viterbi_at_position(unsigned int pos, Node *r_node);
-	bool viterbi_at_position_nbest(unsigned int pos, Node *r_node);
 	bool beam_at_position(unsigned int pos, Node *r_node);
-    //bool beam_at_position(unsigned int pos, Node *r_node, std::vector<BeamQue> &bq );
     unsigned int find_reached_pos(unsigned int pos, Node *node);
     unsigned int find_reached_pos_of_pseudo_nodes(unsigned int pos, Node *node);
     void print_beam();
     void print_best_beam();
-    void print_best_path();
 
     void generate_juman_line(Node* node, std::stringstream &output_string_buffer, std::string prefix = "");
     void print_best_beam_juman();
     void print_best_path_with_rnn(RNNLM::CRnnLM& model);
     TopicVector get_topic();
-    void print_lattice();
 	std::map<std::string, int> nbest_duplicate_filter;
-	void print_N_best_path();
-	void print_N_best_with_rnn(RNNLM::CRnnLM& model);
     void mark_nbest();
     void mark_nbest_rbeam(unsigned int nbest); 
-    Node* find_N_best_path(); // make EOS node and get N-best path
     Node *find_best_beam();
     double eval(Sentence& gold);
     void print_juman_lattice(); // 互換性の為
@@ -292,50 +274,7 @@ class Sentence {//{{{
     Node *make_unk_pseudo_node_list_from_some_positions(const char *start_str, unsigned int pos, unsigned int previous_pos);
     Node *make_unk_pseudo_node_list_by_dic_check(const char *start_str, unsigned int pos, Node *r_node, unsigned int specified_char_num);
 
-//    Node *find_best_path_so() {//{{{
-//
-//        (*begin_node_list)[length] = get_eos_node(); // End Of Sentence
-//
-//        set_bigram_info(length, (*begin_node_list)[length]);
-//        so_viterbi_at_position(length, (*begin_node_list)[length ]);
-//        (*end_node_list)[length + 1] = (*begin_node_list)[length]; //EOS ノード
-//
-//        set_end_node_list(length, (*begin_node_list)[length + 1]);
-//        (*begin_node_list)[length + 1] = get_eos_node(); // End Of Sentence
-//        set_bigram_info(length + 1, (*begin_node_list)[length + 1]);
-//        so_viterbi_at_position(length + 1, (*begin_node_list)[length + 1]);
-//
-//        return (*begin_node_list)[length + 1];
-//    }//}}}
-    
-    // Second order viterbi 用
-    void set_bigram_info(unsigned int pos, Node *r_node) {//{{{
-        while (r_node) {
-            if( r_node->init_bigram_info == true){
-                r_node = r_node->bnext;
-                continue;
-            }
-            r_node->reserve_best_bigram();
-            Node *l_node = (*end_node_list)[pos];
-            while (l_node) {
-                // r_node->best_bigram.insert(std::map<unsigned int, BigramInfo *>::value_type(l_node->id, new BigramInfo()));
-                r_node->best_bigram.insert(std::make_pair(l_node->id, new BigramInfo()));
-                // r_node->best_bigram[l_node->id] = new BigramInfo();
-                r_node->best_bigram[l_node->id]->feature = new FeatureSet(ftmpl);
-                r_node->best_bigram[l_node->id]->feature->extract_bigram_feature(l_node, r_node);
-                r_node->best_bigram[l_node->id]->cost = r_node->best_bigram[l_node->id]->feature->calc_inner_product_with_weight();
-                r_node->best_bigram[l_node->id]->cost += l_node->wcost;
-                r_node->best_bigram[l_node->id]->feature->append_feature(l_node->feature); // unigram feature of l_node
-                r_node->best_bigram[l_node->id]->total_cost = r_node->best_bigram[l_node->id]->cost;
-                l_node = l_node->enext;
-            }
-            r_node->init_bigram_info = true;
-            r_node = r_node->bnext;
-        }
-    }//}}}
-
 };//}}}
-
 
 
 }

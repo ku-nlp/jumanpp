@@ -544,7 +544,6 @@ bool Sentence::lookup() {  //{{{
                 }
             }
             set_end_node_list(pos, r_node);
-            if (param->use_so) set_bigram_info(pos, r_node);
         }
         previous_pos = pos;
         char_num++;
@@ -554,21 +553,11 @@ bool Sentence::lookup() {  //{{{
 
 // パスの選択
 bool Sentence::analyze() {  //{{{
-    // Viterbi
-    // if(param->nbest){
-    if (param->beam) {
-        for (unsigned int pos = 0; pos < length;
-             pos += utf8_bytes((unsigned char *)(sentence_c_str + pos))) {
-            beam_at_position(pos, (*begin_node_list)[pos]);
-        }
-        find_best_beam();
-    } else {  //普通のnbest
-        for (unsigned int pos = 0; pos < length;
-             pos += utf8_bytes((unsigned char *)(sentence_c_str + pos))) {
-            viterbi_at_position_nbest(pos, (*begin_node_list)[pos]);
-        }
-        find_N_best_path();
+    for (unsigned int pos = 0; pos < length;
+            pos += utf8_bytes((unsigned char *)(sentence_c_str + pos))) {
+        beam_at_position(pos, (*begin_node_list)[pos]);
     }
+    find_best_beam();
     return true;
 }  //}}}
 
@@ -609,23 +598,6 @@ TopicVector Sentence::get_topic() {  //{{{
     }
 
     return topic;
-}  //}}}
-
-void Sentence::print_lattice() {  //{{{
-    unsigned int char_num = 0;
-    for (unsigned int pos = 0; pos < length;
-         pos += utf8_bytes((unsigned char *)(sentence_c_str + pos))) {
-        Node *node = (*begin_node_list)[pos];
-        while (node) {
-            for (unsigned int i = 0; i < char_num; i++) cerr << "  ";
-            cerr << *(node->string_for_print);
-            if (node->string_for_print != node->string)
-                cerr << "(" << *(node->string) << ")";
-            cerr << "_" << *(node->pos) << endl;
-            node = node->bnext;
-        }
-        char_num++;
-    }
 }  //}}}
 
 // 互換性のための旧フォーマットの出力
@@ -745,6 +717,7 @@ void Sentence::print_juman_lattice() {  //{{{
     cout << "EOS" << endl;
 }  //}}}
 
+// 用途は？
 void Sentence::print_unified_lattice() {  //{{{
     mark_nbest();
 
@@ -1333,19 +1306,6 @@ Node *Sentence::get_eos_node() {  //{{{
     return eos_node;
 }  //}}}
 
-// make EOS node and get the best path
-Node *Sentence::find_best_path() {                //{{{
-    (*begin_node_list)[length] = get_eos_node();  // End Of Sentence
-    viterbi_at_position(length, (*begin_node_list)[length]);
-    return (*begin_node_list)[length];
-}  //}}}
-
-Node *Sentence::find_N_best_path() {              //{{{
-    (*begin_node_list)[length] = get_eos_node();  // End Of Sentence
-    viterbi_at_position_nbest(length, (*begin_node_list)[length]);
-    return (*begin_node_list)[length];
-}  //}}}
-
 Node *Sentence::find_best_beam() {                //{{{
     (*begin_node_list)[length] = get_eos_node();  // End Of Sentence
     beam_at_position(length, (*begin_node_list)[length]);
@@ -1354,157 +1314,6 @@ Node *Sentence::find_best_beam() {                //{{{
 
 void Sentence::set_begin_node_list(unsigned int pos, Node *new_node) {  //{{{
     (*begin_node_list)[pos] = new_node;
-}  //}}}
-
-// TODO:いずれ nbest=1 の場合と統合 (現在は training にのみ利用)
-bool Sentence::viterbi_at_position(unsigned int pos, Node *r_node) {  //{{{
-    while (r_node) {
-        double best_score = -DBL_MAX;
-        Node *best_score_l_node = NULL;
-        FeatureSet *best_score_bigram_f = NULL;
-        Node *l_node = (*end_node_list)[pos];
-        while (l_node) {
-            FeatureSet *f = new FeatureSet(ftmpl);
-            f->extract_bigram_feature(l_node, r_node);
-            if (param->trigram &&
-                l_node->prev != nullptr)  // l_node よりも前がある
-                f->extract_trigram_feature(l_node->prev, l_node, r_node);
-
-            double bigram_score = f->calc_inner_product_with_weight();
-            double score = l_node->cost + bigram_score + r_node->wcost;
-
-            if (score > best_score) {
-                best_score_l_node = l_node;
-                if (best_score_bigram_f) delete best_score_bigram_f;
-                best_score_bigram_f = f;
-                best_score = score;
-            } else {
-                delete f;
-            }
-            l_node = l_node->enext;
-        }
-
-        if (best_score_l_node) {
-            r_node->prev = best_score_l_node;
-            r_node->next = NULL;
-            r_node->cost = best_score;
-            if (MODE_TRAIN) {  // feature collection
-                r_node->feature->append_feature(best_score_l_node->feature);
-                r_node->feature->append_feature(best_score_bigram_f);
-            }
-            delete best_score_bigram_f;
-        } else {
-            return false;
-        }
-
-        r_node = r_node->bnext;
-    }
-
-    return true;
-}  //}}}
-
-bool Sentence::viterbi_at_position_nbest(unsigned int pos,
-                                         Node *r_node) {  //{{{
-    std::stringstream ss_key, ss_value;
-    unsigned int traceSize = 0;
-
-    while (r_node) {
-        std::priority_queue<NbestSearchToken> nodeHeap;
-        Node *l_node = (*end_node_list)[pos];
-        FeatureSet best_score_bigram_f(ftmpl);
-        double best_score = -DBL_MAX;
-
-        while (l_node) {
-            // 濁音化の条件チェック
-            if ((r_node->stat ==
-                 MORPH_DEVOICE_NODE) &&  //今の形態素が濁音化している
-                (!check_devoice_condition(
-                     *l_node))) {  //前の形態素が濁音化の条件を満たさない
-                NbestSearchToken newSearchToken(-DBL_MAX, 0, l_node);
-                nodeHeap.push(newSearchToken);
-                l_node = l_node->enext;
-                continue;
-            }
-
-            FeatureSet f(ftmpl);
-            f.extract_bigram_feature(l_node, r_node);
-            double bigram_score = f.calc_inner_product_with_weight();
-            if (param->debug) {  //{{{
-                ss_key.str(
-                    ""),
-                    ss_value.str(
-                        "");
-                ss_key << l_node->id << " -> " << r_node->id;
-                ss_value << bigram_score << " + " << l_node->cost << " = "
-                         << l_node->cost + bigram_score;
-                r_node->debug_info[ss_key.str().c_str()] =
-                    std::string(ss_value.str().c_str());
-                l_node->debug_info[ss_key.str().c_str()] =
-                    std::string(ss_value.str().c_str());
-                r_node->debug_info[ss_key.str() +
-                                   ":bigram_feature"] = f.str();
-                l_node->debug_info[ss_key.str() +
-                                   ":bigram_feature"] =
-                    f.str();  // EOS用
-            }                 //}}}
-
-            // get_best_bigram_score
-            if (l_node->cost + bigram_score + r_node->wcost > best_score) {
-                best_score = l_node->cost + bigram_score + r_node->wcost;
-                best_score_bigram_f = std::move(f);
-            }
-
-            traceSize = l_node->traceList.size();
-
-            if (traceSize == 0) {
-                double score = l_node->cost + bigram_score + r_node->wcost;
-                NbestSearchToken newSearchToken(score, 0, l_node);
-                nodeHeap.push(newSearchToken);
-
-            } else {
-                double last_score = DBL_MAX;
-                for (unsigned int i = 0; i < traceSize; ++i) {
-                    double score = l_node->traceList.at(i).score +
-                                   bigram_score + r_node->wcost;
-                    if (i > param->N_redundant &&
-                        (last_score > score || i > param->N_redundant * 5))
-                        break;
-                    nodeHeap.emplace(score, i, l_node);
-                    last_score = score;
-                }
-            }
-            l_node = l_node->enext;
-        }
-
-        unsigned int heapSize = nodeHeap.size();
-
-        double last_score = DBL_MAX;
-        for (unsigned int i = 0; i < heapSize; ++i) {
-            double score = nodeHeap.top().score;
-            if (i > param->N_redundant && last_score > score) break;
-            r_node->traceList.push_back(nodeHeap.top());
-            nodeHeap.pop();
-            last_score = score;
-        }
-
-        if (r_node->traceList.size() > 0) {
-            r_node->next = NULL;
-            r_node->prev = r_node->traceList.front().prevNode;
-            r_node->cost = r_node->traceList.front().score;
-
-            if (MODE_TRAIN) {  // feature collection
-                r_node->feature->append_feature(
-                    r_node->traceList.front().prevNode->feature);
-                r_node->feature->append_feature(&(best_score_bigram_f));
-            }
-        } else {
-            return false;
-        }
-
-        r_node = r_node->bnext;
-    }
-
-    return true;
 }  //}}}
 
 // 各形態素ノードごとにbeam_width 個もっておき，beam_search
@@ -1679,7 +1488,7 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
                                   << std::endl;
                 } 
 #ifdef USE_SRILM
-                else if (param->srilm) {
+                else if (param->srilm) {/*{{{*/
                     unsigned int hist_size =
                         l_token_with_state.node_history.size();
                     unsigned int last_word = vocab->getIndex(
@@ -1713,7 +1522,7 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
                         srilm_score = (param->rweight) * srilm->wordProb(cur_word, context_word);
                     }
                     context_score += srilm_score;
-                }
+                }/*}}}*/
 #endif
 
                 size_t history_size = l_token_with_state.node_history.size();
@@ -1795,173 +1604,6 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
 
     // l_node->bq.beam.clear(); //メモリが気になるならしてもよい?
     return true;
-}  //}}}
-
-void Sentence::print_N_best_path() {  //{{{
-                                      // 曖昧性のある形態素の出力
-    std::string output_string_buffer;
-
-    unsigned int N_required = param->N;
-    unsigned int N_couter = 0;
-
-    unsigned int traceSize = (*begin_node_list)[length]->traceList.size();
-    if (traceSize > param->N_redundant) {
-        traceSize = param->N_redundant;
-    }
-
-    for (unsigned int i = 0; i < traceSize; ++i) {
-        Node *node = (*begin_node_list)[length];
-        std::vector<Node *> result_morphs;
-
-        bool find_bos_node = false;
-        int traceRank = i;
-
-        // Node* temp_node = NULL;
-        double output_score = (*begin_node_list)[length]->traceList.at(i).score;
-
-        while (node) {
-            result_morphs.push_back(node);
-
-            if (node->traceList.size() == 0) {
-                break;
-            }
-            node = node->traceList.at(traceRank).prevNode;
-            if (node->stat == MORPH_BOS_NODE) {
-                find_bos_node = true;
-                break;
-            } else {
-                traceRank = result_morphs.back()->traceList.at(traceRank).rank;
-            }
-        }
-
-        if (!find_bos_node) cerr << ";; cannot analyze:" << sentence << endl;
-
-        size_t printed_num = 0;
-        for (std::vector<Node *>::reverse_iterator it = result_morphs.rbegin();
-             it != result_morphs.rend(); it++) {
-            if ((*it)->stat != MORPH_BOS_NODE &&
-                (*it)->stat != MORPH_EOS_NODE) {
-                (*it)->used_in_nbest = true;
-                if (printed_num++) output_string_buffer.append(
-                    " ");
-
-                if (param->N > 1) {
-                    output_string_buffer.append(*(*it)->string_for_print);
-                    output_string_buffer.append(
-                        "_");
-                    output_string_buffer.append(*(*it)->pos);
-                } else {
-                    output_string_buffer.append(*(*it)->string_for_print);
-                    output_string_buffer.append(
-                        "_");
-                    output_string_buffer.append(*(*it)->pos);
-                    output_string_buffer.append(
-                        ":");
-                    output_string_buffer.append(*(*it)->spos);
-                }
-            }
-        }
-
-        std::map<std::string, int>::iterator find_output =
-            nbest_duplicate_filter.find(output_string_buffer);
-        if (find_output != nbest_duplicate_filter.end()) {
-            // duplicate output
-        } else {
-            nbest_duplicate_filter.insert(
-                std::make_pair(output_string_buffer, i));
-            if (param->N > 1) cout << "# score:" << output_score << endl;
-            cout << output_string_buffer;
-            cout << endl;
-            ++N_couter;
-        }
-
-        output_string_buffer.clear();
-        if (N_couter >= N_required) break;
-    }
-
-    if (param->N > 1) cout << endl;
-}  //}}}
-
-void Sentence::print_N_best_with_rnn(RNNLM::CRnnLM &model) {  //{{{
-    // 曖昧性のある形態素の出力
-    std::string output_string_buffer;
-    std::string rnnlm_string_buffer;
-
-    unsigned int N_required = param->N;
-    unsigned int N_couter = 0;
-
-    unsigned int traceSize = (*begin_node_list)[length]->traceList.size();
-    // if (traceSize > param->N_redundant) {
-    //		traceSize = param->N_redundant;
-    //}
-
-    for (unsigned int i = 0; i < traceSize; ++i) {
-        Node *node = (*begin_node_list)[length];
-        std::vector<Node *> result_morphs;
-
-        bool find_bos_node = false;
-        int traceRank = i;
-
-        // Node* temp_node = NULL;
-        double output_score = (*begin_node_list)[length]->traceList.at(i).score;
-
-        while (node) {
-            result_morphs.push_back(node);
-
-            if (node->traceList.size() == 0) {
-                break;
-            }
-            node = node->traceList.at(traceRank).prevNode;
-            if (node->stat == MORPH_BOS_NODE) {
-                find_bos_node = true;
-                break;
-            } else {
-                traceRank = result_morphs.back()->traceList.at(traceRank).rank;
-            }
-        }
-
-        if (!find_bos_node) cerr << ";; cannot analyze:" << sentence << endl;
-
-        size_t printed_num = 0;
-        for (std::vector<Node *>::reverse_iterator it = result_morphs.rbegin();
-             it != result_morphs.rend(); it++) {
-            if ((*it)->stat != MORPH_BOS_NODE &&
-                (*it)->stat != MORPH_EOS_NODE) {
-                (*it)->used_in_nbest = true;
-                if (printed_num++) {
-                    output_string_buffer.append(
-                        " ");
-                    rnnlm_string_buffer.append(
-                        " ");
-                }
-                output_string_buffer.append(*(*it)->string_for_print);
-                rnnlm_string_buffer.append(*(*it)->base);
-                output_string_buffer.append(
-                    "_");
-                output_string_buffer.append(*(*it)->pos);
-            }
-        }
-
-        std::map<std::string, int>::iterator find_output =
-            nbest_duplicate_filter.find(output_string_buffer);
-        if (find_output != nbest_duplicate_filter.end()) {
-            // duplicate output
-        } else {
-            nbest_duplicate_filter.insert(
-                std::make_pair(output_string_buffer, i));
-            double rnnlm_score = model.test_sent(rnnlm_string_buffer);
-            cout << "# score:" << output_score << " rnnlm:" << rnnlm_score
-                 << endl;
-            cout << output_string_buffer;
-            cout << endl;
-            ++N_couter;
-        }
-
-        output_string_buffer.clear();
-        rnnlm_string_buffer.clear();
-        if (N_couter >= N_required) break;
-    }
-    cout << endl;
 }  //}}}
 
 // beam サーチ用の出力関数
@@ -2286,132 +1928,6 @@ unsigned int Sentence::find_reached_pos_of_pseudo_nodes(unsigned int pos, Node *
     return reached_pos_of_pseudo_nodes;
 }  //}}}
 
-void Sentence::print_best_path() {  //{{{
-    Node *node = (*begin_node_list)[length];
-    std::vector<Node *> result_morphs;
-
-    bool find_bos_node = false;
-    while (node) {
-        if (node->stat == MORPH_BOS_NODE) find_bos_node = true;
-        result_morphs.push_back(node);
-        node = node->prev;
-    }
-
-    if (!find_bos_node) cerr << ";; cannot analyze:" << sentence << endl;
-
-    size_t printed_num = 0;
-    for (std::vector<Node *>::reverse_iterator it = result_morphs.rbegin();
-         it != result_morphs.rend(); it++) {
-        if ((*it)->stat != MORPH_BOS_NODE && (*it)->stat != MORPH_EOS_NODE) {
-            if (printed_num++) cout << " ";
-            (*it)->print();
-        }
-    }
-    cout << endl;
-}  //}}}
-
-void Sentence::print_best_path_with_rnn(RNNLM::CRnnLM &model) {  //{{{
-
-    std::vector<std::pair<double, std::string>> nbest_pathes;
-
-    std::string output_string_buffer;
-    std::string rnnlm_string_buffer;
-
-    unsigned int N_required = param->N;
-    unsigned int N_couter = 0;
-
-    // cout << param->N << endl;
-
-    unsigned int traceSize = (*begin_node_list)[length]->traceList.size();
-
-    // cout << traceSize << endl;
-
-    for (unsigned int i = 0; i < traceSize; ++i) {
-        Node *node = (*begin_node_list)[length];
-        std::vector<Node *> result_morphs;
-
-        bool find_bos_node = false;
-        int traceRank = i;
-        double output_score = (*begin_node_list)[length]->traceList.at(i).score;
-
-        while (node) {
-            result_morphs.push_back(node);
-
-            if (node->traceList.size() == 0) {
-                break;
-            }
-            node = node->traceList.at(traceRank).prevNode;
-            if (node->stat == MORPH_BOS_NODE) {
-                find_bos_node = true;
-                break;
-            } else {
-                traceRank = result_morphs.back()->traceList.at(traceRank).rank;
-            }
-        }
-
-        if (!find_bos_node) cerr << ";; cannot analyze:" << sentence << endl;
-
-        size_t printed_num = 0;
-        for (std::vector<Node *>::reverse_iterator it = result_morphs.rbegin();
-             it != result_morphs.rend(); it++) {
-            if ((*it)->stat != MORPH_BOS_NODE &&
-                (*it)->stat != MORPH_EOS_NODE) {
-                (*it)->used_in_nbest = true;
-                if (printed_num++) {
-                    output_string_buffer.append(
-                        " ");
-                    rnnlm_string_buffer.append(
-                        " ");
-                }
-                output_string_buffer.append(*(*it)->string_for_print);
-                output_string_buffer.append(
-                    "_");
-                output_string_buffer.append(*(*it)->pos);
-                output_string_buffer.append(
-                    ":");
-                output_string_buffer.append(*(*it)->spos);
-                rnnlm_string_buffer.append(*(*it)->base);
-            }
-        }
-
-        std::map<std::string, int>::iterator find_output =
-            nbest_duplicate_filter.find(output_string_buffer);
-        if (find_output != nbest_duplicate_filter.end()) {
-            // duplicate output
-            // cout << "dup: " << output_string_buffer << endl;
-        } else {
-            nbest_duplicate_filter.insert(
-                std::make_pair(output_string_buffer, i));
-            double rnnlm_score = model.test_sent(rnnlm_string_buffer);
-
-            nbest_pathes.push_back(std::make_pair(
-                output_score + rnnlm_score, std::string(output_string_buffer)));
-            // cout << "# score:" << output_score << " rnnlm:" << rnnlm_score <<
-            // endl;
-            // cout << rnnlm_string_buffer;
-            // cout << endl;
-            ++N_couter;
-        }
-
-        output_string_buffer.clear();
-        rnnlm_string_buffer.clear();
-        if (N_couter >= N_required) break;
-    }
-
-    // 1-best を出力
-    // std::sort(nbest_pathes.begin(), nbest_pathes.end(),[](const auto &x,
-    // const auto &y){ return x.first < y.first;});
-    std::sort(nbest_pathes.begin(), nbest_pathes.end(),
-              std::greater<std::pair<double, std::string>>());
-    // cout << "sorted"<< endl;
-    // cout << "size:" << nbest_pathes.size() << endl;
-
-    // cout << nbest_pathes[0].first << endl;
-    cout << nbest_pathes.front().second << endl;
-
-    // cout << endl;
-}  //}}}
-
 // gold 用の辞書引きの亜種
 bool Sentence::lookup_gold_data(std::string &word_pos_pair) {  //{{{
     if (reached_pos < length) {
@@ -2605,11 +2121,7 @@ bool Sentence::lookup_gold_data(std::string &word_pos_pair) {  //{{{
     (*begin_node_list)[length] = r_node;
     find_reached_pos(length, r_node);
 
-    if (param->beam) {
-        beam_at_position(length, r_node);
-    } else {
-        viterbi_at_position(length, r_node);
-    }
+    beam_at_position(length, r_node);
     set_end_node_list(length, r_node);
 
     add_one_word(line[0]);

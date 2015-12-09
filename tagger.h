@@ -13,6 +13,9 @@
 #include <boost/serialization/unordered_map.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/binary_iarchive.hpp>
+
+
+
 #include <lzma.h>
 
 namespace Morph {
@@ -51,11 +54,6 @@ class Tagger {
     Sentence *new_sentence_analyze(std::string &in_sentence);
     Sentence *new_sentence_analyze_lda(std::string &in_sentence, TopicVector &topic);
     void sentence_clear();
-    bool viterbi_at_position(unsigned int pos, Node *r_node);
-    void print_best_path();
-	void print_best_path_with_rnn(RNNLM::CRnnLM& model);
-    void print_N_best_with_rnn(RNNLM::CRnnLM& model); 
-    void print_N_best_path();
     void print_best_beam_juman(); 
     void print_beam();
     void print_best_beam();
@@ -74,15 +72,6 @@ class Tagger {
     // write feature weights
     bool write_model_file(const std::string &model_filename) {
         std::cerr << "Error@write_model_file: not implemented" << std::endl;
-//        std::ofstream model_out(model_filename.c_str(), std::ios::out);
-//        if (!model_out.is_open()) {
-//            cerr << ";; cannot open " << model_filename << " for writing" << endl;
-//            return false;
-//        }
-//        for (auto &w:weight){
-//            model_out << w.first << " " << w.second << endl;
-//        }
-//        model_out.close();
         return true;
     }
     bool write_bin_model_file(const std::string &model_filename) {
@@ -111,18 +100,6 @@ class Tagger {
     // read feature weights
     bool read_model_file(const std::string &model_filename) {
         std::cerr << "Error@read_model_file: not implemented" << std::endl;
-//        std::ifstream model_in(model_filename.c_str(), std::ios::in);
-//        if (!model_in.is_open()) {
-//            cerr << ";; cannot open " << model_filename << " for reading" << endl;
-//            exit(1);
-//        }
-//        std::string buffer;
-//        while (getline(model_in, buffer)) {
-//            std::vector<std::string> line;
-//            Morph::split_string(buffer, " ", line);
-//            weight[line[0]] = atof(static_cast<const char *>(line[1].c_str()));
-//        }
-//        model_in.close();
         return true;
     }
 };

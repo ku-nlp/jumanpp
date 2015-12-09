@@ -75,28 +75,21 @@ int main(int argc, char** argv) {//{{{
     cmdline::parser option;
     option_proc(option, argc, argv);
 
-
     Morph::Parameter param(option.get<std::string>("dict"), option.get<std::string>("feature"), option.get<unsigned int>("iteration"), true, option.exist("shuffle"), option.get<unsigned int>("unk_max_length"), option.exist("debug"), option.exist("nbest")|option.exist("lattice"));
 
     if(param.debug)
         std::cerr << "initializing models ... " << std::flush;
 
-    if(option.exist("nbest"))
-        param.set_N(option.get<unsigned int>("nbest"));
-    else if(option.exist("so")){
-        param.set_so(true);
-    }else if(option.exist("beam")){
-        param.set_beam(true);
+    param.set_beam(true);
+    if(option.exist("beam")){
         param.set_N(option.get<unsigned int>("beam"));
     }else if(option.exist("rbeam")){
-        param.set_beam(true);
         param.set_N(option.get<unsigned int>("rbeam"));
-    }else if(option.exist("lattice")) // rbeam が設定されていたら，lattice のN は表示のみに使う
+    }else if(option.exist("lattice")){ // rbeam が設定されていたら，lattice のN は表示のみに使う
         param.set_N(option.get<unsigned int>("lattice"));
-    else if(option.exist("rerank"))
-        param.set_N(option.get<unsigned int>("rerank"));
-    else
+    }else{
         param.set_N(1);
+    }
 
     param.set_output_ambigous_word(option.exist("ambiguous"));
     if(option.exist("passiveunk"))
@@ -214,54 +207,49 @@ int main(int argc, char** argv) {//{{{
     } else if(option.exist("lda")){//LDAを使う形態素解析{{{
         std::cerr << "LDA mode is obsoleted" << std::endl;
         return 0;
-        Morph::Tagger tagger_normal(&normal_param);
-        tagger_normal.read_model_file(option.get<std::string>("lda"));
-        tagger.read_model_file(option.get<std::string>("model"));
-        std::cerr << "done" << std::endl;
-            
-        std::ifstream is(argv[1]); // input stream
-            
-        // sentence loop
-        std::string buffer;
-        while (getline(is ? is : cin, buffer)) {
-            if (buffer.length() == 0 || buffer.at(0) == '#') { // empty line or comment line
-                cout << buffer << endl;
-                continue;
-            }
-            Morph::Sentence* normal_sent = tagger_normal.new_sentence_analyze(buffer);
-            TopicVector topic = normal_sent->get_topic();
-
-            //std::cerr << "Topic:";
-            //for(double d: topic){
-            //    std::cerr << d << ",";
-            //}
-            //std::cerr << endl;
-
-            Morph::Sentence* lda_sent = tagger.new_sentence_analyze_lda(buffer, topic);
-            if (option.exist("lattice")){
-                if (option.exist("oldstyle"))
-                    tagger.print_old_lattice();
-                else
-                    tagger.print_lattice();
-            }else{
-                if(option.exist("nbest")){
-                    tagger.print_N_best_path();
-                }else{
-                    tagger.print_best_path();
-                }
-            }
-            delete(normal_sent);
-            delete(lda_sent);
-        }
+//        Morph::Tagger tagger_normal(&normal_param);
+//        tagger_normal.read_model_file(option.get<std::string>("lda"));
+//        tagger.read_model_file(option.get<std::string>("model"));
+//        std::cerr << "done" << std::endl;
+//            
+//        std::ifstream is(argv[1]); // input stream
+//            
+//        // sentence loop
+//        std::string buffer;
+//        while (getline(is ? is : cin, buffer)) {
+//            if (buffer.length() == 0 || buffer.at(0) == '#') { // empty line or comment line
+//                cout << buffer << endl;
+//                continue;
+//            }
+//            Morph::Sentence* normal_sent = tagger_normal.new_sentence_analyze(buffer);
+//            TopicVector topic = normal_sent->get_topic();
+//
+//            //std::cerr << "Topic:";
+//            //for(double d: topic){
+//            //    std::cerr << d << ",";
+//            //}
+//            //std::cerr << endl;
+//
+//            Morph::Sentence* lda_sent = tagger.new_sentence_analyze_lda(buffer, topic);
+//            if (option.exist("lattice")){
+//                if (option.exist("oldstyle"))
+//                    tagger.print_old_lattice();
+//                else
+//                    tagger.print_lattice();
+//            }else{
+//                if(option.exist("nbest")){
+//                    tagger.print_N_best_path();
+//                }else{
+//                    tagger.print_best_path();
+//                }
+//            }
+//            delete(normal_sent);
+//            delete(lda_sent);
+//        }
     //}}}
     } else {// 通常の形態素解析{{{
-        //std::cerr << "read model file" << std::flush;
-        //if(option.exist("binmodel"))
         tagger.read_bin_model_file(option.get<std::string>("model"));
-        //else
-        //    tagger.read_model_file(option.get<std::string>("model"));
-        if(param.debug)
-            std::cerr << "done" << std::endl;
+        if(param.debug) std::cerr << "done" << std::endl;
             
         std::ifstream is(argv[1]); // input stream
             
@@ -291,18 +279,8 @@ int main(int argc, char** argv) {//{{{
                         tagger.print_best_beam_juman();
                     else
                         tagger.print_best_beam();
-                }else if(option.exist("nbest") && option.exist("rnnlm")){
-                    tagger.print_N_best_with_rnn(rnnlm);
-                }else if(option.exist("nbest") && !option.exist("rnnlm")){
-                    tagger.print_N_best_path();
-                }else if(option.exist("rerank") && option.exist("rnnlm")){
-                    std::cerr << "廃止" << std::endl;
-                    //tagger.print_best_path_with_rnn(rnnlm);
                 }else{
-                    if(option.exist("juman"))
-                        tagger.print_best_beam_juman();
-                    else
-                        tagger.print_N_best_path();
+                    tagger.print_best_beam_juman();
                 }
             }
             tagger.sentence_clear();

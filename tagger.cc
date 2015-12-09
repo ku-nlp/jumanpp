@@ -197,15 +197,9 @@ bool Tagger::read_gold_data(const char *gsd_file) {//{{{
                 new_sentence->lookup_gold_data(*it);
         }
             
-        if( param->beam ){//beam オプション
-            new_sentence->find_best_beam(); // tri-gram 素性を抽出するために beam の方を呼ぶ;
-            new_sentence->set_feature_beam(); // beam のベストの素性を sentence にコピーする;
-            new_sentence->set_gold_nodes_beam();
-        }else{
-            new_sentence->find_best_path(); 
-            new_sentence->set_feature();
-            new_sentence->set_gold_nodes();
-        }
+        new_sentence->find_best_beam(); // tri-gram 素性を抽出するために beam の方を呼ぶ;
+        new_sentence->set_feature_beam(); // beam のベストの素性を sentence にコピーする;
+        new_sentence->set_gold_nodes_beam();
         
         //new_sentence->print_lattice();
         new_sentence->clear_nodes();
@@ -231,11 +225,6 @@ void Tagger::clear_gold_data() {//{{{
     sentences_for_train.clear();
 }//}}}
 
-// print the best path of a test sentence
-void Tagger::print_best_path() {//{{{
-    sentence->print_best_path();
-}//}}}
-
 void Tagger::print_best_beam() {//{{{
     sentence->print_best_beam();
     if(param->debug){
@@ -250,20 +239,8 @@ void Tagger::print_beam() {//{{{
     }
 }//}}}
 
-void Tagger::print_N_best_path() {//{{{
-    sentence->print_N_best_path();
-}//}}}
-
 void Tagger::print_best_beam_juman() {//{{{
     sentence->print_best_beam_juman();
-}//}}}
-
-void Tagger::print_best_path_with_rnn(RNNLM::CRnnLM& model){//{{{
-    sentence->print_best_path_with_rnn(model);
-}//}}}
-
-void Tagger::print_N_best_with_rnn(RNNLM::CRnnLM& model) {//{{{
-    sentence->print_N_best_with_rnn(model);
 }//}}}
 
 void Tagger::print_lattice() {//{{{

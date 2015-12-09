@@ -678,30 +678,9 @@ cerr << ";; cannot understand macro: " << macro << endl;
 return 0;
 }//}}}
 
-// 以降の関数は廃止予定　
-//void FeatureSet::minus_feature_from_weight(Umap &in_feature_weight, size_t factor) {//{{{
-//    for (std::vector<std::string>::iterator it = fset.begin(); it != fset.end(); it++) {
-//        in_feature_weight[*it] -= factor;
-//    }
-//}//}}}
-//
-//void FeatureSet::minus_feature_from_weight(Umap &in_feature_weight) {//{{{
-//    minus_feature_from_weight(in_feature_weight, 1);
-//}//}}}
-//
-//void FeatureSet::plus_feature_from_weight(Umap &in_feature_weight, size_t factor) {//{{{
-//    for (std::vector<std::string>::iterator it = fset.begin(); it != fset.end(); it++) {
-//        in_feature_weight[*it] += factor;
-//    }
-//}//}}}
-//
-//void FeatureSet::plus_feature_from_weight(Umap &in_feature_weight) {//{{{
-//    plus_feature_from_weight(in_feature_weight, 1);
-//}//}}}
-
 // 以下は保留
 
-//// 素性関数 速度面に問題があるためまとめて保留中// /*{{{*/
+//// 素性関数 速度面に問題があるためまとめて保留中, 可変長テンプレートで素性ごとに定義しておけばなんとか・・// /*{{{*/
 //// TODO:あとで素性関数のクラスにまとめる
 //std::hash<std::string> hash_func; 
 //inline unsigned long get_feature_id(const std::string& s){ return hash_func(s);};
