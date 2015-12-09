@@ -287,18 +287,7 @@ bool Tagger::add_one_sentence_for_train (Sentence *in_sentence) {//{{{
 bool Tagger::write_tmp_model_file(int t){//{{{
     std::stringstream ss;
     ss << param->model_filename << "." << t; 
-    std::ofstream model_out(ss.str().c_str(), std::ios::out);
-    if (!model_out.is_open()) {
-        cerr << ";; cannot open " << ss.str() << " for writing" << endl;
-        return false;
-    }
-    for (auto &w:weight){
-        model_out << w.first << " " << w.second << endl;
-    }
-    //for (Umap::iterator it = feature_weight_sum.begin(); it != feature_weight_sum.end(); it++) {
-    //    model_out << it->first << " " << it->second/(double)t << endl;
-    //}
-    model_out.close();
+    write_bin_model_file(ss.str().c_str());     
     return true;
 }//}}}
 
