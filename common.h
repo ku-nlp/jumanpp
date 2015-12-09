@@ -39,8 +39,10 @@ using std::endl;
 extern bool MODE_TRAIN;
 extern bool WEIGHT_AVERAGED;
 
-namespace Morph {
 
+int main(int argc, char** argv); 
+
+namespace Morph {
 
 extern std::unordered_map<std::string, int> pos_map;
 extern std::unordered_map<std::string, int> spos_map;

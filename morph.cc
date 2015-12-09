@@ -118,6 +118,9 @@ int main(int argc, char** argv) {//{{{
     param.use_lexical_feature=true;
     param.freq_word_list = option.get<std::string>("use_lexical_feature");
     Morph::FeatureSet::open_freq_word_set(param.freq_word_list);
+    if(option.exist("debug")){
+        Morph::FeatureSet::debug_flag = true;
+    }
 
     param.set_trigram(!option.exist("notrigram"));
     param.set_rweight(option.get<double>("Rweight"));

@@ -14,10 +14,11 @@ namespace Morph {
 
 std::vector<double>* FeatureSet::topic = nullptr;
 bool FeatureSet::use_total_sim = false;
+bool FeatureSet::debug_flag = false;
 std::unordered_set<std::tuple<std::string, std::string, std::string, std::string>, tuple_hash, tuple_equal> FeatureSet::freq_word_set;
 
 std::unordered_map<std::string,long int> FeatureSet::feature_map;
-std::tr1::unordered_map<std::vector<long int>,unsigned long> FeatureSet::feature_id_map;
+//std::tr1::unordered_map<std::vector<long int>,unsigned long> FeatureSet::feature_id_map;
 
 FeatureSet::FeatureSet(FeatureTemplateSet *in_ftmpl) {//{{{
 	ftmpl = in_ftmpl;
