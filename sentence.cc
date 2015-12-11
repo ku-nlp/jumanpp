@@ -1024,8 +1024,7 @@ void Sentence::print_unified_lattice_rbeam(unsigned int nbest) {  //{{{
                      << delim;
 
                 // 表層 代表表記 よみ 原形
-                if (*node->reading ==
-                    "*") {                                    //読み不明であれば表層を使う
+                if (*node->reading == "*") { //読み不明であれば表層を使う
                     cout << *node->original_surface << delim  // 表層
                          // 擬似代表表記を表示する
                          << *node->original_surface << "/"
@@ -1033,8 +1032,7 @@ void Sentence::print_unified_lattice_rbeam(unsigned int nbest) {  //{{{
                          << *node->original_surface << delim   // 読み
                          << *node->original_surface << delim;  // 原形
                 } else {
-                    if (*node->representation ==
-                        "*") {  // Wikipedia 数詞など
+                    if (*node->representation == "*") {  // Wikipedia 数詞など
                         cout << *node->original_surface << delim
                              << *node->original_surface << "/" << *node->reading
                              << delim << *node->reading << delim << *node->base
@@ -1100,7 +1098,7 @@ void Sentence::print_unified_lattice_rbeam(unsigned int nbest) {  //{{{
 
                 // 意味情報を再構築して表示
                 if (*node->semantic_feature != "NIL" ||
-                    *node->spos == UNK_POS || ustr.is_katakana() ||
+                    *node->spos == UNK_POS || ustr.is_katakana() || 
                     ustr.is_kanji() || ustr.is_eisuu() || ustr.is_kigou()) {
                     const std::string sep = "|";
                     bool use_sep = false;
@@ -1712,8 +1710,9 @@ void Sentence::generate_juman_line(Node* node, std::stringstream &output_string_
             << Dic::katuyou_form_map.at(type_and_form) << " ";
 
     // 意味情報を再構築して表示
-    if (*node->representation != "*" ||
-            *node->semantic_feature != "NIL" ||
+    if ( (*node->representation != "*" &&
+            *node->spos != "数詞" &&
+            *node->semantic_feature != "NIL") ||
             *node->spos == UNK_POS) {
         std::string delim = "";
         output_string_buffer << '"';
@@ -1726,7 +1725,7 @@ void Sentence::generate_juman_line(Node* node, std::stringstream &output_string_
             delim = " ";
         }
         if (*node->spos == UNK_POS) {
-            output_string_buffer << delim << "品詞推定:" << *node->pos << ":" << *node->spos;
+            output_string_buffer << delim << "品詞推定:" << *node->pos;
             delim = " ";
         }
         output_string_buffer << std::string("\"") << endl;
@@ -1761,7 +1760,7 @@ void Sentence::print_best_beam_juman() {  //{{{
                             tmp->sposid == (*it)->sposid &&
                             tmp->baseid == (*it)->baseid &&
                             tmp->formid == (*it)->formid 
-                            ) {
+                            )  {
                             // 曖昧語@表示
                             if(tmp != *it) // すでに表示したものは除く
                                 generate_juman_line(tmp, output_string_buffer,"@");
