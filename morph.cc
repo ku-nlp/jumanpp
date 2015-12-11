@@ -256,8 +256,11 @@ int main(int argc, char** argv) {//{{{
         // sentence loop
         std::string buffer;
         while (getline(is ? is : cin, buffer)) {
-            if (buffer.length() <= 1 || buffer.at(0) == '#') { // empty line or comment line
+            if (buffer.length() <= 1 ) { // empty line or comment line
                 std::cout << buffer << std::endl;
+                continue;
+            }else if(buffer.at(0) == '#'){
+                std::cout << buffer << " " << VERSION << "(" << GITVER <<")" << std::endl;
                 continue;
             }
 
