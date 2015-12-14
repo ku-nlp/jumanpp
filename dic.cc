@@ -271,9 +271,9 @@ Node *Dic::lookup_lattice_specified(std::vector<CharLattice::da_result_pair_type
     size_t num = result_pair.size();
         
     for (size_t i = 0; i < num; i++) { 
-        const Token *deb_token = get_token(result_pair[i]);// deb
-        //std::cerr << start_str << "_" << *baseid2base.get_pos(deb_token->base_id) << "_" << specified_length << "-" << get_length(result_pair[i]) << std::endl;
 
+        //const Token *token = get_token(result_pair[i]);// deb
+        //std::cerr << start_str << "_" << *baseid2base.get_pos(token->base_id) << "_" << specified_length << "-" << result_pair[i].length << std::endl;
         if (specified_length && specified_length != get_length(result_pair[i]))
             continue;
         size_t size = token_size(result_pair[i]);
@@ -458,11 +458,7 @@ Node *Dic::make_unk_pseudo_node(const char *start_str, int byte_len, unsigned lo
 //sentence.cc:339: 
 // 名前が変？指定した文字種が連続する範囲で全品詞について未定義語ノードを生成
 // 辞書をr_node で受け取り、重複をチェック
-// 部分アノテーション用の最大長を設定
-Node *Dic::make_specified_pseudo_node_by_dic_check(const char *start_str,
-        unsigned int specified_length, std::string *specified_pos,
-        std::vector<unsigned long> *specified_unk_pos, unsigned int
-        type_family, Node* r_node, unsigned int max_length) {//{{{
+Node *Dic::make_specified_pseudo_node_by_dic_check(const char *start_str, unsigned int specified_length, std::string *specified_pos, std::vector<unsigned long> *specified_unk_pos, unsigned int type_family, Node* r_node, unsigned int max_length = 0) {//{{{
     unsigned long specified_posid = MORPH_DUMMY_POS;
     if(specified_pos) specified_posid = posid2pos.get_id(*specified_pos);
 
@@ -473,13 +469,9 @@ Node *Dic::make_specified_pseudo_node_by_dic_check(const char *start_str,
     // 文字種が連続する範囲をチェック
     for (pos = 0; pos < length; pos += utf8_bytes((unsigned char *)(start_str + pos))) {
         unsigned int used_chars = 0;
-
-        if( max_length != 0 && pos >= max_length ){
-            // 指定された境界を超えるため，これ以上長い未定義語は生成できない
-            break;
-        } else if ( pos != 0  && type_family == TYPE_FAMILY_FIGURE && (used_chars = check_exceptional_chars_in_figure(start_str + pos , length - pos)) > 0 ) {
-            // exceptional figure expression of two characters
-            // 数字を指定していて、かつ数字の例外に当たる場合
+        // exceptional figure expression of two characters
+        // 数字を指定していて、かつ数字の例外に当たる場合
+        if ( pos != 0  && type_family == TYPE_FAMILY_FIGURE && (used_chars = check_exceptional_chars_in_figure(start_str + pos , length - pos)) > 0 ) {
             if(used_chars == 2)
                 pos += utf8_bytes((unsigned char *)(start_str + pos));
             else if(used_chars == 3){
@@ -488,15 +480,15 @@ Node *Dic::make_specified_pseudo_node_by_dic_check(const char *start_str,
             }
                 
             char_num += used_chars;
-        } else if (pos == 0 && compare_char_type_in_family(check_utf8_char_type((unsigned char *)(start_str + pos)), TYPE_FAMILY_PUNC_SYMBOL)){
-            // doesn't start with slash, colon, etc.
+        } // doesn't start with slash, colon, etc.
+        else if (pos == 0 && compare_char_type_in_family(check_utf8_char_type((unsigned char *)(start_str + pos)), TYPE_FAMILY_PUNC_SYMBOL))
             break;
-        } else if (pos == 0 && ustart_str.is_choon(0) ) {//一文字目が伸ばし棒
+        else if (pos == 0 && ustart_str.is_choon(0) )//一文字目が伸ばし棒
             break;
-        } else if (( param->use_suu_rule && (pos == 0 && ustart_str.is_figure_exception(0)) ) &&  // 数が先頭に出現している
+        else if (( param->use_suu_rule && (pos == 0 && ustart_str.is_figure_exception(0)) ) &&  // 数が先頭に出現している
                  (ustart_str.char_size()==1 ||                                // 続く文字がない場合(数は単体で数詞として辞書に登録済み) ，もしくは
                  (ustart_str.is_suuji(1) && !ustart_str.is_suuji_digit(1)))){ // 次が桁を表す数字でない場合
-            // 数十，数百への対応 TODO: 何十
+            // 数十，数百への対応
             // 数の次に桁を表す文字が来ない場合は，ひとかたまりの数詞として扱わない．
             // 数キロ，等は先に上のif文でチェックしているため，ここでは考慮しない
             break;
@@ -515,14 +507,17 @@ Node *Dic::make_specified_pseudo_node_by_dic_check(const char *start_str,
             return make_unk_pseudo_node_list_some_pos_by_dic_check(start_str, pos, specified_posid, specified_unk_pos, r_node);
         else
             return make_unk_pseudo_node_list_some_pos(start_str, pos, specified_posid, specified_unk_pos); 
-    } else {
+    }
+    else {
         return nullptr;
     }
+
 }//}}}
 
 // 辞書と重複しないものだけを作る
 // 作ってr_node に足すことはしない
 // 何も作られなかった場合は nullptr を返す
+// 重複してるとき，delteしてないからリークしてる疑惑
 Node *Dic::make_unk_pseudo_node_list_some_pos_by_dic_check(const char *start_str, int byte_len, unsigned long specified_posid, std::vector<unsigned long> *specified_unk_pos, Node* r_node) {//{{{
     Node *result_node = nullptr;
     if (specified_posid == MORPH_DUMMY_POS ) {

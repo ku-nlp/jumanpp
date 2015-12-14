@@ -10,6 +10,7 @@
 #include "u8string.h"
 #include <math.h>
 #include <memory>
+#include <boost/tr1/unordered_map.hpp>
 #include "rnnlm/rnnlmlib.h"
 
 //namespace SRILM {
@@ -22,8 +23,6 @@
 
 namespace Morph {
 
-//TODO: Sentence クラスが肥大化しすぎている．
-
 class Sentence {//{{{
     Parameter *param;
     Dic *dic;
@@ -33,20 +32,13 @@ class Sentence {//{{{
         
     size_t word_num;
     unsigned int length; // length of this sentence
-    std::string sentence; //Gold用だが名前が悪くてどこで初期化されているか追えない
-    std::string partically_annotated_sentence; // 部分アノテーション付き入力文
-    std::vector<unsigned int> maxlen_for_charnum;
+    std::string sentence;
     const char *sentence_c_str;
     FeatureSet *feature;
     std::vector<Node *> *begin_node_list; // position -> list of nodes that begin at this pos
     std::vector<Node *> *end_node_list;   // position -> list of nodes that end at this pos
     unsigned int reached_pos;
     unsigned int reached_pos_of_pseudo_nodes;
-
-    unsigned int first_delimiter;
-    unsigned int last_delimiter;
-    std::vector<unsigned int> delimiter_position;
-    //std::vector<unsigned int> delimiter_interval;
     bool output_ambiguous_word;
     std::unique_ptr<FeatureSet> beam_feature;
             
@@ -64,15 +56,7 @@ class Sentence {//{{{
     static void init_srilm(Ngram* model, Vocab* vocab);
 #endif
     Sentence(std::vector<Node *> *in_begin_node_list, std::vector<Node *> *in_end_node_list, std::string &in_sentence, Dic *in_dic, FeatureTemplateSet *in_ftmpl, Parameter *in_param);
-    Sentence(std::vector<Node *> *in_begin_node_list, std::vector<Node *> *in_end_node_list, std::string &in_sentence, Dic *in_dic, FeatureTemplateSet *in_ftmpl, Parameter *in_param, std::string delimiter);
     Sentence(size_t max_byte_length, std::vector<Node *> *in_begin_node_list, std::vector<Node *> *in_end_node_list, Dic *in_dic, FeatureTemplateSet *in_ftmpl, Parameter *in_param);
-
-    Sentence(std::vector<Node *> *in_begin_node_list,
-            std::vector<Node *> *in_end_node_list,
-            std::string &in_sentence, Dic *in_dic,
-            FeatureTemplateSet *in_ftmpl, Parameter *in_param,
-            unsigned int format_type ); 
-    
     void init(size_t max_byte_length, std::vector<Node *> *in_begin_node_list, std::vector<Node *> *in_end_node_list, Dic *in_dic, FeatureTemplateSet *in_ftmpl, Parameter *in_param);
     ~Sentence();
     void clear_nodes();
@@ -153,9 +137,7 @@ class Sentence {//{{{
     std::vector<std::string> get_gold_topic_features(TopicVector *tov);
 
     bool lookup_and_analyze();
-    bool lookup_and_analyze_partial(); 
     bool lookup();
-    bool lookup_partial();
     bool analyze();
     bool add_one_word(std::string &word);
     std::string &get_sentence() {
@@ -163,9 +145,6 @@ class Sentence {//{{{
     }
     unsigned int get_length() {
         return length;
-    }
-    std::string &get_pa_sentence() {
-        return partically_annotated_sentence;
     }
 
     // gold でしか使わない
@@ -176,7 +155,6 @@ class Sentence {//{{{
             return feature;
     }//}}}
 
-    // 学習用に探索結果に素性ベクトルを再設定
     void  generate_beam_feature(){//{{{
         if(beam_feature) return;
         if(feature != nullptr) return;
@@ -190,10 +168,9 @@ class Sentence {//{{{
             fs->extract_unigram_feature(n_ptr);
             if(last_node)
                 fs->extract_bigram_feature(last_node,n_ptr);
-            if(last_last_node){
+            if(last_last_node)
                 fs->extract_trigram_feature(last_last_node, last_node, n_ptr);
-            }
-            last_last_node = last_node; // node_before_last
+            last_last_node = last_node;
             last_node = n_ptr;
         }
         beam_feature = std::move(fs); 
@@ -262,6 +239,7 @@ class Sentence {//{{{
         
     Node *get_bos_node();
     Node *get_eos_node();
+    Node *find_best_path();
     void set_begin_node_list(unsigned int pos, Node *new_node);
     void set_end_node_list(unsigned int pos, Node *r_node);
 
@@ -291,15 +269,15 @@ class Sentence {//{{{
     Node *lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, const char *start_str, unsigned int char_num, unsigned int pos, unsigned int specified_length, std::string *specified_pos); 
     Node *lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, const char *start_str, unsigned int specified_length, const std::vector<std::string>& spec); //spec 版
     
-    Node *lookup_and_make_special_pseudo_nodes_lattice_with_max_length(CharLattice &cl, const char *start_str, unsigned int char_num, unsigned int pos, unsigned int specified_length, std::string *specified_pos, unsigned int max_length); 
+    Node *lookup_and_make_special_pseudo_nodes_lattice_with_max_length(
+    CharLattice &cl, const char *start_str, unsigned int char_num,
+    unsigned int pos, unsigned int specified_length, std::string *specified_pos, unsigned int max_length); 
+
     bool check_dict_match(Node* tmp_node, Node* dic_node);
     
     Node *make_unk_pseudo_node_list_from_previous_position(const char *start_str, unsigned int previous_pos);
-    Node *make_unk_pseudo_node_list_from_some_positions(const char *start_str, unsigned int pos, unsigned int previous_pos, unsigned int max_length = 0);
+    Node *make_unk_pseudo_node_list_from_some_positions(const char *start_str, unsigned int pos, unsigned int previous_pos);
     Node *make_unk_pseudo_node_list_by_dic_check(const char *start_str, unsigned int pos, Node *r_node, unsigned int specified_char_num);
-
-    // 最大長を超えるノードを orig_dic から削除し，ポインタを返す
-    Node* filter_long_node(Node* orig_dic, unsigned int max_length);
 
 };//}}}
 
