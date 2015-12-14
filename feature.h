@@ -249,6 +249,7 @@ class FeatureSet { //{{{
         
     std::vector<std::string> fset;
     FeatureVector fvec; //暫定
+        
     FeatureSet(FeatureTemplateSet *in_ftmpl);
     FeatureSet(const FeatureSet& f){
         ftmpl = f.ftmpl;

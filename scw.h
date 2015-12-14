@@ -24,6 +24,16 @@ typedef std::tr1::unordered_map<std::string,double> Umap;
 typedef std::tr1::unordered_map<unsigned long, double> Ulmap; //参考に2015/11 時点での素性数 2,395,735
 typedef std::tr1::unordered_map<std::string, unsigned long> Fimap; 
 
+
+// Boost serialization で unordered_map ,Boost::unordered_map, boost::tr1::unordered_map のどれかをserialize
+// #include boost/serialization/stack.hpp 
+// #include boost/serialization/unordered_collections_load_imp.hpp 
+// #include boost/serialization/unordered_collections_save_imp.hpp 
+// #include boost/serialization/unordered_map.hpp 
+// #include boost/serialization/unordered_set.hpp 
+// #include boost/serialization/void_cast.hpp
+
+
 class FeatureVector;// 今後分離したほうが良い？
 class DiagMat; //Matrix も扱うなら名前を変えるべき
 
