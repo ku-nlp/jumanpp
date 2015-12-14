@@ -13,6 +13,7 @@
 bool MODE_TRAIN = false;
 bool WEIGHT_AVERAGED = false;
 
+// オプション
 void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     option.add<std::string>("dict", 'd', "dict filename", false, "data/japanese.dic");
     option.add<std::string>("model", 'm', "model filename", false, "data/model.mdl");
@@ -47,6 +48,7 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     option.add("notrigram", 0, "do NOT use trigram feature");
     option.add("unknown", 'u', "apply unknown word detection (obsolete; already default)");
     option.add<std::string>("use_lexical_feature", '\0', "change frequent word list for lexical feature",false,"data/freq_words.list"); 
+    option.add("part", '\0', "use partical annotation");
     option.add("debug", '\0', "debug mode");
     option.add("rnndebug", '\0', "show rnnlm debug message");
     option.add("version", 'v', "print version");
@@ -94,9 +96,7 @@ int main(int argc, char** argv) {//{{{
         param.set_passive_unknown(true);
     param.set_model_filename(option.get<std::string>("model"));
     param.set_use_scw(option.exist("scw"));
-    //if(option.exist("Lweight")){
-        param.set_lweight(option.get<double>("Lweight"));
-    //}
+    param.set_lweight(option.get<double>("Lweight"));
     if(option.exist("Cvalue"))
         param.set_C(option.get<double>("Cvalue"));
     if(option.exist("Phi"))
@@ -198,6 +198,11 @@ int main(int argc, char** argv) {//{{{
                 
             tagger.train_lda(option.get<std::string>("train"), tagger_normal);
             tagger.write_bin_model_file(option.get<std::string>("model"));
+        }else if (option.exist("part")) { //部分的アノテーションからの学習
+            tagger.read_bin_model_file(option.get<std::string>("model"));
+            // diagの読み込み
+            //tagger.ptrain(option.get<std::string>("train"));
+            tagger.write_bin_model_file(option.get<std::string>("model")+"+"); //ココのファイル名はオプションで与えられるようにする
         }else{ //通常の学習
             tagger.train(option.get<std::string>("train"));
             tagger.write_bin_model_file(option.get<std::string>("model"));

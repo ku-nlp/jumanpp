@@ -35,6 +35,20 @@ Sentence *Tagger::new_sentence_analyze(std::string &in_sentence) {//{{{
     return sentence;
 }//}}}
 
+// analyze partially annotated sentence
+Sentence *Tagger::partial_annotation_analyze(std::string &in_sentence) {//{{{
+    begin_node_list.clear();
+    end_node_list.clear();
+     
+    // param に user_partial_annotate オプションが渡る
+    std::string delimiter = "\t"; // param.delimiterとする？
+    sentence = new Sentence(&begin_node_list, &end_node_list, in_sentence, &dic, &ftmpl, param, delimiter);
+    FeatureSet::topic = nullptr;
+    sentence->lookup_and_analyze_partial();
+    FeatureSet::topic = nullptr;
+    return sentence;
+}//}}}
+
 Sentence *Tagger::new_sentence_analyze_lda(std::string &in_sentence, TopicVector& topic) {//{{{
     begin_node_list.clear();
     end_node_list.clear();
@@ -139,13 +153,17 @@ bool Tagger::ptrain(const std::string &gsd_file) {//{{{
         double loss_sum_first_quarter = 0;
         double loss_sum_last_quarter = 0;
         cerr << "ITERATION:" << t << endl;
-        if (param->shuffle_training_data) // shuffle training data
+        if (param->shuffle_training_data){ // shuffle training data
             random_shuffle(sentences_for_train.begin(), sentences_for_train.end());
+            // 部分アノテーションの場合は順番が重要かもしれないので要検討
+        }
 
         for (std::vector<Sentence *>::iterator gold = sentences_for_train.begin(); gold != sentences_for_train.end(); gold++) {
-            // Goldも随時解析しなおすほうがいいかもしれない？
-            Sentence* sent = new_sentence_analyze((*gold)->get_sentence()); // 通常の解析
-            loss = sent->eval(**gold); // 表示用にロスを計算
+            // Goldも随時解析しなおす
+            Sentence* gold_analysis = partial_annotation_analyze((*gold)->get_orig_sentence()); //ここでdelimiter が除かれていないものが必要
+            Sentence* sent_analysis = new_sentence_analyze((*gold)->get_sentence()); // 通常の解析
+
+            loss = sent_analysis->eval(*gold_analysis); // 表示用にロスを計算
             loss_sum += loss;
                 
             // 表示用の loss の区間平均
@@ -159,10 +177,10 @@ bool Tagger::ptrain(const std::string &gsd_file) {//{{{
                  << std::distance(sentences_for_train.begin(),gold) << "/" << std::distance(sentences_for_train.begin(), sentences_for_train.end()) //事例数の表示
                  << " avg:" << loss_sum/std::distance(sentences_for_train.begin(),gold) 
                  << " loss:" << loss; //イテレーション内の平均ロス，各事例でのロスを表示
-            online_learning(*gold, sent);
+            online_learning(gold_analysis, sent_analysis);
                 
             //TopicVector sent_topic = sent->get_topic();
-            delete (sent);
+            delete (sent_analysis);
         }
         cerr << endl;
     }
@@ -265,19 +283,7 @@ bool Tagger::read_partial_gold_data(const char *gsd_file) {//{{{
 
     std::string buffer;
     while (getline(gsd_in, buffer)) {
-        std::vector<std::string> word_pos_pairs;
-        split_string(buffer, " ", word_pos_pairs);
-            
-        Sentence *new_sentence = new Sentence(strlen(buffer.c_str()), &begin_node_list, &end_node_list, &dic, &ftmpl, param);
-        for (std::vector<std::string>::iterator it = word_pos_pairs.begin(); it != word_pos_pairs.end(); it++) {
-            if(it->size()>0)
-                new_sentence->lookup_gold_data(*it);
-        }
-            
-        new_sentence->find_best_beam(); // tri-gram 素性を抽出するために beam の方を呼ぶ;
-        new_sentence->set_feature_beam(); // beam のベストの素性を sentence にコピーする;
-        new_sentence->set_gold_nodes_beam();
-        
+        Sentence* new_sentence = partial_annotation_analyze(buffer);
         //new_sentence->print_lattice();
         new_sentence->clear_nodes();
         add_one_sentence_for_train(new_sentence);
