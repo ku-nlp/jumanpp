@@ -902,9 +902,9 @@ void Sentence::print_unified_lattice() {  //{{{
 
                 if (param->debug) {
                     // デバッグ出力
-                    cout << "!\twcost(score):" << node->wcost
-                         << "\tcost(score):" << node->cost << endl;
-                    cout << "!\t" << node->debug_info[
+                    cout << "!\tword score:" << node->wcost
+                         << "\tscore:" << node->cost << endl;
+                    cout << "!\t" << "unigram:" << node->debug_info[
                                          "unigram_feature"]
                          << endl;
                     std::stringstream ss_debug;
@@ -915,61 +915,59 @@ void Sentence::print_unified_lattice() {  //{{{
                         cout << "!\t" << ss_debug.str() << ": "
                              << node->debug_info[ss_debug.str()] << endl;
                         cout << "!\t" << ss_debug.str() << ": "
-                             << node->debug_info[ss_debug.str() +
-                                                 ":bigram_feature"] << endl;
+                             << node->debug_info[ss_debug.str() + ":bigram_feature"] << endl;
 
                         // node のbeam に残っているhistoryをたどる
-                        for (auto tok : node->bq.beam) {
-                            auto hist = tok.node_history;
-                            if (hist.size() > 3 &&
-                                hist[hist.size() - 2]->id == to_id) {
-                                ss_debug.str(
-                                    "");
-                                ss_debug << hist[hist.size() - 3]->id << " -> "
-                                         << hist[hist.size() - 2]->id << " -> "
-                                         << node->id;
-                                cout << "!\t" << ss_debug.str() << ": "
-                                     << node->debug_info[ss_debug.str() +
-                                                         ":trigram_feature"]
-                                     << endl;
-                            }
-                        }
+//                        for (auto tok : node->bq.beam) {
+//                            auto hist = tok.node_history;
+//                            if (hist.size() > 3 &&
+//                                hist[hist.size() - 2]->id == to_id) {
+//                                ss_debug.str(
+//                                    "");
+//                                ss_debug << hist[hist.size() - 3]->id << " -> "
+//                                         << hist[hist.size() - 2]->id << " -> "
+//                                         << node->id;
+////                                cout << "!\t" << ss_debug.str() << ": "
+////                                     << node->debug_info[ss_debug.str() +
+////                                                         ":trigram_feature"]
+////                                     << endl;
+//                            }
+//                        }
                     }
                     // BOS, EOS との接続の表示.. (TODO: 簡潔に書き換え)
-                    ss_debug.str(
-                        "");
-                    ss_debug << -2 << " -> " << node->id;  // BOS
-                    if (node->debug_info.find(ss_debug.str()) !=
-                        node->debug_info.end()) {
-                        cout << "!\t"
-                             << "BOS:" << ss_debug.str() << ": "
-                             << node->debug_info[ss_debug.str()] << endl;
-                    }
-                    if (node->debug_info.find(ss_debug.str() +
-                                              ":bigram_feature") !=
-                        node->debug_info.end()) {
-                        cout << "!\t"
-                             << "BOS:" << ss_debug.str() << ": "
-                             << node->debug_info[ss_debug.str() +
-                                                 ":bigram_feature"] << endl;
-                    }
-                    ss_debug.str(
-                        "");
-                    ss_debug << node->id << " -> " << -1;  // EOS
-                    if (node->debug_info.find(ss_debug.str()) !=
-                        node->debug_info.end()) {
-                        cout << "!\t"
-                             << "EOS:" << ss_debug.str() << ": "
-                             << node->debug_info[ss_debug.str()] << endl;
-                    }
-                    if (node->debug_info.find(ss_debug.str() +
-                                              ":bigram_feature") !=
-                        node->debug_info.end()) {
-                        cout << "!\t"
-                             << "EOS:" << ss_debug.str() << ": "
-                             << node->debug_info[ss_debug.str() +
-                                                 ":bigram_feature"] << endl;
-                    }
+                    ss_debug.str( "");
+//                    ss_debug << -2 << " -> " << node->id;  // BOS
+//                    if (node->debug_info.find(ss_debug.str()) !=
+//                        node->debug_info.end()) {
+//                        cout << "!\t"
+//                             << "BOS:" << ss_debug.str() << ": "
+//                             << node->debug_info[ss_debug.str()] << endl;
+//                    }
+//                    if (node->debug_info.find(ss_debug.str() +
+//                                              ":bigram_feature") !=
+//                        node->debug_info.end()) {
+//                        cout << "!\t"
+//                             << "BOS:" << ss_debug.str() << ": "
+//                             << node->debug_info[ss_debug.str() +
+//                                                 ":bigram_feature"] << endl;
+//                    }
+//                    ss_debug.str(
+//                        "");
+//                    ss_debug << node->id << " -> " << -1;  // EOS
+//                    if (node->debug_info.find(ss_debug.str()) !=
+//                        node->debug_info.end()) {
+//                        cout << "!\t"
+//                             << "EOS:" << ss_debug.str() << ": "
+//                             << node->debug_info[ss_debug.str()] << endl;
+//                    }
+//                    if (node->debug_info.find(ss_debug.str() +
+//                                              ":bigram_feature") !=
+//                        node->debug_info.end()) {
+//                        cout << "!\t"
+//                             << "EOS:" << ss_debug.str() << ": "
+//                             << node->debug_info[ss_debug.str() +
+//                                                 ":bigram_feature"] << endl;
+//                    }
                 }
             }
             node = node->bnext;
@@ -1163,13 +1161,11 @@ void Sentence::print_unified_lattice_rbeam(unsigned int nbest) {  //{{{
                     // デバッグ出力
                     cout << "!\twcost(score):" << node->wcost
                          << "\tcost(score):" << node->cost << endl;
-                    cout << "!\t" << node->debug_info[
-                                         "unigram_feature"]
+                    cout << "!\t" << node->debug_info[ "unigram_feature"]
                          << endl;
                     std::stringstream ss_debug;
                     for (auto to_id : num2id[char_num]) {
-                        ss_debug.str(
-                            "");
+                        ss_debug.str( "");
                         ss_debug << to_id << " -> " << node->id;
                         cout << "!\t" << ss_debug.str() << ": "
                              << node->debug_info[ss_debug.str()] << endl;
@@ -1178,25 +1174,24 @@ void Sentence::print_unified_lattice_rbeam(unsigned int nbest) {  //{{{
                                                  ":bigram_feature"] << endl;
 
                         // node のbeam に残っているhistoryをたどる
-                        for (auto tok : node->bq.beam) {
-                            auto hist = tok.node_history;
-                            if (hist.size() > 3 &&
-                                hist[hist.size() - 2]->id == to_id) {
-                                ss_debug.str(
-                                    "");
-                                ss_debug << hist[hist.size() - 3]->id << " -> "
-                                         << hist[hist.size() - 2]->id << " -> "
-                                         << node->id;
-                                cout << "!\t" << ss_debug.str() << ": "
-                                     << node->debug_info[ss_debug.str() +
-                                                         ":trigram_feature"]
-                                     << endl;
-                            }
-                        }
+//                        for (auto tok : node->bq.beam) {
+//                            auto hist = tok.node_history;
+//                            if (hist.size() > 3 &&
+//                                hist[hist.size() - 2]->id == to_id) {
+//                                ss_debug.str(
+//                                    "");
+//                                ss_debug << hist[hist.size() - 3]->id << " -> "
+//                                         << hist[hist.size() - 2]->id << " -> "
+//                                         << node->id;
+//                                cout << "!\t" << ss_debug.str() << ": "
+//                                     << node->debug_info[ss_debug.str() +
+//                                                         ":trigram_feature"]
+//                                     << endl;
+//                            }
+//                        }
                     }
                     // BOS, EOS との接続の表示.. (TODO: 簡潔に書き換え)
-                    ss_debug.str(
-                        "");
+                    ss_debug.str( "");
                     ss_debug << -2 << " -> " << node->id;  // BOS
                     if (node->debug_info.find(ss_debug.str()) !=
                         node->debug_info.end()) {
@@ -1415,10 +1410,8 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
             }  //}}}
 
             if (param->debug) {  //{{{
-                ss_key.str(
-                    ""),
-                    ss_value.str(
-                        "");
+                ss_key.str(""); 
+                ss_value.str("");
                 ss_key << l_node->id << " -> " << r_node->id;
                 ss_value << bigram_score << " + " << l_node->cost << " = "
                          << l_node->cost + bigram_score;
@@ -1426,12 +1419,8 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
                     std::string(ss_value.str().c_str());
                 l_node->debug_info[ss_key.str().c_str()] =
                     std::string(ss_value.str().c_str());
-                r_node->debug_info[ss_key.str() +
-                                   ":bigram_feature"] =
-                    bi_f.str();
-                l_node->debug_info[ss_key.str() +
-                                   ":bigram_feature"] =
-                    bi_f.str();  // EOS用
+                r_node->debug_info[ss_key.str() + ":bigram_feature"] = bi_f.str();
+                l_node->debug_info[ss_key.str() + ":bigram_feature"] = bi_f.str();  // EOS用
             }                    //}}}
 
             // std::cerr << *l_node->string << "  beam size:" <<
@@ -1466,24 +1455,25 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
                         rnnlm->test_word_selfnm(l_token_with_state.context.get(), &new_c, (*r_node->spos == UNK_POS|| *r_node->spos == "数詞" )?*(r_node->original_surface):*(r_node->base));
                     context_score += rnn_score;
 
-                    if (param->debug)
-                        std::cout << "lw:" << *l_node->original_surface << ":"
-                                  << *l_node->pos
-                                  << " rw:" << *r_node->original_surface << ":"
-                                  << *r_node->pos << " => " << rnn_score
-                                  << std::endl;
+//                    if (param->debug)
+//                        std::cout << "lw:" << *l_node->original_surface << "(" << l_node->wcost << "):"
+//                                  << *l_node->pos << " " << *l_node->spos
+//                                  << " rw:" << *r_node->original_surface << "(" << r_node->wcost << "):"
+//                                  << *r_node->pos << " " << *l_node->spos
+//                                  << " => " << rnn_score
+//                                  << std::endl;
                 } else if (param->rnnlm) {
                     rnn_score =
                         (param->rweight) *
                         rnnlm->test_word(l_token_with_state.context.get(), &new_c, (*r_node->spos == UNK_POS|| *r_node->spos == "数詞" )?*(r_node->original_surface):*(r_node->base));
                     context_score += rnn_score;
 
-                    if (param->debug)
-                        std::cout << "lw:" << *l_node->original_surface << ":"
-                                  << *l_node->pos
-                                  << " rw:" << *r_node->original_surface << ":"
-                                  << *r_node->pos << " => " << rnn_score
-                                  << std::endl;
+//                    if (param->debug)
+//                        std::cout << "lw:" << *l_node->original_surface << ":"
+//                                  << *l_node->pos
+//                                  << " rw:" << *r_node->original_surface << ":"
+//                                  << *r_node->pos << " => " << rnn_score
+//                                  << std::endl;
                 } 
 #ifdef USE_SRILM
                 else if (param->srilm) {/*{{{*/
@@ -1532,37 +1522,41 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
                     trigram_score = (1.0 - param->rweight) *
                                     tri_f.calc_inner_product_with_weight();
                     score += trigram_score;
-                    if (param->debug) {  //{{{
-                        ss_key.str(
-                            ""),
-                            ss_value.str(
-                                "");
-                        ss_key
-                            << l_token_with_state.node_history[history_size - 2]
-                                   ->id << " -> " << l_node->id << " -> "
-                            << r_node->id;
-                        ss_value << "cost:" << l_node->cost
-                                 << " + bi:" << bigram_score
-                                 << " + tri:" << trigram_score
-                                 << " + rnn:" << rnn_score << " = "
-                                 << context_score + score;
-                        r_node->debug_info[ss_key.str().c_str()] =
-                            ss_value.str();
-                        l_node->debug_info[ss_key.str().c_str()] =
-                            ss_value.str();
-                        r_node->debug_info[ss_key.str() +
-                                           ":trigram_feature"] =
-                            tri_f.str();
-                        l_node->debug_info[ss_key.str() +
-                                           ":trigram_feature"] =
-                            tri_f.str();  // EOS用
-                    }                     //}}}
+//                    if (param->debug) {  //{{{
+//                        ss_key.str(
+//                            ""),
+//                            ss_value.str(
+//                                "");
+//                        ss_key
+//                            << l_token_with_state.node_history[history_size - 2]
+//                                   ->id << " -> " << l_node->id << " -> "
+//                            << r_node->id;
+//                        ss_value << "cost:" << l_node->cost
+//                                 << " + bi:" << bigram_score
+//                                 << " + tri:" << trigram_score
+//                                 << " + rnn:" << rnn_score << " = "
+//                                 << context_score + score;
+//                        r_node->debug_info[ss_key.str().c_str()] =
+//                            ss_value.str();
+//                        l_node->debug_info[ss_key.str().c_str()] =
+//                            ss_value.str();
+//                        r_node->debug_info[ss_key.str() +
+//                                           ":trigram_feature"] =
+//                            tri_f.str();
+//                        l_node->debug_info[ss_key.str() +
+//                                           ":trigram_feature"] =
+//                            tri_f.str();  // EOS用
+//                    }                     //}}}
                 }
 
                 TokenWithState tok(r_node, l_token_with_state);
                 tok.score = score;
                 tok.context_score = context_score;
 
+//                std::cout << "lw:" << *l_node->original_surface << "(" << *l_node->pos << " " << *l_node->spos << "):" 
+//                         << " rw:" << *r_node->original_surface << "(" << *r_node->pos << " " << *l_node->spos << "):" 
+//                         << " => feature score:" << score << " context_score:" << context_score << std::endl;
+                    
                 // save the feature
                 // tok.f->append_feature(r_node->feature); //unigram
                 // tok.f->append_feature(&bi_f);

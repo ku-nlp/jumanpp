@@ -238,7 +238,7 @@ class FeatureSet { //{{{
     FeatureTemplateSet *ftmpl;
     FeatureVector* weight;
   private:
-    static std::unordered_map<std::string,long int> feature_map; //sub_feature_map
+    static std::unordered_map<long int,std::string> feature_map; //sub_feature_map
     static bool debug_flag;
     static bool use_total_sim;
 

@@ -17,7 +17,7 @@ bool FeatureSet::use_total_sim = false;
 bool FeatureSet::debug_flag = false;
 std::unordered_set<std::tuple<std::string, std::string, std::string, std::string>, tuple_hash, tuple_equal> FeatureSet::freq_word_set;
 
-std::unordered_map<std::string,long int> FeatureSet::feature_map;
+std::unordered_map<long int,std::string> FeatureSet::feature_map;
 //std::tr1::unordered_map<std::vector<long int>,unsigned long> FeatureSet::feature_id_map;
 
 FeatureSet::FeatureSet(FeatureTemplateSet *in_ftmpl) {//{{{
@@ -29,63 +29,85 @@ FeatureSet::~FeatureSet() {//{{{
 	fset.clear(); //ここでdouble free? 
 }//}}}
 
+// TODO:デバッグ用の素性名生成を分離する．
 void FeatureSet::extract_unigram_feature(Node *node) {//{{{
     static std::vector<unsigned long> fv; // TODO:外部から与える形に変更する.
+    std::stringstream feature_name;
     for (std::vector<FeatureTemplate *>::iterator tmpl_it = ftmpl->get_templates()->begin(); tmpl_it != ftmpl->get_templates()->end(); tmpl_it++) {
         if (!((*tmpl_it)->get_is_unigram())) // skip bigram and trigram feature template
             continue;
         fv.clear();
-        // 素性のタイプを表す ID
+        feature_name.str("");
+        if(debug_flag) feature_name << (*tmpl_it)->get_name(); 
         fv.push_back((*tmpl_it)->get_name_hash()); 
-        for (std::vector<unsigned int>::iterator it = (*tmpl_it)->get_features()->begin(); it != (*tmpl_it)->get_features()->end(); it++) {
-            if (*it == FEATURE_MACRO_WORD){
+        for (std::vector<unsigned int>::iterator it = (*tmpl_it)->get_features()->begin(); it != (*tmpl_it)->get_features()->end(); it++){
+            if(debug_flag) feature_name<<":";
+            if (*it == FEATURE_MACRO_WORD){ 
+                if(debug_flag) feature_name << *(node->string);
                 fv.push_back(get_feature_id(*(node->string)));
-            }else if (*it == FEATURE_MACRO_POS){
+            }else if (*it == FEATURE_MACRO_POS){ //品詞
+                if(debug_flag) feature_name << *(node->pos);
                 fv.push_back(node->posid);
             }else if (*it == FEATURE_MACRO_SPOS){ //品詞細分類
+                if(debug_flag) feature_name << *(node->spos);
                 fv.push_back(node->sposid);
             }else if (*it == FEATURE_MACRO_FORM){ //活用形
+                if(debug_flag) feature_name << *(node->form);
                 fv.push_back(node->formid);
             }else if (*it == FEATURE_MACRO_FORM_TYPE){ //活用型
+                if(debug_flag) feature_name << *(node->form_type);
                 fv.push_back(node->formtypeid);
             }else if (*it == FEATURE_MACRO_FUNCTIONAL_WORD) { //機能語
                 if( *(node->pos) == "助詞" || *(node->pos) == "助動詞" || *(node->pos) == "判定詞"){
+                    if(debug_flag) feature_name << *(node->string) << "," << *(node->pos) << "," << *(node->spos);
                     fv.push_back(get_feature_id(*(node->string)));
                     fv.push_back(node->posid);
                     fv.push_back(node->sposid);
                     fv.push_back(0);
                 }else{
+                    if(debug_flag) feature_name << *(node->pos);
                     fv.push_back(node->posid);
                     fv.push_back(0);
                 }
             } else if (*it == FEATURE_MACRO_BASE_WORD){ //原型
+                if(debug_flag) feature_name << *(node->base);
                 fv.push_back(node->baseid);
             } else if (*it == FEATURE_MACRO_DEVOICE){ //濁音化
                 if ( node->stat == MORPH_DEVOICE_NODE){ //濁音化している
+                    if(debug_flag) feature_name << "濁音化";
                     fv.push_back(1);
                 }else{
+                    if(debug_flag) feature_name << "-";
                     fv.push_back(2);
                 }
             } else if (*it == FEATURE_MACRO_LENGTH){
+                if(debug_flag) feature_name  << node->get_char_num();
                 fv.push_back(node->get_char_num());
             } else if (*it == FEATURE_MACRO_LONGER){ // 辞書に登録されているよりも長い動的生成語彙(未知語, 数詞等)
+                if(debug_flag && node->longer) feature_name << "+"; else feature_name << "-";
                 fv.push_back(node->longer);
             } else if (*it == FEATURE_MACRO_NUMSTR){ // 数字としても解釈可能な単語につく素性
+                if(debug_flag && node->suuji) feature_name << "+"; else feature_name << "-";
                 fv.push_back(node->suuji);
             } else if (*it == FEATURE_MACRO_BEGINNING_CHAR){
                 std::string f;
                 f.append(node->get_first_char(), (node->stat & MORPH_PSEUDO_NODE) ? strlen(node->get_first_char()) : utf8_bytes((unsigned char *)node->get_first_char()));
+                if(debug_flag) feature_name << f;
                 fv.push_back(get_feature_id(f)); // 暫定
             } else if (*it == FEATURE_MACRO_ENDING_CHAR) {
+                if(debug_flag) feature_name << *(node->end_string);
                 fv.push_back(get_feature_id(*(node->end_string)));
             } else if (*it == FEATURE_MACRO_BEGINNING_CHAR_TYPE) {
+                if(debug_flag) feature_name  << node->char_family; 
                 fv.push_back(node->char_family);
             } else if (*it == FEATURE_MACRO_ENDING_CHAR_TYPE) {
+                if(debug_flag) feature_name << node->end_char_family;
                 fv.push_back(node->end_char_family);
             } else if (*it == FEATURE_MACRO_FEATURE1) { // Wikipedia (test)
                 fv.push_back(node->lcAttr);
             } else if (*it == FEATURE_MACRO_LEXICAL) { // 
                 if( freq_word_set.count(std::make_tuple(*(node->base),*(node->pos),*(node->spos),*(node->form_type))) > 0){
+                    if(debug_flag) feature_name << *(node->string) << "," << *(node->pos) << "," << *(node->spos) << "," << *(node->form_type) << "," << *(node->form);
                     fv.push_back(get_feature_id(*(node->string)));
                     fv.push_back(node->posid);
                     fv.push_back(node->sposid);
@@ -93,6 +115,7 @@ void FeatureSet::extract_unigram_feature(Node *node) {//{{{
                     fv.push_back(node->formid);
                     fv.push_back(0);
                 }else{
+                    if(debug_flag) feature_name << *(node->pos);
                     fv.push_back(node->posid);
                     fv.push_back(0);
                 }
@@ -100,57 +123,79 @@ void FeatureSet::extract_unigram_feature(Node *node) {//{{{
         }
         auto feature_key = boost::hash_range(fv.begin(),fv.end()); 
         fvec[feature_key]+=1;
+        auto fmap = &feature_map[feature_key];
+        if(fmap->empty()) *fmap = feature_name.str();
     }
 }//}}}
 
+// TODO: せめて，左右をまとめて扱えるようにする
 void FeatureSet::extract_bigram_feature(Node *l_node, Node *r_node) {//{{{
     static std::vector<unsigned long> fv; // TODO:外部から与える形に変更する.
+    std::stringstream feature_name;
     for (std::vector<FeatureTemplate *>::iterator tmpl_it = ftmpl->get_templates()->begin(); tmpl_it != ftmpl->get_templates()->end(); tmpl_it++) {
         if (!(*tmpl_it)->get_is_bigram()) // skip unigram and trigram feature template
             continue;
         fv.clear();
+        feature_name.str("");
+        if(debug_flag) feature_name << (*tmpl_it)->get_name(); 
         fv.push_back((*tmpl_it)->get_name_hash()); 
         for (std::vector<unsigned int>::iterator it = (*tmpl_it)->get_features()->begin(); it != (*tmpl_it)->get_features()->end(); it++) {
+            if(debug_flag) feature_name<<":";
             if (*it == FEATURE_MACRO_LEFT_WORD){
+                if(debug_flag) feature_name << *(l_node->string);
                 fv.push_back(get_feature_id(*(l_node->string)));
             } else if (*it == FEATURE_MACRO_LEFT_POS){
+                if(debug_flag) feature_name << *(l_node->pos);
                 fv.push_back(l_node->posid);
             }else if (*it == FEATURE_MACRO_LEFT_SPOS){
+                if(debug_flag) feature_name << *(l_node->spos);
                 fv.push_back(l_node->sposid);
             }else if (*it == FEATURE_MACRO_LEFT_FORM){
+                if(debug_flag) feature_name << *(l_node->form);
                 fv.push_back(l_node->formid);
             }else if (*it == FEATURE_MACRO_LEFT_FORM_TYPE){
+                if(debug_flag) feature_name << *(l_node->form_type);
                 fv.push_back(l_node->formtypeid);
             }else if (*it == FEATURE_MACRO_LEFT_FUNCTIONAL_WORD){
                 if( *(l_node->pos) == "助詞" || *(l_node->pos) == "助動詞" || *(l_node->pos) == "判定詞"){
+                    if(debug_flag) feature_name << *(l_node->string) << "," << *(l_node->pos) << "," << *(l_node->spos);
                     fv.push_back(get_feature_id(*(l_node->string)));
                     fv.push_back(l_node->posid);
                     fv.push_back(l_node->sposid);
                     fv.push_back(0);
                 }else{
+                    if(debug_flag) feature_name << *(l_node->pos);
                     fv.push_back(l_node->posid);
                     fv.push_back(0);
                 }
             } else if (*it == FEATURE_MACRO_LEFT_BASE_WORD){ //原型
+                if(debug_flag) feature_name << *(l_node->base);
                 fv.push_back(l_node->baseid);
             } else if (*it == FEATURE_MACRO_LEFT_LENGTH){
+                if(debug_flag) feature_name << l_node->get_char_num();
                 fv.push_back(l_node->get_char_num());
             } else if (*it == FEATURE_MACRO_LEFT_LONGER){
+                if(debug_flag && l_node->longer) feature_name << "+"; else feature_name << "-";
                 fv.push_back(l_node->longer);
             }else if (*it == FEATURE_MACRO_LEFT_BEGINNING_CHAR){
                 std::string f;
                 f.append(l_node->get_first_char(), (l_node->stat & MORPH_PSEUDO_NODE) ? strlen(l_node->get_first_char()) : utf8_bytes((unsigned char *)l_node->get_first_char()));
+                if(debug_flag) feature_name << f;
                 fv.push_back(get_feature_id(f)); // 暫定
             }else if (*it == FEATURE_MACRO_LEFT_ENDING_CHAR) {
+                if(debug_flag) feature_name << *(l_node->end_string);
                 fv.push_back(get_feature_id(*(l_node->end_string)));
-            } else if (*it == FEATURE_MACRO_LEFT_BEGINNING_CHAR_TYPE){
+            } else if (*it == FEATURE_MACRO_LEFT_BEGINNING_CHAR_TYPE) {
+                if(debug_flag) feature_name << l_node->char_family; 
                 fv.push_back(l_node->char_family);
-            } else if (*it == FEATURE_MACRO_LEFT_ENDING_CHAR_TYPE){
+            } else if (*it == FEATURE_MACRO_LEFT_ENDING_CHAR_TYPE) {
+                if(debug_flag) feature_name << l_node->end_char_family; 
                 fv.push_back(l_node->end_char_family);
-            } else if (*it == FEATURE_MACRO_LEFT_DUMMY){ 
+            } else if (*it == FEATURE_MACRO_LEFT_DUMMY) { 
                 fv.push_back(3);
             } else if (*it == FEATURE_MACRO_LEFT_LEXICAL){ // 
                 if( freq_word_set.count(std::make_tuple(*(l_node->base),*(l_node->pos),*(l_node->spos),*(l_node->form_type))) > 0 ){
+                    if(debug_flag) feature_name << *(l_node->string) << "," << *(l_node->pos) << "," << *(l_node->spos) << "," << *(l_node->form_type) << "," << *(l_node->form);
                     fv.push_back(get_feature_id(*(l_node->string)));
                     fv.push_back(l_node->posid);
                     fv.push_back(l_node->sposid);
@@ -158,51 +203,67 @@ void FeatureSet::extract_bigram_feature(Node *l_node, Node *r_node) {//{{{
                     fv.push_back(l_node->formid);
                     fv.push_back(0);
                 } else {
+                    if(debug_flag) feature_name << *(l_node->pos);
                     fv.push_back(l_node->posid);
                     fv.push_back(0);
                 }
             }
             // right
             else if (*it == FEATURE_MACRO_RIGHT_WORD){
+                if(debug_flag) feature_name << *(r_node->string);
                 fv.push_back(get_feature_id(*(r_node->string)));
             } else if (*it == FEATURE_MACRO_RIGHT_POS){
+                if(debug_flag) feature_name << *(l_node->pos);
                 fv.push_back(r_node->posid);
             } else if (*it == FEATURE_MACRO_RIGHT_SPOS){
+                if(debug_flag) feature_name << *(l_node->spos);
                 fv.push_back(r_node->sposid);
             } else if (*it == FEATURE_MACRO_RIGHT_FORM){
+                if(debug_flag) feature_name << *(l_node->form);
                 fv.push_back(r_node->formid);
             }else if (*it == FEATURE_MACRO_RIGHT_FORM_TYPE){
+                if(debug_flag) feature_name << *(l_node->form_type);
                 fv.push_back(r_node->formtypeid);
             }else if (*it == FEATURE_MACRO_RIGHT_FUNCTIONAL_WORD){
                 if( *(r_node->pos) == "助詞" || *(r_node->pos) == "助動詞" || *(r_node->pos) == "判定詞"){
+                    if(debug_flag) feature_name << *(l_node->string) << "," << *(l_node->pos) << "," << *(l_node->spos);
                     fv.push_back(get_feature_id(*(r_node->string)));
                     fv.push_back(r_node->posid);
                     fv.push_back(r_node->sposid);
                     fv.push_back(0);
                 }else{
+                    if(debug_flag) feature_name << *(l_node->pos);
                     fv.push_back(r_node->posid);
                     fv.push_back(0);
                 }
             }else if (*it == FEATURE_MACRO_RIGHT_BASE_WORD){ //原型
+                if(debug_flag) feature_name << *(l_node->base);
                 fv.push_back(r_node->baseid);
             }else if (*it == FEATURE_MACRO_RIGHT_LENGTH){
+                if(debug_flag) feature_name << l_node->get_char_num();
                 fv.push_back(r_node->get_char_num());
             }else if (*it == FEATURE_MACRO_RIGHT_LONGER){
+                if(debug_flag && l_node->longer) feature_name << "+"; else feature_name << "-";
                 fv.push_back(r_node->longer);
             }else if (*it == FEATURE_MACRO_RIGHT_BEGINNING_CHAR){
                 std::string f;
                 f.append(r_node->get_first_char(), (r_node->stat & MORPH_PSEUDO_NODE) ? strlen(r_node->get_first_char()) : utf8_bytes((unsigned char *)r_node->get_first_char()));
+                if(debug_flag) feature_name << f;
                 fv.push_back(get_feature_id(f));
             }else if (*it == FEATURE_MACRO_RIGHT_ENDING_CHAR){
+                if(debug_flag) feature_name << *(l_node->end_string);
                 fv.push_back(get_feature_id(*(r_node->end_string)));
             }else if (*it == FEATURE_MACRO_RIGHT_BEGINNING_CHAR_TYPE){
+                if(debug_flag) feature_name << l_node->char_family; 
                 fv.push_back(r_node->char_family);
             }else if (*it == FEATURE_MACRO_RIGHT_ENDING_CHAR_TYPE){
+                if(debug_flag) feature_name << l_node->end_char_family; 
                 fv.push_back(r_node->end_char_family);
             } else if (*it == FEATURE_MACRO_RIGHT_DUMMY){ 
                 fv.push_back(3);
             } else if (*it == FEATURE_MACRO_RIGHT_LEXICAL){ // 
                 if( freq_word_set.count(std::make_tuple(*(r_node->base),*(r_node->pos),*(r_node->spos),*(r_node->form_type))) > 0 ){
+                    if(debug_flag) feature_name << *(l_node->string) << "," << *(l_node->pos) << "," << *(l_node->spos) << "," << *(l_node->form_type) << "," << *(l_node->form);
                     fv.push_back(get_feature_id(*(r_node->string)));
                     fv.push_back(r_node->posid);
                     fv.push_back(r_node->sposid);
@@ -210,6 +271,7 @@ void FeatureSet::extract_bigram_feature(Node *l_node, Node *r_node) {//{{{
                     fv.push_back(r_node->formid);
                     fv.push_back(0);
                 } else {
+                    if(debug_flag) feature_name << *(l_node->pos);
                     fv.push_back(r_node->posid);
                     fv.push_back(0);
                 }
@@ -217,6 +279,8 @@ void FeatureSet::extract_bigram_feature(Node *l_node, Node *r_node) {//{{{
         }
         auto feature_key = boost::hash_range(fv.begin(),fv.end()); 
         fvec[feature_key]+=1;
+        auto fmap = &feature_map[feature_key];
+        if(fmap->empty()) *fmap = feature_name.str();
     }
 }//}}}
 
@@ -535,10 +599,27 @@ bool FeatureSet::open_freq_word_set(const std::string &list_filename) {//{{{
 
 std::string FeatureSet::str(){//{{{
     std::stringstream ss;
-    for (auto it = weight->begin(); it != weight->end(); it++) {
-        ss << it->first << " x " << it->second << " ";
-        //ss << *it << "x" << (*weight)[*it] << " ";
+    std::vector<std::pair<std::string,double>> fpair;
+    for (auto it = fvec.begin(); it != fvec.end(); it++) {
+        ss.str("");
+        ss << feature_map[it->first] << "x" << it->second * (*weight)[it->first];
+        fpair.push_back(make_pair(ss.str(), it->second * (*weight)[it->first]));
     }
+
+    std::sort(fpair.begin(), fpair.end(),[](std::pair<std::string,double> &left,std::pair<std::string,double> &right)->int{return (std::abs(left.second) > std::abs(right.second));});
+    ss.str("");
+    for (auto it = fpair.begin(); it != fpair.end(); it++) {
+        if(std::abs(it->second) > 0.5 )
+            ss << "\e[31m" << it->first << "\e[39m" << " "; //Red
+        else if(std::abs(it->second) > 0.1 )
+            ss << "\e[35m" << it->first << "\e[39m" << " "; //Yellow
+        else if(std::abs(it->second) > 0.05 )
+            ss << "\e[33m" << it->first << "\e[39m" << " "; //Yellow
+        else
+            ss << it->first << " ";
+            
+    }
+
     return ss.str();
 };//}}}
 
