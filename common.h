@@ -9,6 +9,8 @@
 #include <vector>
 #include <climits>
 #include <unordered_map>
+
+#include <boost/functional/hash.hpp>
 #include <map>
 #include <set>
 #include <deque>
@@ -22,9 +24,13 @@
 #include <string.h>
 #include <float.h>
 
-#include <boost/tr1/unordered_map.hpp>
-typedef std::tr1::unordered_map<std::string,double> Umap;
+//typedef std::tr1::unordered_map Umap;
+typedef std::unordered_map<std::string,double> Umap;
+
+
 typedef std::vector<double> TopicVector; 
+//#include "feature.h"
+//#include "scw.h"
 
 using std::cin;
 using std::cout;
@@ -33,6 +39,7 @@ using std::endl;
 
 extern bool MODE_TRAIN;
 extern bool WEIGHT_AVERAGED;
+
 
 int main(int argc, char** argv); 
 

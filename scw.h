@@ -7,22 +7,20 @@
 #include <algorithm>
 #include <utility>
 
-#include <boost/tr1/unordered_map.hpp>
-#include <boost/serialization/string.hpp>
-#include <boost/serialization/vector.hpp>
-#include <boost/serialization/base_object.hpp>
+#include <unordered_map>
+#include <boost/functional/hash.hpp>
 #include <boost/serialization/unordered_map.hpp>
-#include "unordered_map_serialization.hpp"
 
-#include <boost/serialization/unordered_collections_load_imp.hpp>
-#include <boost/serialization/unordered_collections_save_imp.hpp>
-
-#include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
 
-typedef std::tr1::unordered_map<std::string,double> Umap;
-typedef std::tr1::unordered_map<unsigned long, double> Ulmap; //参考に2015/11 時点での素性数 2,395,735
-typedef std::tr1::unordered_map<std::string, unsigned long> Fimap; 
+// これをinclude しないとリンクに失敗する．(2015/12/14 boost 1.59)
+#include <boost/archive/impl/basic_binary_oarchive.ipp>
+#include <boost/archive/impl/basic_binary_iarchive.ipp>
+
+typedef std::unordered_map<std::string,double> Umap;
+typedef std::unordered_map<unsigned long, double> Ulmap; //参考に2015/11 時点での素性数 2,395,735
+typedef std::unordered_map<std::string, unsigned long> Fimap; 
 
 
 // Boost serialization で unordered_map ,Boost::unordered_map, boost::tr1::unordered_map のどれかをserialize

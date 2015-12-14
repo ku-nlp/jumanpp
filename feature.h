@@ -9,7 +9,6 @@
 #include <memory>
 #include <tuple>
 #include <unordered_set>
-#include <boost/tr1/unordered_map.hpp>
 #include <functional>
 
 namespace Morph {

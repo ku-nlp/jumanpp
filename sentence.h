@@ -10,7 +10,6 @@
 #include "u8string.h"
 #include <math.h>
 #include <memory>
-#include <boost/tr1/unordered_map.hpp>
 #include "rnnlm/rnnlmlib.h"
 
 //namespace SRILM {

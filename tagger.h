@@ -8,14 +8,6 @@
 #include "parameter.h"
 #include "dic.h"
 #include "scw.h"
-#include <boost/tr1/unordered_map.hpp>
-#include <boost/serialization/string.hpp>
-#include <boost/serialization/unordered_map.hpp>
-#include <boost/archive/binary_oarchive.hpp>
-#include <boost/archive/binary_iarchive.hpp>
-
-
-
 #include <lzma.h>
 
 namespace Morph {

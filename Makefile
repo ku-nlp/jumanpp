@@ -55,10 +55,10 @@ kkn_test: $(OBJECTS_TEST) $(HEADERS)
 	$(CXX) $(CXXFLAGS) $(LD_FLAGS) -lboost_unit_test_framework -o $@ $(OBJECTS_TEST) $(SRILM_OBJS) -D KKN_UNIT_TEST
 
 kkn: $(OBJECTS) $(HEADERS)
-	$(CXX) $(CXXFLAGS) $(LD_FLAGS) -lboost_serialization  -o $@ $(OBJECTS) # $(SRILM_OBJS)
+	$(CXX) $(CXXFLAGS) $(LD_FLAGS) -lboost_serialization -o $@ $(OBJECTS) # $(SRILM_OBJS)
 
 kkn_g: $(OBJECTS) $(OBJECTS:%.o=%.og) $(HEADERS)
-	$(CXX) $(CXXFLAGS_G) $(LD_FLAGS) $(DEBUG_LIBS) -lboost_serialization  -o $@ $(OBJECTS:%.o=%.og) #$(SRILM_OBJS)
+	$(CXX) $(CXXFLAGS_G) $(LD_FLAGS) $(DEBUG_LIBS) -lboost_serialization -o $@ $(OBJECTS:%.o=%.og) #$(SRILM_OBJS)
 
 mkdarts: $(MKDARTS_OBJECTS) $(MKDARTS_HEADERS)
 	$(CXX) $(CXXFLAGS) $(LD_FLAGS) -lboost_serialization  -o $@ $(MKDARTS_OBJECTS)
