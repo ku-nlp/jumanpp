@@ -19,7 +19,7 @@ FeatureVector::FeatureVector(const std::vector<unsigned long>& v1){/*{{{*/
 
 double FeatureVector::operator* (const FeatureVector& fv) const{/*{{{*/
     double sum = 0.0;
-    if(vec.size() > fv.size()){
+    if(vec.size() > fv.vec.size()){
         for(const auto& f:fv){
             auto itr = vec.find(f.first);
             if(itr != vec.end())
@@ -27,7 +27,7 @@ double FeatureVector::operator* (const FeatureVector& fv) const{/*{{{*/
         }
     }else{
         for(const auto& f:vec){
-            auto itr = fv.find(f.first);
+            auto itr = fv.vec.find(f.first);
             if(itr != fv.end())
                 sum += f.second * itr->second;
         }

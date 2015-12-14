@@ -458,7 +458,7 @@ Node *Dic::make_unk_pseudo_node(const char *start_str, int byte_len, unsigned lo
 //sentence.cc:339: 
 // 名前が変？指定した文字種が連続する範囲で全品詞について未定義語ノードを生成
 // 辞書をr_node で受け取り、重複をチェック
-Node *Dic::make_specified_pseudo_node_by_dic_check(const char *start_str, unsigned int specified_length, std::string *specified_pos, std::vector<unsigned long> *specified_unk_pos, unsigned int type_family, Node* r_node) {//{{{
+Node *Dic::make_specified_pseudo_node_by_dic_check(const char *start_str, unsigned int specified_length, std::string *specified_pos, std::vector<unsigned long> *specified_unk_pos, unsigned int type_family, Node* r_node, unsigned int max_length = 0) {//{{{
     unsigned long specified_posid = MORPH_DUMMY_POS;
     if(specified_pos) specified_posid = posid2pos.get_id(*specified_pos);
 

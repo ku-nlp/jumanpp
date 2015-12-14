@@ -267,6 +267,11 @@ class Sentence {//{{{
     Node *lookup_and_make_special_pseudo_nodes(const char *start_str, unsigned int specified_length, const std::vector<std::string>& spec);
     Node *lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, const char *start_str, unsigned int char_num, unsigned int pos, unsigned int specified_length, std::string *specified_pos); 
     Node *lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, const char *start_str, unsigned int specified_length, const std::vector<std::string>& spec); //spec 版
+    
+    Node *lookup_and_make_special_pseudo_nodes_lattice_with_max_length(
+    CharLattice &cl, const char *start_str, unsigned int char_num,
+    unsigned int pos, unsigned int specified_length, std::string *specified_pos, unsigned int max_length); 
+
     bool check_dict_match(Node* tmp_node, Node* dic_node);
     
     Node *make_unk_pseudo_node_list_from_previous_position(const char *start_str, unsigned int previous_pos);
