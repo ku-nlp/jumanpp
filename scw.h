@@ -22,16 +22,6 @@ typedef std::unordered_map<std::string,double> Umap;
 typedef std::unordered_map<unsigned long, double> Ulmap; //参考に2015/11 時点での素性数 2,395,735
 typedef std::unordered_map<std::string, unsigned long> Fimap; 
 
-
-// Boost serialization で unordered_map ,Boost::unordered_map, boost::tr1::unordered_map のどれかをserialize
-// #include boost/serialization/stack.hpp 
-// #include boost/serialization/unordered_collections_load_imp.hpp 
-// #include boost/serialization/unordered_collections_save_imp.hpp 
-// #include boost/serialization/unordered_map.hpp 
-// #include boost/serialization/unordered_set.hpp 
-// #include boost/serialization/void_cast.hpp
-
-
 class FeatureVector;// 今後分離したほうが良い？
 class DiagMat; //Matrix も扱うなら名前を変えるべき
 
@@ -84,6 +74,7 @@ class FeatureVector{// ただのunordered_map のラップ/*{{{*/
             ss << std::endl;
             return std::move(ss.str());
         };/*}}}*/
+
         inline void clear(){ vec.clear();};
         Ulmap& get_umap(){return vec;}
         Ulmap::iterator begin(){return vec.begin();};
@@ -102,70 +93,6 @@ private:
         }
 
 };/*}}}*/
-
-//class FeatureVector_STR{// 基本的に ただのunordered_map のラップ/*{{{*/
-//    //TODO: unorderd_map<string,double> と同じようなインターフェースのまま，内部を<unsigned long, double> のunordered mapに変える....
-//    //TODO: 内部でunordered_map<string,unsigned long> の素性番号マップを持っておく.
-//    Umap vec;
-//    //Ulmap lvec;
-//    
-//    //static str2id;
-//    public:
-//        FeatureVector(){vec.clear(); };
-//        FeatureVector(const std::vector<std::string>& v1, const std::vector<std::string>& v2);
-//        FeatureVector(const std::vector<std::string>& v1);
-//
-//        void update(double alpha, double y, const DiagMat& sigma, const FeatureVector& xt);
-//        double operator* (const FeatureVector& fv) const;
-//        bool has_key(const std::string& str){
-//            return vec.find(str)!=vec.end();
-//        };
-//        double& operator[](const std::string& s){
-//            auto itr=vec.find(s);
-//            if(itr == vec.end()){
-//                //insert してイテレータ返したほうが良い
-//                vec[s] = 0;
-//                return vec[s];
-//            }else{
-//                return itr->second;
-//            }
-//        };
-//
-//        FeatureVector& merge(const FeatureVector &fv){
-//            for(const auto &st:fv){
-//                vec[st.first] += st.second;
-//            }
-//            return *this;
-//        }
-//        Umap::iterator find(std::string& key){ return vec.find(key); }
-//        
-//        inline std::string str(){  
-//            std::stringstream ss;
-//            for(const auto &st:vec){
-//                ss << st.first << ":" << st.second << " ";
-//            }
-//            ss << std::endl;
-//            return std::move(ss.str());
-//        };
-//        inline void clear(){ vec.clear(); };
-//        //operator Umap(){return vec;}
-//        Umap& get_umap(){return vec;}
-//        Umap::iterator begin(){return vec.begin();};
-//        Umap::iterator end(){return vec.end();};
-//        Umap::const_iterator begin()const{return vec.cbegin();};
-//        Umap::const_iterator end()const{return vec.cend();};
-//        Umap::const_iterator cbegin()const{return vec.cbegin();};
-//        Umap::const_iterator cend()const{return vec.cend();};
-//
-//private:
-//    friend class boost::serialization::access;
-//    template<class Archive>
-//        void serialize(Archive& ar, const unsigned int version)
-//        {
-//            ar & vec;
-//        }
-//
-//};/*}}}*/
 
 // Sparse Matrix
 class DiagMat{/*{{{*/
@@ -223,23 +150,6 @@ class DiagMat{/*{{{*/
         Ulmap::const_iterator cend()const{return vec.cend();};
 };/*}}}*/
 
-//class DiagMat_str{/*{{{*/
-//    private:
-//        Umap vec;
-//    public:
-//        void update(double beta, const FeatureVector& x);
-//        double get_value(const std::string& sp1)const;
-//        inline double& operator[](const std::string& s){ return ref_value(s);};
-//        double& ref_value(const std::string sp1, const std::string sp2);
-//        double& ref_value(const std::string sp1){ return ref_value(sp1,sp1);};
-//        Umap::iterator begin(){return vec.begin();};
-//        Umap::iterator end(){return vec.end();};
-//        Umap::const_iterator begin()const{return vec.cbegin();};
-//        Umap::const_iterator end()const{return vec.cend();};
-//        Umap::const_iterator cbegin()const{return vec.cbegin();};
-//        Umap::const_iterator cend()const{return vec.cend();};
-//};/*}}}*/
-
 class SCWClassifier {/*{{{*/
 #ifndef KKN_UNIT_TEST 
     private: 
@@ -253,8 +163,8 @@ class SCWClassifier {/*{{{*/
         double psi;
         DiagMat sigmat; //本来は二次元だが対角行列だけ扱う
         inline double calc_alpha(double vt, double mt){// scw 1
-            double alpha = (1.0/(vt*zeta)) * ( -mt *psi + std::sqrt( (mt*mt) * (phi*phi*phi*phi / 4.0) + vt *phi*phi*zeta ));
-            if( alpha < 0.0)
+            double alpha = (1.0/(vt*zeta)) * (-mt *psi + std::sqrt( (mt*mt) * (phi*phi*phi*phi / 4.0) + vt *phi*phi*zeta ));
+            if( alpha < 0.0 )
                 return 0.0;
             if( alpha > C )
                 return C;

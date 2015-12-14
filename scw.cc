@@ -94,9 +94,10 @@ void SCWClassifier::update(double loss_value, const FeatureVector& vec){
     double ut = calc_ut(alphat, vt);
     double betat = calc_beta(alphat, ut, vt);
     //    (double alpha, double y, const DiagMat sigma, const FeatureVector& x)
-    //std::cerr << "alpha:" << alphat << " beta:" << betat << " score:" << score <<" y:"  << (double)loss_value << "\t";
-    //std::cerr << "\ty:"  << (double)loss_value << "\t";
+    std::cerr << "alpha:" << alphat << " beta:" << betat << " score:" << score <<" y:"  << (double)loss_value << "\t";
+    std::cerr << "\ty:"  << (double)loss_value << "\t";
 
+    if( vt == 0.0 ) return;
     mu.update(alphat, loss_value, sigmat, vec);
     sigmat.update(betat, vec);
 }

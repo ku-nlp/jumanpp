@@ -15,8 +15,8 @@ class Parameter {
     bool beam;
     bool use_so;
     bool trigram=true;
-    bool rnnlm;
-    bool nce=true;
+    bool rnnlm=false;
+    bool nce=false;
     bool srilm;
     bool useoldloss=false;
     bool lpenalty=false;

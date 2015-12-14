@@ -74,6 +74,38 @@ Sentence::Sentence(std::vector<Node *> *in_begin_node_list,
          in_param);
 }  //}}}
 
+// for partial annoated sentence
+Sentence::Sentence(std::vector<Node *> *in_begin_node_list,
+                   std::vector<Node *> *in_end_node_list,
+                   std::string &in_sentence, 
+                   Dic *in_dic,
+                   FeatureTemplateSet *in_ftmpl, Parameter *in_param, std::string delimiter) {  //{{{
+    //delimiter の位置を配列で持つ
+    //配列の形式は位置のみ
+    std::string sent = in_sentence;
+    auto pos =  sent.find(delimiter, 0);
+    first_delimiter = pos;
+    sent.erase(pos,delimiter.size());//随時削除しながらでないとposがずれる
+    while(pos != std::string::npos){
+        delimiter_position.push_back(pos);
+        last_delimiter = pos;
+        sent.erase(pos,delimiter.size());
+        pos = sent.find(delimiter, pos);
+    }
+    // TODO:チェックが必要
+    std::cerr << "in_sentence: " << in_sentence << std::endl;
+    std::cerr << "sent: " << sent << std::endl;
+    for(auto pos:delimiter_position){
+        std::cerr << "delimiter pos(" << pos << "):" << sent[pos] << std::endl;
+    }
+
+    sentence_c_str = sent.c_str(); 
+    orig_sentence = in_sentence;
+    
+    length = strlen(sentence_c_str);
+    init(length, in_begin_node_list, in_end_node_list, in_dic, in_ftmpl, in_param);
+}  //}}}
+
 // for gold sentence
 Sentence::Sentence(size_t max_byte_length,
                    std::vector<Node *> *in_begin_node_list,
@@ -219,9 +251,12 @@ Node *Sentence::make_unk_pseudo_node_list_from_previous_position(const char *sta
 
 // 特定位置からの未定義語を生成 (解析中にパスが存在しなくなった時に,
 // 出来なくなった時点から未定義語扱いにしてパスをつなげる)
-Node *Sentence::make_unk_pseudo_node_list_from_some_positions(const char *start_str, unsigned int pos, unsigned int previous_pos) {  //{{{
+Node *Sentence::make_unk_pseudo_node_list_from_some_positions(const char *start_str, unsigned int pos, unsigned int previous_pos, unsigned int max_length) {  //{{{
     Node *node;
-    node = dic->make_pseudo_node_list_in_range(start_str + pos, 1, param->unk_max_length);
+    if(max_length != 0 && param->unk_max_length > max_length)
+        node = dic->make_pseudo_node_list_in_range(start_str + pos, 1, max_length);
+    else
+        node = dic->make_pseudo_node_list_in_range(start_str + pos, 1, param->unk_max_length);
     set_begin_node_list(pos, node);
     find_reached_pos(pos, node);
 
@@ -232,6 +267,7 @@ Node *Sentence::make_unk_pseudo_node_list_from_some_positions(const char *start_
 
     return node;
 }  //}}}
+
 
 // specified spec 版 //文字列全体が単語候補の場合のみ
 Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, const char *start_str, unsigned int specified_length, const std::vector<std::string> &spec) {  //{{{
@@ -327,15 +363,17 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice_with_max_length(  /
     unsigned int pos, unsigned int specified_length, std::string *specified_pos, unsigned int max_length) {
 
     // init
-    Node *result_node;
+    Node *undef_node = nullptr;
+    Node *result_node = nullptr;
+    Node *result_tmp = nullptr;
 
     // 方針としては普通に探索して，最大長を超えるノードを削除する
-    auto lattice_node = lookup_and_make_special_pseudo_nodes_lattice(cl,start_str,char_num,pos,specified_length,specified_pos);
+    Node *lattice_node = lookup_and_make_special_pseudo_nodes_lattice(cl,start_str,char_num,pos,specified_length,specified_pos);
     
     // 最大長までの範囲で未定義語生成をする (カタカナ語を途中で切る場合などのため)
     if (specified_length || pos >= reached_pos_of_pseudo_nodes) {
         // 数詞処理
-        result_node = dic->make_specified_pseudo_node_by_dic_check(
+        undef_node = dic->make_specified_pseudo_node_by_dic_check(
             start_str + pos, specified_length, specified_pos,
             &(param->unk_figure_pos), TYPE_FAMILY_FIGURE, nullptr,max_length);
 
@@ -356,28 +394,50 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice_with_max_length(  /
             find_reached_pos_of_pseudo_nodes(pos, result_node);
     }
     
-    // TODO: ここで最大長を超えるノードを同じく削除する
-    if (dic_node) {
-        Node *tmp_node = result_node;
-        while (tmp_node->bnext)  //末尾にシーク
-            tmp_node = tmp_node->bnext;
-            
-        Node *tmp_result_node = lattice_node;
-        while (tmp_result_node) {
-            auto next_result = tmp_result_node->bnext;
-            if (check_dict_match(tmp_result_node, dic_node)) {
-                tmp_node->bnext = tmp_result_node;
-                tmp_node = tmp_node->bnext;
-                tmp_node->bnext = nullptr;
-            } else {
-                delete tmp_result_node;
+    if (lattice_node) {
+        Node *tmp_node = lattice_node;
+        Node *tmp_bnext = nullptr;
+
+        while (tmp_node){ // 全てのノードをチェック 
+            tmp_bnext = tmp_node->bnext;
+            if(tmp_node->length > max_length){ //最大長を超える
+                // 削除して次へ
+                delete tmp_node; 
+            }else{ // 超えない場合
+                if(result_node){ // null でなければ，bnext に繋げる
+                    result_tmp->bnext = tmp_node;
+                    result_tmp = tmp_node;
+                    result_tmp->bnext = nullptr;
+                }else{ // result_node が null なら代入
+                    result_node = tmp_node;
+                    result_tmp = tmp_node;
+                    result_tmp->bnext = nullptr;
+                }
             }
-            tmp_result_node = next_result;
+            if(tmp_bnext)
+                tmp_node = tmp_bnext;
         }
-        tmp_node->bnext = nullptr;
-        result_node = dic_node;
+
+        if(!result_node){ //１つも無い場合
+        }else{
+            // undef_node をマージする
+            Node *tmp_result_node = undef_node;
+            while (tmp_result_node) {
+                auto next_result = tmp_result_node->bnext;
+                if (check_dict_match(tmp_result_node, result_node)) {// result_node とかぶっていなければ追加
+                    tmp_node->bnext = tmp_result_node;
+                    tmp_node = tmp_node->bnext;
+                    tmp_node->bnext = nullptr;
+                } else {
+                    delete tmp_result_node;
+                }
+                tmp_result_node = next_result;
+            }
+            tmp_node->bnext = nullptr;
+        }
+
     } else {  //辞書に無い場合
-        Node *tmp_result_node = result_node;
+        Node *tmp_result_node = undef_node;
         while (tmp_result_node) {
             tmp_result_node->longer = true;
 
@@ -393,6 +453,7 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice_with_max_length(  /
             tmp_result_node->feature = f;
             tmp_result_node = tmp_result_node->bnext;
         }
+        result_node = undef_node;
     }
 
     return result_node;
@@ -560,6 +621,14 @@ bool Sentence::lookup_and_analyze() {  //{{{
     return true;
 }  //}}}
 
+// 部分アノテーション付きの文の解析を行う
+bool Sentence::lookup_and_analyze_partial() {  //{{{
+    lookup_partial();
+    // and
+    analyze();
+    return true;
+}  //}}}
+
 // 単語ラティスの生成
 bool Sentence::lookup() {  //{{{
     unsigned int previous_pos = 0;
@@ -607,6 +676,114 @@ bool Sentence::lookup() {  //{{{
                         // カタカナ
                         if (!result_node) {
                             result_node = dic->make_specified_pseudo_node_by_dic_check( sentence_c_str+pos, 0, nullptr, &(param->unk_pos), TYPE_KATAKANA, nullptr);
+                        }
+                        if (result_node){ 
+                            find_reached_pos_of_pseudo_nodes(pos, result_node);
+                            tmp_node->bnext = result_node;
+                        }
+                    }
+
+
+                } else if (r_node && pos >= reached_pos_of_pseudo_nodes) {
+                    for (unsigned int i = 2; i <= param->unk_max_length; i++) {
+                        r_node = make_unk_pseudo_node_list_by_dic_check(sentence_c_str, pos, r_node, i);
+                    }
+                    
+                    set_begin_node_list(pos, r_node);
+                }
+            }
+            set_end_node_list(pos, r_node);
+        }
+        previous_pos = pos;
+        char_num++;
+    }
+    return true;
+}  //}}}
+
+// 単語ラティスの生成
+bool Sentence::lookup_partial() {  //{{{
+    unsigned int previous_pos = 0;
+    unsigned int char_num = 0;
+
+    // 文字Lattice の構築
+    CharLattice cl;
+    cl.parse(sentence_c_str);
+    Node::reset_id_count();
+
+    for (unsigned int pos = 0; pos < length;
+            pos += utf8_bytes((unsigned char *)(sentence_c_str + pos))) {
+        if ((*end_node_list)[pos] == NULL) {  // pos にたどり着くノードが１つもない
+            // 区間内なら無視する必要がある
+            if(pos > first_delimiter && pos < last_delimiter){
+                // 何もしない
+            }else if (param->unknown_word_detection && pos > 0 && reached_pos <= pos){
+                // ここではアノテーションの境界を超えるノードが生成される可能性がある？
+                make_unk_pseudo_node_list_from_previous_position(sentence_c_str, previous_pos);
+            }
+        } else {
+            // make figure/alphabet nodes and look up a dictionary
+            
+            // MEMO:delimiter は abc<delimiter>def とあったとき, dの位置(3)を指す
+            Node *r_node = nullptr;
+            unsigned int next_delimiter_pos = 0;
+            if( pos < first_delimiter ){// 最初のdelimiter まで
+                r_node = lookup_and_make_special_pseudo_nodes_lattice_with_max_length(cl, sentence_c_str, char_num, pos, 0, NULL, first_delimiter - pos);
+                next_delimiter_pos = first_delimiter;
+            } else if(pos >= last_delimiter ){ //以降はdelimiter が無いので通常通り
+                r_node = lookup_and_make_special_pseudo_nodes_lattice(cl, sentence_c_str, char_num, pos, 0, NULL);
+                next_delimiter_pos = strlen(sentence_c_str);
+            } else { //delimiter 間なので長さが決まっている
+                unsigned int sec_length = 0;
+                std::string sec_string;
+
+                // どの区間に属するか決定する
+                for(unsigned int d_pos = 0;d_pos < delimiter_position.size();d_pos++){
+                    if (delimiter_position[d_pos] == pos){ 
+                        next_delimiter_pos = delimiter_position[d_pos+1]; //最後のdelimiter がここに来ることは無いので, d_pos+1 は上限を超えない
+                        sec_length = next_delimiter_pos - pos;
+                        sec_string = std::string(sentence_c_str).substr(pos,sec_length);
+                        break;
+                    } 
+                }
+                if(sec_length==0){ //対応するdelimiter がない
+                    // delimiter が連続していて，除去出来なかった場合
+                    // 境界を超えたノードが生成されている場合
+                    std::cerr << "Error@lookup_partial sec_length=0." << std::endl;
+                    std::cerr << "Sent:"<< sentence_c_str << std::endl;
+                }
+                
+                // GOLDと同じ引き方をする
+                // spec: {reading,base,pos, spos, formtype, form}
+                std::vector<std::string> spec{"", "", "", "", "", ""}; //品詞等の指定なし
+                r_node = lookup_and_make_special_pseudo_nodes_lattice( cl, sec_string.c_str(), sec_length, spec);
+            }
+                
+            set_begin_node_list(pos, r_node);
+            find_reached_pos(pos, r_node);
+            if (param->unknown_word_detection) {  // make unknown word candidates
+                if (reached_pos <= pos) { // ≒ pos で始まる単語が１つも無い場合
+                    // 長さの上限を設定し未定義語を生成する
+                    r_node = make_unk_pseudo_node_list_from_some_positions(sentence_c_str, pos, previous_pos, next_delimiter_pos - pos);
+                    
+                    if(param->passive_unknown){
+                        Node *result_node = NULL;
+                        Node *tmp_node = r_node;
+                        while (tmp_node->bnext)  //末尾にシーク
+                            tmp_node = tmp_node->bnext;
+                        
+                        // カタカナなどの未定義語処理(仮
+                        // alphabet
+                        result_node = dic->make_specified_pseudo_node_by_dic_check(
+                                sentence_c_str + pos, 
+                                0, 
+                                nullptr,
+                                &(param->unk_pos), 
+                                TYPE_FAMILY_ALPH_PUNC,
+                                nullptr, next_delimiter_pos - pos); 
+                            
+                        // カタカナ
+                        if (!result_node) {
+                            result_node = dic->make_specified_pseudo_node_by_dic_check( sentence_c_str+pos, 0, nullptr, &(param->unk_pos), TYPE_KATAKANA, nullptr,next_delimiter_pos - pos);
                         }
                         if (result_node){ 
                             find_reached_pos_of_pseudo_nodes(pos, result_node);
@@ -1522,6 +1699,7 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
 
                 double trigram_score = 0.0;
                 double rnn_score = 0.0;
+                double rnn_feature_score = 0.0;
 #ifdef USE_SRILM
                 double srilm_score = 0.0;
 #endif
@@ -1533,7 +1711,6 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
                     rnn_score =
                         rnnlm->test_word_selfnm(l_token_with_state.context.get(), &new_c, (*r_node->spos == UNK_POS|| *r_node->spos == "数詞" )?*(r_node->original_surface):*(r_node->base));
                         context_score += (param->rweight) * rnn_score;
-
 //                    if (param->debug)
 //                        std::cout << "lw:" << *l_node->original_surface << ":"
 //                                  << *l_node->pos
@@ -1588,31 +1765,6 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
                     trigram_score = (1.0 - param->rweight) *
                                     tri_f.calc_inner_product_with_weight();
                     score += trigram_score;
-//                    if (param->debug) {  //{{{
-//                        ss_key.str(
-//                            ""),
-//                            ss_value.str(
-//                                "");
-//                        ss_key
-//                            << l_token_with_state.node_history[history_size - 2]
-//                                   ->id << " -> " << l_node->id << " -> "
-//                            << r_node->id;
-//                        ss_value << "cost:" << l_node->cost
-//                                 << " + bi:" << bigram_score
-//                                 << " + tri:" << trigram_score
-//                                 << " + rnn:" << rnn_score << " = "
-//                                 << context_score + score;
-//                        r_node->debug_info[ss_key.str().c_str()] =
-//                            ss_value.str();
-//                        l_node->debug_info[ss_key.str().c_str()] =
-//                            ss_value.str();
-//                        r_node->debug_info[ss_key.str() +
-//                                           ":trigram_feature"] =
-//                            tri_f.str();
-//                        l_node->debug_info[ss_key.str() +
-//                                           ":trigram_feature"] =
-//                            tri_f.str();  // EOS用
-//                    }                     //}}}
                 }
 
                 TokenWithState tok(r_node, l_token_with_state);
@@ -1629,7 +1781,7 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
                 // if(param->trigram)
                 //    tok.f->append_feature(&tri_f);
 
-                if (param->rnnlm)
+                if (param->rnnlm||param->nce)
                     tok.context =
                         std::make_shared<RNNLM::context>(std::move(new_c));
                 r_node->bq.push(std::move(tok));
@@ -1649,7 +1801,7 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
             } else {
                 r_node->prev = nullptr;
             }
-            r_node->cost = r_node->bq.beam.front().score;  // context_score を入れる？
+            r_node->cost = r_node->bq.beam.front().score; // context_score を入れる？
             // ほぼ表示用なので必要ない？
             if (MODE_TRAIN) {
                 //(*r_node->feature) = (*r_node->bq.beam.front().f); //コピー

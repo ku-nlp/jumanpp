@@ -458,7 +458,7 @@ Node *Dic::make_unk_pseudo_node(const char *start_str, int byte_len, unsigned lo
 //sentence.cc:339: 
 // 名前が変？指定した文字種が連続する範囲で全品詞について未定義語ノードを生成
 // 辞書をr_node で受け取り、重複をチェック
-Node *Dic::make_specified_pseudo_node_by_dic_check(const char *start_str, unsigned int specified_length, std::string *specified_pos, std::vector<unsigned long> *specified_unk_pos, unsigned int type_family, Node* r_node, unsigned int max_length = 0) {//{{{
+Node *Dic::make_specified_pseudo_node_by_dic_check(const char *start_str, unsigned int specified_length, std::string *specified_pos, std::vector<unsigned long> *specified_unk_pos, unsigned int type_family, Node* r_node, unsigned int max_length) {//{{{
     unsigned long specified_posid = MORPH_DUMMY_POS;
     if(specified_pos) specified_posid = posid2pos.get_id(*specified_pos);
 
@@ -469,9 +469,14 @@ Node *Dic::make_specified_pseudo_node_by_dic_check(const char *start_str, unsign
     // 文字種が連続する範囲をチェック
     for (pos = 0; pos < length; pos += utf8_bytes((unsigned char *)(start_str + pos))) {
         unsigned int used_chars = 0;
-        // exceptional figure expression of two characters
-        // 数字を指定していて、かつ数字の例外に当たる場合
-        if ( pos != 0  && type_family == TYPE_FAMILY_FIGURE && (used_chars = check_exceptional_chars_in_figure(start_str + pos , length - pos)) > 0 ) {
+
+        if ( max_length != 0 && pos > max_length ){ // 長さ制限を超える場合それ以上は先を見ない
+            std::cerr << "warning@make_specified_pseudo_node_by_dic_check.max_length != 0" << std::endl;
+            break;
+        } else if ( pos != 0  && type_family == TYPE_FAMILY_FIGURE && (used_chars = check_exceptional_chars_in_figure(start_str + pos , length - pos)) > 0 ) {
+            // exceptional figure expression of two characters
+            // 数字を指定していて、かつ数字の例外に当たる場合
+            
             if(used_chars == 2)
                 pos += utf8_bytes((unsigned char *)(start_str + pos));
             else if(used_chars == 3){
@@ -488,7 +493,7 @@ Node *Dic::make_specified_pseudo_node_by_dic_check(const char *start_str, unsign
         else if (( param->use_suu_rule && (pos == 0 && ustart_str.is_figure_exception(0)) ) &&  // 数が先頭に出現している
                  (ustart_str.char_size()==1 ||                                // 続く文字がない場合(数は単体で数詞として辞書に登録済み) ，もしくは
                  (ustart_str.is_suuji(1) && !ustart_str.is_suuji_digit(1)))){ // 次が桁を表す数字でない場合
-            // 数十，数百への対応
+            // 数十，数百への対応 TODO: 何十
             // 数の次に桁を表す文字が来ない場合は，ひとかたまりの数詞として扱わない．
             // 数キロ，等は先に上のif文でチェックしているため，ここでは考慮しない
             break;

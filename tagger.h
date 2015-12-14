@@ -44,6 +44,7 @@ class Tagger {
     Tagger(Parameter *in_param);
     ~Tagger();
     Sentence *new_sentence_analyze(std::string &in_sentence);
+    Sentence *partial_annotation_analyze(std::string &in_sentence);
     Sentence *new_sentence_analyze_lda(std::string &in_sentence, TopicVector &topic);
     void sentence_clear();
 

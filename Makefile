@@ -1,7 +1,7 @@
 
 CXX := g++
 CXXFLAGS := --std=c++1y -Ofast -m64 -Wno-c++11-narrowing -lm -Wall -ltcmalloc -funroll-loops -ffast-math #-DUSE_SRILM -DINSTANTIATE_TEMPLATES -lpthread -Isrilm/include  # -funroll-loops -ffast-math
-CXXFLAGS_G := --std=c++1y -g -Og -ltcmalloc -m64 -Wno-c++11-narrowing -lm -Wall -funroll-loops -ffast-math -fno-omit-frame-pointer -DUSE_GPROF
+CXXFLAGS_G := --std=c++1y -g -Og -ltcmalloc -m64 -Wno-c++11-narrowing -lm -Wall -funroll-loops -ffast-math -fno-omit-frame-pointer -DUSE_GPROF 
 
 # GIT の version を渡す
 GIT_VER = $(shell git log -1 --format="%h")

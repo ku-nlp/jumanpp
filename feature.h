@@ -275,7 +275,7 @@ class FeatureSet { //{{{
         return hash_func(s);
     };
 
-    // 表示用
+    // 表示,学習用
     inline FeatureVector& get_fset(){return fvec;};
     bool print();
     std::string str();

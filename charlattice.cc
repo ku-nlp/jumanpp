@@ -2,11 +2,7 @@
 #include "charlattice.h"
 //static const 変数
 
-
-
-
 namespace Morph {
-
 
 int CharLattice::parse(std::string sent){//{{{
     size_t length = sent.size();
