@@ -1703,11 +1703,12 @@ void Sentence::generate_juman_line(Node* node, std::stringstream &output_string_
         output_string_buffer << *node->form << " "
             << Dic::katuyou_form_map.at(type_and_form) << " ";
 
-    // 意味情報を再構築して表示
-    if ( (*node->representation != "*" &&
-            *node->spos != "数詞" &&
-            *node->semantic_feature != "NIL") ||
-            *node->spos == UNK_POS) {
+    // 意味情報の表示
+    if(*node->spos == "数詞"){
+        output_string_buffer << std::string("\"カテゴリ:数量\"") << endl;
+    }else if ( *node->semantic_feature == "NIL" && *node->spos != UNK_POS && *node->representation == "*" ){ // 未定義語でなく,　代表表記が付いていない, 意味情報がNILの語
+        output_string_buffer << std::string("NIL") << endl;
+    }else{ // 意味情報を再構築して表示
         std::string delim = "";
         output_string_buffer << '"';
         if (*node->representation != "*" && *node->representation != "<UNK>" && *node->representation != "" ) {
@@ -1723,9 +1724,7 @@ void Sentence::generate_juman_line(Node* node, std::stringstream &output_string_
             delim = " ";
         }
         output_string_buffer << std::string("\"") << endl;
-    } else {
-        output_string_buffer << std::string("NIL") << endl;
-    }
+    } 
 
 }/*}}}*/
 
