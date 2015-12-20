@@ -46,6 +46,7 @@ class Tagger {
     Sentence *new_sentence_analyze(std::string &in_sentence);
     Sentence *new_sentence_analyze_lda(std::string &in_sentence, TopicVector &topic);
     void sentence_clear();
+
     void print_best_beam_juman(); 
     void print_beam();
     void print_best_beam();

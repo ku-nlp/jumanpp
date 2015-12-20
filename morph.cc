@@ -85,12 +85,20 @@ int main(int argc, char** argv) {//{{{
         param.set_N(option.get<unsigned int>("beam"));
     }else if(option.exist("rbeam")){
         param.set_N(option.get<unsigned int>("rbeam"));
-    }else if(option.exist("lattice")){ // rbeam が設定されていたら，lattice のN は表示のみに使う
-        param.set_N(option.get<unsigned int>("lattice"));
     }else{
         param.set_N(1);
     }
 
+    if(option.exist("lattice")){ 
+        // rbeam が設定されていたら，lattice のN は表示のみに使う
+        if(option.exist("rbeam")){
+            param.L = option.get<unsigned int>("lattice");
+        }else{// 無ければラティスと同じ幅を指定
+            param.set_N(option.get<unsigned int>("lattice"));
+            param.L = option.get<unsigned int>("lattice");
+        }
+    }    
+    
     param.set_output_ambigous_word(option.exist("ambiguous"));
     if(option.exist("passiveunk"))
         param.set_passive_unknown(true);
@@ -176,16 +184,6 @@ int main(int argc, char** argv) {//{{{
         //ngramLM->linearPenalty() = true; // 未知語のスコアの付け方を変更
 
         Morph::Sentence::init_srilm(ngramLM, vocab);
-
-//        std::cerr << "num_vocab: " << vocab->numWords() << endl;
-//        std::cerr << "ind(人): " << vocab->getIndex("人") << std::endl;
-//        std::cerr << "word(ind(人)): " << vocab->getWord(vocab->getIndex("人")) << std::endl;
-//        
-//        std::cerr << "ind(人): " << vocab->getIndex("人") << std::endl;
-//        std::cerr << "word(ind(人)): " << vocab->getWord(vocab->getIndex("人")) << std::endl;
-
-        //std::make_unique<SRILM::Vocab>(SRILM::Vocab());
-        //std::make_unique<Ngram::Ngram> srilm(Ngram::Ngram())
     }//}}}
 #endif
 
@@ -260,14 +258,33 @@ int main(int argc, char** argv) {//{{{
                 std::cout << buffer << std::endl;
                 continue;
             }else if(buffer.at(0) == '#'){
-                std::cout << buffer << " " << VERSION << "(" << GITVER <<")" << std::endl;
+                // 動的コマンドの処理
+                std::size_t pos;
+                if( (pos = buffer.find("##KKN\t")) != std::string::npos ){
+                    std::size_t arg_pos;
+                    // input:
+                    // ##KKN<tab>command arg
+                    // ##KKN<tab>setL 5
+                        
+                    // setL command
+                    std::string command = "setL";
+                    if( (arg_pos = buffer.find("setL")) != std::string::npos){
+                        arg_pos = buffer.find_first_of(" \t",arg_pos+command.length());
+                        long val = std::stol(buffer.substr(arg_pos));
+                        param.L = val;
+                        std::cout << "##KKN\tsetL " << val << std::endl;
+                    }
+
+                }else{// S-ID の処理
+                    std::cout << buffer << " " << VERSION << "(" << GITVER <<")" << std::endl;
+                }
                 continue;
             }
 
             tagger.new_sentence_analyze(buffer);
             if (option.exist("lattice")){
                 if(option.exist("rbeam")){
-                    tagger.print_lattice_rbeam(option.get<unsigned int>("lattice"));
+                    tagger.print_lattice_rbeam(param.L);
                 }else{
                     if (option.exist("oldstyle"))
                         tagger.print_old_lattice();

@@ -41,9 +41,10 @@ class Parameter {
     std::string model_filename;
     std::string freq_word_list;
 	unsigned int N = 1;
+	unsigned int L = 1;
     bool use_scw=false;
     bool passive_unknown=false;
-	unsigned int N_redundant;
+	unsigned int N_redundant;//もう使っていない
     bool output_ambiguous_word=false;
     double c_value = 1.0;
     double phi_value = 1.0;
