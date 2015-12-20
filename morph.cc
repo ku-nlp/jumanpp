@@ -275,6 +275,15 @@ int main(int argc, char** argv) {//{{{
                         std::cout << "##KKN\tsetL " << val << std::endl;
                     }
 
+                    // setN command
+                    command = "setN";
+                    if( (arg_pos = buffer.find("setN")) != std::string::npos){
+                        arg_pos = buffer.find_first_of(" \t",arg_pos+command.length());
+                        long val = std::stol(buffer.substr(arg_pos));
+                        param.N = val;
+                        std::cout << "##KKN\tsetN " << val << std::endl;
+                    }
+
                 }else{// S-ID の処理
                     std::cout << buffer << " " << VERSION << "(" << GITVER <<")" << std::endl;
                 }
