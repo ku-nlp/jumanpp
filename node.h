@@ -233,7 +233,7 @@ class Node {//{{{
     void reserve_best_bigram(){};
 
     unsigned short length = 0; /* length of morph */
-    unsigned short char_num = 0;
+    unsigned short char_num = 0; //charlattice で指定する．TODO:コンストラクタ内で指定
     unsigned short rcAttr = 0;
     unsigned short lcAttr = 0;
 	unsigned long posid = 0;

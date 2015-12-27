@@ -33,8 +33,9 @@ class Sentence {//{{{
         
     size_t word_num;
     unsigned int length; // length of this sentence
-    std::string sentence; //Gold用名前が悪くてどこで初期化されているか追えない
-    std::string orig_sentence;
+    std::string sentence; //Gold用だが名前が悪くてどこで初期化されているか追えない
+    std::string partically_annotated_sentence; // 部分アノテーション付き入力文
+    std::vector<unsigned int> maxlen_for_charnum;
     const char *sentence_c_str;
     FeatureSet *feature;
     std::vector<Node *> *begin_node_list; // position -> list of nodes that begin at this pos
@@ -65,6 +66,13 @@ class Sentence {//{{{
     Sentence(std::vector<Node *> *in_begin_node_list, std::vector<Node *> *in_end_node_list, std::string &in_sentence, Dic *in_dic, FeatureTemplateSet *in_ftmpl, Parameter *in_param);
     Sentence(std::vector<Node *> *in_begin_node_list, std::vector<Node *> *in_end_node_list, std::string &in_sentence, Dic *in_dic, FeatureTemplateSet *in_ftmpl, Parameter *in_param, std::string delimiter);
     Sentence(size_t max_byte_length, std::vector<Node *> *in_begin_node_list, std::vector<Node *> *in_end_node_list, Dic *in_dic, FeatureTemplateSet *in_ftmpl, Parameter *in_param);
+
+    Sentence(std::vector<Node *> *in_begin_node_list,
+            std::vector<Node *> *in_end_node_list,
+            std::string &in_sentence, Dic *in_dic,
+            FeatureTemplateSet *in_ftmpl, Parameter *in_param,
+            unsigned int format_type ); 
+    
     void init(size_t max_byte_length, std::vector<Node *> *in_begin_node_list, std::vector<Node *> *in_end_node_list, Dic *in_dic, FeatureTemplateSet *in_ftmpl, Parameter *in_param);
     ~Sentence();
     void clear_nodes();
@@ -156,8 +164,8 @@ class Sentence {//{{{
     unsigned int get_length() {
         return length;
     }
-    std::string &get_orig_sentence() {
-        return orig_sentence;
+    std::string &get_pa_sentence() {
+        return partically_annotated_sentence;
     }
 
     // gold でしか使わない
@@ -282,13 +290,16 @@ class Sentence {//{{{
     Node *lookup_and_make_special_pseudo_nodes(const char *start_str, unsigned int specified_length, const std::vector<std::string>& spec);
     Node *lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, const char *start_str, unsigned int char_num, unsigned int pos, unsigned int specified_length, std::string *specified_pos); 
     Node *lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, const char *start_str, unsigned int specified_length, const std::vector<std::string>& spec); //spec 版
-
+    
     Node *lookup_and_make_special_pseudo_nodes_lattice_with_max_length(CharLattice &cl, const char *start_str, unsigned int char_num, unsigned int pos, unsigned int specified_length, std::string *specified_pos, unsigned int max_length); 
     bool check_dict_match(Node* tmp_node, Node* dic_node);
     
     Node *make_unk_pseudo_node_list_from_previous_position(const char *start_str, unsigned int previous_pos);
     Node *make_unk_pseudo_node_list_from_some_positions(const char *start_str, unsigned int pos, unsigned int previous_pos, unsigned int max_length = 0);
     Node *make_unk_pseudo_node_list_by_dic_check(const char *start_str, unsigned int pos, Node *r_node, unsigned int specified_char_num);
+
+    // 最大長を超えるノードを orig_dic から削除し，ポインタを返す
+    Node* filter_long_node(Node* orig_dic, unsigned int max_length);
 
 };//}}}
 

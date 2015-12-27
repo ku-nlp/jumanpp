@@ -28,6 +28,7 @@ class Parameter {
     double lweight;
     unsigned int unk_max_length;
     unsigned int iteration_num;
+    std::string delimiter;
     std::string darts_filename;
     std::string dic_filename;
     std::string pos_filename;

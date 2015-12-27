@@ -41,20 +41,10 @@ Sentence *Tagger::partial_annotation_analyze(std::string &in_sentence) {//{{{
     end_node_list.clear();
      
     // param に user_partial_annotate オプションが渡る
-    std::string delimiter = "\t"; // param.delimiterとする？
+    std::string delimiter = param->delimiter; 
     sentence = new Sentence(&begin_node_list, &end_node_list, in_sentence, &dic, &ftmpl, param, delimiter);
     FeatureSet::topic = nullptr;
     sentence->lookup_and_analyze_partial();
-    FeatureSet::topic = nullptr;
-    return sentence;
-}//}}}
-
-Sentence *Tagger::new_sentence_analyze_lda(std::string &in_sentence, TopicVector& topic) {//{{{
-    begin_node_list.clear();
-    end_node_list.clear();
-    sentence = new Sentence(&begin_node_list, &end_node_list, in_sentence, &dic, &ftmpl, param);
-    FeatureSet::topic = &topic; // TODO: トピックの扱いを改める
-    sentence->lookup_and_analyze();
     FeatureSet::topic = nullptr;
     return sentence;
 }//}}}
@@ -160,7 +150,7 @@ bool Tagger::ptrain(const std::string &gsd_file) {//{{{
 
         for (std::vector<Sentence *>::iterator gold = sentences_for_train.begin(); gold != sentences_for_train.end(); gold++) {
             // Goldも随時解析しなおす
-            Sentence* gold_analysis = partial_annotation_analyze((*gold)->get_orig_sentence()); //ここでdelimiter が除かれていないものが必要
+            Sentence* gold_analysis = partial_annotation_analyze((*gold)->get_pa_sentence()); //ここでdelimiter が除かれていないものが必要
             Sentence* sent_analysis = new_sentence_analyze((*gold)->get_sentence()); // 通常の解析
 
             loss = sent_analysis->eval(*gold_analysis); // 表示用にロスを計算
@@ -186,49 +176,6 @@ bool Tagger::ptrain(const std::string &gsd_file) {//{{{
     }
         
     clear_partial_gold_data();
-    return true;
-}//}}}
-
-// train lda 廃止予定
-bool Tagger::train_lda(const std::string &gsd_file, Tagger& normal_model) {//{{{
-    read_gold_data(gsd_file);
-
-    for (size_t t = 0; t < param->iteration_num; t++) {
-        cerr << "ITERATION:" << t << endl;
-        if (param->shuffle_training_data) // shuffle training data
-            random_shuffle(sentences_for_train.begin(), sentences_for_train.end());
-        for (std::vector<Sentence *>::iterator gold = sentences_for_train.begin(); gold != sentences_for_train.end(); gold++) {
-            cerr << std::distance(sentences_for_train.begin(),gold) << "/" << std::distance(sentences_for_train.begin(), sentences_for_train.end()) << std::endl;
-            //cerr << std::distance(sentences_for_train.begin(),gold) << "/" << std::distance(sentences_for_train.begin(), sentences_for_train.end()) << "\r";
-            
-            // 通常の解析
-            Sentence* sent_normal = normal_model.new_sentence_analyze((*gold)->get_sentence()); 
-            TopicVector sent_topic = sent_normal->get_topic();
-            delete (sent_normal); 
-                    
-            // トピックの表示
-            std::cerr << "sent_topic: ";
-            for(auto &x:sent_topic){
-                std::cerr << x << ", " ;
-            }
-            std::cerr << std::endl;
-            
-            //gold のトピック素性を計算
-            Sentence* sent_lda = new_sentence_analyze_lda((*gold)->get_sentence(), sent_topic); 
-            online_learning( *gold, sent_lda , &sent_topic);
-            delete (sent_lda);
-        }
-        cerr << endl;
-        write_tmp_model_file(t);
-    }
-        
-//    if (WEIGHT_AVERAGED && !param->use_scw) {// パーセプトロンとの互換性のため
-//        for (auto it = weight_sum.begin(); it != weight_sum.end(); it++) {
-//            weight[it->first] -= it->second / total_iteration_num; 
-//        }
-//    }
-
-    clear_gold_data();
     return true;
 }//}}}
 
@@ -364,5 +311,58 @@ bool Tagger::write_tmp_model_file(int t){//{{{
     return true;
 }//}}}
 
+// LDA
+// train lda 廃止予定
+bool Tagger::train_lda(const std::string &gsd_file, Tagger& normal_model) {//{{{
+    read_gold_data(gsd_file);
+
+    for (size_t t = 0; t < param->iteration_num; t++) {
+        cerr << "ITERATION:" << t << endl;
+        if (param->shuffle_training_data) // shuffle training data
+            random_shuffle(sentences_for_train.begin(), sentences_for_train.end());
+        for (std::vector<Sentence *>::iterator gold = sentences_for_train.begin(); gold != sentences_for_train.end(); gold++) {
+            cerr << std::distance(sentences_for_train.begin(),gold) << "/" << std::distance(sentences_for_train.begin(), sentences_for_train.end()) << std::endl;
+            //cerr << std::distance(sentences_for_train.begin(),gold) << "/" << std::distance(sentences_for_train.begin(), sentences_for_train.end()) << "\r";
+            
+            // 通常の解析
+            Sentence* sent_normal = normal_model.new_sentence_analyze((*gold)->get_sentence()); 
+            TopicVector sent_topic = sent_normal->get_topic();
+            delete (sent_normal); 
+                    
+            // トピックの表示
+            std::cerr << "sent_topic: ";
+            for(auto &x:sent_topic){
+                std::cerr << x << ", " ;
+            }
+            std::cerr << std::endl;
+            
+            //gold のトピック素性を計算
+            Sentence* sent_lda = new_sentence_analyze_lda((*gold)->get_sentence(), sent_topic); 
+            online_learning( *gold, sent_lda , &sent_topic);
+            delete (sent_lda);
+        }
+        cerr << endl;
+        write_tmp_model_file(t);
+    }
+        
+//    if (WEIGHT_AVERAGED && !param->use_scw) {// パーセプトロンとの互換性のため
+//        for (auto it = weight_sum.begin(); it != weight_sum.end(); it++) {
+//            weight[it->first] -= it->second / total_iteration_num; 
+//        }
+//    }
+
+    clear_gold_data();
+    return true;
+}//}}}
+
+Sentence *Tagger::new_sentence_analyze_lda(std::string &in_sentence, TopicVector& topic) {//{{{
+    begin_node_list.clear();
+    end_node_list.clear();
+    sentence = new Sentence(&begin_node_list, &end_node_list, in_sentence, &dic, &ftmpl, param);
+    FeatureSet::topic = &topic; // TODO: トピックの扱いを改める
+    sentence->lookup_and_analyze();
+    FeatureSet::topic = nullptr;
+    return sentence;
+}//}}}
 }
 

@@ -19,11 +19,16 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     option.add<std::string>("model", 'm', "model filename", false, "data/model.mdl");
     option.add<std::string>("rnnlm", 'r', "rnnlm filename", false, "data/lang.mdl"); 
     option.add<std::string>("feature", 'f', "feature template filename", false, "data/feature.def");
+
 #ifdef USE_SRILM
     option.add<std::string>("srilm", 'I', "srilm filename", false, "srilm.arpa");
 #endif
+        
     option.add<std::string>("train", 't', "training filename", false, "data/train.txt");
+    option.add<std::string>("ptrain", 'p', "partial training filename", false, "data/ptrain.txt");
     option.add<unsigned int>("iteration", 'i', "iteration number for training", false, 10);
+    option.add("ptest", 0, "receive partially annotated text");
+        
     option.add<unsigned int>("unk_max_length", 'l', "maximum length of unknown word detection", false, 2);
     option.add<unsigned int>("lattice", 'L', "output lattice format",false, 1);
     option.add<double>("Cvalue", 'C', "C value",false, 1.0);
@@ -117,6 +122,8 @@ int main(int argc, char** argv) {//{{{
         param.set_use_total_sim();
         Morph::FeatureSet::use_total_sim = true;
     }
+    // 部分アノテーション用デリミタ
+    param.delimiter = "\t";
 
     if(option.exist("rnnasfeature") && option.exist("rnnlm")){
         param.use_rnnlm_as_feature = true;
@@ -194,7 +201,30 @@ int main(int argc, char** argv) {//{{{
     }
 #endif /*}}}*/
 
-    if (MODE_TRAIN) {//学習モード{{{
+    if (option.exist("ptrain")) {//部分アノテーション学習モード{{{
+        std::cerr << "done" << std::endl;
+        tagger.ptrain(option.get<std::string>("train"));
+        tagger.write_bin_model_file(option.get<std::string>("model"));
+      //}}}
+    } else if (option.exist("ptest")) {//部分アノテーション付き形態素解析{{{
+        tagger.read_bin_model_file(option.get<std::string>("model"));
+        std::cerr << "done" << std::endl;
+        param.delimiter = "\t";
+            
+        std::string buffer;
+        while (getline(cin, buffer)) {
+            
+            std::cerr << "input:" << buffer << std::endl;
+            Morph::Sentence* pa_sent = tagger.partial_annotation_analyze(buffer);
+        
+            //if(option.exist("juman"))
+                tagger.print_best_beam_juman();
+            //else
+            //    tagger.print_best_beam();
+            tagger.sentence_clear();
+        }
+      //}}}
+    } else if (MODE_TRAIN) {//学習モード{{{
         std::cerr << "done" << std::endl;
         if(option.exist("lda")){
             std::cerr << "LDA training is obsoleted" << std::endl;
