@@ -133,9 +133,14 @@ Sentence::Sentence(std::vector<Node *> *in_begin_node_list,
     sentence = in_sentence;
     while( (pos = sentence.find(delimiter, pos)) != std::string::npos ){
         // last_pos ... pos まで，次の<tab>までの距離を追加する．
+        //
         // byte 単位の処理
         std::string substring = sentence.substr(last_pos, pos-last_pos);
+
+        // <tab>が連続していた場合は無視する
         sentence.erase(pos,delimiter.size()); // delimiterを削除
+        if(delimiter_position.size()> 0 &&substring.length() == 0)
+            continue;
         delimiter_position.push_back(pos); // byte 単位の処理用に，delimiter の位置を byte_index で保存
         last_delimiter = pos;
         
@@ -154,10 +159,10 @@ Sentence::Sentence(std::vector<Node *> *in_begin_node_list,
         last_delimiter = 0;
     }
 
-    for (auto a:delimiter_position){
-        std::cerr << a << " ";
-    }
-    std::cerr << std::endl;
+//    for (auto a:delimiter_position){
+//        std::cerr << a << " ";
+//    }
+//    std::cerr << std::endl;
         
     // 最後のdelimiter以降を処理
     U8string subst(sentence.substr(last_pos));
@@ -342,17 +347,17 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, co
         specified_pos = &specified_pos_string;
 
     // まず探す
-    std::cerr << start_str << std::endl;
+//    std::cerr << start_str << std::endl;
     auto lattice_result = cl.da_search_from_position(dic->darts, char_num);
     // 以下は何バイト目かが必要
     Node *dic_node = dic->lookup_lattice_specified(lattice_result, start_str, specified_length, spec);
 
     auto dic_node_tmp = dic_node;
-    std::cerr << "dic_node" << std::endl;
-    while(dic_node_tmp){
-        std::cerr << *dic_node_tmp->string << " " << *dic_node_tmp->representation << std::endl;
-        dic_node_tmp = dic_node_tmp->bnext;
-    }
+//    std::cerr << "dic_node" << std::endl;
+//    while(dic_node_tmp){
+//        std::cerr << *dic_node_tmp->string << " " << *dic_node_tmp->representation << std::endl;
+//        dic_node_tmp = dic_node_tmp->bnext;
+//    }
 
     // オノマトペ処理 // spec 処理... 
     if (dic_node == nullptr && specified_pos_string == "副詞") { //副詞の場合のみ
@@ -782,14 +787,14 @@ bool Sentence::lookup_partial() {  //{{{
                 r_node = lookup_and_make_special_pseudo_nodes_lattice_with_max_length(cl, sentence_c_str, char_num, pos, 0, NULL, first_delimiter - pos);
                 next_delimiter_pos = first_delimiter;
 
-                std::cerr << "r_node" << std::endl;
+                //std::cerr << "r_node" << std::endl;
                 auto r_node_tmp = r_node;
-                while(r_node_tmp){
-                    std::cerr << "p-rnode:" << *(r_node_tmp->string) << ":len=" << 
-                        r_node_tmp->length << " "<<  *(r_node_tmp->pos) << " " <<
-                        *(r_node_tmp->spos) << std::endl;
-                    r_node_tmp = r_node_tmp->bnext;
-                }
+//                while(r_node_tmp){
+//                    std::cerr << "p-rnode:" << *(r_node_tmp->string) << ":len=" << 
+//                        r_node_tmp->length << " "<<  *(r_node_tmp->pos) << " " <<
+//                        *(r_node_tmp->spos) << std::endl;
+//                    r_node_tmp = r_node_tmp->bnext;
+//                }
             } else if( pos >= last_delimiter ){ //以降はdelimiter が無いので通常通り
                 //std::cerr <<pos_character <<"("<< pos << ")>ld" << std::endl;
                 r_node = lookup_and_make_special_pseudo_nodes_lattice(cl, sentence_c_str, char_num, pos, 0, NULL);
@@ -808,7 +813,7 @@ bool Sentence::lookup_partial() {  //{{{
                         break;
                     }
                 }
-                std::cerr << sec_length << std::endl;
+                //std::cerr << sec_length << std::endl;
                 if(sec_length==0){ //対応するdelimiter がない
                     // delimiter が連続していて，除去出来なかった場合
                     // 境界を超えたノードが生成されている場合

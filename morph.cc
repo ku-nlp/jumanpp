@@ -214,7 +214,7 @@ int main(int argc, char** argv) {//{{{
         std::string buffer;
         while (getline(cin, buffer)) {
             
-            std::cerr << "input:" << buffer << std::endl;
+            //std::cerr << "input:" << buffer << std::endl;
             Morph::Sentence* pa_sent = tagger.partial_annotation_analyze(buffer);
         
             //if(option.exist("juman"))

@@ -272,7 +272,7 @@ Node *Dic::lookup_lattice_specified(std::vector<CharLattice::da_result_pair_type
         
     for (size_t i = 0; i < num; i++) { 
         const Token *deb_token = get_token(result_pair[i]);// deb
-        std::cerr << start_str << "_" << *baseid2base.get_pos(deb_token->base_id) << "_" << specified_length << "-" << get_length(result_pair[i]) << std::endl;
+        //std::cerr << start_str << "_" << *baseid2base.get_pos(deb_token->base_id) << "_" << specified_length << "-" << get_length(result_pair[i]) << std::endl;
 
         if (specified_length && specified_length != get_length(result_pair[i]))
             continue;
