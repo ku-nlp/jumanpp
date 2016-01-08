@@ -296,10 +296,15 @@ int main(int argc, char** argv) {//{{{
         // sentence loop
         std::string buffer;
         while (getline(is ? is : cin, buffer)) {
-            if (buffer.length() <= 1 ) { // empty line or comment line
+            if (buffer.length() < 1 ) { // empty line or comment line
                 std::cout << buffer << std::endl;
                 continue;
             }else if(buffer.at(0) == '#'){
+                if(buffer.length() <= 1){
+                    std::cout << buffer << std::endl;
+                    continue;
+                }
+
                 // 動的コマンドの処理
                 std::size_t pos;
                 if( (pos = buffer.find("##KKN\t")) != std::string::npos ){
