@@ -51,6 +51,7 @@ class Tagger {
     void print_best_beam_juman(); 
     void print_beam();
     void print_best_beam();
+    void print_best_beam_rep(){ sentence->print_best_beam_rep(); };
     void print_lattice();
     void print_lattice_rbeam(unsigned int nbest);
     void print_old_lattice();

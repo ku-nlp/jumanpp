@@ -17,6 +17,7 @@ class Parameter {
     bool trigram=true;
     bool rnnlm=false;
     bool nce=false;
+    bool userep=false;
     bool srilm;
     bool useoldloss=false;
     bool lpenalty=false;

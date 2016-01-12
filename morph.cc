@@ -13,16 +13,23 @@
 bool MODE_TRAIN = false;
 bool WEIGHT_AVERAGED = false;
 
+// オプション
 void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     option.add<std::string>("dict", 'd', "dict filename", false, "data/japanese.dic");
     option.add<std::string>("model", 'm', "model filename", false, "data/model.mdl");
     option.add<std::string>("rnnlm", 'r', "rnnlm filename", false, "data/lang.mdl"); 
     option.add<std::string>("feature", 'f', "feature template filename", false, "data/feature.def");
+
 #ifdef USE_SRILM
     option.add<std::string>("srilm", 'I', "srilm filename", false, "srilm.arpa");
 #endif
+        
     option.add<std::string>("train", 't', "training filename", false, "data/train.txt");
+    //option.add<std::string>("ptrain", 'p', "partial training filename", false, "data/ptrain.txt");
     option.add<unsigned int>("iteration", 'i', "iteration number for training", false, 10);
+    option.add("ptest", 0, "receive partially annotated text");
+        
+
     option.add<unsigned int>("unk_max_length", 'l', "maximum length of unknown word detection", false, 2);
     option.add<unsigned int>("lattice", 'L', "output lattice format",false, 1);
     option.add<double>("Cvalue", 'C', "C value",false, 1.0);
@@ -47,8 +54,11 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     option.add("rnnasfeature", 0, "use rnnlm score as feature");
     option.add("unknown", 'u', "apply unknown word detection (obsolete; already default)");
     option.add<std::string>("use_lexical_feature", '\0', "change frequent word list for lexical feature",false,"data/freq_words.list"); 
+    option.add("part", '\0', "use partical annotation");
     option.add("debug", '\0', "debug mode");
     option.add("rnndebug", '\0', "show rnnlm debug message");
+    option.add("userep", 0, "use rep in rnnlm (dev)");
+    option.add("printrep",0, "print rep(dev)");
     option.add("version", 'v', "print version");
     option.add("help", 'h', "print this message");
     option.parse_check(argc, argv);
@@ -73,8 +83,6 @@ int main(int argc, char** argv) {//{{{
     cmdline::parser option;
     option_proc(option, argc, argv);
 
-    std::cerr << "initializing models ... " << std::flush;
-
     Morph::Parameter param(option.get<std::string>("dict"), option.get<std::string>("feature"), option.get<unsigned int>("iteration"), true, option.exist("shuffle"), option.get<unsigned int>("unk_max_length"), option.exist("debug"), option.exist("nbest")|option.exist("lattice"));
 
     // 基本的にbeam は使う
@@ -88,23 +96,27 @@ int main(int argc, char** argv) {//{{{
         param.set_beam(true);
         param.set_N(option.get<unsigned int>("beam"));
     }else if(option.exist("rbeam")){
-        param.set_beam(true);
         param.set_N(option.get<unsigned int>("rbeam"));
-    }else if(option.exist("lattice")) // rbeam が設定されていたら，lattice のN は表示のみに使う
-        param.set_N(option.get<unsigned int>("lattice"));
-    else if(option.exist("rerank"))
-        param.set_N(option.get<unsigned int>("rerank"));
-    else
+    }else{
         param.set_N(1);
+    }
 
+    if(option.exist("lattice")){ 
+        // rbeam が設定されていたら，lattice のN は表示のみに使う
+        if(option.exist("rbeam")){
+            param.L = option.get<unsigned int>("lattice");
+        }else{// 無ければラティスと同じ幅を指定
+            param.set_N(option.get<unsigned int>("lattice"));
+            param.L = option.get<unsigned int>("lattice");
+        }
+    }    
+    
     param.set_output_ambigous_word(option.exist("ambiguous"));
     if(option.exist("passiveunk"))
         param.set_passive_unknown(true);
     param.set_model_filename(option.get<std::string>("model"));
     param.set_use_scw(option.exist("scw"));
-    //if(option.exist("Lweight")){
-        param.set_lweight(option.get<double>("Lweight"));
-    //}
+    param.set_lweight(option.get<double>("Lweight"));
     if(option.exist("Cvalue"))
         param.set_C(option.get<double>("Cvalue"));
     if(option.exist("Phi"))
@@ -112,6 +124,12 @@ int main(int argc, char** argv) {//{{{
     if(option.exist("total")){ // LDA用, 廃止予定
         param.set_use_total_sim();
         Morph::FeatureSet::use_total_sim = true;
+    }
+    // 部分アノテーション用デリミタ
+    param.delimiter = "\t";
+
+    if(option.exist("rnnasfeature") && option.exist("rnnlm")){
+        param.use_rnnlm_as_feature = true;
     }
 
     if(option.exist("rnnasfeature") && option.exist("rnnlm")){
@@ -121,6 +139,9 @@ int main(int argc, char** argv) {//{{{
     param.use_lexical_feature=true;
     param.freq_word_list = option.get<std::string>("use_lexical_feature");
     Morph::FeatureSet::open_freq_word_set(param.freq_word_list);
+    if(option.exist("debug")){
+        Morph::FeatureSet::debug_flag = true;
+    }
 
     // trigram は基本的に使う
     param.set_trigram(!option.exist("notrigram"));
@@ -143,6 +164,9 @@ int main(int argc, char** argv) {//{{{
 #endif
     Morph::Tagger tagger(&param);
     Morph::Node::set_param(&param);
+
+    if(option.exist("userep"))
+        param.userep = true;
    
     RNNLM::CRnnLM rnnlm;
     if(option.exist("rnnlm")){
@@ -184,20 +208,34 @@ int main(int argc, char** argv) {//{{{
         //ngramLM->linearPenalty() = true; // 未知語のスコアの付け方を変更
 
         Morph::Sentence::init_srilm(ngramLM, vocab);
-
-//        std::cerr << "num_vocab: " << vocab->numWords() << endl;
-//        std::cerr << "ind(人): " << vocab->getIndex("人") << std::endl;
-//        std::cerr << "word(ind(人)): " << vocab->getWord(vocab->getIndex("人")) << std::endl;
-//        
-//        std::cerr << "ind(人): " << vocab->getIndex("人") << std::endl;
-//        std::cerr << "word(ind(人)): " << vocab->getWord(vocab->getIndex("人")) << std::endl;
-
-        //std::make_unique<SRILM::Vocab>(SRILM::Vocab());
-        //std::make_unique<Ngram::Ngram> srilm(Ngram::Ngram())
     }
 #endif /*}}}*/
 
-    if (MODE_TRAIN) {//学習モード{{{
+//    if (option.exist("ptrain")) {//部分アノテーション学習モード{{{
+//        std::cerr << "done" << std::endl;
+//        tagger.ptrain(option.get<std::string>("train"));
+//        tagger.write_bin_model_file(option.get<std::string>("model"));
+//      //}}}
+//    } else 
+    if (option.exist("ptest")) {//部分アノテーション付き形態素解析{{{
+        tagger.read_bin_model_file(option.get<std::string>("model"));
+        std::cerr << "done" << std::endl;
+        param.delimiter = "\t";
+            
+        std::string buffer;
+        while (getline(cin, buffer)) {
+            
+            //std::cerr << "input:" << buffer << std::endl;
+            Morph::Sentence* pa_sent = tagger.partial_annotation_analyze(buffer);
+        
+            //if(option.exist("juman"))
+                tagger.print_best_beam_juman();
+            //else
+            //    tagger.print_best_beam();
+            tagger.sentence_clear();
+        }
+      //}}}
+    } else if (MODE_TRAIN) {//学習モード{{{
         std::cerr << "done" << std::endl;
         if(option.exist("lda")){
             std::cerr << "LDA training is obsoleted" << std::endl;
@@ -207,6 +245,11 @@ int main(int argc, char** argv) {//{{{
                 
             tagger.train_lda(option.get<std::string>("train"), tagger_normal);
             tagger.write_bin_model_file(option.get<std::string>("model"));
+        }else if (option.exist("part")) { //部分的アノテーションからの学習
+            tagger.read_bin_model_file(option.get<std::string>("model"));
+            // diagの読み込み
+            //tagger.ptrain(option.get<std::string>("train"));
+            tagger.write_bin_model_file(option.get<std::string>("model")+"+"); //ココのファイル名はオプションで与えられるようにする
         }else{ //通常の学習
             tagger.train(option.get<std::string>("train"));
             tagger.write_bin_model_file(option.get<std::string>("model"));
@@ -215,65 +258,101 @@ int main(int argc, char** argv) {//{{{
     } else if(option.exist("lda")){//LDAを使う形態素解析{{{
         std::cerr << "LDA mode is depreciated" << std::endl;
         return 0;
-        Morph::Tagger tagger_normal(&normal_param);
-        tagger_normal.read_model_file(option.get<std::string>("lda"));
-        tagger.read_model_file(option.get<std::string>("model"));
-        std::cerr << "done" << std::endl;
-            
-        std::ifstream is(argv[1]); // input stream
-            
-        // sentence loop
-        std::string buffer;
-        while (getline(is ? is : cin, buffer)) {
-            if (buffer.length() == 0 || buffer.at(0) == '#') { // empty line or comment line
-                cout << buffer << endl;
-                continue;
-            }
-            Morph::Sentence* normal_sent = tagger_normal.new_sentence_analyze(buffer);
-            TopicVector topic = normal_sent->get_topic();
-
-            //std::cerr << "Topic:";
-            //for(double d: topic){
-            //    std::cerr << d << ",";
-            //}
-            //std::cerr << endl;
-
-            Morph::Sentence* lda_sent = tagger.new_sentence_analyze_lda(buffer, topic);
-            if (option.exist("lattice")){
-                if (option.exist("oldstyle"))
-                    tagger.print_old_lattice();
-                else
-                    tagger.print_lattice();
-            }else{
-                if(option.exist("nbest")){
-                    tagger.print_N_best_path();
-                }else{
-                    tagger.print_best_path();
-                }
-            }
-            delete(normal_sent);
-            delete(lda_sent);
-        }
+//        Morph::Tagger tagger_normal(&normal_param);
+//        tagger_normal.read_model_file(option.get<std::string>("lda"));
+//        tagger.read_model_file(option.get<std::string>("model"));
+//        std::cerr << "done" << std::endl;
+//            
+//        std::ifstream is(argv[1]); // input stream
+//            
+//        // sentence loop
+//        std::string buffer;
+//        while (getline(is ? is : cin, buffer)) {
+//            if (buffer.length() == 0 || buffer.at(0) == '#') { // empty line or comment line
+//                cout << buffer << endl;
+//                continue;
+//            }
+//            Morph::Sentence* normal_sent = tagger_normal.new_sentence_analyze(buffer);
+//            TopicVector topic = normal_sent->get_topic();
+//
+//            //std::cerr << "Topic:";
+//            //for(double d: topic){
+//            //    std::cerr << d << ",";
+//            //}
+//            //std::cerr << endl;
+//
+//            Morph::Sentence* lda_sent = tagger.new_sentence_analyze_lda(buffer, topic);
+//            if (option.exist("lattice")){
+//                if (option.exist("oldstyle"))
+//                    tagger.print_old_lattice();
+//                else
+//                    tagger.print_lattice();
+//            }else{
+//                if(option.exist("nbest")){
+//                    tagger.print_N_best_path();
+//                }else{
+//                    tagger.print_best_path();
+//                }
+//            }
+//            delete(normal_sent);
+//            delete(lda_sent);
+//        }
     //}}}
     } else {// 通常の形態素解析{{{
         tagger.read_bin_model_file(option.get<std::string>("model"));
-        std::cerr << "done" << std::endl;
+        if(param.debug) std::cerr << "done" << std::endl;
             
         std::ifstream is(argv[1]); // input stream
             
         // sentence loop
         std::string buffer;
         while (getline(is ? is : cin, buffer)) {
-            if (buffer.length() <= 1 || buffer.at(0) == '#') { // empty line or comment line
+            if (buffer.length() < 1 ) { // empty line or comment line
                 std::cout << buffer << std::endl;
+                continue;
+            }else if(buffer.at(0) == '#'){
+                if(buffer.length() <= 1){
+                    std::cout << buffer << std::endl;
+                    continue;
+                }
+
+                // 動的コマンドの処理
+                std::size_t pos;
+                if( (pos = buffer.find("##KKN\t")) != std::string::npos ){
+                    std::size_t arg_pos;
+                    // input:
+                    // ##KKN<tab>command arg
+                    // ##KKN<tab>setL 5
+                        
+                    // setL command
+                    std::string command = "setL";
+                    if( (arg_pos = buffer.find("setL")) != std::string::npos){
+                        arg_pos = buffer.find_first_of(" \t",arg_pos+command.length());
+                        long val = std::stol(buffer.substr(arg_pos));
+                        param.L = val;
+                        std::cout << "##KKN\tsetL " << val << std::endl;
+                    }
+
+                    // setN command
+                    command = "setN";
+                    if( (arg_pos = buffer.find("setN")) != std::string::npos){
+                        arg_pos = buffer.find_first_of(" \t",arg_pos+command.length());
+                        long val = std::stol(buffer.substr(arg_pos));
+                        param.N = val;
+                        std::cout << "##KKN\tsetN " << val << std::endl;
+                    }
+
+                }else{// S-ID の処理
+                    std::cout << buffer << " " << VERSION << "(" << GITVER <<")" << std::endl;
+                }
                 continue;
             }
 
             tagger.new_sentence_analyze(buffer);
             if (option.exist("lattice")){
                 if(option.exist("rbeam")){
-                    tagger.print_lattice_rbeam(option.get<unsigned int>("lattice"));
-                }else{ //以下も廃止の予定
+                    tagger.print_lattice_rbeam(param.L);
+                }else{
                     if (option.exist("oldstyle"))
                         tagger.print_old_lattice();
                     else
@@ -285,21 +364,14 @@ int main(int argc, char** argv) {//{{{
                 }else if(option.exist("rbeam")){
                     if(option.exist("juman"))
                         tagger.print_best_beam_juman();
-                    else
-                        tagger.print_best_beam();
-                // 以下は廃止の予定    
-                }else if(option.exist("nbest") && option.exist("rnnlm")){
-                    tagger.print_N_best_with_rnn(rnnlm);
-                }else if(option.exist("nbest") && !option.exist("rnnlm")){
-                    tagger.print_N_best_path();
-                }else if(option.exist("rerank") && option.exist("rnnlm")){
-                    std::cerr << "廃止" << std::endl;
-                    //tagger.print_best_path_with_rnn(rnnlm);
+                    else{
+                        if(option.exist("printrep"))
+                            tagger.print_best_beam_rep();
+                        else
+                            tagger.print_best_beam();
+                    }
                 }else{
-                    if(option.exist("juman"))
-                        tagger.print_best_beam_juman();
-                    else
-                        tagger.print_N_best_path();
+                    tagger.print_best_beam_juman();
                 }
             }
             tagger.sentence_clear();
