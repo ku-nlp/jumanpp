@@ -3,6 +3,11 @@
 #include "feature.h"
 #include "tagger.h"
 #include "sentence.h"
+
+#include "rnnlm/rnnlmlib.h"
+#include "rnnlm/rnnlmlib_static.h"
+#include "rnnlm/rnnlmlib_dynamic.h"
+
 #include <memory.h>
 
 //namespace SRILM {
@@ -19,7 +24,7 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     std::string bin_dir =  bin_path.substr(0,bin_path.rfind('/')); // Unix依存
     
     // 設定の読み込みオプション
-    option.add<std::string>("dir", 'D', "set model directory", false, bin_dir+"data");
+    option.add<std::string>("dir", 'D', "set model directory", false, bin_dir+"/data");
 
     option.add<std::string>("dict", 0, "dict filename", false, "data/japanese.dic");
     option.add<std::string>("model", 0, "model filename", false, "data/model.mdl");
@@ -74,6 +79,7 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     option.add("rnndebug", '\0', "show rnnlm debug message");
     
     // 開発用オプション
+    option.add("dynamic", 0, "dynamic RNNLM loading (dev)");
     option.add("ptest", 0, "receive partially annotated text (dev)");
     option.add("rnnasfeature", 0, "use rnnlm score as feature (dev)");
     option.add("userep", 0, "use rep in rnnlm (dev)");
@@ -102,7 +108,6 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
 int main(int argc, char** argv) {//{{{
     cmdline::parser option;
     option_proc(option, argc, argv);
-
 
     // モデルパス
     std::string rnnlm_model_path = "data/lang.mdl";
@@ -141,6 +146,10 @@ int main(int argc, char** argv) {//{{{
     param.freq_word_list = option.get<std::string>("use_lexical_feature");
     Morph::FeatureSet::open_freq_word_set(param.freq_word_list);
 
+    if(param.debug)
+        std::cerr << "initializing models ... " << std::flush;
+    else
+        setenv("TCMALLOC_LARGE_ALLOC_REPORT_THRESHOLD","107374182400",1);
 
     // 基本的にbeam は使う
     param.set_beam(true);
@@ -193,7 +202,6 @@ int main(int argc, char** argv) {//{{{
     }
 
     // trigram は基本的に使う
-    //param.set_trigram(!option.exist("notrigram"));
     param.set_trigram(true);
     param.set_rweight(option.get<double>("Rweight"));
 
@@ -220,22 +228,23 @@ int main(int argc, char** argv) {//{{{
     Morph::Tagger tagger(&param);
     Morph::Node::set_param(&param);
    
-    RNNLM::CRnnLM rnnlm;
+    RNNLM::CRnnLM* p_rnnlm;
+    if(option.exist("dynamic")){
+        p_rnnlm = new RNNLM::CRnnLM_dyn();
+    }else{
+        p_rnnlm = new RNNLM::CRnnLM_stat();
+    }
+        
     if(option.exist("rnnlm")){
-        rnnlm.setLambda(1.0);
-        rnnlm.setRegularization(0.0000001);
-        rnnlm.setDynamic(0);
-        rnnlm.setRnnLMFile(rnnlm_model_path.c_str());
-        rnnlm.setRandSeed(1);
-        rnnlm.useLMProb(0);
+        p_rnnlm->setRnnLMFile(option.get<std::string>("rnnlm").c_str());
         if(option.exist("rnndebug"))
-            rnnlm.setDebugMode(1);
+            p_rnnlm->setDebugMode(1);
         else
-            rnnlm.setDebugMode(0);
+            p_rnnlm->setDebugMode(0);
         if(param.lpenalty)
-            rnnlm.setLweight(param.lweight);
+            p_rnnlm->setLweight(param.lweight);
         srand(1);
-        Morph::Sentence::init_rnnlm_FR(&rnnlm);
+        Morph::Sentence::init_rnnlm_FR(p_rnnlm);
     } 
 #ifdef USE_SRILM /*{{{*/
     Vocab *vocab;
@@ -276,14 +285,8 @@ int main(int argc, char** argv) {//{{{
             
         std::string buffer;
         while (getline(cin, buffer)) {
-            
-            //std::cerr << "input:" << buffer << std::endl;
-            Morph::Sentence* pa_sent = tagger.partial_annotation_analyze(buffer);
-        
-            //if(option.exist("juman"))
-                tagger.print_best_beam_juman();
-            //else
-            //    tagger.print_best_beam();
+            tagger.partial_annotation_analyze(buffer);
+            tagger.print_best_beam_juman();
             tagger.sentence_clear();
         }
       //}}}
@@ -399,7 +402,7 @@ int main(int argc, char** argv) {//{{{
                 }
                 continue;
             }
-
+                
             tagger.new_sentence_analyze(buffer);
             if (option.exist("lattice")){
                 if (option.exist("oldstyle"))

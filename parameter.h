@@ -25,6 +25,7 @@ class Parameter {
     bool use_suu_rule=true;
     bool use_lexical_feature=false;
     bool use_rnnlm_as_feature=false;
+    bool use_dynamic_loading=false;
     double rweight;
     double lweight;
     unsigned int unk_max_length;

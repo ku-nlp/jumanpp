@@ -41,10 +41,10 @@ Vocab *Sentence::vocab;
 #endif
 
 void Sentence::init_rnnlm(RNNLM::CRnnLM *in_rnnlm) {/*{{{*/
-    rnnlm = in_rnnlm;
-    RNNLM::context tmp;
-    rnnlm->get_initial_context(&tmp);
-    initial_context = std::make_shared<RNNLM::context>(tmp);
+//    rnnlm = in_rnnlm;
+//    RNNLM::context tmp;
+//    rnnlm->get_initial_context(&tmp);
+//    initial_context = std::make_shared<RNNLM::context>(tmp);
 }/*}}}*/
 
 void Sentence::init_rnnlm_FR(RNNLM::CRnnLM *in_rnnlm) {/*{{{*/
@@ -1685,27 +1685,26 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
                 (!check_devoice_condition(
                      *l_node))) {  // 前の形態素が濁音化の条件を満たさない//{{{
 
-                // 解析できない状態を防ぐため，l_node の TOP 1 だけ一応処理する
+                // 解析できない状態を防ぐため，l_node の TOP 1 のみ一応処理する
                 TokenWithState tok(r_node, l_node->bq.beam.front());
                 tok.score = l_node->bq.beam.front().score + bigram_score +
                             (1.0 - param->rweight) * r_node->wcost -
                             10000;  // invalid devoice penalty
                 tok.context_score = l_node->bq.beam.front().score - 10000;
 
-                tok.f->append_feature(r_node->feature);  // unigram
-                tok.f->append_feature(&bi_f);
+                // 学習のため，素性ベクトルも一応計算する
                 if (param->trigram &&
-                    l_node->bq.beam.front().node_history.size() > 1) {
+                    l_node->bq.beam.front().node_history.size() > 1) { 
                     FeatureSet tri_f(ftmpl);
                     tri_f.extract_trigram_feature(
                         l_node->bq.beam.front().node_history
                             [l_node->bq.beam.front().node_history.size() - 2],
                         l_node, r_node);
                     tok.context_score += tri_f.calc_inner_product_with_weight();
-                    tok.f->append_feature(&tri_f);
                 }
-
+                    
                 if (param->nce) {
+                    // コンテクストは必要なので計算するが，スコアは加算しない
                     RNNLM::context new_c;
                     double rnn_score = 0.0;
                     std::string rnnlm_rep;
@@ -1716,14 +1715,6 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
                     }
                     rnn_score = (param->rweight) * rnnlm->test_word_selfnm(l_node->bq.beam.front().context.get(),
                                 &new_c, rnnlm_rep);
-
-                    tok.context_score += (1.0 - param->rweight) * rnn_score;
-                    tok.context =
-                        std::make_shared<RNNLM::context>(std::move(new_c));
-                }else if (param->rnnlm) {
-                    RNNLM::context new_c;
-                    double rnn_score = (param->rweight) * rnnlm->test_word(l_node->bq.beam.front().context.get(),
-                                         &new_c, *(r_node->base));
 
                     tok.context_score += (1.0 - param->rweight) * rnn_score;
                     tok.context =

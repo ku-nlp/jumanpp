@@ -23,35 +23,12 @@
 
 #include <unordered_map>
 #include "fastexp.h"
-#include "rnnlmlib.h"
+#include "rnnlmlib_static.h"
 
 
 #ifndef exp10
     #define exp10(x) pow((double)10, (x))
 #endif
-
-//基本全部の行列を計算する, ここからここまでとかは厳しい
-// 現在のメモリ配置をそのままにするなら，転置オプションを使うのが良さそう
-int cublasSgemv(void* handle, 
-                void* trans, //行列を転地して使うかどうかのフラグ
-                int m,  // number of rows of matrix A.  
-                int n, // number of columns of matrix A
-                const float *alpha, // scalar used for multiplication
-                const float *A, // array of dimension 
-                int lda, // leading dimension of two-dimensional array used to store matrix A
-                const float *x, // vector with n elements ( m elements otherwise (転置する場合)). 
-                int incx, // stride between consecutive elements of x. //いくつ置きに計算するか？？
-                const float *beta, //いらない
-                float  *y, // いらない
-                int incy); // いらない
-
-///// include blas
-#ifdef USE_BLAS
-extern "C" {
-#include <cblas.h>
-}
-#endif
-//
 
 namespace RNNLM{
 
@@ -65,7 +42,7 @@ namespace RNNLM{
         }
     }/*}}}*/
 
-    void CRnnLM::ReadFRHeader(FILE* file) {/*{{{*/
+    void CRnnLM_stat::ReadFRHeader(FILE* file) {/*{{{*/
         const uint64_t kVersionStepSize = 10000;
         const int kCurrentVersion = 6;
         const unsigned kMaxLayerTypeName = 64; // maximum size of layer name type in bytes (including \0)
@@ -121,7 +98,7 @@ namespace RNNLM{
 
     }/*}}}*/
 
-    real CRnnLM::calc_direct_score(int word, context* c){/*{{{*/
+    real CRnnLM_stat::calc_direct_score(int word, context* c){/*{{{*/
         unsigned long long hash[MAX_NGRAM_ORDER] = {};
         unsigned long long hash_max = direct_size - vocab_size;
         unsigned int a,b;
@@ -145,34 +122,34 @@ namespace RNNLM{
         return direct_score;
     }/*}}}*/
 
-    real CRnnLM::random(real min, real max)
+    real CRnnLM_stat::random(real min, real max)
     {
         return rand()/(real)RAND_MAX*(max-min)+min;
     }
 
-    void CRnnLM::setTrainFile(char *str)
+    void CRnnLM_stat::setTrainFile(char *str)
     {
         strcpy(train_file, str);
     }
 
-    void CRnnLM::setValidFile(char *str)
+    void CRnnLM_stat::setValidFile(char *str)
     {
         strcpy(valid_file, str);
     }
 
-    void CRnnLM::setTestFile(char *str)
+    void CRnnLM_stat::setTestFile(char *str)
     {
         strcpy(test_file, str);
     }
 
-    void CRnnLM::setRnnLMFile(const char *str)
+    void CRnnLM_stat::setRnnLMFile(const char *str)
     {
         strcpy(rnnlm_file, str);
     }
 
     // in_str から１単語(delim まで)を読込し word にコピー, 読込後 in_strは""に書き換えられるので注意が必要
     // この辺りの処理もほとんど使われていないハズ
-    void CRnnLM::readWord(char *word, std::string* in_str)
+    void CRnnLM_stat::readWord(char *word, std::string* in_str)
     {//{{{
         const std::string delim = " "; // "\t" はあきらめ
         if(in_str->length() == 0){
@@ -211,7 +188,7 @@ namespace RNNLM{
         return;
     }//}}}
 
-    void CRnnLM::readWord(char *word, FILE *fin)
+    void CRnnLM_stat::readWord(char *word, FILE *fin)
     {//{{{
         int a=0, ch;
 
@@ -244,7 +221,7 @@ namespace RNNLM{
         word[a]=0;
     }//}}}
 
-    int CRnnLM::getWordHash(char *word)
+    int CRnnLM_stat::getWordHash(char *word)
     {//{{{
         unsigned int hash, a;
 
@@ -255,7 +232,7 @@ namespace RNNLM{
         return hash;
     }//}}}
 
-    int CRnnLM::searchVocab(char *word)
+    int CRnnLM_stat::searchVocab(char *word)
     {//{{{
         auto vitr = vocab_map.find(std::string(word));
         if( vitr == vocab_map.end()){
@@ -267,7 +244,7 @@ namespace RNNLM{
         return -1; //return OOV if not found
     }//}}}
 
-    int CRnnLM::readWordIndex(std::string* in_str)
+    int CRnnLM_stat::readWordIndex(std::string* in_str)
     {//{{{
         char word[MAX_STRING];
 
@@ -276,7 +253,7 @@ namespace RNNLM{
         return searchVocab(word);
     }//}}}
 
-    int CRnnLM::readWordIndex(FILE *fin)
+    int CRnnLM_stat::readWordIndex(FILE *fin)
     {//{{{
         char word[MAX_STRING];
 
@@ -286,7 +263,7 @@ namespace RNNLM{
         return searchVocab(word);
     }//}}}
 
-    int CRnnLM::addWordToVocab(char *word)
+    int CRnnLM_stat::addWordToVocab(char *word)
     {//{{{
         strcpy(vocab[vocab_size].word, word);
         vocab[vocab_size].cn=0;
@@ -301,7 +278,7 @@ namespace RNNLM{
         return vocab_size-1;
     }//}}}
 
-    void CRnnLM::sortVocab()
+    void CRnnLM_stat::sortVocab()
     {//{{{
         int a, b, max;
         vocab_word swap;
@@ -316,7 +293,7 @@ namespace RNNLM{
         }
     }//}}}
 
-    void CRnnLM::learnVocabFromTrainFile()    //assumes that vocabulary is empty
+    void CRnnLM_stat::learnVocabFromTrainFile()    //assumes that vocabulary is empty
     {//{{{
         char word[MAX_STRING];
         FILE *fin;
@@ -364,7 +341,7 @@ namespace RNNLM{
         fclose(fin);
     }//}}}
 
-//    void CRnnLM::saveWeights()      //saves current weights and unit activations
+//    void CRnnLM_stat::saveWeights()      //saves current weights and unit activations
 //    {//{{{
 //        int a,b;
 //
@@ -410,7 +387,7 @@ namespace RNNLM{
 //        //for (a=0; a<direct_size; a++) syn_db[a].weight=syn_d[a].weight;
 //    }//}}}
 
-//    void CRnnLM::restoreWeights()      //restores current weights and unit activations from backup copy
+//    void CRnnLM_stat::restoreWeights()      //restores current weights and unit activations from backup copy
 //    {//{{{
 //        int a,b;
 //
@@ -457,7 +434,7 @@ namespace RNNLM{
 //    }//}}}
 
     // 廃止予定
-    void CRnnLM::saveContext()		//useful for n-best list processing
+    void CRnnLM_stat::saveContext()		//useful for n-best list processing
     {//{{{
         //std::cout << "saveContext"<< std::endl;
         int a;
@@ -465,7 +442,7 @@ namespace RNNLM{
         for (a=0; a<layer1_size; a++) neu1b[a].ac=neu1[a].ac;
     }//}}}
 
-    void CRnnLM::saveFullContext(context *dest)		
+    void CRnnLM_stat::saveFullContext(context *dest)		
     {//{{{
         int a;
             
@@ -480,13 +457,13 @@ namespace RNNLM{
         for (a=0; a<MAX_NGRAM_ORDER; a++) dest->history[a] = history[a];
     }//}}}
 
-    void CRnnLM::CacheRecurrent(context *dest)		
+    void CRnnLM_stat::CacheRecurrent(context *dest)		
     {//{{{
         dest->have_recurrent = true;
         for (int a=0; a<layer1_size; a++) dest->l1_neuron[a] = neu1[a].ac;
     }//}}}
 
-    void CRnnLM::restoreFullContext(const context *dest) 
+    void CRnnLM_stat::restoreFullContext(const context *dest) 
     {//{{{
         //std::cerr << "restoreFullContext history_size:" << dest->history.size() << " " << (int)dest->last_word << " ," << (int)dest->history[0] << "," << (int)dest->history[1] << std::endl; //H?
         int a;
@@ -504,7 +481,7 @@ namespace RNNLM{
     }//}}}
 
 //    // このあたりももう必要ないのでは
-//    void CRnnLM::restoreContext()
+//    void CRnnLM_stat::restoreContext()
 //    {//{{{
 //        //std::cout << "restoreContext"<< std::endl;
 //        int a;
@@ -513,7 +490,7 @@ namespace RNNLM{
 //    }//}}}
 
     // 廃止予定
-    void CRnnLM::saveContext2()
+    void CRnnLM_stat::saveContext2()
     {//{{{
         //std::cout << "saveContext2"<< std::endl;
         int a;
@@ -522,7 +499,7 @@ namespace RNNLM{
     }//}}}
 
     // 廃止予定
-    void CRnnLM::restoreContext2()
+    void CRnnLM_stat::restoreContext2()
     {//{{{
         //std::cout << "restoreContext2"<< std::endl;
         int a;
@@ -530,7 +507,7 @@ namespace RNNLM{
         for (a=0; a<layer1_size; a++) neu1[a].ac=neu1b2[a].ac;
     }//}}}
 
-    void CRnnLM::initNet()
+    void CRnnLM_stat::initNet()
     {//{{{
         int a, b, cl;
 
@@ -706,7 +683,7 @@ namespace RNNLM{
         }
     }//}}}
     
-    void CRnnLM::initNetFR()
+    void CRnnLM_stat::initNetFR()
     {//{{{
         int a, b, cl;
 
@@ -793,7 +770,7 @@ namespace RNNLM{
                 sync[a+b*layerc_size].weight=random(-0.1, 0.1)+random(-0.1, 0.1)+random(-0.1, 0.1);
             }
         }
-        else {
+        else { //不要な初期化
             for (b=0; b<layer2_size; b++) for (a=0; a<layer1_size; a++) {
                 syn1[a+b*layer1_size].weight=random(-0.1, 0.1)+random(-0.1, 0.1)+random(-0.1, 0.1);
             }
@@ -879,7 +856,7 @@ namespace RNNLM{
         }
     }//}}}
 
-//    void CRnnLM::saveNet()       //will save the whole network structure                                                        
+//    void CRnnLM_stat::saveNet()       //will save the whole network structure                                                        
 //    {//{{{
 //        FILE *fo;
 //        int a, b;
@@ -1040,7 +1017,7 @@ namespace RNNLM{
 //        rename(str, rnnlm_file);
 //    }//}}}
 
-    void CRnnLM::goToDelimiter(int delim, FILE *fi)
+    void CRnnLM_stat::goToDelimiter(int delim, FILE *fi)
     {//{{{
         int ch=0;
 
@@ -1054,7 +1031,7 @@ namespace RNNLM{
     }//}}}
 
     // RNNLM モデル，語彙の読み込みを行う
-    void CRnnLM::restoreNet()    //will read whole network structure
+    void CRnnLM_stat::restoreNet()    //will read whole network structure
     {//{{{
         FILE *fi;
         int a, b, ver;
@@ -1300,7 +1277,7 @@ namespace RNNLM{
     }//}}}
 
     // RNNLM モデル，語彙の読み込みを行う(faster-rnnlm 対応版)
-    void CRnnLM::restoreNet_FR()    //will read whole network structure
+    void CRnnLM_stat::restoreNet_FR()    //will read whole network structure
     {//{{{
         int a, b;
         float fl;
@@ -1409,7 +1386,7 @@ namespace RNNLM{
         return;
     }//}}}
 
-//    void CRnnLM::netFlush()   //cleans all activations and error vectors
+//    void CRnnLM_stat::netFlush()   //cleans all activations and error vectors
 //    {//{{{
 //        int a;
 //
@@ -1439,7 +1416,7 @@ namespace RNNLM{
 //        }
 //    }//}}}
 
-    void CRnnLM::netReset()   //cleans hidden layer activation + bptt history
+    void CRnnLM_stat::netReset()   //cleans hidden layer activation + bptt history
     {//{{{
         //std::cout << "netReset"<< std::endl;
         int a, b;
@@ -1461,7 +1438,7 @@ namespace RNNLM{
         for (a=0; a<MAX_NGRAM_ORDER; a++) history[a]=0;
     }//}}}
 
-    void CRnnLM::matrixXvector(struct neuron *dest, struct neuron *srcvec, struct synapse *srcmatrix, int matrix_width, int from, int to, int from2, int to2, int type)
+    void CRnnLM_stat::matrixXvector(struct neuron *dest, struct neuron *srcvec, struct synapse *srcmatrix, int matrix_width, int from, int to, int from2, int to2, int type)
     {//{{{
         int a, b;
         real val1, val2, val3, val4;
@@ -1573,7 +1550,7 @@ namespace RNNLM{
           }*/
     }//}}}
 
-    void CRnnLM::computeNet(int last_word, int word)
+    void CRnnLM_stat::computeNet(int last_word, int word)
     {//{{{
         // 他にもhitsoty が実質引数
         int a, b, c;
@@ -1740,7 +1717,7 @@ namespace RNNLM{
 
     // context に last_word も入れておくべき
     // 今までの状態を上書きし，破壊することに注意
-    void CRnnLM::computeNet(int word, context *context)
+    void CRnnLM_stat::computeNet(int word, context *context)
     {//{{{
         int a, b, c;
         int last_word_local = context->history[0];
@@ -1904,7 +1881,7 @@ namespace RNNLM{
     }//}}}
 
     // 今までの状態を上書きし，破壊することに注意
-    void CRnnLM::computeNet_selfnm(int word, context *context)
+    void CRnnLM_stat::computeNet_selfnm(int word, context *context)
     {//{{{
         int a, b;
         int last_word_local = context->history[0];
@@ -1966,7 +1943,7 @@ namespace RNNLM{
 
     }//}}}
     
-//    void CRnnLM::computeNet_selfnm_old(int word, context *context)
+//    void CRnnLM_stat::computeNet_selfnm_old(int word, context *context)
 //    {//{{{
 //        int a, b, c;
 //        int last_word_local = context->history[0];
@@ -2050,7 +2027,7 @@ namespace RNNLM{
 //
 //    }//}}}
 
-//    void CRnnLM::learnNet(int last_word, int word)
+//    void CRnnLM_stat::learnNet(int last_word, int word)
 //    {//{{{
 //        int a, b, c, t, step;
 //        real beta2, beta3;
@@ -2289,7 +2266,7 @@ namespace RNNLM{
 //        }	
 //    }//}}}
 
-    void CRnnLM::copyHiddenLayerToInput()
+    void CRnnLM_stat::copyHiddenLayerToInput()
     {//{{{
         //std::cout << "copyHiddenLayerToInput"<< std::endl;
         int a;
@@ -2299,7 +2276,7 @@ namespace RNNLM{
         }
     }//}}}
 
-//    void CRnnLM::trainNet()
+//    void CRnnLM_stat::trainNet()
 //    {//{{{
 //        int a, b, word, last_word, wordcn;
 //        char log_name[200];
@@ -2492,7 +2469,7 @@ namespace RNNLM{
 //        }
 //    }//}}}
 
-//    void CRnnLM::testNet()
+//    void CRnnLM_stat::testNet()
 //    {//{{{
 //        int a, b, word, last_word, wordcn;
 //        FILE *fi, *flog, *lmprob=NULL;
@@ -2618,7 +2595,7 @@ namespace RNNLM{
 //        fclose(flog);
 //    }//}}}
 
-    void CRnnLM::initialize_test_sent()
+    void CRnnLM_stat::initialize_test_sent()
     {//{{{
 
         if (debug_mode>0) std::cerr << "initializing RNNLM" << std::flush;
@@ -2633,7 +2610,7 @@ namespace RNNLM{
     }//}}}
 
     // 単文評価 // 廃止予定
-    real CRnnLM::test_sent(std::string sent)
+    real CRnnLM_stat::test_sent(std::string sent)
     {//{{{
         int a, word, last_word, wordcn;
         float prob_other; //has to be float so that %f works in fscanf
@@ -2727,7 +2704,7 @@ namespace RNNLM{
         return senp;
     }//}}}
 
-    void CRnnLM::get_initial_context(context *c) // initialize_test_sent とどちらか
+    void CRnnLM_stat::get_initial_context(context *c) // initialize_test_sent とどちらか
     {//{{{
         //if (debug_mode>0) std::cerr << "initializing RNNLM" << std::flush;
         restoreNet(); // initialize 重い
@@ -2748,7 +2725,7 @@ namespace RNNLM{
         saveFullContext(c); //文頭としてInitial context を作成
     }//}}}
 
-    void CRnnLM::get_initial_context_FR(context *c) 
+    void CRnnLM_stat::get_initial_context_FR(context *c) 
     {//{{{
         if (debug_mode>0) std::cerr << "initializing RNNLM FR" << std::endl;
         restoreNet_FR(); // initialize モデル読込  重い
@@ -2762,7 +2739,7 @@ namespace RNNLM{
     }//}}}
     
     // context + word => context + score
-    real CRnnLM::test_word(context *c, context *new_c, std::string next_word)
+    real CRnnLM_stat::test_word(context *c, context *new_c, std::string next_word)
     {//{{{
         int last_word;
         last_word = c->last_word;
@@ -2848,7 +2825,7 @@ namespace RNNLM{
         return senp;
     }//}}}
 
-    real CRnnLM::test_word_selfnm(context *c, context *new_c, std::string next_word)
+    real CRnnLM_stat::test_word_selfnm(context *c, context *new_c, std::string next_word)
     {//{{{
         int last_word;
         last_word = c->last_word;
@@ -2902,7 +2879,7 @@ namespace RNNLM{
     }//}}}
     
     // nbest オプションを渡した時に呼ばれる
-//    void CRnnLM::testNbest()
+//    void CRnnLM_stat::testNbest()
 //    {//{{{
 //        int a, word, last_word, wordcn;
 //        FILE *fi, *flog, *lmprob=NULL;
@@ -3043,7 +3020,7 @@ namespace RNNLM{
 //        fclose(flog);
 //    }//}}}
 
-//    void CRnnLM::testGen()
+//    void CRnnLM_stat::testGen()
 //    {//{{{
 //        int i, word, cla, last_word, wordcn, c, b, a=0;
 //        real f, g, sum;

@@ -27,8 +27,8 @@ SRILM_OBJS := \
         $(SRILM_PATH)/lib/i686-m64/libmisc.a \
         $(SRILM_PATH)/lib/i686-m64/libz.a \
 
-OBJECTS := morph.o dic.o tagger.o pos.o sentence.o feature.o node.o tools.o charlattice.o u8string.o scw.o cdb_juman.o cdb/libcdb.a rnnlm/rnnlmlib.o #srilm/NgramLM.o srilm/Vocab.o
-HEADERS := wvector.h common.h dic.h tagger.h pos.h sentence.h feature.h node.h parameter.h u8string.h scw.h cdb_juman.h rnnlm/rnnlmlib.h
+OBJECTS := morph.o dic.o tagger.o pos.o sentence.o feature.o node.o tools.o charlattice.o u8string.o scw.o cdb_juman.o cdb/libcdb.a rnnlm/rnnlmlib_dynamic.o rnnlm/rnnlmlib_static.o #rnnlm/rnnlmlib.o #srilm/NgramLM.o srilm/Vocab.o
+HEADERS := wvector.h common.h dic.h tagger.h pos.h sentence.h feature.h node.h parameter.h u8string.h scw.h cdb_juman.h rnnlm/rnnlmlib.h rnnlm/rnnlmlib_dynamic.h rnnlm/rnnlmlib_static.h
 DEBUG_LIBS := -lprofiler
 
 MKDARTS_OBJECTS := mkdarts.o pos.o
@@ -63,10 +63,10 @@ kkn_test: $(OBJECTS_TEST) $(HEADERS)
 	$(CXX) $(CXXFLAGS) $(LD_FLAGS) -lboost_unit_test_framework -o $@ $(OBJECTS_TEST) $(SRILM_OBJS) -D KKN_UNIT_TEST
 
 kkn: $(OBJECTS) $(HEADERS)
-	$(CXX) $(CXXFLAGS) $(LD_FLAGS) -lboost_serialization -o $@ $(OBJECTS) # $(SRILM_OBJS)
+	$(CXX) $(CXXFLAGS) $(LD_FLAGS) -lboost_serialization -lpthread -lrt -o $@ $(OBJECTS) # $(SRILM_OBJS)
 
 kkn_g: $(OBJECTS) $(OBJECTS:%.o=%.og) $(HEADERS)
-	$(CXX) $(CXXFLAGS_G) $(LD_FLAGS) $(DEBUG_LIBS) -lboost_serialization -o $@ $(OBJECTS:%.o=%.og) #$(SRILM_OBJS)
+	$(CXX) $(CXXFLAGS_G) $(LD_FLAGS) $(DEBUG_LIBS) -lboost_serialization -lpthread -lrt -o $@ $(OBJECTS:%.o=%.og) #$(SRILM_OBJS)
 
 mkdarts: $(MKDARTS_OBJECTS) $(MKDARTS_HEADERS)
 	$(CXX) $(CXXFLAGS) $(LD_FLAGS) -lboost_serialization  -o $@ $(MKDARTS_OBJECTS)
