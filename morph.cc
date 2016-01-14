@@ -136,9 +136,9 @@ int main(int argc, char** argv) {//{{{
             option.exist("shuffle"), unk_max_length, option.exist("debug"), option.exist("lattice"));
 
     // モデルパスの設定
-    param.set_model_filename(model_path);
+    param.set_model_filename(model_path); //訓練用
     param.use_lexical_feature=true;
-    param.freq_word_list = option.get<std::string>("use_lexical_feature");
+    param.freq_word_list = freq_word_list;
     Morph::FeatureSet::open_freq_word_set(param.freq_word_list);
 
     if(param.debug)
@@ -165,10 +165,10 @@ int main(int argc, char** argv) {//{{{
     if(option.exist("lattice")){ 
         // beam が設定されていたら，lattice のN は表示のみに使う
         if(option.exist("beam")){
-            param.L = option.get<unsigned int>("lattice");
+            param.set_L(option.get<unsigned int>("lattice"));
         }else{// 無ければラティスと同じ幅を指定
             param.set_N(option.get<unsigned int>("lattice"));
-            param.L = option.get<unsigned int>("lattice");
+            param.set_L(option.get<unsigned int>("lattice"));
         }
     }    
     
@@ -274,7 +274,7 @@ int main(int argc, char** argv) {//{{{
 //      //}}}
 //    } else 
     if (option.exist("ptest")) {//部分アノテーション付き形態素解析{{{
-        tagger.read_bin_model_file(option.get<std::string>("model"));
+        tagger.read_bin_model_file(model_path);
         std::cerr << "done" << std::endl;
         param.delimiter = "\t";
             
@@ -302,7 +302,7 @@ int main(int argc, char** argv) {//{{{
 //            tagger.write_bin_model_file(option.get<std::string>("model")+"+"); //ココのファイル名はオプションで与えられるようにする
 //        }else{ //通常の学習
             tagger.train(option.get<std::string>("train"));
-            tagger.write_bin_model_file(option.get<std::string>("model"));
+            tagger.write_bin_model_file(model_path);
 //        }
       //}}}
 //    } else if(option.exist("lda")){//LDAを使う形態素解析{{{
@@ -349,7 +349,7 @@ int main(int argc, char** argv) {//{{{
 //        }
     //}}}
     } else {// 通常の形態素解析{{{
-        tagger.read_bin_model_file(option.get<std::string>("model"));
+        tagger.read_bin_model_file(model_path);
         if(param.debug) std::cerr << "done" << std::endl;
             
         std::ifstream is(argv[1]); // input stream
@@ -362,7 +362,7 @@ int main(int argc, char** argv) {//{{{
                 continue;
             }else if(buffer.at(0) == '#'){
                 if(buffer.length() <= 1){
-                    std::cout << buffer << std::endl;
+                    std::cout << buffer << " " << VERSION << "(" << GITVER <<")" << std::endl;
                     continue;
                 }
 
@@ -374,24 +374,33 @@ int main(int argc, char** argv) {//{{{
                     // ##KKN<tab>command arg
                     // ##KKN<tab>setL 5
                         
-                    // setL command
-                    std::string command = "setL";
-                    if( (arg_pos = buffer.find("setL")) != std::string::npos){
+                    std::string command = "set-lattice";
+                    if( (arg_pos = buffer.find(command)) != std::string::npos){
                         arg_pos = buffer.find_first_of(" \t",arg_pos+command.length());
                         long val = std::stol(buffer.substr(arg_pos));
-                        param.L = val;
-                        std::cout << "##KKN\tsetL " << val << std::endl;
+                        param.set_L(val);
+                        std::cout << "##KKN\tset-lattice " << val << std::endl;
                     }
 
-                    // setN command
-                    command = "setN";
-                    if( (arg_pos = buffer.find("setN")) != std::string::npos){
+                    command = "set-beam";
+                    if( (arg_pos = buffer.find(command)) != std::string::npos){
                         arg_pos = buffer.find_first_of(" \t",arg_pos+command.length());
                         long val = std::stol(buffer.substr(arg_pos));
-                        param.N = val;
-                        std::cout << "##KKN\tsetN " << val << std::endl;
+                        param.set_N(val);
+                        std::cout << "##KKN\tset-beam " << val << std::endl;
                     }
 
+                    command = "set-ambiguous";
+                    if( (arg_pos = buffer.find(command)) != std::string::npos){
+                        param.set_output_ambigous_word(true);
+                        std::cout << "##KKN\tset-ambiguous " << std::endl;
+                    }
+                    
+                    command = "unset-ambiguous";
+                    if( (arg_pos = buffer.find(command)) != std::string::npos){
+                        param.set_output_ambigous_word(false);
+                        std::cout << "##KKN\tunset-ambiguous " << std::endl;
+                    }
                 }else{// S-ID の処理
                     std::cout << buffer << " " << VERSION << "(" << GITVER <<")" << std::endl;
                 }

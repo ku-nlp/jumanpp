@@ -58,8 +58,16 @@ class Parameter {
     std::vector<unsigned long> unk_figure_pos;
 
     int set_N(unsigned int n){
+        if(n > 1000) n= 1000;
+        if(n == 0) n=1;
         N =n;
 		N_redundant = N + (unsigned int)(ceil(N * B_BEST_REDUNDANCY));
+        return 0;
+    }
+    int set_L(unsigned int l){
+        if(l > 1000) l= 1000;
+        if(l == 0) l=1;
+        L =l;
         return 0;
     }
 
