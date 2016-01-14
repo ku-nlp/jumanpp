@@ -25,7 +25,7 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     
     // 設定の読み込みオプション
     option.add<std::string>("dir", 'D', "set resource directory", false, bin_dir+"/data");
-    option.add<std::string>("dict", 0, "dictionary filepath", false, "data/japanese.dic");
+    option.add<std::string>("dict", 0, "dictionary filepath", false, "data/dic");
     option.add<std::string>("model", 0, "model filepath", false, "data/model.mdl");
     option.add<std::string>("rnnlm", 0, "RNNLM filepath", false, "data/lang.mdl"); 
     option.add<std::string>("feature", 0, "feature template filepath", false, "data/feature.def");
@@ -107,13 +107,13 @@ int main(int argc, char** argv) {//{{{
     // TODO: オプションの処理，初期化，解析を分離する
     // モデルパス
     std::string rnnlm_model_path = "data/lang.mdl";
-    std::string dict_path = "data/japanese.dic";
+    std::string dict_path = "data/dic";
     std::string model_path = "data/model.mdl";
     std::string freq_word_list = "data/freq_words.list";
     std::string feature_path = "data/feature.def";
     if(option.exist("dir")){
         rnnlm_model_path = option.get<std::string>("dir") + "/lang.mdl"; 
-        dict_path = option.get<std::string>("dir") + "/japanese.dic";
+        dict_path = option.get<std::string>("dir") + "/dic";
         model_path = option.get<std::string>("dir") + "/model.mdl";
         freq_word_list = option.get<std::string>("dir") + "/freq_words.list";
         feature_path = option.get<std::string>("dir") + "/feature.def";
