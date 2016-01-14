@@ -1,6 +1,7 @@
 
 # Objects
 *.o
+*.og
 *.ko
 *.ot
 *.obj
@@ -26,16 +27,46 @@
 
 # generated or prepared data files and headers
 *.model
+*.mdl
+*.map
 *.dat
 *.prob
 *.db
 *.idx
 *.knpdict
+*.0
+*.1
+*.2
+*.3
+*.4
+*.5
+*.6
+*.7
+*.8
+*.9
+*.log
+*.old
+*.nnet
+*.direct
+*.base
+*.bin
+*.da
+*.form
+*.form_type
+*.imis
+*.pos
+*.read
+*.rep
+*.spos
+*.mrp
 all-compound*
 chinese_rule/*data
 wordlist.txt
 INSTALL
 knprc
+kkn
+kkn_g
+mkdarts
 system/version.h
 
 # generated binaries

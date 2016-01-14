@@ -21,23 +21,22 @@ bool WEIGHT_AVERAGED = false;
 // オプション
 void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     std::string bin_path(argv[0]);
-    std::string bin_dir =  bin_path.substr(0,bin_path.rfind('/')); // Unix依存
+    std::string bin_dir =  bin_path.substr(0,bin_path.rfind('/')); // Windows 非対応
     
     // 設定の読み込みオプション
-    option.add<std::string>("dir", 'D', "set model directory", false, bin_dir+"/data");
-
-    option.add<std::string>("dict", 0, "dict filename", false, "data/japanese.dic");
-    option.add<std::string>("model", 0, "model filename", false, "data/model.mdl");
-    option.add<std::string>("rnnlm", 0, "rnnlm filename", false, "data/lang.mdl"); 
-    option.add<std::string>("feature", 0, "feature template filename", false, "data/feature.def");
-    option.add<std::string>("use_lexical_feature", 0, "change frequent word list for lexical feature",false,"data/freq_words.list"); 
+    option.add<std::string>("dir", 'D', "set resource directory", false, bin_dir+"/data");
+    option.add<std::string>("dict", 0, "dictionary filepath", false, "data/japanese.dic");
+    option.add<std::string>("model", 0, "model filepath", false, "data/model.mdl");
+    option.add<std::string>("rnnlm", 0, "RNNLM filepath", false, "data/lang.mdl"); 
+    option.add<std::string>("feature", 0, "feature template filepath", false, "data/feature.def");
+    option.add<std::string>("use_lexical_feature", 0, "set frequent word list for lexical feature",false,"data/freq_words.list"); 
 
 #ifdef USE_SRILM
     option.add<std::string>("srilm", 'I', "srilm filename", false, "srilm.arpa");
 #endif
         
     // 解析方式の指定オプション
-    option.add<unsigned int>("beam", 'B', "set beam width (default 5)",false,5);
+    option.add<unsigned int>("beam", 'B', "set beam width",false,5);
 
     // 出力形式のオプション
     option.add("juman", 'j', "print juman style (default)"); 
@@ -48,19 +47,18 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     option.add("oldstyle", 0, "print old style lattice");
 
     // 訓練用オプション
-    option.add<std::string>("train", 't', "training filename", false, "data/train.txt");
-    option.add("scw", 0, "use soft confidence weighted");
+    option.add<std::string>("train", 't', "set training data path", false, "data/train.txt");
+    option.add("scw", 0, "use soft confidence weighted in the training");
     option.add("shuffle", 's', "shuffle training data for each iteration"); //デフォルトに
-    //option.add<std::string>("ptrain", 'p', "partial training filename", false, "data/ptrain.txt");
     option.add<unsigned int>("iteration", 'i', "iteration number for training", false, 10);
-    option.add<double>("Cvalue", 'C', "C value",false, 1.0);
-    option.add<double>("Phi", 'P', "Phi value",false, 1.65);
+    option.add<double>("Cvalue", 'C', "C value. parameter for SCW",false, 1.0);
+    option.add<double>("Phi", 'P', "Phi value. parameter for SCW",false, 1.65);
         
     // デフォルト化
     //option.add<unsigned int>("unk_max_length", 'l', "maximum length of unknown word detection", false, 2);
 
-    option.add<double>("Rweight", 0, "linear interpolation parameter for KKN score and RNN score (default=0.3)",false, 0.3);
-    option.add<double>("Lweight", 0, "linear penalty parameter for unknown words in RNNLM (default=1.5)",false, 1.5);
+    option.add<double>("Rweight", 0, "linear interpolation parameter for MA score and RNN score",false, 0.3);
+    option.add<double>("Lweight", 0, "linear penalty parameter for unknown words in RNNLM",false, 1.5);
     //option.add<unsigned int>("nbest", 'n', "n-best search", false, 5);
     //option.add<unsigned int>("rerank", 'R', "n-best reranking", false, 5);
     //option.add("oldloss", 0, "use old loss function");
@@ -79,7 +77,7 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     option.add("rnndebug", '\0', "show rnnlm debug message");
     
     // 開発用オプション
-    option.add("dynamic", 0, "dynamic RNNLM loading (dev)");
+    option.add("dynamic", 0, "loading RNNLM dynamically (dev)");
     option.add("ptest", 0, "receive partially annotated text (dev)");
     option.add("rnnasfeature", 0, "use rnnlm score as feature (dev)");
     option.add("userep", 0, "use rep in rnnlm (dev)");
@@ -95,9 +93,6 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     if (option.exist("train")) {//{{{
         MODE_TRAIN = true;
     }//}}}
-//    if (option.exist("averaged")) {//{{{
-//        WEIGHT_AVERAGED = true;
-//    }//}}}
 }//}}}
 
 // unit_test 時はmainを除く
@@ -108,7 +103,8 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
 int main(int argc, char** argv) {//{{{
     cmdline::parser option;
     option_proc(option, argc, argv);
-
+    
+    // TODO: オプションの処理，初期化，解析を分離する
     // モデルパス
     std::string rnnlm_model_path = "data/lang.mdl";
     std::string dict_path = "data/japanese.dic";
@@ -116,7 +112,6 @@ int main(int argc, char** argv) {//{{{
     std::string freq_word_list = "data/freq_words.list";
     std::string feature_path = "data/feature.def";
     if(option.exist("dir")){
-        //std::cout << option.get<std::string>("dir") << std::endl;
         rnnlm_model_path = option.get<std::string>("dir") + "/lang.mdl"; 
         dict_path = option.get<std::string>("dir") + "/japanese.dic";
         model_path = option.get<std::string>("dir") + "/model.mdl";
