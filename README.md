@@ -1,43 +1,78 @@
----------
 # KKN
----------
-
-This is a new morphological analyser that considers semantic plausibility of 
+-----
+A new morphological analyser that considers semantic plausibility of 
 word sequences by using a recurrent neural network language model (RNNLM).
 
-## DEMO
-----
-http://lotus.kuee.kyoto-u.ac.jp/~morita/rnnlm.cgi
-
 ## Installation
------
 ### Required libraries
-* gperftool
+- gperftool  
  https://github.com/gperftools/gperftools
-** libunwind (required by gperftool in 64bit environment) 
- http://download.savannah.gnu.org/releases/libunwind/libunwind-0.99-beta.tar.gz
-* Boost C++ Libraries (1.57 or later)
+    * libunwind (required by gperftool in 64bit environment)  
+    http://download.savannah.gnu.org/releases/libunwind/libunwind-0.99-beta.tar.gz
+- Boost C++ Libraries (1.57 or later)  
  http://www.boost.org/users/history/version_1_57_0.html
 []( for serialization, unordered_map, hashing, interprocess(dynamic loading))
 
 ### Build
------
+```
 git clone git@bitbucket.org:ku_nlp/kkn.git
+cd kkn
 make
+```
+### Pre-built binary
+```
+/share/tool/kkn/bin/kkn
+```
 
 ## Quick start
------
- ./kkn -D /share/usr-x86_64/tool/kkn/model/latest
+```
+/share/tool/kkn/bin/kkn -D /share/tool/kkn/model/latest
+```
+魅力がたっぷりと詰まっている
+```
+魅力 みりょく 魅力 名詞 6 普通名詞 1 * 0 * 0 "代表表記:魅力/みりょく カテゴリ:抽象物"
+が が が 助詞 9 格助詞 1 * 0 * 0 NIL
+たっぷり たっぷり たっぷり 副詞 8 * 0 * 0 * 0 "自動認識"
+と と と 助詞 9 格助詞 1 * 0 * 0 NIL
+詰まって つまって 詰まる 動詞 2 * 0 子音動詞ラ行 10 タ系連用テ形 14 "代表表記:詰まる/つまる ドメイン:料理・食事 自他動詞:他:詰める/つめる"
+いる いる いる 接尾辞 14 動詞性接尾辞 7 母音動詞 1 基本形 2 "代表表記:いる/いる"
+EOS
+```
 
-## Algorithm 
------
-See ``Morphological Analysis for Unsegmented Languages using Recurrent Neural Network Language Model. Hajime Morita, Daisuke Kawahara, Sadao Kurohashi. EMNLP 2015''
+## Option
+```
+usage: kkn [options] 
+options:
+  -D, --dir                    set resource directory (string [=./data])
+  -j, --juman                  JUMAN style output (default)
+  -L, --lattice                lattice format output (unsigned int [=5])
+  -A, --ambiguous              output ambiguous words on lattice
+  -M, --morph                  morph style output 
+  -N, --Nmorph                 N-best morph output (unsigned int [=5])
+  -B, --beam                   set beam width used in analysis (unsigned int [=5])
+      --dynamic                Load RNNLM dynamically (dev)
+  -v, --version                print version
+  -h, --help                   print this message
+```
+
+## Input
+It receives utf-8 encoding text as an input.
+Lines beginning with `#` will be interpreted as comment line.
+
+## DEMO
+[DEMO cgi](http://lotus.kuee.kyoto-u.ac.jp/~morita/rnnlm.cgi)
+
+## Issue
+KKN has very slow starting time (about 1 minute). 
+`--dynamic` option will reduce the starting time to about 10 sec.
+
+## Model
+See ``Morphological Analysis for Unsegmented Languages using Recurrent Neural Network Language Model. Hajime Morita, Daisuke Kawahara, Sadao Kurohashi. EMNLP 2015''  
+[link](http://aclweb.org/anthology/D/D15/D15-1276.pdf)
 
 ## Authors
------
-
-Hajime Morita <hmorita@i.kyoto-u.ac.jp>
-Daisuke Kawahara <dk@i.kyoto-u.ac.jp>
+Hajime Morita <hmorita@i.kyoto-u.ac.jp>  
+Daisuke Kawahara <dk@i.kyoto-u.ac.jp>  
 Sadao Kurohashi <kuro@i.kyoto-u.ac.jp>
 
 ## Note
