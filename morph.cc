@@ -211,8 +211,8 @@ int main(int argc, char** argv) {//{{{
     normal_param.set_nbest(true); // nbest を利用するよう設定
     normal_param.set_N(10); // 10-best に設定
 
-    param.set_rnnlm(option.exist("rnnlm"));
-    param.set_nce(option.exist("rnnlm"));
+    param.set_rnnlm(option.exist("rnnlm")||option.exist("dir"));
+    param.set_nce(option.exist("rnnlm")||option.exist("dir"));
     
     if(option.exist("userep"))
         param.userep = true;
@@ -230,8 +230,8 @@ int main(int argc, char** argv) {//{{{
         p_rnnlm = new RNNLM::CRnnLM_stat();
     }
         
-    if(option.exist("rnnlm")){
-        p_rnnlm->setRnnLMFile(option.get<std::string>("rnnlm").c_str());
+    if(option.exist("rnnlm")||option.exist("dir")){
+        p_rnnlm->setRnnLMFile(rnnlm_model_path.c_str());
         if(option.exist("rnndebug"))
             p_rnnlm->setDebugMode(1);
         else
