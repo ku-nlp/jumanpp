@@ -12,6 +12,9 @@ word sequences by using a recurrent neural network language model (RNNLM).
 - Boost C++ Libraries (1.57 or later)  
  http://www.boost.org/users/history/version_1_57_0.html
 []( for serialization, unordered_map, hashing, interprocess(dynamic loading))
+- gcc (4.9 or later)
+
+[Note contains instruction for install libraries.](#markdown-header-note)
 
 ### Build
 ```
@@ -75,5 +78,31 @@ Hajime Morita <hmorita@i.kyoto-u.ac.jp>
 Daisuke Kawahara <dk@i.kyoto-u.ac.jp>  
 Sadao Kurohashi <kuro@i.kyoto-u.ac.jp>
 
-## Note
+## Note 
+
+### Install Requirements
+#### libunwind
+```
+wget http://download.savannah.gnu.org/releases/libunwind/libunwind-0.99-beta.tar.gz
+tar xzf libunwind-0.99-beta.tar.gz
+cd libunwind-0.99-beta
+./configure --prefix=/somewhere/local/
+make 
+make install
+```
+#### gperftools
+```
+./configure --prefx=/somewhere/local/
+make
+# When ld try to link libunwind.so (and failed to build), 
+# please set an option "UNWIND_LIBS=-lunwind-x86_64" to make.
+make install
+```
+#### Boost Libraries 
+```
+sh bootstrap.sh
+./b2 install -j2 --prefix=/somewhere/local/
+```
 ----
+
+[note]: http://example.com/  "Optional Title Here"
