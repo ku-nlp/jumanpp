@@ -565,7 +565,7 @@ namespace RNNLM{
         saveFullContext(c); //文頭としてInitial context を作成
     }//}}}
     
-    real CRnnLM_dyn::test_word_selfnm(context *c, context *new_c, std::string next_word)
+    real CRnnLM_dyn::test_word_selfnm(context *c, context *new_c, std::string next_word, size_t word_length)
     {//{{{
         int last_word;
         last_word = c->last_word;
@@ -597,7 +597,7 @@ namespace RNNLM{
             // 文字の長さに対してlinear に設定する
             real oov_penalty=-5; //log penalty
             if(lpenalty){ //penalty を文字の長さに対して線形に与える.
-               oov_penalty -= lweight * (next_word.length()/3.0); //TODO: utf8 の正確な対処
+               oov_penalty -= lweight * word_length;
             }
                 
             logp+=oov_penalty;

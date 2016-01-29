@@ -88,7 +88,7 @@ public:
     virtual void setDebugMode(int newDebug) = 0;
     virtual void setLweight(double newLw) = 0;
     virtual void get_initial_context_FR(context *c) = 0;
-    virtual real test_word_selfnm(context *c, context *new_c, std::string next_word) = 0;
+    virtual real test_word_selfnm(context *c, context *new_c, std::string next_word, size_t word_length) = 0;
 };
 
 //    inline void FreadAllOrDie(void* ptr, size_t size, size_t count, FILE* fo, const char* message) {/*{{{*/

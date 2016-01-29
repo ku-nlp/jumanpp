@@ -1708,13 +1708,14 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
                     RNNLM::context new_c;
                     double rnn_score = 0.0;
                     std::string rnnlm_rep;
-                    if(param->userep){
-                        rnnlm_rep = generate_rnnlm_representation(r_node);
-                    }else{// 原形用言語モデル
-                        rnnlm_rep = (*r_node->spos == UNK_POS|| *r_node->spos == "数詞" )?*(r_node->original_surface):*(r_node->base);
-                    }
+                    //if(param->userep){
+                    // 中で生成するようにする
+                    rnnlm_rep = generate_rnnlm_token(r_node);
+                    //}else{// 原形用言語モデル
+                    //    rnnlm_rep = (*r_node->spos == UNK_POS|| *r_node->spos == "数詞" )?*(r_node->original_surface):*(r_node->base);
+                    //}
                     rnn_score = (param->rweight) * rnnlm->test_word_selfnm(l_node->bq.beam.front().context.get(),
-                                &new_c, rnnlm_rep);
+                                &new_c, rnnlm_rep, get_rnnlm_word_length(r_node));
 
                     tok.context_score += (1.0 - param->rweight) * rnn_score;
                     tok.context =
@@ -1761,21 +1762,21 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
                 if (param->nce){
 
                     std::string rnnlm_rep;
-                    if(param->userep){
-                        rnnlm_rep = generate_rnnlm_representation(r_node);
-                    }else{
-                        rnnlm_rep = (*r_node->spos == UNK_POS|| *r_node->spos == "数詞" )?*(r_node->original_surface):*(r_node->base);
-                    }
+                    //if(param->userep){
+                    rnnlm_rep = generate_rnnlm_token(r_node);
+                    //}else{
+//                        rnnlm_rep = (*r_node->spos == UNK_POS|| *r_node->spos == "数詞" )?*(r_node->original_surface):*(r_node->base);
+//                    }
 
                     rnn_score =
-                        rnnlm->test_word_selfnm(l_token_with_state.context.get(), &new_c, rnnlm_rep);
+                        rnnlm->test_word_selfnm(l_token_with_state.context.get(), &new_c, rnnlm_rep, get_rnnlm_word_length(r_node));
                         context_score += (param->rweight) * rnn_score;
-//                    if (param->debug)
-//                        std::cout << "lw:" << *l_node->original_surface << ":"
-//                                  << *l_node->pos
-//                                  << " rw:" << *r_node->original_surface << ":"
-//                                  << *r_node->pos << " => " << rnn_score
-//                                  << std::endl;
+                    if (param->debug)
+                        std::cout << "lw:" << *l_node->original_surface << ":"
+                                  << *l_node->pos
+                                  << " rw:" << *r_node->original_surface << ":" << rnnlm_rep << "(" << get_rnnlm_word_length(r_node) << ")"
+                                  << *r_node->pos << " => " << rnn_score
+                                  << std::endl;
                 } 
 #ifdef USE_SRILM
                 else if (param->srilm) {/*{{{*/
@@ -1942,12 +1943,7 @@ void Sentence::print_best_beam_rep() {  //{{{
                 (*it)->stat != MORPH_EOS_NODE) {
                 (*it)->used_in_nbest = true;
                 if (printed_num++) output_string_buffer.append(" ");
-                output_string_buffer.append(generate_rnnlm_representation(*it));
-//                output_string_buffer.append(*(*it)->string_for_print);
-//                output_string_buffer.append("_");
-//                output_string_buffer.append(*(*it)->pos);
-//                output_string_buffer.append(":");
-//                output_string_buffer.append(*(*it)->spos);
+                output_string_buffer.append(generate_rnnlm_token(*it));
             }
         }
 

@@ -83,6 +83,14 @@ class U8string{//{{{
         bool parsed = false;
     public:
 
+        static size_t character_length(const std::string& c_str){/*{{{*/
+            size_t clen = 0;
+            for(size_t i=0,byte=utf8_bytes(c_str[0]);i<c_str.size();byte=utf8_bytes(c_str[i]),i+=byte){
+                ++clen;
+            }
+            return clen;
+        }/*}}}*/
+
         U8string(const std::string& c_str):parsed(false){//{{{
             byte_str = std::string(c_str);
             char_array.clear();
@@ -308,7 +316,7 @@ class U8string{//{{{
 
         int to_unicode(std::vector<unsigned char>& c);
             
-        inline int utf8_bytes(unsigned char u) {//{{{
+        inline static int utf8_bytes(unsigned char u) {//{{{
             if ( u < 0x80 ) {
                 return 1;
             } else if ( (0xe0 <= u) & (u < 0xf0) ){// よく出てくるので先に調べる

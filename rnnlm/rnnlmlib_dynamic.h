@@ -321,7 +321,7 @@ namespace RNNLM{
             void trainNet();
             void useLMProb(int use) {use_lmprob=use;}
             real test_word(context *c, context *new_c, std::string next_word);
-            real test_word_selfnm(context *c, context *new_c, std::string next_word);
+            real test_word_selfnm(context *c, context *new_c, std::string next_word,size_t word_length);
             void testNet();
             void testNbest();
             void testGen();

@@ -308,12 +308,8 @@ class Sentence {//{{{
         if(*r_node->spos == UNK_POS|| *r_node->spos == "数詞" ){ //未定義語，数詞は表層から擬似代表表記を作る
             rnnlm_rep = *(r_node->original_surface) + "/" + *(r_node->original_surface);
         }else if(r_node->representation == nullptr || *r_node->representation == "*" || *r_node->representation == "<UNK>" || *r_node->representation == ""){
-            // 代表表記の無い語は, 読みが設定されていれば原形＋読みで擬似代表表記を作成
-//            if(*r_node->reading != "*" && *r_node->reading != "<UNK>")
-//                rnnlm_rep = *r_node->base + "/" + *r_node->reading;
-//            else
-//                // 代表表記の無い語は, 読みが分からなければ，原形+原形で擬似代表表記を作成
-//                rnnlm_rep = *r_node->base + "/" + *r_node->base;
+            // 代表表記の無い語は, 読みの有無にかかわらず，原形+原形で擬似代表表記を作成
+            // ０の読みなど、対処の難しい不一致を回避するため。
             rnnlm_rep = *r_node->base + "/" + *r_node->base;
         }else{
             rnnlm_rep = *r_node->representation;
@@ -321,6 +317,30 @@ class Sentence {//{{{
         // std::cerr << rnnlm_rep << " " ;
         return rnnlm_rep;
     }
+
+    std::string generate_rnnlm_token(Node* r_node){/*{{{*/
+        std::string rnnlm_rep;
+        if(param->userep){
+            rnnlm_rep = generate_rnnlm_representation(r_node);
+        }else if(param->usesurf){
+            rnnlm_rep = *(r_node->original_surface);
+        }else{//usebase // 原形用言語モデル
+            rnnlm_rep = (*r_node->spos == UNK_POS || *r_node->spos == "数詞" )?*(r_node->original_surface):*(r_node->base);
+        }
+
+        if(param->usepos){
+            // 未定義語の場合もここでは推定された品詞が入っている。
+            rnnlm_rep += "_"+*r_node->pos;
+        }
+        return rnnlm_rep;
+    }/*}}}*/
+    
+    size_t get_rnnlm_word_length(Node* r_node){/*{{{*/
+        if(*r_node->spos == UNK_POS || *r_node->spos == "数詞" )
+            return U8string::character_length(*(r_node->original_surface));
+        else
+            return U8string::character_length(*(r_node->base));
+    }/*}}}*/
 
 };//}}}
 

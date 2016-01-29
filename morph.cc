@@ -81,6 +81,9 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     option.add("ptest", 0, "receive partially annotated text (dev)");
     option.add("rnnasfeature", 0, "use rnnlm score as feature (dev)");
     option.add("userep", 0, "use rep in rnnlm (dev)");
+    option.add("usebase", 0, "use rep in rnnlm (dev)");
+    option.add("usesurf", 0, "use surf in rnnlm (dev)");
+    option.add("usepos", 0, "use pos in rnnlm (dev)");
     option.add("printrep",0, "print rep(dev)");
 
     option.add("version", 'v', "print version");
@@ -216,6 +219,12 @@ int main(int argc, char** argv) {//{{{
     
     if(option.exist("userep"))
         param.userep = true;
+    if(option.exist("usebase"))
+        param.usebase = true;
+    if(option.exist("usesurf"))
+        param.usesurf = true;
+    if(option.exist("usepos"))
+        param.usepos = true;
 
 #ifdef USE_SRILM
     param.set_srilm(option.exist("srilm"));
