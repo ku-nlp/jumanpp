@@ -23,7 +23,6 @@
 
 #include <unordered_map>
 #include <boost/unordered_map.hpp>
-#include "fastexp.h"
 #include "rnnlmlib_dynamic.h"
 
 namespace bip = boost::interprocess;
@@ -520,7 +519,7 @@ namespace RNNLM{
             
         // layer 1 の activation(sigmoid)
         for (a=0; a<layer1_size; a++) {
-            neu1[a].ac=1/(1+fasterexp(-neu1[a].ac));
+            neu1[a].ac=1/(1+std::exp(-neu1[a].ac));
         }
                         
         //1->2 class
@@ -535,7 +534,7 @@ namespace RNNLM{
         }
             
         // exp 前 スコア
-        neu2[word].ac = fasterexp( rnn_score + direct_score - nce_lnz );
+        neu2[word].ac = std::exp( rnn_score + direct_score - nce_lnz );
                 
         if(debug_mode > 0)
             std::cerr << "p(" << vocab[word].word << "|" << vocab[context->history[0]].word << ", " << vocab[context->history[1]].word << ", ...) = " << neu2[word].ac << " (nn_score:" << rnn_score << " direct_score:" << direct_score << ")"<< std::endl;
