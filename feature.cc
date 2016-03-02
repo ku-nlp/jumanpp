@@ -105,6 +105,14 @@ void FeatureSet::extract_unigram_feature(Node *node) {//{{{
                 fv.push_back(node->end_char_family);
             } else if (*it == FEATURE_MACRO_FEATURE1) { // Wikipedia (test)
                 fv.push_back(node->lcAttr);
+            } else if (*it == FEATURE_MACRO_NOMINALIZE) {
+                if(node->semantic_feature && node->semantic_feature->find("名詞化",0) != std::string::npos){
+                    if(debug_flag) feature_name << "名詞化";
+                    fv.push_back(1);
+                }else{
+                    if(debug_flag) feature_name << "-";
+                    fv.push_back(0);
+                }
             } else if (*it == FEATURE_MACRO_LEXICAL) { // 
                 if( freq_word_set.count(std::make_tuple(*(node->base),*(node->pos),*(node->spos),*(node->form_type))) > 0){
                     if(debug_flag) feature_name << *(node->string) << "," << *(node->pos) << "," << *(node->spos) << "," << *(node->form_type) << "," << *(node->form);
@@ -693,6 +701,8 @@ unsigned int FeatureTemplate::interpret_macro(std::string &macro) {//{{{
         return FEATURE_MACRO_NUMSTR;
     else if (macro == FEATURE_MACRO_STRING_LEXICAL)
         return FEATURE_MACRO_LEXICAL;
+    else if (macro == FEATURE_MACRO_STRING_NOMINALIZE)
+        return FEATURE_MACRO_NOMINALIZE;
 
     // bigram: left
     else if (macro == FEATURE_MACRO_STRING_LEFT_WORD)

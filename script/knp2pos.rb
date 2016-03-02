@@ -6,11 +6,14 @@ require 'rubygems'
 require 'optparse'
 
 OPTS = {}
+OPTS[:poschange]=true
 opt= OptionParser.new
 
 opt.on('-t'){|v| OPTS[:test]=v}
 opt.on('-b'){|v| OPTS[:base]=v}
 opt.on('-i'){|v| OPTS[:id]=v}
+opt.on('--disablePOSchange'){OPTS[:poschange]=false}
+opt.on('--enablePOSchange'){OPTS[:poschange]=true}
 opt.parse!(ARGV)
 
 # 品詞-品詞id のマップ
@@ -147,7 +150,7 @@ while line = STDIN.gets
         # 0      1        2      3    4 5        6 7 8 9 10 "品詞変更:見通し-みとおし-見通す-動詞-*-子音動詞サ行-基本連用形"
         # 見通し みとおし 見通し 名詞 6 普通名詞 1 * 0 * 0 "品詞変更:見通し-みとおし-見通す-動詞-*-子音動詞サ行-基本連用形"
         sp = line.split(/\s/)
-        if(line =~ /品詞変更:/)
+        if(OPTS[:poschange] && line =~ /品詞変更:/)
             if(line =~ /[ "]品詞変更:(.*?)[" ]/)
                 new_sp = $1.split(/-/)
                 if( new_sp[0] == sp[0] && new_sp[3] != "15") # 単語が分割されていない場合
