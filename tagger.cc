@@ -234,6 +234,12 @@ bool Tagger::read_gold_data(const char *gsd_file) {//{{{
     std::string buffer;
     while (getline(gsd_in, buffer)) {
         std::vector<std::string> word_pos_pairs;
+        // comment, id の除去
+        size_t pos = buffer.find(" # ");
+        if(pos != std::string::npos){
+            buffer = buffer.substr(0,pos);
+        }
+        // 単語へ分割
         split_string(buffer, " ", word_pos_pairs);
             
         Sentence *new_sentence = new Sentence(strlen(buffer.c_str()), &begin_node_list, &end_node_list, &dic, &ftmpl, param);
