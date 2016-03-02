@@ -213,37 +213,37 @@ void FeatureSet::extract_bigram_feature(Node *l_node, Node *r_node) {//{{{
                 if(debug_flag) feature_name << *(r_node->string);
                 fv.push_back(get_feature_id(*(r_node->string)));
             } else if (*it == FEATURE_MACRO_RIGHT_POS){
-                if(debug_flag) feature_name << *(l_node->pos);
+                if(debug_flag) feature_name << *(r_node->pos);
                 fv.push_back(r_node->posid);
             } else if (*it == FEATURE_MACRO_RIGHT_SPOS){
-                if(debug_flag) feature_name << *(l_node->spos);
+                if(debug_flag) feature_name << *(r_node->spos);
                 fv.push_back(r_node->sposid);
             } else if (*it == FEATURE_MACRO_RIGHT_FORM){
-                if(debug_flag) feature_name << *(l_node->form);
+                if(debug_flag) feature_name << *(r_node->form);
                 fv.push_back(r_node->formid);
             }else if (*it == FEATURE_MACRO_RIGHT_FORM_TYPE){
-                if(debug_flag) feature_name << *(l_node->form_type);
+                if(debug_flag) feature_name << *(r_node->form_type);
                 fv.push_back(r_node->formtypeid);
             }else if (*it == FEATURE_MACRO_RIGHT_FUNCTIONAL_WORD){
                 if( *(r_node->pos) == "助詞" || *(r_node->pos) == "助動詞" || *(r_node->pos) == "判定詞"){
-                    if(debug_flag) feature_name << *(l_node->string) << "," << *(l_node->pos) << "," << *(l_node->spos);
+                    if(debug_flag) feature_name << *(r_node->string) << "," << *(r_node->pos) << "," << *(r_node->spos);
                     fv.push_back(get_feature_id(*(r_node->string)));
                     fv.push_back(r_node->posid);
                     fv.push_back(r_node->sposid);
                     fv.push_back(0);
                 }else{
-                    if(debug_flag) feature_name << *(l_node->pos);
+                    if(debug_flag) feature_name << *(r_node->pos);
                     fv.push_back(r_node->posid);
                     fv.push_back(0);
                 }
             }else if (*it == FEATURE_MACRO_RIGHT_BASE_WORD){ //原型
-                if(debug_flag) feature_name << *(l_node->base);
+                if(debug_flag) feature_name << *(r_node->base);
                 fv.push_back(r_node->baseid);
             }else if (*it == FEATURE_MACRO_RIGHT_LENGTH){
-                if(debug_flag) feature_name << l_node->get_char_num();
+                if(debug_flag) feature_name << r_node->get_char_num();
                 fv.push_back(r_node->get_char_num());
             }else if (*it == FEATURE_MACRO_RIGHT_LONGER){
-                if(debug_flag && l_node->longer) feature_name << "+"; else feature_name << "-";
+                if(debug_flag && r_node->longer) feature_name << "+"; else feature_name << "-";
                 fv.push_back(r_node->longer);
             }else if (*it == FEATURE_MACRO_RIGHT_BEGINNING_CHAR){
                 std::string f;
@@ -251,19 +251,19 @@ void FeatureSet::extract_bigram_feature(Node *l_node, Node *r_node) {//{{{
                 if(debug_flag) feature_name << f;
                 fv.push_back(get_feature_id(f));
             }else if (*it == FEATURE_MACRO_RIGHT_ENDING_CHAR){
-                if(debug_flag) feature_name << *(l_node->end_string);
+                if(debug_flag) feature_name << *(r_node->end_string);
                 fv.push_back(get_feature_id(*(r_node->end_string)));
             }else if (*it == FEATURE_MACRO_RIGHT_BEGINNING_CHAR_TYPE){
-                if(debug_flag) feature_name << l_node->char_family; 
+                if(debug_flag) feature_name << r_node->char_family; 
                 fv.push_back(r_node->char_family);
             }else if (*it == FEATURE_MACRO_RIGHT_ENDING_CHAR_TYPE){
-                if(debug_flag) feature_name << l_node->end_char_family; 
+                if(debug_flag) feature_name << r_node->end_char_family; 
                 fv.push_back(r_node->end_char_family);
             } else if (*it == FEATURE_MACRO_RIGHT_DUMMY){ 
                 fv.push_back(3);
             } else if (*it == FEATURE_MACRO_RIGHT_LEXICAL){ // 
                 if( freq_word_set.count(std::make_tuple(*(r_node->base),*(r_node->pos),*(r_node->spos),*(r_node->form_type))) > 0 ){
-                    if(debug_flag) feature_name << *(l_node->string) << "," << *(l_node->pos) << "," << *(l_node->spos) << "," << *(l_node->form_type) << "," << *(l_node->form);
+                    if(debug_flag) feature_name << *(r_node->string) << "," << *(r_node->pos) << "," << *(r_node->spos) << "," << *(r_node->form_type) << "," << *(r_node->form);
                     fv.push_back(get_feature_id(*(r_node->string)));
                     fv.push_back(r_node->posid);
                     fv.push_back(r_node->sposid);
@@ -271,7 +271,7 @@ void FeatureSet::extract_bigram_feature(Node *l_node, Node *r_node) {//{{{
                     fv.push_back(r_node->formid);
                     fv.push_back(0);
                 } else {
-                    if(debug_flag) feature_name << *(l_node->pos);
+                    if(debug_flag) feature_name << *(r_node->pos);
                     fv.push_back(r_node->posid);
                     fv.push_back(0);
                 }
@@ -619,7 +619,9 @@ std::string FeatureSet::str(){//{{{
         fpair.push_back(make_pair(ss.str(), it->second * (*weight)[it->first]));
     }
 
-    std::sort(fpair.begin(), fpair.end(),[](std::pair<std::string,double> &left,std::pair<std::string,double> &right)->int{return (std::abs(left.second) > std::abs(right.second));});
+    // 素性を重み順にソート
+    // std::sort(fpair.begin(), fpair.end(),[](std::pair<std::string,double> &left,std::pair<std::string,double> &right)->int{return (std::abs(left.second) > std::abs(right.second));});
+    
     ss.str("");
     for (auto it = fpair.begin(); it != fpair.end(); it++) {
         if(std::abs(it->second) > 0.5 )

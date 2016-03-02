@@ -4,11 +4,11 @@
 
 #include "common.h"
 #include "node.h"
+#include "parameter.h"
 #include <sstream>
 #include <memory>
 #include <tuple>
 #include <unordered_set>
-#include <boost/tr1/unordered_map.hpp>
 #include <functional>
 
 namespace Morph {
@@ -54,6 +54,9 @@ enum NodePosition {LeftN,RightN,CenterN,UnigramN};
 #define FEATURE_MACRO_NUMSTR  20
 #define FEATURE_MACRO_STRING_LEXICAL  "%lexical"
 #define FEATURE_MACRO_LEXICAL  21
+
+#define FEATURE_MACRO_STRING_NOMINALIZE  "%nominalize"
+#define FEATURE_MACRO_NOMINALIZE  22
 
 //------ LEFT ------
 #define FEATURE_MACRO_STRING_LEFT_WORD "%Lw"
@@ -230,21 +233,25 @@ class FeatureTemplateSet {//{{{
     }
 };//}}}
 
+// 使っていないメンバの削除
+// weight をよそに移譲
 class FeatureSet { //{{{
-  friend int main(int argc, char** argv);
+  friend int ::main(int argc, char** argv);
     FeatureTemplateSet *ftmpl;
     FeatureVector* weight;
-  static std::unordered_map<std::string,long int> feature_map; //sub_feature_map
-  static std::tr1::unordered_map<std::vector<long int>,unsigned long> feature_id_map;
+  private:
+    static std::unordered_map<long int,std::string> feature_map; //sub_feature_map
+    static bool debug_flag;
+    static bool use_total_sim;
 
   public: 
     static std::vector<double>* topic;
-    static bool use_total_sim;
     static bool open_freq_word_set(const std::string &list_filename); 
     static std::unordered_set<std::tuple<std::string, std::string, std::string, std::string>, tuple_hash, tuple_equal> freq_word_set;
-
+    
     std::vector<std::string> fset;
-    FeatureVector fvec;//暫定
+    FeatureVector fvec; //暫定
+        
     FeatureSet(FeatureTemplateSet *in_ftmpl);
     FeatureSet(const FeatureSet& f){
         ftmpl = f.ftmpl;
@@ -259,10 +266,8 @@ class FeatureSet { //{{{
     void extract_topic_feature(Node *node);
     void extract_bigram_feature(Node *l_node, Node *r_node);
     void extract_trigram_feature(Node *l_node, Node *m_node, Node *r_node);
-    void extract_context_feature(double context_score); 
 
     bool append_feature(FeatureSet *in);
-
 
     // 廃止予定
     inline long int get_feature_id(const std::string& s){
@@ -270,7 +275,7 @@ class FeatureSet { //{{{
         return hash_func(s);
     };
 
-    // 表示用
+    // 表示,学習用
     inline FeatureVector& get_fset(){return fvec;};
     bool print();
     std::string str();

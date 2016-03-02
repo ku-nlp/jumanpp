@@ -241,9 +241,10 @@ int main(int argc, char** argv) {//{{{
         
     if(option.exist("rnnlm")||option.exist("dir")){
         p_rnnlm->setRnnLMFile(rnnlm_model_path.c_str());
-        if(option.exist("rnndebug"))
+        if(option.exist("rnndebug")){
             p_rnnlm->setDebugMode(1);
-        else
+            param.rnndebug = true;
+        }else
             p_rnnlm->setDebugMode(0);
         if(param.lpenalty)
             p_rnnlm->setLweight(param.lweight);

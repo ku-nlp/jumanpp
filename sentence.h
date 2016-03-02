@@ -272,6 +272,7 @@ class Sentence {//{{{
     void print_best_beam();
     void print_best_beam_rep();
 
+    void generate_unified_lattice_line(Node* node, std::stringstream &ss, std::vector<std::vector<int>>& num2id, unsigned int char_num);
     void generate_juman_line(Node* node, std::stringstream &output_string_buffer, std::string prefix = "");
     void print_best_beam_juman();
     void print_best_path_with_rnn(RNNLM::CRnnLM& model);

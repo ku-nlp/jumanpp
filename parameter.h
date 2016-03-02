@@ -10,7 +10,8 @@ class Parameter {
   public:
     bool unknown_word_detection;
     bool shuffle_training_data;
-    bool debug;
+    bool debug=false;
+    bool rnndebug=false;
     bool nbest;
     bool beam;
     bool use_so;

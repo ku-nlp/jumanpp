@@ -304,7 +304,6 @@ Node *Sentence::make_unk_pseudo_node_list_from_some_positions(const char *start_
 Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, const char *start_str, unsigned int specified_length, const std::vector<std::string> &spec) {  //{{{
     Node *result_node = NULL;
     unsigned int char_num = 0;
-    // Node *kanji_result_node = NULL;
     unsigned int pos = 0;
     // spec (0: reading, 1:base, 2:pos, 3:spos, 4:type, 5:form)
     auto specified_pos_string = spec[2];  // pos
@@ -315,17 +314,9 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, co
         specified_pos = &specified_pos_string;
 
     // まず探す
-//    std::cerr << start_str << std::endl;
     auto lattice_result = cl.da_search_from_position(dic->darts, char_num);
     // 以下は何バイト目かが必要
     Node *dic_node = dic->lookup_lattice_specified(lattice_result, start_str, specified_length, spec);
-
-    auto dic_node_tmp = dic_node;
-//    std::cerr << "dic_node" << std::endl;
-//    while(dic_node_tmp){
-//        std::cerr << *dic_node_tmp->string << " " << *dic_node_tmp->representation << std::endl;
-//        dic_node_tmp = dic_node_tmp->bnext;
-//    }
 
     // オノマトペ処理 // spec 処理... 
     if (dic_node == nullptr && specified_pos_string == "副詞") { //副詞の場合のみ
@@ -1043,267 +1034,243 @@ void Sentence::print_juman_lattice() {  //{{{
     cout << "EOS" << endl;
 }  //}}}
 
-// 用途は？
-void Sentence::print_unified_lattice() {  //{{{
-    mark_nbest();
+// unified lattice の行出力を生成
+void Sentence::generate_unified_lattice_line(Node* node, std::stringstream &ss, std::vector<std::vector<int>>& num2id, unsigned int char_num){/*{{{*/
+    // 先にやっておく処理
+    //num2id[char_num + word_length].push_back(node->id);
 
-    unsigned int char_num = 0;
-    // - 2 0 0 1 部屋 部屋/へや へや 部屋 名詞 6 普通名詞 1 * 0 * 0
-    // "カテゴリ:場所-施設..."
-    // - 15 2 2 2 に * に に 助詞 9 格助詞 1 * 0 * 0 NIL
-    // wordmark ID fromIDs char_index_begin char_index_end surface rep_form
-    // reading pos posid spos sposid form_type typeid form formid imis
+    // lattice で表示する行の生成
+    size_t word_length = node->char_num;
+    U8string ustr(*node->original_surface);
+    const std::string wordmark{"-"};
+    const std::string delim{"\t"};
 
-    std::vector<std::vector<int>> num2id(length + 1);  //多めに保持する
-    for (unsigned int pos = 0; pos < length;
-         pos += utf8_bytes((unsigned char *)(sentence_c_str + pos))) {
-        Node *node = (*begin_node_list)[pos];
-        const std::string wordmark{
-            "-"};
-        const std::string delim{
-            "\t"};
+    // ヘッダ
+    ss << wordmark << delim << node->id << delim;
 
-        while (node) {
-            size_t word_length = node->char_num;
-            // ID の表示
-            if (node->used_in_nbest) {  // n-best解に使われているもののみ
-                U8string ustr(*node->original_surface);
-                cout << wordmark << delim << node->id << delim;
-                num2id[char_num + word_length].push_back(
-                    node->id);                       // 現在，接続先はn-best
-                                                     // と関係なく繋がるもの全てを使用
-                if (num2id[char_num].size() == 0) {  // 無かったら 0 を出す
-                    cout << "0";
-                } else {
-                    std::string sep =
-                        "";
-                    for (auto to_id : num2id[char_num]) {
-                        cout << sep << to_id;
-                        sep =
-                            ";";
-                    }
-                }
-                cout << delim;
-                // 文字index の表示
-                cout << char_num << delim << char_num + word_length - 1
-                     << delim;
-
-                // 表層 代表表記 よみ 原形
-                if (*node->reading ==
-                    "*") {                                    //読み不明であれば表層を使う
-                    cout << *node->original_surface << delim  // 表層
-                         // 擬似代表表記を表示する
-                         << *node->original_surface << "/"
-                         << *node->original_surface << delim
-                         << *node->original_surface << delim   // 読み
-                         << *node->original_surface << delim;  // 原形
-                } else {
-                    if (*node->representation ==
-                        "*") {  // Wikipedia 数詞など
-                        cout << *node->original_surface << delim
-                             << *node->original_surface << "/" << *node->reading
-                             << delim << *node->reading << delim << *node->base
-                             << delim;
-                    } else {
-                        cout << *node->original_surface << delim
-                             << *node->representation << delim << *node->reading
-                             << delim << *node->base << delim;
-                    }
-                }
-                // 品詞 品詞id 細分類 細分類id
-                if (*node->spos == UNK_POS) {
-                    cout << "未定義語" << delim << Dic::pos_map.at(
-                                                       "未定義語")
-                         << delim;
-                    if (ustr.is_katakana()) {
-                        cout << "カタカナ" << delim
-                             << Dic::spos_map.at(
-                                    "カタカナ") << delim;
-                    } else if (ustr.is_alphabet()) {
-                        cout << "アルファベット" << delim
-                             << Dic::spos_map.at(
-                                    "アルファベット") << delim;
-                    } else {
-                        cout << "その他" << delim << Dic::spos_map.at(
-                                                         "その他")
-                             << delim;
-                    }
-                } else {
-                    cout << *node->pos << delim << Dic::pos_map.at(*node->pos)
-                         << delim;
-                    cout << *node->spos << delim
-                         << Dic::spos_map.at(*node->spos) << delim;
-                }
-                // 活用型 活用型id
-                if (Dic::katuyou_type_map.count(*node->form_type) == 0) {
-                    cout << "*" << delim << "0" << delim;
-                } else {
-                    cout << *node->form_type << delim
-                         << Dic::katuyou_type_map.at(*node->form_type) << delim;
-                }
-
-                // 活用系 活用系id
-                auto type_and_form = (*node->form_type +
-                                      ":" + *node->form);
-                if (Dic::katuyou_form_map.count(type_and_form) ==
-                    0) {  //無い場合
-                    if (*node->form ==
-                        "<UNK>")
-                        cout << "*" << delim << "0" << delim;
-                    else
-                        cout << *node->form << delim << "0" << delim;
-                } else {
-                    if (*node->form ==
-                        "<UNK>") {
-                        cout << "*" << delim << "0" << delim;
-                    } else {
-                        cout << *node->form << delim
-                             << Dic::katuyou_form_map.at(type_and_form)
-                             << delim;
-                    }
-                }
-
-                // 意味情報を再構築して表示
-                if (*node->semantic_feature !=
-                        "NIL" ||
-                    *node->spos == UNK_POS || ustr.is_katakana() ||
-                    ustr.is_kanji() || ustr.is_eisuu() || ustr.is_kigou()) {
-                    const std::string sep =
-                        "|";
-                    bool use_sep = false;
-
-                    if (*node->semantic_feature !=
-                        "NIL") {
-                        // 一度空白で分割し,表示する
-                        size_t current = 0, found;
-                        while ((found = (*node->semantic_feature)
-                                            .find_first_of(' ', current)) !=
-                               std::string::npos) {
-                            cout << (use_sep ? sep : "")
-                                 << std::string(
-                                        (*node->semantic_feature), current,
-                                        found - current);  // NILでなければ
-                            current = found + 1;
-                            use_sep = true;
-                        }
-                        if (current == 0) {
-                            cout << (use_sep ? sep : "")
-                                 << *node->semantic_feature;
-                            use_sep = true;
-                        }
-                    }
-                    if (*node->spos == UNK_POS) {
-                        cout << (use_sep ? sep : "")
-                             << "品詞推定:" << *node->pos << ":" << *node->spos;
-                        use_sep = true;
-                    }
-                    // TODO:これ以降の処理はあとでくくり出してNode 生成時に行う
-                    bool kieisuuka = false;
-                    if (ustr.is_katakana()) {
-                        cout << (use_sep ? sep : "") << "カタカナ";
-                        use_sep = true;
-                        kieisuuka = true;
-                    }
-                    if (ustr.is_kanji()) {
-                        cout << (use_sep ? sep : "") << "漢字";
-                        use_sep = true;
-                    }
-                    if (ustr.is_eisuu()) {
-                        cout << (use_sep ? sep : "") << "英数字";
-                        use_sep = true;
-                        kieisuuka = true;
-                    }
-                    if (ustr.is_kigou()) {
-                        cout << (use_sep ? sep : "") << "記号";
-                        use_sep = true;
-                        kieisuuka = true;
-                    }
-                    if (kieisuuka) {
-                        cout << (use_sep ? sep : "") << "記英数カ";
-                    }
-                    cout << endl;
-                } else {
-                    cout << "NIL" << endl;
-                }
-
-                if (param->debug) {
-                    // デバッグ出力
-                    cout << "!\tword score:" << node->wcost
-                         << "\tscore:" << node->cost << endl;
-                    cout << "!\t" << "unigram:" << node->debug_info[
-                                         "unigram_feature"]
-                         << endl;
-                    std::stringstream ss_debug;
-                    for (auto to_id : num2id[char_num]) {
-                        ss_debug.str(
-                            "");
-                        ss_debug << to_id << " -> " << node->id;
-                        cout << "!\t" << ss_debug.str() << ": "
-                             << node->debug_info[ss_debug.str()] << endl;
-                        cout << "!\t" << ss_debug.str() << ": "
-                             << node->debug_info[ss_debug.str() + ":bigram_feature"] << endl;
-
-                        // node のbeam に残っているhistoryをたどる
-//                        for (auto tok : node->bq.beam) {
-//                            auto hist = tok.node_history;
-//                            if (hist.size() > 3 &&
-//                                hist[hist.size() - 2]->id == to_id) {
-//                                ss_debug.str(
-//                                    "");
-//                                ss_debug << hist[hist.size() - 3]->id << " -> "
-//                                         << hist[hist.size() - 2]->id << " -> "
-//                                         << node->id;
-////                                cout << "!\t" << ss_debug.str() << ": "
-////                                     << node->debug_info[ss_debug.str() +
-////                                                         ":trigram_feature"]
-////                                     << endl;
-//                            }
-//                        }
-                    }
-                    // BOS, EOS との接続の表示.. (TODO: 簡潔に書き換え)
-                    ss_debug.str( "");
-//                    ss_debug << -2 << " -> " << node->id;  // BOS
-//                    if (node->debug_info.find(ss_debug.str()) !=
-//                        node->debug_info.end()) {
-//                        cout << "!\t"
-//                             << "BOS:" << ss_debug.str() << ": "
-//                             << node->debug_info[ss_debug.str()] << endl;
-//                    }
-//                    if (node->debug_info.find(ss_debug.str() +
-//                                              ":bigram_feature") !=
-//                        node->debug_info.end()) {
-//                        cout << "!\t"
-//                             << "BOS:" << ss_debug.str() << ": "
-//                             << node->debug_info[ss_debug.str() +
-//                                                 ":bigram_feature"] << endl;
-//                    }
-//                    ss_debug.str(
-//                        "");
-//                    ss_debug << node->id << " -> " << -1;  // EOS
-//                    if (node->debug_info.find(ss_debug.str()) !=
-//                        node->debug_info.end()) {
-//                        cout << "!\t"
-//                             << "EOS:" << ss_debug.str() << ": "
-//                             << node->debug_info[ss_debug.str()] << endl;
-//                    }
-//                    if (node->debug_info.find(ss_debug.str() +
-//                                              ":bigram_feature") !=
-//                        node->debug_info.end()) {
-//                        cout << "!\t"
-//                             << "EOS:" << ss_debug.str() << ": "
-//                             << node->debug_info[ss_debug.str() +
-//                                                 ":bigram_feature"] << endl;
-//                    }
-                }
-            }
-            node = node->bnext;
+    // 接続先ID
+    // 現在，接続先はn-bestと関係なく繋がるもの全てを使用
+    if (num2id[char_num].size() == 0) { // 無かったら 0 を出す
+        ss << "0";
+    } else {
+        std::string sep = "";
+        for (auto to_id : num2id[char_num]) {
+            ss << sep << to_id;
+            sep = ";";
         }
-        char_num++;
     }
-    cout << "EOS" << endl;
+    ss << delim;
+        
+    // 文字index の表示
+    ss << char_num << delim << char_num + word_length - 1 << delim;
+        
+    // 表層 代表表記 よみ 原形
+    if (*node->reading == "*"||*node->reading=="<UNK>") { //読み不明であれば表層を使う
+        ss << *node->original_surface << delim  // 表層
+            // 擬似代表表記を表示する
+            << *node->original_surface << "/"
+            << *node->original_surface << delim
+            << *node->original_surface << delim   // 読み
+            << *node->original_surface << delim;  // 原形
+    } else {
+        if (*node->representation == "*" || *node->representation == "<UNK>" ) {  // Wikipedia 数詞など
+            ss << *node->original_surface << delim
+                << *node->original_surface << "/" << *node->reading
+                << delim << *node->reading << delim << *node->base
+                << delim;
+        } else {
+            ss << *node->original_surface << delim
+                << *node->representation << delim << *node->reading
+                << delim << *node->base << delim;
+        }
+    }
+    
+    // 品詞 品詞id 細分類 細分類id
+    if (*node->spos == UNK_POS) {
+        ss << "未定義語" << delim << Dic::pos_map.at("未定義語")
+            << delim;
+        if (ustr.is_katakana()) {
+            ss << "カタカナ" << delim
+                << Dic::spos_map.at("カタカナ") << delim;
+        } else if (ustr.is_alphabet()) {
+            ss << "アルファベット" << delim
+                << Dic::spos_map.at("アルファベット") << delim;
+        } else {
+            ss << "その他" << delim << Dic::spos_map.at("その他")
+                << delim;
+        }
+    } else {
+        ss << *node->pos << delim << Dic::pos_map.at(*node->pos)
+            << delim;
+        ss << *node->spos << delim
+            << Dic::spos_map.at(*node->spos) << delim;
+    }
+
+    // 活用型 活用型id
+    if (Dic::katuyou_type_map.count(*node->form_type) == 0) {
+        ss << "*" << delim << "0" << delim;
+    } else {
+        ss << *node->form_type << delim
+            << Dic::katuyou_type_map.at(*node->form_type) << delim;
+    }
+
+    // 活用系 活用系id
+    auto type_and_form = (*node->form_type + ":" + *node->form);
+    if (Dic::katuyou_form_map.count(type_and_form) == 0) {  //無い場合
+        if (*node->form == "<UNK>")
+            ss << "*" << delim << "0" << delim;
+        else
+            ss << *node->form << delim << "0" << delim;
+    } else {
+        if (*node->form ==
+                "<UNK>") {
+            ss << "*" << delim << "0" << delim;
+        } else {
+            ss << *node->form << delim
+                << Dic::katuyou_form_map.at(type_and_form)
+                << delim;
+        }
+    }
+
+    // 意味情報を再構築して表示
+    if (*node->semantic_feature != "NIL" ||
+            *node->spos == UNK_POS || ustr.is_katakana() || 
+            ustr.is_kanji() || ustr.is_eisuu() || ustr.is_kigou()) {
+        const std::string sep = "|";
+        bool use_sep = false;
+
+        if (*node->semantic_feature != "NIL") {
+            // 一度空白で分割し,表示する
+            size_t current = 0, found;
+            while ((found = (*node->semantic_feature)
+                        .find_first_of(' ', current)) !=
+                    std::string::npos) {
+                ss << (use_sep ? sep : "")
+                    << std::string(
+                            (*node->semantic_feature), current,
+                            found - current);  // NILでなければ
+                current = found + 1;
+                use_sep = true;
+            }
+            if (current == 0) {
+                ss << (use_sep ? sep : "")
+                    << *node->semantic_feature;
+                use_sep = true;
+            }else if(current < (*node->semantic_feature).size() ){
+                ss << (use_sep ? sep : "")
+                    << std::string( (*node->semantic_feature), current,  (*node->semantic_feature).size() - current);
+            }
+        }
+        if (*node->spos == UNK_POS) {
+            ss << (use_sep ? sep : "")
+                << "品詞推定:" << *node->pos << ":" << *node->spos;
+            use_sep = true;
+        }
+        // TODO:これ以降の処理はあとでくくり出してNode 生成時に行う
+        bool kieisuuka = false;
+        if (ustr.is_katakana()) {
+            ss << (use_sep ? sep : "") << "カタカナ";
+            use_sep = true;
+            kieisuuka = true;
+        }
+        if (ustr.is_kanji()) {
+            ss << (use_sep ? sep : "") << "漢字";
+            use_sep = true;
+        }
+        if (ustr.is_eisuu()) {
+            ss << (use_sep ? sep : "") << "英数字";
+            use_sep = true;
+            kieisuuka = true;
+        }
+        if (ustr.is_kigou()) {
+            ss << (use_sep ? sep : "") << "記号";
+            use_sep = true;
+            kieisuuka = true;
+        }
+        if (kieisuuka) {
+            ss << (use_sep ? sep : "") << "記英数カ";
+        }
+        ss << endl;
+    } else {
+        ss << "NIL" << endl;
+    }
+
+    if (param->debug) {
+        // デバッグ出力
+        ss << "!\twcost(score):" << node->wcost
+            << "\tcost(score):" << node->cost << endl;
+        ss << "!\t" << node->debug_info[ "unigram_feature"]
+            << endl;
+        std::stringstream ss_debug;
+        for (auto to_id : num2id[char_num]) {
+            ss_debug.str( "");
+            ss_debug << to_id << " -> " << node->id;
+            ss << "!\t" << ss_debug.str() << ": "
+                << node->debug_info[ss_debug.str()] << endl;
+            ss << "!\t" << ss_debug.str() << ": "
+                << node->debug_info[ss_debug.str() +
+                ":bigram_feature"] << endl;
+
+            // node のbeam に残っているhistoryをたどる
+            //                        for (auto tok : node->bq.beam) {
+            //                            auto hist = tok.node_history;
+            //                            if (hist.size() > 3 &&
+            //                                hist[hist.size() - 2]->id == to_id) {
+            //                                ss_debug.str(
+            //                                    "");
+            //                                ss_debug << hist[hist.size() - 3]->id << " -> "
+            //                                         << hist[hist.size() - 2]->id << " -> "
+            //                                         << node->id;
+            //                                cout << "!\t" << ss_debug.str() << ": "
+            //                                     << node->debug_info[ss_debug.str() +
+            //                                                         ":trigram_feature"]
+            //                                     << endl;
+            //                            }
+            //                        }
+        }
+        // BOS, EOS との接続の表示.. (TODO: 簡潔に書き換え)
+        ss_debug.str( "");
+        ss_debug << -2 << " -> " << node->id;  // BOS
+        if (node->debug_info.find(ss_debug.str()) !=
+                node->debug_info.end()) {
+            ss << "!\t"
+                << "BOS:" << ss_debug.str() << ": "
+                << node->debug_info[ss_debug.str()] << endl;
+        }
+        if (node->debug_info.find(ss_debug.str() +
+                    ":bigram_feature") !=
+                node->debug_info.end()) {
+            ss << "!\t"
+                << "BOS:" << ss_debug.str() << ": "
+                << node->debug_info[ss_debug.str() +
+                ":bigram_feature"] << endl;
+        }
+        ss_debug.str(
+                "");
+        ss_debug << node->id << " -> " << -1;  // EOS
+        if (node->debug_info.find(ss_debug.str()) !=
+                node->debug_info.end()) {
+            ss << "!\t"
+                << "EOS:" << ss_debug.str() << ": "
+                << node->debug_info[ss_debug.str()] << endl;
+        }
+        if (node->debug_info.find(ss_debug.str() +
+                    ":bigram_feature") !=
+                node->debug_info.end()) {
+            ss << "!\t"
+                << "EOS:" << ss_debug.str() << ": "
+                << node->debug_info[ss_debug.str() +
+                ":bigram_feature"] << endl;
+        }
+    }
+}/*}}}*/
+
+// デバッグ出力等
+void Sentence::print_unified_lattice() {  //{{{
+    print_unified_lattice_rbeam(1); 
 }  //}}}
 
-void Sentence::print_unified_lattice_rbeam(unsigned int nbest) {  //{{{
+void Sentence::print_unified_lattice_rbeam(unsigned int nbest=1) {  //{{{
     mark_nbest_rbeam(nbest);
 
     unsigned int char_num = 0;
@@ -1314,249 +1281,20 @@ void Sentence::print_unified_lattice_rbeam(unsigned int nbest) {  //{{{
     // reading pos posid spos sposid form_type typeid form formid imis
 
     std::vector<std::vector<int>> num2id(length + 1);  //多めに保持する
+    std::stringstream ss;
     for (unsigned int pos = 0; pos < length;
-         pos += utf8_bytes((unsigned char *)(sentence_c_str + pos))) {
+            pos += utf8_bytes((unsigned char *)(sentence_c_str + pos))) {
         Node *node = (*begin_node_list)[pos];
-        const std::string wordmark{
-            "-"};
-        const std::string delim{
-            "\t"};
-
         while (node) {
-            size_t word_length = node->char_num;
-            // ID の表示
-            if (node->used_in_nbest) {  // n-best解に使われているもののみ
-                U8string ustr(*node->original_surface);
-                cout << wordmark << delim << node->id << delim;
-                num2id[char_num + word_length].push_back(
-                    node->id);                       // 現在，接続先はn-best
-                                                     // と関係なく繋がるもの全てを使用
-                if (num2id[char_num].size() == 0) {  // 無かったら 0 を出す
-                    cout << "0";
-                } else {
-                    std::string sep =
-                        "";
-                    for (auto to_id : num2id[char_num]) {
-                        cout << sep << to_id;
-                        sep =
-                            ";";
-                    }
-                }
-                cout << delim;
-                // 文字index の表示
-                cout << char_num << delim << char_num + word_length - 1
-                     << delim;
-
-                // 表層 代表表記 よみ 原形
-                if (*node->reading == "*") { //読み不明であれば表層を使う
-                    cout << *node->original_surface << delim  // 表層
-                         // 擬似代表表記を表示する
-                         << *node->original_surface << "/"
-                         << *node->original_surface << delim
-                         << *node->original_surface << delim   // 読み
-                         << *node->original_surface << delim;  // 原形
-                } else {
-                    if (*node->representation == "*") {  // Wikipedia 数詞など
-                        cout << *node->original_surface << delim
-                             << *node->original_surface << "/" << *node->reading
-                             << delim << *node->reading << delim << *node->base
-                             << delim;
-                    } else {
-                        cout << *node->original_surface << delim
-                             << *node->representation << delim << *node->reading
-                             << delim << *node->base << delim;
-                    }
-                }
-                // 品詞 品詞id 細分類 細分類id
-                if (*node->spos == UNK_POS) {
-                    cout << "未定義語" << delim << Dic::pos_map.at(
-                                                       "未定義語")
-                         << delim;
-                    if (ustr.is_katakana()) {
-                        cout << "カタカナ" << delim
-                             << Dic::spos_map.at(
-                                    "カタカナ") << delim;
-                    } else if (ustr.is_alphabet()) {
-                        cout << "アルファベット" << delim
-                             << Dic::spos_map.at(
-                                    "アルファベット") << delim;
-                    } else {
-                        cout << "その他" << delim << Dic::spos_map.at(
-                                                         "その他")
-                             << delim;
-                    }
-                } else {
-                    cout << *node->pos << delim << Dic::pos_map.at(*node->pos)
-                         << delim;
-                    cout << *node->spos << delim
-                         << Dic::spos_map.at(*node->spos) << delim;
-                }
-                // 活用型 活用型id
-                if (Dic::katuyou_type_map.count(*node->form_type) == 0) {
-                    cout << "*" << delim << "0" << delim;
-                } else {
-                    cout << *node->form_type << delim
-                         << Dic::katuyou_type_map.at(*node->form_type) << delim;
-                }
-
-                // 活用系 活用系id
-                auto type_and_form = (*node->form_type +
-                                      ":" + *node->form);
-                if (Dic::katuyou_form_map.count(type_and_form) ==
-                    0) {  //無い場合
-                    if (*node->form ==
-                        "<UNK>")
-                        cout << "*" << delim << "0" << delim;
-                    else
-                        cout << *node->form << delim << "0" << delim;
-                } else {
-                    if (*node->form ==
-                        "<UNK>") {
-                        cout << "*" << delim << "0" << delim;
-                    } else {
-                        cout << *node->form << delim
-                             << Dic::katuyou_form_map.at(type_and_form)
-                             << delim;
-                    }
-                }
-
-                // 意味情報を再構築して表示
-                if (*node->semantic_feature != "NIL" ||
-                    *node->spos == UNK_POS || ustr.is_katakana() || 
-                    ustr.is_kanji() || ustr.is_eisuu() || ustr.is_kigou()) {
-                    const std::string sep = "|";
-                    bool use_sep = false;
-
-                    if (*node->semantic_feature != "NIL") {
-                        // 一度空白で分割し,表示する
-                        size_t current = 0, found;
-                        while ((found = (*node->semantic_feature)
-                                            .find_first_of(' ', current)) !=
-                               std::string::npos) {
-                            cout << (use_sep ? sep : "")
-                                 << std::string(
-                                        (*node->semantic_feature), current,
-                                        found - current);  // NILでなければ
-                            current = found + 1;
-                            use_sep = true;
-                        }
-                        if (current == 0) {
-                            cout << (use_sep ? sep : "")
-                                 << *node->semantic_feature;
-                            use_sep = true;
-                        }else if(current < (*node->semantic_feature).size() ){
-                            cout << (use_sep ? sep : "")
-                                 << std::string( (*node->semantic_feature), current,  (*node->semantic_feature).size() - current);
-                        }
-                    }
-                    if (*node->spos == UNK_POS) {
-                        cout << (use_sep ? sep : "")
-                             << "品詞推定:" << *node->pos << ":" << *node->spos;
-                        use_sep = true;
-                    }
-                    // TODO:これ以降の処理はあとでくくり出してNode 生成時に行う
-                    bool kieisuuka = false;
-                    if (ustr.is_katakana()) {
-                        cout << (use_sep ? sep : "") << "カタカナ";
-                        use_sep = true;
-                        kieisuuka = true;
-                    }
-                    if (ustr.is_kanji()) {
-                        cout << (use_sep ? sep : "") << "漢字";
-                        use_sep = true;
-                    }
-                    if (ustr.is_eisuu()) {
-                        cout << (use_sep ? sep : "") << "英数字";
-                        use_sep = true;
-                        kieisuuka = true;
-                    }
-                    if (ustr.is_kigou()) {
-                        cout << (use_sep ? sep : "") << "記号";
-                        use_sep = true;
-                        kieisuuka = true;
-                    }
-                    if (kieisuuka) {
-                        cout << (use_sep ? sep : "") << "記英数カ";
-                    }
-                    cout << endl;
-                } else {
-                    cout << "NIL" << endl;
-                }
-
-                if (param->debug) {
-                    // デバッグ出力
-                    cout << "!\twcost(score):" << node->wcost
-                         << "\tcost(score):" << node->cost << endl;
-                    cout << "!\t" << node->debug_info[ "unigram_feature"]
-                         << endl;
-                    std::stringstream ss_debug;
-                    for (auto to_id : num2id[char_num]) {
-                        ss_debug.str( "");
-                        ss_debug << to_id << " -> " << node->id;
-                        cout << "!\t" << ss_debug.str() << ": "
-                             << node->debug_info[ss_debug.str()] << endl;
-                        cout << "!\t" << ss_debug.str() << ": "
-                             << node->debug_info[ss_debug.str() +
-                                                 ":bigram_feature"] << endl;
-
-                        // node のbeam に残っているhistoryをたどる
-//                        for (auto tok : node->bq.beam) {
-//                            auto hist = tok.node_history;
-//                            if (hist.size() > 3 &&
-//                                hist[hist.size() - 2]->id == to_id) {
-//                                ss_debug.str(
-//                                    "");
-//                                ss_debug << hist[hist.size() - 3]->id << " -> "
-//                                         << hist[hist.size() - 2]->id << " -> "
-//                                         << node->id;
-//                                cout << "!\t" << ss_debug.str() << ": "
-//                                     << node->debug_info[ss_debug.str() +
-//                                                         ":trigram_feature"]
-//                                     << endl;
-//                            }
-//                        }
-                    }
-                    // BOS, EOS との接続の表示.. (TODO: 簡潔に書き換え)
-                    ss_debug.str( "");
-                    ss_debug << -2 << " -> " << node->id;  // BOS
-                    if (node->debug_info.find(ss_debug.str()) !=
-                        node->debug_info.end()) {
-                        cout << "!\t"
-                             << "BOS:" << ss_debug.str() << ": "
-                             << node->debug_info[ss_debug.str()] << endl;
-                    }
-                    if (node->debug_info.find(ss_debug.str() +
-                                              ":bigram_feature") !=
-                        node->debug_info.end()) {
-                        cout << "!\t"
-                             << "BOS:" << ss_debug.str() << ": "
-                             << node->debug_info[ss_debug.str() +
-                                                 ":bigram_feature"] << endl;
-                    }
-                    ss_debug.str(
-                        "");
-                    ss_debug << node->id << " -> " << -1;  // EOS
-                    if (node->debug_info.find(ss_debug.str()) !=
-                        node->debug_info.end()) {
-                        cout << "!\t"
-                             << "EOS:" << ss_debug.str() << ": "
-                             << node->debug_info[ss_debug.str()] << endl;
-                    }
-                    if (node->debug_info.find(ss_debug.str() +
-                                              ":bigram_feature") !=
-                        node->debug_info.end()) {
-                        cout << "!\t"
-                             << "EOS:" << ss_debug.str() << ": "
-                             << node->debug_info[ss_debug.str() +
-                                                 ":bigram_feature"] << endl;
-                    }
-                }
+            if (node->used_in_nbest) { // n-best解に使われているもののみ
+                num2id[char_num + node->char_num].push_back(node->id);
+                generate_unified_lattice_line(node, ss, num2id, char_num);
             }
             node = node->bnext;
         }
         char_num++;
     }
-    cout << "EOS" << endl;
+    cout << ss.str() << "EOS" << endl;
 }  //}}}
 
 // Node か Dic でやるべき処理(get ではなく、BOSノードの生成)
@@ -1771,7 +1509,7 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
                     rnn_score =
                         rnnlm->test_word_selfnm(l_token_with_state.context.get(), &new_c, rnnlm_rep, get_rnnlm_word_length(r_node));
                         context_score += (param->rweight) * rnn_score;
-                    if (param->debug)
+                    if (param->rnndebug)
                         std::cout << "lw:" << *l_node->original_surface << ":"
                                   << *l_node->pos
                                   << " rw:" << *r_node->original_surface << ":" << rnnlm_rep << "(" << get_rnnlm_word_length(r_node) << ")"
