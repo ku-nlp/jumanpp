@@ -63,7 +63,9 @@ class TokenWithState{//{{{
             if(tmp.f.get() != nullptr)
                 f = std::make_unique<FeatureSet>(*(tmp.f)); //unique_ptr
             score = tmp.score;
+            word_score = tmp.word_score;
             context_score = tmp.context_score;
+            word_context_score = tmp.word_context_score;
             context = tmp.context;
             node_history = tmp.node_history;
         };//}}}
@@ -71,7 +73,9 @@ class TokenWithState{//{{{
             if(tmp.f.get() != nullptr)
                 f = std::make_unique<FeatureSet>(*(tmp.f)); //unique_ptr
             score = tmp.score;
+            word_score = tmp.word_score;
             context_score = tmp.context_score;
+            word_context_score = tmp.word_context_score;
             context = tmp.context;
             node_history = tmp.node_history;
             return *this;
@@ -80,6 +84,8 @@ class TokenWithState{//{{{
             
         double score = -DBL_MAX;
         double context_score = -DBL_MAX;
+        double word_score = -DBL_MAX; //単語レベルのスコア
+        double word_context_score = -DBL_MAX; //単語レベルのコンテクストスコア
         std::shared_ptr<RNNLM::context> context;
         std::vector<Node*> node_history;
         std::unique_ptr<FeatureSet> f;
@@ -257,8 +263,10 @@ class Node {//{{{
     bool used_in_nbest = false;
     bool longer = false;
     bool suuji = false;
-    double wcost = 0; // cost of this morpheme
-    double cost = 0; // total cost to this node
+    double wcost = 0; // score of this morpheme
+    double cost = 0;  // score to this node (without context cost)
+    double twcost = 0; // total score of this morpheme
+    double tcost = 0; // total score to this node
     struct morph_token_t *token = nullptr;
     BeamQue bq;
                         
@@ -294,6 +302,7 @@ class Node {//{{{
     TopicVector get_topic();
 };//}}}
 
+// obs
 class NbestSearchToken {//{{{
 
 public:

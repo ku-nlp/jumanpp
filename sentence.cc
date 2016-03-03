@@ -747,7 +747,7 @@ bool Sentence::lookup_partial() {  //{{{
                 next_delimiter_pos = first_delimiter;
 
                 //std::cerr << "r_node" << std::endl;
-                auto r_node_tmp = r_node;
+                //auto r_node_tmp = r_node;
 //                while(r_node_tmp){
 //                    std::cerr << "p-rnode:" << *(r_node_tmp->string) << ":len=" << 
 //                        r_node_tmp->length << " "<<  *(r_node_tmp->pos) << " " <<
@@ -1190,15 +1190,23 @@ void Sentence::generate_unified_lattice_line(Node* node, std::stringstream &ss, 
         if (kieisuuka) {
             ss << (use_sep ? sep : "") << "記英数カ";
         }
+
+        // スコアの出力
+        ss << (use_sep ? sep : "")
+           << "スコア:" << node->twcost;
+        use_sep = true;
         ss << endl;
     } else {
-        ss << "NIL" << endl;
+        ss << "スコア:" << node->twcost << endl;
+        //ss << "NIL" << endl;
     }
 
     if (param->debug) {
         // デバッグ出力
-        ss << "!\twcost(score):" << node->wcost
-            << "\tcost(score):" << node->cost << endl;
+        ss << "!\twscore:" << node->wcost
+            << "\tfeature score:" << node->cost 
+            << "\ttotal word score:" << node->twcost 
+            << "\ttotal score:" << node->tcost << endl;
         ss << "!\t" << node->debug_info[ "unigram_feature"]
             << endl;
         std::stringstream ss_debug;
@@ -1381,11 +1389,9 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
     // r_node の重複を除外 (細分類まで一致する形態素を除外する)
     while (r_node) {  // pos から始まる形態素
         std::string key = (*r_node->original_surface + *r_node->base +
-                           "_" +
-                           *r_node->pos +
+                           "_" + *r_node->pos +
                            "_" + *r_node->spos +
-                           "_" +
-                           *r_node->form_type +
+                           "_" + *r_node->form_type +
                            "_" + *r_node->form);
         if (duplicate_filter.find(key) !=
             duplicate_filter.end()) {  //重複がある
@@ -1402,8 +1408,8 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
         // 訓練時に必要になる trigram素性 の best も context
         // に含める必要がある (もしくは探索語に再生成)
         // 訓練時には 1-best が必要になる
-        FeatureSet best_score_bigram_f( ftmpl);  
-        FeatureSet best_score_trigram_f( ftmpl);  
+        FeatureSet best_score_bigram_f(ftmpl);  
+        FeatureSet best_score_trigram_f(ftmpl);  
 
         while (l_node) {  // pos で終わる形態素
             if (l_node->bq.beam.size() == 0) {
@@ -1465,7 +1471,7 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
                 continue;
             }  //}}}
 
-            if (param->debug) {  //{{{
+            if (param->debug) {  //デバッグのために素性の情報を保存{{{
                 ss_key.str(""); 
                 ss_value.str("");
                 ss_key << l_node->id << " -> " << r_node->id;
@@ -1482,33 +1488,28 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
             // 2.コンテクスト依存の処理
             for (auto &l_token_with_state :
                  l_node->bq.beam) {  // l_node で終わる形態素 top N
-                // コンテクスト素性( RNNLM, tri-gram )
+                // コンテクスト素性( RNNLM )
                 RNNLM::context new_c;
                 FeatureSet tri_f(ftmpl);
                 FeatureSet context_f(ftmpl);
 
                 double trigram_score = 0.0;
                 double rnn_score = 0.0;
-                double rnn_feature_score = 0.0;
 #ifdef USE_SRILM
                 double srilm_score = 0.0;
 #endif
-                double context_score = l_token_with_state.context_score;
+                double context_score = l_token_with_state.context_score; //RNNLM のスコア
                 double score = l_token_with_state.score + bigram_score +
                                (1.0 - param->rweight) * r_node->wcost;
-
+                    
                 if (param->nce){
 
                     std::string rnnlm_rep;
                     //if(param->userep){
                     rnnlm_rep = generate_rnnlm_token(r_node);
-                    //}else{
-//                        rnnlm_rep = (*r_node->spos == UNK_POS|| *r_node->spos == "数詞" )?*(r_node->original_surface):*(r_node->base);
-//                    }
-
                     rnn_score =
-                        rnnlm->test_word_selfnm(l_token_with_state.context.get(), &new_c, rnnlm_rep, get_rnnlm_word_length(r_node));
-                        context_score += (param->rweight) * rnn_score;
+                        (param->rweight) * rnnlm->test_word_selfnm(l_token_with_state.context.get(), &new_c, rnnlm_rep, get_rnnlm_word_length(r_node));
+                    context_score += rnn_score;
                     if (param->rnndebug)
                         std::cout << "lw:" << *l_node->original_surface << ":"
                                   << *l_node->pos
@@ -1556,12 +1557,10 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
 
                 TokenWithState tok(r_node, l_token_with_state);
                 tok.score = score;
+                tok.word_score = (1.0 - param->rweight) * r_node->wcost + bigram_score + trigram_score;
                 tok.context_score = context_score;
+                tok.word_context_score = rnn_score;
 
-//                std::cout << "lw:" << *l_node->original_surface << "(" << *l_node->pos << " " << *l_node->spos << "):" 
-//                         << " rw:" << *r_node->original_surface << "(" << *r_node->pos << " " << *l_node->spos << "):" 
-//                         << " => feature score:" << score << " context_score:" << context_score << std::endl;
-                    
                 // save the feature
                 // tok.f->append_feature(r_node->feature); //unigram
                 // tok.f->append_feature(&bi_f);
@@ -1587,12 +1586,9 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
             } else {
                 r_node->prev = nullptr;
             }
-            r_node->cost = r_node->bq.beam.front().score; // context_score を入れる？
-            // ほぼ表示用なので必要ない？
-            if (MODE_TRAIN) {
-                //(*r_node->feature) = (*r_node->bq.beam.front().f); //コピー
-                ////使わないかも
-            }
+            r_node->cost = r_node->bq.beam.front().score; // context 抜きのスコア
+            r_node->tcost = r_node->bq.beam.front().score + r_node->bq.beam.front().context_score; // context 込みのスコア
+            r_node->twcost = r_node->bq.beam.front().word_score + r_node->bq.beam.front().word_context_score; // context 込みのスコア
         }
 
         r_node = r_node->bnext;
@@ -1895,15 +1891,21 @@ void Sentence::mark_nbest_rbeam(unsigned int nbest) {  //{{{
                     auto tmp = (*begin_node_list)[byte_pos];
                     // cout << *((*it)->representation) << " " << byte_pos << endl;
                     while (tmp) { //同じ長さ(同じ表層)で同じ品詞のものをすべて出力する
-                        if (tmp->length == (*it)->length &&
+                        if (!tmp->used_in_nbest &&
+                            tmp->length == (*it)->length &&
                             tmp->posid == (*it)->posid &&
                             tmp->sposid == (*it)->sposid &&
                             tmp->baseid == (*it)->baseid &&
-                            // 助詞と判定詞の異なりを含める
                             tmp->formid == (*it)->formid 
+                            // TODO 助詞と判定詞の異なりを含める
                             //tmp->formtypeid == (*it)->formtypeid
                             ) {
                             tmp->used_in_nbest = true;
+                            // 表示に必要なため，スコアをコピーする
+                            tmp->cost = (*it)->cost;
+                            tmp->wcost = (*it)->wcost;
+                            tmp->tcost = (*it)->tcost;
+                            tmp->twcost = (*it)->twcost;
                         }
                         tmp = tmp->bnext;
                     }
