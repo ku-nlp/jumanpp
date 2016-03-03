@@ -81,9 +81,9 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     option.add("ptest", 0, "receive partially annotated text (dev)");
     option.add("rnnasfeature", 0, "use rnnlm score as feature (dev)");
     option.add("userep", 0, "use rep in rnnlm (dev)");
-    option.add("usebase", 0, "use rep in rnnlm (dev)");
+    option.add("usebase", 0, "use rep in rnnlm (dev,default)");
     option.add("usesurf", 0, "use surf in rnnlm (dev)");
-    option.add("usepos", 0, "use pos in rnnlm (dev)");
+    option.add("usepos", 0, "use pos in rnnlm (dev,default)");
     option.add("printrep",0, "print rep(dev)");
 
     option.add("version", 'v', "print version");

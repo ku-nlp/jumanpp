@@ -21,7 +21,7 @@ class Parameter {
     bool userep=false;
     bool usebase=false;
     bool usesurf=false;
-    bool usepos=false;
+    bool usepos=true; 
     bool srilm;
     bool useoldloss=false;
     bool lpenalty=false;
