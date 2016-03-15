@@ -1132,11 +1132,11 @@ void Sentence::generate_unified_lattice_line(Node* node, std::stringstream &ss, 
         }
     }
 
+    const std::string sep = "|";
     // 意味情報を再構築して表示
     if (*node->semantic_feature != "NIL" ||
             *node->spos == UNK_POS || ustr.is_katakana() || 
             ustr.is_kanji() || ustr.is_eisuu() || ustr.is_kigou()) {
-        const std::string sep = "|";
         bool use_sep = false;
 
         if (*node->semantic_feature != "NIL") {
@@ -1195,9 +1195,30 @@ void Sentence::generate_unified_lattice_line(Node* node, std::stringstream &ss, 
         ss << (use_sep ? sep : "")
            << "スコア:" << node->twcost;
         use_sep = true;
+        
+        // ランクの出力
+        ss << (use_sep ? sep : "")
+           << "rank:"; 
+        std::string r_sep="";
+        for (auto r_val : node->rank) {
+            ss << r_sep << r_val;
+            r_sep = ";";
+        }
+        use_sep = true;
+
         ss << endl;
     } else {
-        ss << "スコア:" << node->twcost << endl;
+        // スコアの出力
+        ss << "スコア:" << node->twcost;
+
+        // ランクの出力
+        ss << sep << "rank:"; 
+        std::string r_sep="";
+        for (auto r_val : node->rank) {
+            ss << r_sep << r_val;
+            r_sep = ";";
+        }
+        ss << endl;
         //ss << "NIL" << endl;
     }
 
@@ -1279,6 +1300,7 @@ void Sentence::print_unified_lattice() {  //{{{
 }  //}}}
 
 void Sentence::print_unified_lattice_rbeam(unsigned int nbest=1) {  //{{{
+
     mark_nbest_rbeam(nbest);
 
     unsigned int char_num = 0;
@@ -1290,9 +1312,22 @@ void Sentence::print_unified_lattice_rbeam(unsigned int nbest=1) {  //{{{
 
     std::vector<std::vector<int>> num2id(length + 1);  //多めに保持する
     std::stringstream ss;
+
+    // n-best スコアを出力
+    ss << "# MA-SCORE\t";
+    unsigned int rank = 1;
+    std::string sep = "";
+    for (auto &token : (*begin_node_list)[length]->bq.beam){
+        ss << sep << "rank" << rank++ << ":" << (token.score + token.context_score);
+        sep = " ";
+        if(rank > nbest) break;
+    }
+    ss << endl;
+    
     for (unsigned int pos = 0; pos < length;
             pos += utf8_bytes((unsigned char *)(sentence_c_str + pos))) {
         Node *node = (*begin_node_list)[pos];
+        // TODO: スコア順での表示
         while (node) {
             if (node->used_in_nbest) { // n-best解に使われているもののみ
                 num2id[char_num + node->char_num].push_back(node->id);
@@ -1878,37 +1913,40 @@ void Sentence::mark_nbest_rbeam(unsigned int nbest) {  //{{{
         
     unsigned int i = 0;
 
+    // 各N-best path の履歴
     for (auto &token : (*begin_node_list)[length]->bq.beam) {  //最後は必ず EOS のみ
         std::vector<Node *> result_morphs = token.node_history;
         if(++i > traceSize)break;
 
         unsigned int byte_pos = 0;
+        // パス内の形態素すべて
         for (auto it = result_morphs.begin(); it != result_morphs.end(); it++) {
             if ((*it)->stat != MORPH_BOS_NODE && (*it)->stat != MORPH_EOS_NODE) {
                 (*it)->used_in_nbest = true;
-
                 if (output_ambiguous_word) {
                     auto tmp = (*begin_node_list)[byte_pos];
-                    // cout << *((*it)->representation) << " " << byte_pos << endl;
                     while (tmp) { //同じ長さ(同じ表層)で同じ品詞のものをすべて出力する
-                        if (!tmp->used_in_nbest &&
-                            tmp->length == (*it)->length &&
+                        if (tmp->length == (*it)->length &&
                             tmp->posid == (*it)->posid &&
                             tmp->sposid == (*it)->sposid &&
                             tmp->baseid == (*it)->baseid &&
                             tmp->formid == (*it)->formid 
                             // TODO 助詞と判定詞の異なりを含める
-                            //tmp->formtypeid == (*it)->formtypeid
                             ) {
-                            tmp->used_in_nbest = true;
-                            // 表示に必要なため，スコアをコピーする
-                            tmp->cost = (*it)->cost;
-                            tmp->wcost = (*it)->wcost;
-                            tmp->tcost = (*it)->tcost;
-                            tmp->twcost = (*it)->twcost;
+                            if(!tmp->used_in_nbest){ // もっとも良かった時のスコアを用いる
+                                tmp->used_in_nbest = true;
+                                // 表示に必要なため，スコアをコピーする
+                                tmp->cost = (*it)->cost;
+                                tmp->wcost = (*it)->wcost;
+                                tmp->tcost = (*it)->tcost;
+                                tmp->twcost = (*it)->twcost;
+                            }
+                            tmp->rank.push_back(i);
                         }
                         tmp = tmp->bnext;
                     }
+                }else{
+                   (*it)->rank.push_back(i);
                 }
                 byte_pos += (*it)->length;
             }

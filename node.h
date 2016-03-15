@@ -267,6 +267,7 @@ class Node {//{{{
     double cost = 0;  // score to this node (without context cost)
     double twcost = 0; // total score of this morpheme
     double tcost = 0; // total score to this node
+    std::vector<unsigned int> rank;
     struct morph_token_t *token = nullptr;
     BeamQue bq;
                         
