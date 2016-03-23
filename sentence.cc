@@ -1193,12 +1193,14 @@ void Sentence::generate_unified_lattice_line(Node* node, std::stringstream &ss, 
 
         // スコアの出力
         ss << (use_sep ? sep : "")
-           << "スコア:" << node->twcost;
+           << "特徴量スコア:" << node->wscore;
+        ss << sep << "言語モデルスコア:" << node->rscore; 
+        ss << sep << "形態素解析スコア:" << node->wscore + node->rscore; 
         use_sep = true;
         
         // ランクの出力
         ss << (use_sep ? sep : "")
-           << "rank:"; 
+           << "ランク:"; 
         std::string r_sep="";
         for (auto r_val : node->rank) {
             ss << r_sep << r_val;
@@ -1209,10 +1211,12 @@ void Sentence::generate_unified_lattice_line(Node* node, std::stringstream &ss, 
         ss << endl;
     } else {
         // スコアの出力
-        ss << "スコア:" << node->twcost;
+        ss << "特徴量スコア:" << node->wscore;
+        ss << sep << "言語モデルスコア:" << node->rscore; 
+        ss << sep << "形態素解析スコア:" << node->wscore + node->rscore; 
 
         // ランクの出力
-        ss << sep << "rank:"; 
+        ss << sep << "ランク:"; 
         std::string r_sep="";
         for (auto r_val : node->rank) {
             ss << r_sep << r_val;
@@ -1622,8 +1626,11 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
                 r_node->prev = nullptr;
             }
             r_node->cost = r_node->bq.beam.front().score; // context 抜きのスコア
-            r_node->tcost = r_node->bq.beam.front().score + r_node->bq.beam.front().context_score; // context 込みのスコア
-            r_node->twcost = r_node->bq.beam.front().word_score + r_node->bq.beam.front().word_context_score; // context 込みのスコア
+            r_node->tcost = r_node->bq.beam.front().score + r_node->bq.beam.front().context_score; // context 込みの系列に対するスコア
+            
+            r_node->rscore = r_node->bq.beam.front().word_context_score; //RNNLM のスコア
+            r_node->wscore = r_node->bq.beam.front().word_score; // 素性のスコア
+            //r_node->tscore = r_node->bq.beam.front().word_score + r_node->bq.beam.front().word_score; // 合計スコア
         }
 
         r_node = r_node->bnext;
@@ -1940,6 +1947,8 @@ void Sentence::mark_nbest_rbeam(unsigned int nbest) {  //{{{
                                 tmp->wcost = (*it)->wcost;
                                 tmp->tcost = (*it)->tcost;
                                 tmp->twcost = (*it)->twcost;
+                                tmp->rscore = (*it)->rscore;
+                                tmp->wscore = (*it)->wscore;
                             }
                             tmp->rank.push_back(i);
                         }

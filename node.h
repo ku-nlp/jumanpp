@@ -265,8 +265,12 @@ class Node {//{{{
     bool suuji = false;
     double wcost = 0; // score of this morpheme
     double cost = 0;  // score to this node (without context cost)
-    double twcost = 0; // total score of this morpheme
     double tcost = 0; // total score to this node
+
+    double rscore = 0;
+    double wscore = 0;
+
+    double twcost = 0; // total score of this morpheme // 廃止
     std::vector<unsigned int> rank;
     struct morph_token_t *token = nullptr;
     BeamQue bq;
