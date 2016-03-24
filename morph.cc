@@ -37,15 +37,15 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
         
     // 解析方式の指定オプション
     option.add<unsigned int>("beam", 'B', "set beam width",false,5);
-
+        
     // 出力形式のオプション
     option.add("juman", 'j', "print juman style (default)"); 
     option.add("morph", 'M', "print morph style");
-    option.add<unsigned int>("Nmorph", 'N', "print N-best Moprh",false,5);
+    option.add<unsigned int>("Nmorph", 'N', "print N-best Moprh", false, 5);
     option.add<unsigned int>("lattice", 'L', "output lattice format",false, 5);
-    option.add("ambiguous", 'A', "output ambiguous words on lattice");
+    option.add("noambiguous", 0, "do not output ambiguous words on lattice");
     option.add("oldstyle", 0, "print old style lattice");
-
+        
     // 訓練用オプション
     option.add<std::string>("train", 't', "set training data path", false, "data/train.txt");
     option.add("scw", 0, "use soft confidence weighted in the training");
@@ -55,8 +55,9 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     option.add<double>("Phi", 'P', "Phi value. parameter for SCW",false, 1.65);
         
     // デフォルト化
+    // option.add("ambiguous", 'A', "output ambiguous words on lattice (default)");
     //option.add<unsigned int>("unk_max_length", 'l', "maximum length of unknown word detection", false, 2);
-
+        
     option.add<double>("Rweight", 0, "linear interpolation parameter for MA score and RNN score",false, 0.3);
     option.add<double>("Lweight", 0, "linear penalty parameter for unknown words in RNNLM",false, 1.5);
     //option.add<unsigned int>("nbest", 'n', "n-best search", false, 5);
@@ -65,7 +66,7 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
     //option.add<std::string>("lda", 0, "use lda", false, ""); //廃止予定
     //option.add("averaged", 'a', "use averaged perceptron for training");
     //option.add("total", 'T', "use total similarity for LDA");
-   
+         
     // 以下は廃止するオプション
     //option.add("passiveunk", '\0', "apply passive unknown word detection. The option use unknown word detection only if it cannot make any node."); 
     //option.add("notrigram", 0, "do NOT use trigram feature");
@@ -175,7 +176,7 @@ int main(int argc, char** argv) {//{{{
         }
     }    
     
-    param.set_output_ambigous_word(option.exist("ambiguous"));
+    param.set_output_ambigous_word(!option.exist("noambiguous"));
 //    if(option.exist("passiveunk"))
 //        param.set_passive_unknown(true);
     param.set_use_scw(option.exist("scw"));
