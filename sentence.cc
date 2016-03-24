@@ -1422,16 +1422,18 @@ void Sentence::set_begin_node_list(unsigned int pos, Node *new_node) {  //{{{
 
 // 各形態素ノードごとにbeam_width 個もっておき，beam_search
 bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
-    std::stringstream ss_key, ss_value;
+    std::stringstream ss_key, ss_value, dup_key;
     std::unordered_set<std::string> duplicate_filter;
 
     // r_node の重複を除外 (細分類まで一致する形態素を除外する)
     while (r_node) {  // pos から始まる形態素
-        std::string key = (*r_node->original_surface + *r_node->base +
-                           "_" + *r_node->pos +
-                           "_" + *r_node->spos +
-                           "_" + *r_node->form_type +
-                           "_" + *r_node->form);
+        // 濁音Dかどうかでスコアが変わるので，key に含める
+        dup_key.str("");
+        dup_key << *r_node->original_surface << "_" << *r_node->base 
+                << "_" << *r_node->pos << "_" << *r_node->spos 
+                << "_" << *r_node->form_type << "_" << *r_node->form 
+                <<  "_" << (r_node->stat);
+        std::string key = dup_key.str();
         if (duplicate_filter.find(key) !=
             duplicate_filter.end()) {  //重複がある
             r_node = r_node->bnext;
@@ -1463,18 +1465,16 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
 
             // 濁音化の条件チェック
             // 満たさなかった場合も，TOP1のみペナルティを付けて実行する
-            if ((r_node->stat ==
-                 MORPH_DEVOICE_NODE) &&  // 今の形態素が濁音化している
-                (!check_devoice_condition(
-                     *l_node))) {  // 前の形態素が濁音化の条件を満たさない//{{{
-
+            if ((r_node->stat == MORPH_DEVOICE_NODE) &&  // 今の形態素が濁音化している
+                (!check_devoice_condition(*l_node))) {  // 前の形態素が濁音化の条件を満たさない//{{{
+                    
                 // 解析できない状態を防ぐため，l_node の TOP 1 のみ一応処理する
                 TokenWithState tok(r_node, l_node->bq.beam.front());
                 tok.score = l_node->bq.beam.front().score + bigram_score +
                             (1.0 - param->rweight) * r_node->wcost -
-                            10000;  // invalid devoice penalty
-                tok.context_score = l_node->bq.beam.front().score - 10000;
-
+                            1000;  // invalid devoice penalty
+                tok.context_score = l_node->bq.beam.front().score - 1000;
+                    
                 // 学習のため，素性ベクトルも一応計算する
                 if (param->trigram &&
                     l_node->bq.beam.front().node_history.size() > 1) { 
@@ -1499,7 +1499,7 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
                     //}
                     rnn_score = (param->rweight) * rnnlm->test_word_selfnm(l_node->bq.beam.front().context.get(),
                                 &new_c, rnnlm_rep, get_rnnlm_word_length(r_node));
-
+                        
                     tok.context_score += (1.0 - param->rweight) * rnn_score;
                     tok.context =
                         std::make_shared<RNNLM::context>(std::move(new_c));
@@ -1818,7 +1818,8 @@ void Sentence::print_best_beam_juman() {  //{{{
                             tmp->posid == (*it)->posid &&
                             tmp->sposid == (*it)->sposid &&
                             tmp->baseid == (*it)->baseid &&
-                            tmp->formid == (*it)->formid 
+                            tmp->formid == (*it)->formid &&
+                            (tmp->stat & MORPH_DEVOICE_NODE) == ((*it)->stat & MORPH_DEVOICE_NODE) // 濁音化の有無も一致
                             )  {
                             // 曖昧語@表示
                             if(tmp != *it) // すでに表示したものは除く
@@ -1838,6 +1839,7 @@ void Sentence::print_best_beam_juman() {  //{{{
 }  //}}}
 
 // ラティス出力する時のためにn-best に含まれる形態素をマーキングする
+// 廃止予定
 void Sentence::mark_nbest() {  //{{{
     unsigned int traceSize_original =
         (*begin_node_list)[length]->traceList.size();
@@ -1937,7 +1939,8 @@ void Sentence::mark_nbest_rbeam(unsigned int nbest) {  //{{{
                             tmp->posid == (*it)->posid &&
                             tmp->sposid == (*it)->sposid &&
                             tmp->baseid == (*it)->baseid &&
-                            tmp->formid == (*it)->formid 
+                            tmp->formid == (*it)->formid &&
+                            (tmp->stat & MORPH_DEVOICE_NODE) == ((*it)->stat & MORPH_DEVOICE_NODE) // 濁音化の有無も一致
                             // TODO 助詞と判定詞の異なりを含める
                             ) {
                             if(!tmp->used_in_nbest){ // もっとも良かった時のスコアを用いる
