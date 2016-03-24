@@ -1,4 +1,5 @@
 #include "common.h"
+#include <stdlib.h>
 #include "cmdline.h"
 #include "feature.h"
 #include "tagger.h"
@@ -18,18 +19,54 @@
 bool MODE_TRAIN = false;
 bool WEIGHT_AVERAGED = false;
 
+std::string get_home_path(){/*{{{*/
+    char* phome;
+    std::string home_path;
+    phome = getenv("HOME");
+    if (phome!=NULL)
+        home_path = phome;
+    return home_path;
+}/*}}}*/
+
+std::string get_current_path(){/*{{{*/
+    char* phome;
+    std::string home_path;
+    phome = getenv("PWD");
+    if (phome!=NULL)
+        home_path = phome;
+    return home_path;
+}/*}}}*/
+
+std::string read_kknrc(){/*{{{*/
+    std::string home_path = get_home_path();
+    std::string current_path = get_current_path();
+
+    FILE *kknrc_file = fopen((home_path + "/.kknrc").c_str(), "r");
+    if (kknrc_file == NULL){
+        return current_path + "/.kkn";
+    }else{
+        char buffer[1024];
+        uint64_t count; 
+        if(fscanf(kknrc_file, "%s", buffer, &count) == 0){
+            fprintf(stderr, "WARNING: .kknrc file does not contain valid path\n");
+            return current_path + "/.kkn";
+        }
+        return buffer;
+    }
+}/*}}}*/
+
 // オプション
-void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
+void option_proc(cmdline::parser &option, std::string model_path, int argc, char **argv) {//{{{
     std::string bin_path(argv[0]);
     std::string bin_dir =  bin_path.substr(0,bin_path.rfind('/')); // Windows 非対応
     
     // 設定の読み込みオプション
-    option.add<std::string>("dir", 'D', "set resource directory", false, bin_dir+"/data");
-    option.add<std::string>("dict", 0, "dictionary filepath", false, "data/dic");
-    option.add<std::string>("model", 0, "model filepath", false, "data/model.mdl");
-    option.add<std::string>("rnnlm", 0, "RNNLM filepath", false, "data/lang.mdl"); 
-    option.add<std::string>("feature", 0, "feature template filepath", false, "data/feature.def");
-    option.add<std::string>("use_lexical_feature", 0, "set frequent word list for lexical feature",false,"data/freq_words.list"); 
+    option.add<std::string>("dir", 'D', "set resource directory", false, model_path);
+    option.add<std::string>("dict", 0, "dictionary filepath", false, model_path+"/dic");
+    option.add<std::string>("model", 0, "model filepath", false, model_path+"/model.mdl");
+    option.add<std::string>("rnnlm", 0, "RNNLM filepath", false, model_path+"/lang.mdl"); 
+    option.add<std::string>("feature", 0, "feature template filepath", false, model_path+"/feature.def");
+    option.add<std::string>("use_lexical_feature", 0, "set frequent word list for lexical feature",false, model_path+"/freq_words.list"); 
 
 #ifdef USE_SRILM
     option.add<std::string>("srilm", 'I', "srilm filename", false, "srilm.arpa");
@@ -106,15 +143,15 @@ void option_proc(cmdline::parser &option, int argc, char **argv) {//{{{
 
 int main(int argc, char** argv) {//{{{
     cmdline::parser option;
-    option_proc(option, argc, argv);
+    std::string data_path = read_kknrc();
+    option_proc(option, data_path, argc, argv);
     
     // TODO: オプションの処理，初期化，解析を分離する
-    // モデルパス
-    std::string rnnlm_model_path = "data/lang.mdl";
-    std::string dict_path = "data/dic";
-    std::string model_path = "data/model.mdl";
-    std::string freq_word_list = "data/freq_words.list";
-    std::string feature_path = "data/feature.def";
+    std::string rnnlm_model_path = data_path+"/lang.mdl";
+    std::string dict_path = data_path +"/dic";
+    std::string model_path = data_path + "/model.mdl";
+    std::string freq_word_list = data_path + "/freq_words.list";
+    std::string feature_path = data_path + "/feature.def";
     if(option.exist("dir")){
         rnnlm_model_path = option.get<std::string>("dir") + "/lang.mdl"; 
         dict_path = option.get<std::string>("dir") + "/dic";
@@ -122,6 +159,7 @@ int main(int argc, char** argv) {//{{{
         freq_word_list = option.get<std::string>("dir") + "/freq_words.list";
         feature_path = option.get<std::string>("dir") + "/feature.def";
     }
+
     if(option.exist("rnnlm"))
         rnnlm_model_path = option.get<std::string>("rnnlm");
     if(option.exist("dict"))
@@ -444,5 +482,7 @@ int main(int argc, char** argv) {//{{{
     }//}}}
     return 0;
 }//}}}
+
+
 
 #endif
