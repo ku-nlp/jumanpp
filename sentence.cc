@@ -1460,6 +1460,7 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
             // 1.コンテクスト独立の処理
             FeatureSet bi_f(ftmpl);
             bi_f.extract_bigram_feature(l_node, r_node);
+            const int invalid_devoice_penalty = 1000;
             double bigram_score =
                 (1.0 - param->rweight) * bi_f.calc_inner_product_with_weight();
 
@@ -1472,8 +1473,10 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
                 TokenWithState tok(r_node, l_node->bq.beam.front());
                 tok.score = l_node->bq.beam.front().score + bigram_score +
                             (1.0 - param->rweight) * r_node->wcost -
-                            1000;  // invalid devoice penalty
-                tok.context_score = l_node->bq.beam.front().score - 1000;
+                            invalid_devoice_penalty;  // invalid devoice penalty
+                tok.context_score = l_node->bq.beam.front().score - invalid_devoice_penalty;
+
+                tok.word_score = (1.0 - param->rweight) * r_node->wcost + bigram_score -invalid_devoice_penalty;
                     
                 // 学習のため，素性ベクトルも一応計算する
                 if (param->trigram &&
@@ -1501,6 +1504,7 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
                                 &new_c, rnnlm_rep, get_rnnlm_word_length(r_node));
                         
                     tok.context_score += (1.0 - param->rweight) * rnn_score;
+                    tok.word_context_score = (1.0 - param->rweight) * rnn_score - invalid_devoice_penalty;
                     tok.context =
                         std::make_shared<RNNLM::context>(std::move(new_c));
                 }
