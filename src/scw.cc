@@ -1,4 +1,5 @@
 #include "scw.h"
+#include <math.h>
 //Fimap FeatureVector::str2id;
 
 // 訓練時用だが，実際に使う？？
@@ -92,7 +93,7 @@ void SCWClassifier::update(double loss_value, const FeatureVector& vec){
     //double alphat = calc_alpha(vt, score);
     double ut = calc_ut(alphat, vt);
     double betat = calc_beta(alphat, ut, vt);
-    if(!isfinite(betat))return;
+    if(!std::isfinite(betat))return;
 
     //    (double alpha, double y, const DiagMat sigma, const FeatureVector& x)
     //std::cerr << "alpha:" << alphat << " beta:" << betat << " score:" << score <<" y:"  << (double)loss_value << "\t";

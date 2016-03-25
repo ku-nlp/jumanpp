@@ -8,8 +8,8 @@
 ///////////////////////////////////////////////////////////////////////
 
 #include <stdio.h>
-#include <inttypes.h>
 #define __STDC_FORMAT_MACROS
+#include <inttypes.h>
 //#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -56,7 +56,7 @@ namespace RNNLM{
         unsigned int layer_size = quazi_layer_size % kVersionStepSize; //
         int version = quazi_layer_size / kVersionStepSize;
         if(version > kCurrentVersion || version < kCurrentVersion){
-            fprintf(stderr, "unknown version: %llu", quazi_layer_size / kVersionStepSize );
+            fprintf(stderr, "unknown version: %" PRIu64, quazi_layer_size / kVersionStepSize );
             exit(1);
         }
 
@@ -375,7 +375,7 @@ namespace RNNLM{
         for (int line_number = 0; !feof(vocab_file); ++line_number) {
             char buffer[MAX_STRING];
             uint64_t count; 
-            if (fscanf(vocab_file, "%s %llu ", buffer, &count) != 2) {
+            if (fscanf(vocab_file, "%s %" PRIu64 " ", buffer, &count) != 2) {
                 fprintf(stderr, "WARNING: Skipping ill-formed line #%d in the vocabulary\n", line_number);
                 continue;
             }
