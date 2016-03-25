@@ -70,7 +70,5 @@ AC_FUNC_MMAP
 AC_FUNC_REALLOC
 AC_CHECK_FUNCS([memmove memset munmap setenv sqrt strchr strerror strrchr strstr strtol strtoul])
 
-DEFS="-DGITVER=\"\$(GIT_VER)\" $DEFS"
-
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
