@@ -14,6 +14,8 @@ AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_RANLIB
 
+CXXFLAGS="$CXXFLAGS -std=c++14"
+
 # Checks for libraries.
 AC_MSG_CHECKING([for -lboost_serialization])
 AC_LANG_PUSH(C++)
