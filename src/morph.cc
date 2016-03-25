@@ -46,8 +46,7 @@ std::string read_kknrc(){/*{{{*/
         return current_path + "/.kkn";
     }else{
         char buffer[1024];
-        uint64_t count; 
-        if(fscanf(kknrc_file, "%s", buffer, &count) == 0){
+        if(fscanf(kknrc_file, "%s", buffer) == 0){
             fprintf(stderr, "WARNING: .kknrc file does not contain valid path\n");
             return current_path + "/.kkn";
         }

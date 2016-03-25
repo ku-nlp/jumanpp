@@ -305,7 +305,9 @@ class U8string{//{{{
                 return -1;
             int tmp = pos;
 
-            while( (0x80 <= byte_str[tmp]) & (byte_str[tmp] < 0xC0) ){//2byte 以降はこの範囲に入る
+            while( (0x80 <= static_cast<unsigned char>(byte_str[tmp])) & 
+                    (static_cast<unsigned char>(byte_str[tmp]) < 0xC0) 
+                    ){//2byte 以降はこの範囲に入る
                 tmp--;
                 if(tmp < 0) return -1;
             }

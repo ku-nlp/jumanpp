@@ -185,8 +185,13 @@ dmode(char *dbname, char mode, int flags)
     fget(f, buf, 8, &pos, eod);
     klen = cdb_unpack(buf);
     vlen = cdb_unpack(buf + 4);
-    if (!(flags & F_MAP))
-      if (printf(mode == 'd' ? "+%u,%u:" : "+%u:", klen, vlen) < 0) return -1;
+    if (!(flags & F_MAP)){
+        if(mode == 'd'){
+            if (printf("+%u,%u:", klen, vlen) < 0) return -1;
+        }else{
+            if (printf("+%u:", klen) < 0) return -1;
+        }
+    }
     if (fcpy(f, stdout, klen, &pos, eod) != 0) return -1;
     if (mode == 'd')
       if (fputs(flags & F_MAP ? " " : "->", stdout) < 0)

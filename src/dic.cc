@@ -255,8 +255,6 @@ Node *Dic::lookup_lattice(std::vector<CharLattice::da_result_pair_type> &da_sear
 Node *Dic::lookup_lattice_specified(std::vector<CharLattice::da_result_pair_type> &da_search_result, const char *start_str, unsigned int specified_length, const std::vector<std::string>& specified) {//{{{
     Node *result_node = NULL;
     
-    // TODO: specified を生の vector からもう少し意味のあるものに変える
-    // surf_read_base_pos_spos_type_form
     unsigned long specified_readingid  = readingid2reading.get_id(specified[0]);
     unsigned long specified_baseid     = baseid2base.get_id(specified[1]);
     unsigned long specified_posid      = posid2pos.get_id(specified[2]);
@@ -271,19 +269,15 @@ Node *Dic::lookup_lattice_specified(std::vector<CharLattice::da_result_pair_type
     size_t num = result_pair.size();
         
     for (size_t i = 0; i < num; i++) { 
-
-        //const Token *token = get_token(result_pair[i]);// deb
-        //std::cerr << start_str << "_" << *baseid2base.get_pos(token->base_id) << "_" << specified_length << "-" << result_pair[i].length << std::endl;
         if (specified_length && specified_length != get_length(result_pair[i]))
             continue;
         size_t size = token_size(result_pair[i]);
         const Token *token = get_token(result_pair[i]);
 
-        bool modified_word = false; // 長音が挿入されていることを調べる方法が無い
+        bool modified_word = false; 
                 
-        // std::cerr << start_str << "_" << *baseid2base.get_pos(token->base_id) << "_" << specified_length << "-" << result_pair[i].length << ":" << modified_word << std::endl;
             
-        for (size_t j = 0; j < size; j++) { // １つでも異なればskip
+        for (size_t j = 0; j < size; j++) { // １つでも条件と異なればskipする　
             if ((!modified_word && specified[0].size()>0 && specified_readingid != (token + j)->reading_id) ||
                 (!modified_word && specified[1].size()>0 && specified_baseid != (token + j)->base_id) ||
                 (specified[2].size()>0 && specified_posid != (token + j)->posid) ||
@@ -291,10 +285,6 @@ Node *Dic::lookup_lattice_specified(std::vector<CharLattice::da_result_pair_type
                 (specified[4].size()>0 && specified_formtypeid != (token + j)->form_type_id) ||
                 (specified[5].size()>0 && specified_formid != (token + j)->form_id) ){
 
-//                std::cerr << "spec  baseid:" << specified_baseid << std::endl << "token baseid:" <<  (token + j)->base_id << std::endl;
-//                std::cerr << "spec  base:" << *baseid2base.get_pos(specified_baseid) << std::endl << "token base:" << specified[1] << std::endl;
-//                std::cerr << "spec  base:" << *baseid2base.get_pos(specified_baseid) << std::endl << "token base:" <<  baseid2base.get_pos((token + j)->base_id) << std::endl;
-//                std::cerr << "spec  posid:" << specified_posid << std::endl << "token posid:" <<  (token + j)->posid << std::endl;
                 continue;
             }
                 
@@ -307,14 +297,13 @@ Node *Dic::lookup_lattice_specified(std::vector<CharLattice::da_result_pair_type
                 
             new_node->char_num = utf8_chars((unsigned char *)start_str, new_node->length);
             new_node->original_surface = new std::string(start_str, new_node->length);
-            //std::cout << *new_node->original_surface << "_" << *new_node->pos << std::endl;
             new_node->string_for_print = new std::string(start_str, new_node->length);
-            if (new_node->lcAttr == 1) { // Wikipedia
+            if (new_node->lcAttr == 1) { // 現在は使用していない
                 new_node->string = new std::string(UNK_WIKIPEDIA);
                 new_node->stat = MORPH_UNK_NODE;
             } else {
                 new_node->string = new std::string(*new_node->string_for_print);
-                if(new_node->semantic_feature->find("濁音化",0) != std::string::npos){// TODO:意味情報を文字列扱いしない
+                if(new_node->semantic_feature->find("濁音化",0) != std::string::npos){
                     new_node->stat = MORPH_DEVOICE_NODE;
                 }else{
                     new_node->stat = MORPH_NORMAL_NODE;
@@ -458,7 +447,11 @@ Node *Dic::make_unk_pseudo_node(const char *start_str, int byte_len, unsigned lo
 //sentence.cc:339: 
 // 名前が変？指定した文字種が連続する範囲で全品詞について未定義語ノードを生成
 // 辞書をr_node で受け取り、重複をチェック
-Node *Dic::make_specified_pseudo_node_by_dic_check(const char *start_str, unsigned int specified_length, std::string *specified_pos, std::vector<unsigned long> *specified_unk_pos, unsigned int type_family, Node* r_node, unsigned int max_length) {//{{{
+// 部分アノテーション用の最大長を設定
+Node *Dic::make_specified_pseudo_node_by_dic_check(const char *start_str,
+        unsigned int specified_length, std::string *specified_pos,
+        std::vector<unsigned long> *specified_unk_pos, unsigned int
+        type_family, Node* r_node, unsigned int max_length) {//{{{
     unsigned long specified_posid = MORPH_DUMMY_POS;
     if(specified_pos) specified_posid = posid2pos.get_id(*specified_pos);
 
@@ -470,8 +463,8 @@ Node *Dic::make_specified_pseudo_node_by_dic_check(const char *start_str, unsign
     for (pos = 0; pos < length; pos += utf8_bytes((unsigned char *)(start_str + pos))) {
         unsigned int used_chars = 0;
 
-        if ( max_length != 0 && pos > max_length ){ // 長さ制限を超える場合それ以上は先を見ない
-            std::cerr << "warning@make_specified_pseudo_node_by_dic_check.max_length != 0" << std::endl;
+        if( max_length != 0 && pos >= max_length ){
+            // 指定された境界を超えるため，これ以上長い未定義語は生成できない
             break;
         } else if ( pos != 0  && type_family == TYPE_FAMILY_FIGURE && (used_chars = check_exceptional_chars_in_figure(start_str + pos , length - pos)) > 0 ) {
             // exceptional figure expression of two characters
@@ -485,12 +478,12 @@ Node *Dic::make_specified_pseudo_node_by_dic_check(const char *start_str, unsign
             }
                 
             char_num += used_chars;
-        } // doesn't start with slash, colon, etc.
-        else if (pos == 0 && compare_char_type_in_family(check_utf8_char_type((unsigned char *)(start_str + pos)), TYPE_FAMILY_PUNC_SYMBOL))
+        } else if (pos == 0 && compare_char_type_in_family(check_utf8_char_type((unsigned char *)(start_str + pos)), TYPE_FAMILY_PUNC_SYMBOL)){
+            // doesn't start with slash, colon, etc.
             break;
-        else if (pos == 0 && ustart_str.is_choon(0) )//一文字目が伸ばし棒
+        } else if (pos == 0 && ustart_str.is_choon(0) ) {//一文字目が伸ばし棒
             break;
-        else if (( param->use_suu_rule && (pos == 0 && ustart_str.is_figure_exception(0)) ) &&  // 数が先頭に出現している
+        } else if (( param->use_suu_rule && (pos == 0 && ustart_str.is_figure_exception(0)) ) &&  // 数が先頭に出現している
                  (ustart_str.char_size()==1 ||                                // 続く文字がない場合(数は単体で数詞として辞書に登録済み) ，もしくは
                  (ustart_str.is_suuji(1) && !ustart_str.is_suuji_digit(1)))){ // 次が桁を表す数字でない場合
             // 数十，数百への対応 TODO: 何十
@@ -512,17 +505,14 @@ Node *Dic::make_specified_pseudo_node_by_dic_check(const char *start_str, unsign
             return make_unk_pseudo_node_list_some_pos_by_dic_check(start_str, pos, specified_posid, specified_unk_pos, r_node);
         else
             return make_unk_pseudo_node_list_some_pos(start_str, pos, specified_posid, specified_unk_pos); 
-    }
-    else {
+    } else {
         return nullptr;
     }
-
 }//}}}
 
 // 辞書と重複しないものだけを作る
 // 作ってr_node に足すことはしない
 // 何も作られなかった場合は nullptr を返す
-// 重複してるとき，delteしてないからリークしてる疑惑
 Node *Dic::make_unk_pseudo_node_list_some_pos_by_dic_check(const char *start_str, int byte_len, unsigned long specified_posid, std::vector<unsigned long> *specified_unk_pos, Node* r_node) {//{{{
     Node *result_node = nullptr;
     if (specified_posid == MORPH_DUMMY_POS ) {

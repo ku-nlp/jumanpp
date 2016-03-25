@@ -56,7 +56,7 @@ namespace RNNLM{
         unsigned int layer_size = quazi_layer_size % kVersionStepSize; //
         int version = quazi_layer_size / kVersionStepSize;
         if(version > kCurrentVersion || version < kCurrentVersion){
-            fprintf(stderr, "unknown version: %ld", quazi_layer_size / kVersionStepSize );
+            fprintf(stderr, "unknown version: %llu", quazi_layer_size / kVersionStepSize );
             exit(1);
         }
 
@@ -375,7 +375,7 @@ namespace RNNLM{
         for (int line_number = 0; !feof(vocab_file); ++line_number) {
             char buffer[MAX_STRING];
             uint64_t count; 
-            if (fscanf(vocab_file, "%s %ld ", buffer, &count) != 2) {
+            if (fscanf(vocab_file, "%s %llu ", buffer, &count) != 2) {
                 fprintf(stderr, "WARNING: Skipping ill-formed line #%d in the vocabulary\n", line_number);
                 continue;
             }
@@ -666,10 +666,7 @@ namespace RNNLM{
     {//{{{
         int last_word;
         last_word = c->last_word;
-        float prob_other; //has to be float so that %f works in fscanf
         real senp;
-
-        real lambda=1;
         real logp=0;
         senp=0; //
 
@@ -686,7 +683,7 @@ namespace RNNLM{
        
         if (word!=-1) { //OOVでない
             logp+=log10(ln_score);
-            senp+=log10(ln_score*lambda + prob_other*(1-lambda));
+            senp+=log10(ln_score);
         } else {
             //assign to OOVs some score to correctly rescore nbest lists, reasonable value can be less than 1/|V| or backoff LM score (in case it is trained on more data)
             //this means that PPL results from nbest list rescoring are not true probabilities anymore (as in open vocabulary LMs)

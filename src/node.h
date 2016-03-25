@@ -259,7 +259,13 @@ class Node {//{{{
     unsigned int char_type = 0; //先頭文字の文字タイプ
     unsigned int char_family = 0;
     unsigned int end_char_family = 0;
-    unsigned char stat = 0; //TODO: どのような状態がありるうるのかを列挙
+    unsigned int stat = 0; //TODO: どのような状態がありるうるのかを列挙
+    // MORPH_DUMMY_NODE 0xFFFF
+    // MORPH_NORMAL_NODE 0x0001
+    // MORPH_BOS_NODE 0x0002
+    // MORPH_EOS_NODE 0x0004
+    // MORPH_PSEUDO_NODE 0x0008
+    // MORPH_UNK_NODE 0x0010
     bool used_in_nbest = false;
     bool longer = false;
     bool suuji = false;

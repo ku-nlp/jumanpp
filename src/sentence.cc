@@ -1648,10 +1648,6 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
 void Sentence::print_beam() {  //{{{
     std::string output_string_buffer;
     std::unordered_set<std::string> nbest_duplicate_filter;
-    auto &beam = (*begin_node_list)[length]->bq.beam;
-
-    // std::sort(beam.begin(), beam.end(),[](auto &x, auto &y){return
-    // x.score+x.context_score > y.score+y.context_score;});
     for (auto &token :
          (*begin_node_list)[length]->bq.beam) {  //最後は必ず EOS のみ
         std::vector<Node *> result_morphs = token.node_history;
@@ -1673,12 +1669,9 @@ void Sentence::print_beam() {  //{{{
             }
         }
 
-        // auto find_output = nbest_duplicate_filter.find(output_string_buffer);
-        // if(find_output == nbest_duplicate_filter.end()){
         cout << "# score:" << token.score
              << " # context: " << token.context_score << endl;
         cout << output_string_buffer << endl;
-        //}
         output_string_buffer.clear();
     }
 }  //}}}

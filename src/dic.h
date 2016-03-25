@@ -4,13 +4,13 @@
 
 #include "common.h"
 #include "darts.h"
-#include "mmap.h"
 #include "pos.h"
 #include "node.h"
 #include "feature.h"
 #include "parameter.h"
 #include "u8string.h"
 #include "charlattice.h"
+#include "mmap.h"
 
 namespace Morph {
 
