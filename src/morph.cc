@@ -170,7 +170,6 @@ int main(int argc, char** argv) {//{{{
     if(option.exist("feature"))
         feature_path = option.get<std::string>("feature");
     
-    //option.get<unsigned int>("unk_max_length")
     unsigned int unk_max_length = 2; // 固定
     
     Morph::Parameter param( dict_path, feature_path, option.get<unsigned int>("iteration"), true, 
@@ -187,21 +186,15 @@ int main(int argc, char** argv) {//{{{
     else
         setenv("TCMALLOC_LARGE_ALLOC_REPORT_THRESHOLD","107374182400",1);
 
-    // 基本的にbeam は使う
+    // beam は default
     param.set_beam(true);
     param.set_N(5); //初期値
 
-    // beam, rbeam 以外のオプションを廃止予定
-    //if(option.exist("nbest"))
-    //    param.set_N(option.get<unsigned int>("nbest"));
-    //else 
     if(option.exist("Nmorph")){
         param.set_N(option.get<unsigned int>("Nmorph"));
     }else if(option.exist("beam")){
         param.set_N(option.get<unsigned int>("beam"));
-    }//else{
-    //    param.set_N(1);
-    //}
+    }
 
     if(option.exist("lattice")){ 
         // beam が設定されていたら，lattice のN は表示のみに使う
@@ -214,18 +207,12 @@ int main(int argc, char** argv) {//{{{
     }    
     
     param.set_output_ambigous_word(!option.exist("noambiguous"));
-//    if(option.exist("passiveunk"))
-//        param.set_passive_unknown(true);
     param.set_use_scw(option.exist("scw"));
     param.set_lweight(option.get<double>("Lweight"));
     if(option.exist("Cvalue"))
         param.set_C(option.get<double>("Cvalue"));
     if(option.exist("Phi"))
         param.set_Phi(option.get<double>("Phi"));
-//    if(option.exist("total")){ // LDA用, 廃止予定
-//        param.set_use_total_sim();
-//        Morph::FeatureSet::use_total_sim = true;
-//    }
     // 部分アノテーション用デリミタ
     param.delimiter = "\t";
 
@@ -237,13 +224,10 @@ int main(int argc, char** argv) {//{{{
         Morph::FeatureSet::debug_flag = true;
     }
 
-    // trigram は基本的に使う
+    // trigram はdefault
     param.set_trigram(true);
     param.set_rweight(option.get<double>("Rweight"));
 
-//    if(option.exist("oldloss")){ //廃止予定
-//        param.useoldloss = true;
-//    }
     param.use_suu_rule = true;
     param.no_posmatch = true;
 
@@ -252,8 +236,8 @@ int main(int argc, char** argv) {//{{{
     normal_param.set_nbest(true); // nbest を利用するよう設定
     normal_param.set_N(10); // 10-best に設定
 
-    param.set_rnnlm(option.exist("rnnlm")||option.exist("dir"));
-    param.set_nce(option.exist("rnnlm")||option.exist("dir"));
+    param.set_rnnlm(true);
+    param.set_nce(true);
     
     if(option.exist("userep"))
         param.userep = true;
@@ -277,18 +261,17 @@ int main(int argc, char** argv) {//{{{
         p_rnnlm = new RNNLM::CRnnLM_stat();
     }
         
-    if(option.exist("rnnlm")||option.exist("dir")){
-        p_rnnlm->setRnnLMFile(rnnlm_model_path.c_str());
-        if(option.exist("rnndebug")){
-            p_rnnlm->setDebugMode(1);
-            param.rnndebug = true;
-        }else
-            p_rnnlm->setDebugMode(0);
-        if(param.lpenalty)
-            p_rnnlm->setLweight(param.lweight);
-        srand(1);
-        Morph::Sentence::init_rnnlm_FR(p_rnnlm);
-    } 
+    p_rnnlm->setRnnLMFile(rnnlm_model_path.c_str());
+    if(option.exist("rnndebug")){
+        p_rnnlm->setDebugMode(1);
+        param.rnndebug = true;
+    }else
+        p_rnnlm->setDebugMode(0);
+    if(param.lpenalty)
+        p_rnnlm->setLweight(param.lweight);
+    srand(1);
+    Morph::Sentence::init_rnnlm_FR(p_rnnlm);
+
 #ifdef USE_SRILM /*{{{*/
     Vocab *vocab;
     Ngram *ngramLM;
