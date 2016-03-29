@@ -16,7 +16,7 @@
 ### 推奨ライブラリ 
 導入することで，動作を高速化することができます．インストール方法は，A. 推奨ライブラリのインストールを参照してください  
 - gperftool  
-[\[github\]](https://github.com/gperftools/gperftools)
+[\[github\]](https://github.com/gperftools/gperftools)  
 - libunwind (gperftool を64bit 環境で動作させるために必要)  
 [\[download\]](http://download.savannah.gnu.org/releases/libunwind/libunwind-0.99-beta.tar.gz)
 
@@ -33,7 +33,7 @@
 % sudo make install
 ```
 インストール先を変える場合は, `./configure --prefix=/path/to/somewhere/` としてください．
-Windows へのインストールはサポートし　ていません．
+Windows へのインストールはサポートしていません．
 
 #### 辞書および訓練済みモデルのインストール
 辞書およびモデルを配置する場所は任意です．パスを設定ファイル($HOME/.kknrc)に書き込むことで，起動時に辞書およびモデルが読み込まれるようになります．
@@ -167,13 +167,13 @@ EOS
 
 ## 参考文献
 "Morphological Analysis for Unsegmented Languages using Recurrent Neural Network Language Model. Hajime Morita, Daisuke Kawahara, Sadao Kurohashi. Proceedings of EMNLP 2015: Conference on Empirical Methods in Natural Language Processing,  pp.2292-2297" 
-[pdf](http://lotus.kuee.kyoto-u.ac.jp/morita/paper/morita_EMNLP2015_cameraready.pdf)
-[poster](http://lotus.kuee.kyoto-u.ac.jp/morita/paper/morita_EMNLP2015_poster.pptx)
+[pdf](http://lotus.kuee.kyoto-u.ac.jp/~morita/paper/morita_EMNLP2015_cameraready.pdf)
+[poster](http://lotus.kuee.kyoto-u.ac.jp/~morita/paper/morita_EMNLP2015_poster.pptx)
 
 "RNN 言語モデルを用いた日本語形態素解析の実用化. 森田一, 黒橋 禎夫. 情報処理学会 第78回全国大会"
-[pdf](http://lotus.kuee.kyoto-u.ac.jp/morita/paper/IPSJ2016_morita.pdf)
+[pdf](http://lotus.kuee.kyoto-u.ac.jp/~morita/paper/IPSJ2016_morita.pdf)
 
-JUMAN マニュアル
+JUMAN ユーザーマニュアル
 [link](http://nlp.ist.i.kyoto-u.ac.jp/?JUMAN)
 
 ## A. 推奨ライブラリのインストール方法
