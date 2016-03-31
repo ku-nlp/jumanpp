@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([KKN], [0.95], [hmorita@i.kyoto-u.ac.jp])
+AC_INIT([JUMAN++], [0.95], [hmorita@i.kyoto-u.ac.jp])
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([src/morph.cc])
 #AC_CONFIG_HEADERS([config.h])

@@ -41,14 +41,14 @@ std::string read_kknrc(){/*{{{*/
     std::string home_path = get_home_path();
     std::string current_path = get_current_path();
 
-    FILE *kknrc_file = fopen((home_path + "/.kknrc").c_str(), "r");
+    FILE *kknrc_file = fopen((home_path + "/.jumanpprc").c_str(), "r");
     if (kknrc_file == NULL){
-        return current_path + "/.kkn";
+        return current_path + "/.jumanpp";
     }else{
         char buffer[1024];
         if(fscanf(kknrc_file, "%s", buffer) == 0){
-            fprintf(stderr, "WARNING: .kknrc file does not contain valid path\n");
-            return current_path + "/.kkn";
+            fprintf(stderr, "WARNING: .jumanpprc file does not contain valid path\n");
+            return current_path + "/.jumanpp";
         }
         return buffer;
     }
@@ -127,7 +127,7 @@ void option_proc(cmdline::parser &option, std::string model_path, int argc, char
     option.add("help", 'h', "print this message");
     option.parse_check(argc, argv);
     if (option.exist("version")) {//{{{
-        cout << "KKN " << VERSION << "(" << GITVER <<")" << endl;
+        cout << "JUMAN++ " << VERSION << "(" << GITVER <<")" << endl;
         exit(0);
     }//}}}
     if (option.exist("train")) {//{{{

@@ -1,4 +1,4 @@
-# KKN マニュアル
+# JUMAN++ マニュアル
 -----
 
 森田 一 (hmorita@i.kyoto-u.ac.jp)  
@@ -6,7 +6,7 @@
 黒橋 禎夫 (kuro@i.kyoto-u.ac.jp)  
 
 ## 1. 概要
-**KKN**は言語モデルを利用した高性能な形態素解析器です．言語モデルとして *Recurrent Neural Network Language Model(RNNLM)* を用いることにより，単語の並びの意味的な自然さを考慮した解析を行います．それにより JUMAN，MeCab に比べ大きく性能が向上しています．本システムは CREST「知識に基づく構造的言語処理の確立と知識インフラの構築」により開発されました．
+**JUMAN++**は言語モデルを利用した高性能な形態素解析器です．言語モデルとして *Recurrent Neural Network Language Model(RNNLM)* を用いることにより，単語の並びの意味的な自然さを考慮した解析を行います．それにより JUMAN，MeCab に比べ大きく性能が向上しています．本システムは CREST「知識に基づく構造的言語処理の確立と知識インフラの構築」により開発されました．
 
 ## 2. インストール
 ### 必要なもの
@@ -25,9 +25,9 @@
 
 #### 形態素解析器本体のインストール. 
 ```
-% wget http://lotus.kuee.kyoto-u.ac.jp/nl-resource/kkn/kkn-20160325.tar.gz
-% tar xzf kkn-20160325.tar.gz
-% cd kkn-20160325
+% wget http://lotus.kuee.kyoto-u.ac.jp/nl-resource/jumanpp/jumanpp-20160325.tar.gz
+% tar xzf jumanpp-20160325.tar.gz
+% cd jumanpp-20160325
 % ./configure
 % make
 % sudo make install
@@ -38,16 +38,16 @@ Windows へのインストールはサポートしていません．
 #### 辞書および訓練済みモデルのインストール
 辞書およびモデルを配置する場所は任意です．パスを設定ファイル($HOME/.kknrc)に書き込むことで，起動時に辞書およびモデルが読み込まれるようになります．
 ```
-% wget http://lotus.kuee.kyoto-u.ac.jp/nl-resource/kkn/kkn-model-20160325.tar.gz
-% sudo tar xzf kkn-model-20160325.tar.gz -C /usr/local/share/kkn-model-20160325 (※ /usr/local/share/ に配置する場合)
-% echo /usr/local/share/kkn-model-20160325 > ~/.kknrc
+% wget http://lotus.kuee.kyoto-u.ac.jp/nl-resource/jumanpp/jumanpp-model-linux-20160325.tar.gz
+% sudo tar xzf jumanpp-model-linux-20160325.tar.gz -C /usr/local/share/jumanpp-model-linux-20160325 (※ /usr/local/share/ に配置する場合)
+% echo /usr/local/share/jumanpp-model-linux-20160325 > ~/.jumanpprc
 ```
  
 ## 3. Quick Start
-KKN を起動し，標準入力に UTF-8 でエンコードされた生文を入力することで解析を行います．
+JUMAN++ を起動し，標準入力に UTF-8 でエンコードされた生文を入力することで解析を行います．
 ただし，`#`で始まる行はコメント行として扱い，解析は行いません．
 ```
-% echo "重み付けを変える" | kkn 
+% echo "重み付けを変える" | jumanpp
 重 おも 重い 形容詞 3 * 0 イ形容詞アウオ段 18 語幹 1 "代表表記:重い/おもい 反義:形容詞:軽い/かるい"
 み み み 接尾辞 14 名詞性述語接尾辞 1 * 0 * 0 "代表表記:み/み 準内容語 カテゴリ:抽象物"
 付け つけ 付け 名詞 6 普通名詞 1 * 0 * 0 "代表表記:付け/つけ 補文ト 付属動詞候補（基本） 自他動詞:自:付く/つく 連用形名詞化:形態素解析"
@@ -70,13 +70,13 @@ EOS
 [デモ](http://lotus.kuee.kyoto-u.ac.jp/demo/rnnlm.cgi)
 
 ## 4. オプション解説
-KKN の主なオプションは以下のとおりです．
+JUMAN++ の主なオプションは以下のとおりです．
 ```
 オプション:
   -L, --lattice N              N-Best 解をラティス形式で出力
   -B, --beam width             解析に利用する Beam 幅 (default: width = 5)
   -D, --dir                    モデルファイルのあるディレクトリを指定  
-                               (default: .kknrc で指定したパス)
+                               (default: .jumanpprc で指定したパス)
       --dynamic                RNNLM の読み込みを動的に行い，起動を高速化する (開発中)
   -v, --version                バージョンを表示
       --debug                  デバッグ出力を表示します
@@ -104,6 +104,7 @@ EOS
 ```
 
 同じスパンに複数のスコア・品詞が同一の形態素候補がある場合は，他の候補を先頭に`@`をつけて表示します．また，`EOS` は文区切りを表します．
+品詞体系についての説明は [JUMAN ユーザーマニュアル](http://nlp.ist.i.kyoto-u.ac.jp/?JUMAN) を参照してください．
 
 ### ラティス形式 (-L)
 後段の処理で形態素解析のN-best解を利用する場合を想定して，解析結果をラティスとして出力します．各形態素が他のどの形態素と接続するかの情報が付随しているため，複数の解析結果をまとめた形式で表現することができます．JUMAN形式と同様に各行が１つの形態素を表しますが，形態素の各項目はタブで区切られています．各項目が表す内容は以下の通りです．
@@ -149,7 +150,7 @@ EOS
 する する する 接尾辞 14 動詞性接尾辞 7 サ変動詞 16 基本形 2 "代表表記:する/する"
 EOS
 ```
-出力例:本システム   
+出力例: JUMAN++
 "響き" を名詞として出力し，意味情報に形態素解析時に名詞化を行ったことを表す `連用形名詞化:形態素解析` という情報を追加します．
 ```
 音 おん 音 名詞 6 普通名詞 1 * 0 * 0 "代表表記:音/おん 漢字読み:音 カテゴリ:抽象物"
@@ -161,6 +162,10 @@ EOS
 する する する 接尾辞 14 動詞性接尾辞 7 サ変動詞 16 基本形 2 "代表表記:する/する"
 EOS
 ```
+
+## 7. 動作速度
+本システムは言語モデル等の計算コストが高く，解析速度は 約20文/s 程度とJUMAN等に比較すると解析に時間と必要としますが，
+後段の処理として想定している構文・格解析 (KNP) と比べた解析時間は 1/5 程度となっており，パイプライン処理を行う上で十分な解析速度を達成しています．
 
 ## 謝辞
 言語モデルの学習には, [faster-rnnlm](https://github.com/yandex/faster-rnnlm) を利用しています．Double-Array を扱うため Taku Kudo 氏の [Darts](http://chasen.org/~taku/software/darts/)を利用しています．CDBの読み込みに [tinycdb](http://www.corpit.ru/mjt/tinycdb.html) のコードを利用しています．コマンドラインの解析に Hideyuki Tanaka 氏の [cmdline](https://github.com/tanakh/cmdline) を利用しています． 各ソフトウェア，ライブラリの製作者様に心から感謝申し上げます．
