@@ -14,12 +14,26 @@ AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_RANLIB
 
-CXXFLAGS="$CXXFLAGS -std=c++14"
+# Checks for libraries.
+AC_MSG_CHECKING([for option --std=c++1y])
+CXXFLAGS="$CXXFLAGS -std=c++1y"
+LIBS="$LIBS -lstdc++"
+AC_LANG_PUSH(C++)
+AC_TRY_LINK([], 
+            [],
+            has_cpp14_option=1,
+            has_cpp14_option=0)
+if test $has_cpp14_option = 0; then
+    AC_MSG_RESULT([no])
+    AC_MSG_ERROR("ERROR: --std=c++1y option does not supported.")
+else
+    AC_MSG_RESULT([yes])
+fi
 
 # Checks for libraries.
 AC_MSG_CHECKING([for -lboost_serialization])
 AC_LANG_PUSH(C++)
-LIBS="$LIBS -lstdc++ -lboost_serialization"
+LIBS="$LIBS -lboost_serialization"
 AC_TRY_LINK([#include <fstream>
              #include <boost/serialization/unordered_map.hpp>
              #include <boost/archive/binary_iarchive.hpp>
