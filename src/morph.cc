@@ -16,6 +16,10 @@
 //#include "srilm/Vocab.h"
 //}
 
+// define された内容の文字列化を行う
+#define str_def(s) xstr(s)
+#define xstr(s) #s
+
 bool MODE_TRAIN = false;
 bool WEIGHT_AVERAGED = false;
 
@@ -40,15 +44,23 @@ std::string get_current_path(){/*{{{*/
 std::string read_kknrc(){/*{{{*/
     std::string home_path = get_home_path();
     std::string current_path = get_current_path();
+    std::string jumanpprc_path = home_path + "/.jumanpprc";
 
-    FILE *kknrc_file = fopen((home_path + "/.jumanpprc").c_str(), "r");
-    if (kknrc_file == NULL){
-        return current_path + "/.jumanpp";
+#ifdef DEFAULT_MODEL_PATH
+    std::string default_model_path = str_def(DEFAULT_MODEL_PATH);
+#else
+    //std::string default_model_path = current_path + "/.jumanpp";
+    std::string default_model_path = "/share/tool/kkn/model/latest";
+#endif
+
+    FILE *jumanpprc_file = fopen((jumanpprc_path).c_str(), "r");
+    if (jumanpprc_file == NULL){
+        return default_model_path;
     }else{
         char buffer[1024];
-        if(fscanf(kknrc_file, "%s", buffer) == 0){
+        if(fscanf(jumanpprc_file, "%s", buffer) == 0){
             fprintf(stderr, "WARNING: .jumanpprc file does not contain valid path\n");
-            return current_path + "/.jumanpp";
+            return default_model_path;
         }
         return buffer;
     }
