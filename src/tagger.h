@@ -20,7 +20,7 @@ class Tagger {
     bool unknown_word_detection;
     bool shuffle_training_data;
 
-    lzma_stream lzma_;
+    //lzma_stream lzma_;
         
     FeatureVector weight; 
     FeatureVector weight_sum; 
