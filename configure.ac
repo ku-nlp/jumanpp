@@ -19,7 +19,7 @@ CXXFLAGS="$CXXFLAGS -std=c++14"
 # Checks for libraries.
 AC_MSG_CHECKING([for -lboost_serialization])
 AC_LANG_PUSH(C++)
-LIBS="$LIBS -lboost_serialization"
+LIBS="$LIBS -lstdc++ -lboost_serialization"
 AC_TRY_LINK([#include <fstream>
              #include <boost/serialization/unordered_map.hpp>
              #include <boost/archive/binary_iarchive.hpp>
