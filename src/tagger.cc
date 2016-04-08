@@ -15,8 +15,8 @@ Tagger::Tagger(Parameter *in_param):weight(),scw(in_param->c_value, in_param->ph
         
     sentences_for_train_num = 0;
 
-    lzma_stream initial_lzma = LZMA_STREAM_INIT;
-    lzma_ = initial_lzma;
+    //lzma_stream initial_lzma = LZMA_STREAM_INIT;
+    //lzma_ = initial_lzma;
 
 }//}}}
 

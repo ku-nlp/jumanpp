@@ -8,7 +8,7 @@
 #include "parameter.h"
 #include "dic.h"
 #include "scw.h"
-#include <lzma.h>
+//#include <lzma.h>
 
 namespace Morph {
 
