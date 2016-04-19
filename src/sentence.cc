@@ -1728,19 +1728,42 @@ void Sentence::print_best_beam_rep() {  //{{{
     }
 }  //}}}
 
+std::string replace_space (std::string& str) {
+    std::string::size_type pos = 0;
+    const std::string space = " ";
+    const size_t splen = space.length(); 
+    const std::string espace = "\\ ";
+    const size_t esplen = espace.length();
+
+    while(pos = str.find(space, pos), pos != std::string::npos) {
+        str.replace(pos, splen, espace);
+        pos += esplen;
+    }
+    return str;
+}
+
 void Sentence::generate_juman_line(Node* node, std::stringstream &output_string_buffer, std::string prefix){/*{{{*/
     // JUMAN の一行に相当する文字列を output_string_buffer に出力する
-        
+       
+    std::string surface = *node->original_surface;
+    std::string reading = *node->reading;
+    std::string base    = *node->base;
+
+    // 空白の場合，JUMAN表示の場合はエスケープ処理が必要　
+    if(surface.find(" ") != std::string::npos) surface = replace_space(surface);
+    if(reading.find(" ") != std::string::npos) reading = replace_space(reading); 
+    if(base.find(" ") != std::string::npos) base = replace_space(base);
+    
     if(prefix != "")
         output_string_buffer << prefix << " ";
     if (*node->reading == "*"|| *node->spos == UNK_POS || *node->spos == "数詞") {  //読み不明であれば表層を使う
-        output_string_buffer << *node->original_surface << " "
-            << *node->original_surface << " "
-            << *node->original_surface << " ";
+        output_string_buffer << surface << " "
+            << surface << " "
+            << surface << " ";
     } else {
-        output_string_buffer << *node->original_surface << " " 
-            << *node->reading << " " 
-            << *node->base << " ";
+        output_string_buffer << surface << " " 
+            << reading << " " 
+            << base << " ";
     }
     if (*node->spos == UNK_POS) {
         // 品詞 品詞id
