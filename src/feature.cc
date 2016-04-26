@@ -106,8 +106,8 @@ void FeatureSet::extract_unigram_feature(Node *node) {//{{{
             } else if (*it == FEATURE_MACRO_FEATURE1) { // Wikipedia (test)
                 fv.push_back(node->lcAttr);
             } else if (*it == FEATURE_MACRO_NOMINALIZE) {
-                if(node->semantic_feature && node->semantic_feature->find("名詞化",0) != std::string::npos){
-                    if(debug_flag) feature_name << "名詞化";
+                if(node->semantic_feature && node->semantic_feature->find("連用形名詞化",0) != std::string::npos){
+                    if(debug_flag) feature_name << "連用形名詞化";
                     fv.push_back(1);
                 }else{
                     if(debug_flag) feature_name << "-";
