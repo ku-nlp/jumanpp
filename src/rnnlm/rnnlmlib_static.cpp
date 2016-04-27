@@ -1,5 +1,9 @@
 ///////////////////////////////////////////////////////////////////////
 //
+// JUMAN++ 1.0 
+// (c) 2016 Hajime Morita
+//
+// This code is based on RNNLM toolkit.
 // Recurrent neural network based statistical language modeling toolkit
 // Version 0.4a
 // (c) 2010-2012 Tomas Mikolov (tmikolov@gmail.com)
@@ -10,7 +14,6 @@
 #include <stdio.h>
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
-//#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -379,22 +382,28 @@ namespace RNNLM{
                 fprintf(stderr, "WARNING: Skipping ill-formed line #%d in the vocabulary\n", line_number);
                 continue;
             }
-            int wid = vocab_map.size(); 
-            vocab_map[buffer] = wid; 
+            int wid = line_number;
+
+            // 重複時は頻度の高い方(先に読み込んだ方)を優先する
+            if(vocab_map.find(buffer) == vocab_map.end())
+                vocab_map[buffer] = wid; 
+
+            if (debug_mode>1) 
+                std::cerr << buffer << ", " << wid << std::endl; 
         }
         
         // vocab_map を全て読み込んでから，vocab を確保する
-        // デバッグ用が主
+        // 主にデバッグ用
         vocab_size = vocab_map.size();
         if (vocab_max_size < vocab_size) {
             if (vocab!=NULL) free(vocab);
             vocab_max_size=vocab_size+1000;
-            vocab=(struct vocab_word *)calloc(vocab_max_size, sizeof(struct vocab_word));    //initialize memory for vocabulary
+            //initialize memory for vocabulary
+            vocab=(struct vocab_word *)calloc(vocab_max_size, sizeof(struct vocab_word));
 
             for(auto& pw:vocab_map){
                 int wid = pw.second;
                 strncpy(vocab[wid].word, pw.first.c_str(), (pw.first.length()));
-                //if(wid %100000 == 0) std::cout << vocab[wid].word << std::endl;
             }
         }
         fclose(vocab_file);
@@ -406,16 +415,16 @@ namespace RNNLM{
             exit(1);
         }
         
-        //std::cout << "read header file" << std::endl;
+        if (debug_mode>0) 
+            std::cout << "read header file" << std::endl;
         ReadFRHeader(model_file);
-         
 
         if (debug_mode>0) 
             std::cerr << "reading model file" << std::endl;
         if (neu0==NULL) initNetFR(); //memory allocation here
 
         if (use_nce != true){
-            std::cerr << "err:use nce" << std::endl;
+            std::cerr << "Error:found invalid flag. Please enable NCE flag." << std::endl;
             exit(1); //DEB
         }
 
@@ -444,7 +453,6 @@ namespace RNNLM{
             }
         }
         
-        //std::cerr << "reccurrent: begin " << ftell(model_file) << std::endl;
         if(debug_mode>0)
             std::cerr << "reading reccurent weight" << std::endl;
         // Recurrent weight
@@ -713,3 +721,4 @@ namespace RNNLM{
     }//}}}
 
 }
+

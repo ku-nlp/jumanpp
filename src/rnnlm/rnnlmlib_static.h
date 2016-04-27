@@ -117,7 +117,7 @@ public:
     CRnnLM_stat()		//constructor initializes variables
     {
 	version=10;
-	filetype=TEXT;
+	//filetype=TEXT;
 	
 	use_lmprob=0;
 	lambda=0.75;

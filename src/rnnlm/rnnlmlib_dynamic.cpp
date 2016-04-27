@@ -25,8 +25,6 @@
 #include <boost/unordered_map.hpp>
 #include "rnnlmlib_dynamic.h"
 
-namespace bip = boost::interprocess;
-
 #ifndef exp10
     #define exp10(x) pow((double)10, (x))
 #endif
@@ -53,7 +51,7 @@ namespace RNNLM{
         // READ ... 
         
         // leyer1 のサイズ
-        uint64_t quazi_layer_size; //10000 *version + layer size が入っているらしい．．
+        uint64_t quazi_layer_size; //10000 *version + layer size が入っている
         FreadAllOrDie_dyn(&quazi_layer_size, sizeof(int64_t), 1, file, "failed to read layer size.");
         unsigned int layer_size = quazi_layer_size % kVersionStepSize; //
         int version = quazi_layer_size / kVersionStepSize;
@@ -76,13 +74,13 @@ namespace RNNLM{
         FreadAllOrDie_dyn(&nce_lnz_, sizeof(real), 1, file, error_message);
         nce_lnz = nce_lnz_;
 
-        // 読み込むだけのパラメタ(RNNLM toolkit に関係の無いパラメタ)
+        // 読み込むだけのパラメタ (RNNLM toolkit に関係の無いパラメタ)
         bool reverse_sentence;
         char buffer[kMaxLayerTypeName];
         int layer_count;
         int hs_arity;
         FreadAllOrDie_dyn(&reverse_sentence, sizeof(bool), 1, file, error_message);
-        FreadAllOrDie_dyn(&buffer, sizeof(char), kMaxLayerTypeName, file, error_message); // 固定長らしい
+        FreadAllOrDie_dyn(&buffer, sizeof(char), kMaxLayerTypeName, file, error_message); // 固定長
         FreadAllOrDie_dyn(&layer_count, sizeof(int), 1, file, error_message);
         FreadAllOrDie_dyn(&hs_arity, sizeof(int), 1, file, error_message);
         
@@ -135,8 +133,10 @@ namespace RNNLM{
 
     int CRnnLM_dyn::searchVocab(char *word)
     {//{{{
-        *mmfstr = word;
-        auto vitr = vocab_map->find(*mmfstr);
+        //*mmfstr = word;
+        //std::string stdkey = word;
+        //auto vitr = vocab_map->find(*mmfstr);
+        auto vitr = vocab_map->find(shash(std::string(word)));
         if( vitr == vocab_map->end()){
             return -1;
         }else{
@@ -211,17 +211,21 @@ namespace RNNLM{
         }
             
         std::string MapVocabFilePath= model_vocab_file+".map";
-        if( access( MapVocabFilePath.c_str(), F_OK ) != -1 ){ //読み込みのみ
-            //std::cerr << "read mapped file" << std::endl;
-            p_file_vocab = new bip::managed_mapped_file(ipc::open_only, MapVocabFilePath.c_str());
+        if( access( MapVocabFilePath.c_str(), F_OK ) != -1 ){ //メモリマップからの読み込み
+            if (debug_mode>0) 
+                std::cerr << "read mapped file" << std::endl;
+            p_file_vocab = new bip::managed_mapped_file(bip::open_read_only, MapVocabFilePath.c_str());
             vocab_map = p_file_vocab->find<umap_vocab>("map_vocab").first;
-            mmfstr = p_file_vocab->find<MmfString>("mmfstring").first;
-        }else{ //通常読み込み
-            //std::cerr << "read original file" << std::endl;
-            unsigned long long map_vocab_size = 1024 * 1024 * 1024; // 大きめに1GB (10M文で85MB程度)
-            p_file_vocab = new bip::managed_mapped_file(ipc::create_only, MapVocabFilePath.c_str(), map_vocab_size ); 
-            vocab_map = p_file_vocab->construct<umap_vocab>("map_vocab")( 0, boost::hash<MmfString>(), std::equal_to<MmfString>(), p_file_vocab->get_allocator<VocabPair>());
-            mmfstr = p_file_vocab->construct<MmfString>("mmfstring")(p_file_vocab->get_allocator<MmfString>());
+        }else{ //モデルファイルの読み込み
+            if (debug_mode>0) 
+                std::cerr << "read original file" << std::endl;
+            
+            // 大きめに1GB (10M文で85MB程度)とる(あとでshrink)
+            unsigned long long map_vocab_size = 1024 * 1024 * 1024; 
+            // メモリマップファイルを作成
+            p_file_vocab = new bip::managed_mapped_file(bip::create_only, MapVocabFilePath.c_str(), map_vocab_size ); 
+            // メモリマップ内にvocablary 用の領域を確保
+            vocab_map = p_file_vocab->construct<umap_vocab>("map_vocab")( 0, boost::hash<uint64_t>(), std::equal_to<uint64_t>(), p_file_vocab->get_allocator<hashPair>());
                  
             // 語彙の vocab, と vocab_map への登録
             for (int line_number = 0; !feof(vocab_file); ++line_number) {
@@ -232,31 +236,50 @@ namespace RNNLM{
                     continue;
                 }
                     
-                int wid = vocab_map->size(); 
-                *mmfstr = buffer;
-                (*vocab_map)[*mmfstr] = wid; 
+                int wid = line_number;
+                auto hash_key = shash(std::string(buffer));
+                if(vocab_map->find(hash_key) == vocab_map->end())
+                    (*vocab_map)[shash(std::string(buffer))] = wid; 
+                else
+                    std::cerr << "Collision:" << buffer << ", " << wid << std::endl; 
+
+                if(debug_mode>1)
+                    std::cerr << buffer << ", " << wid << std::endl; 
             }
+            // メモリマップへの書き込みを flush
             p_file_vocab->flush();
+            // メモリマップのサイズ shrink
             bip::managed_mapped_file::shrink_to_fit(MapVocabFilePath.c_str());
-            bip::managed_mapped_file::grow(MapVocabFilePath.c_str(),65535);
         }
+        fclose(vocab_file);
         
-        // vocab_map を全て読み込んでから，vocab を確保する(デバッグ用)
+        // vocab_map を全て読み込んでから，vocab に逆向きのmap を作成(デバッグ用)
         vocab_size = vocab_map->size();
         if (debug_mode>0) {
+            vocab_file = fopen(model_vocab_file.c_str(), "rb");
+
             if (vocab!=NULL) free(vocab);
             vocab_max_size=vocab_size+1000;
             vocab=(struct vocab_word *)calloc(vocab_max_size, sizeof(struct vocab_word));    //initialize memory for vocabulary
 
-            for(auto& pw:(*vocab_map)){
-                int wid = pw.second;
-                std::stringstream ss;
-                strncpy(vocab[wid].word, pw.first.c_str(), (pw.first.length()));
+            for (int line_number = 0; !feof(vocab_file); ++line_number) {
+                char buffer[MAX_STRING];
+                uint64_t count; 
+                if (fscanf(vocab_file, "%s %" PRIu64 " ", buffer, &count) != 2) {
+                    fprintf(stderr, "WARNING: Skipping ill-formed line #%d in the vocabulary\n", line_number);
+                    continue;
+                }
+                
+                auto wid = searchVocab(buffer);
+                // Debug に必要であれば vocab ファイルに登録
+                if(wid != -1)
+                    strncpy(vocab[wid].word, buffer, strlen(buffer));
             }
+
+            fclose(vocab_file);
         }
-        fclose(vocab_file);
         
-        // ネットワークの重み 読み出し
+        // ニューラルネットワークの重み 読み出し
         FILE *model_file = fopen(model_weight_file.c_str(), "rb");
         if (model_file == NULL){
             fprintf(stderr, "Error: model file %s not found. \n", model_weight_file.c_str());
@@ -277,7 +300,7 @@ namespace RNNLM{
 
         const std::string MapFilePath( model_vocab_file + ".nnet.map" );
         if( access( MapFilePath.c_str(), F_OK ) != -1 ){ //読み込みのみ
-            p_file_syn = new bip::managed_mapped_file(ipc::open_only, MapFilePath.c_str());
+            p_file_syn = new bip::managed_mapped_file(bip::open_read_only, MapFilePath.c_str());
             if(debug_mode>0)
                 std::cerr << "reading RNNLM model" << std::endl;
             syn_vocab_l1 = p_file_syn->find<vector_syn>("syn_vocab_l1").first;
@@ -285,14 +308,13 @@ namespace RNNLM{
             syn_l1_l2    = p_file_syn->find<vector_syn>("syn_l1_l2").first;
         }else{ //通常読み込み
             unsigned long long syn_size = sizeof(real)*(vocab_size*layer1_size + layer1_size*layer1_size + layer2_size*layer1_size) + 4096;
-            p_file_syn = new bip::managed_mapped_file(ipc::create_only, MapFilePath.c_str(), syn_size );
+            p_file_syn = new bip::managed_mapped_file(bip::create_only, MapFilePath.c_str(), syn_size );
             syn_vocab_l1 = p_file_syn->construct<vector_syn>("syn_vocab_l1")(p_file_syn->get_segment_manager());
             syn_rec      = p_file_syn->construct<vector_syn>("syn_rec")(p_file_syn->get_segment_manager());
             syn_l1_l2    = p_file_syn->construct<vector_syn>("syn_l1_l2")(p_file_syn->get_segment_manager());
 
             if(debug_mode>0)
                 std::cerr << "reading embedding" << std::endl;
-            // embedding //Row-major // embeddings.resize(vocab.size(), cfg.layer_size);
             syn_vocab_l1->resize(vocab_size*layer1_size);
             for (a=0; a<vocab_size; a++) { //vocab_size < layer_0.size
                 for (b=0; b<layer1_size; b++) {
@@ -334,16 +356,14 @@ namespace RNNLM{
             std::cerr << "reading direct weight" << std::endl;
 
         const std::string FilePath( model_vocab_file + ".direct" );
-
-        //auto const size = boost::filesystem::file_size(FilePath);
         if( access( FilePath.c_str(), F_OK ) != -1 ){ //読み込みのみ
-            p_file_direct = new bip::managed_mapped_file( bip::open_only, FilePath.c_str() ); 
+            p_file_direct = new bip::managed_mapped_file( bip::open_read_only, FilePath.c_str() ); 
             syn_d = p_file_direct->find<vector_syn>("MyVector").first;
             if(debug_mode>0)
                 std::cerr << "read finished"<< std::endl;
         }else{
             // 初回起動時は Memory mapped file に読み込み
-            p_file_direct = new bip::managed_mapped_file( ipc::create_only, FilePath.c_str(), direct_size*sizeof(real)+4096 );
+            p_file_direct = new bip::managed_mapped_file( bip::create_only, FilePath.c_str(), direct_size*sizeof(real)+4096 );
             syn_d = p_file_direct->construct<vector_syn>("MyVector")(p_file_direct->get_segment_manager());
             if(debug_mode>0)
                 std::cerr << "Creating memory mapped file:" << std::endl;
@@ -351,9 +371,6 @@ namespace RNNLM{
             real fl;
             (*syn_d).resize(direct_size);
             for (unsigned long long b=0; b<direct_size; b++) {
-                if(debug_mode>0)
-                    if(b%10000 ==0)
-                        std::cerr << "b:"<< b << "\r" << std::flush;
                 fread(&fl, sizeof(real), 1, model_file); //real
                 (*syn_d)[b]=fl;
             }

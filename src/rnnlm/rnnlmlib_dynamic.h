@@ -82,29 +82,32 @@ namespace RNNLM{
             struct neuron *neuc;	//neurons in hidden layer (for compression)
             struct neuron *neu2;	//neurons in output layer
 
-            typedef ipc::allocator<real,ipc::managed_mapped_file::segment_manager> allocator_t;
+            typedef bip::allocator<real,bip::managed_mapped_file::segment_manager> allocator_t;
 
-            typedef ipc::allocator<char, ipc::managed_mapped_file::segment_manager> CharAllocator;
-            typedef ipc::basic_string<char, std::char_traits<char>, CharAllocator> MmfString;
+            typedef bip::allocator<char, bip::managed_mapped_file::segment_manager> CharAllocator;
+            typedef bip::basic_string<char, std::char_traits<char>, CharAllocator> MmfString;
             typedef std::pair<const MmfString, int> VocabPair;
-            //typedef std::pair<unsigned long, int> hashPair;
+            typedef std::pair<unsigned long, int> hashPair;
 
-            typedef ipc::allocator<VocabPair, ipc::managed_mapped_file::segment_manager> allocator_map;
-            //typedef ipc::allocator<hashPair, ipc::managed_mapped_file::segment_manager> allocator_hmap;
+            typedef bip::allocator<VocabPair, bip::managed_mapped_file::segment_manager> allocator_map;
+            typedef bip::allocator<hashPair, bip::managed_mapped_file::segment_manager> allocator_hmap;
 
             //typedef std::vector<real,allocator_t> vector_t;
             typedef std::vector<real,allocator_t> vector_syn;
-            typedef boost::unordered_map<MmfString, int, boost::hash<MmfString>, std::equal_to<MmfString>, allocator_map> umap_vocab;
+            //typedef boost::unordered_map<MmfString, int, boost::hash<MmfString>, std::equal_to<MmfString>, allocator_map> umap_vocab;
 
+            // 予め文字列をハッシュ化して与える
+            typedef boost::unordered_map<uint64_t, int, boost::hash<uint64_t>, std::equal_to<uint64_t>, allocator_hmap> umap_vocab; 
+                
             //typedef std::unordered_map<unsigned long, int, std::hash<unsigned long>, std::equal_to<unsigned long>, allocator_hmap> umap_vocab; //問題なし
             //typedef std::map<const MmfString, int, std::less<const MmfString>, allocator_map> umap_vocab;
 
-            //std::hash<std::string> shash;
-            ipc::managed_mapped_file* p_file_vocab; // = new bip::managed_mapped_file(ipc::open_only, MapVocabFilePath.c_str());
-            ipc::managed_mapped_file* p_file_syn;
-            ipc::managed_mapped_file* p_file_direct;
+            std::hash<std::string> shash;
+            bip::managed_mapped_file* p_file_vocab; // = new bip::managed_mapped_file(bip::open_only, MapVocabFilePath.c_str());
+            bip::managed_mapped_file* p_file_syn;
+            bip::managed_mapped_file* p_file_direct;
             MmfString* mmfstr;
-
+                
             vector_syn *syn0;		//weights between input and hidden layer //単語ベクトルを学習
             vector_syn *syn1;		//weights between hidden and output layer (or hidden and compression if compression>0)
             //struct synapse *sync;		//weights between hidden and compression layer
@@ -141,8 +144,7 @@ namespace RNNLM{
 
             CRnnLM_dyn(){		//constructor initializes variables
                 version=10;
-                filetype=TEXT;
-
+                //filetype=TEXT;
 
                 use_lmprob=0;
                 lambda=0.75;

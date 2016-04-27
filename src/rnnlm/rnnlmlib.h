@@ -15,17 +15,19 @@
 #include <inttypes.h>
 #include <stddef.h>
 #include <stdio.h>
-
-#include <vector>
 #include <math.h>
 
+// STL
+#include <vector>
+
+// Boost Libraries
 #define  BOOST_DATE_TIME_NO_LIB
 #include <boost/interprocess/managed_mapped_file.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/file_mapping.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/containers/string.hpp>
-namespace ipc = boost::interprocess;
+namespace bip = boost::interprocess;
 
 #include <boost/unordered_map.hpp>
 
@@ -75,13 +77,11 @@ const uint64_t PRIMES_SIZE=sizeof(PRIMES)/sizeof(PRIMES[0]);
 
 const int MAX_NGRAM_ORDER=20;
 
-enum FileTypeEnum {TEXT, BINARY, COMPRESSED};		//COMPRESSED not yet implemented
-
 class CRnnLM{
     // 静的読み込みモデルと動的読み込みモデルの切り替えのための，インターフェースクラス
 public:
-    CRnnLM(){}		//constructor initializes variables
-    virtual ~CRnnLM(){}		//destructor, deallocates memory
+    CRnnLM(){}
+    virtual ~CRnnLM(){}
     
     // 必要なインターフェースの定義
     virtual void setRnnLMFile(const char *str) = 0;
@@ -90,16 +90,6 @@ public:
     virtual void get_initial_context_FR(context *c) = 0;
     virtual real test_word_selfnm(context *c, context *new_c, std::string next_word, size_t word_length) = 0;
 };
-
-//    inline void FreadAllOrDie(void* ptr, size_t size, size_t count, FILE* fo, const char* message) {/*{{{*/
-//        size_t read = fread(ptr, size, count, fo);
-//        if (read != count) {
-//            fprintf(
-//                    stderr, "ERROR: expected to read %zu elements, but read %zu elements (%s)\n",
-//                    count, read, message);
-//            exit(1);
-//        }
-//    }/*}}}*/
 
 }
 #endif
