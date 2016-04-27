@@ -2,10 +2,12 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([JUMAN++], [0.95], [hmorita@i.kyoto-u.ac.jp])
+AC_INIT([JUMAN++], [0.96], [hmorita@i.kyoto-u.ac.jp],[jumanpp])
+#AC_PACKAGE_NAME([jumanpp])
+#AC_PACKAGE_TARNAME([jumanpp])
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([src/morph.cc])
-#AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_HEADERS([src/config.h])
 
 # Checks for programs.
 AC_PROG_CXX
@@ -14,25 +16,13 @@ AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_RANLIB
 
-# Checks for libraries.
-AC_MSG_CHECKING([for option --std=c++1y])
-CXXFLAGS="$CXXFLAGS -std=c++1y"
-LIBS="$LIBS -lstdc++"
 AC_LANG_PUSH(C++)
-AC_TRY_LINK([], 
-            [],
-            has_cpp14_option=1,
-            has_cpp14_option=0)
-if test $has_cpp14_option = 0; then
-    AC_MSG_RESULT([no])
-    AC_MSG_ERROR("ERROR: --std=c++1y option does not supported.")
-else
-    AC_MSG_RESULT([yes])
-fi
+AX_CXX_COMPILE_STDCXX([14], [noext], [mandatory])
+AX_BOOST_BASE([1.57])
+# AX_BOOST_SERIALIZATION() # It doesn't work properly..
 
 # Checks for libraries.
 AC_MSG_CHECKING([for -lboost_serialization])
-AC_LANG_PUSH(C++)
 LIBS="$LIBS -lboost_serialization"
 AC_TRY_LINK([#include <fstream>
              #include <boost/serialization/unordered_map.hpp>
@@ -57,14 +47,10 @@ if test $has_libtcmalloc = 0; then
 fi
 AC_LANG_POP(C++)
 
-#AC_CHECK_LIB([boost_serialization], [main])
 AC_CHECK_LIB([m], [main])
 AC_CHECK_LIB([pthread], [main])
 # Check for Mac
 AC_CHECK_LIB([rt], [main], LIBS="-lrt $LIBS" has_librt=1,has_librt=0)
-
-cd src/cdb && make && cd -
-LIBS="$LIBS src/cdb/libcdb.a"
 
 # Checks for header files.
 AC_CHECK_HEADERS([fcntl.h float.h inttypes.h malloc.h memory.h shadow.h stddef.h stdlib.h string.h sys/file.h unistd.h])
@@ -84,5 +70,23 @@ AC_FUNC_MMAP
 AC_FUNC_REALLOC
 AC_CHECK_FUNCS([memmove memset munmap setenv sqrt strchr strerror strrchr strstr strtol strtoul])
 
-AC_CONFIG_FILES([Makefile])
+# Build libcdb 
+cd src/cdb && make && cd -
+LIBS="$LIBS cdb/libcdb.a"
+
+# Add option for model path
+AC_ARG_ENABLE([default_model_path],
+	[AS_HELP_STRING([--enable-default-model-path=PATH], [set default model path])],
+    [DEFAULT_MODEL_PATH=${enableval}],
+    [DEFAULT_MODEL_PATH="disable"]
+)
+
+AS_IF([test "x${DEFAULT_MODEL_PATH}" != "xdisable"],
+    [AC_DEFINE_UNQUOTED(DEFAULT_MODEL_PATH, ${DEFAULT_MODEL_PATH}, [default path to model])]
+)
+
+#    [AC_DEFINE([DEFAULT_MODEL_PATH], ["$DEFAULT_MODEL_PATH"], [Set default model path])]
+
+AC_CONFIG_FILES([Makefile src/Makefile])
 AC_OUTPUT
+
