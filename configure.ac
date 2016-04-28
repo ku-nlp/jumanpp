@@ -2,9 +2,9 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
+
+
 AC_INIT([JUMAN++], [0.96], [hmorita@i.kyoto-u.ac.jp],[jumanpp])
-#AC_PACKAGE_NAME([jumanpp])
-#AC_PACKAGE_TARNAME([jumanpp])
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([src/morph.cc])
 AC_CONFIG_HEADERS([src/config.h])
@@ -85,8 +85,12 @@ AS_IF([test "x${DEFAULT_MODEL_PATH}" != "xdisable"],
     [AC_DEFINE_UNQUOTED(DEFAULT_MODEL_PATH, ${DEFAULT_MODEL_PATH}, [default path to model])]
 )
 
-#    [AC_DEFINE([DEFAULT_MODEL_PATH], ["$DEFAULT_MODEL_PATH"], [Set default model path])]
-
+AS_IF([test -e .git],
+    [GIT_VER_TMP=`git log -1 --date=local --format="%ad %h"`;echo ${GIT_VER_TMP} > VERSION],
+    [GIT_VER_TMP=`cat VERSION`]
+)
+AC_DEFINE_UNQUOTED(GITVER, "${GIT_VER_TMP}", [revision])
+      
 AC_CONFIG_FILES([Makefile src/Makefile])
 AC_OUTPUT
 
