@@ -48,7 +48,7 @@ sub calc_score {
 	my @output_pos;
 	&parse_line($output->[$i], \@output_token, \@output_pos);
 
-    #if (scalar(@output_token) == 0) { next; }# 解析できなかった文を評価から除外する
+    # if (scalar(@output_token) == 0) { next; }# 解析できなかった文を評価から除外する
 
 	$pre_c += scalar(@output_token);
 	my @ref_token;
@@ -56,7 +56,7 @@ sub calc_score {
 	&parse_line($ref->[$i], \@ref_token, \@ref_pos);
 	$rec_c += scalar(@ref_token);
 
-    if (scalar(@output_token) == 0) { next; }# 解析できなかった文の処理をスキップ
+    # if (scalar(@output_token) == 0) { next; }# 解析できなかった文の処理をスキップ
 
 	my $output_length = 0;
 	my $output_index = 0;
@@ -193,3 +193,4 @@ sub parse_line {
     }
 }
 
+# Kyoto Corpus
