@@ -106,6 +106,7 @@ void option_proc(cmdline::parser &option, std::string model_path, int argc, char
     // option.add("ambiguous", 'A', "output ambiguous words on lattice (default)");
     //option.add<unsigned int>("unk_max_length", 'l', "maximum length of unknown word detection", false, 2);
         
+
     option.add<double>("Rweight", 0, "linear interpolation parameter for MA score and RNN score",false, 0.3);
     option.add<double>("Lweight", 0, "linear penalty parameter for unknown words in RNNLM",false, 1.5);
     //option.add<unsigned int>("nbest", 'n', "n-best search", false, 5);
@@ -216,7 +217,9 @@ int main(int argc, char** argv) {//{{{
         if(option.exist("beam")){
             param.set_L(option.get<unsigned int>("lattice"));
         }else{// 無ければラティスと同じ幅を指定
-            param.set_N(option.get<unsigned int>("lattice"));
+            // 指定されたビーム幅よりもラティスに使うN-best が多ければ，ビーム幅を拡張する．
+            if(option.get<unsigned int>("lattice") > param.N)
+                param.set_N(option.get<unsigned int>("lattice"));
             param.set_L(option.get<unsigned int>("lattice"));
         }
     }    
