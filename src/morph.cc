@@ -124,8 +124,10 @@ void option_proc(cmdline::parser &option, std::string model_path, int argc, char
     // デバッグオプション
     option.add("debug", '\0', "debug mode");
     option.add("rnndebug", '\0', "show rnnlm debug message");
-    
+   
+#ifdef USE_DEV_OPTION
     // 開発用オプション
+    option.add("nornnlm", 0, "do not use RNNLM");
     option.add("dynamic", 0, "loading RNNLM dynamically (dev)");
     option.add("ptest", 0, "receive partially annotated text (dev)");
     option.add("rnnasfeature", 0, "use rnnlm score as feature (dev)");
@@ -134,6 +136,7 @@ void option_proc(cmdline::parser &option, std::string model_path, int argc, char
     option.add("usesurf", 0, "use surf in rnnlm (dev)");
     option.add("usepos", 0, "use pos in rnnlm (dev,default)");
     option.add("printrep",0, "print rep(dev)");
+#endif
 
     option.add("version", 'v', "print version");
     option.add("help", 'h', "print this message");
@@ -219,18 +222,23 @@ int main(int argc, char** argv) {//{{{
     }    
     
     param.set_output_ambigous_word(!option.exist("noambiguous"));
+    
+    // TODO: 訓練はデフォルトでSCWを利用するようにする
     param.set_use_scw(option.exist("scw"));
     param.set_lweight(option.get<double>("Lweight"));
     if(option.exist("Cvalue"))
         param.set_C(option.get<double>("Cvalue"));
     if(option.exist("Phi"))
         param.set_Phi(option.get<double>("Phi"));
+
     // 部分アノテーション用デリミタ
     param.delimiter = "\t";
 
-    if(option.exist("rnnasfeature") && option.exist("rnnlm")){
+#ifdef USE_DEV_OPTION
+    if(option.exist("rnnasfeature") && option.exist("rnnlm") && !option.exist("nornnlm")){
         param.use_rnnlm_as_feature = true;
     }
+#endif
 
     if(option.exist("debug")){
         Morph::FeatureSet::debug_flag = true;
@@ -248,9 +256,8 @@ int main(int argc, char** argv) {//{{{
     normal_param.set_nbest(true); // nbest を利用するよう設定
     normal_param.set_N(10); // 10-best に設定
 
-    param.set_rnnlm(true);
-    param.set_nce(true);
-    
+// RNNLM の利用フラグ設定    
+#ifdef USE_DEV_OPTION
     if(option.exist("userep"))
         param.userep = true;
     if(option.exist("usebase"))
@@ -260,6 +267,18 @@ int main(int argc, char** argv) {//{{{
     if(option.exist("usepos"))
         param.usepos = true;
 
+    if(option.exist("nornnlm")){
+        param.set_rnnlm(false);
+        param.set_nce(false);
+    }else{
+        param.set_rnnlm(true);
+        param.set_nce(true);
+    }
+#else
+    param.set_rnnlm(true);
+    param.set_nce(true);
+#endif
+
 #ifdef USE_SRILM
     param.set_srilm(option.exist("srilm"));
 #endif
@@ -267,11 +286,15 @@ int main(int argc, char** argv) {//{{{
     Morph::Node::set_param(&param);
    
     RNNLM::CRnnLM* p_rnnlm;
+#ifdef USE_DEV_OPTION
     if(option.exist("dynamic")){
         p_rnnlm = new RNNLM::CRnnLM_dyn();
     }else{
         p_rnnlm = new RNNLM::CRnnLM_stat();
     }
+#else
+    p_rnnlm = new RNNLM::CRnnLM_dyn();
+#endif
         
     p_rnnlm->setRnnLMFile(rnnlm_model_path.c_str());
     if(option.exist("rnndebug")){
@@ -463,9 +486,11 @@ int main(int argc, char** argv) {//{{{
                     // N-best の Moprh形式出力
                     tagger.print_beam();
                 }else if(option.exist("morph")){
+#if USE_DEV_OPTION
                     if(option.exist("printrep"))
                         tagger.print_best_beam_rep();
                     else
+#endif
                         tagger.print_best_beam();//Morph出力
                 }else{
                     tagger.print_best_beam_juman();

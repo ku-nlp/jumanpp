@@ -85,6 +85,17 @@ AS_IF([test "x${DEFAULT_MODEL_PATH}" != "xdisable"],
     [AC_DEFINE_UNQUOTED(DEFAULT_MODEL_PATH, ${DEFAULT_MODEL_PATH}, [default path to model])]
 )
 
+AC_ARG_ENABLE([dev_option],
+	[AS_HELP_STRING([--enable-dev_option], [enable options for development ])],
+    [DEV_OPTION=${enableval}],
+    [DEV_OPTION="disable"]
+)
+
+AS_IF([test "x${DEV_OPTION}" != "xdisable"],
+    [AC_DEFINE_UNQUOTED(USE_DEV_OPTION, ${DEV_OPTION}, [enables options for development])]
+)
+
+
 AS_IF([test -e .git],
     [GIT_VER_TMP=`git log -1 --date=local --format="%ad %h"`;echo ${GIT_VER_TMP} > VERSION],
     [GIT_VER_TMP=`cat VERSION`]
