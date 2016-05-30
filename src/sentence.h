@@ -276,7 +276,7 @@ class Sentence {//{{{
     void generate_juman_line(Node* node, std::stringstream &output_string_buffer, std::string prefix = "");
     void print_best_beam_juman();
     void print_best_path_with_rnn(RNNLM::CRnnLM& model);
-    TopicVector get_topic();
+    //TopicVector get_topic();
 	std::map<std::string, int> nbest_duplicate_filter;
     void mark_nbest();
     void mark_nbest_rbeam(unsigned int nbest); 

@@ -385,7 +385,6 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, co
     return result_node;
 }  //}}}
 
-
 // lookup_and_make_special_pseudo_nodes_lattice_with_max_length
 // ノードとして作る単語の長さ上限を設定して探索
 // TODO: 簡潔な名称
@@ -876,45 +875,6 @@ bool Sentence::analyze() {  //{{{
     }
     find_best_beam();
     return true;
-}  //}}}
-
-// 文のトピックを計算する
-TopicVector Sentence::get_topic() {  //{{{
-    TopicVector topic(TOPIC_NUM, 0.0);
-    mark_nbest();
-
-    for (unsigned int pos = 0; pos < length;
-         pos += utf8_bytes((unsigned char *)(sentence_c_str + pos))) {
-        Node *node = (*begin_node_list)[pos];
-
-        while (node) {
-            // n-best解に使われているもののみ
-            std::set<int> used_length;
-            if (node->used_in_nbest) {
-                if (node->topic_available()) {
-                    TopicVector node_topic = node->get_topic();
-
-                    // count topic
-                    if (used_length.count(node->char_num) ==
-                        0) {  // 同じ開始位置で同じ長さの場合最初の物だけを使う
-                        for (unsigned int i = 0; i < node_topic.size(); i++) {
-                            topic[i] += node_topic[i];
-                        }
-                        used_length.insert(node->char_num);
-                    }
-                }
-            }
-            node = node->bnext;
-        }
-    }
-    // 正規化
-    double sum = 0.0;
-    for (double x : topic) sum += x * x;
-    if (sum != 0.0) {  //完全に0なら, 0ベクトルを返す
-        for (double &x : topic) x /= sqrt(sum);
-    }
-
-    return topic;
 }  //}}}
 
 // 互換性のための旧フォーマットの出力
