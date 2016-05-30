@@ -40,6 +40,19 @@ Ngram *Sentence::srilm;
 Vocab *Sentence::vocab;
 #endif
 
+// 文字列の置換を行う(エスケープ用)
+std::string& escape(std::string const& from, std::string const& to, std::string& str) {/*{{{*/
+    std::string::size_type pos = 0;
+    const size_t fromlen = from.length(); 
+    const size_t tolen = to.length();
+
+    while(pos = str.find(from, pos), pos != std::string::npos) {
+        str.replace(pos, fromlen, to);
+        pos += tolen;
+    }
+    return str;
+}/*}}}*/
+
 void Sentence::init_rnnlm(RNNLM::CRnnLM *in_rnnlm) {/*{{{*/
 //    rnnlm = in_rnnlm;
 //    RNNLM::context tmp;
@@ -1024,26 +1037,32 @@ void Sentence::generate_unified_lattice_line(Node* node, std::stringstream &ss, 
     // 文字index の表示
     ss << char_num << delim << char_num + word_length - 1 << delim;
         
-    // 表層 代表表記 よみ 原形
-    if (*node->reading == "*"||*node->reading=="<UNK>") { //読み不明であれば表層を使う
-        ss << *node->original_surface << delim  // 表層
-            // 擬似代表表記を表示する
-            << *node->original_surface << "/"
-            << *node->original_surface << delim
-            << *node->original_surface << delim   // 読み
-            << *node->original_surface << delim;  // 原形
-    } else {
-        if (*node->representation == "*" || *node->representation == "<UNK>" ) {  // Wikipedia 数詞など
-            ss << *node->original_surface << delim
-                << *node->original_surface << "/" << *node->reading
-                << delim << *node->reading << delim << *node->base
-                << delim;
-        } else {
-            ss << *node->original_surface << delim
-                << *node->representation << delim << *node->reading
-                << delim << *node->base << delim;
-        }
+    // 表層 代表表記 よみ 原形 を表示
+    std::string surface_for_print = *node->original_surface;    
+    std::string reading_for_print = *node->reading; //*node->original_surface;    
+    std::string base_for_print    = *node->original_surface;    
+    std::string representation_for_print = *node->original_surface;    
+
+    if (*node->reading == "*"||*node->reading=="<UNK>") {
+        // 読みが不明の場合, 表層を読みの変わりに使い，代表表記も擬似的に生成する．
+        reading_for_print = *node->original_surface;
+        representation_for_print = *node->original_surface + "/" + *node->original_surface;
+    } else if(*node->representation == "*" || *node->representation == "<UNK>" ){
+        // 代表表記が不明の場合, 代表表記を生成する．
+        representation_for_print = *node->original_surface + "/" + *node->reading;
     }
+
+    // タブを\tに置換する
+    escape("\t","\\t",surface_for_print);
+    escape("\t","\\t",reading_for_print);
+    escape("\t","\\t",base_for_print);
+    escape("\t","\\t",representation_for_print);
+    
+    // 表示
+    ss << surface_for_print << delim;
+    ss << representation_for_print << delim;
+    ss << reading_for_print << delim; 
+    ss << base_for_print << delim;
     
     // 品詞 品詞id 細分類 細分類id
     if (*node->spos == UNK_POS) {
@@ -1688,20 +1707,6 @@ void Sentence::print_best_beam_rep() {  //{{{
     }
 }  //}}}
 
-std::string replace_space (std::string& str) {
-    std::string::size_type pos = 0;
-    const std::string space = " ";
-    const size_t splen = space.length(); 
-    const std::string espace = "\\ ";
-    const size_t esplen = espace.length();
-
-    while(pos = str.find(space, pos), pos != std::string::npos) {
-        str.replace(pos, splen, espace);
-        pos += esplen;
-    }
-    return str;
-}
-
 void Sentence::generate_juman_line(Node* node, std::stringstream &output_string_buffer, std::string prefix){/*{{{*/
     // JUMAN の一行に相当する文字列を output_string_buffer に出力する
        
@@ -1710,9 +1715,9 @@ void Sentence::generate_juman_line(Node* node, std::stringstream &output_string_
     std::string base    = *node->base;
 
     // 空白の場合，JUMAN表示の場合はエスケープ処理が必要　
-    if(surface.find(" ") != std::string::npos) surface = replace_space(surface);
-    if(reading.find(" ") != std::string::npos) reading = replace_space(reading); 
-    if(base.find(" ") != std::string::npos) base = replace_space(base);
+    if(surface.find(" ") != std::string::npos) escape(" ","\\ ",surface);
+    if(reading.find(" ") != std::string::npos) escape(" ","\\ ",reading); 
+    if(base.find(" ") != std::string::npos) escape(" ","\\ ",base);
     
     if(prefix != "")
         output_string_buffer << prefix << " ";
