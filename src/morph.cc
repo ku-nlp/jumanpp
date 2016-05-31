@@ -126,11 +126,12 @@ void option_proc(cmdline::parser &option, std::string model_path, int argc, char
     option.add("debug", '\0', "debug mode");
     option.add("rnndebug", '\0', "show rnnlm debug message");
     option.add("ptest", 0, "receive partially annotated text (dev)");
+    option.add("static", 0, "static loading for RNNLM. (It may be faster than default when you process large texts)"); 
    
 #ifdef USE_DEV_OPTION
     // 開発用オプション
     option.add("nornnlm", 0, "do not use RNNLM");
-    option.add("dynamic", 0, "loading RNNLM dynamically (dev)");
+    option.add("dynamic", 0, "Obsoleted. (It remains only for backward compatibility.)"); 
     option.add("rnnasfeature", 0, "use rnnlm score as feature (dev)");
     option.add("userep", 0, "use rep in rnnlm (dev)");
     option.add("usebase", 0, "use rep in rnnlm (dev,default)");
@@ -289,17 +290,13 @@ int main(int argc, char** argv) {//{{{
     Morph::Node::set_param(&param);
    
     RNNLM::CRnnLM* p_rnnlm;
-#ifdef USE_DEV_OPTION
-    if(option.exist("dynamic")){
-        p_rnnlm = new RNNLM::CRnnLM_dyn();
-    }else{
+    if(option.exist("static")){
         p_rnnlm = new RNNLM::CRnnLM_stat();
+    }else{
+        p_rnnlm = new RNNLM::CRnnLM_dyn();
     }
-#else
-    p_rnnlm = new RNNLM::CRnnLM_dyn();
-#endif
-        
     p_rnnlm->setRnnLMFile(rnnlm_model_path.c_str());
+
     if(option.exist("rnndebug")){
         p_rnnlm->setDebugMode(1);
         param.rnndebug = true;
