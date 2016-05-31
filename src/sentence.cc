@@ -1038,9 +1038,9 @@ void Sentence::generate_unified_lattice_line(Node* node, std::stringstream &ss, 
     ss << char_num << delim << char_num + word_length - 1 << delim;
         
     // 表層 代表表記 よみ 原形 を表示
-    std::string surface_for_print = *node->original_surface;    
-    std::string reading_for_print = *node->reading; //*node->original_surface;    
-    std::string base_for_print    = *node->original_surface;    
+    std::string surface_for_print = *node->original_surface;
+    std::string reading_for_print = *node->reading;
+    std::string base_for_print    = *node->base;
     std::string representation_for_print = *node->representation;
 
     if (*node->reading == "*"||*node->reading=="<UNK>") {
