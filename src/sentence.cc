@@ -1041,7 +1041,7 @@ void Sentence::generate_unified_lattice_line(Node* node, std::stringstream &ss, 
     std::string surface_for_print = *node->original_surface;    
     std::string reading_for_print = *node->reading; //*node->original_surface;    
     std::string base_for_print    = *node->original_surface;    
-    std::string representation_for_print = *node->original_surface;    
+    std::string representation_for_print = *node->representation;
 
     if (*node->reading == "*"||*node->reading=="<UNK>") {
         // 読みが不明の場合, 表層を読みの変わりに使い，代表表記も擬似的に生成する．
