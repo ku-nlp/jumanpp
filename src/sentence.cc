@@ -1043,11 +1043,16 @@ void Sentence::generate_unified_lattice_line(Node* node, std::stringstream &ss, 
     std::string base_for_print    = *node->base;
     std::string representation_for_print = *node->representation;
 
-    if (*node->reading == "*"||*node->reading=="<UNK>") {
+    if (*node->reading == "*") {
         // 読みが不明の場合, 表層を読みの変わりに使い，代表表記も擬似的に生成する．
         reading_for_print = *node->original_surface;
         representation_for_print = *node->original_surface + "/" + *node->original_surface;
-    } else if(*node->representation == "*" || *node->representation == "<UNK>" ){
+    } else if(*node->reading=="<UNK>"){
+        // 未定義語は読み，原形，代表表記を生成する
+        reading_for_print = *node->original_surface;
+        base_for_print = surface_for_print;
+        representation_for_print = *node->original_surface + "/" + *node->original_surface;
+    } else if(*node->representation == "*" ){
         // 代表表記が不明の場合, 代表表記を生成する．
         representation_for_print = *node->original_surface + "/" + *node->reading;
     }
