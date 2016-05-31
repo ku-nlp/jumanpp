@@ -125,12 +125,12 @@ void option_proc(cmdline::parser &option, std::string model_path, int argc, char
     // デバッグオプション
     option.add("debug", '\0', "debug mode");
     option.add("rnndebug", '\0', "show rnnlm debug message");
+    option.add("ptest", 0, "receive partially annotated text (dev)");
    
 #ifdef USE_DEV_OPTION
     // 開発用オプション
     option.add("nornnlm", 0, "do not use RNNLM");
     option.add("dynamic", 0, "loading RNNLM dynamically (dev)");
-    option.add("ptest", 0, "receive partially annotated text (dev)");
     option.add("rnnasfeature", 0, "use rnnlm score as feature (dev)");
     option.add("userep", 0, "use rep in rnnlm (dev)");
     option.add("usebase", 0, "use rep in rnnlm (dev,default)");
