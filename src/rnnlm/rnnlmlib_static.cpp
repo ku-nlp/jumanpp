@@ -118,7 +118,7 @@ namespace RNNLM{
         }
 
         for (a=0; a<d_o; ++a) {
-            direct_score += syn_d[(hash[a] + word)%hash_max]; 
+            direct_score += syn_d[(hash[a] + word)%hash_max];
             if(a>0 && c->history[a-1] == 0) break;
         }
         return direct_score;
@@ -715,7 +715,7 @@ namespace RNNLM{
         history[0] = word;
             
         // context の保存 // history の渡し方が暗黙的
-        saveFullContext(new_c);
+        saveFullContext(new_c); //neu1を保存
 
         return senp;
     }//}}}
