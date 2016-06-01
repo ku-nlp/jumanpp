@@ -1808,6 +1808,7 @@ void Sentence::print_best_beam_juman() {  //{{{
                             tmp->sposid == (*it)->sposid &&
                             tmp->baseid == (*it)->baseid &&
                             tmp->formid == (*it)->formid &&
+                            tmp->formtypeid == (*it)->formtypeid &&
                             (tmp->stat & MORPH_DEVOICE_NODE) == ((*it)->stat & MORPH_DEVOICE_NODE) // 濁音化の有無も一致
                             )  {
                             // 曖昧語@表示
@@ -1888,7 +1889,13 @@ void Sentence::mark_nbest() {  //{{{
                     while (
                         tmp) {  //同じ長さ(同じ表層)で同じ表層のものをすべて出力する
                         if (tmp->length == (*it)->length &&
-                            tmp->posid == (*it)->posid) {
+                            tmp->posid == (*it)->posid &&
+                            tmp->sposid == (*it)->sposid &&
+                            tmp->baseid == (*it)->baseid &&
+                            tmp->formid == (*it)->formid &&
+                            tmp->formtypeid == (*it)->formtypeid &&
+                            (tmp->stat & MORPH_DEVOICE_NODE) == ((*it)->stat & MORPH_DEVOICE_NODE) // 濁音化の有無も一致
+                            ) {
                             tmp->used_in_nbest = true;
                         }
                         tmp = tmp->bnext;
@@ -1929,8 +1936,8 @@ void Sentence::mark_nbest_rbeam(unsigned int nbest) {  //{{{
                             tmp->sposid == (*it)->sposid &&
                             tmp->baseid == (*it)->baseid &&
                             tmp->formid == (*it)->formid &&
+                            tmp->formtypeid == (*it)->formtypeid &&
                             (tmp->stat & MORPH_DEVOICE_NODE) == ((*it)->stat & MORPH_DEVOICE_NODE) // 濁音化の有無も一致
-                            // TODO 助詞と判定詞の異なりを含める
                             ) {
                             if(!tmp->used_in_nbest){ // もっとも良かった時のスコアを用いる
                                 tmp->used_in_nbest = true;
