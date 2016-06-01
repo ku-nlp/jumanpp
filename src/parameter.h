@@ -24,6 +24,7 @@ class Parameter {
     bool usepos=true; 
     bool srilm;
     bool useoldloss=false;
+    bool usetypedloss=false;
     bool lpenalty=false;
     bool no_posmatch=true;
     bool use_suu_rule=true;

@@ -2249,11 +2249,21 @@ double Sentence::eval(Sentence &gold) {  //{{{
                     (*itr)->length == (itr_gold)->length &&
                     (*itr)->posid == (itr_gold)->posid ) {// ２つ一致して 1.0 点
                 score += 1.0;
-            }else if ((*itr)->length == (itr_gold)->length &&
-                    (*itr)->posid == (itr_gold)->posid &&
-                    (*itr)->sposid == (itr_gold)->sposid &&
-                    (*itr)->formid == (itr_gold)->formid) {// すべて一致して 1.0 点
-                score += 1.0;
+            }else if (param->usetypedloss){
+                if ((*itr)->length == (itr_gold)->length &&
+                        (*itr)->posid == (itr_gold)->posid &&
+                        (*itr)->sposid == (itr_gold)->sposid &&
+                        (*itr)->formtypeid == (itr_gold)->formtypeid &&
+                        (*itr)->formid == (itr_gold)->formid) {// すべて一致して 1.0 点
+                    score += 1.0;
+                }
+            }else{ 
+                if ((*itr)->length == (itr_gold)->length &&
+                        (*itr)->posid == (itr_gold)->posid &&
+                        (*itr)->sposid == (itr_gold)->sposid &&
+                        (*itr)->formid == (itr_gold)->formid) {// すべて一致して 1.0 点
+                    score += 1.0;
+                }
             }
 
             byte += (*itr)->length;
