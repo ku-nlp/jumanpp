@@ -501,8 +501,6 @@ namespace RNNLM{
         int a, b;
         int last_word_local = context->history[0];
 
-        // 未知語に対しては計算しない
-        if(word == -1) return; 
         
         // 語彙数次元のベクトル
         if (last_word_local!=-1) neu0[last_word_local].ac=1;
@@ -512,6 +510,9 @@ namespace RNNLM{
         // layer0_size-layer1_size > layer0_size がコンテクストの次元
         restoreFullContext(context); // コンテクストをneu0 のコンテクストへコピー，history をセット
         
+        // 未知語に対しては計算しない
+        if(word == -1) return; 
+
         if(context->have_recurrent){
             // context が recurrent に含まれるなら，それを読み込むだけに留める.
             

@@ -1529,10 +1529,9 @@ bool Sentence::beam_at_position(unsigned int pos, Node *r_node) {  //{{{
                 double score = l_token_with_state.score + bigram_score +
                                (1.0 - param->rweight) * r_node->wcost;
                     
-                if (param->nce){
+                if (param->nce){// このif 不要
 
                     std::string rnnlm_rep;
-                    //if(param->userep){
                     rnnlm_rep = generate_rnnlm_token(r_node);
                     rnn_score =
                         (param->rweight) * rnnlm->test_word_selfnm(l_token_with_state.context.get(), &new_c, rnnlm_rep, get_rnnlm_word_length(r_node));
