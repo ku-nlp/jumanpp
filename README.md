@@ -1,4 +1,4 @@
-# KKN
+# JUMAN++
 -----
 A new morphological analyser that considers semantic plausibility of 
 word sequences by using a recurrent neural network language model (RNNLM).
@@ -18,18 +18,13 @@ word sequences by using a recurrent neural network language model (RNNLM).
 
 ### Build
 ```
-git clone git@bitbucket.org:ku_nlp/kkn.git
-cd kkn
+git clone git@bitbucket.org:ku_nlp/jumanpp.git
+cd jumanpp
 make
 ```
-### Pre-built binary
+## Quick start (The latest version is installed in shared binary directory in our lab.)
 ```
-/share/tool/kkn/bin/kkn
-```
-
-## Quick start
-```
-/share/tool/kkn/bin/kkn -D /share/tool/kkn/model/latest
+jumanpp
 ```
 魅力がたっぷりと詰まっている
 ```
@@ -44,7 +39,7 @@ EOS
 
 ## Option
 ```
-usage: kkn [options] 
+usage: jumanpp [options] 
 options:
   -D, --dir                    set resource directory (string [=./data])
   -j, --juman                  JUMAN style output (default)
@@ -104,5 +99,3 @@ sh bootstrap.sh
 ./b2 install -j2 --prefix=/somewhere/local/
 ```
 ----
-
-[note]: http://example.com/  "Optional Title Here"
