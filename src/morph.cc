@@ -89,15 +89,12 @@ void option_proc(cmdline::parser &option, std::string model_path, int argc, char
     // 出力形式のオプション
     option.add("juman", 'j', "print juman style (default)"); 
     option.add("morph", 'M', "print morph style");
-    option.add<unsigned int>("Nmorph", 'N', "print N-best Moprh", false, 5);
     option.add<unsigned int>("lattice", 'L', "output lattice format",false, 5);
     option.add("force-single-path", 0, "do not output ambiguous words on lattice");
-    option.add("oldstyle", 0, "print old style lattice");
         
     // 訓練用オプション
     option.add<std::string>("train", 't', "set training data path", false, "data/train.txt");
-    option.add("scw", 0, "use soft confidence weighted in the training");
-    option.add("shuffle", 's', "shuffle training data for each iteration"); //デフォルトに
+    option.add<std::string>("outputmodel", 'o', "set model path for output", false, "output.mdl");
     option.add<unsigned int>("iteration", 'i', "iteration number for training", false, 10);
     option.add<double>("Cvalue", 'C', "C value. parameter for SCW",false, 1.0);
     option.add<double>("Phi", 'P', "Phi value. parameter for SCW",false, 1.65);
@@ -108,13 +105,15 @@ void option_proc(cmdline::parser &option, std::string model_path, int argc, char
     // デバッグオプション
     option.add("debug", '\0', "debug mode");
     option.add("rnndebug", '\0', "show rnnlm debug message");
-    option.add("ptest", 0, "receive partially annotated text (dev)");
+    option.add("ptest", 0, "receive partially annotated text");
     option.add("static", 0, "static loading for RNNLM. (It may be faster than default when you process large texts)"); 
    
 #ifdef USE_DEV_OPTION
     // 開発用オプション
+    option.add<unsigned int>("Nmorph", 'N', "print N-best Moprh", false, 5);
+    option.add("oldstyle", 0, "print JUMAN style lattice");
     option.add("typedloss", 0, "use loss function considering form type ");
-    option.add("nornnlm", 0, "do not use RNNLM");
+    option.add("nornnlm", 0, "do not use RNNLM"); 
     option.add("dynamic", 0, "Obsoleted. (It remains only for backward compatibility.)"); 
     option.add("rnnasfeature", 0, "use rnnlm score as feature (dev)");
     option.add("userep", 0, "use rep in rnnlm (dev)");
@@ -172,20 +171,19 @@ int main(int argc, char** argv) {//{{{
     unsigned int unk_max_length = 2; // 固定
     
     Morph::Parameter param( dict_path, feature_path, option.get<unsigned int>("iteration"), true, 
-            option.exist("shuffle"), unk_max_length, option.exist("debug"), option.exist("lattice"));
-
-    // モデルパスの設定
-    param.set_model_filename(model_path); //訓練用
+            option.exist("train"), unk_max_length, option.exist("debug"), option.exist("lattice"));
+        
+    // 訓練時のアウトプット用モデルパスの設定
+    param.set_model_filename(option.get<std::string>("outputmodel")); 
+        
     param.use_lexical_feature=true;
     param.freq_word_list = freq_word_list;
     Morph::FeatureSet::open_freq_word_set(param.freq_word_list);
 
     if(param.debug)
         std::cerr << "initializing models ... " << std::flush;
-    else
-        setenv("TCMALLOC_LARGE_ALLOC_REPORT_THRESHOLD","107374182400",1);
 
-    // beam は default
+    // ビームサーチを用いるかどうか
     param.set_beam(true);
     param.set_N(5); //初期値
 
@@ -215,9 +213,8 @@ int main(int argc, char** argv) {//{{{
     }    
     
     param.set_output_ambigous_word(!option.exist("force-single-path"));
-    
-    // TODO: 訓練はデフォルトでSCWを利用するようにする
-    param.set_use_scw(option.exist("scw"));
+     
+    param.set_use_scw(true);
     param.set_lweight(option.get<double>("Lweight"));
     if(option.exist("Cvalue"))
         param.set_C(option.get<double>("Cvalue"));
@@ -260,7 +257,7 @@ int main(int argc, char** argv) {//{{{
     if(option.exist("usepos"))
         param.usepos = true;
 
-    if(option.exist("nornnlm")){
+    if(option.exist("nornnlm") && (option.exist("train") && !option.exist("rnnasfeature") ) ){
         param.set_rnnlm(false);
         param.set_nce(false);
     }else{
@@ -268,13 +265,20 @@ int main(int argc, char** argv) {//{{{
         param.set_nce(true);
     }
 #else
-    param.set_rnnlm(true);
-    param.set_nce(true);
+    if(option.exist("train")){
+        param.set_rnnlm(false);
+        param.set_nce(false);
+    }else{
+        param.set_rnnlm(true);
+        param.set_nce(true);
+    }
 #endif
 
+// SRILM の利用
 #ifdef USE_SRILM
     param.set_srilm(option.exist("srilm"));
 #endif
+
     Morph::Tagger tagger(&param);
     Morph::Node::set_param(&param);
    
@@ -289,8 +293,10 @@ int main(int argc, char** argv) {//{{{
     if(option.exist("rnndebug")){
         p_rnnlm->setDebugMode(1);
         param.rnndebug = true;
-    }else
+    }else{
         p_rnnlm->setDebugMode(0);
+    }
+
     if(param.lpenalty)
         p_rnnlm->setLweight(param.lweight);
     srand(1);
@@ -328,80 +334,20 @@ int main(int argc, char** argv) {//{{{
 //        tagger.write_bin_model_file(option.get<std::string>("model"));
 //      //}}}
 //    } else 
-    if (option.exist("ptest")) {//部分アノテーション付き形態素解析{{{
-        tagger.read_bin_model_file(model_path);
-        std::cerr << "done" << std::endl;
-        param.delimiter = "\t";
-            
-        std::string buffer;
-        while (getline(cin, buffer)) {
-            tagger.partial_annotation_analyze(buffer);
-            tagger.print_best_beam_juman();
-            tagger.sentence_clear();
-        }
-      //}}}
-    } else if (MODE_TRAIN) {//学習モード{{{
-//        std::cerr << "done" << std::endl;
-//        if(option.exist("lda")){
-//            std::cerr << "LDA training is obsoleted" << std::endl;
-//            return 0;
-//            Morph::Tagger tagger_normal(&normal_param);
-//            tagger_normal.read_model_file(option.get<std::string>("lda"));
-//                
-//            tagger.train_lda(option.get<std::string>("train"), tagger_normal);
-//            tagger.write_bin_model_file(option.get<std::string>("model"));
-//        }else if (option.exist("part")) { //部分的アノテーションからの学習
-//            tagger.read_bin_model_file(option.get<std::string>("model"));
-//            // diagの読み込み
-//            //tagger.ptrain(option.get<std::string>("train"));
-//            tagger.write_bin_model_file(option.get<std::string>("model")+"+"); //ココのファイル名はオプションで与えられるようにする
-//        }else{ //通常の学習
-            tagger.train(option.get<std::string>("train"));
-            tagger.write_bin_model_file(model_path);
-//        }
-      //}}}
-//    } else if(option.exist("lda")){//LDAを使う形態素解析{{{
-//        std::cerr << "LDA mode is depreciated" << std::endl;
-//        return 0;
-//        Morph::Tagger tagger_normal(&normal_param);
-//        tagger_normal.read_model_file(option.get<std::string>("lda"));
-//        tagger.read_model_file(option.get<std::string>("model"));
-//        std::cerr << "done" << std::endl;
+//    if (option.exist("ptest")) {//部分アノテーション付き形態素解析{{{
+//        tagger.read_bin_model_file(model_path);
 //            
-//        std::ifstream is(argv[1]); // input stream
-//            
-//        // sentence loop
 //        std::string buffer;
-//        while (getline(is ? is : cin, buffer)) {
-//            if (buffer.length() == 0 || buffer.at(0) == '#') { // empty line or comment line
-//                cout << buffer << endl;
-//                continue;
-//            }
-//            Morph::Sentence* normal_sent = tagger_normal.new_sentence_analyze(buffer);
-//            TopicVector topic = normal_sent->get_topic();
-//
-//            //std::cerr << "Topic:";
-//            //for(double d: topic){
-//            //    std::cerr << d << ",";
-//            //}
-//            //std::cerr << endl;
-//
-//            Morph::Sentence* lda_sent = tagger.new_sentence_analyze_lda(buffer, topic);
-//            if (option.exist("lattice")){
-//                if (option.exist("oldstyle"))
-//                    tagger.print_old_lattice();
-//                else
-//                    tagger.print_lattice();
-//            }else{
-//                if(option.exist("nbest")){
-//                    tagger.print_N_best_path();
-//                }else{
-//                    tagger.print_best_path();
-//                }
-//            }
-//            delete(normal_sent);
-//            delete(lda_sent);
+//        while (getline(cin, buffer)) {
+//            tagger.partial_annotation_analyze(buffer);
+//            tagger.print_best_beam_juman();
+//            tagger.sentence_clear();
 //        }
+//      //}}}
+//    } else 
+    if (MODE_TRAIN) {//学習モード{{{
+        tagger.train(option.get<std::string>("train"));
+        tagger.write_bin_model_file(model_path);
     //}}}
     } else {// 通常の形態素解析{{{
         tagger.read_bin_model_file(model_path);
