@@ -509,6 +509,7 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(  //{{{
             Node *tmp_node = dic_node;
             while (tmp_node->bnext) tmp_node = tmp_node->bnext;
             tmp_node->bnext = r_onomatope_node;
+            // TODO ここで辞書引きの結果, 自動認識と同じオノマトペが含まれていれば，自動認識したオノマトペは追加しない．
         } else {
             dic_node = r_onomatope_node;
         }

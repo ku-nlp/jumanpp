@@ -6,7 +6,7 @@ require 'rubygems'
 require 'optparse'
 
 OPTS = {}
-OPTS[:poschange]=true
+OPTS[:poschange]=false
 opt= OptionParser.new
 
 opt.on('-t'){|v| OPTS[:test]=v}
