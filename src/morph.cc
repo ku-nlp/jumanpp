@@ -408,28 +408,36 @@ int main(int argc, char** argv) {//{{{
                 continue;
             }
                 
-            tagger.new_sentence_analyze(buffer);
+            if(option.exist("ptest")){
+                tagger.partial_annotation_analyze(buffer);
+            }else{
+                tagger.new_sentence_analyze(buffer);
+            }
+
             if (option.exist("lattice")){
-                if (option.exist("oldstyle"))
+#if USE_DEV_OPTION
+                if (option.exist("oldstyle")){
                     tagger.print_old_lattice();
-                else{
+                }else{
+#endif
                     // 通常のNbestラティス
                     tagger.print_lattice_rbeam(param.L);
-                }
-            }else{
-                if(option.exist("Nmorph")){
-                    // N-best の Moprh形式出力
-                    tagger.print_beam();
-                }else if(option.exist("morph")){
 #if USE_DEV_OPTION
-                    if(option.exist("printrep"))
-                        tagger.print_best_beam_rep();
-                    else
-#endif
-                        tagger.print_best_beam();//Morph出力
-                }else{
-                    tagger.print_best_beam_juman();
                 }
+            }else if(option.exist("Nmorph")){
+                // N-best の Moprh形式出力
+                tagger.print_beam();
+#endif
+            }else if(option.exist("morph")){
+#if USE_DEV_OPTION
+                if(option.exist("printrep")){
+                    tagger.print_best_beam_rep()
+                else
+#endif
+                    tagger.print_best_beam(); //Morph出力
+            }else{
+                // デフォルトのJUMAN形式の出力
+                tagger.print_best_beam_juman();
             }
             tagger.sentence_clear();
         }
