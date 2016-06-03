@@ -139,8 +139,6 @@ void option_proc(cmdline::parser &option, std::string model_path, int argc, char
 // unit_test 時はmainを除く
 #ifndef KKN_UNIT_TEST
 
-//終了時にdartsのclearでbus errorが出てる
-
 int main(int argc, char** argv) {//{{{
     cmdline::parser option;
     std::string data_path = read_kknrc();
@@ -246,7 +244,7 @@ int main(int argc, char** argv) {//{{{
     param.use_suu_rule = true;
     param.no_posmatch = true;
 
-    // LDA用、廃止予定
+    // LDA用、廃止
     Morph::Parameter normal_param = param;
     normal_param.set_nbest(true); // nbest を利用するよう設定
     normal_param.set_N(10); // 10-best に設定
@@ -414,7 +412,7 @@ int main(int argc, char** argv) {//{{{
         // sentence loop
         std::string buffer;
         while (getline(is ? is : cin, buffer)) {
-            if (buffer.length() < 1 ) { // empty line or comment line
+            if (buffer.length() < 1 ) { // empty line 
                 std::cout << buffer << std::endl;
                 continue;
             }else if(buffer.at(0) == '#'){
@@ -425,18 +423,18 @@ int main(int argc, char** argv) {//{{{
 
                 // 動的コマンドの処理
                 std::size_t pos;
-                if( (pos = buffer.find("##KKN\t")) != std::string::npos ){
+                if( (pos = buffer.find("##JUMAN++\t")) != std::string::npos ){
                     std::size_t arg_pos;
                     // input:
-                    // ##KKN<tab>command arg
-                    // ##KKN<tab>setL 5
+                    // ##JUMAN++<tab>command arg
+                    // ##JUMAN++<tab>setL 5
                         
                     std::string command = "set-lattice";
                     if( (arg_pos = buffer.find(command)) != std::string::npos){
                         arg_pos = buffer.find_first_of(" \t",arg_pos+command.length());
                         long val = std::stol(buffer.substr(arg_pos));
                         param.set_L(val);
-                        std::cout << "##KKN\tset-lattice " << val << std::endl;
+                        std::cout << "##JUMAN++\t" << command << " " << val << std::endl;
                     }
 
                     command = "set-beam";
@@ -444,19 +442,19 @@ int main(int argc, char** argv) {//{{{
                         arg_pos = buffer.find_first_of(" \t",arg_pos+command.length());
                         long val = std::stol(buffer.substr(arg_pos));
                         param.set_N(val);
-                        std::cout << "##KKN\tset-beam " << val << std::endl;
+                        std::cout << "##JUMAN++\t" << command << " " << val << std::endl;
                     }
 
-                    command = "set-ambiguous";
+                    command = "unset-force-single-path";
                     if( (arg_pos = buffer.find(command)) != std::string::npos){
                         param.set_output_ambigous_word(true);
-                        std::cout << "##KKN\tset-ambiguous " << std::endl;
+                        std::cout << "##JUMAN++\t" << command << " " << std::endl;
                     }
                     
-                    command = "unset-ambiguous";
+                    command = "set-force-single-path";
                     if( (arg_pos = buffer.find(command)) != std::string::npos){
                         param.set_output_ambigous_word(false);
-                        std::cout << "##KKN\tunset-ambiguous " << std::endl;
+                        std::cout << "##JUMAN++\t" << command << " " << std::endl;
                     }
                 }else{// S-ID の処理
                     std::cout << buffer << " " << VERSION << "(" << GITVER <<")" << std::endl;
