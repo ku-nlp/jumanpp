@@ -355,7 +355,7 @@ Node *Dic::make_unk_pseudo_node(const char *start_str, int byte_len, unsigned lo
     new_node->char_family = check_char_family(new_node->char_type);
 
     // 整理:
-    // 品詞が指定されていないか，名詞で，文字が数詞なら＝＞数詞
+    // 品詞が指定されていないか，名詞で，文字種が数字なら＝＞数詞
     // 品詞が指定なしの場合, 表層(string)を未定義語に
     // 指定がある場合, 表層はそのまま
 
@@ -580,8 +580,7 @@ Node *Dic::make_unk_pseudo_node_list_some_pos(const char *start_str, int byte_le
 // 連続する同じ文字種の文字列を未定義語化
 // make_unk_pseudo_node_list_from_previous_position 専用
 // min_char_num から max_char_num までの範囲におさまるもののみ
-// make unknown word nodes of some lengths
-// TODO make_unk_pseudo_node_list_some_pos を長さの範囲だけ呼び出してマージするようにする
+// make_unk_pseudo_node_list_some_pos を長さの範囲だけ呼び出してマージするようにする
 Node *Dic::make_pseudo_node_list_in_range(const char *start_str, unsigned int min_char_num, unsigned int max_char_num, unsigned long specified_posid) {//{{{
     Node *result_node = NULL;
     unsigned int length = strlen(start_str), char_num = 1;
@@ -639,7 +638,8 @@ Node *Dic::make_unk_pseudo_node_gold(const char *start_str, int byte_len, std::s
     new_node->end_char_family = check_char_family((unsigned char *)end_char);
     new_node->end_string = new std::string(end_char, utf8_bytes((unsigned char *)end_char));
     new_node->stat = MORPH_UNK_NODE;
-    if (specified_posid == MORPH_DUMMY_POS) {//ここは来ないはず
+    if (specified_posid == MORPH_DUMMY_POS) {
+        // ここに来ることは無い．
         cerr << ";; error there are unknown words on gold data" << endl;
     } else {
         new_node->posid  = specified_posid;
@@ -649,8 +649,6 @@ Node *Dic::make_unk_pseudo_node_gold(const char *start_str, int byte_len, std::s
         new_node->baseid = baseid2base.get_id(UNK_POS); //文字種に置き換える
         new_node->readingid = readingid2reading.get_id(UNK_POS);
 
-
-        // 却って悪くなるかも？05/25
         if (new_node->char_type == TYPE_KANJI){
             delete new_node->string;
             new_node->string = new std::string("未定義漢語");

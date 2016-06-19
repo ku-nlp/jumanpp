@@ -786,8 +786,7 @@ return 0;
 
 // 以下は保留
 
-//// 素性関数 速度面に問題があるためまとめて保留中, 可変長テンプレートで素性ごとに定義しておけばなんとか・・// /*{{{*/
-//// TODO:あとで素性関数のクラスにまとめる
+//// 素性関数 速度面に問題があるためまとめて保留中, 可変長テンプレートで素性ごとに定義すれば早くなる？// /*{{{*/
 //std::hash<std::string> hash_func; 
 //inline unsigned long get_feature_id(const std::string& s){ return hash_func(s);};
 //

@@ -339,6 +339,7 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, co
         }
     }else{
         // TODO: 部分アノテーションでは，それ以外の場合にも必要
+
     }
 
     // 訓練データで，長さが分かっている場合か，未知語として選択されていない範囲なら
@@ -377,6 +378,7 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(CharLattice &cl, co
         tmp_node->bnext = nullptr;
         result_node = dic_node;
     } else {
+        // こちらは少なくとも必要．ラティス内の同一開始地点の他のノードと比較した素性を追加
         Node *tmp_result_node = result_node;
         while (tmp_result_node) {
             tmp_result_node->longer = true;
