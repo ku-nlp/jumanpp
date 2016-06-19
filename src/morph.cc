@@ -105,7 +105,7 @@ void option_proc(cmdline::parser &option, std::string model_path, int argc, char
     // デバッグオプション
     option.add("debug", '\0', "debug mode");
     option.add("rnndebug", '\0', "show rnnlm debug message");
-    option.add("ptest", 0, "receive partially annotated text");
+    option.add("partial", 0, "receive partially annotated text");
     option.add("static", 0, "static loading for RNNLM. (It may be faster than default when you process large texts)"); 
    
 #ifdef USE_DEV_OPTION
@@ -334,7 +334,7 @@ int main(int argc, char** argv) {//{{{
 //        tagger.write_bin_model_file(option.get<std::string>("model"));
 //      //}}}
 //    } else 
-//    if (option.exist("ptest")) {//部分アノテーション付き形態素解析{{{
+//    if (option.exist("partial")) {//部分アノテーション付き形態素解析{{{
 //        tagger.read_bin_model_file(model_path);
 //            
 //        std::string buffer;
@@ -408,7 +408,7 @@ int main(int argc, char** argv) {//{{{
                 continue;
             }
                 
-            if(option.exist("ptest")){
+            if(option.exist("partial")){
                 tagger.partial_annotation_analyze(buffer);
             }else{
                 tagger.new_sentence_analyze(buffer);
