@@ -113,7 +113,7 @@ void option_proc(cmdline::parser &option, std::string model_path, int argc, char
     option.add<std::string>("gold-lattice", 0, "output gold lattice", false, "data/train.txt");
     option.add<unsigned int>("Nmorph", 'N', "print N-best Moprh", false, 5);
     option.add("oldstyle", 0, "print JUMAN style lattice");
-    option.add("typedloss", 0, "use loss function considering form type ");
+    //option.add("typedloss", 0, "use loss function considering form type ");
     option.add("nornnlm", 0, "do not use RNNLM"); 
     option.add("dynamic", 0, "Obsoleted. (It remains only for backward compatibility.)"); 
     option.add("rnnasfeature", 0, "use rnnlm score as feature (dev)");
@@ -194,12 +194,8 @@ int main(int argc, char** argv) {//{{{
         param.set_N(option.get<unsigned int>("beam"));
     }
 
-#ifdef USE_DEV_OPTION
     // 学習時のロス関数で 活用型を見る
-    if(option.exist("typedloss")){
-        param.usetypedloss = true;
-    }
-#endif
+    param.usetypedloss = true;
 
     if(option.exist("lattice")){ 
         // beam が設定されていたら，lattice のN は表示のみに使う
