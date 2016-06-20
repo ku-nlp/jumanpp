@@ -61,6 +61,8 @@ class Tagger {
     bool train_lda(const std::string &gsd_file, Tagger& normal_model);
     bool read_gold_data(const std::string &gsd_file);
     bool read_gold_data(const char *gsd_file);
+
+    bool output_gold_result(const std::string &gsd_file); 
     bool read_partial_gold_data(const char *gsd_file); 
     bool lookup_gold_data(Sentence *sentence, std::string &word_pos_pair);
     bool add_one_sentence_for_train(Sentence *in_sentence);

@@ -17,6 +17,7 @@ class Parameter {
     bool use_so;
     bool trigram=true;
     bool rnnlm=false;
+    bool print_gold=false;
     bool nce=false;
     bool userep=false;
     bool usebase=false;

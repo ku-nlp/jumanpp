@@ -110,6 +110,7 @@ void option_proc(cmdline::parser &option, std::string model_path, int argc, char
    
 #ifdef USE_DEV_OPTION
     // 開発用オプション
+    option.add<std::string>("gold-lattice", 0, "output gold lattice", false, "data/train.txt");
     option.add<unsigned int>("Nmorph", 'N', "print N-best Moprh", false, 5);
     option.add("oldstyle", 0, "print JUMAN style lattice");
     option.add("typedloss", 0, "use loss function considering form type ");
@@ -334,21 +335,16 @@ int main(int argc, char** argv) {//{{{
 //        tagger.write_bin_model_file(option.get<std::string>("model"));
 //      //}}}
 //    } else 
-//    if (option.exist("partial")) {//部分アノテーション付き形態素解析{{{
-//        tagger.read_bin_model_file(model_path);
-//            
-//        std::string buffer;
-//        while (getline(cin, buffer)) {
-//            tagger.partial_annotation_analyze(buffer);
-//            tagger.print_best_beam_juman();
-//            tagger.sentence_clear();
-//        }
-//      //}}}
-//    } else 
     if (MODE_TRAIN) {//学習モード{{{
         tagger.train(option.get<std::string>("train"));
         tagger.write_bin_model_file(model_path);
     //}}}
+    } else if(option.exist("gold-lattice")){
+        // TODO: モデルの読み込み
+        // TODO: 形態素IDが変
+        tagger.read_bin_model_file(model_path);
+        param.print_gold = true;
+        tagger.output_gold_result(option.get<std::string>("gold-lattice"));
     } else {// 通常の形態素解析{{{
         tagger.read_bin_model_file(model_path);
         if(param.debug) std::cerr << "done" << std::endl;

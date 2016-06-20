@@ -151,6 +151,8 @@ class Sentence {//{{{
             cerr << ";; gold parse err"<< endl;
     }//}}}
 
+    void print_gold_beam();
+
     std::vector<std::string> get_gold_topic_features(TopicVector *tov);
 
     bool lookup_and_analyze();
@@ -159,6 +161,12 @@ class Sentence {//{{{
     bool lookup_partial();
     bool analyze();
     bool add_one_word(std::string &word);
+    void set_comment(std::string com_str){/*{{{*/
+        comment = com_str;
+    }/*}}}*/
+    std::string &get_comment(){/*{{{*/
+        return comment;
+    }/*}}}*/
     std::string &get_sentence() {
         return sentence;
     }

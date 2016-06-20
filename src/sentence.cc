@@ -1186,11 +1186,15 @@ void Sentence::generate_unified_lattice_line(Node* node, std::stringstream &ss, 
         ss << (use_sep ? sep : "")
            << "ランク:"; 
         std::string r_sep="";
-        for (auto r_val : node->rank) {
-            ss << r_sep << r_val;
-            r_sep = ";";
+        if(param->print_gold){
+            ss << "Gold";
+        }else{
+            for (auto r_val : node->rank) {
+                ss << r_sep << r_val;
+                r_sep = ";";
+            }
+            use_sep = true;
         }
-        use_sep = true;
 
         ss << endl;
     } else {
@@ -1201,10 +1205,14 @@ void Sentence::generate_unified_lattice_line(Node* node, std::stringstream &ss, 
 
         // ランクの出力
         ss << sep << "ランク:"; 
-        std::string r_sep="";
-        for (auto r_val : node->rank) {
-            ss << r_sep << r_val;
-            r_sep = ";";
+        if(param->print_gold){
+            ss << "Gold";
+        }else{
+            std::string r_sep="";
+            for (auto r_val : node->rank) {
+                ss << r_sep << r_val;
+                r_sep = ";";
+            }
         }
         ss << endl;
         //ss << "NIL" << endl;
@@ -1685,6 +1693,70 @@ void Sentence::print_best_beam() {  //{{{
 
         return;
     }
+}  //}}}
+
+void Sentence::print_gold_beam() {  //{{{
+    unsigned int char_num = 0;
+    std::stringstream ss;
+    std::vector<std::vector<int>> num2id(length + 1);  //多めに保持する
+    // comment の表示
+    ss << "# " << comment << std::endl;
+    // スコアの表示
+    ss << "# MA-SCORE\t";
+    auto &token = (*begin_node_list)[length]->bq.beam[0];
+    ss << "rank Gold:" << (token.score + token.context_score) << endl;
+    
+    std::string sep = " ";
+
+    std::vector<Node *> result_morphs = token.node_history;
+        
+    unsigned int byte_pos = 0;
+    int mrph_id = 1;
+    for (auto it = result_morphs.begin(); it != result_morphs.end(); it++) {
+        if ((*it)->stat != MORPH_BOS_NODE &&
+            (*it)->stat != MORPH_EOS_NODE) {
+            (*it)->used_in_nbest = true;
+            
+            // 曖昧性表示
+            if (output_ambiguous_word) {
+                auto tmp = (*begin_node_list)[byte_pos];
+                while (tmp) { //同じ長さ(同じ表層)で同じ品詞のものをすべて出力する
+                    if (tmp->length == (*it)->length &&
+                        tmp->posid == (*it)->posid &&
+                        tmp->sposid == (*it)->sposid &&
+                        tmp->baseid == (*it)->baseid &&
+                        tmp->formid == (*it)->formid &&
+                        tmp->formtypeid == (*it)->formtypeid &&
+                        (tmp->stat & MORPH_DEVOICE_NODE) == ((*it)->stat & MORPH_DEVOICE_NODE) // 濁音化の有無も一致
+                        ) {
+                        if(!tmp->used_in_nbest){ // もっとも良かった時のスコアを用いる
+                            tmp->used_in_nbest = true;
+                            // 表示に必要なため，スコアをコピーする
+                            tmp->cost = (*it)->cost;
+                            tmp->wcost = (*it)->wcost;
+                            tmp->tcost = (*it)->tcost;
+                            tmp->twcost = (*it)->twcost;
+                            tmp->rscore = (*it)->rscore;
+                            tmp->wscore = (*it)->wscore;
+                        }
+                        // tmp->rank.push_back(i);
+                        tmp->id = mrph_id++;
+                        num2id[char_num + (tmp)->char_num].push_back(tmp->id); //Gold の場合 id が必ず1になっている
+                        generate_unified_lattice_line(tmp, ss, num2id, char_num);
+                    }
+                    tmp = tmp->bnext;
+                }
+            }else{
+                (*it)->id=mrph_id++;
+                num2id[char_num + (*it)->char_num].push_back((*it)->id); //Gold の場合 id が必ず1になっている
+                generate_unified_lattice_line((*it), ss, num2id, char_num);
+            }
+            char_num+=(*it)->char_num;
+            byte_pos += (*it)->length;
+        }
+    }
+        
+    std::cout << ss.str() << "EOS" << std::endl;
 }  //}}}
 
 void Sentence::print_best_beam_rep() {  //{{{
