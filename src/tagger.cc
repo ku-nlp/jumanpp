@@ -265,7 +265,7 @@ bool Tagger::read_partial_gold_data(const char *gsd_file) {//{{{
 
 // clear gold standard data
 void Tagger::clear_gold_data() {//{{{
-    std::cerr << "clear_gold_data" << std::endl;
+    // std::cerr << "clear_gold_data" << std::endl;
     for (std::vector<Sentence *>::iterator it = sentences_for_train.begin(); it != sentences_for_train.end(); it++) {
         if(*it){
             delete *it;

@@ -33,7 +33,8 @@ class Sentence {//{{{
         
     size_t word_num;
     unsigned int length; // length of this sentence
-    std::string sentence; //Gold用だが名前が悪くてどこで初期化されているか追えない
+    std::string sentence; //Gold用だが名前が悪い
+    std::string comment; // 主にGold用
     std::string partically_annotated_sentence; // 部分アノテーション付き入力文
     std::vector<unsigned int> maxlen_for_charnum;
     const char *sentence_c_str;
@@ -80,15 +81,15 @@ class Sentence {//{{{
     // beam の場合はhistory をたどるように変更
     void set_gold_nodes_beam(){//{{{
         auto& eos_beam = (*begin_node_list)[length]->bq.beam;
-
+            
         if(eos_beam.size() == 0){
             cerr << ";; gold parse err"<< endl;
             return;
         }
-
+            
         auto& eos_tok = eos_beam.back(); 
         std::vector<Node *> history = eos_tok.node_history;
-
+            
         bool find_bos_node_gold = false;
 		for (auto node_gold = history.rbegin(); node_gold != history.rend(); node_gold++) {
             if ((*node_gold)->stat == MORPH_BOS_NODE)
@@ -105,13 +106,13 @@ class Sentence {//{{{
             new_node.formtypeid = (*node_gold)->formtypeid;
             new_node.imisid = (*node_gold)->imisid;
             new_node.semantic_feature = (*node_gold)->semantic_feature;
-
+                
             new_node.base = (*node_gold)->base;
             new_node.representation = (*node_gold)->representation;
             new_node.length = (*node_gold)->length;
             new_node.char_num = (*node_gold)->char_num;
             gold_morphs.push_back(new_node);
-
+                
             // debug 用出力
             //cerr << *new_node.base << "_"<< *new_node.pos << ":" << *new_node.spos << " ";
         }

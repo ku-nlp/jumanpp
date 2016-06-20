@@ -1012,9 +1012,6 @@ void Sentence::print_juman_lattice() {  //{{{
 
 // unified lattice の行出力を生成
 void Sentence::generate_unified_lattice_line(Node* node, std::stringstream &ss, std::vector<std::vector<int>>& num2id, unsigned int char_num){/*{{{*/
-    // 先にやっておく処理
-    //num2id[char_num + word_length].push_back(node->id);
-
     // lattice で表示する行の生成
     size_t word_length = node->char_num;
     U8string ustr(*node->original_surface);
@@ -2199,7 +2196,7 @@ bool Sentence::lookup_gold_data(std::string &word_pos_pair) {  //{{{
     return true;
 }  //}}}
 
-// gold とどの程度離れた解析をしたか、0-1の範囲で返す
+// gold とどの程度離れた解析をしたか、0-1の範囲で返す．loss 関数.
 double Sentence::eval(Sentence &gold) {  //{{{
     if (length != gold.length) {
         cerr << ";; cannot calc loss " << sentence << endl;
@@ -2290,6 +2287,7 @@ double Sentence::eval(Sentence &gold) {  //{{{
         return 1.0 - (score / morph_count);
 };  //}}}
 
+// 廃止
 std::vector<std::string> Sentence::get_gold_topic_features(
     TopicVector *tov) {  //{{{
     if (tov) {
