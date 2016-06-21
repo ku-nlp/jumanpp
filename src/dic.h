@@ -59,6 +59,7 @@ class Dic {
     
     // 暫定。あとでオプションとして統合する
     Node *make_unk_pseudo_node_gold(const char *start_str, int byte_len, std::string &specified_pos);
+    Node *make_pseudo_node_gold(const char *start_str, int byte_len, const std::vector<std::string> &spec);
 
     Node *make_unk_pseudo_node_list_some_pos(const char *start_str, int byte_len, unsigned long specified_posid, std::vector<unsigned long> *specified_unk_pos);
     Node *make_unk_pseudo_node_list_some_pos_by_dic_check(const char *start_str, int byte_len, unsigned long specified_posid, std::vector<unsigned long> *specified_unk_pos, Node* r_node);

@@ -2080,27 +2080,17 @@ bool Sentence::lookup_gold_data(std::string &word_pos_pair) {  //{{{
     Node::reset_id_count();
     std::vector<std::string> spec{
         line[1], line[2], line[3],
-        line[4], line[5], line[6]};  // reading,base,pos, spos, formtype, form
+        line[4], line[5], line[6]};  
+        // reading,base,pos, spos, formtype, form
 
     // TODO: 外国人人名 が苗字と名前がくっついていても引けるようにしたい．
 
     CharLattice cl;
     cl.parse(line[0]);
-
+        
     // そのまま辞書を引く
     Node *r_node = lookup_and_make_special_pseudo_nodes_lattice(
         cl, line[0].c_str(), strlen(line[0].c_str()), spec);
-
-//    if (!r_node &&
-//        (line[6] == "命令形エ形" ||
-//         line[6] == "命令形")) {  // JUMANの活用になく，３文コーパスでのみ出てくる活用の命令形エ形を連用形だと解釈する.
-//        std::vector<std::string> mod_spec{line[1],
-//                                          "", line[3],
-//                                          line[4], line[5],
-//                                          "基本連用形"};
-//        r_node = lookup_and_make_special_pseudo_nodes_lattice(
-//            cl, line[0].c_str(), strlen(line[0].c_str()), mod_spec);
-//    }
 
     if (!r_node && line[3] == "名詞") {  // 動詞の名詞化を復元
         // コーパスでは名詞化した動詞は名詞として扱われる. (kkn
@@ -2243,11 +2233,18 @@ bool Sentence::lookup_gold_data(std::string &word_pos_pair) {  //{{{
 
     if (!r_node) {  // 未定義語として処理
         // 細分類以下まで推定するなら，以下も書き換える
-        r_node = dic->make_unk_pseudo_node_gold(
-            line[0].c_str(), strlen(line[0].c_str()), line[3]);
-        cerr << ";; lookup failed in gold data:" << line[0] << ":" << line[1]
-             << ":" << line[2] << ":" << line[3] << ":" << line[4] << ":"
-             << line[5] << ":" << line[6] << "\r";
+        if(param->print_gold){
+            r_node = dic->make_pseudo_node_gold(
+                line[0].c_str(), strlen(line[0].c_str()), spec);
+        }else{
+            r_node = dic->make_unk_pseudo_node_gold(
+                line[0].c_str(), strlen(line[0].c_str()), line[3]);
+        }
+
+        if(param->debug)
+            cerr << ";; lookup failed in gold data:" << line[0] << ":" << line[1]
+                 << ":" << line[2] << ":" << line[3] << ":" << line[4] << ":"
+                 << line[5] << ":" << line[6] << "\r";
     }
 
     // auto tmp_node = r_node;

@@ -691,6 +691,52 @@ Node *Dic::make_unk_pseudo_node_gold(const char *start_str, int byte_len, std::s
 
     return new_node;
 }//}}}
+
+Node *Dic::make_pseudo_node_gold(const char *start_str, int byte_len, const std::vector<std::string> &spec) {//{{{
+    unsigned long specified_posid = posid2pos.get_id(spec[2]);
+
+    Node *new_node = new Node;
+    new_node->surface = start_str;
+    new_node->length = byte_len;
+    new_node->char_type = check_utf8_char_type((unsigned char *)new_node->surface);
+    new_node->char_family = check_char_family(new_node->char_type);
+    new_node->string = new std::string(new_node->surface, new_node->length);
+    new_node->original_surface = new std::string(new_node->surface, new_node->length);
+    new_node->string_for_print = new std::string(new_node->surface, new_node->length);
+    new_node->char_num = utf8_chars((unsigned char *)(new_node->surface), new_node->length);
+    char *end_char = (char *)get_specified_char_pointer((unsigned char *)start_str, new_node->length, new_node->char_num - 1);
+    new_node->end_char_family = check_char_family((unsigned char *)end_char);
+    new_node->end_string = new std::string(end_char, utf8_bytes((unsigned char *)end_char));
+    new_node->stat = MORPH_NORMAL_NODE; 
+    if (specified_posid == MORPH_DUMMY_POS) {
+        // ここに来ることは無い．
+        cerr << ";; error there are unknown words on gold data" << endl;
+    } else {
+        new_node->readingid = readingid2reading.get_id(spec[0]);
+        new_node->baseid = baseid2base.get_id(spec[1]); 
+        new_node->posid  = specified_posid;
+        new_node->sposid = sposid2spos.get_id(spec[3]);
+        new_node->formid = formid2form.get_id(spec[4]);
+        new_node->formtypeid = formtypeid2formtype.get_id(spec[5]);
+        new_node->repid = repid2rep.get_id("*");
+        new_node->imisid = imisid2imis.get_id("NIL");
+    }
+    new_node->reading = new std::string(spec[0]);
+    new_node->base = new std::string(spec[1]);
+    new_node->pos = new std::string(spec[2]);
+    new_node->spos = new std::string(spec[3]);
+    new_node->form = new std::string(spec[4]);
+    new_node->form_type = new std::string(spec[5]);
+    
+    new_node->representation = repid2rep.get_pos(new_node->repid);
+    new_node->semantic_feature = new std::string("擬似ノード");
+
+    new_node->feature = new FeatureSet(ftmpl);
+    new_node->feature->extract_unigram_feature(new_node);
+    new_node->wcost = new_node->feature->calc_inner_product_with_weight();
+
+    return new_node;
+}//}}}
 // mkdarts => Dic
 void inline Dic::read_node_info(const Token &token, Node **node) {//{{{
     (*node)->lcAttr = token.lcAttr;
