@@ -46,8 +46,8 @@ while line=gets
     # MA-SCORE
     # skip
   elsif(line =~ /^-/) #形態素行
-    if(line =~ /rank:1/)
-      # ランク:1 のもののみ取り出し
+    if(line =~ /(rank|ランク):(1|Gold)/)
+      # ランク:1 または Gold のみ取り出し
       cols = line.split(/\t/)
       # 同スパンで二つ目以降の形態素は＠表示
       span = cols[3..4]
