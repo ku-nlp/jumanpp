@@ -333,7 +333,7 @@ int main(int argc, char** argv) {//{{{
 //    } else 
     if (MODE_TRAIN) {//学習モード{{{
         tagger.train(option.get<std::string>("train"));
-        tagger.write_bin_model_file(model_path);
+        tagger.write_bin_model_file(option.get<std::string>("outputmodel"));
     //}}}
     } else if(option.exist("gold-lattice")){
         // TODO: モデルの読み込み
