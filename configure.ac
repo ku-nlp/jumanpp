@@ -22,8 +22,9 @@ AX_BOOST_BASE([1.57])
 # AX_BOOST_SERIALIZATION() # It doesn't work properly..
 
 # Checks for libraries.
-AC_MSG_CHECKING([for -lboost_serialization])
-LIBS="$LIBS -lboost_serialization"
+AC_MSG_CHECKING([for -lboost_serialization-mt])
+LIBS_TMP="$LIBS"
+LIBS="$LIBS_TMP -lboost_serialization-mt"
 AC_TRY_LINK([#include <fstream>
              #include <boost/serialization/unordered_map.hpp>
              #include <boost/archive/binary_iarchive.hpp>
@@ -34,6 +35,22 @@ AC_TRY_LINK([#include <fstream>
              boost::archive::binary_oarchive object(out);],
             has_boost_serialization_lib=1,
             has_boost_serialization_lib=0)
+
+if test $has_boost_serialization_lib = 0; then
+AC_MSG_CHECKING([for -lboost_serialization])
+LIBS="$LIBS_TMP -lboost_serialization"
+AC_TRY_LINK([#include <fstream>
+             #include <boost/serialization/unordered_map.hpp>
+             #include <boost/archive/binary_iarchive.hpp>
+             #include <boost/archive/binary_oarchive.hpp>
+             #include <boost/archive/impl/basic_binary_oarchive.ipp>
+             #include <boost/archive/impl/basic_binary_iarchive.ipp>], 
+            [std::ofstream out("test");
+             boost::archive::binary_oarchive object(out);],
+            has_boost_serialization_lib=1,
+            has_boost_serialization_lib=0)
+fi
+
 if test $has_boost_serialization_lib = 0; then
     AC_MSG_RESULT([no])
     AC_MSG_ERROR("ERROR: cannot find -lboost_serialization.")
