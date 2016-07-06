@@ -207,7 +207,7 @@ bool Tagger::read_gold_data(const char *gsd_file) {//{{{
         if(pos != std::string::npos){
             // # 以降をコメントとして読み込む
             comment = buffer.substr(pos+3,std::string::npos);
-            // # 以降をbuffer 
+            // # までをbuffer 
             buffer = buffer.substr(0,pos);
         }else{
             comment = "";
@@ -223,7 +223,7 @@ bool Tagger::read_gold_data(const char *gsd_file) {//{{{
             }
         }
             
-        new_sentence->find_best_beam(); // tri-gram 素性を抽出するために beam の方を呼ぶ;
+        new_sentence->find_best_beam(); 
         new_sentence->set_feature_beam(); // beam のベストの素性を sentence にコピーする;
         new_sentence->set_gold_nodes_beam();
 

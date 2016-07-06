@@ -188,9 +188,12 @@ int main(int argc, char** argv) {//{{{
     param.set_beam(true);
     param.set_N(5); //初期値
 
+#ifdef USE_DEV_OPTION
     if(option.exist("Nmorph")){
         param.set_N(option.get<unsigned int>("Nmorph"));
-    }else if(option.exist("beam")){
+    }
+#endif
+    if(option.exist("beam")){
         param.set_N(option.get<unsigned int>("beam"));
     }
 
