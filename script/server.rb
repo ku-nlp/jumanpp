@@ -45,7 +45,7 @@ while true
         socket.puts responce
       rescue
         # 自動的に再起動 場合はここへ
-        # rnnlm = IO.popen("/home/morita/local64/bin/kkn_juman_1201", "r+") 
+        # rnnlm = IO.popen("/home/morita/local64/bin/jumanpp_juman_1201", "r+") 
         # retry
         socket.close
       end 

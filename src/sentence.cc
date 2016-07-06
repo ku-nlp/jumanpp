@@ -2234,8 +2234,8 @@ bool Sentence::lookup_gold_data(std::string &word_pos_pair) { //{{{
     Node *r_node = lookup_and_make_special_pseudo_nodes_lattice(
         cl, line[0].c_str(), strlen(line[0].c_str()), spec);
 
-    if (!r_node && line[3] == "名詞") { // 動詞の名詞化を復元
-        // コーパスでは名詞化した動詞は名詞として扱われる. (kkn
+    if (!r_node && line[3] == "名詞") {  // 動詞の名詞化を復元
+        // コーパスでは名詞化した動詞は名詞として扱われる. (jumanpp
         // では動詞の連用形扱い)
         // 品詞変更タグがついていない場合の対策
         // 動詞の活用型不明のまま，基本連用形をチェック
