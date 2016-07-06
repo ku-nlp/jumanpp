@@ -195,7 +195,7 @@ bool Tagger::ptrain(const std::string &gsd_file) { //{{{
             // Goldも随時解析しなおす
             Sentence *gold_analysis = partial_annotation_analyze(
                 (*gold)->get_pa_sentence()); //ここでdelimiter
-                                             //が除かれていないものが必要
+            //が除かれていないものが必要
             Sentence *sent_analysis =
                 new_sentence_analyze((*gold)->get_sentence()); // 通常の解析
 
@@ -242,15 +242,21 @@ bool Tagger::read_gold_data(const std::string &gsd_file) { //{{{
 
 // read gold standard data
 bool Tagger::read_gold_data(const char *gsd_file) { //{{{
-    std::ifstream gsd_in(gsd_file, std::ios::in);
-    if (!gsd_in.is_open()) {
-        cerr << ";; failed to open gold data for reading" << endl;
-        return false;
+    std::istream *gsd_in;
+    std::ifstream gsd_in_fs(gsd_file, std::ios::in);
+    if (strlen(gsd_file) >= 1 && gsd_file[0] == '-') {
+        gsd_in = &std::cin;
+    } else {
+        if (!gsd_in_fs.is_open()) {
+            cerr << ";; failed to open gold data for reading" << endl;
+            return false;
+        }
+        gsd_in = &gsd_in_fs;
     }
 
     std::string buffer;
     std::string comment;
-    while (getline(gsd_in, buffer)) {
+    while (getline(*gsd_in, buffer)) {
         std::vector<std::string> word_pos_pairs;
         // comment, id の除去
         size_t pos = buffer.find(" # ");
@@ -289,7 +295,7 @@ bool Tagger::read_gold_data(const char *gsd_file) { //{{{
         sentences_for_train_num++;
     }
 
-    gsd_in.close();
+    gsd_in_fs.close();
     std::cout << std::endl;
     return true;
 } //}}}

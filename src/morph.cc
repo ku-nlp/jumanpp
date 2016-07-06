@@ -131,7 +131,8 @@ void option_proc(cmdline::parser &option, std::string model_path, int argc,
 
 #ifdef USE_DEV_OPTION
     // 開発用オプション
-    option.add<std::string>("gold-lattice", 0, "output gold lattice", false,
+    option.add<std::string>("gold-lattice", 0,
+                            "output gold lattice (- means STDIN)", false,
                             "data/train.txt");
     option.add<unsigned int>("Nmorph", 'N', "print N-best Moprh", false, 5);
     option.add("oldstyle", 0, "print JUMAN style lattice");
