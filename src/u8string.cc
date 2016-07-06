@@ -1,17 +1,18 @@
 
 #include "u8string.h"
 
-std::ostream& operator << (std::ostream& os, Morph::U8string& u) {
-    os << u.byte_str; 
+std::ostream &operator<<(std::ostream &os, Morph::U8string &u) {
+    os << u.byte_str;
     return os;
 };
 
-namespace Morph{
-const std::unordered_set<std::string> U8string::lowercase{//{{{
-    "ぁ", "ぃ", "ぅ", "ぇ", "ぉ", "ゎ", "ヵ",
-    "ァ", "ィ", "ゥ", "ェ", "ォ", "ヮ", "っ", "ッ", "ん", "ン",
-    "ゃ", "ャ", "ゅ", "ュ", "ょ", "ョ"};//}}}
-const std::unordered_set<unsigned int> U8string::brackets{//{{{
+namespace Morph {
+const std::unordered_set<std::string> U8string::lowercase{
+    //{{{
+    "ぁ", "ぃ", "ぅ", "ぇ", "ぉ", "ゎ", "ヵ", "ァ", "ィ", "ゥ", "ェ", "ォ",
+    "ヮ", "っ", "ッ", "ん", "ン", "ゃ", "ャ", "ゅ", "ュ", "ょ", "ョ"}; //}}}
+const std::unordered_set<unsigned int> U8string::brackets{
+    //{{{
     0x0028, 0x0029, // PARENTHESIS
     0x005B, 0x005D, // SQUARE BRACKET
     0x007B, 0x007D, // CURLY BRACKET
@@ -72,18 +73,17 @@ const std::unordered_set<unsigned int> U8string::brackets{//{{{
     0xFF5B, 0xFF5D, // FULLWIDTH CURLY BRACKET
     0xFF5F, 0xFF60, // FULLWIDTH WHITE PARENTHESIS
     0xFF62, 0xFF63, // HALFWIDTH CORNER BRACKET
-};//}}}
+};                  //}}}
 
-
-int U8string::to_unicode(std::vector<unsigned char>& c){//{{{
+int U8string::to_unicode(std::vector<unsigned char> &c) { //{{{
     int unicode = 0;
 
-    if (c[0] > 0x00ef) { /* 4 bytes */
-        return 0; // 無視
+    if (c[0] > 0x00ef) {      /* 4 bytes */
+        return 0;             // 無視
     } else if (c[0] > 0xdf) { /* 3 bytes */
-        unicode =  (c[0] & 0x0f) << 12;
+        unicode = (c[0] & 0x0f) << 12;
         unicode += (c[1] & 0x3f) << 6;
-        unicode +=  c[2] & 0x3f;
+        unicode += c[2] & 0x3f;
         return unicode;
     } else if (c[0] > 0x7f) { /* 2 bytes */
         unicode = (c[0] & 0x1f) << 6;
@@ -92,21 +92,21 @@ int U8string::to_unicode(std::vector<unsigned char>& c){//{{{
     } else { /* 1 byte */
         return c[0];
     }
-};//}}}
+}; //}}}
 
-unsigned long U8string::check_unicode_char_type(int code) {//{{{
+unsigned long U8string::check_unicode_char_type(int code) { //{{{
     /* SPACE */
-    if (code == 0x20 /* space*/|| code == 0x3000 /*全角スペース*/ || 
-            code == 0x00A0 || code == 0x1680 || code == 0x180E ||  /*その他のunicode上のスペース*/
-            (0x2000 <= code && code <= 0x200B )|| code == 0x202F || 
-            code == 0x205F || code == 0xFEFF) {
+    if (code == 0x20 /* space*/ || code == 0x3000 /*全角スペース*/ ||
+        code == 0x00A0 || code == 0x1680 ||
+        code == 0x180E || /*その他のunicode上のスペース*/
+        (0x2000 <= code && code <= 0x200B) || code == 0x202F ||
+        code == 0x205F || code == 0xFEFF) {
         return SPACE;
     }
     /* IDEOGRAPHIC PUNCTUATIONS (、。) */
     else if (code > 0x3000 && code < 0x3003) {
         return IDEOGRAPHIC_PUNC;
-    }
-    else if (0x337B <= code && code <= 0x337E){ /* ㍻㍼㍽㍾ */
+    } else if (0x337B <= code && code <= 0x337E) { /* ㍻㍼㍽㍾ */
         return SYMBOL + ERA;
     }
     /* HIRAGANA */
@@ -114,31 +114,32 @@ unsigned long U8string::check_unicode_char_type(int code) {//{{{
         return HIRAGANA;
     }
     /* KATAKANA and  */
-    else if (code > 0x309f && code < 0x30fb ) {
+    else if (code > 0x309f && code < 0x30fb) {
         return KATAKANA;
-    }else if (code == 0x30fc) { // "ー"(0x30fc)
+    } else if (code == 0x30fc) { // "ー"(0x30fc)
         return KATAKANA + CHOON;
-    }else if ( 0x00A1 <= code && code<= 0x00DF){ //半角カナ(0xA1-0xDF) 
-        return HANKAKU_KANA; 
-    }else if ( code == 0xFF70){ //半角長音(U+FF70
-        return HANKAKU_KANA + CHOON; 
-    }else if (code == 0x30fc) { // "〜"(0x301C)  ⁓ (U+2053)、fullwidth tilde: ～ (U+FF5E)、tilde operator: ∼ (U+223C) 
+    } else if (0x00A1 <= code && code <= 0x00DF) { //半角カナ(0xA1-0xDF)
+        return HANKAKU_KANA;
+    } else if (code == 0xFF70) { //半角長音(U+FF70
+        return HANKAKU_KANA + CHOON;
+    } else if (code == 0x30fc) { // "〜"(0x301C)  ⁓ (U+2053)、fullwidth tilde:
+                                 // ～ (U+FF5E)、tilde operator: ∼ (U+223C)
         return CHOON;
     }
     /* "・"(0x30fb) "· 0x 00B7 */
-    else if (code == 0x00B7 || code == 0x30fb ) {
+    else if (code == 0x00B7 || code == 0x30fb) {
         return MIDDLE_DOT;
     }
     /* "，"(0xff0c), "," (0x002C) */
-    else if (code == 0x002C || code == 0xff0c ) {
+    else if (code == 0x002C || code == 0xff0c) {
         return COMMA;
     }
     /* "/"0x002F, "／"(0xff0f) */
-    else if (code == 0x002F||code == 0xff0f) {
+    else if (code == 0x002F || code == 0xff0f) {
         return SLASH;
     }
     /* ":" 0x003A "："(0xff1a) */
-    else if (code == 0x003A ||code == 0xff1a) {
+    else if (code == 0x003A || code == 0xff1a) {
         return COLON;
     }
     /* PRIOD */
@@ -146,54 +147,52 @@ unsigned long U8string::check_unicode_char_type(int code) {//{{{
         return PERIOD;
     }
     /* FIGURE (0-9, ０-９) */ //①，ⅷ などはどうするか
-    else if ((code > 0x2f && code < 0x3a) || 
-            (code > 0xff0f && code < 0xff1a)) {
+    else if ((code > 0x2f && code < 0x3a) || (code > 0xff0f && code < 0xff1a)) {
         return FIGURE;
     }
     /* KANJI_FIGURE (○一七万三九二五亿六八十千四百零, ％, 点余多) */
     else if (code == 0x25cb || //○(全角丸)
-            code == 0x3007 || //〇
-            code == 0x96f6 || //零
-            code == 0x4e00 || //一
-            code == 0x4e8c || //二
-            code == 0x4e09 || //三
-            code == 0x56db || //四
-            code == 0x4e94 || //五
-            code == 0x516d || //六
-            code == 0x4e03 || //七
-            code == 0x516b || //八
-            code == 0x4e5d || //九
-            false) {
-                return KANJI_FIGURE;
-            }
-    else if(code == 0x5341 || //十
-            code == 0x767e || //百
-            code == 0x5343 || //千
-            code == 0x4e07 || //万
-            code == 0x5104 || //億
-            code == 0x5146 || //兆
-            code == 0x6570 || //数
-            false) {
-                if(code == 0x6570) // 数
-                    return KANJI_FIGURE + FIGURE_EXCEPTION;
-                else
-                    return KANJI_FIGURE + FIGURE_DIGIT;
-            }
+             code == 0x3007 || //〇
+             code == 0x96f6 || //零
+             code == 0x4e00 || //一
+             code == 0x4e8c || //二
+             code == 0x4e09 || //三
+             code == 0x56db || //四
+             code == 0x4e94 || //五
+             code == 0x516d || //六
+             code == 0x4e03 || //七
+             code == 0x516b || //八
+             code == 0x4e5d || //九
+             false) {
+        return KANJI_FIGURE;
+    } else if (code == 0x5341 || //十
+               code == 0x767e || //百
+               code == 0x5343 || //千
+               code == 0x4e07 || //万
+               code == 0x5104 || //億
+               code == 0x5146 || //兆
+               code == 0x6570 || //数
+               false) {
+        if (code == 0x6570) // 数
+            return KANJI_FIGURE + FIGURE_EXCEPTION;
+        else
+            return KANJI_FIGURE + FIGURE_DIGIT;
+    }
     /* ALPHABET (A-Z, a-z, Umlaut etc., Ａ-Ｚ, ａ-ｚ) */
-    else if ((code > 0x40 && code < 0x5b) || 
-            (code > 0x60 && code < 0x7b) || 
-            (code > 0xbf && code < 0x0100) || 
-            (code > 0xff20 && code < 0xff3b) || 
-            (code > 0xff40 && code < 0xff5b)) {
+    else if ((code > 0x40 && code < 0x5b) || (code > 0x60 && code < 0x7b) ||
+             (code > 0xbf && code < 0x0100) ||
+             (code > 0xff20 && code < 0xff3b) ||
+             (code > 0xff40 && code < 0xff5b)) {
         return ALPH;
     }
     /* CJK Unified Ideographs and "々" and "〇"*/
-    else if ((code > 0x4dff && code < 0xa000) || code == 0x3005 || code == 0x3007) {
+    else if ((code > 0x4dff && code < 0xa000) || code == 0x3005 ||
+             code == 0x3007) {
         return KANJI;
-    } else if ( brackets.count(code)==1 ){ // 括弧，引用符
+    } else if (brackets.count(code) == 1) { // 括弧，引用符
         return BRACKET;
     } else {
         return SYMBOL;
     }
-};//}}}
+}; //}}}
 }

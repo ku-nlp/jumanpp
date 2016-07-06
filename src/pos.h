@@ -6,11 +6,12 @@
 namespace Morph {
 
 class Pos {
-    //unsigned long count;
+    // unsigned long count;
     std::unordered_map<std::string, unsigned long> dic;
     std::hash<std::string> str_hash;
     std::unordered_map<unsigned long, std::string> rdic;
-   public:
+
+  public:
     Pos();
 
     unsigned long get_id(const std::string &pos_str);

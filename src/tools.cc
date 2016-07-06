@@ -7,30 +7,26 @@ int utf8_bytes(unsigned char *ucp) {
     unsigned char c = *ucp;
 
     if (c > 0xfb) { /* 6 bytes */
-	return 6;
-    }
-    else if (c > 0xf7) { /* 5 bytes */
-	return 5;
-    }
-    else if (c > 0xef) { /* 4 bytes */
-	return 4;
-    }
-    else if (c > 0xdf) { /* 3 bytes */
-	return 3;
-    }
-    else if (c > 0x7f) { /* 2 bytes */
-	return 2;
-    }
-    else { /* 1 byte */
-	return 1;
+        return 6;
+    } else if (c > 0xf7) { /* 5 bytes */
+        return 5;
+    } else if (c > 0xef) { /* 4 bytes */
+        return 4;
+    } else if (c > 0xdf) { /* 3 bytes */
+        return 3;
+    } else if (c > 0x7f) { /* 2 bytes */
+        return 2;
+    } else { /* 1 byte */
+        return 1;
     }
 }
 
 // utf8 文字列の長さを計る
-size_t utf8_length(const char *ucp){
+size_t utf8_length(const char *ucp) {
     size_t char_length = 0;
     size_t byte_length = strlen(ucp);
-    for (unsigned int pos = 0; pos < byte_length; pos += utf8_bytes((unsigned char *)(ucp + pos))) {
+    for (unsigned int pos = 0; pos < byte_length;
+         pos += utf8_bytes((unsigned char *)(ucp + pos))) {
         char_length += 1;
     }
     return char_length;
@@ -45,8 +41,10 @@ unsigned short utf8_chars(unsigned char *ucp, size_t byte_len) {
     return char_num;
 }
 
-// return the pointer of the specified char (if 1 is specified, return the second char pointer)
-unsigned char *get_specified_char_pointer(unsigned char *ucp, size_t byte_len, unsigned short specified_char_num) {
+// return the pointer of the specified char (if 1 is specified, return the
+// second char pointer)
+unsigned char *get_specified_char_pointer(unsigned char *ucp, size_t byte_len,
+                                          unsigned short specified_char_num) {
     unsigned short char_num = 0;
     size_t last_pos = 0;
     for (size_t pos = 0; pos < byte_len; pos += utf8_bytes(ucp + pos)) {
@@ -62,23 +60,23 @@ unsigned char *get_specified_char_pointer(unsigned char *ucp, size_t byte_len, u
 unsigned int check_unicode_char_type(int code) {
     /* SPACE */
     if (code == 0x20 || code == 0x3000) {
-	return TYPE_SPACE;
+        return TYPE_SPACE;
     }
     /* IDEOGRAPHIC PUNCTUATIONS (、。) */
     else if (code > 0x3000 && code < 0x3003) {
-	return TYPE_IDEOGRAPHIC_PUNC;
+        return TYPE_IDEOGRAPHIC_PUNC;
     }
     /* HIRAGANA */
     else if (code > 0x303f && code < 0x30a0) {
-	return TYPE_HIRAGANA;
+        return TYPE_HIRAGANA;
     }
     /* KATAKANA and "ー"(0x30fc) */
-    else if ( (code > 0x309f && code < 0x30fb) || code == 0x30fc) {
-	return TYPE_KATAKANA;
+    else if ((code > 0x309f && code < 0x30fb) || code == 0x30fc) {
+        return TYPE_KATAKANA;
     }
     /* "・"(0x30fb) */
     else if (code == 0x30fb) {
-	return TYPE_MIDDLE_DOT;
+        return TYPE_MIDDLE_DOT;
     }
     /* "，"(0xff0c) */
     else if (code == 0xff0c) {
@@ -94,12 +92,11 @@ unsigned int check_unicode_char_type(int code) {
     }
     /* PRIOD */
     else if (code == 0xff0e) {
-	return TYPE_PERIOD;
+        return TYPE_PERIOD;
     }
     /* FIGURE (0-9, ０-９) */
-    else if ((code > 0x2f && code < 0x3a) || 
-             (code > 0xff0f && code < 0xff1a)) {
-	return TYPE_FIGURE;
+    else if ((code > 0x2f && code < 0x3a) || (code > 0xff0f && code < 0xff1a)) {
+        return TYPE_FIGURE;
     }
     /* KANJI_FIGURE (○一七万三九二五亿六八十千四百零, ％, 点余多) */
     else if (code == 0x25cb || //○(全角丸)
@@ -122,44 +119,42 @@ unsigned int check_unicode_char_type(int code) {
              code == 0x5146 || //兆
              code == 0x6570 || //数
              code == 0xff0c || //，
-             //code == 0xff05 ||//％
-             // 年月日: code == 0x5e74 || code == 0x6708 || code == 0x65e5 || 
-             //code == 0x4ebf || //??
-             //code == 0x4f59 || //余
-             //code == 0x591a || //多
-             //code == 0x70b9 //点
+             // code == 0xff05 ||//％
+             // 年月日: code == 0x5e74 || code == 0x6708 || code == 0x65e5 ||
+             // code == 0x4ebf || //??
+             // code == 0x4f59 || //余
+             // code == 0x591a || //多
+             // code == 0x70b9 //点
              false) {
-	return TYPE_KANJI_FIGURE;
+        return TYPE_KANJI_FIGURE;
     }
     /* ALPHABET (A-Z, a-z, Umlaut etc., Ａ-Ｚ, ａ-ｚ) */
-    else if ((code > 0x40 && code < 0x5b) || 
-             (code > 0x60 && code < 0x7b) || 
-             (code > 0xbf && code < 0x0100) || 
-             (code > 0xff20 && code < 0xff3b) || 
-	     (code > 0xff40 && code < 0xff5b)) {
-	return TYPE_ALPH;
+    else if ((code > 0x40 && code < 0x5b) || (code > 0x60 && code < 0x7b) ||
+             (code > 0xbf && code < 0x0100) ||
+             (code > 0xff20 && code < 0xff3b) ||
+             (code > 0xff40 && code < 0xff5b)) {
+        return TYPE_ALPH;
     }
     /* CJK Unified Ideographs and "々" and "〇"*/
-    else if ((code > 0x4dff && code < 0xa000) || code == 0x3005 || code == 0x3007) {
-	return TYPE_KANJI;
-    }
-    else {
-	return TYPE_SYMBOL;
+    else if ((code > 0x4dff && code < 0xa000) || code == 0x3005 ||
+             code == 0x3007) {
+        return TYPE_KANJI;
+    } else {
+        return TYPE_SYMBOL;
     }
 }
 
-
-//int check_code(U_CHAR *cp, int pos) {
+// int check_code(U_CHAR *cp, int pos) {
 //    int	code;
-//    
+//
 //    if ( cp[pos] == '\0')			return 0;
 //    else if ( cp[pos] == KUUHAKU )		return KUUHAKU;
-//    
+//
 //#ifdef IO_ENCODING_EUC
 //    else if ( cp[pos] < HANKAKU )		return HANKAKU;
 //
 //    code = cp[pos]*256 + cp[pos+1];
-//    
+//
 //    if ( code == PRIOD ) 			return PRIOD;
 //    else if ( code == CHOON ) 			return CHOON;
 //    else if ( code < KIGOU ) 			return KIGOU;
@@ -174,7 +169,7 @@ unsigned int check_unicode_char_type(int code) {
 //    else if ( cp[pos] < HANKAKU )		return HANKAKU;
 //
 //    code = cp[pos]*256 + cp[pos+1];
-//    
+//
 //    if ( code == 0x8144 ) 			return PRIOD;
 //    else if ( code == 0x815b ) 			return CHOON;
 //    else if ( code < 0x8200 ) 			return KIGOU;
@@ -192,8 +187,8 @@ unsigned int check_unicode_char_type(int code) {
 
 // check the code of a char
 unsigned int check_utf8_char_type(const char *ucp) {
-    //char cp[3]; 
-    //strncpy(cp, ucp,3);
+    // char cp[3];
+    // strncpy(cp, ucp,3);
     return check_utf8_char_type((unsigned char *)ucp);
 }
 
@@ -203,34 +198,28 @@ unsigned int check_utf8_char_type(unsigned char *ucp) {
     unsigned char c = *ucp;
 
     if (c > 0xfb) { /* 6 bytes */
-	code = 0;
-    }
-    else if (c > 0xf7) { /* 5 bytes */
-	code = 0;
-    }
-    else if (c > 0xef) { /* 4 bytes */
-	code = 0;
-    }
-    else if (c > 0xdf) { /* 3 bytes */
-	unicode = (c & 0x0f) << 12;
-	c = *(ucp + 1);
-	unicode += (c & 0x3f) << 6;
-	c = *(ucp + 2);
-	unicode += c & 0x3f;
-	code = check_unicode_char_type(unicode);
-    }
-    else if (c > 0x7f) { /* 2 bytes */
-	unicode = (c & 0x1f) << 6;
-	c = *(ucp + 1);
-	unicode += c & 0x3f;
-	code = check_unicode_char_type(unicode);
-    }
-    else { /* 1 byte */
-	code = check_unicode_char_type(c);
+        code = 0;
+    } else if (c > 0xf7) { /* 5 bytes */
+        code = 0;
+    } else if (c > 0xef) { /* 4 bytes */
+        code = 0;
+    } else if (c > 0xdf) { /* 3 bytes */
+        unicode = (c & 0x0f) << 12;
+        c = *(ucp + 1);
+        unicode += (c & 0x3f) << 6;
+        c = *(ucp + 2);
+        unicode += c & 0x3f;
+        code = check_unicode_char_type(unicode);
+    } else if (c > 0x7f) { /* 2 bytes */
+        unicode = (c & 0x1f) << 6;
+        c = *(ucp + 1);
+        unicode += c & 0x3f;
+        code = check_unicode_char_type(unicode);
+    } else { /* 1 byte */
+        code = check_unicode_char_type(c);
     }
 
     return code;
-
 }
 
 unsigned int check_char_family(unsigned char *ucp) {
@@ -240,26 +229,22 @@ unsigned int check_char_family(unsigned char *ucp) {
 unsigned int check_char_family(unsigned int char_type) {
     if (char_type & TYPE_FAMILY_KANJI) {
         return TYPE_FAMILY_KANJI;
-    }
-    else if (char_type & TYPE_FAMILY_SPACE) {
+    } else if (char_type & TYPE_FAMILY_SPACE) {
         return TYPE_FAMILY_SPACE;
-    }
-    else if (char_type & TYPE_FAMILY_ALPH) {
+    } else if (char_type & TYPE_FAMILY_ALPH) {
         return TYPE_FAMILY_ALPH;
-    }
-    else if (char_type & TYPE_FIGURE) { // figure only
+    } else if (char_type & TYPE_FIGURE) { // figure only
         return TYPE_FIGURE;
-    }
-    else { // char_type & TYPE_FAMILY_SYMBOL
+    } else { // char_type & TYPE_FAMILY_SYMBOL
         return TYPE_FAMILY_SYMBOL;
     }
 }
 
-bool compare_char_type_in_family(unsigned int char_type, unsigned int family_pattern) {
+bool compare_char_type_in_family(unsigned int char_type,
+                                 unsigned int family_pattern) {
     if (char_type & family_pattern) {
         return true;
-    }
-    else {
+    } else {
         return false;
     }
 }
@@ -267,38 +252,43 @@ bool compare_char_type_in_family(unsigned int char_type, unsigned int family_pat
 // exceptional expression
 // キロとかここに入れればいい？ペタはjumanでは入ってなかった
 // 数億，数円，数時間をどうするか
-unsigned int check_exceptional_chars_in_figure(const char *cp, unsigned int rest_byte_len) {
+unsigned int check_exceptional_chars_in_figure(const char *cp,
+                                               unsigned int rest_byte_len) {
     if (rest_byte_len >= EXCEPTIONAL_FIGURE_EXPRESSION_LENGTH && //分の
-        !strncmp(cp, EXCEPTIONAL_FIGURE_EXPRESSION, EXCEPTIONAL_FIGURE_EXPRESSION_LENGTH)) {
+        !strncmp(cp, EXCEPTIONAL_FIGURE_EXPRESSION,
+                 EXCEPTIONAL_FIGURE_EXPRESSION_LENGTH)) {
         return 2;
-    }else if (rest_byte_len >= EXCEPTIONAL_FIGURE_EXPRESSION_LENGTH_2 && //ぶんの
-        strncmp(cp, EXCEPTIONAL_FIGURE_EXPRESSION_2, EXCEPTIONAL_FIGURE_EXPRESSION_LENGTH_2) == 0) {
+    } else if (rest_byte_len >=
+                   EXCEPTIONAL_FIGURE_EXPRESSION_LENGTH_2 && //ぶんの
+               strncmp(cp, EXCEPTIONAL_FIGURE_EXPRESSION_2,
+                       EXCEPTIONAL_FIGURE_EXPRESSION_LENGTH_2) == 0) {
         return 3;
-    }else if(rest_byte_len >= 6 && !strncmp(cp, "キロ", 6)){
+    } else if (rest_byte_len >= 6 && !strncmp(cp, "キロ", 6)) {
         return 2;
-    }else if(rest_byte_len >= 6 && !strncmp(cp, "メガ", 6)){
+    } else if (rest_byte_len >= 6 && !strncmp(cp, "メガ", 6)) {
         return 2;
-    }else if(rest_byte_len >= 6 && !strncmp(cp, "ギガ", 6)){
+    } else if (rest_byte_len >= 6 && !strncmp(cp, "ギガ", 6)) {
         return 2;
-    }else if(rest_byte_len >= 6 && !strncmp(cp, "テラ", 6)){
+    } else if (rest_byte_len >= 6 && !strncmp(cp, "テラ", 6)) {
         return 2;
-    }else if(rest_byte_len >= 6 && !strncmp(cp, "ミリ", 6)){
+    } else if (rest_byte_len >= 6 && !strncmp(cp, "ミリ", 6)) {
         return 2;
-    }else {
+    } else {
         return 0;
     }
 }
 
 // すべて数字かどうかチェック *u8strにもうつす
-size_t is_suuji(unsigned char *ucp){
+size_t is_suuji(unsigned char *ucp) {
     size_t byte_length = strlen((const char *)ucp);
-    if(byte_length == 0)
+    if (byte_length == 0)
         return false;
-    for (unsigned int pos = 0; pos < byte_length; pos += utf8_bytes((unsigned char *)(ucp + pos))) {
-         if(check_char_family(check_utf8_char_type((unsigned char *)(ucp + pos))) != TYPE_FAMILY_FIGURE )
-             return false;
+    for (unsigned int pos = 0; pos < byte_length;
+         pos += utf8_bytes((unsigned char *)(ucp + pos))) {
+        if (check_char_family(check_utf8_char_type(
+                (unsigned char *)(ucp + pos))) != TYPE_FAMILY_FIGURE)
+            return false;
     }
     return true;
 }
-
 }
