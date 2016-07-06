@@ -30,7 +30,7 @@ class Dic {
     FeatureTemplateSet *ftmpl;
     static constexpr const char* DEF_ONOMATOPOEIA_HINSI = "副詞";
     static constexpr const char* DEF_ONOMATOPOEIA_BUNRUI = "*";
-    static constexpr const char* DEF_ONOMATOPOEIA_IMIS = "自動認識";
+    static constexpr const char* DEF_ONOMATOPOEIA_IMIS = "自動認識 スル接続可能";
     static constexpr const char* DEF_MORPH_DUMMY = "DUMMY POS";
     static unsigned long MORPH_DUMMY_POS;
   public:
