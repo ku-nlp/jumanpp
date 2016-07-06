@@ -338,12 +338,14 @@ int main(int argc, char** argv) {//{{{
         tagger.train(option.get<std::string>("train"));
         tagger.write_bin_model_file(option.get<std::string>("outputmodel"));
     //}}}
+#ifdef USE_DEV_OPTION
     } else if(option.exist("gold-lattice")){
         // TODO: モデルの読み込み
         // TODO: 形態素IDが変
         tagger.read_bin_model_file(model_path);
         param.print_gold = true;
         tagger.output_gold_result(option.get<std::string>("gold-lattice"));
+#endif
     } else {// 通常の形態素解析{{{
         tagger.read_bin_model_file(model_path);
         if(param.debug) std::cerr << "done" << std::endl;
