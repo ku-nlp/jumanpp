@@ -533,11 +533,19 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice( //{{{
     if (r_onomatope_node != NULL) {
         if (dic_node) { // 辞書の末尾につける
             Node *tmp_node = dic_node;
-            while (tmp_node->bnext)
+            Node *tmp_onomatope_node = r_onomatope_node;
+            while (tmp_node->bnext){
+                if( tmp_onomatope_node &&
+                    tmp_node->length == tmp_onomatope_node->length &&
+                    tmp_node->posid == tmp_onomatope_node->posid){ 
+                    // 表層が同じ副詞を辞書引きで得た場合は削除する
+                    auto del_node =  tmp_onomatope_node;
+                    tmp_onomatope_node= tmp_onomatope_node->bnext;                    
+                    delete(del_node);
+                }
                 tmp_node = tmp_node->bnext;
-            tmp_node->bnext = r_onomatope_node;
-            // TODO ここで辞書引きの結果,
-            // 自動認識と同じオノマトペが含まれていれば，自動認識したオノマトペは追加しない．
+            }
+            tmp_node->bnext = tmp_onomatope_node;
         } else {
             dic_node = r_onomatope_node;
         }
