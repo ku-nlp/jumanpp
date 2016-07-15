@@ -27,8 +27,7 @@
 #include <math.h>
 #include <string.h>
 #include <float.h>
-
-#include "config.h"
+#include "u8string.h"
 
 typedef std::unordered_map<std::string, double> Umap;
 
@@ -121,7 +120,7 @@ extern size_t is_suuji(unsigned char *ucp);
 #define TYPE_HANKAKU_KANA 0x00010000; // 半角カタカナ
 
 //#define TYPE_FAMILY_FIGURE	14392 // TYPE_FIGURE + TYPE_PERIOD +
-//TYPE_MIDDLE_DOT + TYPE_KANJI_FIGURE + TYPE_SLASH + TYPE_COLON
+// TYPE_MIDDLE_DOT + TYPE_KANJI_FIGURE + TYPE_SLASH + TYPE_COLON
 #define TYPE_FAMILY_FIGURE                                                     \
     2168 // TYPE_FIGURE + TYPE_PERIOD + TYPE_COMMA + TYPE_MIDDLE_DOT +
          // TYPE_KANJI_FIGURE  8+16+64+32+2048

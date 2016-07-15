@@ -7,7 +7,6 @@
 #include "dic.h"
 #include "parameter.h"
 #include "charlattice.h"
-#include "u8string.h"
 #include <math.h>
 #include <memory>
 #include "rnnlm/rnnlmlib.h"
@@ -32,8 +31,8 @@ class Sentence { //{{{
     std::vector<Node> gold_morphs; //正例の場合のみ利用
 
     size_t word_num;
-    unsigned int length; // length of this sentence
-    std::string sentence; // Gold用だが名前が悪い
+    unsigned int length;                       // length of this sentence
+    std::string sentence;                      // Gold用だが名前が悪い
     std::string comment;                       // 主にGold用
     std::string partically_annotated_sentence; // 部分アノテーション付き入力文
     std::vector<unsigned int> maxlen_for_charnum;
@@ -244,7 +243,7 @@ class Sentence { //{{{
     } //}}}
 
     bool set_feature_beam() { //{{{
-        if (feature) { // beam では feature は使わない
+        if (feature) {        // beam では feature は使わない
             delete feature;
             feature = nullptr;
         }
@@ -269,8 +268,8 @@ class Sentence { //{{{
               node.formid ==
                   dic->formid2form.get_id(
                       "タ接連用形"))); // 動詞で連用形. Juman
-                                       // の時点で，連用形は母音動詞の連用形と同じid
-                                       // かどうかだけをチェックしている
+        // の時点で，連用形は母音動詞の連用形と同じid
+        // かどうかだけをチェックしている
         bool check_noun =
             (node.posid == dic->posid2pos.get_id("名詞") &&
              node.sposid !=
