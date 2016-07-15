@@ -41,7 +41,7 @@ std::string get_current_path() { /*{{{*/
     return home_path;
 } /*}}}*/
 
-std::string read_jumanpprc() { /*{{{*/
+std::string read_jumanpprc(){/*{{{*/
     std::string home_path = get_home_path();
     std::string current_path = get_current_path();
     std::string jumanpprc_path = home_path + "/.jumanpprc";
@@ -135,9 +135,7 @@ void option_proc(cmdline::parser &option, std::string model_path, int argc,
                             "data/train.txt");
     option.add<unsigned int>("Nmorph", 'N', "print N-best Moprh", false, 5);
     option.add("oldstyle", 0, "print JUMAN style lattice");
-    option.add<unsigned int>("autoN", 0,
-                             "automatically set N depending on sentence length",
-                             false, 5);
+    option.add("autoN",0, "automatically set N depending on sentence length");
     // option.add("typedloss", 0, "use loss function considering form type ");
     option.add("nornnlm", 0, "do not use RNNLM");
     option.add("dynamic", 0,
@@ -372,7 +370,7 @@ int main(int argc, char **argv) { //{{{
 #endif
     } else { // 通常の形態素解析{{{
         tagger.read_bin_model_file(model_path);
-        std::ifstream is(argv[1]);
+        std::ifstream is(argv[1]); 
 
         // sentence loop
         std::string buffer;
@@ -382,8 +380,8 @@ int main(int argc, char **argv) { //{{{
                 continue;
             } else if (buffer.at(0) == '#') {
                 if (buffer.length() <= 1) {
-                    std::cout << buffer << " JUMAN++:" << VERSION << "("
-                              << GITVER << ")" << std::endl;
+                    std::cout << buffer << " JUMAN++:" << VERSION << "(" << GITVER
+                              << ")" << std::endl;
                     continue;
                 }
 
@@ -429,21 +427,10 @@ int main(int argc, char **argv) { //{{{
                                   << std::endl;
                     }
                 } else { // S-ID の処理
-                    std::cout << buffer << " JUMAN++:" << VERSION << "("
-                              << GITVER << ")" << std::endl;
+                    std::cout << buffer << " JUMAN++:" << VERSION << "(" << GITVER
+                              << ")" << std::endl;
                 }
                 continue;
-            }
-
-            // N-best の 表示数 自動決定
-            if (option.exist("autoN")) {
-                Morph::U8string u8buffer(buffer);
-                const size_t denom = option.get<unsigned int>("autoN");
-                const size_t length = u8buffer.char_size();
-                size_t autoN = length / denom;
-                if (autoN > option.get<unsigned int>("lattice"))
-                    autoN = option.get<unsigned int>("lattice");
-                param.set_L(autoN);
             }
 
             if (option.exist("partial")) {
@@ -451,7 +438,15 @@ int main(int argc, char **argv) { //{{{
             } else {
                 tagger.new_sentence_analyze(buffer);
             }
-
+            
+            // N-best の N 自動決定
+            if (option.exist("autoN")) {
+                const size_t length = buffer.size();
+                const size_t autoN = length/5; //適当なN
+                param.set_N(autoN); 
+                param.set_L(autoN);
+            }
+            
             if (option.exist("lattice")) {
 #if USE_DEV_OPTION
                 if (option.exist("oldstyle")) {
