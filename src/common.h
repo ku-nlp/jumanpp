@@ -28,6 +28,8 @@
 #include <string.h>
 #include <float.h>
 
+#include "config.h"
+
 typedef std::unordered_map<std::string, double> Umap;
 
 typedef std::vector<double> TopicVector;
