@@ -17,7 +17,8 @@ AC_PROG_LN_S
 AC_PROG_RANLIB
 
 AC_LANG_PUSH(C++)
-AX_CXX_COMPILE_STDCXX([14], [noext], [mandatory])
+AX_CXX_COMPILE_STDCXX_11([noext], [mandatory])
+#AX_CXX_COMPILE_STDCXX_14([noext], [mandatory]) # This macro requires autotools archive 2016-03-20 or newer.
 AX_BOOST_BASE([1.57])
 # AX_BOOST_SERIALIZATION() # It doesn't work properly..
 

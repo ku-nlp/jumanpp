@@ -2,50 +2,6 @@
 #include <math.h>
 // Fimap FeatureVector::str2id;
 
-// 訓練時用だが，実際に使う？？
-FeatureVector::FeatureVector(const std::vector<unsigned long> &v1,
-                             const std::vector<unsigned long> &v2) { /*{{{*/
-    for (const auto &s : v1) {
-        vec[s] += 1.0;
-    }
-    for (const auto &s : v2) {
-        vec[s] -= 1.0;
-    }
-}; /*}}}*/
-
-FeatureVector::FeatureVector(const std::vector<unsigned long> &v1) { /*{{{*/
-    for (const auto &s : v1) {
-        vec[s] += 1.0;
-    }
-}; /*}}}*/
-
-double FeatureVector::operator*(const FeatureVector &fv) const { /*{{{*/
-    double sum = 0.0;
-    if (vec.size() > fv.vec.size()) {
-        for (const auto &f : fv) {
-            auto itr = vec.find(f.first);
-            if (itr != vec.end())
-                sum += f.second * itr->second;
-        }
-    } else {
-        for (const auto &f : vec) {
-            auto itr = fv.vec.find(f.first);
-            if (itr != fv.end())
-                sum += f.second * itr->second;
-        }
-    }
-    return sum;
-}; /*}}}*/
-
-// updated mu
-void FeatureVector::update(double alpha, double y, const DiagMat &sigma,
-                           const FeatureVector &x) { /*{{{*/
-    for (const auto &v : x) {
-        vec[v.first] += alpha * y * sigma.get_value(v.first) * v.second;
-        // v の対角要素以外を考える場合は v.first と他のキーの組み合わせを計算
-    }
-}; /*}}}*/
-
 void DiagMat::update(double beta, const FeatureVector &x) { // update sigma
     for (const auto &v : x) {
         this->ref_value(v.first, v.first) -= beta * this->ref_value(v.first) *
@@ -89,6 +45,13 @@ double DiagMat::get_value(const unsigned long sp1) const {
         return 1.0;
 };
 
+void SCWClassifier::update_mu(double alpha, double y,const DiagMat& sigma, const FeatureVector& x){
+    for(const auto& v:x){
+        mu[v.first] += alpha * y * sigma.get_value(v.first) * v.second;
+        // v の対角要素以外の計算は省略する.
+    }
+};
+
 void SCWClassifier::update(double loss_value, const FeatureVector &vec) {
     if (loss_value < 0.00001)
         return;
@@ -109,7 +72,7 @@ void SCWClassifier::update(double loss_value, const FeatureVector &vec) {
 
     if (vt == 0.0)
         return;
-    mu.update(alphat, loss_value, sigmat, vec);
+    update_mu(alphat, loss_value, sigmat, vec);
     sigmat.update(betat, vec);
 }
 
@@ -122,6 +85,6 @@ void SCWClassifier::perceptron_update(const FeatureVector &vec) {
     //    (double alpha, double y, const DiagMat sigma, const FeatureVector& x)
     std::cerr << "mu*vec:" << score << std::endl;
 
-    mu.update(1.0, 1.0, sigmat, vec);
+    update_mu(1.0, 1.0, sigmat, vec);
     // sigmat.update(betat, vec);
 }

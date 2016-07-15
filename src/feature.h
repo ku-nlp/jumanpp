@@ -3,16 +3,17 @@
 #define FEATURE_H
 
 #include "common.h"
-#include "node.h"
 #include "parameter.h"
 #include <sstream>
 #include <memory>
 #include <tuple>
 #include <unordered_set>
 #include <functional>
+#include "feature_vector.h"
 
 namespace Morph {
 
+class Node;
 // どのノードについての素性関数であるか.
 enum NodePosition { LeftN, RightN, CenterN, UnigramN };
 

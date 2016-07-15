@@ -17,7 +17,6 @@ extern "C" {
 
 namespace Morph {
 // TODO: ヘッダ間の依存関係の整理
-class FeatureSet;
 class FeatureTemplateSet;
 class Node;
 class NbestSearchToken;
@@ -64,8 +63,10 @@ class TokenWithState { //{{{
   public:
     explicit TokenWithState(){};
     TokenWithState(const TokenWithState &tmp) { //{{{
-        if (tmp.f.get() != nullptr)
-            f = std::make_unique<FeatureSet>(*(tmp.f)); // unique_ptr
+        if (tmp.f.get() != nullptr){
+            f = std::unique_ptr<FeatureSet>(new FeatureSet(*tmp.f));
+            //f = std::make_unique<FeatureSet>(*(tmp.f)); //C++14 or later
+        }    
         score = tmp.score;
         word_score = tmp.word_score;
         context_score = tmp.context_score;
@@ -74,8 +75,10 @@ class TokenWithState { //{{{
         node_history = tmp.node_history;
     };                                                     //}}}
     TokenWithState &operator=(const TokenWithState &tmp) { //{{{
-        if (tmp.f.get() != nullptr)
-            f = std::make_unique<FeatureSet>(*(tmp.f)); // unique_ptr
+        if (tmp.f.get() != nullptr){
+            f = std::unique_ptr<FeatureSet>(new FeatureSet(*tmp.f));
+            //f = std::make_unique<FeatureSet>(*(tmp.f)); //C++14 or later
+        }
         score = tmp.score;
         word_score = tmp.word_score;
         context_score = tmp.context_score;
@@ -99,15 +102,9 @@ class TokenWithState { //{{{
     TokenWithState(Node *current_node, const TokenWithState &prev_token) {
         node_history = prev_token.node_history; // copy
         node_history.emplace_back(current_node);
-        f = std::make_unique<FeatureSet>(*(prev_token.f)); // copy
+        f = std::unique_ptr<FeatureSet>(new FeatureSet(*(prev_token.f)));
+        //f = std::make_unique<FeatureSet>(*(prev_token.f)); 
     };
-
-    //        void move_state_vector(std::vector<double> &&state){
-    //            context = std::move(state);
-    //        };
-    // void set_history(std::vector<char> &&his){
-    //    history = std::move(his);
-    //};
 }; //}}}
 
 class BeamQue { //{{{
@@ -132,29 +129,6 @@ class BeamQue { //{{{
         beam.resize(0);
     };
 
-    //        void push(TokenWithState tok){
-    //            // beam は昇順でソート済み
-    //            if( beam.size() == beam_width && beam.back().score > tok.score
-    //            ){ //追加しない
-    //                return;
-    //            }else if(beam.size() ==
-    //            beam_width){//最小のものを置き換えて再ソート
-    //                beam.back() = std::move(std::move(tok));
-    //                std::sort(beam.begin(), beam.end(),[](auto x, auto
-    //                y){return x.score + x.context_score> y.score +
-    //                y.context_score ;});
-    //            }else{ //追加してリサイズ
-    //                beam.emplace_back(std::move(tok));
-    //                std::sort(beam.begin(), beam.end(),[](auto x, auto
-    //                y){return x.score + x.context_score> y.score +
-    //                y.context_score ;});
-    //                //std::sort(beam.begin(), beam.end(),[](auto x, auto
-    //                y){return x.score > y.score;});
-    //                if(beam.size() > beam_width)
-    //                    beam.resize(beam_width);
-    //            }
-    //        }
-
     void push(TokenWithState &&tok) {
         // beam は昇順でソート済み
         if (beam.size() == beam_width &&
@@ -163,12 +137,12 @@ class BeamQue { //{{{
             return;
         } else if (beam.size() == beam_width) { //最小のものを置き換えて再ソート
             beam.back() = (tok);
-            std::sort(beam.begin(), beam.end(), [](auto x, auto y) {
+            std::sort(beam.begin(), beam.end(), [](const TokenWithState& x, const TokenWithState& y) {
                 return x.score + x.context_score > y.score + y.context_score;
             });
         } else { //追加してリサイズ
             beam.emplace_back((tok));
-            std::sort(beam.begin(), beam.end(), [](auto x, auto y) {
+            std::sort(beam.begin(), beam.end(), [](const TokenWithState& x, const TokenWithState& y) {
                 return x.score + x.context_score > y.score + y.context_score;
             });
             if (beam.size() > beam_width)

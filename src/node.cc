@@ -126,8 +126,7 @@ Node::~Node() { //{{{
 } //}}}
 
 void TokenWithState::init_feature(FeatureTemplateSet *ftmpl) { //{{{
-    FeatureSet fset(ftmpl);
-    f = std::make_unique<FeatureSet>(std::move(fset));
+    f = std::unique_ptr<FeatureSet>(new FeatureSet(ftmpl));
 }; //}}}
 
 void Node::append_bigram_feature(Node *left_node,
