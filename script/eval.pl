@@ -80,14 +80,14 @@ sub calc_score {
 		} else {
             $output_pos[$output_index] =~ /([^:]*):[^:]*$/;
             my $output_pos_tmp = $1;
-            $ref_pos[$output_index] =~ /([^:]*):[^:]*$/;
+            $ref_pos[$ref_index] =~ /([^:]*):[^:]*$/;
             my $ref_pos_tmp = $1;
             if( $output_pos_tmp eq $ref_pos_tmp || #品詞が一致 
                 ($output_pos_tmp eq "未定義語" and $ref_pos_tmp eq "名詞") ){ #未定義語は名詞扱い
                 $tmp_joint_ok_c++;
 		        $output_buffer .= " $output_token[$output_index]=$output_pos[$output_index]";
             }else{
-		        $output_buffer .= " $output_token[$output_index]x$output_pos[$output_index]";
+		        $output_buffer .= " \033[33m$output_token[$output_index]x$output_pos[$output_index]\033[0m";
             }
 		}
 		$output_length += length($output_token[$output_index]);
@@ -97,24 +97,24 @@ sub calc_score {
 		$ref_index++;
 	    }
 	    else {
-		# 正解の単語の方が長い
+		# リファレンスの単語列のほうが文字列長が長い
 		if ($output_length + length($output_token[$output_index]) <
 		    $ref_length + length($ref_token[$ref_index])) {
 		    $output_length += length($output_token[$output_index]);
-		    $output_buffer .= "*$output_token[$output_index]_$output_pos[$output_index]";
+		    $output_buffer .= " \033[31m*$output_token[$output_index]_$output_pos[$output_index]\033[0m";
 		    $output_index++;
 		}
-		# 出力の単語の方が長い
+		# 出力の単語列のほうが文字列長が長い
 		elsif ($output_length + length($output_token[$output_index]) >
 		    $ref_length + length($ref_token[$ref_index])) {
 		    $ref_length += length($ref_token[$ref_index]);
 		    $ref_buffer .= " $ref_token[$ref_index]_$ref_pos[$ref_index]";
 		    $ref_index++;
 		}
-		# 調整して一致した場合
+		# 一致した場合
 		else {
 		    $output_length += length($output_token[$output_index]);
-		    $output_buffer .= "*$output_token[$output_index]_$output_pos[$output_index]";
+		    $output_buffer .= " \033[31m*$output_token[$output_index]_$output_pos[$output_index]\033[0m";
 		    $output_index++;
 		    $ref_length += length($ref_token[$ref_index]);
 		    $ref_buffer .= " $ref_token[$ref_index]_$ref_pos[$ref_index]";
@@ -135,7 +135,7 @@ sub calc_score {
 	    } elsif ($ref_index == scalar(@ref_token)) {
 		while ($output_index != scalar(@output_token)) {
 		    $output_length += length($output_token[$output_index]);
-		    $output_buffer .= "*$output_token[$output_index]_$output_pos[$output_index]";
+		    $output_buffer .= "\033[31m*\033[0m$output_token[$output_index]_$output_pos[$output_index]";
 		    $output_index++;
 		}
 		last;
