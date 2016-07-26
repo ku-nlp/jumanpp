@@ -137,7 +137,7 @@ void option_proc(cmdline::parser &option, std::string model_path, int argc,
     option.add("oldstyle", 0, "print JUMAN style lattice");
     option.add<unsigned int>("autoN", 0,
                              "automatically set N depending on sentence length",
-                             false, 5);
+                             false, 10);
     // option.add("typedloss", 0, "use loss function considering form type ");
     option.add("nornnlm", 0, "do not use RNNLM");
     option.add("dynamic", 0,
