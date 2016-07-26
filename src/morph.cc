@@ -135,9 +135,7 @@ void option_proc(cmdline::parser &option, std::string model_path, int argc,
                             "data/train.txt");
     option.add<unsigned int>("Nmorph", 'N', "print N-best Moprh", false, 5);
     option.add("oldstyle", 0, "print JUMAN style lattice");
-    option.add<unsigned int>("autoN", 0,
-                             "automatically set N depending on sentence length",
-                             false, 10);
+    option.add("autoN", 0, "automatically set N depending on sentence length");
     // option.add("typedloss", 0, "use loss function considering form type ");
     option.add("nornnlm", 0, "do not use RNNLM");
     option.add("dynamic", 0,
@@ -435,16 +433,20 @@ int main(int argc, char **argv) { //{{{
                 continue;
             }
 
+#if USE_DEV_OPTION
             // N-best の 表示数 自動決定
             if (option.exist("autoN")) {
                 Morph::U8string u8buffer(buffer);
-                const size_t denom = option.get<unsigned int>("autoN");
+                const size_t denom = 10;
                 const size_t length = u8buffer.char_size();
                 size_t autoN = length / denom;
                 if (autoN > option.get<unsigned int>("lattice"))
                     autoN = option.get<unsigned int>("lattice");
+                if (autoN < 1)
+                    autoN = 1;
                 param.set_L(autoN);
             }
+#endif
 
             if (option.exist("partial")) {
                 tagger.partial_annotation_analyze(buffer);
