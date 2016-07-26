@@ -239,9 +239,9 @@ void Sentence::feature_print() { //{{{
 } //}}}
 
 // make unknown word candidates of specified length if it's not found in dic
-Node *Sentence::make_unk_pseudo_node_list_by_dic_check(
+Node *Sentence::make_unk_pseudo_node_list_by_dic_check( //{{{
     const char *start_str, unsigned int pos, Node *r_node,
-    unsigned int specified_char_num) { //{{{
+    unsigned int specified_char_num) {
 
     // 関数の中ではbyte_len として扱っている
     auto result_node = dic->make_unk_pseudo_node_list_some_pos_by_dic_check(
@@ -286,8 +286,8 @@ Node *Sentence::make_unk_pseudo_node_list_by_dic_check(
 } //}}}
 
 // 現在地までの範囲を未定義語として生成 (任意の単語数の未定義語を生成する)
-Node *Sentence::make_unk_pseudo_node_list_from_previous_position(
-    const char *start_str, unsigned int previous_pos) { //{{{
+Node *Sentence::make_unk_pseudo_node_list_from_previous_position( //{{{
+    const char *start_str, unsigned int previous_pos) {
     if ((*end_node_list)[previous_pos] != NULL) {
         Node **node_p = &((*begin_node_list)[previous_pos]);
         while (*node_p) {
@@ -305,9 +305,9 @@ Node *Sentence::make_unk_pseudo_node_list_from_previous_position(
 
 // 特定位置からの未定義語を生成 (解析中にパスが存在しなくなった時に,
 // 出来なくなった時点から未定義語扱いにしてパスをつなげる)
-Node *Sentence::make_unk_pseudo_node_list_from_some_positions(
+Node *Sentence::make_unk_pseudo_node_list_from_some_positions( //{{{
     const char *start_str, unsigned int pos, unsigned int previous_pos,
-    unsigned int max_length) { //{{{
+    unsigned int max_length) {
     Node *node;
     if (max_length != 0 && param->unk_max_length > max_length)
         node =
@@ -327,9 +327,9 @@ Node *Sentence::make_unk_pseudo_node_list_from_some_positions(
 } //}}}
 
 // specified spec 版 //文字列全体が単語候補の場合のみ
-Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice(
+Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice( //{{{
     CharLattice &cl, const char *start_str, unsigned int specified_length,
-    const std::vector<std::string> &spec) { //{{{
+    const std::vector<std::string> &spec) {
     Node *result_node = NULL;
     unsigned int char_num = 0;
     unsigned int pos = 0;
@@ -534,14 +534,14 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice( //{{{
         if (dic_node) { // 辞書の末尾につける
             Node *tmp_node = dic_node;
             Node *tmp_onomatope_node = r_onomatope_node;
-            while (tmp_node->bnext){
-                if( tmp_onomatope_node &&
+            while (tmp_node->bnext) {
+                if (tmp_onomatope_node &&
                     tmp_node->length == tmp_onomatope_node->length &&
-                    tmp_node->posid == tmp_onomatope_node->posid){ 
+                    tmp_node->posid == tmp_onomatope_node->posid) {
                     // 表層が同じ副詞を辞書引きで得た場合は削除する
-                    auto del_node =  tmp_onomatope_node;
-                    tmp_onomatope_node= tmp_onomatope_node->bnext;                    
-                    delete(del_node);
+                    auto del_node = tmp_onomatope_node;
+                    tmp_onomatope_node = tmp_onomatope_node->bnext;
+                    delete (del_node);
                 }
                 tmp_node = tmp_node->bnext;
             }
@@ -838,10 +838,9 @@ bool Sentence::lookup_partial() { //{{{
                      d_pos++) {
                     if (delimiter_position[d_pos] == pos) {
                         next_delimiter_pos =
-                            delimiter_position[d_pos +
-                                               1]; //最後のdelimiter
-                                                   //がここに来ることは無いので,
-                                                   //d_pos+1 は上限を超えない
+                            delimiter_position[d_pos + 1]; //最後のdelimiter
+                        //がここに来ることは無いので,
+                        // d_pos+1 は上限を超えない
                         sec_length = next_delimiter_pos - pos;
                         sec_string =
                             std::string(sentence_c_str).substr(pos, sec_length);
@@ -1893,9 +1892,9 @@ void Sentence::print_best_beam_rep() { //{{{
     }
 } //}}}
 
-void Sentence::generate_juman_line(Node *node,
+void Sentence::generate_juman_line(Node *node, //{{{
                                    std::stringstream &output_string_buffer,
-                                   std::string prefix) { /*{{{*/
+                                   std::string prefix) {
     // JUMAN の一行に相当する文字列を output_string_buffer に出力する
 
     std::string surface = *node->original_surface;
@@ -2234,134 +2233,78 @@ bool Sentence::lookup_gold_data(std::string &word_pos_pair) { //{{{
     Node *r_node = lookup_and_make_special_pseudo_nodes_lattice(
         cl, line[0].c_str(), strlen(line[0].c_str()), spec);
 
-    if (!r_node && line[3] == "名詞") {  // 動詞の名詞化を復元
-        // コーパスでは名詞化した動詞は名詞として扱われる. (jumanpp
-        // では動詞の連用形扱い)
-        // 品詞変更タグがついていない場合の対策
-        // 動詞の活用型不明のまま，基本連用形をチェック
-        std::vector<std::string> mod_spec{line[1], "", "動詞",
-                                          "*",     "", "基本連用形"};
-        r_node = lookup_and_make_special_pseudo_nodes_lattice(
-            cl, line[0].c_str(), strlen(line[0].c_str()), mod_spec);
-        // cerr << "; restore nominalized verb:" <<  line[0] << ":" << line[1]
-        // << ":" << line[2] << ":" << line[3] << ":" << line[4] << ":" <<
-        // line[5] << ":" << line[6] << endl;
-    }
+    if (!param->print_gold) {
+        //    if (!r_node && line[3] == "名詞") { // 動詞の名詞化を復元
+        //        // コーパスでは名詞化した動詞は名詞として扱われる. (jumanpp
+        //        // では動詞の連用形扱い)
+        //        // 品詞変更タグがついていない場合の対策
+        //        // 動詞の活用型不明のまま，基本連用形をチェック
+        //        std::vector<std::string> mod_spec{line[1], "", "動詞",
+        //                                          "*",     "", "基本連用形"};
+        //        r_node = lookup_and_make_special_pseudo_nodes_lattice(
+        //            cl, line[0].c_str(), strlen(line[0].c_str()), mod_spec);
+        //        // cerr << "; restore nominalized verb:" <<  line[0] << ":" <<
+        //        line[1]
+        //        // << ":" << line[2] << ":" << line[3] << ":" << line[4] <<
+        //        ":" <<
+        //        // line[5] << ":" << line[6] << endl;
+        //    }
 
-    if (!r_node && line[3] == "名詞") { // 形容詞語幹を名詞と表記している場合
-        // コーパスでは"綺麗"などが名詞として使われることがあるが，辞書では"綺麗"は形容詞のみの場合
-        std::vector<std::string> mod_spec{line[1], "",         "形容詞",
-                                          "",      "ナ形容詞", "語幹"};
-        r_node = lookup_and_make_special_pseudo_nodes_lattice(
-            cl, line[0].c_str(), strlen(line[0].c_str()), mod_spec);
-        // cerr << "; restore nominalized verb:" <<  line[0] << ":" << line[1]
-        // << ":" << line[2] << ":" << line[3] << ":" << line[4] << ":" <<
-        // line[5] << ":" << line[6] << endl;
-    }
+        if (!r_node && line[3] == "名詞") {
+            //形容詞語幹を名詞と表記している場合
+            //コーパスでは
+            //"綺麗"などが名詞として使われることがあるが，辞書では
+            //"綺麗"は形容詞のみの場合
+            std::vector<std::string> mod_spec{line[1], "",         "形容詞",
+                                              "",      "ナ形容詞", "語幹"};
+            r_node = lookup_and_make_special_pseudo_nodes_lattice(
+                cl, line[0].c_str(), strlen(line[0].c_str()), mod_spec);
+        }
 
-    // 名詞が固有名詞, サ変名詞化している場合, 細分類を無視して辞書引き
-    // Wikipedia 辞書で読みが正しく付与されていない場合があるので，読みも無視
-    if (!r_node && line[3] == "名詞") {
-        std::vector<std::string> mod_spec{"", line[2], line[3],
-                                          "", line[5], line[6]};
-        r_node = lookup_and_make_special_pseudo_nodes_lattice(
-            cl, line[0].c_str(), strlen(line[0].c_str()), mod_spec);
-        // cerr << "; modify proper noun to noun:" <<  line[0] << ":" << line[1]
-        // << ":" << line[2] << ":" << line[3] << ":" << line[4] << ":" <<
-        // line[5] << ":" << line[6] << endl;
-    }
+        // 名詞が固有名詞, サ変名詞化している場合, 細分類を無視して辞書引き
+        // Wikipedia
+        // 辞書で読みが正しく付与されていない場合があるので，読みも無視
+        if (!r_node && line[3] == "名詞") {
+            std::vector<std::string> mod_spec{"", line[2], line[3],
+                                              "", line[5], line[6]};
+            r_node = lookup_and_make_special_pseudo_nodes_lattice(
+                cl, line[0].c_str(), strlen(line[0].c_str()), mod_spec);
+            // cerr << "; modify proper noun to noun:" <<  line[0] << ":" <<
+            // line[1]
+            // << ":" << line[2] << ":" << line[3] << ":" << line[4] << ":" <<
+            // line[5] << ":" << line[6] << endl;
+        }
 
-    //    if (!r_node && line[3] == "名詞") {  // 名詞扱いの副詞
-    //        //
-    //        コーパスでは"事実"などが名詞として使われるが，辞書では"事実"は副詞のみ
-    //        std::vector<std::string> mod_spec{line[1], line[2],
-    //                                          "副詞",
-    //                                          "",
-    //                                          "",
-    //                                          ""};
-    //        r_node = lookup_and_make_special_pseudo_nodes_lattice(
-    //            cl, line[0].c_str(), strlen(line[0].c_str()), mod_spec);
-    //        if(r_node)
-    //        cerr << "; modify adverb to noun:" <<  line[0] << ":" << line[1]
-    //        << ":" << line[2] << ":" << line[3] << ":" << line[4] << ":" <<
-    //        line[5] << ":" << line[6] << endl;
-    //    }
-    //
-    //    if (!r_node && line[3] == "副詞") {  // 副詞扱いの名詞
-    //        std::vector<std::string> mod_spec{line[1], line[2],
-    //                                          "名詞",
-    //                                          "",
-    //                                          "",
-    //                                          ""};
-    //        r_node = lookup_and_make_special_pseudo_nodes_lattice(
-    //            cl, line[0].c_str(), strlen(line[0].c_str()), mod_spec);
-    //        if(r_node)
-    //        cerr << "; modify noun to adverb:" <<  line[0] << ":" << line[1]
-    //        << ":" << line[2] << ":" << line[3] << ":" << line[4] << ":" <<
-    //        line[5] << ":" << line[6] << endl;
-    //    }
-    //
-    //    if (!r_node && line[3] == "副詞") {  // 副詞扱いの形容詞 名詞も
-    //        //
-    //        コーパスでは"真実"などが副詞として使われるが，辞書では"事実"は形容詞のみ
-    //        std::vector<std::string> mod_spec{line[1], line[2],
-    //                                          "形容詞",
-    //                                          "",
-    //                                          "",
-    //                                          ""};
-    //        r_node = lookup_and_make_special_pseudo_nodes_lattice(
-    //            cl, line[0].c_str(), strlen(line[0].c_str()), mod_spec);
-    //        if(r_node)
-    //        cerr << "; modify adverb to adjective:" <<  line[0] << ":" <<
-    //        line[1]
-    //        << ":" << line[2] << ":" << line[3] << ":" << line[4] << ":" <<
-    //        line[5] << ":" << line[6] << endl;
-    //        // cerr << "; restore nominalized verb:" <<  line[0] << ":" <<
-    //        line[1]
-    //        // << ":" << line[2] << ":" << line[3] << ":" << line[4] << ":" <<
-    //        // line[5] << ":" << line[6] << endl;
-    //    }
-    // 人名, 地名が辞書にない場合 // 未定義語として処理
+        if (!r_node) { // 濁音化, 音便化(?相:しょう,など)しているケース
+            // は読みを無視して検索
+            std::vector<std::string> mod_spec{"",      line[2], line[3],
+                                              line[4], line[5], line[6]};
+            r_node = lookup_and_make_special_pseudo_nodes_lattice(
+                cl, line[0].c_str(), strlen(line[0].c_str()), mod_spec);
+            // cerr << "; restore voiced reading:" <<  line[0] << ":" << line[1]
+            // <<
+            // ":" << line[2] << ":" << line[3] << ":" << line[4] << ":" <<
+            // line[5]
+            // << ":" << line[6] << endl;
+        }
 
-    //    if (!r_node) {  // 活用型が誤っている場合があるので，活用型を無視する
-    //        std::vector<std::string> mod_spec{line[1], line[2], line[3],
-    //                                          line[4],
-    //                                          "", line[6]};
-    //        r_node = lookup_and_make_special_pseudo_nodes_lattice(
-    //            cl, line[0].c_str(), strlen(line[0].c_str()), mod_spec);
-    //        // cerr << "; restore nominalized verb:" <<  line[0] << ":" <<
-    //        line[1]
-    //        // << ":" << line[2] << ":" << line[3] << ":" << line[4] << ":" <<
-    //        // line[5] << ":" << line[6] << endl;
-    //    }
+        //    // 記号に読み方が書かれている場合は無視する
+        //    if (!r_node && line[3] == "特殊") {
+        //        std::vector<std::string> mod_spec{
+        //            "", line[2], line[3],
+        //            line[4], line[5], line[6]};
+        //        r_node = lookup_and_make_special_pseudo_nodes_lattice(
+        //            cl, line[0].c_str(), strlen(line[0].c_str()), mod_spec);
+        //    }
 
-    if (!r_node) { // 濁音化, 音便化している(?相:しょう,など)しているケース
-        // は読みを無視して検索
-        std::vector<std::string> mod_spec{"",      line[2], line[3],
-                                          line[4], line[5], line[6]};
-        r_node = lookup_and_make_special_pseudo_nodes_lattice(
-            cl, line[0].c_str(), strlen(line[0].c_str()), mod_spec);
-        // cerr << "; restore voiced reading:" <<  line[0] << ":" << line[1] <<
-        // ":" << line[2] << ":" << line[3] << ":" << line[4] << ":" << line[5]
-        // << ":" << line[6] << endl;
-    }
-
-    //    // 記号に読み方が書かれている場合は無視する
-    //    if (!r_node && line[3] == "特殊") {
-    //        std::vector<std::string> mod_spec{
-    //            "", line[2], line[3],
-    //            line[4], line[5], line[6]};
-    //        r_node = lookup_and_make_special_pseudo_nodes_lattice(
-    //            cl, line[0].c_str(), strlen(line[0].c_str()), mod_spec);
-    //    }
-
-    // 長音が挿入されている場合, 読みと原形を無視する
-    if (!r_node && (line[0].find("〜", 0) != std::string::npos ||
-                    line[0].find("ー", 0) != std::string::npos)) {
-        std::vector<std::string> mod_spec{"",      "",      line[3],
-                                          line[4], line[5], line[6]};
-        r_node = lookup_and_make_special_pseudo_nodes_lattice(
-            cl, line[0].c_str(), strlen(line[0].c_str()), mod_spec);
+        // 長音が挿入されている場合, 読みと原形を無視する
+        if (!r_node && (line[0].find("〜", 0) != std::string::npos ||
+                        line[0].find("ー", 0) != std::string::npos)) {
+            std::vector<std::string> mod_spec{"",      "",      line[3],
+                                              line[4], line[5], line[6]};
+            r_node = lookup_and_make_special_pseudo_nodes_lattice(
+                cl, line[0].c_str(), strlen(line[0].c_str()), mod_spec);
+        }
     }
 
     if (!r_node) { // 未定義語として処理
