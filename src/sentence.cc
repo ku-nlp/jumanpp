@@ -35,6 +35,7 @@ std::string EOS_STRING = EOS;
 std::shared_ptr<RNNLM::context> Sentence::initial_context;
 RNNLM::CRnnLM *Sentence::rnnlm;
 
+
 #ifdef USE_SRILM
 Ngram *Sentence::srilm;
 Vocab *Sentence::vocab;

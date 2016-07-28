@@ -86,8 +86,13 @@ class Tagger {
                  << endl;
             return false;
         }
-        boost::archive::binary_oarchive oa(model_out);
-        oa << weight;
+        
+        weight.serialize(model_out);
+        //for(auto val: weight){
+        //    model_out.write(val);
+        //}
+        //boost::archive::binary_oarchive oa(model_out);
+        //oa << weight;
         model_out.close();
         return true;
     }
@@ -98,8 +103,9 @@ class Tagger {
                  << endl;
             return false;
         }
-        boost::archive::binary_iarchive ia(model_in);
-        ia >> weight;
+        weight.deserialize(model_in);
+        //boost::archive::binary_iarchive ia(model_in);
+        //ia >> weight;
         model_in.close();
         return true;
     }

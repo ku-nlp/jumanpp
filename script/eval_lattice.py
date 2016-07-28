@@ -51,10 +51,10 @@ def match_morph(gold, sys, opt):
     return correct 
 
 def span_match(gold, sys):
-    return (mg.char_from == ms.char_from and mg.char_to == ms.char_to)
+    return (mg.span[0] == ms.span[0] and mg.span[1] == ms.span[1])
 
 def span(m):
-    return "({},{})".format(m.char_from, m.char_to)
+    return "({},{})".format(m.span[0], m.span[1])
 
 def fval(prec,recall):
     return((prec*recall*2)/(prec+recall))
@@ -123,8 +123,8 @@ with open(args.gold_input[0], mode='r', encoding='utf-8') as goldf:
                 break
 
 
-#print("Recall: {:02.4} ({}/{})".format(correct/sum_gold, correct, sum_gold))
-#print("Precision: {:02.4} ({}/{})".format(correct_nbest/sum_sys, correct_nbest, sum_sys))
-#print("F-val: {:02.4}".format(fval(correct/sum_gold, correct_nbest/sum_sys)))
-print("{:02.4}, {:02.4}, {:02.4}".format(correct/sum_gold, correct_nbest/sum_sys,fval(correct/sum_gold, correct_nbest/sum_sys) ))
+print("Recall: {:02.4} ({}/{})".format(correct/sum_gold, correct, sum_gold))
+print("Precision: {:02.4} ({}/{})".format(correct_nbest/sum_sys, correct_nbest, sum_sys))
+print("F-val: {:02.4}".format(fval(correct/sum_gold, correct_nbest/sum_sys)))
+#print("{:02.4} {:02.4} {:02.4}".format(correct/sum_gold, correct_nbest/sum_sys,fval(correct/sum_gold, correct_nbest/sum_sys) ))
 

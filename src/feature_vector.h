@@ -5,9 +5,13 @@
 #pragma once
 #include <vector>
 #include <unordered_map>
+#include <iostream>
+#include <fstream>
 
 typedef std::unordered_map<std::string,double> Umap;
-typedef std::unordered_map<unsigned long, double> Ulmap; //参考に2015/11 時点での素性数 2,395,735
+typedef unsigned long Ulkey;
+typedef double Ulval;
+typedef std::unordered_map<Ulkey, Ulval> Ulmap; //参考に2015/11 時点での素性数 2,395,735
 typedef std::unordered_map<std::string, unsigned long> Fimap; 
 typedef std::pair<unsigned long, double> weightPair;
 
@@ -88,16 +92,40 @@ class FeatureVector{// ただのunordered_map のラップ/*{{{*/
         Ulmap::const_iterator cbegin()const{return vec.cbegin();};
         Ulmap::const_iterator cend()const{return vec.cend();};
 
-private:
-    friend class boost::serialization::access;
-    template<class Archive>
-        void serialize(Archive& ar, const unsigned int version)
-        {
-            if(version)
-                ar & vec;
-            else
-                ar & vec;
+        bool serialize(std::ofstream& os){
+            os << vec.size();
+            for(auto const& kv: vec){
+                os << kv.first << kv.second;
+            }
+            return true;
+        };
 
-        }
+        bool deserialize(std::ifstream& is){
+            vec.clear();
+            size_t size = 0;
+            is >> size;
+            vec.reserve(size);
+            for (size_t i = 0; i != size; ++i) {
+                Ulkey key;
+                Ulval value;
+                is >> key >> value;
+                vec[key] = value;
+            }
+            if(vec.size() != size)
+                return false;
+            return true;
+        };
+
+private:
+//    friend class boost::serialization::access;
+//    template<class Archive>
+//        void serialize(Archive& ar, const unsigned int version)
+//        {
+//            if(version)
+//                ar & vec;
+//            else
+//                ar & vec;
+//
+//        }
 
 };/*}}}*/
