@@ -93,9 +93,11 @@ class FeatureVector{// ただのunordered_map のラップ/*{{{*/
         Ulmap::const_iterator cend()const{return vec.cend();};
 
         bool serialize(std::ofstream& os){
-            os << vec.size();
+            size_t vec_size = vec.size();
+            os.write((char*)&vec_size,sizeof(vec_size));
             for(auto const& kv: vec){
-                os << kv.first << kv.second;
+                os.write((char*)&kv.first, sizeof(Ulkey));
+                os.write((char*)&kv.second, sizeof(Ulval));
             }
             return true;
         };
@@ -103,14 +105,17 @@ class FeatureVector{// ただのunordered_map のラップ/*{{{*/
         bool deserialize(std::ifstream& is){
             vec.clear();
             size_t size = 0;
-            is >> size;
+            is.read((char*)&size,sizeof(size_t));
             vec.reserve(size);
+            std::cerr << size << std::endl;
             for (size_t i = 0; i != size; ++i) {
                 Ulkey key;
                 Ulval value;
-                is >> key >> value;
+                is.read((char*)&key,sizeof(Ulkey));
+                is.read((char*)&value,sizeof(Ulval));
                 vec[key] = value;
             }
+            std::cerr << vec.size() << std::endl;
             if(vec.size() != size)
                 return false;
             return true;

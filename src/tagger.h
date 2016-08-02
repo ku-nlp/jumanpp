@@ -80,7 +80,7 @@ class Tagger {
         return true;
     }
     bool write_bin_model_file(const std::string &model_filename) {
-        std::ofstream model_out(model_filename.c_str());
+        std::ofstream model_out(model_filename.c_str(),std::ofstream::out | std::ofstream::binary);
         if (!model_out.is_open()) {
             cerr << ";; cannot open " << model_filename << " for writing"
                  << endl;
@@ -97,7 +97,7 @@ class Tagger {
         return true;
     }
     bool read_bin_model_file(const std::string &model_filename) {
-        std::ifstream model_in(model_filename.c_str());
+        std::ifstream model_in(model_filename.c_str(), std::ofstream::in | std::ofstream::binary);
         if (!model_in.is_open()) {
             cerr << ";; cannot open " << model_filename << " for reading"
                  << endl;
