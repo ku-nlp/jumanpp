@@ -5,12 +5,9 @@ import sys
 import pyknp
 import argparse
 import itertools
+from collections import defaultdict
 
 parser = argparse.ArgumentParser()
-
-# 位置引数
-#parser.add_argument('gold_input', nargs=1)
-#parser.add_argument('sys_input', nargs=1)
 
 # オプション引数
 parser.add_argument('--nbest', '-n', default=-1, type=int,
@@ -23,7 +20,6 @@ parser.add_argument('--color', '-c', action='store_true',
                     dest='hilight', help='Hilight higher rank morph')
 
 args = parser.parse_args()
-#opt = {'hinsi':(args.joint or args.spos), 'bunrui':args.spos, 'rank':args.nbest, 'available_rank': [str(x) for x in range(1,args.nbest+1)] }
 
 def iter_EOS(file):
     buf = []
@@ -76,6 +72,9 @@ def spec(span_list, span2morph):
             else:
                 yield(m.new_spec())
 
+# TODO: span の順番を短い順にするオプションを追加する(現在は長い順)
+# ex: 1-5, 1-8, 2-5, 2-3,....
+
 for index, string in enumerate(iter_EOS(sys.stdin)):
     try: 
         lattice = pyknp.BList(string, newstyle=True)
@@ -103,13 +102,18 @@ for index, string in enumerate(iter_EOS(sys.stdin)):
         # pos filter
         if args.pos:
             mlist = []
-            posset = {}
+            posmap = defaultdict(list)
+            basemap = set()
             for m in sort_by_rank(span2morph[sp]):
                 hinsi = m.hinsi
+                base = m.genkei
                 if(m.hinsi == "形容詞" and m.katuyou2 == "語幹"):
                     hinsi = "名詞"
-                if(hinsi not in posset or m.feature['ランク'] == posset[hinsi]):
-                    posset[hinsi] = m.feature['ランク']
+                if(hinsi not in posmap or 
+                        m.feature['ランク'] in posmap[hinsi] or 
+                        (base not in basemap and hinsi == "動詞")):
+                    posmap[hinsi].append(m.feature['ランク'])
+                    basemap.add(base)
                     mlist.append(m)
             span2morph[sp] = mlist
         # sort by mrph_id
