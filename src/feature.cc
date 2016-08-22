@@ -109,7 +109,7 @@ void FeatureSet::extract_unigram_feature(Node *node) { //{{{
             } else if (
                 *it ==
                 FEATURE_MACRO_LONGER) { // 辞書に登録されているよりも長い動的生成語彙(未知語,
-                                        // 数詞等)
+                // 数詞等)
                 if (debug_flag && node->longer)
                     feature_name << "+";
                 else
@@ -582,7 +582,7 @@ void FeatureSet::extract_trigram_feature(Node *l_node, Node *m_node,
             } else if (
                 *it ==
                 FEATURE_MACRO_LONGER) { // 辞書に登録されているよりも長い動的生成語彙(未知語,
-                                        // 数詞等)
+                // 数詞等)
                 fv.push_back(m_node->longer);
             } else if (
                 *it ==
@@ -663,11 +663,17 @@ bool FeatureSet::append_feature(FeatureSet *in) { //{{{
     return true;
 } //}}}
 
-// 廃止を検討中
+// 廃止
 double FeatureSet::calc_inner_product_with_weight() { //{{{
     if (!weight)
         return 0;
     return (*weight) * fvec;
+
+} //}}}
+
+double
+FeatureSet::calc_inner_product_with_weight(const FeatureVector &weight) { //{{{
+    return (weight)*fvec;
 
 } //}}}
 
@@ -762,6 +768,7 @@ bool FeatureSet::open_freq_word_set(const std::string &list_filename) { //{{{
     return true;
 } //}}}
 
+// 廃止 or 重みを明示的に与えるように変更
 std::string FeatureSet::str() { //{{{
     std::stringstream ss;
     std::vector<std::pair<std::string, double>> fpair;
@@ -948,7 +955,7 @@ unsigned int FeatureTemplate::interpret_macro(std::string &macro) { //{{{
 //
 ////// 接頭辞素性
 ////void feature_function_prefix(Node* l_node, Node* r_node,
-///FeatureTemplate::FTemp& fv, NodePosition position){/*{{{*/
+/// FeatureTemplate::FTemp& fv, NodePosition position){/*{{{*/
 ////    if(pos == LeftN){
 ////        if( *(l_node->pos) != "接頭辞"){
 ////            fv.push_back(1);
@@ -977,7 +984,7 @@ unsigned int FeatureTemplate::interpret_macro(std::string &macro) { //{{{
 ////
 ////// 接尾辞素性
 ////void feature_function_prefix(Node* m_node, Node*
-///r_node,FeatureTemplate::FTemp& fv, NodePosition position){/*{{{*/
+/// r_node,FeatureTemplate::FTemp& fv, NodePosition position){/*{{{*/
 ////    if(pos=RightN){
 ////        if(*(r_node->pos) != "接尾辞" ){
 ////            fv.push_back(1);

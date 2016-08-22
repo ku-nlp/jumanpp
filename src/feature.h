@@ -247,7 +247,7 @@ class FeatureTemplateSet { //{{{
 class FeatureSet { //{{{
     friend int ::main(int argc, char **argv);
     FeatureTemplateSet *ftmpl;
-    FeatureVector *weight;
+    FeatureVector *weight; // 廃止
 
   private:
     static std::unordered_map<long int, std::string>
@@ -263,7 +263,7 @@ class FeatureSet { //{{{
         tuple_hash, tuple_equal> freq_word_set;
 
     std::vector<std::string> fset;
-    FeatureVector fvec; //暫定
+    FeatureVector fvec; // 取り出したFeature
 
     FeatureSet(FeatureTemplateSet *in_ftmpl);
     FeatureSet(const FeatureSet &f) {
@@ -275,6 +275,7 @@ class FeatureSet { //{{{
     ~FeatureSet();
     void clear() { fset.clear(); };
     double calc_inner_product_with_weight();
+    double calc_inner_product_with_weight(const FeatureVector &weight);
     void extract_unigram_feature(Node *node);
     void extract_topic_feature(Node *node);
     void extract_bigram_feature(Node *l_node, Node *r_node);

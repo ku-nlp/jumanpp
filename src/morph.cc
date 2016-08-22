@@ -79,7 +79,7 @@ void option_proc(cmdline::parser &option, std::string model_path, int argc,
     option.add<std::string>("dict", 0, "dictionary filepath", false,
                             model_path + "/dic");
     option.add<std::string>("model", 0, "model filepath", false,
-                            model_path + "/model.mdl");
+                            model_path + "/weight.mdl");
     option.add<std::string>("rnnlm", 0, "RNNLM filepath", false,
                             model_path + "/lang.mdl");
     option.add<std::string>("feature", 0, "feature template filepath", false,
@@ -127,6 +127,7 @@ void option_proc(cmdline::parser &option, std::string model_path, int argc,
     option.add("partial", 0, "receive partially annotated text");
     option.add("static", 0, "static loading for RNNLM. (It may be faster than "
                             "default when you process large texts)");
+    option.add("static_mdl", 0, "static loading for model file.");
 
 #ifdef USE_DEV_OPTION
     // 開発用オプション
@@ -170,13 +171,13 @@ int main(int argc, char **argv) { //{{{
     // TODO: オプションの処理，初期化，解析を分離する
     std::string rnnlm_model_path = data_path + "/lang.mdl";
     std::string dict_path = data_path + "/dic";
-    std::string model_path = data_path + "/model.mdl";
+    std::string model_path = data_path + "/weight.mdl";
     std::string freq_word_list = data_path + "/freq_words.list";
     std::string feature_path = data_path + "/feature.def";
     if (option.exist("dir")) {
         rnnlm_model_path = option.get<std::string>("dir") + "/lang.mdl";
         dict_path = option.get<std::string>("dir") + "/dic";
-        model_path = option.get<std::string>("dir") + "/model.mdl";
+        model_path = option.get<std::string>("dir") + "/weight.mdl";
         freq_word_list = option.get<std::string>("dir") + "/freq_words.list";
         feature_path = option.get<std::string>("dir") + "/feature.def";
     }
@@ -273,6 +274,18 @@ int main(int argc, char **argv) { //{{{
     normal_param.set_nbest(true); // nbest を利用するよう設定
     normal_param.set_N(10);       // 10-best に設定
 
+    if (option.exist("static")) {
+        param.use_dynamic_loading = false;
+    } else {
+        param.use_dynamic_loading = true;
+    }
+
+    if (option.exist("static_mdl")) {
+        param.use_dynamic_loading = false;
+    } else {
+        param.use_dynamic_loading = true;
+    }
+
 // RNNLM の利用フラグ設定
 #ifdef USE_DEV_OPTION
     if (option.exist("userep"))
@@ -311,11 +324,10 @@ int main(int argc, char **argv) { //{{{
     Morph::Node::set_param(&param);
 
     RNNLM::CRnnLM *p_rnnlm;
-    if (option.exist("static")) {
-        p_rnnlm = new RNNLM::CRnnLM_stat();
-    } else {
+    if (option.exist("static") && param.use_dynamic_loading)
         p_rnnlm = new RNNLM::CRnnLM_dyn();
-    }
+    else
+        p_rnnlm = new RNNLM::CRnnLM_stat();
     p_rnnlm->setRnnLMFile(rnnlm_model_path.c_str());
 
     if (option.exist("rnndebug")) {

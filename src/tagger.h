@@ -20,19 +20,19 @@ class Tagger {
     bool unknown_word_detection;
     bool shuffle_training_data;
 
-    // lzma_stream lzma_;
-
-    FeatureVector weight;
-    FeatureVector weight_sum;
+    FeatureVector weight; // 本体
+    // FeatureVector weight_sum;
     SCWClassifier scw;
-    unsigned int num_of_sentences_processed = 0; // static?
-    unsigned int total_iteration_num = 0;
-    Umap feature_weight_sum;
+    // Umap feature_weight_sum; //使われていない
+
+    // unsigned int num_of_sentences_processed = 0; // 使用されていない
+    // unsigned int total_iteration_num = 0; // 使用されていない
+    // lzma_stream lzma_;
 
     Sentence *sentence; // current input sentence
 
     size_t iteration_num;
-    int sentences_for_train_num;
+    int sentences_for_train_num; //数えているだけで使っていない
     std::vector<Sentence *> sentences_for_train;
 
     std::vector<Node *>
@@ -40,8 +40,7 @@ class Tagger {
     std::vector<Node *>
         end_node_list; // position -> list of nodes that end at this pos
     bool write_tmp_model_file(int t);
-    // int online_learning(Sentence* gold, Sentence* system ); // learn と train
-    // があって紛らわしい...
+    // learn と train があって紛らわしい... > update とかに変更する
     int online_learning(Sentence *gold, Sentence *system, TopicVector *topic);
 
   public:
@@ -75,41 +74,41 @@ class Tagger {
     void clear_partial_gold_data(){};
 
     // write feature weights
-    bool write_model_file(const std::string &model_filename) {
-        std::cerr << "Error@write_model_file: not implemented" << std::endl;
-        return true;
-    }
     bool write_bin_model_file(const std::string &model_filename) {
-        std::ofstream model_out(model_filename.c_str(),std::ofstream::out | std::ofstream::binary);
+        std::ofstream model_out(model_filename.c_str(),
+                                std::ofstream::out | std::ofstream::binary);
         if (!model_out.is_open()) {
             cerr << ";; cannot open " << model_filename << " for writing"
                  << endl;
             return false;
         }
-        
+
         weight.serialize(model_out);
-        //for(auto val: weight){
-        //    model_out.write(val);
-        //}
-        //boost::archive::binary_oarchive oa(model_out);
-        //oa << weight;
         model_out.close();
         return true;
     }
     bool read_bin_model_file(const std::string &model_filename) {
-        std::ifstream model_in(model_filename.c_str(), std::ofstream::in | std::ofstream::binary);
+        std::ifstream model_in(model_filename.c_str(),
+                               std::ofstream::in | std::ofstream::binary);
         if (!model_in.is_open()) {
             cerr << ";; cannot open " << model_filename << " for reading"
                  << endl;
             return false;
         }
-        weight.deserialize(model_in);
-        //boost::archive::binary_iarchive ia(model_in);
-        //ia >> weight;
+        // TODO: mapがある場合，model は無くてもOKにする
+        if (param->use_dynamic_loading) {
+            weight.dynamic_deserialize(model_in, model_filename + ".map");
+        } else {
+            weight.deserialize(model_in);
+        }
         model_in.close();
         return true;
     }
 
+    bool write_model_file(const std::string &model_filename) {
+        std::cerr << "Error@write_model_file: not implemented" << std::endl;
+        return true;
+    }
     // read feature weights
     bool read_model_file(const std::string &model_filename) {
         std::cerr << "Error@read_model_file: not implemented" << std::endl;

@@ -71,18 +71,7 @@ int Tagger::online_learning(Sentence *gold, Sentence *system,
         }
     } else { //パーセプトロン
         std::cerr << "perceptron is not implemented. " << std::endl;
-        //        sentence->minus_feature_from_weight(weight.get_umap()); // -
-        //        prediction
-        //        gold->get_feature()->plus_feature_from_weight(weight.get_umap());
-        //        // + gold standard
-        //        if (WEIGHT_AVERAGED) { // for average
-        //            sentence->minus_feature_from_weight(weight_sum.get_umap(),
-        //            total_iteration_num); // - prediction
-        //            gold->get_feature()->plus_feature_from_weight(weight_sum.get_umap(),
-        //            total_iteration_num); // + gold standard
-        //        }
     }
-    ++total_iteration_num;
     return 0;
 } //}}}
 
@@ -156,14 +145,6 @@ bool Tagger::train(const std::string &gsd_file) { //{{{
              << endl;
         write_tmp_model_file(t);
     }
-
-    if (WEIGHT_AVERAGED && !param->use_scw) {
-        // 通常のモデルに書き出し
-        for (auto it = weight_sum.begin(); it != weight_sum.end(); it++) {
-            weight[it->first] -= it->second / total_iteration_num;
-        }
-    }
-
     clear_gold_data();
     return true;
 } //}}}

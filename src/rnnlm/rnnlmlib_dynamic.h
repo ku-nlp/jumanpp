@@ -92,8 +92,9 @@ class CRnnLM_dyn : public CRnnLM {
     typedef std::pair<const MmfString, int> VocabPair;
     typedef std::pair<unsigned long, int> hashPair;
 
-    typedef bip::allocator<VocabPair, bip::managed_mapped_file::segment_manager>
-        allocator_map;
+    // typedef bip::allocator<VocabPair,
+    // bip::managed_mapped_file::segment_manager>
+    //    allocator_map;
     typedef bip::allocator<hashPair, bip::managed_mapped_file::segment_manager>
         allocator_hmap;
 
@@ -236,7 +237,7 @@ class CRnnLM_dyn : public CRnnLM {
             free(neu1);
             free(neu2);
         }
-        // syn_** は直接開放しない(Memory mapped file内に確保したままにする)
+        // syn_** は開放しない(Memory mapped file内に確保したままにする)
         // if(mmfstr != nullptr){ delete(mmfstr);}
 
         // free Memory mapped file
@@ -311,10 +312,12 @@ class CRnnLM_dyn : public CRnnLM {
     void readWord(char *word, std::string *in_str);
     int readWordIndex(std::string *in_str);
 
-    void saveWeights(); // saves current weights and unit activations
+    void saveWeights();    // saves current weights and unit activations
     void restoreWeights(); // restores current weights and unit activations from
                            // backup copy
-    // void saveWeights2();		//allows 2. copy to be stored, useful for dynamic
+    // void saveWeights2();		//allows 2. copy to be stored, useful
+    // for
+    // dynamic
     // rescoring of nbest lists
     // void restoreWeights2();
     void saveContext();
