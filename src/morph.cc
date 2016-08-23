@@ -99,7 +99,7 @@ void option_proc(cmdline::parser &option, std::string model_path, int argc,
     // 出力形式のオプション
     option.add("juman", 'j', "print juman style (default)");
     option.add("morph", 'M', "print morph style");
-    option.add<unsigned int>("specifics", 'S', "output detailed format", false,
+    option.add<unsigned int>("specifics", 's', "output detailed format", false,
                              5);
     option.add("force-single-path", 0,
                "do not output ambiguous words on lattice");
