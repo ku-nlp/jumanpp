@@ -446,7 +446,7 @@ int main(int argc, char **argv) { //{{{
                 continue;
             }
 
-#if USE_DEV_OPTION
+#ifdef USE_DEV_OPTION
             // N-best の 表示数 自動決定
             if (option.exist("autoN")) {
                 Morph::U8string u8buffer(buffer);
@@ -468,33 +468,34 @@ int main(int argc, char **argv) { //{{{
             }
 
             if (option.exist("lattice")) {
-#if USE_DEV_OPTION
+#ifdef USE_DEV_OPTION
                 if (option.exist("oldstyle")) {
                     tagger.print_old_lattice();
                 } else {
 #endif
                     // 通常のNbestラティス
                     tagger.print_lattice_rbeam(param.L);
-#if USE_DEV_OPTION
+#ifdef USE_DEV_OPTION
                 }
             } else if (option.exist("Nmorph")) {
                 // N-best の Moprh形式出力
                 tagger.print_beam();
 #endif
             } else if (option.exist("morph")) {
-#if USE_DEV_OPTION
-                if (option.exist("printrep")) {
-                    tagger.print_best_beam_rep() else
+#ifdef USE_DEV_OPTION
+                if (option.exist("printrep"))
+                    tagger.print_best_beam_rep(); // 代表表記列を出力
+                else
 #endif
-                        tagger.print_best_beam(); // Morph出力
-                } else {
-                    // デフォルトのJUMAN形式の出力
-                    tagger.print_best_beam_juman();
-                }
-                tagger.sentence_clear();
+                    tagger.print_best_beam(); // Morph出力
+            } else {
+                // デフォルトのJUMAN形式の出力
+                tagger.print_best_beam_juman();
             }
-        } //}}}
-        return 0;
+            tagger.sentence_clear();
+        }
     } //}}}
+    return 0;
+} //}}}
 
 #endif
