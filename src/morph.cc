@@ -274,13 +274,7 @@ int main(int argc, char **argv) { //{{{
     normal_param.set_nbest(true); // nbest を利用するよう設定
     normal_param.set_N(10);       // 10-best に設定
 
-    if (option.exist("static")) {
-        param.use_dynamic_loading = false;
-    } else {
-        param.use_dynamic_loading = true;
-    }
-
-    if (option.exist("static_mdl")) {
+    if (option.exist("static_mdl") || option.exist("static")) {
         param.use_dynamic_loading = false;
     } else {
         param.use_dynamic_loading = true;
@@ -324,10 +318,10 @@ int main(int argc, char **argv) { //{{{
     Morph::Node::set_param(&param);
 
     RNNLM::CRnnLM *p_rnnlm;
-    if (option.exist("static") && param.use_dynamic_loading)
-        p_rnnlm = new RNNLM::CRnnLM_dyn();
-    else
+    if (option.exist("static"))
         p_rnnlm = new RNNLM::CRnnLM_stat();
+    else
+        p_rnnlm = new RNNLM::CRnnLM_dyn();
     p_rnnlm->setRnnLMFile(rnnlm_model_path.c_str());
 
     if (option.exist("rnndebug")) {
@@ -340,6 +334,7 @@ int main(int argc, char **argv) { //{{{
     if (param.lpenalty)
         p_rnnlm->setLweight(param.lweight);
     srand(1);
+
     Morph::Sentence::init_rnnlm_FR(p_rnnlm);
 
 #ifdef USE_SRILM /*{{{*/
@@ -377,6 +372,7 @@ int main(int argc, char **argv) { //{{{
     } else if (option.exist("gold-lattice")) {
         // GOLD のアノテーション通りに出力するモード
         tagger.read_bin_model_file(model_path);
+
         param.print_gold = true;
         tagger.output_gold_result(option.get<std::string>("gold-lattice"));
 #endif
