@@ -217,19 +217,10 @@ class Sentence { //{{{
         return;
     } //}}}
 
-    FeatureSet &get_best_feature() {             //{{{
-        Node *node = (*begin_node_list)[length]; // EOS
-        // if(node->bq.beam.size()> 0)
-        if (param->beam) {
-            generate_beam_feature();
-            return *beam_feature; //参照を返す
-            // return *node->bq.beam.front().f; //参照を返す
-        } else if (param->use_so)
-            return (*(*begin_node_list)[length + 1]->get_bigram_feature(
-                (*begin_node_list)[length]));
-        else
-            return *node->feature; // beam 探索していない場合
-    }                              //}}}
+    FeatureSet &get_best_feature() { //{{{
+        generate_beam_feature();
+        return *beam_feature; //参照を返す
+    }                         //}}}
 
     // ベストのパスのfeature を 文のfeature に移す
     FeatureSet *set_feature() { //{{{
@@ -318,7 +309,6 @@ class Sentence { //{{{
     void mark_nbest_rbeam(unsigned int nbest);
     Node *find_best_beam();
     double eval(Sentence &gold);
-    void print_juman_lattice(); // 互換性の為
     void print_unified_lattice();
     void print_unified_lattice_rbeam(unsigned int nbest);
     bool lookup_gold_data(std::string &word_pos_pair);

@@ -108,21 +108,6 @@ Node::~Node() { //{{{
         delete feature;
         feature = nullptr;
     }
-    // best_bigram
-    if (param->use_so) {
-        for (std::map<unsigned int, BigramInfo *>::iterator it =
-                 best_bigram.begin();
-             it != best_bigram.end(); it++) {
-            if ((*it).second->feature) {
-                delete (*it).second->feature;
-                (*it).second->feature = nullptr;
-            }
-            delete ((*it).second);
-            (*it).second = nullptr;
-        }
-    }
-    // if (token) //開放する必要無し
-    //    delete token;
 } //}}}
 
 void TokenWithState::init_feature(FeatureTemplateSet *ftmpl) { //{{{
@@ -215,7 +200,7 @@ bool Node::topic_available() { //{{{
                           // 名詞 6
                           *node->pos == "指示詞" || // 7
                           // 副詞 8
-                          *node->pos == "助詞" || // 9
+                          *node->pos == "助詞" ||   // 9
                           *node->pos == "接続詞" || // 10
                           *node->pos == "連体詞" || // 11
                           // 感動詞 12

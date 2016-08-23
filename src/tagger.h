@@ -58,7 +58,6 @@ class Tagger {
     void print_best_beam_rep() { sentence->print_best_beam_rep(); };
     void print_lattice();
     void print_lattice_rbeam(unsigned int nbest);
-    void print_old_lattice();
 
     bool train(const std::string &gsd_file);
     bool ptrain(const std::string &gsd_file);

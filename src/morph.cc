@@ -136,7 +136,6 @@ void option_proc(cmdline::parser &option, std::string model_path, int argc,
                             "output gold lattice (- means STDIN)", false,
                             "data/train.txt");
     option.add<unsigned int>("Nmorph", 'N', "print N-best Moprh", false, 5);
-    option.add("oldstyle", 0, "print JUMAN style lattice");
     option.add("autoN", 0, "automatically set N depending on sentence length");
     // option.add("typedloss", 0, "use loss function considering form type ");
     option.add("nornnlm", 0, "do not use RNNLM");
@@ -203,7 +202,21 @@ int main(int argc, char **argv) { //{{{
         dict_path, feature_path, option.get<unsigned int>("iteration"), true,
         option.exist("train"), unk_max_length, option.exist("debug"));
 
-    param.nbest = option.exist("lattice") || option.exist("specifics");
+#ifdef USE_DEV_OPTION
+    param.specifics = option.exist("specifics") || option.exist("lattice");
+#else
+    param.specifics = option.exist("specifics");
+#endif
+
+    if (option.exist("specifics")) {
+        param.L_max = option.get<unsigned int>("specifics");
+    } else {
+#ifdef USE_DEV_OPTION
+        if (option.exist("specifics")) {
+            param.L_max = option.get<unsigned int>("lattice");
+        }
+#endif
+    }
 
     // 訓練時のアウトプット用モデルパスの設定
     param.set_model_filename(option.get<std::string>("outputmodel"));
@@ -214,10 +227,6 @@ int main(int argc, char **argv) { //{{{
 
     if (param.debug)
         std::cerr << "initializing models ... " << std::flush;
-
-    // ビームサーチを用いるかどうか
-    param.set_beam(true);
-    param.set_N(5); //初期値
 
 #ifdef USE_DEV_OPTION
     if (option.exist("Nmorph")) {
@@ -231,16 +240,16 @@ int main(int argc, char **argv) { //{{{
     // 学習時のロス関数で 活用型を見る
     param.usetypedloss = true;
 
-    if (option.exist("lattice")) {
+    if (param.specifics) {
         // beam が設定されていたら，lattice のN は表示のみに使う
         if (option.exist("beam")) {
-            param.set_L(option.get<unsigned int>("lattice"));
+            param.set_L(param.L_max);
         } else { // 無ければラティスと同じ幅を指定
             // 指定されたビーム幅よりもラティスに使うN-best
             // が多ければ，ビーム幅を拡張する．
-            if (option.get<unsigned int>("lattice") > param.N)
-                param.set_N(option.get<unsigned int>("lattice"));
-            param.set_L(option.get<unsigned int>("lattice"));
+            if (param.L_max > param.N)
+                param.set_N(param.L_max);
+            param.set_L(param.L_max);
         }
     }
 
@@ -276,8 +285,7 @@ int main(int argc, char **argv) { //{{{
 
     // LDA用、廃止
     Morph::Parameter normal_param = param;
-    normal_param.set_nbest(true); // nbest を利用するよう設定
-    normal_param.set_N(10);       // 10-best に設定
+    normal_param.set_N(10); // 10-best に設定
 
     if (option.exist("static_mdl") || option.exist("static")) {
         param.use_dynamic_loading = false;
@@ -453,8 +461,8 @@ int main(int argc, char **argv) { //{{{
                 const size_t denom = 10;
                 const size_t length = u8buffer.char_size();
                 size_t autoN = length / denom;
-                if (autoN > option.get<unsigned int>("lattice"))
-                    autoN = option.get<unsigned int>("lattice");
+                if (autoN > param.L_max)
+                    autoN = param.L_max;
                 if (autoN < 1)
                     autoN = 1;
                 param.set_L(autoN);
@@ -467,16 +475,10 @@ int main(int argc, char **argv) { //{{{
                 tagger.new_sentence_analyze(buffer);
             }
 
-            if (option.exist("lattice")) {
+            if (param.specifics) {
+                // 通常のNbestラティス
+                tagger.print_lattice_rbeam(param.L);
 #ifdef USE_DEV_OPTION
-                if (option.exist("oldstyle")) {
-                    tagger.print_old_lattice();
-                } else {
-#endif
-                    // 通常のNbestラティス
-                    tagger.print_lattice_rbeam(param.L);
-#ifdef USE_DEV_OPTION
-                }
             } else if (option.exist("Nmorph")) {
                 // N-best の Moprh形式出力
                 tagger.print_beam();

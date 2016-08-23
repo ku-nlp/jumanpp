@@ -9,29 +9,21 @@ class Parameter {
     friend int main(int argc, char **argv);
 
   public:
-    bool unknown_word_detection;
     bool shuffle_training_data;
     bool debug = false;
     bool rnndebug = false;
     bool specifics = false; // 詳細(ラティス)出力
-    bool nbest;
-    bool beam;
-    bool trigram = true;
     bool rnnlm = false;
     bool print_gold = false;
-    bool nce = false;
     bool userep = false;
     bool usebase = false;
     bool usesurf = false;
     bool usepos = true;
     bool srilm;
-    bool useoldloss = false;
     bool usetypedloss = false;
     bool lpenalty = false;
     bool no_posmatch = true;
-    bool use_suu_rule = true;
-    bool use_lexical_feature = false;
-    bool use_rnnlm_as_feature = false;
+    bool use_rnnlm_as_feature = false; // dev
     bool use_dynamic_loading = true;
     double rweight;
     double lweight;
@@ -51,17 +43,21 @@ class Parameter {
     std::string reading_filename;
     std::string model_filename;
     std::string freq_word_list;
-    unsigned int N = 1;
+    unsigned int N = 5;
     unsigned int L = 1;
+    unsigned int L_max = 5;
     bool use_scw = false;
     bool passive_unknown = false;
     bool output_ambiguous_word = false;
     double c_value = 1.0;
     double phi_value = 1.0;
-    /* 廃止パラメタ ****************************************/
-    bool use_so; //廃止
-    bool use_total_sim = false;
-    unsigned int N_redundant; //もう使っていない
+    /* 廃止予定パラメタ ************************************/
+    bool trigram = true;
+    bool use_suu_rule = true;
+    bool use_lexical_feature = false;
+    bool nce = false;
+    bool useoldloss = false;
+    bool unknown_word_detection;
     /*******************************************************/
 
     std::vector<unsigned long> unk_pos;
@@ -73,7 +69,7 @@ class Parameter {
         if (n == 0)
             n = 1;
         N = n;
-        N_redundant = N + (unsigned int)(ceil(N * B_BEST_REDUNDANCY));
+        // N_redundant = N + (unsigned int)(ceil(N * B_BEST_REDUNDANCY));
         return 0;
     }
     int set_L(unsigned int l) {
@@ -84,17 +80,8 @@ class Parameter {
         L = l;
         return 0;
     }
-
-    int set_nbest(bool in_nb) {
-        nbest = in_nb;
-        return 0;
-    }
     int set_passive_unknown(bool in_pas_unk) {
         passive_unknown = in_pas_unk;
-        return 0;
-    }
-    int set_beam(bool in_beam) {
-        beam = in_beam;
         return 0;
     }
     int set_rnnlm(bool in_rnnlm) {
@@ -125,11 +112,9 @@ class Parameter {
 
     void set_output_ambigous_word(bool b) { output_ambiguous_word = b; }
     void set_use_scw(bool scw) { use_scw = scw; }
-    void set_so(bool in_so) { use_so = in_so; }
     void set_trigram(bool tri) { trigram = tri; }
     void set_C(double in_c) { c_value = in_c; }
     void set_Phi(double in_phi) { phi_value = in_phi; }
-    void set_use_total_sim() { use_total_sim = true; }
     void set_model_filename(std::string filename) { model_filename = filename; }
 
     Parameter(const std::string &in_dic_filename,
@@ -154,7 +139,7 @@ class Parameter {
         unk_max_length = in_unk_max_length;
         debug = in_debug;
 
-        N_redundant = N + (unsigned int)(ceil(N * B_BEST_REDUNDANCY));
+        // N_redundant = N + (unsigned int)(ceil(N * B_BEST_REDUNDANCY));
     }
 };
 }

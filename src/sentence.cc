@@ -35,7 +35,6 @@ std::string EOS_STRING = EOS;
 std::shared_ptr<RNNLM::context> Sentence::initial_context;
 RNNLM::CRnnLM *Sentence::rnnlm;
 
-
 #ifdef USE_SRILM
 Ngram *Sentence::srilm;
 Vocab *Sentence::vocab;
@@ -975,111 +974,6 @@ bool Sentence::analyze() { //{{{
     return true;
 } //}}}
 
-// 互換性のための旧フォーマットの出力
-void Sentence::print_juman_lattice() { //{{{
-
-    mark_nbest();
-
-    unsigned int char_num = 0;
-    int id = 1;
-    // 2 0 0 1 部屋 へや 部屋 名詞 6 普通名詞 1 * 0 * 0 “代表表記:部屋/へや
-    // カテゴリ:場所-施設 …"
-    // 15 2 2 2 に に に 助詞 9 格助詞 1 * 0 * 0 NIL
-    // ID IDs_connecting_from index_begin index_end ...
-
-    std::vector<std::vector<int>> num2id(length + 1); //多めに保持する
-    // cout << "len:" << length << endl;
-    for (unsigned int pos = 0; pos < length;
-         pos += utf8_bytes((unsigned char *)(sentence_c_str + pos))) {
-        Node *node = (*begin_node_list)[pos];
-
-        while (node) {
-            size_t word_length = node->char_num;
-            // cout << "pos:" << pos << " wordlen:" << word_length << endl;
-            // ID の表示
-            if (node->used_in_nbest) { // n-best解に使われているもののみ
-                cout << id << " ";
-                // 接続先
-                num2id[char_num + word_length].push_back(id++);
-                if (num2id[char_num].size() == 0) { // 無かったら 0 を出す
-                    cout << "0";
-                } else {
-                    std::string sep = "";
-                    for (auto to_id : num2id[char_num]) {
-                        cout << sep << to_id;
-                        sep = ";";
-                    }
-                }
-                cout << " ";
-                // 文字index の表示
-                cout << char_num << " " << char_num + word_length - 1 << " ";
-
-                // 表層 よみ 原形
-                if (*node->reading == "*") { //読み不明であれば表層を使う
-                    cout << *node->original_surface << " "
-                         << *node->original_surface << " "
-                         << *node->original_surface << " ";
-                } else {
-                    cout << *node->original_surface << " " << *node->reading
-                         << " " << *node->base << " ";
-                }
-                if (*node->spos == UNK_POS) {
-                    // 品詞 品詞id
-                    cout << "未定義語"
-                         << " " << Dic::pos_map.at("未定義語") << " ";
-                    // 細分類 細分類id
-                    cout << "その他 " << Dic::spos_map.at("その他") << " ";
-                } else {
-                    // 品詞 品詞id
-                    cout << *node->pos << " " << Dic::pos_map.at(*node->pos)
-                         << " ";
-                    // 細分類 細分類id
-                    cout << *node->spos << " " << Dic::spos_map.at(*node->spos)
-                         << " ";
-                }
-                // 活用型 活用型id
-                cout << *node->form_type << " "
-                     << Dic::katuyou_type_map.at(*node->form_type) << " ";
-                // 活用系 活用系id
-                auto type_and_form = (*node->form_type + ":" + *node->form);
-                if (Dic::katuyou_form_map.count(type_and_form) == 0) //無い場合
-                    cout << *node->form << " " << 0 << " ";
-                else
-                    cout << *node->form << " "
-                         << Dic::katuyou_form_map.at(type_and_form) << " ";
-
-                // 意味情報を再構築して表示
-                if (*node->representation != "*" ||
-                    *node->semantic_feature != "NIL" ||
-                    *node->spos == UNK_POS) {
-                    std::string delim = "";
-                    cout << '"';
-                    if (*node->representation != "*") {
-                        cout << "代表表記:"
-                             << *node->representation; //*ならスキップ
-                        delim = " ";
-                    }
-                    if (*node->semantic_feature != "NIL") {
-                        cout << delim << *node->semantic_feature; // NILならNIL
-                        delim = " ";
-                    }
-                    if (*node->spos == UNK_POS) {
-                        cout << delim << "品詞推定:" << *node->pos << ":"
-                             << *node->spos;
-                        delim = " ";
-                    }
-                    cout << '"' << endl;
-                } else {
-                    cout << "NIL" << endl;
-                }
-            }
-            node = node->bnext;
-        }
-        char_num++;
-    }
-    cout << "EOS" << endl;
-} //}}}
-
 // unified lattice の行出力を生成
 void Sentence::generate_unified_lattice_line(
     Node *node, std::stringstream &ss, std::vector<std::vector<int>> &num2id,
@@ -1455,9 +1349,6 @@ Node *Sentence::get_eos_node() { //{{{
     eos_node->form_type = &(EOS_STRING);
     eos_node->base = &(EOS_STRING);
     eos_node->representation = &(EOS_STRING);
-
-    if (!param->use_so) // so では eos のid が必要になるため
-        eos_node->id = -1;
 
     FeatureSet *f = new FeatureSet(ftmpl);
     f->extract_unigram_feature(eos_node);
@@ -2034,87 +1925,91 @@ void Sentence::print_best_beam_juman() { //{{{
 
 // ラティス出力する時のためにn-best に含まれる形態素をマーキングする
 // 廃止予定
-void Sentence::mark_nbest() { //{{{
-    unsigned int traceSize_original =
-        (*begin_node_list)[length]->traceList.size();
-    unsigned int traceSize = (*begin_node_list)[length]->traceList.size();
-    if (traceSize > param->N_redundant) {
-        traceSize = param->N_redundant;
-    }
-
-    // 近いスコアの場合をまとめるために，整数に丸める
-    double last_score = DBL_MAX;
-    long sample_num = 0;
-    unsigned int i = 0;
-
-    while (i < traceSize_original) {
-        Node *node = (*begin_node_list)[length];
-        std::vector<Node *> result_morphs;
-        bool find_bos_node = false;
-        int traceRank = i;
-
-        // Node* temp_node = NULL;
-        double output_score = (*begin_node_list)[length]->traceList.at(i).score;
-        if (last_score > output_score)
-            sample_num++; // 同スコアの場合は数に数えず，N-bestに出力
-        if (sample_num > param->N || i > param->N * 5)
-            break;
-
-        while (node) {
-            result_morphs.push_back(node);
-
-            if (node->traceList.size() == 0) {
-                break;
-            }
-            node = node->traceList.at(traceRank).prevNode;
-            if (node->stat == MORPH_BOS_NODE) {
-                find_bos_node = true;
-                break;
-            } else {
-                traceRank = result_morphs.back()->traceList.at(traceRank).rank;
-            }
-        }
-
-        if (!find_bos_node) {
-            cerr << ";; cannot analyze:" << sentence << endl;
-        }
-
-        // size_t printed_num = 0;
-        unsigned long byte_pos = 0;
-        // 後ろから追加しているので、元の順にするために逆向き
-        for (std::vector<Node *>::reverse_iterator it = result_morphs.rbegin();
-             it != result_morphs.rend(); it++) {
-            if ((*it)->stat != MORPH_BOS_NODE &&
-                (*it)->stat != MORPH_EOS_NODE) {
-                (*it)->used_in_nbest =
-                    true; // Nodeにnbestに入っているかをマークする
-
-                if (output_ambiguous_word) {
-                    auto tmp = (*begin_node_list)[byte_pos];
-                    while (
-                        tmp) { //同じ長さ(同じ表層)で同じ表層のものをすべて出力する
-                        if (tmp->length == (*it)->length &&
-                            tmp->posid == (*it)->posid &&
-                            tmp->sposid == (*it)->sposid &&
-                            tmp->baseid == (*it)->baseid &&
-                            tmp->formid == (*it)->formid &&
-                            tmp->formtypeid == (*it)->formtypeid &&
-                            (tmp->stat & MORPH_DEVOICE_NODE) ==
-                                ((*it)->stat &
-                                 MORPH_DEVOICE_NODE) // 濁音化の有無も一致
-                            ) {
-                            tmp->used_in_nbest = true;
-                        }
-                        tmp = tmp->bnext;
-                    }
-                }
-                byte_pos += (*it)->length;
-            }
-        }
-        i++;
-        last_score = output_score;
-    }
-} //}}}
+// void Sentence::mark_nbest() { //{{{
+//    unsigned int traceSize_original =
+//        (*begin_node_list)[length]->traceList.size();
+//    unsigned int traceSize = (*begin_node_list)[length]->traceList.size();
+//    if (traceSize > param->N_redundant) {
+//        traceSize = param->N_redundant;
+//    }
+//
+//    // 近いスコアの場合をまとめるために，整数に丸める
+//    double last_score = DBL_MAX;
+//    long sample_num = 0;
+//    unsigned int i = 0;
+//
+//    while (i < traceSize_original) {
+//        Node *node = (*begin_node_list)[length];
+//        std::vector<Node *> result_morphs;
+//        bool find_bos_node = false;
+//        int traceRank = i;
+//
+//        // Node* temp_node = NULL;
+//        double output_score =
+//        (*begin_node_list)[length]->traceList.at(i).score;
+//        if (last_score > output_score)
+//            sample_num++; // 同スコアの場合は数に数えず，N-bestに出力
+//        if (sample_num > param->N || i > param->N * 5)
+//            break;
+//
+//        while (node) {
+//            result_morphs.push_back(node);
+//
+//            if (node->traceList.size() == 0) {
+//                break;
+//            }
+//            node = node->traceList.at(traceRank).prevNode;
+//            if (node->stat == MORPH_BOS_NODE) {
+//                find_bos_node = true;
+//                break;
+//            } else {
+//                traceRank =
+//                result_morphs.back()->traceList.at(traceRank).rank;
+//            }
+//        }
+//
+//        if (!find_bos_node) {
+//            cerr << ";; cannot analyze:" << sentence << endl;
+//        }
+//
+//        // size_t printed_num = 0;
+//        unsigned long byte_pos = 0;
+//        // 後ろから追加しているので、元の順にするために逆向き
+//        for (std::vector<Node *>::reverse_iterator it =
+//        result_morphs.rbegin();
+//             it != result_morphs.rend(); it++) {
+//            if ((*it)->stat != MORPH_BOS_NODE &&
+//                (*it)->stat != MORPH_EOS_NODE) {
+//                (*it)->used_in_nbest =
+//                    true; // Nodeにnbestに入っているかをマークする
+//
+//                if (output_ambiguous_word) {
+//                    auto tmp = (*begin_node_list)[byte_pos];
+//                    while (
+//                        tmp) {
+//                        //同じ長さ(同じ表層)で同じ表層のものをすべて出力する
+//                        if (tmp->length == (*it)->length &&
+//                            tmp->posid == (*it)->posid &&
+//                            tmp->sposid == (*it)->sposid &&
+//                            tmp->baseid == (*it)->baseid &&
+//                            tmp->formid == (*it)->formid &&
+//                            tmp->formtypeid == (*it)->formtypeid &&
+//                            (tmp->stat & MORPH_DEVOICE_NODE) ==
+//                                ((*it)->stat &
+//                                 MORPH_DEVOICE_NODE) // 濁音化の有無も一致
+//                            ) {
+//                            tmp->used_in_nbest = true;
+//                        }
+//                        tmp = tmp->bnext;
+//                    }
+//                }
+//                byte_pos += (*it)->length;
+//            }
+//        }
+//        i++;
+//        last_score = output_score;
+//    }
+//} //}}}
 
 void Sentence::mark_nbest_rbeam(unsigned int nbest) { //{{{
     auto &beam = (*begin_node_list)[length]->bq.beam;
