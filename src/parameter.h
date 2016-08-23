@@ -13,9 +13,9 @@ class Parameter {
     bool shuffle_training_data;
     bool debug = false;
     bool rnndebug = false;
+    bool specifics = false; // 詳細(ラティス)出力
     bool nbest;
     bool beam;
-    bool use_so;
     bool trigram = true;
     bool rnnlm = false;
     bool print_gold = false;
@@ -55,11 +55,14 @@ class Parameter {
     unsigned int L = 1;
     bool use_scw = false;
     bool passive_unknown = false;
-    unsigned int N_redundant; //もう使っていない
     bool output_ambiguous_word = false;
     double c_value = 1.0;
     double phi_value = 1.0;
+    /* 廃止パラメタ ****************************************/
+    bool use_so; //廃止
     bool use_total_sim = false;
+    unsigned int N_redundant; //もう使っていない
+    /*******************************************************/
 
     std::vector<unsigned long> unk_pos;
     std::vector<unsigned long> unk_figure_pos;
@@ -133,8 +136,7 @@ class Parameter {
               const std::string &in_ftmpl_filename, const int in_iteration_num,
               const bool in_unknown_word_detection,
               const bool in_shuffle_training_data,
-              const unsigned int in_unk_max_length, const bool in_debug,
-              const bool in_nbest) {
+              const unsigned int in_unk_max_length, const bool in_debug) {
         darts_filename = in_dic_filename + ".da";
         dic_filename = in_dic_filename + ".bin";
         pos_filename = in_dic_filename + ".pos";
@@ -151,7 +153,6 @@ class Parameter {
         shuffle_training_data = in_shuffle_training_data;
         unk_max_length = in_unk_max_length;
         debug = in_debug;
-        nbest = in_nbest;
 
         N_redundant = N + (unsigned int)(ceil(N * B_BEST_REDUNDANCY));
     }

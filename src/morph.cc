@@ -99,7 +99,8 @@ void option_proc(cmdline::parser &option, std::string model_path, int argc,
     // 出力形式のオプション
     option.add("juman", 'j', "print juman style (default)");
     option.add("morph", 'M', "print morph style");
-    option.add<unsigned int>("lattice", 'L', "output lattice format", false, 5);
+    option.add<unsigned int>("specifics", 'S', "output detailed format", false,
+                             5);
     option.add("force-single-path", 0,
                "do not output ambiguous words on lattice");
 
@@ -141,6 +142,9 @@ void option_proc(cmdline::parser &option, std::string model_path, int argc,
     option.add("nornnlm", 0, "do not use RNNLM");
     option.add("dynamic", 0,
                "Obsoleted. (It remains only for backward compatibility.)");
+    option.add<unsigned int>(
+        "lattice", 'L', "output detailed format (for backward compatibility)",
+        false, 5);
     option.add("rnnasfeature", 0, "use rnnlm score as feature (dev)");
     option.add("userep", 0, "use rep in rnnlm (dev)");
     option.add("usebase", 0, "use rep in rnnlm (dev,default)");
@@ -195,10 +199,11 @@ int main(int argc, char **argv) { //{{{
 
     unsigned int unk_max_length = 2; // 固定
 
-    Morph::Parameter param(dict_path, feature_path,
-                           option.get<unsigned int>("iteration"), true,
-                           option.exist("train"), unk_max_length,
-                           option.exist("debug"), option.exist("lattice"));
+    Morph::Parameter param(
+        dict_path, feature_path, option.get<unsigned int>("iteration"), true,
+        option.exist("train"), unk_max_length, option.exist("debug"));
+
+    param.nbest = option.exist("lattice") || option.exist("specifics");
 
     // 訓練時のアウトプット用モデルパスの設定
     param.set_model_filename(option.get<std::string>("outputmodel"));
