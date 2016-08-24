@@ -607,7 +607,7 @@ Node *Dic::make_specified_pseudo_node_by_dic_check(
                    ustart_str.is_figure_exception(char_num) &&
                    !ustart_str.is_suuji_digit(char_num - 1)) {
             // std::cerr << ustart_str.str() << std::endl;
-            // 十数人，などへの対応 , TODO: 十余名
+            // 十数人，などへの対応 , TODO?: 十余名
             // 十や百など，桁の次に"数"や"何"
             // が出てきた場合には，ひとかたまりの数詞として扱う
             break;

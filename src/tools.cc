@@ -1,5 +1,7 @@
 #include "common.h"
 
+// TODO: 廃止
+
 namespace Morph {
 
 // return the bytes of a char
