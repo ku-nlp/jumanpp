@@ -63,10 +63,10 @@ class TokenWithState { //{{{
   public:
     explicit TokenWithState(){};
     TokenWithState(const TokenWithState &tmp) { //{{{
-        if (tmp.f.get() != nullptr){
+        if (tmp.f.get() != nullptr) {
             f = std::unique_ptr<FeatureSet>(new FeatureSet(*tmp.f));
-            //f = std::make_unique<FeatureSet>(*(tmp.f)); //C++14 or later
-        }    
+            // f = std::make_unique<FeatureSet>(*(tmp.f)); //C++14 or later
+        }
         score = tmp.score;
         word_score = tmp.word_score;
         context_score = tmp.context_score;
@@ -75,9 +75,9 @@ class TokenWithState { //{{{
         node_history = tmp.node_history;
     };                                                     //}}}
     TokenWithState &operator=(const TokenWithState &tmp) { //{{{
-        if (tmp.f.get() != nullptr){
+        if (tmp.f.get() != nullptr) {
             f = std::unique_ptr<FeatureSet>(new FeatureSet(*tmp.f));
-            //f = std::make_unique<FeatureSet>(*(tmp.f)); //C++14 or later
+            // f = std::make_unique<FeatureSet>(*(tmp.f)); //C++14 or later
         }
         score = tmp.score;
         word_score = tmp.word_score;
@@ -103,7 +103,7 @@ class TokenWithState { //{{{
         node_history = prev_token.node_history; // copy
         node_history.emplace_back(current_node);
         f = std::unique_ptr<FeatureSet>(new FeatureSet(*(prev_token.f)));
-        //f = std::make_unique<FeatureSet>(*(prev_token.f)); 
+        // f = std::make_unique<FeatureSet>(*(prev_token.f));
     };
 }; //}}}
 
@@ -137,12 +137,14 @@ class BeamQue { //{{{
             return;
         } else if (beam.size() == beam_width) { //最小のものを置き換えて再ソート
             beam.back() = (tok);
-            std::sort(beam.begin(), beam.end(), [](const TokenWithState& x, const TokenWithState& y) {
+            std::sort(beam.begin(), beam.end(), [](const TokenWithState &x,
+                                                   const TokenWithState &y) {
                 return x.score + x.context_score > y.score + y.context_score;
             });
         } else { //追加してリサイズ
             beam.emplace_back((tok));
-            std::sort(beam.begin(), beam.end(), [](const TokenWithState& x, const TokenWithState& y) {
+            std::sort(beam.begin(), beam.end(), [](const TokenWithState &x,
+                                                   const TokenWithState &y) {
                 return x.score + x.context_score > y.score + y.context_score;
             });
             if (beam.size() > beam_width)
@@ -263,6 +265,8 @@ class Node { //{{{
     // MORPH_EOS_NODE 0x0004
     // MORPH_PSEUDO_NODE 0x0008
     // MORPH_UNK_NODE 0x0010
+    unsigned int normalize_stat = 0;
+
     bool used_in_nbest = false;
     bool longer = false;
     bool suuji = false;
@@ -315,7 +319,7 @@ class NbestSearchToken { //{{{
   public:
     double score = 0;
     Node *prevNode = nullptr; // access to previous trace-list
-    int rank = 0; // specify an element in previous trace-list
+    int rank = 0;             // specify an element in previous trace-list
 
     NbestSearchToken(Node *pN) { prevNode = pN; };
 

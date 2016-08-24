@@ -401,6 +401,8 @@ class Sentence { //{{{
         else
             return U8string::character_length(*(r_node->base));
     } /*}}}*/
+  private:
+    void generate_imis(Node *node, std::stringstream &output_string_buffer);
 
 }; //}}}
 }

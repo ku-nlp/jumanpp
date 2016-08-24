@@ -166,10 +166,10 @@ CharLattice::da_search_one_step(Darts::DoubleArray &da, int left_position,
                         right_char_node.da_node_pos.push_back(
                             left_char_node.da_node_pos[i]);
                         size_t tmp = 0;
-                        int status = da.traverse(
-                            "", left_char_node.da_node_pos[i],
-                            tmp); // left_char_node.da_node_pos[i]
-                                  // の位置にあるものをそのまま読み込む
+                        int status =
+                            da.traverse("", left_char_node.da_node_pos[i],
+                                        tmp); // left_char_node.da_node_pos[i]
+                        // の位置にあるものをそのまま読み込む
 
                         if (status >
                             0) { /* マッチしたら結果に登録するとともに、次回のノード開始位置とする
@@ -290,7 +290,7 @@ CharLattice::da_search_from_position(Darts::DoubleArray &da,
     auto tokens_one_char = da_search_one_step(da, -1, position);
     for (auto &pair : tokens_one_char) { //一文字のノード
         std::get<1>(pair) = byte; // マッチした表層のバイト数,
-                                  // マッチした辞書の情報は取り出していない.
+        // マッチした辞書の情報は取り出していない.
         result.push_back(pair);
     }
     for (size_t i = position + 1; i < node_list.size(); i++) { // 二文字

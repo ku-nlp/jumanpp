@@ -286,6 +286,14 @@ Node *Dic::lookup_lattice(
                 }
             }
 
+            // 長音挿入，小書きなど非標準の表記をしている形態素に意味情報を追加
+            if (get_stat(result_pair[i]) &
+                (OPT_PROLONG_DEL_LAST | OPT_PROLONG_DEL | OPT_NORMALIZE |
+                 OPT_PROLONG_REPLACE)) {
+
+                new_node->normalize_stat = OPT_NORMALIZE;
+            }
+
             new_node->original_surface =
                 new std::string(start_str, new_node->length);
             new_node->string_for_print =

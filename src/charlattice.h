@@ -9,12 +9,13 @@
 
 /* 定数 */
 #define STOP_MRPH_WEIGHT 255 /* このWeigthのときは形態素候補から除く */
-#define OPT_NORMAL 1
-#define OPT_NORMALIZE 2
-#define OPT_DEVOICE 4
-#define OPT_PROLONG_DEL 8
-#define OPT_PROLONG_REPLACE 16
-#define OPT_PROLONG_DEL_LAST 32
+#define OPT_NORMAL 0x0001
+#define OPT_NORMALIZE 0x0002
+#define OPT_DEVOICE 0x0004
+#define OPT_PROLONG_DEL 0x0008
+#define OPT_PROLONG_REPLACE 0x0010
+#define OPT_PROLONG_DEL_LAST 0x0020
+
 #define NORMALIZED_LENGTH 8 /* 非正規表記の処理で考慮する最大形態素長 */
 
 #define BYTES4CHAR 3 /* UTF-8 (usually) */
@@ -53,7 +54,7 @@ class CharNode { //{{{
             return;
         str.copy(
             chr,
-            str_size); //一文字でない場合に例外を返せないので，コンストラクタで作るべきではない？
+            str_size);        //一文字でない場合に例外を返せないので，コンストラクタで作るべきではない？
         chr[str_size] = '\0'; // copy はnull文字を付け加えない
     };
 }; //}}}
