@@ -115,9 +115,10 @@ extern size_t is_suuji(unsigned char *ucp);
 #define TYPE_KANJI_FIGURE 2048
 #define TYPE_SLASH 4096
 #define TYPE_COLON 8192
-#define TYPE_ERA 16384                //㍻
-#define TYPE_CHOON 0x00008000;        // ー, 〜
-#define TYPE_HANKAKU_KANA 0x00010000; // 半角カタカナ
+#define TYPE_ERA 16384               //㍻，㍼など
+#define TYPE_CHOON 0x00008000        // ー, 〜
+#define TYPE_HANKAKU_KANA 0x00010000 // 半角カタカナ
+#define TYPE_FIGURE_EXCEPTION 0x00020000
 
 //#define TYPE_FAMILY_FIGURE	14392 // TYPE_FIGURE + TYPE_PERIOD +
 // TYPE_MIDDLE_DOT + TYPE_KANJI_FIGURE + TYPE_SLASH + TYPE_COLON
@@ -202,6 +203,11 @@ inline std::string double2string(double d) {
     std::snprintf(buf, 5, "%.4f", d);
     return std::string(buf);
 }
+
+inline std::string version() { //{{{
+    std::string buf = " JUMAN++:";
+    return (buf + VERSION + "(" + GITVER + ")");
+} //}}}
 }
 
 #endif

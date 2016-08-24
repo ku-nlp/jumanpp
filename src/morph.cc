@@ -95,6 +95,10 @@ void option_proc(cmdline::parser &option, std::string model_path, int argc,
 
     // 解析方式の指定オプション
     option.add<unsigned int>("beam", 'B', "set beam width", false, 5);
+    option.add("partial", 0, "receive partially annotated text");
+    option.add("static", 0, "static loading for RNNLM. (It may be faster than "
+                            "default when you process large texts)");
+    option.add("static_mdl", 0, "static loading for model file.");
 
     // 出力形式のオプション
     option.add("juman", 'j', "print juman style (default)");
@@ -125,10 +129,6 @@ void option_proc(cmdline::parser &option, std::string model_path, int argc,
     // デバッグオプション
     option.add("debug", '\0', "debug mode");
     option.add("rnndebug", '\0', "show rnnlm debug message");
-    option.add("partial", 0, "receive partially annotated text");
-    option.add("static", 0, "static loading for RNNLM. (It may be faster than "
-                            "default when you process large texts)");
-    option.add("static_mdl", 0, "static loading for model file.");
 
 #ifdef USE_DEV_OPTION
     // 開発用オプション
@@ -162,6 +162,42 @@ void option_proc(cmdline::parser &option, std::string model_path, int argc,
     if (option.exist("train")) { //{{{
         MODE_TRAIN = true;
     } //}}}
+} //}}}
+
+void parse_dynamic_command(std::string buffer, Morph::Parameter &param) { //{{{
+    std::size_t arg_pos;
+    // input:
+    // ##JUMAN++<tab>command arg
+    // ##JUMAN++<tab>setL 5
+
+    std::string command = "set-lattice";
+    if ((arg_pos = buffer.find(command)) != std::string::npos) {
+        arg_pos = buffer.find_first_of(" \t", arg_pos + command.length());
+        long val = std::stol(buffer.substr(arg_pos));
+        param.set_L(val);
+        std::cout << "##JUMAN++\t" << command << " " << val << std::endl;
+    }
+
+    command = "set-beam";
+    if ((arg_pos = buffer.find(command)) != std::string::npos) {
+        arg_pos = buffer.find_first_of(" \t", arg_pos + command.length());
+        long val = std::stol(buffer.substr(arg_pos));
+        param.set_N(val);
+        std::cout << "##JUMAN++\t" << command << " " << val << std::endl;
+    }
+
+    command = "unset-force-single-path";
+    if ((arg_pos = buffer.find(command)) != std::string::npos) {
+        param.set_output_ambigous_word(true);
+        std::cout << "##JUMAN++\t" << command << " " << std::endl;
+    }
+
+    command = "set-force-single-path";
+    if ((arg_pos = buffer.find(command)) != std::string::npos) {
+        param.set_output_ambigous_word(false);
+        std::cout << "##JUMAN++\t" << command << " " << std::endl;
+    }
+    return;
 } //}}}
 
 #ifndef KKN_UNIT_TEST
@@ -210,13 +246,14 @@ int main(int argc, char **argv) { //{{{
 
     if (option.exist("specifics")) {
         param.L_max = option.get<unsigned int>("specifics");
-    } else {
+    }
 #ifdef USE_DEV_OPTION
+    else {
         if (option.exist("specifics")) {
             param.L_max = option.get<unsigned int>("lattice");
         }
-#endif
     }
+#endif
 
     // 訓練時のアウトプット用モデルパスの設定
     param.set_model_filename(option.get<std::string>("outputmodel"));
@@ -355,23 +392,17 @@ int main(int argc, char **argv) { //{{{
     Ngram *ngramLM;
     if (option.exist("srilm")) { //
         vocab = new Vocab;
-        vocab->unkIsWord() = true; // use unknown <unk>
-        // File file(vocabFile, "r"); // vocabFile
-        // vocab->read(file); //オプションでは指定してない
-        ngramLM = new Ngram(*vocab, 3); // order = 3,or 4?
+        vocab->unkIsWord() = true;
+        ngramLM = new Ngram(*vocab, 3);
 
-        std::string lmfile =
-            option.get<std::string>("srilm"); // "./srilm.vocab";
-        // SRILM::
-        File file(lmfile.c_str(), "r"); //
-        bool limitVocab = false;        //?
+        std::string lmfile = option.get<std::string>("srilm");
+        File file(lmfile.c_str(), "r");
+        bool limitVocab = false;
 
         if (!ngramLM->read(file, limitVocab)) {
             cerr << "format error in lm file " << lmfile << endl;
             exit(1);
         }
-        // ngramLM->skipOOVs() = true;
-        // ngramLM->linearPenalty() = true; // 未知語のスコアの付け方を変更
 
         Morph::Sentence::init_srilm(ngramLM, vocab);
     }
@@ -397,59 +428,20 @@ int main(int argc, char **argv) { //{{{
         std::string buffer;
         while (getline(is ? is : cin, buffer)) {
             if (buffer.length() < 1) { // empty line
-                std::cout << buffer << std::endl;
+                std::cout << std::endl;
                 continue;
             } else if (buffer.at(0) == '#') {
                 if (buffer.length() <= 1) {
-                    std::cout << buffer << " JUMAN++:" << VERSION << "("
-                              << GITVER << ")" << std::endl;
+                    std::cout << buffer << Morph::version() << std::endl;
                     continue;
                 }
 
-                // 動的コマンドの処理
                 std::size_t pos;
                 if ((pos = buffer.find("##JUMAN++\t")) != std::string::npos) {
-                    std::size_t arg_pos;
-                    // input:
-                    // ##JUMAN++<tab>command arg
-                    // ##JUMAN++<tab>setL 5
-
-                    std::string command = "set-lattice";
-                    if ((arg_pos = buffer.find(command)) != std::string::npos) {
-                        arg_pos = buffer.find_first_of(
-                            " \t", arg_pos + command.length());
-                        long val = std::stol(buffer.substr(arg_pos));
-                        param.set_L(val);
-                        std::cout << "##JUMAN++\t" << command << " " << val
-                                  << std::endl;
-                    }
-
-                    command = "set-beam";
-                    if ((arg_pos = buffer.find(command)) != std::string::npos) {
-                        arg_pos = buffer.find_first_of(
-                            " \t", arg_pos + command.length());
-                        long val = std::stol(buffer.substr(arg_pos));
-                        param.set_N(val);
-                        std::cout << "##JUMAN++\t" << command << " " << val
-                                  << std::endl;
-                    }
-
-                    command = "unset-force-single-path";
-                    if ((arg_pos = buffer.find(command)) != std::string::npos) {
-                        param.set_output_ambigous_word(true);
-                        std::cout << "##JUMAN++\t" << command << " "
-                                  << std::endl;
-                    }
-
-                    command = "set-force-single-path";
-                    if ((arg_pos = buffer.find(command)) != std::string::npos) {
-                        param.set_output_ambigous_word(false);
-                        std::cout << "##JUMAN++\t" << command << " "
-                                  << std::endl;
-                    }
-                } else { // S-ID の処理
-                    std::cout << buffer << " JUMAN++:" << VERSION << "("
-                              << GITVER << ")" << std::endl;
+                    // 動的コマンドの処理
+                    parse_dynamic_command(buffer, param);
+                } else { // コメント，S-ID の処理
+                    std::cout << buffer << Morph::version() << std::endl;
                 }
                 continue;
             }
@@ -476,7 +468,7 @@ int main(int argc, char **argv) { //{{{
             }
 
             if (param.specifics) {
-                // 通常のNbestラティス
+                // 詳細出力
                 tagger.print_lattice_rbeam(param.L);
 #ifdef USE_DEV_OPTION
             } else if (option.exist("Nmorph")) {

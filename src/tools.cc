@@ -285,8 +285,9 @@ size_t is_suuji(unsigned char *ucp) {
         return false;
     for (unsigned int pos = 0; pos < byte_length;
          pos += utf8_bytes((unsigned char *)(ucp + pos))) {
-        if (check_char_family(check_utf8_char_type(
-                (unsigned char *)(ucp + pos))) != TYPE_FAMILY_FIGURE)
+        if ((check_char_family(
+                 check_utf8_char_type((unsigned char *)(ucp + pos))) &
+             TYPE_FAMILY_FIGURE) == TYPE_FAMILY_FIGURE)
             return false;
     }
     return true;

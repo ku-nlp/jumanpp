@@ -218,8 +218,8 @@ Node *Dic::lookup_lattice(
         size_t size = token_size(result_pair[i]);
         const Token *token = get_token(result_pair[i]);
 
-        for (size_t j = 0; j < size;
-             j++) { // same key but different value (pos)
+        for (size_t j = 0; j < size; j++) {
+            // same key but different value (pos)
             if (specified_posid != MORPH_DUMMY_POS &&
                 specified_posid != (token + j)->posid)
                 continue;
@@ -257,7 +257,7 @@ Node *Dic::lookup_lattice(
                     new_node->char_num - 2);
 
             // ここで，NODE_PROLONG_DEL_LAST でなく，NODE_PROLONG_DEL
-            // なカタカナ語を削除する
+            // であるカタカナ語を削除する
             if (((get_stat(result_pair[i]) & OPT_PROLONG_DEL_LAST) ||
                  (get_stat(result_pair[i]) &
                   OPT_PROLONG_DEL)) && // 長音を付加している
@@ -271,27 +271,22 @@ Node *Dic::lookup_lattice(
                 if (!((!(get_stat(result_pair[i]) &
                          OPT_PROLONG_DEL)) && // 途中で長音を付加していない
                       new_node->posid ==
-                          posid2pos.get_id("名詞"))) // 名詞である
+                          posid2pos.get_id("名詞"))) { // 名詞である
+                    delete (new_node);
                     continue;
+                }
             }
 
             new_node->original_surface =
                 new std::string(start_str, new_node->length);
-            // std::cout << *new_node->original_surface << "_" << *new_node->pos
-            // << std::endl;
             new_node->string_for_print =
                 new std::string(start_str, new_node->length);
-            if (new_node->lcAttr == 1) { // Wikipedia
-                new_node->string = new std::string(UNK_WIKIPEDIA);
-                new_node->stat = MORPH_UNK_NODE;
+            new_node->string = new std::string(*new_node->string_for_print);
+            if (new_node->semantic_feature->find("濁音化", 0) !=
+                std::string::npos) { // TODO:意味情報を文字列扱いしない
+                new_node->stat = MORPH_DEVOICE_NODE;
             } else {
-                new_node->string = new std::string(*new_node->string_for_print);
-                if (new_node->semantic_feature->find("濁音化", 0) !=
-                    std::string::npos) { // TODO:意味情報を文字列扱いしない
-                    new_node->stat = MORPH_DEVOICE_NODE;
-                } else {
-                    new_node->stat = MORPH_NORMAL_NODE;
-                }
+                new_node->stat = MORPH_NORMAL_NODE;
             }
 
             FeatureSet *f = new FeatureSet(ftmpl);
@@ -369,17 +364,12 @@ Node *Dic::lookup_lattice_specified(
                 new std::string(start_str, new_node->length);
             new_node->string_for_print =
                 new std::string(start_str, new_node->length);
-            if (new_node->lcAttr == 1) { // 現在は使用していない
-                new_node->string = new std::string(UNK_WIKIPEDIA);
-                new_node->stat = MORPH_UNK_NODE;
+            new_node->string = new std::string(*new_node->string_for_print);
+            if (new_node->semantic_feature->find("濁音化", 0) !=
+                std::string::npos) {
+                new_node->stat = MORPH_DEVOICE_NODE;
             } else {
-                new_node->string = new std::string(*new_node->string_for_print);
-                if (new_node->semantic_feature->find("濁音化", 0) !=
-                    std::string::npos) {
-                    new_node->stat = MORPH_DEVOICE_NODE;
-                } else {
-                    new_node->stat = MORPH_NORMAL_NODE;
-                }
+                new_node->stat = MORPH_NORMAL_NODE;
             }
             new_node->char_type =
                 check_utf8_char_type((unsigned char *)start_str);
@@ -470,8 +460,8 @@ Node *Dic::make_unk_pseudo_node(const char *start_str, int byte_len,
     new_node->string_for_print =
         new std::string(new_node->surface, new_node->length);
 
-    if ((new_node->char_type == TYPE_FIGURE ||
-         new_node->char_type == TYPE_KANJI_FIGURE) &&
+    if ((new_node->char_type & TYPE_FIGURE ||
+         new_node->char_type & TYPE_KANJI_FIGURE) &&
         (specified_posid == posid2pos.get_id("名詞") ||
          specified_posid == MORPH_DUMMY_POS)) {
         //数詞の場合

@@ -60,7 +60,7 @@ class U8string { //{{{
     static constexpr unsigned long CHOON = 0x00008000;        // ー, 〜
     static constexpr unsigned long HANKAKU_KANA = 0x00010000; // 半角カタカナ
     static constexpr unsigned long BRACKET = 0x00020000; // 括弧, 引用符
-    static constexpr unsigned long FIGURE_EXCEPTION = 0x00040000; // 数
+    static constexpr unsigned long FIGURE_EXCEPTION = 0x00040000; // 数，何
     static constexpr unsigned long FIGURE_DIGIT =
         0x00080000; // 十，百，千，万，億
 

@@ -517,13 +517,11 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice( //{{{
     unsigned int pos, unsigned int specified_length,
     std::string *specified_pos) {
     Node *result_node = NULL;
-    // Node *kanji_result_node = NULL;
 
-    // まず探す
-    auto lattice_result = cl.da_search_from_position(
-        dic->darts, char_num); // こっちは何文字目かが必要
+    // DARTSから文字ラティスを生成する（処理は文字単位）．
+    auto lattice_result = cl.da_search_from_position(dic->darts, char_num);
 
-    // 以下は何バイト目かが必要
+    // バイト単位の処理
     // look up a dictionary with common prefix search
     Node *dic_node = dic->lookup_lattice(lattice_result, start_str + pos,
                                          specified_length, specified_pos);
@@ -580,7 +578,6 @@ Node *Sentence::lookup_and_make_special_pseudo_nodes_lattice( //{{{
                 &(param->unk_pos), TYPE_KATAKANA, nullptr);
         }
 
-        //
         if (!specified_length && result_node) // only prediction
             find_reached_pos_of_pseudo_nodes(pos, result_node);
     }
