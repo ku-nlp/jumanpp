@@ -44,17 +44,33 @@ FeatureVector &FeatureVector::operator=(const FeatureVector &fv) { /*{{{*/
 
 double FeatureVector::operator*(const FeatureVector &fv) const { /*{{{*/
     double sum = 0.0;
-    if (vec.size() > fv.vec.size()) {
-        for (const auto &f : fv) {
-            auto itr = vec.find(f.first);
-            if (itr != vec.end())
-                sum += f.second * itr->second;
+    if (mmap_flag) {
+        if (this->size() > fv.size()) {
+            for (const auto &f : fv) {
+                auto itr = dvec->find(f.first);
+                if (itr != dvec->end())
+                    sum += f.second * itr->second;
+            }
+        } else {
+            for (const auto &f : vec) {
+                auto itr = fv.vec.find(f.first);
+                if (itr != fv.vec.end())
+                    sum += f.second * itr->second;
+            }
         }
     } else {
-        for (const auto &f : vec) {
-            auto itr = fv.vec.find(f.first);
-            if (itr != fv.vec.end())
-                sum += f.second * itr->second;
+        if (this->size() > fv.vec.size()) {
+            for (const auto &f : fv) {
+                auto itr = vec.find(f.first);
+                if (itr != vec.end())
+                    sum += f.second * itr->second;
+            }
+        } else {
+            for (const auto &f : vec) {
+                auto itr = fv.vec.find(f.first);
+                if (itr != fv.vec.end())
+                    sum += f.second * itr->second;
+            }
         }
     }
     return sum;
@@ -74,15 +90,27 @@ FeatureVector::const_iterator FeatureVector::FeatureVector::end() const {
 };
 
 FeatureVector &FeatureVector::merge(const FeatureVector &fv) { /*{{{*/
-    for (const auto &st : fv) {
-        vec[st.first] += st.second;
+    if (mmap_flag) {
+        for (const auto &st : fv) {
+            (*dvec)[st.first] += st.second;
+        }
+    } else {
+        for (const auto &st : fv) {
+            vec[st.first] += st.second;
+        }
     }
     return *this;
 } /*}}}*/
 
 FeatureVector &FeatureVector::diff(const FeatureVector &fv) { /*{{{*/
-    for (const auto &st : fv) {
-        vec[st.first] -= st.second;
+    if (mmap_flag) {
+        for (const auto &st : fv) {
+            (*dvec)[st.first] -= st.second;
+        }
+    } else {
+        for (const auto &st : fv) {
+            vec[st.first] -= st.second;
+        }
     }
     return *this;
 } /*}}}*/

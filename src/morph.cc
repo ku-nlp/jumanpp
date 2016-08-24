@@ -279,10 +279,9 @@ int main(int argc, char **argv) { //{{{
     normal_param.set_nbest(true); // nbest を利用するよう設定
     normal_param.set_N(10);       // 10-best に設定
 
-    param.use_dynamic_loading = false;
     if (option.exist("static_mdl") || option.exist("static")) {
         param.use_dynamic_loading = false;
-    } else if (option.exist("dynamic")) {
+    } else {
         param.use_dynamic_loading = true;
     }
 
