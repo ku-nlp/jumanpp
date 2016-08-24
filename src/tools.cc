@@ -128,6 +128,7 @@ unsigned int check_unicode_char_type(int code) {
         return TYPE_KANJI_FIGURE;
     } else if (code == 0x6570 || //数
                code == 0x4F55 || //何
+               code == 0x5E7E || //幾
                false) {
         return (TYPE_KANJI_FIGURE + TYPE_FIGURE_EXCEPTION);
         /* ALPHABET (A-Z, a-z, Umlaut etc., Ａ-Ｚ, ａ-ｚ) */
