@@ -284,6 +284,7 @@ int main(int argc, char **argv) { //{{{
     } else {
         param.use_dynamic_loading = true;
     }
+    param.use_dynamic_loading = false;
 
 // RNNLM の利用フラグ設定
 #ifdef USE_DEV_OPTION
