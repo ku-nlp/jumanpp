@@ -1094,35 +1094,39 @@ void Sentence::generate_unified_lattice_line(
     if (*node->semantic_feature != "NIL" || *node->spos == UNK_POS ||
         ustr.is_katakana() || ustr.is_kanji() || ustr.is_eisuu() ||
         ustr.is_kigou()) {
-        bool use_sep = false;
 
-        if (*node->semantic_feature != "NIL") {
+        std::stringstream simis;
+        generate_imis(node, simis, "");
+        std::string imis = simis.str();
+
+        bool use_sep = false;
+        if (imis != "NIL") {
             // 一度空白で分割し,表示する
             size_t current = 0, found;
-            while ((found = (*node->semantic_feature)
-                                .find_first_of(' ', current)) !=
+            while ((found = imis.find_first_of(' ', current)) !=
                    std::string::npos) {
                 ss << (use_sep ? sep : "")
-                   << std::string((*node->semantic_feature), current,
+                   << std::string(imis, current,
                                   found - current); // NILでなければ
                 current = found + 1;
                 use_sep = true;
             }
             if (current == 0) {
-                ss << (use_sep ? sep : "") << *node->semantic_feature;
+                ss << (use_sep ? sep : "") << imis;
                 use_sep = true;
-            } else if (current < (*node->semantic_feature).size()) {
+            } else if (current < imis.size()) {
                 ss << (use_sep ? sep : "")
-                   << std::string((*node->semantic_feature), current,
-                                  (*node->semantic_feature).size() - current);
+                   << std::string(imis, current, imis.size() - current);
             }
         }
-        if (*node->spos == UNK_POS) {
-            ss << (use_sep ? sep : "") << "品詞推定:" << *node->pos << ":"
-               << *node->spos;
-            use_sep = true;
-        }
-        // TODO:これ以降の処理はあとでくくり出してNode 生成時に行う
+        //        if (*node->spos == UNK_POS) {
+        //            ss << (use_sep ? sep : "") << "品詞推定:" << *node->pos <<
+        //            ":"
+        //               << *node->spos;
+        //            use_sep = true;
+        //        }
+
+        // 以下の素性は詳細表示の場合のみ出力する．
         bool kieisuuka = false;
         if (ustr.is_katakana()) {
             ss << (use_sep ? sep : "") << "カタカナ";
@@ -1852,18 +1856,19 @@ void Sentence::generate_juman_line(Node *node, //{{{
                              << Dic::katuyou_form_map.at(type_and_form) << " ";
 
     // 意味情報の表示
-    generate_imis(node, output_string_buffer);
-
+    generate_imis(node, output_string_buffer, "\"");
+    output_string_buffer << endl;
 } /*}}}*/
 
 void Sentence::generate_imis(Node *node,
-                             std::stringstream &output_string_buffer) {
+                             std::stringstream &output_string_buffer,
+                             std::string quot) { //{{{
+    std::string in_delim = " ";
     std::string delim = "";
 
     // 数詞の場合
-
     if (*node->spos == "数詞") {
-        output_string_buffer << std::string("\"カテゴリ:数量\"") << endl;
+        output_string_buffer << std::string("\"カテゴリ:数量\"");
         return;
     }
 
@@ -1871,37 +1876,38 @@ void Sentence::generate_imis(Node *node,
     if (*node->semantic_feature == "NIL" && *node->spos != UNK_POS &&
         *node->representation == "*") {
         // 未定義語でなく,　代表表記が付いていない, 意味情報がNILの語
-        output_string_buffer << std::string("NIL") << endl;
+        output_string_buffer << std::string("NIL");
         return;
     }
 
     // その他の形態素 意味情報を再構築して表示
-    output_string_buffer << '"';
+    output_string_buffer << quot;
     if (*node->representation != "*" && *node->representation != "<UNK>" &&
         *node->representation != "") {
         output_string_buffer << "代表表記:"
                              << *node->representation; //*や<UNK>ならスキップ
-        delim = " ";
+        delim = in_delim;
     }
     if (*node->semantic_feature !=
         "NIL") { // NILで代表表記も品詞推定も付かないことはない．
         std::string imis_copy = *node->semantic_feature;
         replace("濁音化D", "濁音化", imis_copy);
         output_string_buffer << delim << imis_copy;
-        delim = " ";
+        delim = in_delim;
     }
     if (*node->spos == UNK_POS) {
         output_string_buffer << delim << "品詞推定:" << *node->pos;
-        delim = " ";
+        delim = in_delim;
     }
 
     if (node->normalize_stat & OPT_NORMALIZE) {
         output_string_buffer << delim << "非標準表記";
-        delim = " ";
+        delim = in_delim;
     }
 
-    output_string_buffer << std::string("\"") << endl;
-}
+    output_string_buffer << quot;
+    return;
+} //}}}
 
 void Sentence::print_best_beam_juman() { //{{{
     std::stringstream output_string_buffer;
