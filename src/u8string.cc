@@ -172,8 +172,9 @@ unsigned long U8string::check_unicode_char_type(int code) { //{{{
                code == 0x5104 || //億
                code == 0x5146 || //兆
                code == 0x6570 || //数
+               code == 0x4F55 || //何
                false) {
-        if (code == 0x6570) // 数
+        if (code == 0x6570 || code == 0x4F55) // 数，何 //TODO: 幾
             return KANJI_FIGURE + FIGURE_EXCEPTION;
         else
             return KANJI_FIGURE + FIGURE_DIGIT;

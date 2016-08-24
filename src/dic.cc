@@ -240,6 +240,15 @@ Node *Dic::lookup_lattice(
             new_node->char_type =
                 check_utf8_char_type((unsigned char *)start_str);
             new_node->char_family = check_char_family(new_node->char_type);
+
+            // 単体の数詞は例外を除き破棄
+            if (new_node->sposid == sposid2spos.get_id("数詞") &&
+                new_node->char_type & (TYPE_FIGURE + TYPE_KANJI_FIGURE) &&
+                !(new_node->char_type & TYPE_FIGURE_EXCEPTION)) {
+                delete (new_node);
+                continue;
+            }
+
             new_node->suuji = is_suuji((unsigned char *)start_str);
             char *end_char = (char *)get_specified_char_pointer(
                 (unsigned char *)start_str, new_node->length,
@@ -549,7 +558,18 @@ Node *Dic::make_specified_pseudo_node_by_dic_check(
         if (max_length != 0 && pos >= max_length) {
             // 指定された境界を超えるため，これ以上長い未定義語は生成できない
             break;
-        } else if (pos != 0 && type_family == TYPE_FAMILY_FIGURE &&
+        } else if ((type_family & TYPE_FAMILY_FIGURE) &&
+                   compare_char_type_in_family(
+                       check_utf8_char_type((unsigned char *)(start_str + pos)),
+                       TYPE_FAMILY_PUNC_SYMBOL) &&
+                   (max_length != 0 ||
+                    pos + utf8_bytes((unsigned char *)(start_str + pos)) >=
+                        max_length) &&
+                   pos + utf8_bytes((unsigned char *)(start_str + pos)) >=
+                       length) {
+            // 末尾がピリオドなどで終わる数詞を作らない．
+            break;
+        } else if (pos != 0 && (type_family & TYPE_FAMILY_PURE_FIGURE) &&
                    (used_chars = check_exceptional_chars_in_figure(
                         start_str + pos, length - pos)) > 0) {
             // exceptional figure expression of two characters
@@ -573,29 +593,29 @@ Node *Dic::make_specified_pseudo_node_by_dic_check(
             break;
         } else if (
             (param->use_suu_rule &&
-             (pos == 0 &&
-              ustart_str.is_figure_exception(0))) && // 数が先頭に出現している
-            (ustart_str.char_size() ==
-                 1 || // 続く文字がない場合(数は単体で数詞として辞書に登録済み)
-                      // ，もしくは
-             (ustart_str.is_suuji(1) &&
-              !ustart_str.is_suuji_digit(1)))) { // 次が桁を表す数字でない場合
-            // 数十，数百への対応 TODO: 何十
-            // 数の次に桁を表す文字が来ない場合は，ひとかたまりの数詞として扱わない．
+             // 数が先頭に出現している
+             (pos == 0 && ustart_str.is_figure_exception(0))) &&
+            // 続く文字がない場合(数は単体で数詞として辞書に登録済み)，もしくは
+            (ustart_str.char_size() == 1 ||
+             // 次が桁を表す数字でない場合
+             (ustart_str.is_suuji(1) && !ustart_str.is_suuji_digit(1)))) {
+            // 数十，数百，何十への対応
+            // 数・何の次に桁を表す文字が来ない場合は，ひとかたまりの数詞として扱わない．
             // 数キロ，等は先に上のif文でチェックしているため，ここでは考慮しない
             break;
         } else if (param->use_suu_rule && char_num > 0 &&
                    ustart_str.is_figure_exception(char_num) &&
                    !ustart_str.is_suuji_digit(char_num - 1)) {
-            // 十数人，などへの対応
-            // 十や百など，桁の次に"数"
+            // std::cerr << ustart_str.str() << std::endl;
+            // 十数人，などへの対応 , TODO: 十余名
+            // 十や百など，桁の次に"数"や"何"
             // が出てきた場合には，ひとかたまりの数詞として扱う
             break;
         } else if (compare_char_type_in_family(
                        check_utf8_char_type((unsigned char *)(start_str + pos)),
-                       type_family)) // this is in specified family
+                       type_family)) { // this is in specified family
             char_num++;
-        else
+        } else
             break;
     }
 

@@ -117,7 +117,6 @@ unsigned int check_unicode_char_type(int code) {
              code == 0x4e07 || //万
              code == 0x5104 || //億
              code == 0x5146 || //兆
-             code == 0x6570 || //数
              code == 0xff0c || //，
              // code == 0xff05 ||//％
              // 年月日: code == 0x5e74 || code == 0x6708 || code == 0x65e5 ||
@@ -127,12 +126,15 @@ unsigned int check_unicode_char_type(int code) {
              // code == 0x70b9 //点
              false) {
         return TYPE_KANJI_FIGURE;
-    }
-    /* ALPHABET (A-Z, a-z, Umlaut etc., Ａ-Ｚ, ａ-ｚ) */
-    else if ((code > 0x40 && code < 0x5b) || (code > 0x60 && code < 0x7b) ||
-             (code > 0xbf && code < 0x0100) ||
-             (code > 0xff20 && code < 0xff3b) ||
-             (code > 0xff40 && code < 0xff5b)) {
+    } else if (code == 0x6570 || //数
+               code == 0x4F55 || //何
+               false) {
+        return (TYPE_KANJI_FIGURE + TYPE_FIGURE_EXCEPTION);
+        /* ALPHABET (A-Z, a-z, Umlaut etc., Ａ-Ｚ, ａ-ｚ) */
+    } else if ((code > 0x40 && code < 0x5b) || (code > 0x60 && code < 0x7b) ||
+               (code > 0xbf && code < 0x0100) ||
+               (code > 0xff20 && code < 0xff3b) ||
+               (code > 0xff40 && code < 0xff5b)) {
         return TYPE_ALPH;
     }
     /* CJK Unified Ideographs and "々" and "〇"*/
@@ -233,8 +235,10 @@ unsigned int check_char_family(unsigned int char_type) {
         return TYPE_FAMILY_SPACE;
     } else if (char_type & TYPE_FAMILY_ALPH) {
         return TYPE_FAMILY_ALPH;
-    } else if (char_type & TYPE_FIGURE) { // figure only
-        return TYPE_FIGURE;
+    } else if (char_type & TYPE_FAMILY_PURE_FIGURE) { // ピリオドなどは含まない
+        return TYPE_FAMILY_FIGURE;
+        //} else if (char_type & TYPE_FIGURE) { // figure only
+        //    return TYPE_FIGURE;
     } else { // char_type & TYPE_FAMILY_SYMBOL
         return TYPE_FAMILY_SYMBOL;
     }
