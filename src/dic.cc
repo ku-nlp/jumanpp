@@ -479,8 +479,9 @@ Node *Dic::make_unk_pseudo_node(const char *start_str, int byte_len,
 
     if ((new_node->char_type & TYPE_FIGURE ||
          new_node->char_type & TYPE_KANJI_FIGURE) &&
-        (specified_posid == posid2pos.get_id("名詞") ||
-         specified_posid == MORPH_DUMMY_POS)) {
+        !(new_node->char_type & TYPE_FIGURE_EXCEPTION &&
+          new_node->char_num == 1) &&
+        specified_posid == posid2pos.get_id("名詞")) {
         //数詞の場合
         new_node->string = new std::string("<数詞>");
         new_node->baseid = baseid2base.get_id("<数詞>");
