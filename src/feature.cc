@@ -775,8 +775,9 @@ std::string FeatureSet::str() { //{{{
     for (auto it = fvec.begin(); it != fvec.end(); it++) {
         ss.str("");
         ss << feature_map[it->first] << "x"
-           << it->second * (*weight)[it->first];
-        fpair.push_back(make_pair(ss.str(), it->second * (*weight)[it->first]));
+           << it->second * weight->get_val(it->first);
+        fpair.push_back(
+            make_pair(ss.str(), it->second * weight->get_val(it->first)));
     }
 
     // 素性を重み順にソート

@@ -92,12 +92,13 @@ class FeatureVector {/*{{{*/
     double operator*(const FeatureVector &fv) const;
     FeatureVector &operator=(const FeatureVector &fv);
     double &operator[](const unsigned long s) { /*{{{*/
+        static double dummy = 0;
         if (mmap_flag) {
             auto itr = dvec->find(s);
             if (itr == dvec->end()) {
-                auto &ref = (*dvec)[s];
-                ref = 0;
-                return ref;
+                // auto &ref = (*dvec)[s]; // 書き込み禁止なのでsegf
+                dummy = 0;
+                return dummy;
             } else {
                 return itr->second;
             }
@@ -107,6 +108,24 @@ class FeatureVector {/*{{{*/
                 auto &ref = vec[s];
                 ref = 0;
                 return ref;
+            } else {
+                return itr->second;
+            }
+        }
+    }; /*}}}*/
+
+    double get_val(const unsigned long s) { /*{{{*/
+        if (mmap_flag) {
+            auto itr = dvec->find(s);
+            if (itr == dvec->end()) {
+                return 0;
+            } else {
+                return itr->second;
+            }
+        } else {
+            auto itr = vec.find(s);
+            if (itr == vec.end()) {
+                return 0;
             } else {
                 return itr->second;
             }
@@ -131,12 +150,8 @@ class FeatureVector {/*{{{*/
     FeatureVector &merge(const FeatureVector &fv);
     FeatureVector &diff(const FeatureVector &fv);
 
-    //    Ulmap::iterator find(const unsigned long key) { /*{{{*/
-    //        return vec.find(key);
-    //    } /*}}}*/
-    //    Ulmap::const_iterator find(const unsigned long key) const { /*{{{*/
-    //        return vec.find(key);
-    //    } /*}}}*/
+    FeatureVector::iterator find(const unsigned long key);
+    FeatureVector::const_iterator find(const unsigned long key) const;
 
     inline std::string str() { /*{{{*/
         std::stringstream ss;
@@ -256,7 +271,6 @@ class ConstFeatureVectorIterator
     //値の場所を示すメンバ変数と、取り扱う CMyClass へのポインタを private
     //に格納します。
   private:
-    Ulkey key; //?
     bool mmap_flag = false;
     // Static or Dynamic のFeatureVector iterator を持っておく
 
@@ -267,13 +281,9 @@ class ConstFeatureVectorIterator
     // イテレータを構築するコンストラクタは private
     // に持たせ、外部で勝手に作れないようにします。
   private:
-    ConstFeatureVectorIterator() {
-        fv = nullptr;
-        key = Ulkey(); // 0?
-    };
+    ConstFeatureVectorIterator() { fv = nullptr; };
     ConstFeatureVectorIterator(FeatureVector *in_fv) {
         fv = in_fv;
-        key = Ulkey();
         if (in_fv && in_fv->mmap_flag) {
             mmap_flag = true;
             ditr = std::begin(*(in_fv->dvec));
@@ -284,9 +294,8 @@ class ConstFeatureVectorIterator
             return;
         }
     };
-    ConstFeatureVectorIterator(FeatureVector const *in_fv, bool begin) {
+    ConstFeatureVectorIterator(FeatureVector const *in_fv, bool begin) { //{{{
         fv = in_fv;
-        key = Ulkey();
         if (begin) {
             if (in_fv && in_fv->mmap_flag) {
                 mmap_flag = true;
@@ -308,14 +317,32 @@ class ConstFeatureVectorIterator
                 return;
             }
         }
-    };
+    }; //}}}
+
+    ConstFeatureVectorIterator(FeatureVector const *in_fv,
+                               Ulmap::const_iterator in_itr) { //{{{
+        mmap_flag = false;
+        fv = in_fv;
+        itr = in_itr;
+        return;
+    }; //}}}
+
+    ConstFeatureVectorIterator(FeatureVector const *in_fv,
+                               Uldmap::const_iterator in_itr) { //{{{
+        fv = in_fv;
+        ditr = in_itr;
+        return;
+    }; //}}}
 
   public:
     ConstFeatureVectorIterator(const ConstFeatureVectorIterator &iterator) =
         default;
 
   public:
-    ConstFeatureVectorIterator &operator++() {
+    ConstFeatureVectorIterator &
+    operator=(const ConstFeatureVectorIterator &in) = default;
+
+    ConstFeatureVectorIterator &operator++() { //{{{
         if (fv->mmap_flag) {
             (++ditr);
             return *this;
@@ -323,9 +350,9 @@ class ConstFeatureVectorIterator
             (++itr);
             return *this;
         }
-    };
+    }; //}}}
 
-    ConstFeatureVectorIterator operator++(int) {
+    ConstFeatureVectorIterator operator++(int) { //{{{
         if (fv && fv->mmap_flag) {
             auto tmp = *this;
             (++ditr);
@@ -335,17 +362,17 @@ class ConstFeatureVectorIterator
             (++itr);
             return tmp;
         }
-    };
+    }; //}}}
 
-    auto operator*() const -> decltype(*ditr) {
+    auto operator*() const -> decltype(*ditr) { //{{{
         if (fv && fv->mmap_flag) {
             return (*ditr);
         } else {
             return (*itr);
         }
-    };
+    }; //}}}
 
-    bool operator==(const ConstFeatureVectorIterator &iterator) {
+    bool operator==(const ConstFeatureVectorIterator &iterator) { //{{{
         // 両方 end ならtrue
         if (((mmap_flag && ditr == fv->dvec->end()) ||
              (!mmap_flag && itr == fv->vec.end())) &&
@@ -360,20 +387,20 @@ class ConstFeatureVectorIterator
             (!mmap_flag && itr == iterator.itr))
             return true;
         return false;
-    };
+    }; //}}}
 
-    bool operator!=(const ConstFeatureVectorIterator &iterator) {
+    bool operator!=(const ConstFeatureVectorIterator &iterator) { //{{{
         return !(*this == iterator);
-    };
+    }; //}}}
 
-    const auto operator-> () -> decltype(&(*ditr)) {
+    const auto operator-> () -> decltype(&(*ditr)) { //{{{
         if (fv && fv->mmap_flag) {
             return &(*ditr);
         } else {
             return &(*itr);
         }
-    };
-}; //}}}
+    }; //}}}
+};     //}}}
 
 class FeatureVectorIterator
     : public std::iterator<std::forward_iterator_tag, Ulkey> { //{{{
@@ -392,7 +419,7 @@ class FeatureVectorIterator
     // に持たせ、外部で勝手に作れないようにします。
   private:
     FeatureVectorIterator() { fv = nullptr; };
-    FeatureVectorIterator(FeatureVector *in_fv) {
+    FeatureVectorIterator(FeatureVector *in_fv) { //{{{
         fv = in_fv;
         if (in_fv && in_fv->mmap_flag) {
             mmap_flag = true;
@@ -403,8 +430,8 @@ class FeatureVectorIterator
             itr = std::begin(in_fv->vec);
             return;
         }
-    };
-    FeatureVectorIterator(FeatureVector *in_fv, bool begin) {
+    };                                                        //}}}
+    FeatureVectorIterator(FeatureVector *in_fv, bool begin) { //{{{
         fv = in_fv;
         if (begin) {
             if (in_fv && in_fv->mmap_flag) {
@@ -427,13 +454,28 @@ class FeatureVectorIterator
                 return;
             }
         }
-    };
+    }; //}}}
+
+    FeatureVectorIterator(FeatureVector *in_fv, Ulmap::iterator in_itr) { //{{{
+        mmap_flag = false;
+        fv = in_fv;
+        itr = (in_itr);
+        return;
+    }; //}}}
+
+    FeatureVectorIterator(FeatureVector *in_fv, Uldmap::iterator in_itr) { //{{{
+        fv = in_fv;
+        ditr = (in_itr);
+        return;
+    }; //}}}
 
   public:
     FeatureVectorIterator(const FeatureVectorIterator &iterator) = default;
+    FeatureVectorIterator &
+    operator=(const FeatureVectorIterator &iterator) = default;
 
   public:
-    FeatureVectorIterator &operator++() {
+    FeatureVectorIterator &operator++() { //{{{
         if (fv->mmap_flag) {
             (++ditr);
             return *this;
@@ -441,9 +483,9 @@ class FeatureVectorIterator
             (++itr);
             return *this;
         }
-    };
+    }; //}}}
 
-    FeatureVectorIterator operator++(int) {
+    FeatureVectorIterator operator++(int) { //{{{
         if (fv && fv->mmap_flag) {
             auto tmp = *this;
             (++ditr);
@@ -453,17 +495,17 @@ class FeatureVectorIterator
             (++itr);
             return tmp;
         }
-    };
+    }; //}}}
 
-    const weightPair operator*() const {
+    const weightPair operator*() const { //{{{
         if (fv && fv->mmap_flag) {
             return (*ditr);
         } else {
             return (*itr);
         }
-    };
+    }; //}}}
 
-    bool operator==(const FeatureVectorIterator &iterator) {
+    bool operator==(const FeatureVectorIterator &iterator) { //{{{
         // 両方 end ならtrue
         if (((mmap_flag && ditr == fv->dvec->end()) ||
              (!mmap_flag && itr == fv->vec.end())) &&
@@ -478,20 +520,20 @@ class FeatureVectorIterator
             (!mmap_flag && itr == iterator.itr))
             return true;
         return false;
-    };
+    }; //}}}
 
-    bool operator!=(const FeatureVectorIterator &iterator) {
+    bool operator!=(const FeatureVectorIterator &iterator) { //{{{
         return !(*this == iterator);
-    };
+    }; //}}}
 
-    const auto operator-> () -> decltype(&(*ditr)) {
+    const auto operator-> () -> decltype(&(*ditr)) { //{{{
         if (fv && fv->mmap_flag) {
             return &(*ditr);
         } else {
             return &(*itr);
         }
-    };
-}; //}}}
+    }; //}}}
+};     //}}}
 
 // TODO:FeatureVectorIteratorクラス, ConstFeatureVectorIterator クラスをtemplate
 // で書き直す

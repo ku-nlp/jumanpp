@@ -249,7 +249,7 @@ int main(int argc, char **argv) { //{{{
     }
 #ifdef USE_DEV_OPTION
     else {
-        if (option.exist("specifics")) {
+        if (option.exist("lattice")) {
             param.L_max = option.get<unsigned int>("lattice");
         }
     }

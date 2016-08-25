@@ -403,7 +403,7 @@ class Sentence { //{{{
     } /*}}}*/
   private:
     void generate_imis(Node *node, std::stringstream &output_string_buffer,
-                       std::string quot);
+                       bool specific);
 
 }; //}}}
 }

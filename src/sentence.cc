@@ -1096,7 +1096,7 @@ void Sentence::generate_unified_lattice_line(
         ustr.is_kigou()) {
 
         std::stringstream simis;
-        generate_imis(node, simis, "");
+        generate_imis(node, simis, true);
         std::string imis = simis.str();
 
         bool use_sep = false;
@@ -1856,15 +1856,19 @@ void Sentence::generate_juman_line(Node *node, //{{{
                              << Dic::katuyou_form_map.at(type_and_form) << " ";
 
     // 意味情報の表示
-    generate_imis(node, output_string_buffer, "\"");
+    generate_imis(node, output_string_buffer, false);
     output_string_buffer << endl;
 } /*}}}*/
 
 void Sentence::generate_imis(Node *node,
                              std::stringstream &output_string_buffer,
-                             std::string quot) { //{{{
+                             bool specific = false) { //{{{
     std::string in_delim = " ";
     std::string delim = "";
+    std::string quot = "\"";
+    if (specific) {
+        quot = "";
+    }
 
     // 数詞の場合
     if (*node->spos == "数詞") {
@@ -1882,12 +1886,13 @@ void Sentence::generate_imis(Node *node,
 
     // その他の形態素 意味情報を再構築して表示
     output_string_buffer << quot;
-    if (*node->representation != "*" && *node->representation != "<UNK>" &&
-        *node->representation != "") {
+    if (!specific && *node->representation != "*" &&
+        *node->representation != "<UNK>" && *node->representation != "") {
         output_string_buffer << "代表表記:"
                              << *node->representation; //*や<UNK>ならスキップ
         delim = in_delim;
     }
+
     if (*node->semantic_feature !=
         "NIL") { // NILで代表表記も品詞推定も付かないことはない．
         std::string imis_copy = *node->semantic_feature;
