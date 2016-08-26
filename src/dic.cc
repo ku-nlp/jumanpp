@@ -596,21 +596,23 @@ Node *Dic::make_specified_pseudo_node_by_dic_check(
                    check_utf8_char_type((unsigned char *)(start_str + pos)) ==
                        TYPE_COMMA) {
             //カンマのあとは，きっかり３文字数字が続く必要がある
-            //１|，０００万円
+            //後に続く数字の数を調べる
+            unsigned int continued_figure = 0;
+            unsigned int pos_figure = pos + utf8_bytes(start_str + pos);
 
-            if (length < pos + 12) // 後に４文字存在する必要がある
-                break;
-            if (!(check_utf8_char_type((unsigned char *)(start_str + pos + 3)) &
-                      TYPE_FIGURE &&
-                  check_utf8_char_type((unsigned char *)(start_str + pos + 6)) &
-                      TYPE_FIGURE &&
-                  check_utf8_char_type((unsigned char *)(start_str + pos + 9)) &
-                      TYPE_FIGURE))
-                break;
-
-            if (length >= pos + 15 &&
-                (check_utf8_char_type((unsigned char *)(start_str + pos + 12)) &
-                 TYPE_FIGURE))
+            for (int i = 0; i < 5 && pos_figure < length; ++i) {
+                if (check_utf8_char_type((unsigned char *)start_str +
+                                         pos_figure) &
+                    TYPE_FIGURE) {
+                    ++continued_figure;
+                    pos_figure += utf8_bytes(start_str + pos_figure);
+                } else {
+                    break;
+                }
+            }
+            if (continued_figure == 3)
+                ++char_num;
+            else
                 break;
 
             ++char_num;

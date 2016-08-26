@@ -50,7 +50,8 @@ extern std::unordered_map<std::string, int> spos_map;
 extern std::unordered_map<std::string, int> katuyou_type_map;
 extern std::unordered_map<std::string, int> katuyou_form_map;
 
-extern int utf8_bytes(unsigned char *ucp);
+extern int utf8_bytes(const char *ucp);
+extern int utf8_bytes(const unsigned char *ucp);
 extern size_t utf8_length(const char *ucp);
 extern unsigned short utf8_chars(unsigned char *ucp, size_t byte_len);
 extern unsigned char *

@@ -5,7 +5,8 @@
 namespace Morph {
 
 // return the bytes of a char
-int utf8_bytes(unsigned char *ucp) {
+int utf8_bytes(const char *ucp) { return utf8_bytes((unsigned char *)ucp); }
+int utf8_bytes(const unsigned char *ucp) {
     unsigned char c = *ucp;
 
     if (c > 0xfb) { /* 6 bytes */
@@ -272,7 +273,6 @@ unsigned int check_exceptional_chars_in_figure(const char *cp,
                 (TYPE_FIGURE | TYPE_KANJI_FIGURE)) {
             return 2;
         } else {
-            std::cerr << cp + EXCEPTIONAL_FIGURE_EXPRESSION_LENGTH << std::endl;
             return 0;
         }
     } else if (rest_byte_len >=
@@ -285,7 +285,6 @@ unsigned int check_exceptional_chars_in_figure(const char *cp,
                 (TYPE_FIGURE | TYPE_KANJI_FIGURE)) {
             return 3;
         } else {
-            std::cerr << cp + EXCEPTIONAL_FIGURE_EXPRESSION_LENGTH << std::endl;
             return 0;
         }
     } else if (rest_byte_len >= 6 && !strncmp(cp, "キロ", 6)) {
