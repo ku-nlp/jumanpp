@@ -581,8 +581,8 @@ Node *Dic::make_specified_pseudo_node_by_dic_check(
         } else if (pos != 0 && (type_family & TYPE_FAMILY_PURE_FIGURE) &&
                    (used_chars = check_exceptional_chars_in_figure(
                         start_str + pos, length - pos)) > 0) {
-            // exceptional figure expression of two characters
-            // 数字を指定していて、かつ数字の例外に当たる場合，キロ，分の
+            // 数字の連続をチェックしていて、かつ次の文字列が数字の例外に当たる場合
+            // 例：キロ，分の
 
             if (used_chars == 2)
                 pos += utf8_bytes((unsigned char *)(start_str + pos));
@@ -592,6 +592,28 @@ Node *Dic::make_specified_pseudo_node_by_dic_check(
             }
 
             char_num += used_chars;
+        } else if (pos != 0 && (type_family & TYPE_FAMILY_PURE_FIGURE) &&
+                   check_utf8_char_type((unsigned char *)(start_str + pos)) ==
+                       TYPE_COMMA) {
+            //カンマのあとは，きっかり３文字数字が続く必要がある
+            //１|，０００万円
+
+            if (length < pos + 12) // 後に４文字存在する必要がある
+                break;
+            if (!(check_utf8_char_type((unsigned char *)(start_str + pos + 3)) &
+                      TYPE_FIGURE &&
+                  check_utf8_char_type((unsigned char *)(start_str + pos + 6)) &
+                      TYPE_FIGURE &&
+                  check_utf8_char_type((unsigned char *)(start_str + pos + 9)) &
+                      TYPE_FIGURE))
+                break;
+
+            if (length >= pos + 15 &&
+                (check_utf8_char_type((unsigned char *)(start_str + pos + 12)) &
+                 TYPE_FIGURE))
+                break;
+
+            ++char_num;
         } else if (pos == 0 &&
                    compare_char_type_in_family(
                        check_utf8_char_type((unsigned char *)(start_str + pos)),
