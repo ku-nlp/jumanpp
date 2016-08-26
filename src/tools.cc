@@ -119,7 +119,8 @@ unsigned int check_unicode_char_type(int code) {
              code == 0x4e07 || //万
              code == 0x5104 || //億
              code == 0x5146 || //兆
-             code == 0xff0c || //，
+             // code == 0xff0c || //，//
+             // 加える場合，特別な処理が必要．３文字ごとで区切っているかどうか等
              // code == 0xff05 ||//％
              // 年月日: code == 0x5e74 || code == 0x6708 || code == 0x65e5 ||
              // code == 0x4ebf || //??
@@ -197,6 +198,7 @@ unsigned int check_utf8_char_type(const char *ucp) {
     return check_utf8_char_type((unsigned char *)ucp);
 }
 
+// 文字列が途中で切れている場合，落ちる原因
 unsigned int check_utf8_char_type(unsigned char *ucp) {
     int code = 0;
     int unicode;
@@ -264,12 +266,28 @@ unsigned int check_exceptional_chars_in_figure(const char *cp,
     if (rest_byte_len >= EXCEPTIONAL_FIGURE_EXPRESSION_LENGTH && //分の
         !strncmp(cp, EXCEPTIONAL_FIGURE_EXPRESSION,
                  EXCEPTIONAL_FIGURE_EXPRESSION_LENGTH)) {
-        return 2;
+
+        if (rest_byte_len >= EXCEPTIONAL_FIGURE_EXPRESSION_LENGTH + 3 &&
+            check_utf8_char_type(cp + EXCEPTIONAL_FIGURE_EXPRESSION_LENGTH) &
+                (TYPE_FIGURE | TYPE_KANJI_FIGURE)) {
+            return 2;
+        } else {
+            std::cerr << cp + EXCEPTIONAL_FIGURE_EXPRESSION_LENGTH << std::endl;
+            return 0;
+        }
     } else if (rest_byte_len >=
                    EXCEPTIONAL_FIGURE_EXPRESSION_LENGTH_2 && //ぶんの
                strncmp(cp, EXCEPTIONAL_FIGURE_EXPRESSION_2,
                        EXCEPTIONAL_FIGURE_EXPRESSION_LENGTH_2) == 0) {
-        return 3;
+
+        if (rest_byte_len >= EXCEPTIONAL_FIGURE_EXPRESSION_LENGTH_2 + 3 &&
+            check_utf8_char_type(cp + EXCEPTIONAL_FIGURE_EXPRESSION_LENGTH_2) &
+                (TYPE_FIGURE | TYPE_KANJI_FIGURE)) {
+            return 3;
+        } else {
+            std::cerr << cp + EXCEPTIONAL_FIGURE_EXPRESSION_LENGTH << std::endl;
+            return 0;
+        }
     } else if (rest_byte_len >= 6 && !strncmp(cp, "キロ", 6)) {
         return 2;
     } else if (rest_byte_len >= 6 && !strncmp(cp, "メガ", 6)) {

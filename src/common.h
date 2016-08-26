@@ -123,8 +123,8 @@ extern size_t is_suuji(unsigned char *ucp);
 //#define TYPE_FAMILY_FIGURE	14392 // TYPE_FIGURE + TYPE_PERIOD +
 // TYPE_MIDDLE_DOT + TYPE_KANJI_FIGURE + TYPE_SLASH + TYPE_COLON
 #define TYPE_FAMILY_FIGURE                                                     \
-    2168 // TYPE_FIGURE + TYPE_PERIOD + TYPE_COMMA + TYPE_MIDDLE_DOT +
-         // TYPE_KANJI_FIGURE  8+16+64+32+2048
+    2104 // TYPE_FIGURE + TYPE_PERIOD +  TYPE_MIDDLE_DOT +
+         // TYPE_KANJI_FIGURE  8+16+32+2048
 #define TYPE_FAMILY_PURE_FIGURE 2056 // TYPE_FIGURE + TYPE_KANJI_FIGURE  8+2048
 #define TYPE_FAMILY_PUNC                                                       \
     114 // TYPE_PERIOD + TYPE_COMMA + TYPE_IDEOGRAPHIC_PUNC + TYPE_MIDDLE_DOT

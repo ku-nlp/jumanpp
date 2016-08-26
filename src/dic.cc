@@ -582,7 +582,7 @@ Node *Dic::make_specified_pseudo_node_by_dic_check(
                    (used_chars = check_exceptional_chars_in_figure(
                         start_str + pos, length - pos)) > 0) {
             // exceptional figure expression of two characters
-            // 数字を指定していて、かつ数字の例外に当たる場合
+            // 数字を指定していて、かつ数字の例外に当たる場合，キロ，分の
 
             if (used_chars == 2)
                 pos += utf8_bytes((unsigned char *)(start_str + pos));
@@ -617,8 +617,7 @@ Node *Dic::make_specified_pseudo_node_by_dic_check(
                    !ustart_str.is_suuji_digit(char_num - 1)) {
             // std::cerr << ustart_str.str() << std::endl;
             // 十数人，などへの対応 , TODO?: 十余名
-            // 十や百など，桁の次に"数"や"何"
-            // が出てきた場合には，ひとかたまりの数詞として扱う
+            // 十や百など，桁の次に"数"や"何"が出てきた場合には，ひとかたまりの数詞として扱う
             break;
         } else if (compare_char_type_in_family(
                        check_utf8_char_type((unsigned char *)(start_str + pos)),
