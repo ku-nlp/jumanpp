@@ -29,6 +29,7 @@ bool Dic::open(Parameter *in_param, FeatureTemplateSet *in_ftmpl) { //{{{
     const char *ptr = dmmap->begin();
     token_head = reinterpret_cast<const Token *>(ptr);
 
+    // 動的読み込みの場合は分岐
     posid2pos.read_pos_list(param->pos_filename);
     sposid2spos.read_pos_list(param->spos_filename);
     formid2form.read_pos_list(param->form_filename);
@@ -42,13 +43,13 @@ bool Dic::open(Parameter *in_param, FeatureTemplateSet *in_ftmpl) { //{{{
     split_string(UNK_POSS, ",", c);
     for (std::vector<std::string>::iterator it = c.begin(); it != c.end();
          it++) {
-        param->unk_pos.push_back(posid2pos.get_id(*it));
+        param->unk_pos.push_back(posid2pos.register_pos(*it));
     }
 
     split_string(UNK_FIGURE_POSS, ",", c);
     for (std::vector<std::string>::iterator it = c.begin(); it != c.end();
          it++) {
-        param->unk_figure_pos.push_back(posid2pos.get_id(*it));
+        param->unk_figure_pos.push_back(posid2pos.register_pos(*it));
     }
 
     return true;
@@ -114,9 +115,11 @@ Node *Dic::recognize_onomatopoeia(const char *start_str,
         new_node->form = formid2form.get_pos(new_node->formid);
         new_node->formtypeid = formtypeid2formtype.get_id("*"); //*
         new_node->form_type =
-            formtypeid2formtype.get_pos(new_node->formtypeid);              //*
-        new_node->baseid = baseid2base.get_id(key.char_substr(0, len * 2)); //
-        new_node->base = baseid2base.get_pos(new_node->baseid);             //
+            formtypeid2formtype.get_pos(new_node->formtypeid); //*
+        // 未知の原形の可能性があるので登録する．
+        new_node->baseid =
+            baseid2base.register_pos(key.char_substr(0, len * 2)); //
+        new_node->base = baseid2base.get_pos(new_node->baseid);    //
         new_node->repid = repid2rep.get_id("*");
         new_node->representation = repid2rep.get_pos(new_node->repid);
         new_node->imisid = imisid2imis.get_id(DEF_ONOMATOPOEIA_IMIS); //
@@ -495,7 +498,7 @@ Node *Dic::make_unk_pseudo_node(const char *start_str, int byte_len,
         new_node->form = formid2form.get_pos(new_node->formid);
         new_node->formtypeid = formtypeid2formtype.get_id("*");
         new_node->form_type = formtypeid2formtype.get_pos(new_node->formtypeid);
-        new_node->base = new std::string("<数詞>");
+        // new_node->base = new std::string("<数詞>");
     } else {
         if (new_node->char_type == TYPE_KANJI) {
             new_node->string = new std::string("未定義漢語");
@@ -537,13 +540,7 @@ Node *Dic::make_unk_pseudo_node(const char *start_str, int byte_len,
     return new_node;
 } //}}}
 
-// make_chartype_pseud_node
-// sentence.cc:236:
-// sentence.cc:242:
-// sentence.cc:252:
-// sentence.cc:323:
-// sentence.cc:329:
-// sentence.cc:339:
+// TODO: 名称変更 -> make_pseud_node_by_chartype
 // 名前が変？指定した文字種が連続する範囲で全品詞について未定義語ノードを生成
 // 辞書をr_node で受け取り、重複をチェック
 // 部分アノテーション用の最大長を設定
@@ -908,12 +905,13 @@ Node *Dic::make_pseudo_node_gold(const char *start_str, int byte_len,
         // ここに来ることは無い．
         cerr << ";; error there are unknown words on gold data" << endl;
     } else {
-        new_node->readingid = readingid2reading.get_id(spec[0]);
-        new_node->baseid = baseid2base.get_id(spec[1]);
+        // 辞書に無い品詞が登録される可能性がある
+        new_node->readingid = readingid2reading.register_pos(spec[0]);
+        new_node->baseid = baseid2base.register_pos(spec[1]);
         new_node->posid = specified_posid;
-        new_node->sposid = sposid2spos.get_id(spec[3]);
-        new_node->formid = formid2form.get_id(spec[4]);
-        new_node->formtypeid = formtypeid2formtype.get_id(spec[5]);
+        new_node->sposid = sposid2spos.register_pos(spec[3]);
+        new_node->formid = formid2form.register_pos(spec[4]);
+        new_node->formtypeid = formtypeid2formtype.register_pos(spec[5]);
         new_node->repid = repid2rep.get_id("*");
         new_node->imisid = imisid2imis.get_id("NIL");
     }

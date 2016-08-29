@@ -168,17 +168,17 @@ int main(int argc, char **argv) {
         token->lcAttr = std::atoi(col[1]);
         token->rcAttr = std::atoi(col[2]);
         token->wcost = std::atoi(col[3]);
-        token->posid = pos_gen.get_id(col[4]);
-        token->spos_id = spos_gen.get_id(col[5]);
-        token->form_id = form_gen.get_id(col[6]);
-        token->form_type_id = form_type_gen.get_id(col[7]);
-        token->base_id = base_gen.get_id(col[8]);
-        token->reading_id = reading_gen.get_id(col[9]);
+        token->posid = pos_gen.register_pos(col[4]);
+        token->spos_id = spos_gen.register_pos(col[5]);
+        token->form_id = form_gen.register_pos(col[6]);
+        token->form_type_id = form_type_gen.register_pos(col[7]);
+        token->base_id = base_gen.register_pos(col[8]);
+        token->reading_id = reading_gen.register_pos(col[9]);
         // 代表表記
-        token->rep_id = rep_gen.get_id(col[10]);
+        token->rep_id = rep_gen.register_pos(col[10]);
         // cout << token->representation << endl;
         // 意味情報(残り全て)
-        token->imis_id = imis_gen.get_id(col[11]);
+        token->imis_id = imis_gen.register_pos(col[11]);
         // cout << col[10] << endl;
 
         dic.push_back(std::make_pair(w, token));

@@ -42,9 +42,39 @@ class Dic {
     static const std::unordered_map<std::string, int> katuyou_form_map;
 
     Dic() {
-        posid2pos.get_id(BOS);
-        posid2pos.get_id(EOS);
-        MORPH_DUMMY_POS = posid2pos.get_id(DEF_MORPH_DUMMY);
+        // 特殊な品詞名等を登録
+        posid2pos.register_pos(BOS);
+        posid2pos.register_pos(EOS);
+
+        // オノマトペ用
+        posid2pos.register_pos(DEF_ONOMATOPOEIA_HINSI);
+        sposid2spos.register_pos(DEF_ONOMATOPOEIA_BUNRUI);
+        imisid2imis.register_pos(DEF_ONOMATOPOEIA_IMIS);
+
+        // 品詞などが未定義の形態素用
+        formid2form.register_pos("*");
+        formtypeid2formtype.register_pos("*");
+        repid2rep.register_pos("*");
+        readingid2reading.register_pos("*");
+        imisid2imis.register_pos("NIL");
+
+        // 生成する形態素ノード用の特殊な原形
+        baseid2base.register_pos("<数詞>");
+        baseid2base.register_pos("未定義漢語");
+        baseid2base.register_pos("未定義カタカナ語");
+        baseid2base.register_pos("未定義ひらがな語");
+        baseid2base.register_pos("未定義アルファベット語");
+
+        // 未定義語用
+        baseid2base.register_pos(UNK_POS);
+        sposid2spos.register_pos(UNK_POS);
+        sposid2spos.register_pos(UNK_POS);
+        readingid2reading.register_pos(UNK_POS);
+        formid2form.register_pos(UNK_POS);
+        formtypeid2formtype.register_pos(UNK_POS);
+        repid2rep.register_pos(UNK_POS);
+        // 使われている？
+        MORPH_DUMMY_POS = posid2pos.register_pos(DEF_MORPH_DUMMY);
     }
     Dic(Parameter *in_param, FeatureTemplateSet *in_ftmpl);
     ~Dic();
