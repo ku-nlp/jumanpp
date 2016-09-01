@@ -20,7 +20,6 @@ AC_LANG_PUSH(C++)
 AX_CXX_COMPILE_STDCXX_11([noext], [mandatory])
 #AX_CXX_COMPILE_STDCXX_14([noext], [mandatory]) # This macro requires autotools archive 2016-03-20 or newer.
 AX_BOOST_BASE([1.57])
-# AX_BOOST_SERIALIZATION() # It doesn't work properly..
 
 AC_CHECK_LIB([tcmalloc], [main], LIBS="-ltcmalloc $LIBS" has_libtcmalloc=1, has_libtcmalloc=0)
 if test $has_libtcmalloc = 0; then
