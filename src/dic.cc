@@ -331,13 +331,14 @@ Node *Dic::lookup_lattice_specified(
     const std::vector<std::string> &specified) { //{{{
     Node *result_node = NULL;
 
-    unsigned long specified_readingid = readingid2reading.get_id(specified[0]);
-    unsigned long specified_baseid = baseid2base.get_id(specified[1]);
-    unsigned long specified_posid = posid2pos.get_id(specified[2]);
-    unsigned long specified_sposid = sposid2spos.get_id(specified[3]);
+    unsigned long specified_readingid =
+        readingid2reading.register_pos(specified[0]);
+    unsigned long specified_baseid = baseid2base.register_pos(specified[1]);
+    unsigned long specified_posid = posid2pos.register_pos(specified[2]);
+    unsigned long specified_sposid = sposid2spos.register_pos(specified[3]);
     unsigned long specified_formtypeid =
-        formtypeid2formtype.get_id(specified[4]);
-    unsigned long specified_formid = formid2form.get_id(specified[5]);
+        formtypeid2formtype.register_pos(specified[4]);
+    unsigned long specified_formid = formid2form.register_pos(specified[5]);
 
     std::vector<CharLattice::da_result_pair_type> &result_pair =
         da_search_result;
@@ -880,7 +881,7 @@ Node *Dic::make_unk_pseudo_node_gold(const char *start_str, int byte_len,
 
 Node *Dic::make_pseudo_node_gold(const char *start_str, int byte_len,
                                  const std::vector<std::string> &spec) { //{{{
-    unsigned long specified_posid = posid2pos.get_id(spec[2]);
+    unsigned long specified_posid = posid2pos.register_pos(spec[2]);
 
     Node *new_node = new Node;
     new_node->surface = start_str;
@@ -915,12 +916,12 @@ Node *Dic::make_pseudo_node_gold(const char *start_str, int byte_len,
         new_node->repid = repid2rep.get_id("*");
         new_node->imisid = imisid2imis.get_id("NIL");
     }
-    new_node->reading = new std::string(spec[0]);
-    new_node->base = new std::string(spec[1]);
-    new_node->pos = new std::string(spec[2]);
-    new_node->spos = new std::string(spec[3]);
-    new_node->form = new std::string(spec[4]);
-    new_node->form_type = new std::string(spec[5]);
+    new_node->reading = readingid2reading.get_pos(new_node->readingid);
+    new_node->base = baseid2base.get_pos(new_node->baseid);
+    new_node->pos = posid2pos.get_pos(specified_posid);
+    new_node->spos = sposid2spos.get_pos(new_node->sposid);
+    new_node->form = formid2form.get_pos(new_node->formid);
+    new_node->form_type = formtypeid2formtype.get_pos(new_node->formtypeid);
 
     new_node->representation = repid2rep.get_pos(new_node->repid);
     new_node->semantic_feature = new std::string("擬似ノード");
