@@ -70,8 +70,6 @@ check_exceptional_chars_in_figure(const char *cp, unsigned int rest_byte_len);
 
 extern size_t is_suuji(unsigned char *ucp);
 
-#define VERSION "0.96"
-
 #ifndef INT_MAX
 #define INT_MAX 2147483647
 #endif

@@ -4,7 +4,7 @@
 AC_PREREQ([2.69])
 
 
-AC_INIT([JUMAN++], [0.96], [hmorita@i.kyoto-u.ac.jp],[jumanpp])
+AC_INIT([JUMAN++], [0.97], [hmorita@i.kyoto-u.ac.jp],[jumanpp])
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([src/morph.cc])
 AC_CONFIG_HEADERS([src/config.h])
