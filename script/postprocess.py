@@ -16,6 +16,8 @@ parser.add_argument('--pos', '-p', action='store_true',
                     dest='pos',help='Set nbest for evaluation')
 parser.add_argument('--sort', '-s', action='store_true',
                     dest='sort',help='Sort morph by midasi in dictionary order')
+parser.add_argument('--sortbyrank', '-m', action='store_true',
+                    dest='sortbyrank',help='Sort morph by rank')
 parser.add_argument('--color', '-c', action='store_true',
                     dest='hilight', help='Hilight higher rank morph')
 
@@ -60,7 +62,7 @@ def has_higher_rank(m, rank):
             return True
 
 def sort_by_rank(m_list):
-    return sorted(m_list, key=lambda m:m.feature['ランク'][0])
+    return sorted(m_list, key=lambda m:int(m.feature['ランク'][0]))
 
 def spec(span_list, span2morph):
     for sp in span_list:
@@ -116,9 +118,11 @@ for index, string in enumerate(iter_EOS(sys.stdin)):
                     basemap.add(base)
                     mlist.append(m)
             span2morph[sp] = mlist
-        # sort by mrph_id
+        # sort 
         if args.sort:
             span2morph[sp].sort(key=lambda x:x.midasi)
+        elif args.sortbyrank:
+            span2morph[sp] = sort_by_rank(span2morph[sp])
     
     # print spec
     out = [lattice.comment]
