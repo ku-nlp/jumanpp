@@ -41,14 +41,10 @@ EOS
 ```
 usage: jumanpp [options] 
 options:
-  -D, --dir                    set resource directory (string [=./data])
+  -D, --dir                    set resource directory (string) 
   -j, --juman                  JUMAN style output (default)
-  -L, --lattice                lattice format output (unsigned int [=5])
-  -A, --ambiguous              output ambiguous words on lattice
-  -M, --morph                  morph style output 
-  -N, --Nmorph                 N-best morph output (unsigned int [=5])
+  -s, --specifics              lattice format output (unsigned int [=5])
   -B, --beam                   set beam width used in analysis (unsigned int [=5])
-      --dynamic                Load RNNLM dynamically (dev)
   -v, --version                print version
   -h, --help                   print this message
 ```
@@ -59,10 +55,6 @@ Lines beginning with `#` will be interpreted as comment line.
 
 ## DEMO
 [DEMO cgi](http://lotus.kuee.kyoto-u.ac.jp/~morita/rnnlm.cgi)
-
-## Issue
-KKN has very slow starting time (about 1 minute). 
-`--dynamic` option will reduce the starting time to about 10 sec.
 
 ## Model
 See ``Morphological Analysis for Unsegmented Languages using Recurrent Neural Network Language Model. Hajime Morita, Daisuke Kawahara, Sadao Kurohashi. EMNLP 2015''  
