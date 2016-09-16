@@ -134,7 +134,7 @@ while line = STDIN.gets
         # 一文出力
         print("# #{id}\n")
         id = ""
-    elsif(line =~ /^([^\*\+\#]|EOS)/ && !(line =~ /^\s*$/ )) #単語なら
+    elsif(line =~ /^([^\*\+\#@]|EOS)/ && !(line =~ /^\s*$/ )) #単語なら
         # 品詞変更タグ
         # 0      1        2      3    4 5            6
         # 見通し-みとおし-見通す-動詞-*-子音動詞サ行-基本連用形"
@@ -175,7 +175,11 @@ while line = STDIN.gets
                 end
             end
         else
-            print_word([sp[0], sp[1],sp[2],sp[3], sp[5], sp[7],sp[9]])
+            if(sp[3] == "未定義語") # 未定義語は訓練データに渡さない
+              print_word([sp[0], sp[1], sp[2], "名詞", "普通名詞", "*", "*"])
+            else
+              print_word([sp[0], sp[1],sp[2],sp[3], sp[5], sp[7],sp[9]])
+            end
             #print "#{sp[0]}_#{sp[1]}_#{sp[2]}_#{sp[3]}_#{sp[5]}_#{sp[7]}_#{sp[9]} " 
         end
     elsif(line =~ /^# (S-ID:\S*) /) 
