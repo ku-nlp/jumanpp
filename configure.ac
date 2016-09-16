@@ -54,15 +54,15 @@ AC_CHECK_FUNCS([memmove memset munmap setenv sqrt strchr strerror strrchr strstr
 cd src/cdb && make && cd -
 LIBS="$LIBS cdb/libcdb.a"
 
-# Add option for model path
-AC_ARG_ENABLE([default_model_path],
-	[AS_HELP_STRING([--enable-default-model-path=PATH], [set default model path])],
-    [DEFAULT_MODEL_PATH=${enableval}],
-    [DEFAULT_MODEL_PATH="disable"]
+# Add option for resource path
+AC_ARG_ENABLE([default_resource_path],
+	[AS_HELP_STRING([--enable-default-resource-path=PATH], [set default resource path])],
+    [DEFAULT_RESOURCE_PATH=${enableval}],
+    [DEFAULT_RESOURCE_PATH="disable"]
 )
 
 AS_IF([test "x${DEFAULT_MODEL_PATH}" != "xdisable"],
-    [AC_DEFINE_UNQUOTED(DEFAULT_MODEL_PATH, ${DEFAULT_MODEL_PATH}, [default path to model])]
+    [AC_DEFINE_UNQUOTED(DEFAULT_RESOURCE_PATH, ${DEFAULT_RESOURCE_PATH}, [default path to resource])]
 )
 
 AC_ARG_ENABLE([dev_option],

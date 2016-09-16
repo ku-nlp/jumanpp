@@ -46,8 +46,8 @@ std::string read_jumanpprc() { /*{{{*/
     std::string current_path = get_current_path();
     std::string jumanpprc_path = home_path + "/.jumanpprc";
 
-#ifdef DEFAULT_MODEL_PATH
-    std::string default_model_path = str_def(DEFAULT_MODEL_PATH);
+#ifdef DEFAULT_RESOURCE_PATH
+    std::string default_model_path = str_def(DEFAULT_RESOURCE_PATH);
 #else
     std::string default_model_path = current_path + "/.jumanpp";
 #endif
