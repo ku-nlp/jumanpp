@@ -10,14 +10,14 @@
 #include <iterator>
 #include <sstream>
 
+#include <boost/unordered_map.hpp>
+#include <boost/functional/hash.hpp>
 #define BOOST_DATE_TIME_NO_LIB
 #include <boost/interprocess/managed_mapped_file.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/file_mapping.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/containers/string.hpp>
-#include <boost/unordered_map.hpp>
-#include <boost/functional/hash.hpp>
 namespace bip = boost::interprocess;
 
 typedef std::unordered_map<std::string, double> Umap;
@@ -393,7 +393,7 @@ class ConstFeatureVectorIterator
         return !(*this == iterator);
     }; //}}}
 
-    const auto operator-> () -> decltype(&(*ditr)) { //{{{
+    auto operator-> () -> decltype(&(*ditr)) { //{{{
         if (fv && fv->mmap_flag) {
             return &(*ditr);
         } else {
@@ -483,6 +483,7 @@ class FeatureVectorIterator
             (++itr);
             return *this;
         }
+        return *this;
     }; //}}}
 
     FeatureVectorIterator operator++(int) { //{{{
@@ -526,7 +527,7 @@ class FeatureVectorIterator
         return !(*this == iterator);
     }; //}}}
 
-    const auto operator-> () -> decltype(&(*ditr)) { //{{{
+    auto operator-> () -> decltype(&(*ditr)) { //{{{
         if (fv && fv->mmap_flag) {
             return &(*ditr);
         } else {
