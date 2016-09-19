@@ -26,7 +26,7 @@
 
 ### インストール手順
 #### 配布アーカイブのダウンロードおよび展開
-% wget http://lotus.kuee.kyoto-u.ac.jp/nl-resource/jumanpp/jumanpp-1.0.tar.xz (約 1.2GB)
+% wget http://lotus.kuee.kyoto-u.ac.jp/nl-resource/jumanpp/jumanpp-1.0.tar.xz (約 1.3GB)
 % tar xJf jumanpp-1.0.tar.xz
 % cd jumanpp-1.0
 

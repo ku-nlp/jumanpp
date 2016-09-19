@@ -19,8 +19,11 @@ AC_PROG_RANLIB
 AC_LANG_PUSH(C++)
 AX_CXX_COMPILE_STDCXX_11([noext], [mandatory])
 #AX_CXX_COMPILE_STDCXX_14([noext], [mandatory]) # This macro requires autotools archive 2016-03-20 or newer.
-AX_BOOST_BASE([1.57])
+AX_BOOST_BASE([1.57], boost_check=0, boost_check=1)
 
+if test $boost_check = 1; then
+    AC_MSG_ERROR("Error: cannot find available Boost library.")
+fi
 AC_CHECK_LIB([tcmalloc], [main], LIBS="-ltcmalloc $LIBS" has_libtcmalloc=1, has_libtcmalloc=0)
 if test $has_libtcmalloc = 0; then
     AC_MSG_WARN("Warning: cannot find -ltcmalloc. It is recommended to link libtcmalloc.")
@@ -51,7 +54,7 @@ AC_FUNC_REALLOC
 AC_CHECK_FUNCS([memmove memset munmap setenv sqrt strchr strerror strrchr strstr strtol strtoul])
 
 # Build libcdb 
-cd src/cdb && make && cd -
+#cd src/cdb && make && cd -
 LIBS="$LIBS cdb/libcdb.a"
 
 # Add option for resource path
@@ -78,10 +81,10 @@ AS_IF([test "x${DEV_OPTION}" != "xdisable"],
 
 AS_IF([test -e .git],
     [GIT_VER_TMP=`git log -1 --date=local --format="%ad %h"`;echo ${GIT_VER_TMP} > VERSION],
-    [GIT_VER_TMP=`cat VERSION`]
+    [GIT_VER_TMP=]
 )
 AC_DEFINE_UNQUOTED(GITVER, "${GIT_VER_TMP}", [revision])
       
-AC_CONFIG_FILES([Makefile src/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile src/cdb/Makefile])
 AC_OUTPUT
 
