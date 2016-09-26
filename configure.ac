@@ -56,7 +56,10 @@ AC_CHECK_FUNCS([memmove memset munmap setenv sqrt strchr strerror strrchr strstr
 #cd src/cdb && make && cd -
 LIBS="$LIBS cdb/libcdb.a"
 
-RESOURCE_DIR="$datadir/jumanpp"
+# For mac 
+test "${prefix}" = NONE && prefix=/usr/local
+
+RESOURCE_DIR="${datadir}/jumanpp"
 eval RESOURCE_DIR=`eval echo "$RESOURCE_DIR"`
 
 # Add option for resource path
