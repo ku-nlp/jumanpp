@@ -13,7 +13,7 @@
 - OS: Linux (CentOS 6.7 で動作を確認) 
 - 必要メモリ: 4GB 以上  
 - ディスク容量: 2GB 以上  
-### 必要なもの
+### 必須ツール・ライブラリ
 - gcc (4.9 以降)
 - Boost C++ Libraries (1.57 以降)  
 [\[link\]](http://www.boost.org/users/history/version_1_57_0.html)
@@ -25,27 +25,14 @@
 [\[download\]](http://download.savannah.gnu.org/releases/libunwind/libunwind-0.99-beta.tar.gz)
 
 ### インストール手順
-#### 配布アーカイブのダウンロードおよび展開
-% wget http://lotus.kuee.kyoto-u.ac.jp/nl-resource/jumanpp/jumanpp-1.0.tar.xz (約 1.3GB)
-% tar xJf jumanpp-1.0.tar.xz
-% cd jumanpp-1.0
+JUMAN++ を使用するには,以下の手順で配布アーカイブをダウンロード,インストールす
+る必要があります.インストールされるものは,JUMAN++本体,JUMAN++ のシステム標準辞書,シ
+ステム標準モデル(訓練済みのパラメタ),言語モデルです.
 
-リソースファイルには JUMAN++のシステム標準辞書,システム標準モデル(訓練済みのパ
-ラメタ),言語モデルが含まれます.リソースファイルをインストールするディレクトリは
-任意す. 以降,インストール先のディレクトリを$JPPRC として参照します．
-#### リソースファイルのインストール
-```
-% export JPPRC=/usr/local/share/jumanpp-resource/
- (※ /usr/local/share/jumanpp-resource/ にインストールする場合)
-% sudo mv jumanpp-resource $JPPRC
-```
-
-#### 形態素解析器本体のインストール
-形態素解析器本体と辞書および訓練済みのモデルをダウンロードし，インストールします．
-```
-% cd jumanpp-src
-% ./configure --enable-default-resource-path=$JPPRC
-(※ リソースファイルをインストールしたディレクトリを指定する)
+% wget http://lotus.kuee.kyoto-u.ac.jp/nl-resource/jumanpp/jumanpp-1.00.tar.xz
+% tar xJf jumanpp-1.00.tar.xz
+% cd jumanpp-1.00
+% ./configure 
 % make
 % sudo make install
 ```
@@ -91,8 +78,6 @@ JUMAN++ の主なオプションは以下のとおりです．詳細はマニュ
 オプション:
   -s, --specifics N            N-Best 解をラティス形式で出力
   -B, --beam width             解析に利用する Beam 幅 (default: width = 5)
-  -D, --dir                    モデルファイルのあるディレクトリを指定  
-                               (default: configure 時に指定したパス)
   -v, --version                バージョンを表示
       --debug                  デバッグ出力を表示します
   -h, --help                   ヘルプを表示
@@ -119,7 +104,7 @@ JUMAN++ の主なオプションは以下のとおりです．詳細はマニュ
 EOS
 ```
 
-同じスパンにスコア・品詞が同一の形態素候補が複数ある場合は，他の候補を先頭に`@`をつけて表示します．また，`EOS` は文区切りを表します．品詞体系についての説明は [JUMAN ユーザーマニュアル](http://nlp.ist.i.kyoto-u.ac.jp/?JUMAN) を参照してください．
+同じスパンにスコア・品詞が同一の形態素候補が複数ある場合は，他の候補を先頭に`@`をつけて表示します．また，`EOS` は文区切りを表します．
 
 ### 詳細出力形式 (-s)
 詳細出力形式は，N-best 解の出力に対応し，各形態素が他のどの形態素と接続するかと

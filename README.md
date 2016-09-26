@@ -18,9 +18,12 @@ word sequences by using a recurrent neural network language model (RNNLM).
 
 ### Build
 ```
-git clone git@bitbucket.org:ku_nlp/jumanpp.git
-cd jumanpp
-make
+% wget http://lotus.kuee.kyoto-u.ac.jp/nl-resource/jumanpp/jumanpp-1.00.tar.xz
+% tar xJf jumanpp-1.00.tar.xz
+% cd jumanpp-1.00
+% ./configure 
+% make
+% sudo make install
 ```
 ## Quick start (The latest version is installed in shared binary directory in our lab.)
 ```
@@ -41,8 +44,6 @@ EOS
 ```
 usage: jumanpp [options] 
 options:
-  -D, --dir                    set resource directory (string) 
-  -j, --juman                  JUMAN style output (default)
   -s, --specifics              lattice format output (unsigned int [=5])
   -B, --beam                   set beam width used in analysis (unsigned int [=5])
   -v, --version                print version

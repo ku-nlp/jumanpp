@@ -3,7 +3,6 @@
 
 AC_PREREQ([2.69])
 
-
 AC_INIT([JUMAN++], [1.00], [morita@nlp.ist.i.kyoto-u.ac.jp],[jumanpp])
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([src/morph.cc])
@@ -57,11 +56,14 @@ AC_CHECK_FUNCS([memmove memset munmap setenv sqrt strchr strerror strrchr strstr
 #cd src/cdb && make && cd -
 LIBS="$LIBS cdb/libcdb.a"
 
+RESOURCE_DIR="$datadir/jumanpp"
+eval RESOURCE_DIR=`eval echo "$RESOURCE_DIR"`
+
 # Add option for resource path
 AC_ARG_ENABLE([default_resource_path],
 	[AS_HELP_STRING([--enable-default-resource-path=PATH], [set default resource path])],
     [DEFAULT_RESOURCE_PATH=${enableval}],
-    [DEFAULT_RESOURCE_PATH="disable"]
+    [DEFAULT_RESOURCE_PATH=${RESOURCE_DIR}]
 )
 
 AS_IF([test "x${DEFAULT_MODEL_PATH}" != "xdisable"],
@@ -77,7 +79,6 @@ AC_ARG_ENABLE([dev_option],
 AS_IF([test "x${DEV_OPTION}" != "xdisable"],
     [AC_DEFINE_UNQUOTED(USE_DEV_OPTION, ${DEV_OPTION}, [enables options for development])]
 )
-
 
 AS_IF([test -e .git],
     [GIT_VER_TMP=`git log -1 --date=local --format="%ad %h"`;echo ${GIT_VER_TMP} > VERSION],
