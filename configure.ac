@@ -73,6 +73,13 @@ AS_IF([test "x${DEFAULT_MODEL_PATH}" != "xdisable"],
     [AC_DEFINE_UNQUOTED(DEFAULT_RESOURCE_PATH, ${DEFAULT_RESOURCE_PATH}, [default path to resource])]
 )
 
+AC_ARG_ENABLE([no_dict],
+    [AS_HELP_STRING([--enable-no-dict], [do not install dictionary ])],
+    [NODICT_OPTION="true"],
+    [NODICT_OPTION="false"]
+)
+AM_CONDITIONAL(NODICT, test x${NODICT_OPTION} = xtrue)
+
 AC_ARG_ENABLE([dev_option],
 	[AS_HELP_STRING([--enable-dev_option], [enable options for development ])],
     [DEV_OPTION=${enableval}],
