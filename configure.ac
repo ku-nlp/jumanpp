@@ -3,7 +3,7 @@
 
 AC_PREREQ([2.69])
 
-AC_INIT([JUMAN++], [1.00], [morita@nlp.ist.i.kyoto-u.ac.jp],[jumanpp])
+AC_INIT([JUMAN++], [1.01], [morita@nlp.ist.i.kyoto-u.ac.jp],[jumanpp])
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([src/morph.cc])
 AC_CONFIG_HEADERS([src/config.h])
@@ -52,11 +52,9 @@ AC_FUNC_MMAP
 AC_FUNC_REALLOC
 AC_CHECK_FUNCS([memmove memset munmap setenv sqrt strchr strerror strrchr strstr strtol strtoul])
 
-# Build libcdb 
-#cd src/cdb && make && cd -
 LIBS="$LIBS cdb/libcdb.a"
 
-# For mac 
+# Set Default prefix
 test "${prefix}" = NONE && prefix=/usr/local
 
 RESOURCE_DIR="${datadir}/jumanpp"
@@ -74,7 +72,7 @@ AS_IF([test "x${DEFAULT_MODEL_PATH}" != "xdisable"],
 )
 
 AC_ARG_ENABLE([no_dict],
-    [AS_HELP_STRING([--enable-no-dict], [do not install dictionary ])],
+    [AS_HELP_STRING([--enable-no-dict], [do not install resource files ])],
     [NODICT_OPTION="true"],
     [NODICT_OPTION="false"]
 )
