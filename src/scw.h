@@ -10,30 +10,12 @@
 #include <unordered_map>
 #include "feature_vector.h"
 
-// Boost::interprocess (Memory Mapped File)
-#define BOOST_DATE_TIME_NO_LIB
-#include <boost/interprocess/managed_mapped_file.hpp>
-#include <boost/interprocess/file_mapping.hpp>
-#include <boost/interprocess/allocators/allocator.hpp>
-#include <boost/interprocess/containers/string.hpp>
-namespace ipc = boost::interprocess;
-
 typedef std::unordered_map<std::string, double> Umap;
 typedef std::unordered_map<unsigned long, double>
     Ulmap; //参考に2015/11 時点での素性数 2,395,735
-// typedef std::unordered_map<unsigned long, double,>
-typedef std::unordered_map<std::string, unsigned long> Fimap;
 
-typedef std::pair<unsigned long, double> weightPair;
-typedef ipc::allocator<weightPair, ipc::managed_mapped_file::segment_manager>
-    allocator_wmap;
-
-typedef std::unordered_map<unsigned long, double, std::hash<unsigned long>,
-                           std::equal_to<unsigned long>,
-                           allocator_wmap> MmfUlmap;
-
-class FeatureVector; // 今後分離したほうが良い？
-class DiagMat; // Matrix も扱うなら名前を変えるべき
+class FeatureVector;
+class DiagMat;
 
 // Sparse Matrix
 class DiagMat {/*{{{*/
@@ -132,7 +114,9 @@ class SCWClassifier {/*{{{*/
         return sum;
     };
 
-    void update_mu(double alpha, double y, const DiagMat& sigma, const FeatureVector& xt);
+    void update_mu(double alpha, double y, const DiagMat &sigma,
+                   const FeatureVector &xt);
+
   public:
     SCWClassifier(double in_C, double in_phi, FeatureVector &in_mu)
         : C(in_C), phi(in_phi), zeta(1 + in_phi * in_phi), mu(in_mu),

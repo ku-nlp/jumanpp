@@ -24,5 +24,9 @@ jumanpp-resource/lang.mdl.direct: $(dist_resource_DATA) src/jumanpp
 	rm -f jumanpp-resource/*.map;\
 	echo "" | src/jumanpp -D jumanpp-resource
 
-jumanpp-resource/%.map: jumanpp-resource/%.mdl src/jumanpp jumanpp-resource/lang.mdl.direct
-	touch $@
+jumanpp-resource/%.map: jumanpp-resource/%.mdl jumanpp-resource/lang.mdl.direct
+	:
+
+jumanpp-resource/lang.mdl.nnet.map: jumanpp-resource/lang.mdl.nnet jumanpp-resource/lang.mdl.direct
+	:
+	

@@ -2,6 +2,7 @@
 #define POS_H
 
 #include "common.h"
+#include "hash.h"
 
 #define BOOST_DATE_TIME_NO_LIB
 #include <boost/interprocess/managed_mapped_file.hpp>
@@ -12,7 +13,6 @@
 #include <boost/interprocess/containers/vector.hpp>
 #include <boost/interprocess/containers/string.hpp>
 #include <boost/unordered_map.hpp>
-#include <boost/functional/hash.hpp>
 namespace bip = boost::interprocess;
 
 typedef bip::managed_mapped_file::segment_manager mapped_file_manager;
@@ -23,7 +23,7 @@ typedef bip::basic_string<char, std::char_traits<char>, allocator_char>
 typedef bip::allocator<MappedString, bip::managed_mapped_file::segment_manager>
     allocator_string;
 
-typedef unsigned long RDkey;
+typedef uint64_t RDkey;
 typedef MappedString RDval;
 typedef std::pair<const RDkey, RDval> RDpair;
 
@@ -31,8 +31,8 @@ typedef std::pair<const RDkey, RDval> RDpair;
 typedef bip::allocator<RDpair, bip::managed_mapped_file::segment_manager>
     allocator_rdpair;
 
-typedef boost::unordered_map<RDkey, RDval, boost::hash<RDkey>,
-                             std::equal_to<RDkey>, allocator_rdpair> RDmap;
+typedef boost::unordered_map<RDkey, RDval, DummyHash, std::equal_to<RDkey>,
+                             allocator_rdpair> RDmap;
 
 //ファイルの更新時間を調べる
 // struct stat attrib;                 //1. create a file attribute structure
@@ -44,7 +44,7 @@ namespace Morph {
 class Pos {
     // unsigned long count;
     std::unordered_map<std::string, unsigned long> dic;
-    std::hash<std::string> str_hash;
+    MurMurHash3_str str_hash;
     std::unordered_map<unsigned long, std::string> rdic;
     RDmap *rd_dic;
 
@@ -86,15 +86,8 @@ class Pos {
         // メモリマップファイルを作成
         p_file = new bip::managed_mapped_file(bip::create_only, mapfile.c_str(),
                                               map_size);
-        // MappedString のアロケータ
-        // allocator_string
-        // allocator_void alloc_inst(p_file->get_segment_manager());
-        // メモリマップ内にvocablary 用の領域を確保
-        //        auto rd_pos_map = p_file->construct<RDmap>("rdmap")(
-        //            0, boost::hash<RDkey>(), std::equal_to<RDkey>(),
-        //            alloc_inst);
         auto rd_pos_map = p_file->construct<RDmap>("rdmap")(
-            0, boost::hash<RDkey>(), std::equal_to<RDkey>(),
+            0, DummyHash(), std::equal_to<RDkey>(),
             p_file->get_allocator<RDpair>());
         rd_dic = rd_pos_map;
         return true;

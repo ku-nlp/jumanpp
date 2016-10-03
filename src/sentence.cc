@@ -12,7 +12,7 @@
 
 #include <sstream>
 
-// SRILM memo
+// SRILM
 //
 // #ifdef USE_SHORT_VOCAB
 // typedef unsigned short	VocabIndex;
@@ -211,13 +211,10 @@ Sentence::~Sentence() { //{{{
 } //}}}
 
 void Sentence::clear_nodes() { //{{{
-    // EOS 以外基本的にbegin_node_list と同じノードを指しているはず
+    // EOS 以外基本的に begin_node_list と同じノードを指しているはず
     if (end_node_list && end_node_list->size() > 0 && (*end_node_list)[0]) {
         delete (*end_node_list)[0]; // delete BOS
         (*end_node_list)[0] = nullptr;
-    } else {
-        // std::cerr << "skipped: " << this->sentence << " clear_end_nodes" <<
-        // std::endl;
     }
 
     if (begin_node_list && begin_node_list->size() > 0) {
@@ -229,9 +226,6 @@ void Sentence::clear_nodes() { //{{{
                 tmp_node = next_node;
             }
         }
-    } else {
-        // std::cerr << "skipped: " << this->sentence << " clear_begin_nodes" <<
-        // std::endl;
     }
 
     if (begin_node_list)
@@ -240,7 +234,8 @@ void Sentence::clear_nodes() { //{{{
         end_node_list->clear();
 } //}}}
 
-bool Sentence::add_one_word(std::string &word) { //コーパス読み込み時に使用 {{{
+//コーパス読み込み時に使用
+bool Sentence::add_one_word(std::string &word) { //{{{
     word_num++;
     length += strlen(word.c_str());
     sentence += word;
@@ -1321,7 +1316,7 @@ Node *Sentence::get_bos_node() { //{{{
     // bos_node->isbest = 1;
     bos_node->stat = MORPH_BOS_NODE;
     bos_node->posid =
-        Dic::MORPH_DUMMY_POS; // TODO: れ未知語と同じ品詞扱いになっている
+        Dic::MORPH_DUMMY_POS; // TODO: 未知語と同じ品詞扱いになっている
     bos_node->pos = &(BOS_STRING);
     bos_node->spos = &(BOS_STRING);
     bos_node->form = &(BOS_STRING);
@@ -2286,29 +2281,6 @@ double Sentence::eval(Sentence &gold) { //{{{
     else
         return 1.0 - (score / morph_count);
 }; //}}}
-
-// 廃止
-std::vector<std::string>
-Sentence::get_gold_topic_features(TopicVector *tov) { //{{{
-    if (tov) {
-        std::stringstream topic_feature;
-        FeatureSet f(ftmpl);
-        TopicVector *tmp_topic = FeatureSet::topic; // 一時保存
-        FeatureSet::topic = tov;
-        for (Node node : gold_morphs) {
-            if (!node.is_dummy()) {
-                f.extract_topic_feature(&node);
-                // std::cerr << *(node.base) << "(" << node.topic_available() <<
-                // ")"<< std::endl;
-            }
-        }
-        FeatureSet::topic = tmp_topic;
-
-        return std::move(f.fset);
-    } else {
-        return std::vector<std::string>();
-    }
-} //}}}
 
 Node *Sentence::filter_long_node(Node *orig_dic,
                                  unsigned int max_length) { /*{{{*/

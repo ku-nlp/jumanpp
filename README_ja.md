@@ -29,9 +29,9 @@ JUMAN++ を使用するには,以下の手順で配布アーカイブを�
 る必要があります.インストールされるものは,JUMAN++本体,JUMAN++ のシステム標準辞書,シ
 ステム標準モデル(訓練済みのパラメタ),言語モデルです.
 
-% wget http://lotus.kuee.kyoto-u.ac.jp/nl-resource/jumanpp/jumanpp-1.00.tar.xz
-% tar xJf jumanpp-1.00.tar.xz
-% cd jumanpp-1.00
+% wget http://lotus.kuee.kyoto-u.ac.jp/nl-resource/jumanpp/jumanpp-1.01.tar.xz
+% tar xJf jumanpp-1.01.tar.xz
+% cd jumanpp-1.01
 % ./configure 
 % make
 % sudo make install
@@ -183,6 +183,10 @@ EOS
 - 辞書・モデルの改良 (随時公開予定)
 - Windows 対応
 - 中国語対応
+
+## 9. 更新履歴
+- 1.01 インストール時の不具合を修正
+- 1.00 公開
 
 ## 謝辞
 言語モデルの学習には, [faster-rnnlm](https://github.com/yandex/faster-rnnlm) を利用しています．言語モデルの利用には，[RNNLM-toolkit](http://rnnlm.org/)のコードを一部利用しています．Double-Array を扱うため Taku Kudo 氏の [Darts](http://chasen.org/~taku/software/darts/)を利用しています．CDBの読み込みに [tinycdb](http://www.corpit.ru/mjt/tinycdb.html) のコードを利用しています．コマンドラインの解析に Hideyuki Tanaka 氏の [cmdline](https://github.com/tanakh/cmdline) を利用しています． 各ソフトウェア，ライブラリの製作者様に心から感謝申し上げます．

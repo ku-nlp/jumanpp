@@ -9,9 +9,9 @@
 #include <fstream>
 #include <iterator>
 #include <sstream>
+#include "hash.h"
 
 #include <boost/unordered_map.hpp>
-#include <boost/functional/hash.hpp>
 #define BOOST_DATE_TIME_NO_LIB
 #include <boost/interprocess/managed_mapped_file.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
@@ -21,7 +21,7 @@
 namespace bip = boost::interprocess;
 
 typedef std::unordered_map<std::string, double> Umap;
-typedef unsigned long Ulkey;
+typedef uint64_t Ulkey;
 typedef double Ulval;
 typedef std::unordered_map<Ulkey, Ulval>
     Ulmap; //参考に2015/11 時点での素性数 2,395,735
@@ -33,8 +33,8 @@ typedef bip::allocator<weightPair, bip::managed_mapped_file::segment_manager>
     allocator_dmap;
 
 // 予め文字列をハッシュ化して与える
-typedef boost::unordered_map<Ulkey, Ulval, boost::hash<Ulkey>,
-                             std::equal_to<Ulkey>, allocator_dmap> Uldmap;
+typedef boost::unordered_map<Ulkey, Ulval, DummyHash, std::equal_to<Ulkey>,
+                             allocator_dmap> Uldmap;
 
 class FeatureVector;
 class FeatureVectorIterator;
@@ -226,7 +226,7 @@ class FeatureVector {/*{{{*/
             bip::create_only, mapfile.c_str(), map_weight_size);
         // メモリマップ内にvocablary 用の領域を確保
         auto weight_map = p_file_weight->construct<Uldmap>("map_weight")(
-            0, boost::hash<Ulkey>(), std::equal_to<Ulkey>(),
+            0, DummyHash(), std::equal_to<Ulkey>(),
             p_file_weight->get_allocator<weightPair>());
         dvec.reset(weight_map);
         return true;

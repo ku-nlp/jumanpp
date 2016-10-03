@@ -20,8 +20,6 @@ std::unordered_set<
     tuple_equal> FeatureSet::freq_word_set;
 
 std::unordered_map<long int, std::string> FeatureSet::feature_map;
-// std::tr1::unordered_map<std::vector<long int>,unsigned long>
-// FeatureSet::feature_id_map;
 
 FeatureSet::FeatureSet(FeatureTemplateSet *in_ftmpl) { //{{{
     ftmpl = in_ftmpl;
@@ -34,7 +32,7 @@ FeatureSet::~FeatureSet() { //{{{
 
 // TODO:デバッグ用の素性名生成を分離する．
 void FeatureSet::extract_unigram_feature(Node *node) { //{{{
-    static std::vector<unsigned long> fv; // TODO:外部から与える形に変更する.
+    static std::vector<uint64_t> fv;
     std::stringstream feature_name;
     for (std::vector<FeatureTemplate *>::iterator tmpl_it =
              ftmpl->get_templates()->begin();
@@ -182,7 +180,8 @@ void FeatureSet::extract_unigram_feature(Node *node) { //{{{
                 }
             }
         }
-        auto feature_key = boost::hash_range(fv.begin(), fv.end());
+        uint64_t feature_key = murmurhash3_u64_vector(fv);
+        // auto feature_key = boost::hash_range(fv.begin(), fv.end());
         fvec[feature_key] += 1;
         auto fmap = &feature_map[feature_key];
         if (fmap->empty())
@@ -192,7 +191,7 @@ void FeatureSet::extract_unigram_feature(Node *node) { //{{{
 
 // TODO: せめて，左右をまとめて扱えるようにする
 void FeatureSet::extract_bigram_feature(Node *l_node, Node *r_node) { //{{{
-    static std::vector<unsigned long> fv; // TODO:外部から与える形に変更する.
+    static std::vector<uint64_t> fv;
     std::stringstream feature_name;
     for (std::vector<FeatureTemplate *>::iterator tmpl_it =
              ftmpl->get_templates()->begin();
@@ -406,7 +405,8 @@ void FeatureSet::extract_bigram_feature(Node *l_node, Node *r_node) { //{{{
                 }
             }
         }
-        auto feature_key = boost::hash_range(fv.begin(), fv.end());
+        // auto feature_key = boost::hash_range(fv.begin(), fv.end());
+        uint64_t feature_key = murmurhash3_u64_vector(fv);
         fvec[feature_key] += 1;
         auto fmap = &feature_map[feature_key];
         if (fmap->empty())
@@ -416,7 +416,7 @@ void FeatureSet::extract_bigram_feature(Node *l_node, Node *r_node) { //{{{
 
 void FeatureSet::extract_trigram_feature(Node *l_node, Node *m_node,
                                          Node *r_node) { //{{{
-    static std::vector<unsigned long> fv; // TODO:外部から与える形に変更する.
+    static std::vector<uint64_t> fv;
     for (std::vector<FeatureTemplate *>::iterator tmpl_it =
              ftmpl->get_templates()->begin();
          tmpl_it != ftmpl->get_templates()->end(); tmpl_it++) {
@@ -621,36 +621,9 @@ void FeatureSet::extract_trigram_feature(Node *l_node, Node *m_node,
                 }
             }
         }
-        auto feature_key = boost::hash_range(fv.begin(), fv.end());
+
+        uint64_t feature_key = murmurhash3_u64_vector(fv);
         fvec[feature_key] += 1;
-    }
-} //}}}
-
-void FeatureSet::extract_topic_feature(Node *node) { //{{{
-    if (FeatureSet::topic) { // TOPIC 素性 ( TODO: ハードコードをやめてルール化
-        if (node->topic_available()) {
-            if (FeatureSet::use_total_sim) {
-                TopicVector node_topic = node->get_topic();
-                double sum = 0.0;
-                for (size_t i = 0; i < node_topic.size(); i++) {
-                    sum += node_topic[i] * (*topic)[i];
-                }
-                fset.push_back("TP_all:" + binning(sum));
-            } else {
-                TopicVector node_topic = node->get_topic();
-                for (size_t i = 0; i < node_topic.size(); i++) {
-                    // std::cerr << "TP" << int2string(i) << ":" <<
-                    // binning(node_topic[i] * (*topic)[i]) << " " ;
-                    // fset.push_back("TP" + int2string(i) + ":"  +
-                    // binning(node_topic[i] * (*topic)[i]));
-
-                    fset.push_back("TP" + int2string(i) + ":" +
-                                   binning((*topic)[i] - node_topic[i])); //差
-                }
-            }
-        } else {
-            fset.push_back(std::string("TOPIC:<NONE>"));
-        }
     }
 } //}}}
 
@@ -693,7 +666,7 @@ FeatureTemplate::FeatureTemplate(std::string &in_name,
     is_bigram = (in_n_gram == 2);
     is_trigram = (in_n_gram == 3);
     name = in_name;
-    std::hash<std::string> shash;
+    MurMurHash3_str shash;
     feature_name_hash = shash(in_name);
 
     std::vector<std::string> line;
@@ -944,9 +917,7 @@ unsigned int FeatureTemplate::interpret_macro(std::string &macro) { //{{{
 } //}}}
 
 // 以下は保留
-
-//// 素性関数 速度面に問題があるためまとめて保留中,
-///可変長テンプレートで素性ごとに定義すれば早くなる？// /*{{{*/
+//// 素性関数 速度面に問題があるためまとめて保留中, ///*{{{*/
 // std::hash<std::string> hash_func;
 // inline unsigned long get_feature_id(const std::string& s){ return
 // hash_func(s);};

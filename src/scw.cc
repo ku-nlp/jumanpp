@@ -1,6 +1,5 @@
 #include "scw.h"
 #include <math.h>
-// Fimap FeatureVector::str2id;
 
 void DiagMat::update(double beta, const FeatureVector &x) { // update sigma
     for (const auto &v : x) {
@@ -15,7 +14,7 @@ void DiagMat::update(double beta, const FeatureVector &x) { // update sigma
 double &DiagMat::ref_value(const unsigned long sp1, const unsigned long sp2) {
     auto key = sp1;
     // 対角行列以外は非サポートだが，とりあえず計算する
-    boost::hash_combine(key, sp2);
+    murmur_combine(key, sp2);
 
     auto itr = vec.find(key);
     if (itr != vec.cend()) {
@@ -36,7 +35,7 @@ double &DiagMat::ref_value(const unsigned long sp1, const unsigned long sp2) {
 
 double DiagMat::get_value(const unsigned long sp1) const {
     auto key = sp1;
-    boost::hash_combine(key, sp1);
+    murmur_combine(key, sp1);
 
     auto itr = vec.find(key);
     if (itr != vec.cend())
@@ -45,8 +44,9 @@ double DiagMat::get_value(const unsigned long sp1) const {
         return 1.0;
 };
 
-void SCWClassifier::update_mu(double alpha, double y,const DiagMat& sigma, const FeatureVector& x){
-    for(const auto& v:x){
+void SCWClassifier::update_mu(double alpha, double y, const DiagMat &sigma,
+                              const FeatureVector &x) {
+    for (const auto &v : x) {
         mu[v.first] += alpha * y * sigma.get_value(v.first) * v.second;
         // v の対角要素以外の計算は省略する.
     }
@@ -59,7 +59,6 @@ void SCWClassifier::update(double loss_value, const FeatureVector &vec) {
 
     double vt = calc_vt(vec);
     double alphat = calc_alpha(vt, loss_value * score);
-    // double alphat = calc_alpha(vt, score);
     double ut = calc_ut(alphat, vt);
     double betat = calc_beta(alphat, ut, vt);
     if (!std::isfinite(betat))

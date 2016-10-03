@@ -16,7 +16,6 @@ extern "C" {
 #include "rnnlm/rnnlmlib.h"
 
 namespace Morph {
-// TODO: ヘッダ間の依存関係の整理
 class FeatureTemplateSet;
 class Node;
 class NbestSearchToken;
@@ -155,32 +154,12 @@ class BeamQue { //{{{
 
 typedef struct morph_token_t Token;
 
-class BigramInfo { // Second order Viterbi用  {{{
-  public:
-    long cost;
-    long total_cost;
-    FeatureSet *feature;
-    Node *prev;
-    BigramInfo() {
-        cost = total_cost = 0;
-        feature = NULL;
-        prev = NULL;
-    }
-}; //}}}
-
-// TODO: posid を grammar と共通化し， ない場合にのみ新しいid
-// を追加するようにする.
-// TODO: 巨大な定数 mapping も削除する
+// TODO: 巨大な定数 mapping の削除
 // TODO: ポインタ撲滅
 
 class Node { //{{{
   private:
     static int id_count;
-
-    // TODO: Topic 関係はあとで外に出してまとめる
-    constexpr static const char *cdb_filename =
-        "/home/morita/work/juman_LDA/dic/all_uniq.cdb";
-    static DBM_FILE topic_cdb;
     static Parameter *param;
 
   public:
@@ -204,41 +183,8 @@ class Node { //{{{
     std::map<std::string, std::string> debug_info;
     // endif
 
-    // codes for second order bigram
-    std::map<unsigned int, BigramInfo *> best_bigram;
-    // std::vector<BigramInfo *> best_bigram;
-    long get_bigram_cost(Node *left_node) {
-        return best_bigram[left_node->id]->cost;
-    }
-    void set_bigram_cost(Node *left_node, long in_cost) {
-        best_bigram[left_node->id]->cost = in_cost;
-    }
-    long get_bigram_total_cost(Node *left_node) {
-        auto tmp = best_bigram[left_node->id];
-        return tmp->total_cost;
-    }
-    void set_bigram_total_cost(Node *left_node, long in_cost) {
-        best_bigram[left_node->id]->total_cost = in_cost;
-    }
-    Node *get_bigram_best_prev(Node *left_node) {
-        return best_bigram[left_node->id]->prev;
-    }
-    void set_bigram_best_prev(Node *left_node, Node *best_l2_node) {
-        best_bigram[left_node->id]->prev = best_l2_node;
-        left_node->prev = best_l2_node;
-    }
-    FeatureSet *get_bigram_feature(Node *left_node) {
-        return best_bigram[left_node->id]->feature;
-    }
-    /// void set_bigram_feature(Node *left_node, FeatureSet *in_feature) {
-    //    best_bigram[left_node->id]->feature = in_feature;
-    //}
-    void append_bigram_feature(Node *left_node, FeatureSet *in_feature);
-    void reserve_best_bigram(){};
-
-    unsigned short length = 0; /* length of morph */
-    unsigned short char_num =
-        0; // charlattice で指定する．TODO:コンストラクタ内で指定
+    unsigned short length = 0;   /* length of morph */
+    unsigned short char_num = 0; // charlattice で指定する．
     unsigned short rcAttr = 0;
     unsigned short lcAttr = 0;
     unsigned long posid = 0;
@@ -258,7 +204,7 @@ class Node { //{{{
     unsigned int char_type = 0; //先頭文字の文字タイプ
     unsigned int char_family = 0;
     unsigned int end_char_family = 0;
-    unsigned int stat = 0; // TODO: どのような状態がありるうるのかを列挙
+    unsigned int stat = 0;
     // MORPH_DUMMY_NODE 0xFFFF
     // MORPH_NORMAL_NODE 0x0001
     // MORPH_BOS_NODE 0x0002
@@ -285,13 +231,8 @@ class Node { //{{{
     // for N-best and Juman-style output
     int id = 1;
     unsigned int starting_pos = 0; // starting position
-    std::priority_queue<unsigned int, std::vector<unsigned int>,
-                        std::greater<unsigned int>>
-        connection;                          // id of previous nodes connected
-    std::vector<NbestSearchToken> traceList; // keep track of n-best paths
 
     Node();
-    // Node(const Node& node);
     ~Node();
 
     void print();
@@ -305,45 +246,6 @@ class Node { //{{{
     static Node make_dummy_node() { return Node(); }
 
     static void set_param(Parameter *in_param) { param = in_param; };
-
-    bool topic_available();
-    bool topic_available_for_sentence();
-    void read_vector(const char *buf, std::vector<double> &vector);
-
-    TopicVector get_topic();
-}; //}}}
-
-// obs
-class NbestSearchToken { //{{{
-
-  public:
-    double score = 0;
-    Node *prevNode = nullptr; // access to previous trace-list
-    int rank = 0;             // specify an element in previous trace-list
-
-    NbestSearchToken(Node *pN) { prevNode = pN; };
-
-    NbestSearchToken(double s, int r) {
-        score = s;
-        rank = r;
-    };
-
-    NbestSearchToken(double s, int r, Node *pN) {
-        score = s;
-        rank = r;
-        prevNode = pN;
-    };
-
-    ~NbestSearchToken(){
-
-    };
-
-    bool operator<(const NbestSearchToken &right) const {
-        if ((*this).score < right.score)
-            return true;
-        else
-            return false;
-    }
 
 }; //}}}
 }

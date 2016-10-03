@@ -419,16 +419,17 @@ Node *Dic::lookup_lattice_specified(
     return result_node;
 } //}}}
 
-// TODO: make_**_pseudo_node が多すぎるので，減らすか，クラス化する
-// make_**pseudo_node が必要な場合はおもに３パターン
-// 動的な数詞, アルファベット処理
-// 文字幅の範囲を指定した未定義語処理
+// TODO: make_**_pseudo_node が多すぎるので，減らす
+// make_**pseudo_node が必要な場合はおもに４パターン
+// 動的な数詞の処理
+// 文字幅の範囲を指定した未定義語処理,
+// - 文字種の連続
+// - 部分アノテーション
 // 品詞などを全て与えられた，コーパス上の辞書にない単語の処理
 //
-// TODO: list で specified_pos な奴を廃棄 > 直接 specified_pseudo_node
-// を呼ぶようにする
+// TODO: specified_pos と specified_pseudo_node をマージする
 // TODO: dic_check をフラグ化 & default にする
-// TODO: 名前をわかりやすくする
+// TODO: gold
 
 // MEMO:
 // make_specified_pseudo_node_by_dic_check >
@@ -542,7 +543,8 @@ Node *Dic::make_unk_pseudo_node(const char *start_str, int byte_len,
 } //}}}
 
 // TODO: 名称変更 -> make_pseud_node_by_chartype
-// 名前が変？指定した文字種が連続する範囲で全品詞について未定義語ノードを生成
+// 名前が変
+// 指定した文字種が連続する範囲で全品詞について未定義語ノードを生成
 // 辞書をr_node で受け取り、重複をチェック
 // 部分アノテーション用の最大長を設定
 Node *Dic::make_specified_pseudo_node_by_dic_check(

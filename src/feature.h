@@ -8,7 +8,6 @@
 #include <memory>
 #include <tuple>
 #include <unordered_set>
-#include <functional>
 #include "feature_vector.h"
 
 namespace Morph {
@@ -143,9 +142,8 @@ enum NodePosition { LeftN, RightN, CenterN, UnigramN };
 #define FEATURE_MACRO_RIGHT_LEXICAL 221
 
 //----- middle  ----- (left middle right) の並び
-//とりあえず, middle は unigram のテンプレートを流用する.
+// middle は unigram のテンプレートを流用する.
 
-#define TOPIC_NUM 50
 #define NUM_OF_FUKUGOUJI 39
 
 // unordered_map で tuple を扱うための hash 関数
@@ -156,10 +154,11 @@ struct tuple_hash
     std::size_t operator()(
         const std::tuple<std::string, std::string, std::string, std::string> &k)
         const {
-        std::hash<std::string> hash_str;
-        // このハッシュだと衝突が多そう?
-        return hash_str(std::get<0>(k)) ^ hash_str(std::get<1>(k)) ^
-               hash_str(std::get<2>(k)) ^ hash_str(std::get<3>(k));
+        return murmur_combine(
+            murmur_combine(murmurhash3_string(std::get<0>(k)),
+                           murmurhash3_string(std::get<1>(k))),
+            murmur_combine(murmurhash3_string(std::get<2>(k)),
+                           murmurhash3_string(std::get<3>(k))));
     }
 };
 
@@ -194,7 +193,7 @@ class FeatureTemplate { //{{{
     bool is_bigram;
     bool is_trigram;
     std::string name;
-    unsigned long feature_name_hash;
+    uint64_t feature_name_hash;
 
     //    // 要素ごとの素性化関数の配列
     //    std::vector<FeatureFunction> feature_functions;
@@ -283,10 +282,8 @@ class FeatureSet { //{{{
 
     bool append_feature(FeatureSet *in);
 
-    // 廃止予定
     inline long int get_feature_id(const std::string &s) {
-        std::hash<std::string> hash_func;
-        return hash_func(s);
+        return murmurhash3_string(s);
     };
 
     // 表示,学習用
