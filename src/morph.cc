@@ -452,11 +452,9 @@ int main(int argc, char **argv) { //{{{
                 Morph::U8string u8buffer(buffer);
                 const size_t denom = 10;
                 const size_t length = u8buffer.char_size();
-                size_t autoN = length / denom;
+                size_t autoN = length / denom + 1;
                 if (autoN > param.L_max)
                     autoN = param.L_max;
-                if (autoN < 1)
-                    autoN = 1;
                 param.set_L(autoN);
             }
 #endif
