@@ -10,10 +10,6 @@
 #include <unordered_map>
 #include "feature_vector.h"
 
-typedef std::unordered_map<std::string, double> Umap;
-typedef std::unordered_map<unsigned long, double>
-    Ulmap; //参考に2015/11 時点での素性数 2,395,735
-
 class FeatureVector;
 class DiagMat;
 

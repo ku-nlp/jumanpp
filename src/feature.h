@@ -224,7 +224,7 @@ class FeatureTemplate { //{{{
     //    feature_functions; }
 
     std::string &get_name() { return name; }
-    unsigned long &get_name_hash() { return feature_name_hash; }
+    uint64_t &get_name_hash() { return feature_name_hash; }
 
     unsigned int interpret_macro(std::string &macro);
     std::vector<unsigned int> *get_features() { return &features; }
