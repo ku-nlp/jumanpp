@@ -26,7 +26,7 @@ while true
   while buffer = socket.gets
     STDERR.puts buffer
       
-    if (buffer =~ /^##KKN\t.*/) # 動的オプション
+    if (buffer =~ /^##JUMAN++\t.*/) # 動的オプション
       rnnlm.puts(buffer) 
       socket.puts rnnlm.gets # 動的オプションの戻り値(必ず1行)
     elsif(buffer =~ /^#.*/) # コメント行
@@ -44,9 +44,6 @@ while true
         end
         socket.puts responce
       rescue
-        # 自動的に再起動 場合はここへ
-        # rnnlm = IO.popen("/home/morita/local64/bin/jumanpp_juman_1201", "r+") 
-        # retry
         socket.close
       end 
     end
