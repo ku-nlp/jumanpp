@@ -10,7 +10,7 @@
 
 ## 2. インストール
 ### 動作環境
-- OS: Linux (CentOS 6.7 で動作を確認) 
+- OS: Linux (CentOS 6.7, Ubuntu16.4 で動作を確認) 
 - 必要メモリ: 4GB 以上  
 - ディスク容量: 2GB 以上  
 ### 必須ツール・ライブラリ
@@ -30,7 +30,7 @@ JUMAN++ を使用するには,以下の手順で配布アーカイブを�
 ステム標準モデル(訓練済みのパラメタ),言語モデルです.
 
 % wget http://lotus.kuee.kyoto-u.ac.jp/nl-resource/jumanpp/jumanpp-1.01.tar.xz
-% tar xJf jumanpp-1.01.tar.xz
+% tar xJvf jumanpp-1.01.tar.xz
 % cd jumanpp-1.01
 % ./configure 
 % make
@@ -70,7 +70,7 @@ EOS
 ```
 
 インストールせずに試せるように，Web上で本システムを動かせるデモを用意しています．  
-[デモ](http://lotus.kuee.kyoto-u.ac.jp/demo/jumanpp.cgi)
+[デモ](http://tulip.kuee.kyoto-u.ac.jp/demo/jumanpp_lattice?text=%E5%A4%96%E5%9B%BD%E4%BA%BA%E5%8F%82%E6%94%BF%E6%A8%A9%E3%81%AB%E5%AF%BE%E3%81%99%E3%82%8B%E8%80%83%E3%81%88%E6%96%B9%E3%81%AE%E9%81%95%E3%81%84)
 
 ## 4. オプション解説
 JUMAN++ の主なオプションは以下のとおりです．詳細はマニュアルを参照してください．

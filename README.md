@@ -4,22 +4,22 @@ A new morphological analyser that considers semantic plausibility of
 word sequences by using a recurrent neural network language model (RNNLM).
 
 ## Installation
-### Required libraries
-- gperftool
- https://github.com/gperftools/gperftools
-    * libunwind (required by gperftool in 64bit environment) 
-    http://download.savannah.gnu.org/releases/libunwind/libunwind-0.99-beta.tar.gz
+### Requirement
+- OS: Linux (tested on CentOS 6.7, Ubuntu 16.4) 
+- gcc (4.9 or later)
 - Boost C++ Libraries (1.57 or later)  
  http://www.boost.org/users/history/version_1_57_0.html
 []( for unordered_map, interprocess(dynamic loading))
-- gcc (4.9 or later)
-
+- gperftool (optional)
+ https://github.com/gperftools/gperftools
+    * libunwind (required by gperftool in 64bit environment) 
+    http://download.savannah.gnu.org/releases/libunwind/libunwind-0.99-beta.tar.gz
 [Note contains instruction for install libraries.](#markdown-header-note)
 
 ### Build
 ```
 % wget http://lotus.kuee.kyoto-u.ac.jp/nl-resource/jumanpp/jumanpp-1.01.tar.xz
-% tar xJf jumanpp-1.01.tar.xz
+% tar xJvf jumanpp-1.01.tar.xz
 % cd jumanpp-1.01
 % ./configure 
 % make
@@ -52,7 +52,7 @@ It receives utf-8 encoding text as an input.
 Lines beginning with `#` will be interpreted as comment line.
 
 ## DEMO
-[DEMO cgi](http://lotus.kuee.kyoto-u.ac.jp/demo/jumanpp.cgi)
+[DEMO cgi](http://tulip.kuee.kyoto-u.ac.jp/demo/jumanpp_lattice?text=%E5%A4%96%E5%9B%BD%E4%BA%BA%E5%8F%82%E6%94%BF%E6%A8%A9%E3%81%AB%E5%AF%BE%E3%81%99%E3%82%8B%E8%80%83%E3%81%88%E6%96%B9%E3%81%AE%E9%81%95%E3%81%84)
 
 ## Model
 See ``Morphological Analysis for Unsegmented Languages using Recurrent Neural Network Language Model. Hajime Morita, Daisuke Kawahara, Sadao Kurohashi. EMNLP 2015''  
