@@ -16,7 +16,22 @@ word sequences by using a recurrent neural network language model (RNNLM).
     http://download.savannah.gnu.org/releases/libunwind/libunwind-0.99-beta.tar.gz
 [Note contains instruction for install libraries.](#markdown-header-note)
 
-### Build
+### Build from git
+```
+% git clone git@github.com:ku-nlp/jumanpp.git
+% wget http://lotus.kuee.kyoto-u.ac.jp/nl-resource/jumanpp/jumanpp-1.01.tar.xz
+  (Since this repository does not include resource files, it needs to copy the files
+   from ditributed package.)
+% tar xJvf jumanpp-1.01.tar.xz
+% mv jumanpp-1.01/jumanpp-resource jumanpp/.
+% cd jumanpp
+% ./autogen.sh
+% ./configure 
+% make
+% sudo make install
+```
+
+### Build from package
 ```
 % wget http://lotus.kuee.kyoto-u.ac.jp/nl-resource/jumanpp/jumanpp-1.01.tar.xz
 % tar xJvf jumanpp-1.01.tar.xz
@@ -25,6 +40,7 @@ word sequences by using a recurrent neural network language model (RNNLM).
 % make
 % sudo make install
 ```
+
 ## Quick start
 ```
 % echo "魅力がたっぷりと詰まっている" | jumanpp
@@ -55,7 +71,7 @@ Lines beginning with `#` will be interpreted as comment line.
 [DEMO cgi](http://tulip.kuee.kyoto-u.ac.jp/demo/jumanpp_lattice?text=%E5%A4%96%E5%9B%BD%E4%BA%BA%E5%8F%82%E6%94%BF%E6%A8%A9%E3%81%AB%E5%AF%BE%E3%81%99%E3%82%8B%E8%80%83%E3%81%88%E6%96%B9%E3%81%AE%E9%81%95%E3%81%84)
 
 ## Model
-See ``Morphological Analysis for Unsegmented Languages using Recurrent Neural Network Language Model. Hajime Morita, Daisuke Kawahara, Sadao Kurohashi. EMNLP 2015''  
+See ``Morphological Analysis for Unsegmented Languages using Recurrent Neural Network Language Model. Hajime Morita, Daisuke Kawahara, Sadao Kurohashi. EMNLP 2015''
 [link](http://aclweb.org/anthology/D/D15/D15-1276.pdf)
 
 ## Authors
