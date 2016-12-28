@@ -103,6 +103,10 @@ stamp-h?
 *.swm
 *.swn
 
+#CLion
+.idea/
+build-dir/
+
 # GTAGS
 GPATH
 GRTAGS

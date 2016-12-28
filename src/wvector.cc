@@ -1,4 +1,5 @@
 #include "wvector.h"
+#include <boost/foreach.hpp>
 
 std::unordered_map<std::string, int> WeightedVector::feature_map;
 

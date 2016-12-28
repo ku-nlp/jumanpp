@@ -60,7 +60,7 @@ class WeightedVector {
 //イテレータだけ渡せば良い？
 #ifndef KKN_UNIT_TEST
   protected:
-#else:
+#else
   public:
 #endif
     vector_imp vec;
