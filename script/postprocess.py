@@ -125,7 +125,7 @@ for index, string in enumerate(iter_EOS(sys.stdin)):
             span2morph[sp] = sort_by_rank(span2morph[sp])
     
     # print spec
-    out = [lattice.comment]
+    out = [lattice.comment.rstrip()+"\n"]
     for ms in spec(span_list, span2morph):
         out.append(ms)
     out.append('EOS')
