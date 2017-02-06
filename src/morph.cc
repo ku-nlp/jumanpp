@@ -137,6 +137,7 @@ void option_proc(cmdline::parser &option, std::string model_path, int argc,
                             "data/train.txt");
     option.add<unsigned int>("Nmorph", 'N', "print N-best Moprh", false, 5);
     option.add("autoN", 0, "automatically set N depending on sentence length");
+    option.add<unsigned int>("autoNbase", 0, "base N value on autoN", false, 1);
     // option.add("typedloss", 0, "use loss function considering form type ");
     option.add("nornnlm", 0, "do not use RNNLM");
     option.add("dynamic", 0,
@@ -452,7 +453,10 @@ int main(int argc, char **argv) { //{{{
                 Morph::U8string u8buffer(buffer);
                 const size_t denom = 10;
                 const size_t length = u8buffer.char_size();
-                size_t autoN = length / denom + 1;
+                size_t base_length = 1;
+                if (option.exist("autoNbase"))
+                    base_length = option.get<unsigned int>("autoNbase");
+                size_t autoN = length / denom + base_length;
                 if (autoN > param.L_max)
                     autoN = param.L_max;
                 param.set_L(autoN);
