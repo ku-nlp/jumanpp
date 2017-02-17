@@ -8,9 +8,25 @@
 #include "status.hpp"
 #include "types.hpp"
 
+#include <vector>
+
 namespace jumanpp {
 
-enum class CharacterClass {
+enum class CharacterClass;
+
+inline CharacterClass operator | (CharacterClass c1, CharacterClass c2) {
+  return static_cast<CharacterClass>(
+      static_cast<int>(c1) | static_cast<int>(c2)
+  );
+}
+
+inline CharacterClass operator & (CharacterClass c1, CharacterClass c2) {
+  return static_cast<CharacterClass>(
+      static_cast<int>(c1) & static_cast<int>(c2)
+  );
+}
+
+enum class CharacterClass : i32 {
   // 定数群, or で繋げたいのでenum にはしない．
   SPACE = 0x00000001,
   IDEOGRAPHIC_PUNC = 0x00000002,  // 、。
@@ -48,7 +64,7 @@ enum class CharacterClass {
 
 inline bool IsCompatibleCharClass(CharacterClass realCharClass,
                                   CharacterClass familyOrTarget) noexcept {
-  return (realCharClass & familyOrTarget) != 0;
+  return (realCharClass & familyOrTarget) != CharacterClass::FAMILY_OTHERS;
 }
 
 struct InputCharacter {

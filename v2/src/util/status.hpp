@@ -12,15 +12,15 @@
 
 namespace jumanpp {
 
+
 enum class StatusCode : int {
+  //When adding a new status here do not forget add line to
+  //StatusNames in status.cpp.
   Ok = 0,
   InvalidParameter = 1,
   InvalidState = 2,
   MaxStatus
 };
-
-constexpr const char *const names[] = {"Ok", "InvalidParameter", "InvalidState",
-                                       "MaxStatus"};
 
 class StatusConstructor {
   StatusCode code_;
@@ -70,15 +70,7 @@ class Status {
   }
 };
 
-std::ostream &operator<<(std::ostream &str, const Status &st) {
-  int idx = (int)st.code;
-  auto *name = names[idx];
-  str << idx << ":" << name;
-  if (!st.message.empty()) {
-    str << " " << st.message;
-  }
-  return str;
-}
+std::ostream &operator<<(std::ostream &str, const Status &st);
 
 #define JPP_RETURN_IF_ERROR(expr)                            \
   {                                                          \
