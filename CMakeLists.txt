@@ -7,5 +7,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -g")
 find_package(Boost "1.57" REQUIRED)
 
 include_directories(${Boost_INCLUDE_DIRECTORIES})
+include_directories("./libs")
 
 add_subdirectory(src)
+add_subdirectory(v2)
