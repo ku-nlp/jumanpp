@@ -36,7 +36,7 @@ class WriteInDestructorLoggerImpl {
 }
 }
 
-#define JPP_LOG(level)                                                           \
+#define JPP_LOG(level)                                                       \
   (::jumanpp::util::logging::WriteInDestructorLoggerImpl{__FILE__, __LINE__, \
                                                          level})
 #define LOG_DEBUG() JPP_LOG(::jumanpp::util::logging::Level::Debug)

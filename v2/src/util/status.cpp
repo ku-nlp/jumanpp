@@ -2,14 +2,13 @@
 // Created by Arseny Tolmachev on 2017/02/18.
 //
 
-
-#include <iosfwd>
 #include "status.hpp"
+#include <iosfwd>
 
 namespace jumanpp {
 
-constexpr const char *const StatusNames[] = {"Ok", "InvalidParameter", "InvalidState",
-                                       "MaxStatus"};
+constexpr const char *const StatusNames[] = {"Ok", "InvalidParameter",
+                                             "InvalidState", "MaxStatus"};
 
 std::ostream &operator<<(std::ostream &str, const Status &st) {
   int idx = (int)st.code;
@@ -20,6 +19,4 @@ std::ostream &operator<<(std::ostream &str, const Status &st) {
   }
   return str;
 }
-
-
 }

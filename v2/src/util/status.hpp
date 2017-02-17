@@ -12,10 +12,9 @@
 
 namespace jumanpp {
 
-
 enum class StatusCode : int {
-  //When adding a new status here do not forget add line to
-  //StatusNames in status.cpp.
+  // When adding a new status here do not forget add line to
+  // StatusNames in status.cpp.
   Ok = 0,
   InvalidParameter = 1,
   InvalidState = 2,

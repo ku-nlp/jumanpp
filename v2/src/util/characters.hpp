@@ -14,16 +14,14 @@ namespace jumanpp {
 
 enum class CharacterClass;
 
-inline CharacterClass operator | (CharacterClass c1, CharacterClass c2) {
-  return static_cast<CharacterClass>(
-      static_cast<int>(c1) | static_cast<int>(c2)
-  );
+inline CharacterClass operator|(CharacterClass c1, CharacterClass c2) {
+  return static_cast<CharacterClass>(static_cast<int>(c1) |
+                                     static_cast<int>(c2));
 }
 
-inline CharacterClass operator & (CharacterClass c1, CharacterClass c2) {
-  return static_cast<CharacterClass>(
-      static_cast<int>(c1) & static_cast<int>(c2)
-  );
+inline CharacterClass operator&(CharacterClass c1, CharacterClass c2) {
+  return static_cast<CharacterClass>(static_cast<int>(c1) &
+                                     static_cast<int>(c2));
 }
 
 enum class CharacterClass : i32 {
