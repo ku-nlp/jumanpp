@@ -36,12 +36,12 @@ class WriteInDestructorLoggerImpl {
 }
 }
 
-#define LOG(level)                                                           \
+#define JPP_LOG(level)                                                           \
   (::jumanpp::util::logging::WriteInDestructorLoggerImpl{__FILE__, __LINE__, \
                                                          level})
-#define LOG_DEBUG() LOG(::jumanpp::util::logging::Level::Debug)
-#define LOG_INFO() LOG(::jumanpp::util::logging::Level::Info)
-#define LOG_WARN() LOG(::jumanpp::util::logging::Level::Warning)
-#define LOG_ERROR() LOG(::jumanpp::util::logging::Level::Error)
+#define LOG_DEBUG() JPP_LOG(::jumanpp::util::logging::Level::Debug)
+#define LOG_INFO() JPP_LOG(::jumanpp::util::logging::Level::Info)
+#define LOG_WARN() JPP_LOG(::jumanpp::util::logging::Level::Warning)
+#define LOG_ERROR() JPP_LOG(::jumanpp::util::logging::Level::Error)
 
 #endif  // JUMANPP_LOGGING_HPP
