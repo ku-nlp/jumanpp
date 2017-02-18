@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <catch.hpp>
 #include <util/status.hpp>
+#include <util/string_piece.h>
 
 namespace Catch {
 template <>
@@ -15,6 +16,15 @@ struct StringMaker<jumanpp::Status> {
   static std::string convert(jumanpp::Status const &value) {
     std::stringstream s;
     s << value;
+    return s.str();
+  }
+};
+
+template <>
+struct StringMaker<jumanpp::StringPiece> {
+  static std::string convert(jumanpp::StringPiece const &value) {
+    std::stringstream s;
+    s << '"' << value << '"';
     return s.str();
   }
 };
