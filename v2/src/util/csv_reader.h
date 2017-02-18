@@ -13,6 +13,12 @@
 namespace jumanpp {
 namespace util {
 
+
+/**
+ * This class allows to read csv files line by line.
+ *
+ * TODO: implement reading quoted and escaped data
+ */
 class CsvReader {
   MappedFile file_;
   MappedFileFragment fragment_;
