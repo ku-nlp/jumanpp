@@ -2,8 +2,7 @@
 // Created by Arseny Tolmachev on 2017/02/16.
 //
 
-#define CATCH_CONFIG_MAIN
-#include <catch.hpp>
+#include <testing/standalone_test.h>
 
 #include <iostream>
 #include <util/logging.hpp>
