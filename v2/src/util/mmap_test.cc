@@ -7,17 +7,17 @@
 #include <unistd.h>
 #include <fstream>
 
-#include "mmap.hpp"
+#include "mmap.h"
 
 namespace u = jumanpp::util;
 
 TEST_CASE("mmap correctly reads a file", "[mmap]") {
-  u::mmap_file f;
+  u::MappedFile f;
 
   CHECK_OK(f.open("label.txt", u::MMapType::ReadOnly));
   CHECK(f.size() == 19);
 
-  u::mmap_view v;
+  u::MappedFileFragment v;
   CHECK_OK(f.map(&v, 0, 19));
   auto bytes = static_cast<char *>(v.address());
   CHECK(bytes);
@@ -32,9 +32,9 @@ TEST_CASE("mmap correctly writes data", "[mmap]") {
   auto fname = tmp.name();
 
   {
-    u::mmap_file f;
+    u::MappedFile f;
     CHECK_OK(f.open(fname, u::MMapType::ReadWrite));
-    u::mmap_view v;
+    u::MappedFileFragment v;
     std::string data = "testdata";
     f.map(&v, 0, data.size());
     std::copy(std::begin(data), std::end(data),

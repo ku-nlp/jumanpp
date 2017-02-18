@@ -3,8 +3,8 @@
 //
 
 #include "string_piece.h"
-#include <iostream>
 #include <cstring>
+#include <iostream>
 
 namespace jumanpp {
 
@@ -13,15 +13,11 @@ std::ostream &operator<<(std::ostream &str, const StringPiece &sp) {
   return str;
 }
 
-bool operator==(const StringPiece &l, const char *r) {
-  return std::strcmp(l.begin(), r) == 0;
-}
-
 bool operator==(const StringPiece &l, const StringPiece &r) {
   if (l.size() != r.size()) return false;
   return std::strncmp(l.begin(), r.begin(), l.size()) == 0;
 }
 
+StringPiece::StringPiece(StringPiece::pointer_t begin)
+    : begin_{begin}, end_{begin + std::strlen(begin)} {}
 }
-
-

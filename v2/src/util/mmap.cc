@@ -9,30 +9,30 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "mmap.hpp"
+#include "mmap.h"
 
 namespace jumanpp {
 
 namespace util {
 
-mmap_file::~mmap_file() {
+MappedFile::~MappedFile() {
   if (this->fd_ != 0) {
     ::close(fd_);
   }
 }
 
-Status mmap_file::open(const std::string &filename, MMapType type) {
+Status MappedFile::open(const StringPiece &filename, MMapType type) {
   if (fd_ != 0) {
     return Status::InvalidState() << "mmap has already opened file "
                                   << this->filename_;
   }
 
-  this->filename_ = filename;
+  this->filename_ = filename.str();
   this->type_ = type;
 
   struct stat statResult;
 
-  int code = stat(filename.c_str(), &statResult);
+  int code = stat(filename_.c_str(), &statResult);
   if (code != 0) {
     auto errn = errno;
     if (type == MMapType::ReadWrite && errn == ENOENT) {
@@ -60,7 +60,7 @@ Status mmap_file::open(const std::string &filename, MMapType type) {
   }
 
   // use mode 0644 for file creation
-  int fd = ::open(filename.c_str(), file_mode, 0644);
+  int fd = ::open(filename_.c_str(), file_mode, 0644);
 
   if (fd == 0) {
     return Status::InvalidState() << "mmap could not open file: " << filename
@@ -74,7 +74,7 @@ Status mmap_file::open(const std::string &filename, MMapType type) {
 
 char ZERO[] = {'\0'};
 
-Status mmap_file::map(mmap_view *view, size_t offset, size_t size) {
+Status MappedFile::map(MappedFileFragment *view, size_t offset, size_t size) {
   int protection = 0;
   int flags = 0;
 
@@ -124,17 +124,17 @@ Status mmap_file::map(mmap_view *view, size_t offset, size_t size) {
   return Status::Ok();
 }
 
-mmap_view::mmap_view() : address_{MAP_FAILED} {}
+MappedFileFragment::MappedFileFragment() : address_{MAP_FAILED} {}
 
-mmap_view::~mmap_view() {
+MappedFileFragment::~MappedFileFragment() {
   if (!isClean()) {
     ::munmap(address_, size_);
   }
 }
 
-bool mmap_view::isClean() { return address_ == MAP_FAILED; }
+bool MappedFileFragment::isClean() { return address_ == MAP_FAILED; }
 
-Status mmap_view::flush() {
+Status MappedFileFragment::flush() {
   int status = ::msync(address_, size(), MS_SYNC);
   if (status != 0) {
     return Status::InvalidState() << "could not flush mapped contents, error: "
