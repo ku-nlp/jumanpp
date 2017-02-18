@@ -6,9 +6,9 @@
 #define JUMANPP_STANDALONE_TEST_H
 
 #include <unistd.h>
+#include <util/string_piece.h>
 #include <catch.hpp>
 #include <util/status.hpp>
-#include <util/string_piece.h>
 
 namespace Catch {
 template <>

@@ -142,5 +142,11 @@ Status MappedFileFragment::flush() {
   }
   return Status::Ok();
 }
+
+StringPiece MappedFileFragment::asStringPiece() {
+  StringPiece::pointer_t asChar =
+      reinterpret_cast<StringPiece::pointer_t>(address_);
+  return StringPiece(asChar, size_);
+}
 }
 }

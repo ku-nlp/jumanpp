@@ -13,10 +13,12 @@
 namespace jumanpp {
 
 class StringPiece {
+ public:
   using value_type = const char;
   using pointer_t = const value_type*;
   using iterator = pointer_t;
 
+ private:
   pointer_t begin_;
   pointer_t end_;
 

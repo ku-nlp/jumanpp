@@ -31,6 +31,8 @@ class MappedFileFragment {
   Status flush();
 
   friend class MappedFile;
+
+  StringPiece asStringPiece();
 };
 
 class MappedFile {
