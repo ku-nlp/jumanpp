@@ -4,6 +4,7 @@
 
 #include "string_piece.h"
 #include <iostream>
+#include <cstring>
 
 namespace jumanpp {
 

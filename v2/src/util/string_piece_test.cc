@@ -3,7 +3,7 @@
 //
 
 #include <testing/standalone_test.h>
-#import "string_piece.h"
+#include "string_piece.h"
 
 using jumanpp::StringPiece;
 

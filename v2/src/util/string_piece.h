@@ -6,7 +6,7 @@
 #define JUMANPP_STRING_PIECE_H
 
 #include <string>
-#import "common.hpp"
+#include "common.hpp"
 #include "types.hpp"
 #include <iosfwd>
 
