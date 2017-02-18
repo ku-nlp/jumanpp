@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <sys/fcntl.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <string.h>
 
@@ -29,6 +30,15 @@ Status mmap_file::open(const std::string &filename, MMapType type) {
   this->filename_ = filename;
   this->type_ = type;
 
+  struct stat statResult;
+
+  int code = stat(filename.c_str(), &statResult);
+  if (code != 0) {
+    return Status::InvalidState() << "could not get information about file: " << filename << " errcode=" << strerror(errno);
+  }
+
+  this->size_ = (size_t) statResult.st_size;
+
   int file_mode = 0;
 
   switch (type) {
@@ -48,6 +58,8 @@ Status mmap_file::open(const std::string &filename, MMapType type) {
                                   << " error code = " << strerror(errno);
   }
 
+  this->fd_ = fd;
+
   return Status::Ok();
 }
 
@@ -58,9 +70,11 @@ Status mmap_file::map(mmap_view *view, size_t offset, size_t size) {
   switch (type_) {
     case MMapType::ReadOnly:
       protection = PROT_READ;
+      flags = MAP_PRIVATE;
       break;
     case MMapType::ReadWrite:
       protection = PROT_READ | PROT_WRITE;
+      flags = MAP_SHARED;
       break;
   }
 

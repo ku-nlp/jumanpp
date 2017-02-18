@@ -35,10 +35,13 @@ class mmap_file {
   int fd_ = 0;
   std::string filename_;
   MMapType type_;
+  size_t size_ = 0;
 
  public:
   Status open(const std::string& filename, MMapType type);
   Status map(mmap_view* view, size_t offset, size_t size);
+
+  size_t size() const { return size_; }
 
   ~mmap_file();
 };
