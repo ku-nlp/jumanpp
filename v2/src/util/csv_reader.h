@@ -13,7 +13,6 @@
 namespace jumanpp {
 namespace util {
 
-
 /**
  * This class allows to read csv files line by line.
  *
@@ -28,7 +27,7 @@ class CsvReader {
   char quote_;
   char escape_;
   const char* position_;
-  const char *end_;
+  const char* end_;
 
  public:
   CsvReader(char separator = ',', char quote = '"', char escape = '\\');
@@ -37,8 +36,6 @@ class CsvReader {
   bool nextLine();
   i32 numFields() const;
   StringPiece field(i32 idx) const;
-
-
 };
 }
 }
