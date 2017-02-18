@@ -1,13 +1,17 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.1)
 project(jumanpp)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -g")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
-find_package(Boost "1.57" REQUIRED)
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
-include_directories(${Boost_INCLUDE_DIRECTORIES})
-include_directories("./libs")
+include_directories("${CMAKE_SOURCE_DIR}/libs")
+
+option(JPP_TEST_REPORT_JUNIT OFF)
+enable_testing()
 
 add_subdirectory(src)
 add_subdirectory(v2)

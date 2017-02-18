@@ -4,6 +4,7 @@
 
 #include "memory.hpp"
 #include <sys/mman.h>
+#include <string.h>
 #include <cassert>
 #include <cstddef>
 #include <memory>

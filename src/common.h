@@ -204,8 +204,8 @@ inline std::string double2string(double d) {
 }
 
 inline std::string version() { //{{{
-    std::string buf = " JUMAN++:";
-    return (buf + VERSION + " " + GITVER);
+    std::string buf = " JUMAN++ ";
+    return (buf + PACKAGE_VERSION + " " + GITVER);
 } //}}}
 }
 

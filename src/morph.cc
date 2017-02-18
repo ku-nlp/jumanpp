@@ -157,7 +157,7 @@ void option_proc(cmdline::parser &option, std::string model_path, int argc,
     option.add("help", 'h', "print this message");
     option.parse_check(argc, argv);
     if (option.exist("version")) { //{{{
-        cout << "JUMAN++ " << VERSION << " " << GITVER << endl;
+        cout << Morph::version() << "\n";
         exit(0);
     }                            //}}}
     if (option.exist("train")) { //{{{
