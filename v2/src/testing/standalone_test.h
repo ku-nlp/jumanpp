@@ -7,31 +7,64 @@
 
 #include <catch.hpp>
 #include <util/status.hpp>
+#include <unistd.h>
 
 namespace Catch {
-  template <> struct StringMaker<jumanpp::Status> {
-    static std::string convert(jumanpp::Status const& value) {
-      std::stringstream s;
-      s << value;
-      return s.str();
-    }
-  };
+template <>
+struct StringMaker<jumanpp::Status> {
+  static std::string convert(jumanpp::Status const &value) {
+    std::stringstream s;
+    s << value;
+    return s.str();
+  }
+};
 }
 
-class OkStatusMatcher : public Catch::Matchers::Impl::MatcherBase<jumanpp::Status> {
-public:
-  OkStatusMatcher(OkStatusMatcher const&) = default;
+class OkStatusMatcher
+    : public Catch::Matchers::Impl::MatcherBase<jumanpp::Status> {
+ public:
+  OkStatusMatcher(OkStatusMatcher const &) = default;
   OkStatusMatcher() = default;
 
-  virtual bool match(jumanpp::Status const& status) const override {
+  virtual bool match(jumanpp::Status const &status) const override {
     return status.isOk();
   }
 
-  virtual std::string toStringUncached() const override {
-    return "";
+  virtual std::string toStringUncached() const override { return ""; }
+};
+
+class TempFile {
+  std::string filename_;
+
+public:
+  TempFile() {
+    char buffer[L_tmpnam];
+    //tmpnam is a security risk, but we use this for unit tests!
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#endif // __clang__
+    std::tmpnam(buffer);
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif // __clang__
+    filename_.assign(buffer);
+  }
+
+  bool isOk() const { return filename_.size() > 0; }
+
+  const std::string &name() const { return filename_; }
+
+  ~TempFile() {
+    if (!Catch::getResultCapture().getLastResult()->isOk()) {
+      WARN("temporary file name is: " << filename_);
+    } else {
+      //delete file
+      unlink(filename_.c_str());
+    }
   }
 };
 
 #define CHECK_OK(x) CHECK_THAT(x, OkStatusMatcher())
 
-#endif //JUMANPP_STANDALONE_TEST_H
+#endif  // JUMANPP_STANDALONE_TEST_H

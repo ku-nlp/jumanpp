@@ -86,8 +86,8 @@ struct InputCharacter {
   }
 };
 
-Status analyzeChars(const std::string& utf8data,
-                    std::vector<CharacterClass>* result);
+Status analyzeChars(const std::string &utf8data,
+                    std::vector<CharacterClass> *result);
 }
 
 #endif  // JUMANPP_CHARACTERS_HPP

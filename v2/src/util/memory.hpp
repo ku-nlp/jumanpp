@@ -21,21 +21,21 @@ namespace memory {
 inline bool IsPowerOf2(size_t val) { return (val & (val - 1)) == 0; }
 
 struct MemoryPage {
-  void* base;
+  void *base;
   size_t size;
 };
 
 class Manager;
 
 class ManagedAllocatorCore {
-  Manager* mgr_;
-  char* current_ = nullptr;
-  char* end_ = nullptr;
+  Manager *mgr_;
+  char *current_ = nullptr;
+  char *end_ = nullptr;
   bool ensureAvailable(size_t size);
 
  public:
-  ManagedAllocatorCore(Manager* manager) : mgr_(manager) {}
-  void* allocate_memory(size_t size, size_t alignment);
+  ManagedAllocatorCore(Manager *manager) : mgr_(manager) {}
+  void *allocate_memory(size_t size, size_t alignment);
 };
 
 template <typename T, size_t Talign = alignof(T)>
@@ -48,8 +48,8 @@ class ManagedAllocator {
   ManagedAllocator(ManagedAllocatorCore core) : core_{core} {}
 
   template <typename... Args>
-  T* make(Args... args) {
-    void* buffer = core_.allocate_memory(Tsize, Talign);
+  T *make(Args... args) {
+    void *buffer = core_.allocate_memory(Tsize, Talign);
     auto obj = new (buffer) T(std::forward<Args>(args)...);
     return obj;
   }
@@ -68,7 +68,7 @@ class Manager {
   Manager(size_t page_size) : page_size_{page_size} {}
 
 #if JUMANPP_USE_DEFAULT_ALLOCATION
-  void* allocate(size_t size, size_t align);
+  void *allocate(size_t size, size_t align);
 #else
   MemoryPage newPage();
 #endif

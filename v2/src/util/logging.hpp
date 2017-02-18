@@ -22,12 +22,12 @@ class WriteInDestructorLoggerImpl {
   Level level_;
 
  public:
-  WriteInDestructorLoggerImpl(const char* file, int line, Level lvl);
+  WriteInDestructorLoggerImpl(const char *file, int line, Level lvl);
 
   ~WriteInDestructorLoggerImpl();
 
   template <typename T>
-  WriteInDestructorLoggerImpl& operator<<(const T& obj) {
+  WriteInDestructorLoggerImpl &operator<<(const T &obj) {
     if (level_ >= CurrentLogLevel) data_ << obj;
     return *this;
   }

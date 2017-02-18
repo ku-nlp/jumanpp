@@ -25,12 +25,12 @@ class fixed_queue {
   std::vector<T, Alloc> data_;
   Comp cmp_;
 
-  void insert(const T& input) {
+  void insert(const T &input) {
     data_.emplace_back(input);
     std::push_heap(data_.begin(), data_.end(), Comp());
   }
 
-  bool replace(const T& input, T* return_slot) {
+  bool replace(const T &input, T *return_slot) {
     Comp cmp;
     if (cmp(peek(), input)) {
       return false;
@@ -69,7 +69,7 @@ class fixed_queue {
    * @param returned pointer to write the discarded element into
    * @return true if an element was discarded, false otherwise
    */
-  bool enqueue(const T& input, T* returned = nullptr) {
+  bool enqueue(const T &input, T *returned = nullptr) {
     if (data_.size() < data_.capacity()) {
       insert(input);
       return false;
@@ -82,13 +82,13 @@ class fixed_queue {
    *
    * @return max element in this queue. Non-const version.
    */
-  T& peek() { return data_[0]; }
+  T &peek() { return data_[0]; }
 
   /**
    *
    * @return max element in this queue
    */
-  const T& peek() const { return data_[0]; }
+  const T &peek() const { return data_[0]; }
 
   /**
    *

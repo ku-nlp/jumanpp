@@ -3,8 +3,8 @@
 //
 
 #include "memory.hpp"
-#include <sys/mman.h>
 #include <string.h>
+#include <sys/mman.h>
 #include <cassert>
 #include <cstddef>
 #include <memory>
@@ -15,13 +15,13 @@ namespace util {
 namespace memory {
 
 #if JUMANPP_USE_DEFAULT_ALLOCATION
-void* ManagedAllocatorCore::allocate_memory(size_t size, size_t alignment) {
+void *ManagedAllocatorCore::allocate_memory(size_t size, size_t alignment) {
   assert(IsPowerOf2(alignment) && "alignment should be a power of 2");
   return mgr_->allocate(size, std::max<size_t>(alignment, 8));
 }
 
-void* Manager::allocate(size_t size, size_t align) {
-  void* ptr = nullptr;
+void *Manager::allocate(size_t size, size_t align) {
+  void *ptr = nullptr;
   int error = posix_memalign(&ptr, align, size);
   if (error != 0) {
     LOG_ERROR() << "posix_memalign failed, errno=" << strerror(error);
@@ -37,21 +37,21 @@ Manager::~Manager() {
   }
 }
 #else
-void* ManagedAllocatorCore::allocate_memory(size_t size, size_t alignment) {
+void *ManagedAllocatorCore::allocate_memory(size_t size, size_t alignment) {
   assert(IsPowerOf2(alignment) && "alignment should be a power of 2");
 
   // check if aligned
   size_t mask = alignment - 1;
   if ((reinterpret_cast<size_t>(current_) & mask) == 0) {
     ensureAvailable(size);
-    void* addr = current_;
+    void *addr = current_;
     current_ += size;
     return addr;
   } else {
     // need to align memory
     ensureAvailable(size + alignment);
     auto aligned =
-        reinterpret_cast<char*>(reinterpret_cast<size_t>(current_) & ~mask);
+        reinterpret_cast<char *>(reinterpret_cast<size_t>(current_) & ~mask);
     aligned += alignment;
     current_ = aligned + size;
     return aligned;
@@ -59,7 +59,7 @@ void* ManagedAllocatorCore::allocate_memory(size_t size, size_t alignment) {
 }
 
 MemoryPage Manager::newPage() {
-  void* addr = ::mmap(NULL, page_size_, PROT_READ | PROT_WRITE,
+  void *addr = ::mmap(NULL, page_size_, PROT_READ | PROT_WRITE,
                       MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
   if (JPP_UNLIKELY(addr == MAP_FAILED)) {
     LOG_ERROR() << "mmap call failed, could not allocate memory, probably out "
@@ -80,7 +80,7 @@ bool ManagedAllocatorCore::ensureAvailable(size_t size) {
     MemoryPage page = mgr_->newPage();
     assert(page.size > size &&
            "page size is lesser than object size, please increase page size");
-    current_ = reinterpret_cast<char*>(page.base);
+    current_ = reinterpret_cast<char *>(page.base);
     end_ = current_ + page.size;
     return true;
   }

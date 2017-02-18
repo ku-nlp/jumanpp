@@ -17,16 +17,17 @@ namespace util {
 enum class MMapType { ReadOnly, ReadWrite };
 
 class mmap_view {
-  void* address_;
+  void *address_;
   size_t size_;
 
  public:
   mmap_view();
   ~mmap_view();
 
-  void* address() { return address_; }
+  void *address() { return address_; }
   size_t size() { return size_; }
-  bool clean();
+  bool isClean();
+  Status flush();
 
   friend class mmap_file;
 };
@@ -38,8 +39,8 @@ class mmap_file {
   size_t size_ = 0;
 
  public:
-  Status open(const std::string& filename, MMapType type);
-  Status map(mmap_view* view, size_t offset, size_t size);
+  Status open(const std::string &filename, MMapType type);
+  Status map(mmap_view *view, size_t offset, size_t size);
 
   size_t size() const { return size_; }
 

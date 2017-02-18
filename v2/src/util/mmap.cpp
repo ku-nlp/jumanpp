@@ -3,11 +3,11 @@
 //
 
 #include <errno.h>
+#include <string.h>
 #include <sys/fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <string.h>
 
 #include "mmap.hpp"
 
@@ -34,10 +34,18 @@ Status mmap_file::open(const std::string &filename, MMapType type) {
 
   int code = stat(filename.c_str(), &statResult);
   if (code != 0) {
-    return Status::InvalidState() << "could not get information about file: " << filename << " errcode=" << strerror(errno);
+    auto errn = errno;
+    if (type == MMapType::ReadWrite && errn == ENOENT) {
+      // ok, we have no file, it will be created
+      this->size_ = 0;
+    } else {
+      return Status::InvalidState()
+             << "could not get information about file: " << filename
+             << " errcode=" << strerror(errn);
+    }
+  } else {
+    this->size_ = (size_t)statResult.st_size;
   }
-
-  this->size_ = (size_t) statResult.st_size;
 
   int file_mode = 0;
 
@@ -51,7 +59,8 @@ Status mmap_file::open(const std::string &filename, MMapType type) {
       break;
   }
 
-  int fd = ::open(filename.c_str(), file_mode);
+  //use mode 0644 for file creation
+  int fd = ::open(filename.c_str(), file_mode, 0644);
 
   if (fd == 0) {
     return Status::InvalidState() << "mmap could not open file: " << filename
@@ -63,16 +72,41 @@ Status mmap_file::open(const std::string &filename, MMapType type) {
   return Status::Ok();
 }
 
+char ZERO[] = {'\0'};
+
 Status mmap_file::map(mmap_view *view, size_t offset, size_t size) {
   int protection = 0;
   int flags = 0;
 
+  auto endoffset = offset + size;
+
   switch (type_) {
     case MMapType::ReadOnly:
+      if (endoffset > size_) {
+        return Status::InvalidParameter()
+               << "offset=" << offset << " and size=" << size
+               << " point after the end of file " << filename_
+               << " of size=" << size_;
+      }
       protection = PROT_READ;
       flags = MAP_PRIVATE;
       break;
     case MMapType::ReadWrite:
+      if (endoffset > size_) {
+        off_t fileoffset = static_cast<off_t>(endoffset) - 1;
+        auto retval = ::lseek(fd_, fileoffset, SEEK_SET);
+        if (retval == -1) {
+          return Status::InvalidState() << "[seek] could not extend file "
+                                        << filename_ << " to " << endoffset
+                                        << "bytes";
+        }
+        auto write_ret = write(fd_, ZERO, 1);
+        if (write_ret == -1) {
+          return Status::InvalidState() << "[write] could not extend file "
+                                        << filename_ << " to " << endoffset
+                                        << "bytes";
+        }
+      }
       protection = PROT_READ | PROT_WRITE;
       flags = MAP_SHARED;
       break;
@@ -93,11 +127,20 @@ Status mmap_file::map(mmap_view *view, size_t offset, size_t size) {
 mmap_view::mmap_view() : address_{MAP_FAILED} {}
 
 mmap_view::~mmap_view() {
-  if (!clean()) {
+  if (!isClean()) {
     ::munmap(address_, size_);
   }
 }
 
-bool mmap_view::clean() { return address_ == MAP_FAILED; }
+bool mmap_view::isClean() { return address_ == MAP_FAILED; }
+
+Status mmap_view::flush() {
+  int status = ::msync(address_, size(), MS_SYNC);
+  if (status != 0) {
+    return Status::InvalidState() << "could not flush mapped contents, error: "
+                                  << strerror(errno);
+  }
+  return Status::Ok();
+}
 }
 }
