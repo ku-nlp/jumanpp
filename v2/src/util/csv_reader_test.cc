@@ -21,7 +21,7 @@ TEST_CASE("csv reader reads small file", "[csv_reader]") {
 
 TEST_CASE("csv reader reads small file with crlf", "[csv_reader]") {
   jumanpp::util::CsvReader reader;
-  CHECK_OK(reader.open("csv/small_crlf.csv"));
+  CHECK_OK(reader.initFromMemory("0,1\r\n2,3\r\n"));
   CHECK(reader.nextLine());
   CHECK(reader.numFields() == 2);
   CHECK(reader.field(0) == "0");

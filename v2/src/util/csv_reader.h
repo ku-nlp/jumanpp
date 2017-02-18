@@ -33,6 +33,7 @@ class CsvReader {
  public:
   CsvReader(char separator = ',', char quote = '"', char escape = '\\');
   Status open(const StringPiece& filename);
+  Status initFromMemory(const StringPiece& data);
   bool nextLine();
   i32 numFields() const;
   StringPiece field(i32 idx) const;
