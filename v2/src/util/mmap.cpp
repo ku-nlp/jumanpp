@@ -59,7 +59,7 @@ Status mmap_file::open(const std::string &filename, MMapType type) {
       break;
   }
 
-  //use mode 0644 for file creation
+  // use mode 0644 for file creation
   int fd = ::open(filename.c_str(), file_mode, 0644);
 
   if (fd == 0) {

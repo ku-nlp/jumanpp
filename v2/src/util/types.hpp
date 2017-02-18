@@ -6,6 +6,7 @@
 #define JUMANPP_TYPES_HPP
 
 #include <cstdint>
+#include <cstdlib>
 
 namespace jumanpp {
 
@@ -20,6 +21,8 @@ using u8 = std::uint8_t;
 using u16 = std::int16_t;
 using u32 = std::uint32_t;
 using u64 = std::uint64_t;
+
+using size_t = std::size_t;
 }
 
 #endif  // JUMANPP_TYPES_HPP

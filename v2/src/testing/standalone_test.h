@@ -5,9 +5,9 @@
 #ifndef JUMANPP_STANDALONE_TEST_H
 #define JUMANPP_STANDALONE_TEST_H
 
+#include <unistd.h>
 #include <catch.hpp>
 #include <util/status.hpp>
-#include <unistd.h>
 
 namespace Catch {
 template <>
@@ -36,18 +36,18 @@ class OkStatusMatcher
 class TempFile {
   std::string filename_;
 
-public:
+ public:
   TempFile() {
     char buffer[L_tmpnam];
-    //tmpnam is a security risk, but we use this for unit tests!
+// tmpnam is a security risk, but we use this for unit tests!
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-#endif // __clang__
+#endif  // __clang__
     std::tmpnam(buffer);
 #ifdef __clang__
 #pragma clang diagnostic pop
-#endif // __clang__
+#endif  // __clang__
     filename_.assign(buffer);
   }
 
@@ -59,7 +59,7 @@ public:
     if (!Catch::getResultCapture().getLastResult()->isOk()) {
       WARN("temporary file name is: " << filename_);
     } else {
-      //delete file
+      // delete file
       unlink(filename_.c_str());
     }
   }
