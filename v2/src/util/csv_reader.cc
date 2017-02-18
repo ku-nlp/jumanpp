@@ -32,7 +32,21 @@ bool CsvReader::nextLine() {
       fields_.emplace_back(field_start, position);
       //next call starts from the next string, skipping EOL
       position_ = position + 1;
+      //handle \n\r pattern
+      if (position_ < end && *position_ == '\r') {
+        ++position_;
+      }
       break;
+    }
+
+    //handle \r\n pattern
+    if (ch == '\r') {
+      auto next = position + 1;
+      if (next < end && *next == '\n') {
+        fields_.emplace_back(field_start, position);
+        position_ = next + 1;
+        break;
+      }
     }
 
     if (ch == separator_) {
