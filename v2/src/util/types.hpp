@@ -23,6 +23,7 @@ using u32 = std::uint32_t;
 using u64 = std::uint64_t;
 
 using size_t = std::size_t;
+using ptrdiff_t = std::ptrdiff_t;
 using uint32 = u32;
 using uint8 = u8;
 }

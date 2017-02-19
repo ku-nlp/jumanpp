@@ -6,6 +6,7 @@
 #define JUMANPP_FLATREP_H
 
 #include "types.hpp"
+#include <cstring>
 
 namespace jumanpp {
 namespace util {
@@ -236,7 +237,7 @@ class FlatRep {
     Bucket* array = new Bucket[n];
     for (size_t i = 0; i < n; i++) {
       Bucket* b = &array[i];
-      memset(b->marker, kEmpty, kWidth);
+      std::memset(b->marker, kEmpty, kWidth);
     }
     const size_t capacity = (1 << lg) * kWidth;
     lglen_ = lg;
