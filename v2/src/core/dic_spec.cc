@@ -187,6 +187,21 @@ Status checkUniqueNames(const parser::ParserState& state) {
   return Status::Ok();
 }
 
+Status checkUniqueColumns(const parser::ParserState& state) {
+  jumanpp::util::FlatSet<i32> cols;
+
+  for (auto& descr : state.collected) {
+    auto col = descr.position;
+    if (cols.count(col) != 0) {
+      return Status::InvalidParameter() << "column with name " << descr.name
+                                        << " does not have unique number";
+    }
+    cols.emplace(col);
+  }
+
+  return Status::Ok();
+}
+
 Status parseDescriptor(StringPiece data, DictionarySpec* result) {
   pegtl::input inp{0,  // line
                    0,  // column
@@ -218,6 +233,7 @@ Status parseDescriptor(StringPiece data, DictionarySpec* result) {
 
   JPP_RETURN_IF_ERROR(findIndexColumn(state, &result->indexColumn));
   JPP_RETURN_IF_ERROR(checkUniqueNames(state));
+  JPP_RETURN_IF_ERROR(checkUniqueColumns(state));
 
   result->columns = std::move(state.collected);
 

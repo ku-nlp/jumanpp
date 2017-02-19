@@ -74,3 +74,11 @@ TEST_CASE("columns should have unique names") {
         "name SURFACE was used at least for two columns. "
         "Column names must be unique");
 }
+
+TEST_CASE("columns should have unique positions") {
+  d::DictionarySpec spec{};
+  auto s = d::parseDescriptor("1 SURFACE STRING TRIE_INDEX\n1 SURFACE2 STRING",
+                              &spec);
+  CHECK_FALSE(s.isOk());
+  CHECK(s.message == "column with name SURFACE2 does not have unique number");
+}
