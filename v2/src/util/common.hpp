@@ -13,12 +13,17 @@
 #define JPP_UNLIKELY(x) __builtin_expect((x), 0)
 
 #ifndef NDEBUG
-#define JPP_DCHECK_EQ(a, b) (assert((a) != (b)))
-#define JPP_DCHECK_GE(a, b) (assert((a) > (b)))
+#define JPP_DCHECK(x) (assert(x))
 #else
-#define JPP_DCHECK_EQ(a, b) ()
-#define JPP_DCHECK_GE(a, b) ()
+#define JPP_DCHECK(x) ()
 #endif
+
+#define JPP_DCHECK_EQ(a, b) JPP_DCHECK((a) == (b))
+#define JPP_DCHECK_NE(a, b) JPP_DCHECK((a) != (b))
+#define JPP_DCHECK_GE(a, b) JPP_DCHECK((a) >= (b))
+#define JPP_DCHECK_GT(a, b) JPP_DCHECK((a) > (b))
+#define JPP_DCHECK_LE(a, b) JPP_DCHECK((a) <= (b))
+#define JPP_DCHECK_LT(a, b) JPP_DCHECK((a) < (b))
 
 namespace jumanpp {
 namespace util {

@@ -99,7 +99,7 @@ class FlatSet {
     }
     bool operator!=(const const_iterator& x) const { return !(*this == x); }
     const_iterator& operator++() {
-      DCHECK(b_ != end_);
+      JPP_DCHECK(b_ != end_);
       i_++;
       SkipUnused();
       return *this;
