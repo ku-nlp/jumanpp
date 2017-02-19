@@ -26,7 +26,7 @@ endfunction()
 
 function(jpp_test_executable executable_name)
     set(TEST_SOURCES ${ARGN})
-    add_executable(${executable_name} ${TEST_SOURCES} ${JPP_TEST_STANDALONE_HDRS})
+    add_executable(${executable_name} ${TEST_SOURCES} ${JPP_TEST_STANDALONE_HDRS} ${libs3p_catch_header})
     target_link_libraries(${executable_name} jpp_test_catch_main_lib)
     jpp_register_test(${executable_name})
 endfunction()
