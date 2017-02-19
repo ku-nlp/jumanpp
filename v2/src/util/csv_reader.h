@@ -28,6 +28,7 @@ class CsvReader {
   char escape_;
   const char* position_;
   const char* end_;
+  i64 line_number_;
 
  public:
   CsvReader(char separator = ',', char quote = '"', char escape = '\\');
@@ -36,6 +37,7 @@ class CsvReader {
   bool nextLine();
   i32 numFields() const;
   StringPiece field(i32 idx) const;
+  i64 lineNumber() const { return line_number_;  }
 };
 }
 }

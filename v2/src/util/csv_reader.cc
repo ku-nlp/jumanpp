@@ -13,9 +13,7 @@ CsvReader::CsvReader(char separator_, char quote_, char escape_)
 Status CsvReader::open(const StringPiece &filename) {
   JPP_RETURN_IF_ERROR(file_.open(filename, MMapType::ReadOnly));
   JPP_RETURN_IF_ERROR(file_.map(&fragment_, 0, file_.size()));
-  position_ = reinterpret_cast<const char *>(fragment_.address());
-  end_ = position_ + file_.size();
-  return Status::Ok();
+  return initFromMemory(fragment_.asStringPiece());
 }
 
 bool CsvReader::nextLine() {
@@ -23,6 +21,7 @@ bool CsvReader::nextLine() {
   auto position = position_;
   if (position == end) return false;
   fields_.clear();
+  line_number_ += 1;
 
   auto field_start = position;
 
@@ -75,6 +74,7 @@ StringPiece CsvReader::field(i32 idx) const { return fields_[idx]; }
 Status CsvReader::initFromMemory(const StringPiece &data) {
   position_ = data.begin();
   end_ = data.end();
+  line_number_ = 0;
   return Status::Ok();
 }
 }
