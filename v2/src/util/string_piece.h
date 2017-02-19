@@ -23,6 +23,8 @@ class StringPiece {
   pointer_t end_;
 
  public:
+  constexpr StringPiece() noexcept : begin_{nullptr}, end_{nullptr} {}
+
   constexpr StringPiece(iterator begin, iterator end) noexcept
       : begin_{begin}, end_{end} {}
   constexpr StringPiece(pointer_t begin, size_t length) noexcept
@@ -57,6 +59,8 @@ class StringPiece {
                 value_type, typename Cont::value_type>::value>>
   constexpr StringPiece(const Cont& cont) noexcept
       : begin_{cont.data()}, end_{cont.data() + cont.size()} {}
+
+  constexpr StringPiece(const StringPiece& o) = default;
 
   constexpr iterator begin() const noexcept { return begin_; }
   constexpr iterator end() const noexcept { return end_; }
