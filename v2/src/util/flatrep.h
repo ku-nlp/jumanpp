@@ -5,8 +5,8 @@
 #ifndef JUMANPP_FLATREP_H
 #define JUMANPP_FLATREP_H
 
-#include "types.hpp"
 #include <cstring>
+#include "types.hpp"
 
 namespace jumanpp {
 namespace util {
