@@ -24,6 +24,7 @@
 #define JPP_DCHECK_GT(a, b) JPP_DCHECK((a) > (b))
 #define JPP_DCHECK_LE(a, b) JPP_DCHECK((a) <= (b))
 #define JPP_DCHECK_LT(a, b) JPP_DCHECK((a) < (b))
+#define JPP_DCHECK_NOT(x) JPP_DCHECK(!(x))
 
 namespace jumanpp {
 namespace util {
@@ -60,7 +61,7 @@ JPP_ALWAYS_INLINE inline void prefetch(const void* x) {
 }
 
 namespace port {
-  constexpr bool kLittleEndian = false;
+constexpr bool kLittleEndian = false;
 }
 
 }  // util

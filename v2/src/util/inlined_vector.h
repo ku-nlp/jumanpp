@@ -5,28 +5,22 @@
 #ifndef JUMANPP_INLINED_VECTOR_H
 #define JUMANPP_INLINED_VECTOR_H
 
+#include <string.h>
+#include <algorithm>
 #include <initializer_list>
-#include "common.hpp"
-#include "types.hpp"
-#include <type_traits>
 #include <iterator>
 #include <memory>
-#include <algorithm>
-#include <string.h>
-
+#include <type_traits>
+#include "common.hpp"
+#include "types.hpp"
 
 namespace jumanpp {
 namespace util {
 
-
 namespace port {
-inline void* Malloc(size_t sz) {
-  return std::malloc(sz);
-}
+inline void* Malloc(size_t sz) { return std::malloc(sz); }
 
-inline void Free(void* mem) {
-  std::free(mem);
-}
+inline void Free(void* mem) { std::free(mem); }
 }
 
 // An InlinedVector<T,N,A> is like a std::vector<T,A>, except that storage
@@ -45,7 +39,7 @@ inline void Free(void* mem) {
 
 template <typename T, int N>
 class InlinedVector {
-public:
+ public:
   typedef T value_type;
   typedef T* pointer;
   typedef const T* const_pointer;
@@ -74,7 +68,7 @@ public:
   InlinedVector(
       InputIterator range_start, InputIterator range_end,
       typename std::enable_if<!std::is_integral<InputIterator>::value>::type* =
-      NULL) {
+          NULL) {
     InitRep();
     AppendRange(range_start, range_end);
   }
@@ -249,7 +243,7 @@ public:
   // REQUIRES: value_type is swappable and copyable.
   void swap(InlinedVector& other);
 
-private:
+ private:
   // Representation can either be inlined or out-of-line.
   // In either case, at least sizeof(void*) + 8 bytes are available.
   //
@@ -397,7 +391,7 @@ private:
   };
   // 2) Construct a T with args at not-yet-initialized memory pointed by dst.
   struct Construct {
-    template<class... Args>
+    template <class... Args>
     void operator()(T* dst, Args&&... args) const {
       new (dst) T(std::forward<Args>(args)...);
     }
@@ -410,7 +404,7 @@ private:
   // this code compiles even if T does not support copying or default
   // construction.
   template <void(Mover)(T*, size_t, T*), class InitType = Uninitialized,
-      class... Args>
+            class... Args>
   void Grow(size_t n, Args&&... args) {
     size_t s = size();
     JPP_DCHECK_LE(s, capacity());
@@ -672,8 +666,7 @@ inline void InlinedVector<T, N>::AppendRange(Iter first, Iter last) {
   AppendRange(first, last, IterTag());
 }
 
+}  // util
+}  // jumanpp
 
-} // util
-} // jumanpp
-
-#endif //JUMANPP_INLINED_VECTOR_H
+#endif  // JUMANPP_INLINED_VECTOR_H

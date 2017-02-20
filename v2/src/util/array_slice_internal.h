@@ -45,21 +45,22 @@ struct Size {
 
 struct MutableStringData {
   // Defined only for string.
-  static char* Get(std::string* v) { return v->empty() ? nullptr : &*v->begin(); }
+  static char* Get(std::string* v) {
+    return v->empty() ? nullptr : &*v->begin();
+  }
 };
-
 
 // Checks whether M::Get(C*) is defined and has a return type R such that
 // Checker::valid<R>()==true.
 template <typename M, typename Checker, typename C>
 struct HasGetHelper : public M {
-private:
+ private:
   struct None {};
   // M::Get is selected when it is viable. Get(...) is selected otherwise.
   using M::Get;
   static None Get(...);
 
-public:
+ public:
   static constexpr bool HasGet() {
     using Result = decltype(Get(std::declval<C*>()));
     return !std::is_same<Result, None>() && Checker::template valid<Result>();
@@ -69,7 +70,7 @@ public:
 // Defines HasGet() for a particular method, container, and checker. If
 // HasGet()==true, provides Get() that delegates to the method.
 template <typename M, typename Checker, typename C,
-    bool /*has_get*/ = HasGetHelper<M, Checker, C>::HasGet()>
+          bool /*has_get*/ = HasGetHelper<M, Checker, C>::HasGet()>
 struct Wrapper {
   static constexpr bool HasGet() { return false; }
 };
@@ -118,9 +119,9 @@ using ContainerData = Wrapper<Data, DataChecker<const T>, const C>;
 // method 'T* C::data() const' in a non-STL-compliant container.
 template <typename T, typename C>
 using ContainerMutableData =
-FirstWithGet<Wrapper<Data, DataChecker<T>, C>,
-    FirstWithGet<Wrapper<MutableData, DataChecker<T>, C>,
-        Wrapper<MutableStringData, DataChecker<T>, C>>>;
+    FirstWithGet<Wrapper<Data, DataChecker<T>, C>,
+                 FirstWithGet<Wrapper<MutableData, DataChecker<T>, C>,
+                              Wrapper<MutableStringData, DataChecker<T>, C>>>;
 
 // Wraps C::size() const.
 template <typename C>
@@ -131,7 +132,7 @@ using ContainerSize = Wrapper<Size, SizeChecker, const C>;
 // mutable type.
 template <typename T>
 class ArraySliceImplBase {
-public:
+ public:
   typedef T* pointer;
   typedef const T* const_pointer;
   typedef T& reference;
@@ -204,22 +205,22 @@ public:
     return !(*this == other);
   }
 
-private:
+ private:
   pointer ptr_;
   size_type length_;
 };
 
 template <typename T>
 class ArraySliceImpl : public ArraySliceImplBase<const T> {
-public:
+ public:
   using ArraySliceImplBase<const T>::ArraySliceImplBase;
 
   // Defined iff the data and size accessors for the container C have been
   // defined.
   template <typename C>
   using EnableIfConvertibleFrom =
-  typename std::enable_if<ContainerData<T, C>::HasGet() &&
-                          ContainerSize<C>::HasGet()>::type;
+      typename std::enable_if<ContainerData<T, C>::HasGet() &&
+                              ContainerSize<C>::HasGet()>::type;
 
   // Constructs from a container when EnableIfConvertibleFrom is
   // defined. std::addressof handles types with overloaded operator&.
@@ -231,22 +232,21 @@ public:
 
 template <typename T>
 class MutableArraySliceImpl : public ArraySliceImplBase<T> {
-public:
+ public:
   using ArraySliceImplBase<T>::ArraySliceImplBase;
 
   template <typename C>
   using EnableIfConvertibleFrom =
-  typename std::enable_if<ContainerMutableData<T, C>::HasGet() &&
-                          ContainerSize<C>::HasGet()>::type;
+      typename std::enable_if<ContainerMutableData<T, C>::HasGet() &&
+                              ContainerSize<C>::HasGet()>::type;
 
   template <typename C>
   explicit MutableArraySliceImpl(C* v)
       : ArraySliceImplBase<T>(ContainerMutableData<T, C>::Get(v),
                               ContainerSize<C>::Get(v)) {}
 };
-
 }
 }
 }
 
-#endif //JUMANPP_ARRAY_SLICE_INTERNAL_H
+#endif  // JUMANPP_ARRAY_SLICE_INTERNAL_H

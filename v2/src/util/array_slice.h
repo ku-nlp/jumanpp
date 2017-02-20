@@ -6,15 +6,14 @@
 #define JUMANPP_ARRAY_SLICE_H
 
 #include <vector>
-#include "types.hpp"
 #include "array_slice_internal.h"
+#include "types.hpp"
 
 namespace jumanpp {
 namespace util {
 
 template <typename T, size_t N>
 class InlinedVector;
-
 
 // An ArraySlice<T> represents an immutable array of elements of type
 // T.  It has a length "length", and a base pointer "ptr", and the
@@ -95,10 +94,10 @@ class InlinedVector;
 //   MyMutatingRoutine(my_proto.mutable_value());
 template <typename T>
 class ArraySlice {
-private:
+ private:
   typedef jumanpp::util::internal::ArraySliceImpl<T> Impl;
 
-public:
+ public:
   typedef T value_type;
   typedef typename Impl::pointer pointer;
   typedef typename Impl::const_pointer const_pointer;
@@ -134,7 +133,7 @@ public:
   // std::vector<T,A> and std::array<T, N> are examples of this. See
   // array_slice_internal.h for details.
   template <typename V,
-      typename = typename Impl::template EnableIfConvertibleFrom<V>>
+            typename = typename Impl::template EnableIfConvertibleFrom<V>>
 
   ArraySlice(const V& v)  // NOLINT(runtime/explicit)
       : impl_(v) {}
@@ -187,7 +186,7 @@ public:
   bool operator==(ArraySlice<T> other) const { return impl_ == other.impl_; }
   bool operator!=(ArraySlice<T> other) const { return impl_ != other.impl_; }
 
-private:
+ private:
   Impl impl_;
 };
 
@@ -205,10 +204,10 @@ private:
 // to a "const T*" pointer (corresponding to a non-const ArraySlice<T>).
 template <typename T>
 class MutableArraySlice {
-private:
+ private:
   typedef jumanpp::util::internal::MutableArraySliceImpl<T> Impl;
 
-public:
+ public:
   typedef T value_type;
   typedef typename Impl::pointer pointer;
   typedef typename Impl::const_pointer const_pointer;
@@ -245,7 +244,7 @@ public:
   // arguments, when T==char. The appropriate ctor is selected using SFINAE. See
   // array_slice_internal.h for details.
   template <typename V,
-      typename = typename Impl::template EnableIfConvertibleFrom<V>>
+            typename = typename Impl::template EnableIfConvertibleFrom<V>>
   MutableArraySlice(V* v)  // NOLINT(runtime/explicit)
       : impl_(v) {}
 
@@ -289,7 +288,7 @@ public:
   // DEPRECATED(jacobsa): Please use data() instead.
   pointer mutable_data() const { return impl_.data(); }
 
-private:
+ private:
   Impl impl_;
 };
 
@@ -297,9 +296,7 @@ template <typename T>
 const typename ArraySlice<T>::size_type ArraySlice<T>::npos;
 template <typename T>
 const typename MutableArraySlice<T>::size_type MutableArraySlice<T>::npos;
-
-
 }
 }
 
-#endif //JUMANPP_ARRAY_SLICE_H
+#endif  // JUMANPP_ARRAY_SLICE_H

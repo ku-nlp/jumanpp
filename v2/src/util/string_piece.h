@@ -24,17 +24,21 @@ class StringPiece {
   pointer_t end_;
 
  public:
-  JPP_ALWAYS_INLINE constexpr StringPiece() noexcept : begin_{nullptr}, end_{nullptr} {}
+  JPP_ALWAYS_INLINE constexpr StringPiece() noexcept
+      : begin_{nullptr}, end_{nullptr} {}
 
   JPP_ALWAYS_INLINE constexpr StringPiece(iterator begin, iterator end) noexcept
       : begin_{begin}, end_{end} {}
-  JPP_ALWAYS_INLINE constexpr StringPiece(pointer_t begin, size_t length) noexcept
+  JPP_ALWAYS_INLINE constexpr StringPiece(pointer_t begin,
+                                          size_t length) noexcept
       : begin_{begin}, end_{begin + length} {}
   JPP_ALWAYS_INLINE StringPiece(const std::string& str) noexcept
       : begin_{str.data()}, end_{str.data() + str.size()} {}
 
-  JPP_ALWAYS_INLINE constexpr StringPiece(const StringPiece& other) noexcept = default;
-  JPP_ALWAYS_INLINE StringPiece& operator=(const StringPiece& other) noexcept = default;
+  JPP_ALWAYS_INLINE constexpr StringPiece(const StringPiece& other) noexcept =
+      default;
+  JPP_ALWAYS_INLINE StringPiece& operator=(const StringPiece& other) noexcept =
+      default;
 
   /**
    * This constructor accepts only string literals.
@@ -43,7 +47,8 @@ class StringPiece {
    * @param array
    */
   template <size_t array_size>
-  JPP_ALWAYS_INLINE constexpr StringPiece(const char (&array)[array_size]) noexcept
+  JPP_ALWAYS_INLINE constexpr StringPiece(
+      const char (&array)[array_size]) noexcept
       : begin_{array}, end_{array + array_size} {
     if (*(end_ - 1) == 0) {
       --end_;
@@ -82,11 +87,24 @@ class StringPiece {
    * @param to index after the last character in slice
    * @return new StringPiece with specified length
    */
-  JPP_ALWAYS_INLINE constexpr StringPiece slice(ptrdiff_t from, ptrdiff_t to) const noexcept {
+  JPP_ALWAYS_INLINE constexpr StringPiece slice(ptrdiff_t from,
+                                                ptrdiff_t to) const noexcept {
     JPP_DCHECK_GE(from, 0);
     JPP_DCHECK_LE(to, size());
     JPP_DCHECK_LE(from, to);
     return StringPiece{begin() + from, begin() + to};
+  }
+
+  JPP_ALWAYS_INLINE constexpr StringPiece from(ptrdiff_t from) const noexcept {
+    JPP_DCHECK_GE(from, 0);
+    JPP_DCHECK_LT(from, size());
+    return StringPiece{begin() + from, end()};
+  }
+
+  JPP_ALWAYS_INLINE constexpr StringPiece take(ptrdiff_t num) const noexcept {
+    JPP_DCHECK_GE(num, 0);
+    JPP_DCHECK_LT(num, size());
+    return StringPiece{begin(), begin() + num};
   }
 };
 

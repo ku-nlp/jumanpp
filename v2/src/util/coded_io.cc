@@ -29,9 +29,9 @@ namespace impl {
 // Adopted from
 // https://github.com/google/protobuf/blob/master/src/google/protobuf/io/coded_stream.cc
 JPP_ALWAYS_INLINE::std::pair<bool, const u8*> ReadVarint64FromArray(
-    const u8* buffer, u64* value);
+    const u8* buffer, u64* value) noexcept;
 inline ::std::pair<bool, const u8*> ReadVarint64FromArray(const u8* buffer,
-                                                          u64* value) {
+                                                          u64* value) noexcept {
   const u8* ptr = buffer;
   u32 b;
 
@@ -91,7 +91,7 @@ done:
 }
 }  // impl
 
-bool CodedBufferParser::readVarint64Slowpath(u64* pInt) {
+bool CodedBufferParser::readVarint64Slowpath(u64* pInt) noexcept {
   if (remaining() == 0) return false;
 
   // We won't get to the end of buffer with this decode

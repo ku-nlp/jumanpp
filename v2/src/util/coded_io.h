@@ -99,10 +99,10 @@ class CodedBufferParser {
     end_ = reinterpret_cast<const u8*>(data.end());
   }
 
-  bool readVarint64Slowpath(u64* pInt);
+  bool readVarint64Slowpath(u64* pInt) noexcept;
 
   // most of varints are small
-  inline bool readVarint64(u64* ptr) {
+  inline bool readVarint64(u64* ptr) noexcept {
     if (JPP_LIKELY(position_ < end_) && *position_ < 0x80) {
       *ptr = *position_;
       ++position_;
@@ -111,7 +111,7 @@ class CodedBufferParser {
     return readVarint64Slowpath(ptr);
   }
 
-  bool readStringPiece(StringPiece* ptr) {
+  bool readStringPiece(StringPiece* ptr) noexcept {
     size_t len;
     if (!readInt(&len)) return false;
     if (len > remaining()) {
@@ -125,7 +125,7 @@ class CodedBufferParser {
   }
 
   template <typename T>
-  inline bool readInt(T* ptr) {
+  inline bool readInt(T* ptr) noexcept {
     u64 mem;
     bool success = readVarint64(&mem);
     if (JPP_LIKELY(success)) {
@@ -134,11 +134,19 @@ class CodedBufferParser {
     return success;
   }
 
-  size_t remaining() const { return static_cast<size_t>(end_ - position_); };
+  size_t remaining() const noexcept {
+    return static_cast<size_t>(end_ - position_);
+  };
 
   i32 position() const noexcept {
     return static_cast<i32>(position_ - begin_);
   };
+
+  size_t limit(size_t cnt) {
+    size_t cur = remaining();
+    end_ = std::min(end_, position_ + cnt);
+    return cur;
+  }
 };
 
 }  // util
