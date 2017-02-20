@@ -67,3 +67,20 @@ TEST_CASE("coded io works with string and int") {
   CHECK_FALSE(p.readStringPiece(&sp));
   CHECK_FALSE(p.readVarint64(&x));
 }
+
+TEST_CASE("read fails when a large integer is truncated") {
+  u::CodedBuffer buf;
+  buf.writeVarint(382190578192);
+  auto slice = buf.contents().slice(1, 5);
+  u::CodedBufferParser p { slice };
+  u64 x;
+  CHECK_FALSE(p.readVarint64(&x));
+}
+
+TEST_CASE("read fails when string buffer is truncated") {
+  u::CodedBuffer buf;
+  buf.writeString("hello, world!");
+  auto slice = buf.contents().slice(0, 3);
+  u::CodedBufferParser p { slice };
+  CHECK_FALSE(p.readStringPiece(nullptr));
+}

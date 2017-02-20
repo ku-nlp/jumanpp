@@ -114,6 +114,10 @@ bool CodedBufferParser::readVarint64Slowpath(u64* pInt) noexcept {
       return false;
     }
 
+    if (JPP_UNLIKELY(position_ >= end_)) {
+      return false;
+    }
+
     b = *position_;
     result |= static_cast<u64>(b & 0x7F) << (7 * count);
     ++position_;
