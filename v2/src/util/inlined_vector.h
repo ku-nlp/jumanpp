@@ -12,6 +12,7 @@
 #include <iterator>
 #include <memory>
 #include <algorithm>
+#include <string.h>
 
 
 namespace jumanpp {

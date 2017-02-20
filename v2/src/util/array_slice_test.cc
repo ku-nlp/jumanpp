@@ -5,17 +5,19 @@
 #include "array_slice.h"
 #include <testing/standalone_test.h>
 #include "string_piece.h"
+#include <string>
 
 using namespace jumanpp::util;
 
-TEST_CASE("arrayslice works with string literal") {
-  ArraySlice<const char> data{"hello"};
+TEST_CASE("arrayslice works with string") {
+  std::string str = "hello";
+  ArraySlice<char> data{str};
   CHECK(data.length() == 6); // 5 + zero
 }
 
 TEST_CASE("arrayslice works with stringpiece") {
   jumanpp::StringPiece piece { "hello" };
-  ArraySlice<const char> data { piece };
+  ArraySlice<char> data { piece };
   CHECK(data.length() == 5);
 }
 
