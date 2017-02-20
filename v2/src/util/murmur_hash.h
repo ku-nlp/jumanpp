@@ -115,11 +115,12 @@ JPP_ALWAYS_INLINE inline uint64_t murmurhash3_memory(const u8 *begin, const u8 *
                                    const uint64_t seed) {
   using namespace impl;
   OWORD value = OWORD(seed, seed);
+  constexpr OWORDSIZE = sizeof(OWORD);
 
   const uint8_t *data = begin;
   size_t len = end - begin;
   const uint64_t *blocks = reinterpret_cast<const uint64_t *>(data);
-  const size_t block_size = len / sizeof(OWORD);
+  const size_t block_size = len / OWORDSIZE;
 
   for (unsigned int i = 0; i < block_size; i++) {
     OWORD block = OWORD(blocks[i * 2], blocks[i * 2 + 1]);
@@ -127,7 +128,7 @@ JPP_ALWAYS_INLINE inline uint64_t murmurhash3_memory(const u8 *begin, const u8 *
   }
 
   OWORD tail = OWORD(0, 0);
-  const uint8_t *data_tail = (data + block_size * 16);
+  const uint8_t *data_tail = (data + block_size * OWORDSIZE);
   get_tail(data_tail, len, &tail);
 
   mur1_oword(tail, constant);
