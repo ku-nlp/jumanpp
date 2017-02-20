@@ -6,26 +6,27 @@
 #define JUMANPP_CHARACTERS_HPP
 
 #include "status.hpp"
+#include "string_piece.h"
 #include "types.hpp"
 
 #include <vector>
 
 namespace jumanpp {
+namespace chars {
 
 enum class CharacterClass;
 
-inline CharacterClass operator|(CharacterClass c1, CharacterClass c2) {
+inline CharacterClass operator|(CharacterClass c1, CharacterClass c2) noexcept {
   return static_cast<CharacterClass>(static_cast<int>(c1) |
                                      static_cast<int>(c2));
 }
 
-inline CharacterClass operator&(CharacterClass c1, CharacterClass c2) {
+inline CharacterClass operator&(CharacterClass c1, CharacterClass c2) noexcept {
   return static_cast<CharacterClass>(static_cast<int>(c1) &
                                      static_cast<int>(c2));
 }
 
 enum class CharacterClass : i32 {
-  // 定数群, or で繋げたいのでenum にはしない．
   SPACE = 0x00000001,
   IDEOGRAPHIC_PUNC = 0x00000002,  // 、。
   KANJI = 0x00000004,
@@ -51,7 +52,7 @@ enum class CharacterClass : i32 {
   FAMILY_PUNC = PERIOD | COMMA | IDEOGRAPHIC_PUNC,
   FAMILY_ALPH_PUNC = ALPH | PERIOD | SLASH | COLON | MIDDLE_DOT,
   FAMILY_PUNC_SYMBOL =
-      PERIOD | COMMA | IDEOGRAPHIC_PUNC | MIDDLE_DOT | SYMBOL | SLASH | COLON,
+  PERIOD | COMMA | IDEOGRAPHIC_PUNC | MIDDLE_DOT | SYMBOL | SLASH | COLON,
   FAMILY_SPACE = SPACE,
   FAMILY_SYMBOL = SYMBOL,
   FAMILY_ALPH = ALPH,
@@ -65,29 +66,28 @@ inline bool IsCompatibleCharClass(CharacterClass realCharClass,
   return (realCharClass & familyOrTarget) != CharacterClass::FAMILY_OTHERS;
 }
 
-struct InputCharacter {
+struct InputCodepoint {
   /**
    * Unicode codepoint for character
    */
   char32_t codepoint;
+
   CharacterClass charClass;
-  /**
-   * Offset in the start of sentence
-   */
-  i16 offset;
 
   /**
-   * UTF-8 length of character
+   * Rererence to original bytes
    */
-  i8 length;
+  StringPiece bytes;
 
-  inline bool ofClass(CharacterClass queryClass) const noexcept {
+  inline bool hasClass(CharacterClass queryClass) const noexcept {
     return IsCompatibleCharClass(charClass, queryClass);
   }
 };
 
-Status analyzeChars(const std::string &utf8data,
-                    std::vector<CharacterClass> *result);
-}
+Status preprocessRawData(StringPiece utf8data,
+                         std::vector<InputCodepoint> *result);
+
+} // chars
+} // jumanpp
 
 #endif  // JUMANPP_CHARACTERS_HPP

@@ -6,6 +6,7 @@
 
 #include <util/characters.hpp>
 
+using namespace jumanpp::chars;
 using namespace jumanpp;
 
 TEST_CASE("character classes are compatible", "[characters]") {
@@ -22,4 +23,9 @@ TEST_CASE("character classes are compatible", "[characters]") {
       IsCompatibleCharClass(CharacterClass::KANJI, CharacterClass::ALPH));
 }
 
-TEST_CASE("string is processed to character information", "[characters]") {}
+TEST_CASE("string is processed to character information", "[characters]") {
+  StringPiece input {"TODO TEST"};
+  std::vector<InputCodepoint> points;
+  Status s = preprocessRawData(input, &points);
+  CHECK_FALSE(s.isOk()); //TODO real test (maybe several)
+}
