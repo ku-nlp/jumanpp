@@ -9,7 +9,7 @@
 using namespace jumanpp;
 using namespace jumanpp::core::dic::impl;
 
-bool feedData(util::CsvReader& csv, FieldImporter& importer) {
+bool feedData(util::CsvReader &csv, FieldImporter &importer) {
   while (csv.nextLine()) {
     bool status = importer.importFieldValue(csv);
     if (!status) return false;
@@ -73,9 +73,9 @@ TEST_CASE("string field importer processes storage") {
   CHECK_FALSE(rdr.nextLine());
 }
 
-void checkOne(IntStorageReader& intStorage, StringStorageReader& strings,
-              i32 idx, std::vector<i32>& ptrs,
-              std::initializer_list<StringPiece> values) {
+void checkSLFld(IntStorageReader &intStorage, StringStorageReader &strings,
+                i32 idx, std::vector<i32> &ptrs,
+                std::initializer_list<StringPiece> values) {
   CAPTURE(idx);
   auto ptr = ptrs[idx];
   CAPTURE(ptr);
@@ -117,9 +117,9 @@ TEST_CASE("string list field processes input") {
   auto stringDataRaw = stringData.str();
   StringStorageReader stringRdr{stringDataRaw};
 
-  checkOne(fieldCntReader, stringRdr, 0, pointers, {"this", "is"});
-  checkOne(fieldCntReader, stringRdr, 1, pointers, {"no", "more"});
-  checkOne(fieldCntReader, stringRdr, 2, pointers, {});
-  checkOne(fieldCntReader, stringRdr, 3, pointers, {"it", "is", "more"});
-  checkOne(fieldCntReader, stringRdr, 4, pointers, {"no"});
+  checkSLFld(fieldCntReader, stringRdr, 0, pointers, {"this", "is"});
+  checkSLFld(fieldCntReader, stringRdr, 1, pointers, {"no", "more"});
+  checkSLFld(fieldCntReader, stringRdr, 2, pointers, {});
+  checkSLFld(fieldCntReader, stringRdr, 3, pointers, {"it", "is", "more"});
+  checkSLFld(fieldCntReader, stringRdr, 4, pointers, {"no"});
 }
