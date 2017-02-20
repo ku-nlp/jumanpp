@@ -5,7 +5,6 @@
 #include "murmur_hash.h"
 #include <testing/standalone_test.h>
 
-
 using namespace jumanpp::util::hashing;
 
 TEST_CASE("murmurhash compiles with ints") {

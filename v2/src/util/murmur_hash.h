@@ -55,7 +55,7 @@ JPP_ALWAYS_INLINE inline void mur2_oword(OWORD &block, OWORD *val) {
 }
 
 JPP_ALWAYS_INLINE inline void murmur_oword(OWORD &block, const OWORD &constant,
-                                    OWORD *val) {
+                                           OWORD *val) {
   mur1_oword(block, constant);
   mur2_oword(block, val);
   return;
@@ -103,7 +103,8 @@ constexpr OWORD constant = OWORD(0x87c37b91114253d5LLU, 0x4cf5ad432745937fLLU);
 
 }  // impl
 
-JPP_ALWAYS_INLINE inline uint64_t murmur_combine(uint64_t hash1, uint64_t hash2) {  //{{{
+JPP_ALWAYS_INLINE inline uint64_t murmur_combine(uint64_t hash1,
+                                                 uint64_t hash2) {  //{{{
   using namespace impl;
   OWORD key = OWORD(hash1, hash2);
   OWORD value = OWORD(0, 0);
@@ -111,8 +112,9 @@ JPP_ALWAYS_INLINE inline uint64_t murmur_combine(uint64_t hash1, uint64_t hash2)
   return value.first;
 }
 
-JPP_ALWAYS_INLINE inline uint64_t murmurhash3_memory(const u8 *begin, const u8 *end,
-                                   const uint64_t seed) {
+JPP_ALWAYS_INLINE inline uint64_t murmurhash3_memory(const u8 *begin,
+                                                     const u8 *end,
+                                                     const uint64_t seed) {
   using namespace impl;
   JPP_DCHECK_LE(begin, end);
 

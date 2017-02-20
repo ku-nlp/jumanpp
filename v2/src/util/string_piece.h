@@ -8,8 +8,8 @@
 #include <iosfwd>
 #include <string>
 #include "common.hpp"
-#include "types.hpp"
 #include "murmur_hash.h"
+#include "types.hpp"
 
 namespace jumanpp {
 
@@ -105,11 +105,12 @@ struct StringPieceHash {
     using ptrtype = const u8*;
     auto start = reinterpret_cast<ptrtype>(p.begin());
     auto end = reinterpret_cast<ptrtype>(p.end());
-    auto hv = jumanpp::util::hashing::murmurhash3_memory(start, end, StringPieceSeed);
+    auto hv =
+        jumanpp::util::hashing::murmurhash3_memory(start, end, StringPieceSeed);
     return static_cast<size_t>(hv);
   }
 };
-} //impl
+}  // impl
 }
 }  // jumanpp
 

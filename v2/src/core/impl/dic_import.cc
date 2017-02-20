@@ -9,8 +9,7 @@ namespace core {
 namespace dic {
 namespace impl {
 
-
-Status StringFieldImporter::makeStorage(std::ostream &result) {
+Status StringFieldImporter::makeStorage(std::ostream& result) {
   std::vector<std::pair<StringPiece, i32>> forSort;
   for (auto& obj : mapping_) {
     forSort.emplace_back(obj.first, obj.second);
@@ -33,7 +32,7 @@ Status StringFieldImporter::makeStorage(std::ostream &result) {
   return Status::Ok();
 }
 
-} //impl
-} //dic
-} //core
-} //jumanpp
+}  // impl
+}  // dic
+}  // core
+}  // jumanpp
