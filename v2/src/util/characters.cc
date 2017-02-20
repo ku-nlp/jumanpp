@@ -7,10 +7,10 @@
 namespace jumanpp {
 namespace chars {
 
-Status preprocessRawData(StringPiece utf8data, std::vector<InputCodepoint> *result) {
+Status preprocessRawData(StringPiece utf8data,
+                         std::vector<InputCodepoint> *result) {
   return Status::InvalidParameter() << "TODO: implement";
 }
 
-
-} // chars
-} // jumanpp
+}  // chars
+}  // jumanpp

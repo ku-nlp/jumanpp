@@ -7,8 +7,8 @@
 
 namespace jumanpp {
 
-constexpr const char *const StatusNames[] = {"Ok", "InvalidParameter",
-                                             "InvalidState", "MaxStatus"};
+constexpr const char *const StatusNames[] = {
+    "Ok", "InvalidParameter", "InvalidState", "NotImplemented", "MaxStatus"};
 
 std::ostream &operator<<(std::ostream &str, const Status &st) {
   int idx = (int)st.code;

@@ -28,3 +28,16 @@ TEST_CASE("stringpiece has working mechanisms of substringing") {
   CHECK(a.slice(0, 1) == "a");
   CHECK(a.slice(2, 2 + 4) == "test");
 }
+
+TEST_CASE("stringpiece has working std::hash and std::equal_to impls") {
+  std::hash<StringPiece> hashFn;
+  std::equal_to<StringPiece> equalFn;
+
+  CHECK(hashFn("test") == hashFn("test"));
+  CHECK(hashFn("test5") == hashFn("test5"));
+  CHECK(hashFn("test5") != hashFn("test3"));
+
+  CHECK(equalFn("test", "test"));
+  CHECK(equalFn("test5", "test5"));
+  CHECK_FALSE(equalFn("test5", "test3"));
+}

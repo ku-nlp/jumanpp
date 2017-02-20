@@ -24,8 +24,8 @@ TEST_CASE("character classes are compatible", "[characters]") {
 }
 
 TEST_CASE("string is processed to character information", "[characters]") {
-  StringPiece input {"TODO TEST"};
+  StringPiece input{"TODO TEST"};
   std::vector<InputCodepoint> points;
   Status s = preprocessRawData(input, &points);
-  CHECK_FALSE(s.isOk()); //TODO real test (maybe several)
+  CHECK_FALSE(s.isOk());  // TODO real test (maybe several)
 }

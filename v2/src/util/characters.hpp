@@ -52,7 +52,7 @@ enum class CharacterClass : i32 {
   FAMILY_PUNC = PERIOD | COMMA | IDEOGRAPHIC_PUNC,
   FAMILY_ALPH_PUNC = ALPH | PERIOD | SLASH | COLON | MIDDLE_DOT,
   FAMILY_PUNC_SYMBOL =
-  PERIOD | COMMA | IDEOGRAPHIC_PUNC | MIDDLE_DOT | SYMBOL | SLASH | COLON,
+      PERIOD | COMMA | IDEOGRAPHIC_PUNC | MIDDLE_DOT | SYMBOL | SLASH | COLON,
   FAMILY_SPACE = SPACE,
   FAMILY_SYMBOL = SYMBOL,
   FAMILY_ALPH = ALPH,
@@ -87,7 +87,7 @@ struct InputCodepoint {
 Status preprocessRawData(StringPiece utf8data,
                          std::vector<InputCodepoint> *result);
 
-} // chars
-} // jumanpp
+}  // chars
+}  // jumanpp
 
 #endif  // JUMANPP_CHARACTERS_HPP

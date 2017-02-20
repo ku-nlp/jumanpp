@@ -9,6 +9,7 @@
 #include <string>
 #include "common.hpp"
 #include "types.hpp"
+#include "murmur_hash.h"
 
 namespace jumanpp {
 
@@ -31,6 +32,9 @@ class StringPiece {
       : begin_{begin}, end_{begin + length} {}
   StringPiece(const std::string& str) noexcept
       : begin_{str.data()}, end_{str.data() + str.size()} {}
+
+  constexpr StringPiece(const StringPiece& other) noexcept = default;
+  constexpr StringPiece& operator=(const StringPiece& other) noexcept = default;
 
   /**
    * This constructor accepts only string literals.
@@ -59,8 +63,6 @@ class StringPiece {
                 value_type, typename Cont::value_type>::value>>
   constexpr StringPiece(const Cont& cont) noexcept
       : begin_{cont.data()}, end_{cont.data() + cont.size()} {}
-
-  constexpr StringPiece(const StringPiece& o) = default;
 
   constexpr iterator begin() const noexcept { return begin_; }
   constexpr iterator end() const noexcept { return end_; }
@@ -93,6 +95,36 @@ bool operator==(const StringPiece& l, const StringPiece& r);
 inline bool operator!=(const StringPiece& l, const StringPiece& r) {
   return !(l == r);
 }
+
+namespace util {
+namespace impl {
+struct StringPieceHash {
+  static const constexpr u64 StringPieceSeed = 0x4adf325;
+
+  inline size_t operator()(const StringPiece& p) const noexcept {
+    using ptrtype = const u8*;
+    auto start = reinterpret_cast<ptrtype>(p.begin());
+    auto end = reinterpret_cast<ptrtype>(p.end());
+    auto hv = jumanpp::util::hashing::murmurhash3_memory(start, end, StringPieceSeed);
+    return static_cast<size_t>(hv);
+  }
+};
+} //impl
 }
+}  // jumanpp
+
+namespace std {
+template <>
+class hash<jumanpp::StringPiece> {
+  jumanpp::util::impl::StringPieceHash impl_;
+
+ public:
+  using argument_type = jumanpp::StringPiece;
+  using result_type = size_t;
+  inline result_type operator()(argument_type const& p) const noexcept {
+    return impl_(p);
+  }
+};
+}  // std
 
 #endif  // JUMANPP_STRING_PIECE_H

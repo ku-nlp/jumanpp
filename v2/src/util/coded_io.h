@@ -86,10 +86,16 @@ class CodedBuffer {
 class CodedBufferParser {
   const u8* position_ = nullptr;
   const u8* end_ = nullptr;
+  const u8* begin_ = nullptr;
 
  public:
+  CodedBufferParser() {}
+
+  CodedBufferParser(StringPiece data) { reset(data); }
+
   void reset(StringPiece data) {
     position_ = reinterpret_cast<const u8*>(data.begin());
+    begin_ = position_;
     end_ = reinterpret_cast<const u8*>(data.end());
   }
 
@@ -129,6 +135,10 @@ class CodedBufferParser {
   }
 
   size_t remaining() const { return static_cast<size_t>(end_ - position_); };
+
+  i32 position() const noexcept {
+    return static_cast<i32>(position_ - begin_);
+  };
 };
 
 }  // util

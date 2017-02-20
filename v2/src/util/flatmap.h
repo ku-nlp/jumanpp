@@ -6,6 +6,7 @@
 #define JUMANPP_FLATMAP_H
 
 #include "common.hpp"
+#include "flatrep.h"
 #include "types.hpp"
 
 namespace jumanpp {

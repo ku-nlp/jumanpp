@@ -1,9 +1,9 @@
 set(jpp_util_sources mmap.cc memory.cpp logging.cpp string_piece.cc status.cpp
         csv_reader.cc coded_io.cc characters.cc)
 set(jpp_util_headers mmap.h status.hpp fixed_queue.hpp memory.hpp characters.hpp types.hpp logging.hpp common.hpp
-        string_piece.h csv_reader.h coded_io.h flatrep.h flatset.h flatmap.h)
+        string_piece.h csv_reader.h coded_io.h flatrep.h flatset.h flatmap.h murmur_hash.h)
 set(jpp_util_test_srcs memory_test.cpp mmap_test.cc string_piece_test.cc
-        csv_reader_test.cc coded_io_test.cc charecters_test.cpp)
+        csv_reader_test.cc coded_io_test.cc charecters_test.cpp murmur_hash_test.cc)
 
 add_library(jpp_util ${jpp_util_sources} ${jpp_util_headers})
 jpp_test_executable(jpp_util_test ${jpp_util_test_srcs} ${jpp_util_headers})

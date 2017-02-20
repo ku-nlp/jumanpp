@@ -18,6 +18,7 @@ enum class StatusCode : int {
   Ok = 0,
   InvalidParameter = 1,
   InvalidState = 2,
+  NotImplemented = 3,
   MaxStatus
 };
 
