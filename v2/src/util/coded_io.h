@@ -83,6 +83,8 @@ class CodedBuffer {
   }
 };
 
+#define JPP_RET_CHECK(x) { if(!JPP_LIKELY(x)) return false; }
+
 class CodedBufferParser {
   const u8* position_ = nullptr;
   const u8* end_ = nullptr;
@@ -127,11 +129,9 @@ class CodedBufferParser {
   template <typename T>
   inline bool readInt(T* ptr) noexcept {
     u64 mem;
-    bool success = readVarint64(&mem);
-    if (JPP_LIKELY(success)) {
-      *ptr = static_cast<T>(mem);
-    }
-    return success;
+    JPP_RET_CHECK(readVarint64(&mem));
+    *ptr = static_cast<T>(mem);
+    return true;
   }
 
   size_t remaining() const noexcept {
