@@ -2,7 +2,7 @@
 // Created by Arseny Tolmachev on 2017/02/20.
 //
 
-#include "dic_import.h"
+#include "field_import.h"
 #include <algorithm>
 
 namespace jumanpp {

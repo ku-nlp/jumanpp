@@ -2,7 +2,7 @@
 // Created by Arseny Tolmachev on 2017/02/20.
 //
 
-#include "dic_reader.h"
+#include "field_reader.h"
 #include <testing/standalone_test.h>
 #include <util/array_slice.h>
 

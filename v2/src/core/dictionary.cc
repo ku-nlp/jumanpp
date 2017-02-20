@@ -3,7 +3,7 @@
 //
 
 #include "dictionary.h"
-#include "impl/dic_import.h"
+#include "core/impl/field_import.h"
 
 #include <util/coded_io.h>
 #include <util/csv_reader.h>

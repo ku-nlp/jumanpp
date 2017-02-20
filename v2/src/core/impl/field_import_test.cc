@@ -2,8 +2,8 @@
 // Created by Arseny Tolmachev on 2017/02/20.
 //
 
-#include "dic_import.h"
-#include "dic_reader.h"
+#include "field_import.h"
+#include "field_reader.h"
 
 #include <testing/standalone_test.h>
 #include <util/flatset.h>
