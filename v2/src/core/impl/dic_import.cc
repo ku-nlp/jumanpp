@@ -3,6 +3,7 @@
 //
 
 #include "dic_import.h"
+#include <algorithm>
 
 namespace jumanpp {
 namespace core {

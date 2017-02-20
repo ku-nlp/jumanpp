@@ -24,17 +24,17 @@ class StringPiece {
   pointer_t end_;
 
  public:
-  constexpr StringPiece() noexcept : begin_{nullptr}, end_{nullptr} {}
+  JPP_ALWAYS_INLINE constexpr StringPiece() noexcept : begin_{nullptr}, end_{nullptr} {}
 
-  constexpr StringPiece(iterator begin, iterator end) noexcept
+  JPP_ALWAYS_INLINE constexpr StringPiece(iterator begin, iterator end) noexcept
       : begin_{begin}, end_{end} {}
-  constexpr StringPiece(pointer_t begin, size_t length) noexcept
+  JPP_ALWAYS_INLINE constexpr StringPiece(pointer_t begin, size_t length) noexcept
       : begin_{begin}, end_{begin + length} {}
-  StringPiece(const std::string& str) noexcept
+  JPP_ALWAYS_INLINE StringPiece(const std::string& str) noexcept
       : begin_{str.data()}, end_{str.data() + str.size()} {}
 
-  constexpr StringPiece(const StringPiece& other) noexcept = default;
-  constexpr StringPiece& operator=(const StringPiece& other) noexcept = default;
+  JPP_ALWAYS_INLINE constexpr StringPiece(const StringPiece& other) noexcept = default;
+  JPP_ALWAYS_INLINE StringPiece& operator=(const StringPiece& other) noexcept = default;
 
   /**
    * This constructor accepts only string literals.
@@ -43,7 +43,7 @@ class StringPiece {
    * @param array
    */
   template <size_t array_size>
-  constexpr StringPiece(const char (&array)[array_size]) noexcept
+  JPP_ALWAYS_INLINE constexpr StringPiece(const char (&array)[array_size]) noexcept
       : begin_{array}, end_{array + array_size} {
     if (*(end_ - 1) == 0) {
       --end_;
@@ -61,12 +61,12 @@ class StringPiece {
   template <typename Cont,
             typename = std::enable_if<std::is_trivially_assignable<
                 value_type, typename Cont::value_type>::value>>
-  constexpr StringPiece(const Cont& cont) noexcept
+  JPP_ALWAYS_INLINE constexpr StringPiece(const Cont& cont) noexcept
       : begin_{cont.data()}, end_{cont.data() + cont.size()} {}
 
-  constexpr iterator begin() const noexcept { return begin_; }
-  constexpr iterator end() const noexcept { return end_; }
-  constexpr size_t size() const noexcept {
+  JPP_ALWAYS_INLINE constexpr iterator begin() const noexcept { return begin_; }
+  JPP_ALWAYS_INLINE constexpr iterator end() const noexcept { return end_; }
+  JPP_ALWAYS_INLINE constexpr size_t size() const noexcept {
     return static_cast<size_t>(end_ - begin_);
   }
 
@@ -81,7 +81,7 @@ class StringPiece {
    * @param to index after the last character in slice
    * @return new StringPiece with specified length
    */
-  constexpr StringPiece slice(ptrdiff_t from, ptrdiff_t to) const noexcept {
+  JPP_ALWAYS_INLINE constexpr StringPiece slice(ptrdiff_t from, ptrdiff_t to) const noexcept {
     JPP_DCHECK_GE(from, 0);
     JPP_DCHECK_LE(to, size());
     JPP_DCHECK_LE(from, to);
