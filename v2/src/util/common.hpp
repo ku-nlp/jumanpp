@@ -59,6 +59,10 @@ JPP_ALWAYS_INLINE inline void prefetch(const void* x) {
 #endif
 }
 
+namespace port {
+  constexpr bool kLittleEndian = false;
+}
+
 }  // util
 }  // jumanpp
 

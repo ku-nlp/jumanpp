@@ -64,6 +64,7 @@ class StringPiece {
   JPP_ALWAYS_INLINE constexpr StringPiece(const Cont& cont) noexcept
       : begin_{cont.data()}, end_{cont.data() + cont.size()} {}
 
+  JPP_ALWAYS_INLINE constexpr pointer_t data() const noexcept { return begin_; }
   JPP_ALWAYS_INLINE constexpr iterator begin() const noexcept { return begin_; }
   JPP_ALWAYS_INLINE constexpr iterator end() const noexcept { return end_; }
   JPP_ALWAYS_INLINE constexpr size_t size() const noexcept {
