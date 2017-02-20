@@ -47,9 +47,11 @@ public:
 
   bool readOneCumulative(i32* result) noexcept {
     i32 diff;
-    bool ret = readOne(&diff);
-    *result += diff;
-    return ret;
+    if (readOne(&diff)) {
+      *result += diff;
+      return true;
+    }
+    return false;
   }
 
   template <typename C>
