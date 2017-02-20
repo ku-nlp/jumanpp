@@ -3,6 +3,8 @@
 //
 
 #include "dic_import.h"
+#include "dic_reader.h"
+
 #include <testing/standalone_test.h>
 #include <util/flatset.h>
 
