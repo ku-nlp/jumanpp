@@ -119,7 +119,7 @@ JPP_ALWAYS_INLINE inline uint64_t murmurhash3_memory(const u8 *begin,
   JPP_DCHECK_LE(begin, end);
 
   OWORD value = OWORD(seed, seed);
-  constexpr OWORDSIZE = sizeof(OWORD);
+  constexpr size_t OWORDSIZE = sizeof(OWORD);
 
   const uint8_t *data = begin;
   size_t len = end - begin;
