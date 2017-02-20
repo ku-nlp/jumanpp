@@ -15,7 +15,7 @@ namespace impl {
 class StringStorageReader {
   StringPiece data_;
 
-public:
+ public:
   StringStorageReader(const StringPiece& obj) noexcept : data_{obj} {}
 
   StringPiece data() const noexcept { return data_; }
@@ -32,7 +32,7 @@ class IntListTraversal {
   i32 position_ = 0;
   util::CodedBufferParser parser_;
 
-public:
+ public:
   IntListTraversal(i32 length, const util::CodedBufferParser& parser)
       : length_{length}, parser_{parser} {}
 
@@ -76,7 +76,7 @@ public:
 class IntStorageReader {
   StringPiece data_;
 
-public:
+ public:
   IntStorageReader(const StringPiece& obj) : data_{obj} {}
 
   IntListTraversal listAt(i32 ptr) const noexcept {
@@ -96,7 +96,7 @@ class StringStorageTraversal {
   util::CodedBufferParser parser_;
   i32 position_ = 0;
 
-public:
+ public:
   StringStorageTraversal(const StringPiece& data) : parser_{data} {}
 
   bool hasNext() const noexcept { return parser_.remaining() != 0; }
@@ -110,10 +110,9 @@ public:
   }
 };
 
+}  // impl
+}  // dic
+}  // core
+}  // jumanpp
 
-} // impl
-} // dic
-} // core
-} // jumanpp
-
-#endif //JUMANPP_DIC_READER_H
+#endif  // JUMANPP_DIC_READER_H

@@ -83,7 +83,10 @@ class CodedBuffer {
   }
 };
 
-#define JPP_RET_CHECK(x) { if(!JPP_LIKELY(x)) return false; }
+#define JPP_RET_CHECK(x)              \
+  {                                   \
+    if (!JPP_LIKELY(x)) return false; \
+  }
 
 class CodedBufferParser {
   const u8* position_ = nullptr;

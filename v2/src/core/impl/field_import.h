@@ -8,8 +8,8 @@
 #include <util/coded_io.h>
 #include <util/csv_reader.h>
 #include <util/flatmap.h>
-#include <util/status.hpp>
 #include <algorithm>
+#include <util/status.hpp>
 
 namespace jumanpp {
 namespace core {
