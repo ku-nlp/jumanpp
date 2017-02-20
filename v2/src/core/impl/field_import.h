@@ -9,6 +9,7 @@
 #include <util/csv_reader.h>
 #include <util/flatmap.h>
 #include <util/status.hpp>
+#include <algorithm>
 
 namespace jumanpp {
 namespace core {

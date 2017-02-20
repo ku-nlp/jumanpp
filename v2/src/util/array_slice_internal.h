@@ -9,6 +9,7 @@
 #include <iterator>
 #include <string>
 #include "common.hpp"
+#include "types.hpp"
 
 namespace jumanpp {
 

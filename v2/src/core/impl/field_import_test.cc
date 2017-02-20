@@ -83,7 +83,7 @@ void checkSLFld(IntStorageReader &intStorage, StringStorageReader &strings,
 
   auto stringPtrs = intStorage.listAt(ptr);
   i32 stringPtr = 0;
-  util::FlatSet<StringPiece> set{values};
+  util::FlatSet<StringPiece> set{std::begin(values), std::end(values)};
   CHECK(set.size() == stringPtrs.size());
   CHECK(set.size() == stringPtrs.remaining());
 
