@@ -55,7 +55,6 @@ class StringFieldImporter : public FieldImporter {
 class StringDomainTraversal {
   util::CodedBufferParser parser_;
   i32 position_ = 0;
-  i32 lastSize_ = 0;
 
  public:
   StringDomainTraversal(const StringPiece& data) : parser_{data} {}
@@ -65,9 +64,8 @@ class StringDomainTraversal {
   i32 position() const noexcept { return position_; }
 
   bool next(StringPiece* result) noexcept {
-    position_ += lastSize_;
+    position_ = parser_.position();
     bool ret = parser_.readStringPiece(result);
-    lastSize_ = static_cast<i32>(parser_.position()) - position_;
     return ret;
   }
 };
