@@ -34,7 +34,6 @@ TEST_CASE("string field importer processes storage") {
     actualPositions[sp] = trav.position();
   }
   StringStorageReader storageReader{data};
-  ;
   StringPiece piece;
   CHECK(actualPositions.size() == 5);
   CHECK_OK(rdr.initFromMemory(testData));
