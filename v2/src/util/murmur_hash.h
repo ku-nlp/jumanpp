@@ -114,6 +114,8 @@ JPP_ALWAYS_INLINE inline uint64_t murmur_combine(uint64_t hash1, uint64_t hash2)
 JPP_ALWAYS_INLINE inline uint64_t murmurhash3_memory(const u8 *begin, const u8 *end,
                                    const uint64_t seed) {
   using namespace impl;
+  JPP_DCHECK_LE(begin, end);
+
   OWORD value = OWORD(seed, seed);
   constexpr OWORDSIZE = sizeof(OWORD);
 
