@@ -22,3 +22,9 @@ TEST_CASE("stringpiece can be constructed", "[string_piece]") {
   // implicit construction of StringPiece here
   CHECK(StringPiece("test") == std::string("test"));
 }
+
+TEST_CASE("stringpiece has working mechanisms of substringing") {
+  StringPiece a{"a test string"};
+  CHECK(a.slice(0, 1) == "a");
+  CHECK(a.slice(2, 2 + 4) == "test");
+}

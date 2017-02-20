@@ -69,6 +69,22 @@ class StringPiece {
   }
 
   std::string str() const { return std::string{begin_, end_}; }
+
+  /**
+   * Makes a slice (substring) of original string.
+   * Slice is [from, to) in range notation.
+   * If NDEBUG is not defined this function performs range checks.
+   *
+   * @param from index of first character in slice
+   * @param to index after the last character in slice
+   * @return new StringPiece with specified length
+   */
+  constexpr StringPiece slice(ptrdiff_t from, ptrdiff_t to) const noexcept {
+    JPP_DCHECK_GE(from, 0);
+    JPP_DCHECK_LE(to, size());
+    JPP_DCHECK_LE(from, to);
+    return StringPiece{begin() + from, begin() + to};
+  }
 };
 
 std::ostream& operator<<(std::ostream& str, const StringPiece& sp);
