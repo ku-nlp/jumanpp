@@ -12,7 +12,7 @@ using namespace jumanpp::util;
 TEST_CASE("arrayslice works with string") {
   std::string str = "hello";
   ArraySlice<char> data{str};
-  CHECK(data.length() == 6); // 5 + zero
+  CHECK(data.length() == 5); // 5 + zero
 }
 
 TEST_CASE("arrayslice works with stringpiece") {
