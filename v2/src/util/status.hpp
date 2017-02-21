@@ -68,6 +68,10 @@ class Status {
   static StatusConstructor InvalidState() {
     return StatusConstructor{StatusCode::InvalidState};
   }
+
+  static StatusConstructor NotImplemented() {
+    return StatusConstructor{StatusCode::NotImplemented};
+  }
 };
 
 std::ostream &operator<<(std::ostream &str, const Status &st);

@@ -60,6 +60,11 @@ JPP_ALWAYS_INLINE inline void prefetch(const void* x) {
 #endif
 }
 
+#define JPP_RET_CHECK(x)                  \
+  {                                       \
+    if (JPP_UNLIKELY(!(x))) return false; \
+  }
+
 namespace port {
 constexpr bool kLittleEndian = false;
 }

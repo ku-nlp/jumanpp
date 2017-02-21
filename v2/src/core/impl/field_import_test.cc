@@ -25,17 +25,16 @@ TEST_CASE("string field importer processes storage") {
   util::CsvReader rdr;
   CHECK_OK(rdr.initFromMemory(testData));
   CHECK(feedData(rdr, importer));
-  std::stringstream buffer;
-  CHECK_OK(importer.makeStorage(buffer));
-  auto data = buffer.str();
-  StringStorageTraversal trav{data};
+  util::CodedBuffer buffer;
+  CHECK_OK(importer.makeStorage(&buffer));
+  StringStorageTraversal trav{buffer.contents()};
   util::FlatMap<StringPiece, i32> actualPositions;
   while (trav.hasNext()) {
     StringPiece sp;
     REQUIRE(trav.next(&sp));
     actualPositions[sp] = trav.position();
   }
-  StringStorageReader storageReader{data};
+  StringStorageReader storageReader{buffer.contents()};
   StringPiece piece;
   CHECK(actualPositions.size() == 5);
   CHECK_OK(rdr.initFromMemory(testData));
@@ -100,23 +99,22 @@ void checkSLFld(IntStorageReader &intStorage, StringStorageReader &strings,
 
 TEST_CASE("string list field processes input") {
   StringPiece testdata{"this is\nno more\n\nis it more\nno\n\n"};
-  std::stringstream fieldStream;
-  StringListFieldImporter imp{0, fieldStream};
+  util::CodedBuffer fieldData;
+  StringListFieldImporter imp{0};
+  imp.injectFieldBuffer(&fieldData);
   util::CsvReader csv;
   CHECK_OK(csv.initFromMemory(testdata));
   CHECK(feedData(csv, imp));
-  std::stringstream stringData;
-  CHECK_OK(imp.makeStorage(stringData));
+  util::CodedBuffer stringData;
+  CHECK_OK(imp.makeStorage(&stringData));
   std::vector<i32> pointers;
   csv.initFromMemory(testdata);
   while (csv.nextLine()) {
     pointers.push_back(imp.fieldPointer(csv));
   }
   CHECK(pointers.size() == 6);
-  auto fieldContentData = fieldStream.str();
-  IntStorageReader fieldCntReader{fieldContentData};
-  auto stringDataRaw = stringData.str();
-  StringStorageReader stringRdr{stringDataRaw};
+  IntStorageReader fieldCntReader{fieldData.contents()};
+  StringStorageReader stringRdr{stringData.contents()};
 
   checkSLFld(fieldCntReader, stringRdr, 0, pointers, {"this", "is"});
   checkSLFld(fieldCntReader, stringRdr, 1, pointers, {"no", "more"});

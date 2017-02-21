@@ -552,8 +552,8 @@ inline InlinedVector<T, N>::InlinedVector(const InlinedVector& v) {
 template <typename T, int N>
 typename InlinedVector<T, N>::iterator InlinedVector<T, N>::insert(
     iterator pos, const value_type& v) {
-  DCHECK_GE(pos, begin());
-  DCHECK_LE(pos, end());
+  JPP_DCHECK_GE(pos, begin());
+  JPP_DCHECK_LE(pos, end());
   if (pos == end()) {
     push_back(v);
     return end() - 1;
@@ -563,7 +563,7 @@ typename InlinedVector<T, N>::iterator InlinedVector<T, N>::insert(
   if (s == capacity()) {
     Grow<Move>(s + 1);
   }
-  CHECK_LT(s, capacity());
+  JPP_DCHECK_LT(s, capacity());
   pos = begin() + idx;  // Reset 'pos' into a post-enlarge iterator.
   Fill(data() + s - 1, 1, data() + s);  // data[s] = data[s-1]
   std::copy_backward(pos, data() + s - 1, data() + s);
@@ -576,9 +576,9 @@ typename InlinedVector<T, N>::iterator InlinedVector<T, N>::insert(
 template <typename T, int N>
 typename InlinedVector<T, N>::iterator InlinedVector<T, N>::erase(
     iterator first, iterator last) {
-  DCHECK_LE(begin(), first);
-  DCHECK_LE(first, last);
-  DCHECK_LE(last, end());
+  JPP_DCHECK_LE(begin(), first);
+  JPP_DCHECK_LE(first, last);
+  JPP_DCHECK_LE(last, end());
 
   size_t s = size();
   ptrdiff_t erase_gap = std::distance(first, last);

@@ -92,19 +92,21 @@ class StringPiece {
     JPP_DCHECK_GE(from, 0);
     JPP_DCHECK_LE(to, size());
     JPP_DCHECK_LE(from, to);
-    return StringPiece{begin() + from, begin() + to};
+    auto begin_new = std::min(begin() + from, end());
+    auto end_new = std::min(begin() + to, end());
+    return StringPiece{begin_new, end_new};
   }
 
   JPP_ALWAYS_INLINE constexpr StringPiece from(ptrdiff_t from) const noexcept {
     JPP_DCHECK_GE(from, 0);
     JPP_DCHECK_LT(from, size());
-    return StringPiece{begin() + from, end()};
+    return StringPiece{std::min(begin() + from, end()), end()};
   }
 
   JPP_ALWAYS_INLINE constexpr StringPiece take(ptrdiff_t num) const noexcept {
     JPP_DCHECK_GE(num, 0);
     JPP_DCHECK_LT(num, size());
-    return StringPiece{begin(), begin() + num};
+    return StringPiece{begin(), std::min(begin() + num, end())};
   }
 };
 
