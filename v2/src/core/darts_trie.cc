@@ -102,8 +102,7 @@ DoubleArray::DoubleArray() {}
 
 TraverseStatus DoubleArrayTraversal::step(StringPiece data) {
   key_pos_ = 0;
-  auto status = base_.underlying_->traverse(data.begin(), node_pos_, key_pos_,
-                                            data.size());
+  auto status = base_->traverse(data.begin(), node_pos_, key_pos_, data.size());
 
   switch (status) {
     case -1:

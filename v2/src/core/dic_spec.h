@@ -22,7 +22,6 @@ struct ColumnDescriptor {
   std::string name;
   bool isTrieKey;
   ColumnType columnType;
-  std::string separatorRegex;
 };
 
 struct DictionarySpec {

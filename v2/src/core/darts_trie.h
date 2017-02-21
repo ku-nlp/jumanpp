@@ -48,6 +48,11 @@ class DoubleArrayBuilder {
   size_t underlyingByteSize() const;
   const void* underlyingStorage() const;
 
+  StringPiece result() const {
+    return StringPiece{reinterpret_cast<const char*>(underlyingStorage()),
+                       underlyingByteSize()};
+  }
+
   ~DoubleArrayBuilder();
 };
 
@@ -56,14 +61,16 @@ class DoubleArray;
 enum class TraverseStatus { Ok, NoLeaf, NoNode };
 
 class DoubleArrayTraversal {
-  const DoubleArray& base_;
+  const impl::DoubleArrayCore* base_;
   size_t node_pos_ = 0;
   size_t key_pos_ = 0;
-  int value_;
+  i32 value_;
 
  public:
-  DoubleArrayTraversal(const DoubleArray& base_) : base_(base_) {}
-  int value() { return value_; }
+  DoubleArrayTraversal(const impl::DoubleArrayCore* base_) noexcept
+      : base_(base_) {}
+  DoubleArrayTraversal(const DoubleArrayTraversal&) noexcept = default;
+  i32 value() const { return value_; }
   TraverseStatus step(StringPiece data);
 };
 
@@ -83,7 +90,9 @@ class DoubleArray {
   DoubleArray();
   ~DoubleArray();
 
-  DoubleArrayTraversal traversal() const { return DoubleArrayTraversal(*this); }
+  DoubleArrayTraversal traversal() const {
+    return DoubleArrayTraversal(underlying_.get());
+  }
 
   friend class DoubleArrayTraversal;
 };

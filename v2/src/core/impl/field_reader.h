@@ -77,15 +77,27 @@ class IntStorageReader {
   StringPiece data_;
 
  public:
+  IntStorageReader() {}
   IntStorageReader(const StringPiece& obj) : data_{obj} {}
 
+  IntListTraversal rawWithLimit(i32 ptr, i32 length) {
+    JPP_DCHECK_GE(ptr, 0);
+    JPP_DCHECK_LT(ptr, data_.size());
+    JPP_DCHECK_GE(length, 0);
+    JPP_DCHECK_LE(length, data_.size() - ptr);  // this is a lower bound
+    util::CodedBufferParser parser{data_.from(ptr)};
+    return IntListTraversal{length, parser};
+  }
+
   IntListTraversal listAt(i32 ptr) const noexcept {
+    JPP_DCHECK_GE(ptr, 0);
+    JPP_DCHECK_LT(ptr, data_.size());
     util::CodedBufferParser parser{data_.from(ptr)};
     i32 size;
     if (!parser.readInt(&size)) {
       // empty traversal
       parser.limit(0);
-      return IntListTraversal{0, parser};
+      return IntListTraversal{-1, parser};
     }
 
     return IntListTraversal{size, parser};

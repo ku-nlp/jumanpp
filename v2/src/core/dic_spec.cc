@@ -63,7 +63,6 @@ struct ParserState {
     single.name = "";
     single.isTrieKey = false;
     single.columnType = ColumnType::Error;
-    single.separatorRegex = " ";
   }
 };
 

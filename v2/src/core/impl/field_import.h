@@ -24,10 +24,11 @@ class FieldImporter {
   virtual bool requiresFieldBuffer() const { return false; };
   virtual void injectFieldBuffer(util::CodedBuffer* buffer){};
   virtual i32 fieldPointer(const util::CsvReader& csv) = 0;
+  virtual i32 uniqueValues() const = 0;
   virtual ~FieldImporter() {}
 };
 
-template <size_t PageSize = (1 << 20)> // 1M by default
+template <size_t PageSize = (1 << 20)>  // 1M by default
 class CharBuffer {
   static constexpr ptrdiff_t page_size = PageSize;
   using page = std::array<char, page_size>;
@@ -109,12 +110,13 @@ class StringFieldImporter : public FieldImporter {
     auto sp = csv.field(field_);
     return mapping_[sp];
   }
+
+  virtual i32 uniqueValues() const override { return (i32)mapping_.size(); }
 };
 
 class StringListFieldImporter : public StringFieldImporter {
   util::CodedBuffer* buffer_;
   std::vector<i32> values_;
-  i32 position_ = 0;
 
  public:
   StringListFieldImporter(i32 field)

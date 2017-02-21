@@ -1,5 +1,6 @@
-set(core_srcs darts_trie.cc dictionary.cc dic_spec.cc impl/field_import.cc)
-set(core_hdrs darts.h darts_trie.h dictionary.h dic_spec.h impl/field_import.h impl/field_reader.h)
+set(core_srcs darts_trie.cc dictionary.cc dic_spec.cc impl/field_import.cc dic_builder.cc)
+set(core_hdrs darts.h darts_trie.h dictionary.h dic_spec.h impl/field_import.h impl/field_reader.h dic_entries.h
+        dic_builder.h)
 set(core_test_srcs darts_trie_test.cc dictionary_test.cc dic_spec_test.cc impl/field_import_test.cc
         impl/field_reader_test.cc)
 
