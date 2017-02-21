@@ -25,7 +25,7 @@ WriteInDestructorLoggerImpl::WriteInDestructorLoggerImpl(const char *file,
 }
 
 // Enable all logging by default
-thread_local Level CurrentLogLevel = Level::Debug;
+/*thread_local*/ Level CurrentLogLevel = Level::Debug;
 }
 }
 }

@@ -87,9 +87,8 @@ struct InputCodepoint {
 
 };
 
-inline uint32_t u8ByteLength(StringPiece::value_type u) noexcept;
-inline bool toCodepoint(StringPiece::iterator &itr, StringPiece::iterator itr_end, char32_t *result ) noexcept;
-inline CharacterClass getCodeType(char32_t code) noexcept; 
+bool toCodepoint(StringPiece::iterator &itr, StringPiece::iterator itr_end, char32_t *result ) noexcept;
+CharacterClass getCodeType(char32_t code) noexcept; 
 
 Status preprocessRawData(StringPiece utf8data,
                          std::vector<InputCodepoint> *result);

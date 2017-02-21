@@ -60,7 +60,7 @@ void *ManagedAllocatorCore::allocate_memory(size_t size, size_t alignment) {
 
 MemoryPage Manager::newPage() {
   void *addr = ::mmap(NULL, page_size_, PROT_READ | PROT_WRITE,
-                      MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+                      MAP_ANON | MAP_PRIVATE, -1, 0);
   if (JPP_UNLIKELY(addr == MAP_FAILED)) {
     LOG_ERROR() << "mmap call failed, could not allocate memory, probably out "
                    "of memory,"

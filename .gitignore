@@ -1,5 +1,5 @@
-
-# Objects
+ 
+4 Objects
 *.o
 *.og
 *.ko
@@ -106,6 +106,9 @@ stamp-h?
 #CLion
 .idea/
 build-dir/
+
+#VScode
+.vscode/
 
 # GTAGS
 GPATH

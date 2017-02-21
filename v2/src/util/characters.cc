@@ -4,7 +4,6 @@
 
 #include "characters.hpp"
 #include <util/flatset.h>
-#include <testing/standalone_test.h>
 
 namespace jumanpp {
 namespace chars {
@@ -99,20 +98,11 @@ const util::FlatSet<char32_t> brackets{
     0xFF62, 0xFF63, // HALFWIDTH CORNER BRACKET
 };
 
-inline uint32_t u8ByteLength(StringPiece::value_type u) noexcept { 
-  if ((0xe0 <= u) & (u < 0xf0)) { // In most cases.
-    return 3;
-  } else if (u < 0x80) {
-    return 1;
-  } else if (u < 0xe0) {
-    return 2;
-  } else {
-    return 4;
-  }
-}
-
-inline bool toCodepoint(StringPiece::iterator &itr, StringPiece::iterator itr_end, char32_t *result ) noexcept { 
+inline bool toCodepoint(StringPiece::iterator &input_itr, StringPiece::iterator itr_end2, char32_t *result ) noexcept { 
   char32_t u;
+  const u8* itr = reinterpret_cast<const u8*>(input_itr);
+  const u8* itr_end = reinterpret_cast<const u8*>(itr_end2);
+
   if (*itr > 0x00ef) { /* 4 bytes */
       JPP_RET_CHECK(itr_end - itr >= 4);
       JPP_RET_CHECK(((*itr & ~0x7)^0xf0) == 0);
@@ -124,10 +114,7 @@ inline bool toCodepoint(StringPiece::iterator &itr, StringPiece::iterator itr_en
       JPP_RET_CHECK(((*itr & ~0x3f)^0x80) == 0);
       u |= (*(itr++) & 0x3f);
   } else if (*itr > 0xdf) { /* 3 bytes */
-      WARN(itr); 
-      WARN(itr_end); 
       JPP_RET_CHECK(itr_end - itr >= 3);
-      WARN(*itr); 
       JPP_RET_CHECK(((*itr & ~0xf)^0xe0) == 0);
       u = (*(itr++) & 0x0f) << 12;
       JPP_RET_CHECK(((*itr & ~0x3f)^0x80) == 0);
@@ -146,6 +133,7 @@ inline bool toCodepoint(StringPiece::iterator &itr, StringPiece::iterator itr_en
       u = *(itr++) & 0x7f;
   }
   *result = u;
+  input_itr = reinterpret_cast<StringPiece::pointer_t>(itr);
   return true; 
 }
 
@@ -186,10 +174,10 @@ inline CharacterClass getCodeType(char32_t code) noexcept {
           return CharacterClass::KATAKANA;
   } else if (code == 0x30fc) { // KATAKANA-HIRAGANA PROLONGED SOUND MARK (0x30fc)
       return CharacterClass::KATAKANA | CharacterClass::CHOON;
-  } else if (0x00A1 <= code && code <= 0x00DF) { //Half-widths KATAKANA (0xA1-0xDF)
-      return CharacterClass::HANKAKU_KANA;
   } else if (code == 0xFF70) { // Half-widths HIRAGANA-KATAKANA PROLONGED SOUND MARK (U+FF70
       return CharacterClass::HANKAKU_KANA | CharacterClass::CHOON;
+  } else if (0xFF66 <= code && code <= 0xFF9F) { //Half-widths KATAKANA (0xFF66-0xFF9F)
+      return CharacterClass::HANKAKU_KANA;
   } else if (code == 0x30fc) { // "〜"(0x301C)  ⁓ (U+2053)、Full-width tilde:
                                // ～ (U+FF5E)、tilde operator: ∼ (U+223C)
       return CharacterClass::CHOON;

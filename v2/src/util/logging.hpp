@@ -15,7 +15,7 @@ namespace logging {
 
 enum class Level { None, Error, Warning, Info, Debug };
 
-extern thread_local Level CurrentLogLevel;
+extern /*thread_local*/ Level CurrentLogLevel;
 
 class WriteInDestructorLoggerImpl {
   std::stringstream data_;

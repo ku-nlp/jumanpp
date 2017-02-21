@@ -8,14 +8,12 @@ using namespace jumanpp::chars;
 
 TEST_CASE("toCodepoint works with あ", "[string_piece]") {
     char32_t result;    
-    auto literal = "あいうえお";
+    auto literal = "あ";
     CHECK(toCodepoint(literal, literal+sizeof(literal)-1, &result));
+    CHECK(result == U'あ');
 }
 
-TEST_CASE("テストケース名", "[string_piece]") {
-
-  //Status preprocessRawData(StringPiece utf8data,
-  //                       std::vector<InputCodepoint> *result) {
+TEST_CASE("preprocessRawData works", "[string_piece]") {
   std::vector<InputCodepoint> result;
   CHECK_OK(preprocessRawData("", &result));
   CHECK(result.size() == 0);
@@ -45,7 +43,7 @@ TEST_CASE("テストケース名", "[string_piece]") {
   
   result.clear();
   CHECK_OK(preprocessRawData("🍣🍺", &result));
-  CHECK(result.size() == 1);
+  CHECK(result.size() == 2);
   CHECK(result[0].codepoint == U'🍣');
   CHECK(result[1].codepoint == U'🍺');
 }
