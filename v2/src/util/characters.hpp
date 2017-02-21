@@ -10,6 +10,7 @@
 #include "types.hpp"
 
 #include <vector>
+#include <unordered_set>
 
 namespace jumanpp {
 namespace chars {
@@ -47,6 +48,7 @@ enum class CharacterClass : i32 {
   BRACKET = 0x00020000,           // 括弧, 引用符
   FIGURE_EXCEPTION = 0x00040000,  // 数，何
   FIGURE_DIGIT = 0x00080000,      // 十，百，千，万，億
+  LOWER_CASE = 0x00100000,        // ぁ，ぃ，ぅ，ァ，ィ，ゥ，っ，ッ
 
   FAMILY_FIGURE = FIGURE | PERIOD | MIDDLE_DOT | KANJI_FIGURE | SLASH | COLON,
   FAMILY_PUNC = PERIOD | COMMA | IDEOGRAPHIC_PUNC,
@@ -82,7 +84,12 @@ struct InputCodepoint {
   inline bool hasClass(CharacterClass queryClass) const noexcept {
     return IsCompatibleCharClass(charClass, queryClass);
   }
+
 };
+
+inline uint32_t u8ByteLength(StringPiece::value_type u) noexcept;
+inline bool toCodepoint(StringPiece::iterator &itr, StringPiece::iterator itr_end, char32_t *result ) noexcept;
+inline CharacterClass getCodeType(char32_t code) noexcept; 
 
 Status preprocessRawData(StringPiece utf8data,
                          std::vector<InputCodepoint> *result);
