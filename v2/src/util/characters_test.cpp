@@ -2,11 +2,8 @@
 // Created by Arseny Tolmachev on 2017/02/18.
 //
 
-#include <catch.hpp>
-
-#include <util/characters.hpp>
-
-#include <testing/standalone_test.h>
+#include "util/characters.hpp"
+#include "testing/standalone_test.h"
 
 using jumanpp::StringPiece;
 using namespace jumanpp::chars;
@@ -45,7 +42,7 @@ TEST_CASE("toCodepoint works with あ", "[characters]") {
 TEST_CASE("space type of codepints is detected correctly", "[characters]") {
   CHECK(getCodeType(U' ') == CharacterClass::SPACE);  // U+0020 simple space
   CHECK(getCodeType(U' ') == CharacterClass::SPACE);  //	U+00A0 NO-BREAK
-                                                      //SPACE
+                                                      // SPACE
   CHECK(getCodeType(U'　') ==
         CharacterClass::SPACE);  // U+3000 IDEOGRAPHIC SPACE (full width space)
   CHECK(getCodeType(0xFEFF) ==
@@ -68,7 +65,7 @@ TEST_CASE("preprocessRawData works with alphabets", "[characters]") {
   CHECK(result[3].hasClass(CharacterClass::ALPH));
 }
 
-TEST_CASE("preprocessRawData works with Hiraganas", "[characters]") {
+TEST_CASE("preprocessRawData works with Hiragana", "[characters]") {
   std::vector<InputCodepoint> result;
   CHECK_OK(preprocessRawData("あいうえお", &result));
   CHECK(result.size() == 5);

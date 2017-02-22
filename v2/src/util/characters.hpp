@@ -5,9 +5,9 @@
 #ifndef JUMANPP_CHARACTERS_HPP
 #define JUMANPP_CHARACTERS_HPP
 
-#include "status.hpp"
-#include "string_piece.h"
-#include "types.hpp"
+#include "util/status.hpp"
+#include "util/string_piece.h"
+#include "util/types.hpp"
 
 #include <unordered_set>
 #include <vector>
