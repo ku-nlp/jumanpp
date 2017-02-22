@@ -123,15 +123,14 @@ struct if_cond_body : mtch {};
 struct if_cond : p::if_must<lparen, sep, if_cond_body, sep, rparen> {};
 struct if_true : arglist {};
 struct if_false : arglist {};
-struct if_expr : p::if_must<kw_if, sep, if_cond, sep, if_true, sep,
-                            kw_else, sep, if_false> {};
-
+struct if_expr : p::if_must<kw_if, sep, if_cond, sep, if_true, sep, kw_else,
+                            sep, if_false> {};
 
 struct feat_bdy_if : if_expr {};
 struct feat_bdy_eq : arg {};
-struct feat_bdy: p::sor<feat_bdy_if, feat_bdy_eq> {};
+struct feat_bdy : p::sor<feat_bdy_if, feat_bdy_eq> {};
 struct feat_name : ident {};
-struct feat_data: p::if_must<kw_feature, sep, feat_name, sep, feat_bdy> {};
+struct feat_data : p::if_must<kw_feature, sep, feat_name, sep, feat_bdy> {};
 
 struct uni_lst : arglist {};
 struct uni_data : p::if_must<kw_unigram, sep, uni_lst> {};
@@ -143,7 +142,8 @@ struct bi_data : p::if_must<kw_bigram, sep, bi_lst_1, sep, bi_lst_2> {};
 struct tri_list_1 : arglist {};
 struct tri_list_2 : arglist {};
 struct tri_list_3 : arglist {};
-struct tri_data : p::if_must<kw_trigram, sep, tri_list_1, sep, tri_list_2, sep, tri_list_3> {};
+struct tri_data : p::if_must<kw_trigram, sep, tri_list_1, sep, tri_list_2, sep,
+                             tri_list_3> {};
 
 }  // parser
 }  // spec
