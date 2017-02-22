@@ -99,8 +99,7 @@ const util::FlatSet<char32_t> brackets{
 };
 
 bool toCodepoint(StringPiece::iterator &input_itr,
-                        StringPiece::iterator itr_end2,
-                        char32_t *result) noexcept {
+                 StringPiece::iterator itr_end2, char32_t *result) noexcept {
   char32_t u;
   const u8 *itr = reinterpret_cast<const u8 *>(input_itr);
   const u8 *itr_end = reinterpret_cast<const u8 *>(itr_end2);
