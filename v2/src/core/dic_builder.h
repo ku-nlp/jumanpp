@@ -6,6 +6,8 @@
 #define JUMANPP_DIC_BUILDER_H
 
 #include "dic_spec.h"
+#include <vector>
+#include <memory>
 
 namespace jumanpp {
 namespace core {

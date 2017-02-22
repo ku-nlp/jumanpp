@@ -60,7 +60,7 @@ struct TesterStep {
   }
 
   TesterStep strings(std::initializer_list<StringPiece> sp) {
-    std::vector<StringPiece> local{sp};
+    std::vector<StringPiece> local{std::begin(sp), std::end(sp)};
     CHECK(local.size() == cols_.size());
     std::vector<i32> entryData;
     entryData.resize(cols_.size());
