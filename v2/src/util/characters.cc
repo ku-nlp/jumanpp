@@ -98,7 +98,7 @@ const util::FlatSet<char32_t> brackets{
     0xFF62, 0xFF63,  // HALFWIDTH CORNER BRACKET
 };
 
-inline bool toCodepoint(StringPiece::iterator &input_itr,
+bool toCodepoint(StringPiece::iterator &input_itr,
                         StringPiece::iterator itr_end2,
                         char32_t *result) noexcept {
   char32_t u;
@@ -147,7 +147,7 @@ bool inSet(Codepoint needle) {
   return staticHaystack.count(needle) != 0;
 }
 
-inline CharacterClass getCodeType(char32_t input) noexcept {
+CharacterClass getCodeType(char32_t input) noexcept {
   Codepoint code = static_cast<Codepoint>(input);
   /* SPACE */
   if (inSet<0x20,                                         // space
