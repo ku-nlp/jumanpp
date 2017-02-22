@@ -3,10 +3,10 @@
 //
 
 #include "dictionary.h"
-#include <testing/standalone_test.h>
 #include "dic_builder.h"
 #include "dic_entries.h"
 #include "impl/field_reader.h"
+#include "testing/standalone_test.h"
 
 using namespace jumanpp;
 using namespace jumanpp::core::dic;

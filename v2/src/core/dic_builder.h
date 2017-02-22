@@ -5,9 +5,9 @@
 #ifndef JUMANPP_DIC_BUILDER_H
 #define JUMANPP_DIC_BUILDER_H
 
-#include "dic_spec.h"
-#include <vector>
 #include <memory>
+#include <vector>
+#include "dic_spec.h"
 
 namespace jumanpp {
 namespace core {
