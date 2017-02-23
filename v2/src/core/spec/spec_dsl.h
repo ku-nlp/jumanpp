@@ -45,10 +45,11 @@ struct FieldExpression {
 
 class FieldReference {
   StringPiece name_;
-  FieldReference(StringPiece name): name_{name} {}
+  FieldReference(StringPiece name) : name_{name} {}
 
   friend class FieldBuilder;
-public:
+
+ public:
   StringPiece name() const { return name_; }
 };
 
