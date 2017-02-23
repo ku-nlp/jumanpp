@@ -52,7 +52,7 @@ TEST_CASE("check failed with non-unique field names") {
 
 TEST_CASE("feature length transform") {
   ModelSpecBuilder spec;
-  auto& f1 = spec.field(1, "f1").strings();
+  auto& f1 = spec.field(1, "f1").strings().trieIndex();
   auto& f1l = spec.feature("f1l").length(f1);
   VALID(f1l);
   VALID(spec);
@@ -60,7 +60,7 @@ TEST_CASE("feature length transform") {
 
 TEST_CASE("feature value match") {
   ModelSpecBuilder spec;
-  auto& f1 = spec.field(1, "f1").strings();
+  auto& f1 = spec.field(1, "f1").strings().trieIndex();
   auto& f2 = spec.field(2, "f2").strings();
   auto& f3 = spec.field(3, "f3").strings();
   auto& ft1 = spec.feature("ft1")

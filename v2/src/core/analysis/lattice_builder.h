@@ -11,7 +11,7 @@ namespace jumanpp {
 namespace core {
 namespace analysis {
 
-using LatticePosition = i32;
+using LatticePosition = u16;
 
 struct LatticeNodeSeed {
   i32 entryPtr;
@@ -22,6 +22,8 @@ struct LatticeNodeSeed {
 class LatticeBuilder {
  public:
   void appendSeed(LatticeNodeSeed seed);
+
+  void reset();
 };
 
 }  // analysis

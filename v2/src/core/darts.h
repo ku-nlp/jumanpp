@@ -301,10 +301,11 @@ class DoubleArrayImpl {
     return num;
   }
 
-  value_type traverse(const key_type *key, size_t &node_pos, size_t &key_pos,
-                      size_t len = 0) const {
-    if (!len) len = length_func_()(key);
-
+  // Original version had length calculation
+  // if the input was not passed.
+  // We always pass length.
+  inline value_type traverse(const key_type *key, size_t &node_pos,
+                             size_t &key_pos, size_t len) const {
     array_type_ b = array_[node_pos].base;
     array_u_type_ p;
 

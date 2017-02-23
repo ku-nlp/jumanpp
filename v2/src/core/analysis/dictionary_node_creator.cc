@@ -8,9 +8,11 @@ namespace jumanpp {
 namespace core {
 namespace analysis {
 
-bool DictionaryNodeCreator::spawnNodes(const AnalysisInput &input, LatticeBuilder *lattice) {
+bool DictionaryNodeCreator::spawnNodes(const AnalysisInput& input,
+                                       LatticeBuilder* lattice) {
   auto& points = input.codepoints();
-  LatticePosition totalPoints = (LatticePosition) points.size();
+
+  LatticePosition totalPoints = (LatticePosition)points.size();
 
   for (LatticePosition begin = 0; begin < totalPoints; ++begin) {
     auto trav = entries_.traversal();
@@ -23,11 +25,7 @@ bool DictionaryNodeCreator::spawnNodes(const AnalysisInput &input, LatticeBuilde
         auto dicEntries = trav.entries();
         i32 ptr = 0;
         while (dicEntries.readOnePtr(&ptr)) {
-          LatticeNodeSeed seed {
-              ptr,
-              begin,
-              end
-          };
+          LatticeNodeSeed seed{ptr, begin, end};
           lattice->appendSeed(seed);
         }
       } else if (status == TraverseStatus::NoNode) {
@@ -39,6 +37,10 @@ bool DictionaryNodeCreator::spawnNodes(const AnalysisInput &input, LatticeBuilde
   return true;
 }
 
-} // analysis
-} // core
-} // jumanpp
+DictionaryNodeCreator::DictionaryNodeCreator(
+    const dic::DictionaryEntries& entries_)
+    : entries_(entries_) {}
+
+}  // analysis
+}  // core
+}  // jumanpp

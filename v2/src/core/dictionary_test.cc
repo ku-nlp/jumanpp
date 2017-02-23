@@ -2,22 +2,18 @@
 // Created by Arseny Tolmachev on 2017/02/19.
 //
 
-#include "dictionary.h"
-#include "dic_builder.h"
-#include "dic_entries.h"
-#include "impl/field_reader.h"
+#include "core/dictionary.h"
+#include "core/dic_builder.h"
+#include "core/dic_entries.h"
+#include "core/impl/field_reader.h"
+#include "core/spec/spec_dsl.h"
 #include "testing/standalone_test.h"
 
 using namespace jumanpp;
 using namespace jumanpp::core::dic;
-using jumanpp::core::TraverseStatus;
+using namespace jumanpp::core::spec;
 
-void fillHolder(const BuiltDictionary& dic, EntriesHolder* result) {
-  result->entrySize = static_cast<i32>(dic.fieldData.size());
-  result->entries = impl::IntStorageReader{dic.entryData};
-  result->entryPtrs = impl::IntStorageReader{dic.entryPointers};
-  CHECK_OK(result->trie.loadFromMemory(dic.trieContent));
-}
+using jumanpp::core::TraverseStatus;
 
 class TestStringColumn {
   impl::StringStorageReader rdr_;
@@ -89,19 +85,31 @@ struct DataTester {
     for (auto& x : dic.fieldData) {
       columns.emplace_back(x.stringContent);
     }
-    fillHolder(dic, &holder);
+    CHECK_OK(fillEntriesHolder(dic, &holder));
     entrs.reset(new DictionaryEntries{&holder});
   }
 
   TesterStep operator()() { return TesterStep{columns, entrs->traversal()}; }
 };
 
+class TesterSpec {
+ public:
+  AnalysisSpec spec;
+
+  TesterSpec() {
+    dsl::ModelSpecBuilder bldr;
+    bldr.field(1, "a").strings().trieIndex();
+    bldr.field(2, "b").strings();
+    CHECK_OK(bldr.build(&spec));
+  }
+};
+
 TEST_CASE("small dictionary is imported") {
-  StringPiece spec{"1 a string trie_index\n2 b string"};
+  TesterSpec test;
   StringPiece data{"a,b\nc,d\ne,f"};
 
   DictionaryBuilder bldr;
-  CHECK_OK(bldr.importSpec("spec", spec));
+  CHECK_OK(bldr.importSpec(&test.spec));
   CHECK_OK(bldr.importCsv("data", data));
   auto& dic = bldr.result();
   CHECK(dic.entryCount == 3);
@@ -115,13 +123,44 @@ TEST_CASE("small dictionary is imported") {
   tester().step("e", TraverseStatus::Ok).fillEntries().strings({"e", "f"});
 }
 
+TEST_CASE("small substring-only is imported") {
+  TesterSpec test;
+  StringPiece data{"abc,b\nab,d\na,f\nabcd,f"};
+
+  DictionaryBuilder bldr;
+  CHECK_OK(bldr.importSpec(&test.spec));
+  CHECK_OK(bldr.importCsv("data", data));
+  auto& dic = bldr.result();
+  CHECK(dic.entryCount == 4);
+  CHECK(dic.fieldData.size() == 2);
+  CHECK(dic.fieldData[0].uniqueValues == 4);
+  CHECK(dic.fieldData[1].uniqueValues == 3);
+
+  auto Ok = TraverseStatus::Ok;
+
+  DataTester tester{dic};
+  tester()
+      .step("a", Ok)
+      .fillEntries()
+      .strings({"a", "f"})
+      .step("b", Ok)
+      .fillEntries()
+      .strings({"ab", "d"})
+      .step("c", Ok)
+      .fillEntries()
+      .strings({"abc", "b"})
+      .step("d", Ok)
+      .fillEntries()
+      .strings({"abcd", "f"});
+}
+
 TEST_CASE(
     "small dictionary where exist field with duplicated entries is imported") {
-  StringPiece spec{"1 a string trie_index\n2 b string"};
+  TesterSpec test;
   StringPiece data{"a,b\na,d\ne,f"};
 
   DictionaryBuilder bldr;
-  CHECK_OK(bldr.importSpec("spec", spec));
+  CHECK_OK(bldr.importSpec(&test.spec));
   CHECK_OK(bldr.importCsv("data", data));
   auto& dic = bldr.result();
   CHECK(dic.entryCount == 3);
@@ -139,11 +178,11 @@ TEST_CASE(
 }
 
 TEST_CASE("small with substrings dictionary is imported") {
-  StringPiece spec{"1 a string trie_index\n2 b string"};
+  TesterSpec test;
   StringPiece data{"a,b\na,d\nae,f"};
 
   DictionaryBuilder bldr;
-  CHECK_OK(bldr.importSpec("spec", spec));
+  CHECK_OK(bldr.importSpec(&test.spec));
   CHECK_OK(bldr.importCsv("data", data));
   auto& dic = bldr.result();
   CHECK(dic.entryCount == 3);
@@ -164,10 +203,10 @@ TEST_CASE("small with substrings dictionary is imported") {
 }
 
 TEST_CASE("small dictionary where one of lines is corrupted is not imported") {
-  StringPiece spec{"1 a string trie_index\n2 b string"};
+  TesterSpec test;
   StringPiece data{"a,b\nd\ne,f"};
   DictionaryBuilder bldr;
-  CHECK_OK(bldr.importSpec("spec", spec));
+  CHECK_OK(bldr.importSpec(&test.spec));
   auto status = bldr.importCsv("data", data);
   CHECK_FALSE(status);
   CHECK(status.message.find("there were 1 columns") != std::string::npos);

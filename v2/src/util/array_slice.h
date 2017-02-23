@@ -12,7 +12,7 @@
 namespace jumanpp {
 namespace util {
 
-template <typename T, size_t N>
+template <typename T, int N>
 class InlinedVector;
 
 // An ArraySlice<T> represents an immutable array of elements of type

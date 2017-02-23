@@ -9,7 +9,7 @@
 #include <util/array_slice.h>
 #include <util/string_piece.h>
 #include <util/types.hpp>
-#include "darts_trie.h"
+#include "core/darts_trie.h"
 
 namespace jumanpp {
 namespace core {
@@ -42,8 +42,10 @@ class IndexedEntries {
   i32 count() const { return count_; }
   i32 remaining() const { return remaining_; }
 
-  inline bool readOnePtr(i32 *result) {
-    if (remaining_ <= 0) { return false; }
+  inline bool readOnePtr(i32* result) {
+    if (remaining_ <= 0) {
+      return false;
+    }
     JPP_RET_CHECK(entries_.readOneCumulative(&lastIdx));
     *result = lastIdx;
     return true;

@@ -2,11 +2,7 @@
 // Created by Arseny Tolmachev on 2017/02/21.
 //
 
-#include "dic_builder.h"
-#include <util/coded_io.h>
-#include <util/csv_reader.h>
-#include <util/flatmap.h>
-#include <util/inlined_vector.h>
+#include "core/dic_builder.h"
 #include <util/string_piece.h>
 #include <memory>
 #include <util/status.hpp>
@@ -14,21 +10,28 @@
 #include "core/darts_trie.h"
 #include "core/impl/field_import.h"
 #include "core/impl/field_reader.h"
+#include "core/spec/spec_types.h"
+#include "util/coded_io.h"
+#include "util/csv_reader.h"
+#include "util/flatmap.h"
+#include "util/inlined_vector.h"
 
 namespace jumanpp {
 namespace core {
 namespace dic {
 
+using namespace core::spec;
+
 struct ColumnImportContext {
   i32 index;
-  const ColumnDescriptor* descriptor;
+  const FieldDescriptor* descriptor;
   util::CodedBuffer stringData;
   util::CodedBuffer fieldData;
   bool useFieldData = false;
   bool isTrieIndexed = false;
   std::unique_ptr<impl::FieldImporter> importer;
 
-  Status initialize(i32 index, const ColumnDescriptor* descr) {
+  Status initialize(i32 index, const FieldDescriptor* descr) {
     this->index = index;
     this->descriptor = descr;
     this->isTrieIndexed = descr->isTrieKey;
@@ -126,7 +129,7 @@ Status DictionaryBuilder::importCsv(StringPiece name, StringPiece data) {
   importers.resize(spec_->columns.size());
 
   for (int i = 0; i < spec_->columns.size(); ++i) {
-    const ColumnDescriptor& column = spec_->columns[i];
+    const FieldDescriptor& column = spec_->columns[i];
     JPP_RETURN_IF_ERROR(importers[i].initialize(i, &column));
     auto colIdx = column.position - 1;
     if (maxUsedCol < colIdx) {
@@ -216,10 +219,9 @@ Status DictionaryBuilder::importCsv(StringPiece name, StringPiece data) {
   return Status::Ok();
 }
 
-Status DictionaryBuilder::importSpec(StringPiece name, StringPiece data) {
-  spec_.reset(new DictionarySpec);
-  specContent_.append(data.begin(), data.end());
-  return parseDescriptor(data, spec_.get());
+Status DictionaryBuilder::importSpec(spec::AnalysisSpec* spec) {
+  this->spec_ = spec;
+  return Status::Ok();
 }
 
 DictionaryBuilder::~DictionaryBuilder() {}

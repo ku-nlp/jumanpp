@@ -7,8 +7,9 @@
 
 #include <memory>
 #include <vector>
-#include "dic_entries.h"
-#include "dic_spec.h"
+#include "core/dic_builder.h"
+#include "core/dic_entries.h"
+#include "core/spec/spec_types.h"
 
 namespace jumanpp {
 namespace core {
@@ -18,7 +19,7 @@ struct DictionaryField {
   i32 index;
   i32 csvPosition;
   StringPiece name;
-  ColumnType columnType;
+  spec::ColumnType columnType;
   impl::IntStorageReader postions;
   impl::StringStorageReader strings;
   bool usesPositions;
@@ -29,10 +30,12 @@ class FieldsHolder {
 };
 
 class DictionaryHolder {
-  DictionarySpec spec_;
+  spec::AnalysisSpec spec_;
   EntriesHolder entries_;
   FieldsHolder fields_;
 };
+
+Status fillEntriesHolder(const BuiltDictionary &dic, EntriesHolder *result);
 
 }  // dic
 }  // core

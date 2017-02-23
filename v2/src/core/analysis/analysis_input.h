@@ -6,10 +6,10 @@
 #define JUMANPP_ANALYSIS_INPUT_H
 
 #include <string>
+#include "util/array_slice.h"
 #include "util/characters.hpp"
 #include "util/status.hpp"
 #include "util/types.hpp"
-#include "util/array_slice.h"
 
 namespace jumanpp {
 namespace core {
@@ -28,9 +28,7 @@ class AnalysisInput {
 
   Status reset(StringPiece data);
 
-  const CodepointStorage& codepoints() const {
-    return codepoints_;
-  }
+  const CodepointStorage& codepoints() const { return codepoints_; }
 };
 
 }  // analysis

@@ -3,6 +3,7 @@
 //
 
 #include "analysis_input.h"
+#include "lattice_builder.h"
 
 namespace jumanpp {
 namespace core {
@@ -18,7 +19,16 @@ Status AnalysisInput::reset(StringPiece data) {
   raw_input_.clear();
   codepoints_.clear();
   raw_input_.append(data.begin(), data.end());
-  return chars::preprocessRawData(raw_input_, &codepoints_);
+  JPP_RETURN_IF_ERROR(chars::preprocessRawData(raw_input_, &codepoints_));
+
+  constexpr auto max_codepoints = std::numeric_limits<LatticePosition>::max();
+  if (codepoints().size() > max_codepoints) {
+    return Status::InvalidState()
+           << "jpp_core at current settings cannot process more than "
+           << max_codepoints << "characters at once";
+  }
+
+  return Status::Ok();
 }
 
 }  // analysis

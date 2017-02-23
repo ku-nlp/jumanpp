@@ -13,17 +13,17 @@ namespace jumanpp {
 namespace core {
 namespace analysis {
 
-
 class DictionaryNodeCreator {
   dic::DictionaryEntries entries_;
 
-public:
+ public:
+  DictionaryNodeCreator(const dic::DictionaryEntries& entries_);
+
   bool spawnNodes(const AnalysisInput& input, LatticeBuilder* lattice);
 };
 
+}  // analysis
+}  // core
+}  // jumanpp
 
-} // analysis
-} // core
-} // jumanpp
-
-#endif //JUMANPP_DICTIONARY_NODE_CREATOR_H
+#endif  // JUMANPP_DICTIONARY_NODE_CREATOR_H

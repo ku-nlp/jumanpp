@@ -6,7 +6,6 @@
 #define JUMANPP_DARTS_TRIE_H
 
 #include <util/string_piece.h>
-#include <cstring>
 #include <memory>
 #include <util/status.hpp>
 #include <util/types.hpp>
@@ -22,13 +21,16 @@ namespace jumanpp {
 namespace core {
 
 struct CharStringLength {
-  size_t operator()(const char* data) const { return std::strlen(data); }
+  size_t operator()(StringPiece::pointer_t data) const {
+    JPP_DCHECK_NOT("should never be called");
+    return 0;
+  }
 };
 
 namespace impl {
 
 using DoubleArrayCore =
-    Darts::DoubleArrayImpl<char, unsigned char, i32, u32, CharStringLength>;
+    Darts::DoubleArrayImpl<u8, u8, i32, u32, CharStringLength>;
 
 struct PieceWithValue {
   StringPiece key;

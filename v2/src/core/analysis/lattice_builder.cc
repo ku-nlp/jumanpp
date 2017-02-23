@@ -10,6 +10,8 @@ namespace analysis {
 
 void LatticeBuilder::appendSeed(LatticeNodeSeed seed) {}
 
+void LatticeBuilder::reset() {}
+
 }  // analysis
 }  // core
 }  // jumanpp

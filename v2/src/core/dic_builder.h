@@ -7,7 +7,8 @@
 
 #include <memory>
 #include <vector>
-#include "dic_spec.h"
+#include "core/spec/spec_types.h"
+#include "util/status.hpp"
 
 namespace jumanpp {
 namespace core {
@@ -36,7 +37,7 @@ struct DictionaryBuilderStorage;
 
 class DictionaryBuilder {
   std::string specContent_;
-  std::unique_ptr<DictionarySpec> spec_;
+  spec::AnalysisSpec* spec_;
   std::unique_ptr<BuiltDictionary> dic_;
   std::unique_ptr<DictionaryBuilderStorage> storage_;
 
@@ -44,7 +45,7 @@ class DictionaryBuilder {
   DictionaryBuilder();
   ~DictionaryBuilder();
 
-  Status importSpec(StringPiece name, StringPiece data);
+  Status importSpec(spec::AnalysisSpec* spec);
   Status importCsv(StringPiece name, StringPiece data);
   const BuiltDictionary& result() const { return *dic_; }
 };

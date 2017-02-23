@@ -6,8 +6,9 @@
 #define JUMANPP_SPEC_DSL_H
 
 #include <vector>
-#include "core/dic_spec.h"
+#include "core/spec/spec_types.h"
 #include "util/inlined_vector.h"
+#include "util/status.hpp"
 #include "util/string_piece.h"
 
 namespace jumanpp {
@@ -56,7 +57,7 @@ class FieldReference {
 class FieldBuilder : public DslOpBase {
   i32 csvColumn_;
   StringPiece name_;
-  dic::ColumnType columnType_ = dic::ColumnType::Error;
+  ColumnType columnType_ = ColumnType::Error;
   bool trieIndex_ = false;
   StringPiece emptyValue_;
 
@@ -67,17 +68,17 @@ class FieldBuilder : public DslOpBase {
       : csvColumn_(csvColumn_), name_(name_) {}
 
   FieldBuilder& strings() {
-    columnType_ = dic::ColumnType::String;
+    columnType_ = ColumnType::String;
     return *this;
   }
 
   FieldBuilder& stringLists() {
-    columnType_ = dic::ColumnType::StringList;
+    columnType_ = ColumnType::StringList;
     return *this;
   }
 
   FieldBuilder& integers() {
-    columnType_ = dic::ColumnType::Int;
+    columnType_ = ColumnType::Int;
     return *this;
   }
 
@@ -100,7 +101,8 @@ class FieldBuilder : public DslOpBase {
   }
 
   FieldExpression replaceWith(i32 value) const {
-    return FieldExpression{name_, TransformType::ReplaceInt, jumanpp::EMPTY_SP, value};
+    return FieldExpression{name_, TransformType::ReplaceInt, jumanpp::EMPTY_SP,
+                           value};
   }
 
   FieldExpression append(StringPiece value) const {
@@ -111,15 +113,15 @@ class FieldBuilder : public DslOpBase {
 
   const StringPiece& name() const { return name_; }
 
-  dic::ColumnType getColumnType_() const { return columnType_; }
+  ColumnType getColumnType() const { return columnType_; }
 
-  bool isTrieIndex_() const { return trieIndex_; }
-
-  const StringPiece& getEmptyValue_() const { return emptyValue_; }
+  bool isTrieIndex() const { return trieIndex_; }
 
   virtual Status validate() const override;
 
   operator FieldReference() const { return FieldReference{name()}; }
+
+  void fill(FieldDescriptor* descriptor) const;
 };
 
 enum class FeatureType { Initial, Invalid, MatchValue, MatchCsv, Length };
@@ -182,27 +184,14 @@ class FeatureBuilder : DslOpBase {
     return *this;
   }
 
-  Status validate() const override {
-    if (type_ == FeatureType::Initial) {
-      return Status::InvalidParameter() << "feature " << name_
-                                        << " was not initialized";
-    }
-    if (type_ == FeatureType::Invalid) {
-      return Status::InvalidParameter()
-             << "feature " << name_ << " was initialized more than one time";
-    }
-    if (type_ == FeatureType::Length && fields_.size() != 1) {
-      return Status::InvalidState() << "feature " << name_
-                                    << " can contain only one field reference";
-    }
-
-    return Status::Ok();
-  }
+  Status validate() const override;
 };
 
 class ModelSpecBuilder : public DslOpBase {
   std::vector<FieldBuilder> fields_;
   std::vector<FeatureBuilder> features_;
+
+  void makeFields(AnalysisSpec* spec) const;
 
  public:
   FieldBuilder& field(i32 csvColumn, StringPiece name) {
@@ -217,6 +206,7 @@ class ModelSpecBuilder : public DslOpBase {
 
   Status validateFields() const;
   virtual Status validate() const override;
+  Status build(AnalysisSpec* spec) const;
 };
 }
 }  // spec

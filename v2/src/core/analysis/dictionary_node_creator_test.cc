@@ -3,3 +3,45 @@
 //
 
 #include "dictionary_node_creator.h"
+#include "core/dic_builder.h"
+#include "core/dictionary.h"
+#include "core/spec/spec_dsl.h"
+#include "testing/standalone_test.h"
+#include "util/string_piece.h"
+
+using namespace jumanpp::core::analysis;
+using namespace jumanpp::core::spec;
+using namespace jumanpp::core::dic;
+
+using jumanpp::StringPiece;
+
+class NodeCreatorTestEnv {
+  AnalysisSpec dicSpec;
+  jumanpp::core::dic::DictionaryBuilder dicBldr;
+  AnalysisInput input;
+  LatticeBuilder latticeBldr;
+  EntriesHolder holder;
+
+ public:
+  NodeCreatorTestEnv(StringPiece csvData) {
+    dsl::ModelSpecBuilder specBldr;
+    specBldr.field(1, "a").strings().trieIndex();
+    CHECK_OK(specBldr.build(&dicSpec));
+    CHECK_OK(dicBldr.importSpec(&dicSpec));
+    CHECK_OK(dicBldr.importCsv("dic", csvData));
+    CHECK_OK(fillEntriesHolder(dicBldr.result(), &holder));
+  }
+
+  void analyze(StringPiece str) {
+    DictionaryNodeCreator dnc{DictionaryEntries{&holder}};
+    CHECK_OK(input.reset(str));
+    latticeBldr.reset();
+    dnc.spawnNodes(input, &latticeBldr);
+  }
+};
+
+TEST_CASE("asdf") {
+  NodeCreatorTestEnv env{
+      "of\na\nan\napple\nabout\nargument\narg\ngum\nmug\nrgu\nfme"};
+  env.analyze("argumentofme");
+}
