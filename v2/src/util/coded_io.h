@@ -35,11 +35,6 @@ inline u8* writeRawBytes(const u8* begin, const u8* end, u8* target) {
   return target + std::distance(begin, end);
 }
 
-inline u8* writeRawBytes(StringPiece::iterator begin, StringPiece::iterator end,
-                         u8* target) {
-  std::copy(begin, end, target);
-  return target + std::distance(begin, end);
-}
 }  // impl
 
 class CodedBuffer {

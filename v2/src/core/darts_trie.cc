@@ -23,7 +23,7 @@ DoubleArrayBuilder::DoubleArrayBuilder()
 Status DoubleArrayBuilder::build() {
   std::sort(immediate_.begin(), immediate_.end(),
             [](const PieceWithValue& l, const PieceWithValue& r) {
-              int cmp = std::strncmp(l.key.begin(), r.key.begin(),
+              int cmp = std::strncmp(l.key.char_begin(), r.key.char_begin(),
                                      std::min(l.key.size(), r.key.size()));
               return cmp < 0;
             });
@@ -36,7 +36,7 @@ Status DoubleArrayBuilder::build() {
   values.reserve(immediate_.size());
 
   for (auto& o : immediate_) {
-    keys.push_back(o.key.begin());
+    keys.push_back(o.key.char_begin());
     lengths.push_back(o.key.size());
     values.push_back(o.value);
   }
@@ -102,7 +102,7 @@ DoubleArray::DoubleArray() {}
 
 TraverseStatus DoubleArrayTraversal::step(StringPiece data) {
   key_pos_ = 0;
-  auto status = base_->traverse(data.begin(), node_pos_, key_pos_, data.size());
+  auto status = base_->traverse(data.char_begin(), node_pos_, key_pos_, data.size());
 
   switch (status) {
     case -1:

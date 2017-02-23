@@ -49,7 +49,7 @@ class DoubleArrayBuilder {
   const void* underlyingStorage() const;
 
   StringPiece result() const {
-    return StringPiece{reinterpret_cast<const char*>(underlyingStorage()),
+    return StringPiece{reinterpret_cast<StringPiece::pointer_t>(underlyingStorage()),
                        underlyingByteSize()};
   }
 

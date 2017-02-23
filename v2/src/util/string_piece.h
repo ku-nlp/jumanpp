@@ -14,8 +14,11 @@
 namespace jumanpp {
 
 class StringPiece {
+private:
+  using char_t = const char;
+  using char_ptr = char_t*;
  public:
-  using value_type = const char;
+  using value_type = const u8;
   using pointer_t = const value_type*;
   using iterator = pointer_t;
 
@@ -29,14 +32,21 @@ class StringPiece {
 
   JPP_ALWAYS_INLINE constexpr StringPiece(iterator begin, iterator end) noexcept
       : begin_{begin}, end_{end} {}
+
   JPP_ALWAYS_INLINE constexpr StringPiece(pointer_t begin,
                                           size_t length) noexcept
       : begin_{begin}, end_{begin + length} {}
+
+  template <typename=std::enable_if<!std::is_same<char_t, value_type>::value>>
+  JPP_ALWAYS_INLINE StringPiece(char_ptr begin, char_ptr end) noexcept : begin_{reinterpret_cast<pointer_t>(begin)}, end_{
+      reinterpret_cast<pointer_t>(end)} {};
+
   JPP_ALWAYS_INLINE StringPiece(const std::string& str) noexcept
-      : begin_{str.data()}, end_{str.data() + str.size()} {}
+      : StringPiece(str.data(), str.data() + str.size()) {}
 
   JPP_ALWAYS_INLINE constexpr StringPiece(const StringPiece& other) noexcept =
       default;
+
   JPP_ALWAYS_INLINE StringPiece& operator=(const StringPiece& other) noexcept =
       default;
 
@@ -49,7 +59,7 @@ class StringPiece {
   template <size_t array_size>
   JPP_ALWAYS_INLINE constexpr StringPiece(
       const char (&array)[array_size]) noexcept
-      : begin_{array}, end_{array + array_size} {
+      : StringPiece(array, array + array_size) {
     if (*(end_ - 1) == 0) {
       --end_;
     }
@@ -108,6 +118,16 @@ class StringPiece {
     JPP_DCHECK_LT(num, size());
     return StringPiece{begin(), std::min(begin() + num, end())};
   }
+
+  template <typename=std::enable_if<!std::is_same<char_t, value_type>::value>>
+  JPP_ALWAYS_INLINE constexpr char_ptr char_begin() const noexcept {
+    return reinterpret_cast<char_ptr>(begin_);
+  };
+
+  template <typename=std::enable_if<!std::is_same<char_t, value_type>::value>>
+  JPP_ALWAYS_INLINE constexpr char_ptr char_end() const noexcept {
+    return reinterpret_cast<char_ptr>(end_);
+  };
 };
 
 std::ostream& operator<<(std::ostream& str, const StringPiece& sp);

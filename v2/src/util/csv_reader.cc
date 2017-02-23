@@ -72,8 +72,8 @@ i32 CsvReader::numFields() const { return static_cast<i32>(fields_.size()); }
 StringPiece CsvReader::field(i32 idx) const { return fields_[idx]; }
 
 Status CsvReader::initFromMemory(const StringPiece &data) {
-  position_ = data.begin();
-  end_ = data.end();
+  position_ = data.char_begin();
+  end_ = data.char_end();
   line_number_ = 0;
   return Status::Ok();
 }

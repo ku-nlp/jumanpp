@@ -24,8 +24,7 @@ TEST_CASE("darts builds and traverses") {
   bldr.add("anchor", 3);
   bldr.add("tanya", 4);
   CHECK_OK(bldr.build());
-  j::StringPiece pc{(const char*)bldr.underlyingStorage(),
-                    bldr.underlyingByteSize()};
+  j::StringPiece pc = bldr.result();
   c::DoubleArray da;
   CHECK_OK(da.loadFromMemory(pc));
   auto trav = da.traversal();

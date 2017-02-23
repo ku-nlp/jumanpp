@@ -204,7 +204,7 @@ Status checkUniqueColumns(const parser::ParserState& state) {
 Status parseDescriptor(StringPiece data, DictionarySpec* result) {
   pegtl::input inp{0,  // line
                    0,  // column
-                   data.begin(), data.end(), "descr"};
+                   data.char_begin(), data.char_end(), "descr"};
 
   parser::ParserState state;
   state.reset();
@@ -220,7 +220,7 @@ Status parseDescriptor(StringPiece data, DictionarySpec* result) {
     bldr << "spec syntax error";
     for (auto& o : err.positions) {
       bldr << "\n     on line " << o.line << ":" << o.column << " content: "
-           << StringPiece{o.begin, std::min(o.begin + 10, data.end())};
+           << StringPiece{o.begin, std::min(o.begin + 10, data.char_end())};
     }
     return bldr;
   }

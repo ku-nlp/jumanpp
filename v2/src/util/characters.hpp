@@ -86,8 +86,10 @@ struct InputCodepoint {
   }
 };
 
-bool toCodepoint(StringPiece::iterator &itr, StringPiece::iterator itr_end,
+bool toCodepoint(StringPiece::pointer_t &itr, StringPiece::pointer_t itr_end,
                  char32_t *result) noexcept;
+
+
 CharacterClass getCodeType(char32_t code) noexcept;
 
 Status preprocessRawData(StringPiece utf8data,

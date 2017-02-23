@@ -14,7 +14,7 @@ namespace p = jumanpp::core::spec::parser;
 template <typename T>
 void shouldParse(StringPiece data) {
   struct full_grammar : pegtl::seq<T, pegtl::eof> {};
-  pegtl::input input(0, 0, data.begin(), data.end(), "test");
+  pegtl::input input(0, 0, data.char_begin(), data.char_end(), "test");
   bool success = false;
   try {
     success = pegtl::parse_input<full_grammar>(input, "test");
@@ -32,7 +32,7 @@ void shouldParse(StringPiece data) {
 template <typename T>
 void failParse(StringPiece data) {
   struct full_grammar : pegtl::seq<T, pegtl::eof> {};
-  pegtl::input input(0, 0, data.begin(), data.end(), "test");
+  pegtl::input input(0, 0, data.char_begin(), data.char_end(), "test");
   auto result = false;
   try {
     result = pegtl::parse_input<full_grammar>(input, "test");

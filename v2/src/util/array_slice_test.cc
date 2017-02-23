@@ -8,6 +8,7 @@
 #include "string_piece.h"
 
 using namespace jumanpp::util;
+using jumanpp::u8;
 
 TEST_CASE("arrayslice works with string") {
   std::string str = "hello";
@@ -17,6 +18,6 @@ TEST_CASE("arrayslice works with string") {
 
 TEST_CASE("arrayslice works with stringpiece") {
   jumanpp::StringPiece piece{"hello"};
-  ArraySlice<char> data{piece};
+  ArraySlice<u8> data{piece};
   CHECK(data.length() == 5);
 }
