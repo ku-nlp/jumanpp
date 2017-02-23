@@ -16,8 +16,7 @@ TEST_CASE("stringpiece can be constructed", "[string_piece]") {
   CHECK_FALSE(StringPiece(std::string("test")) == "test2");
   CHECK_FALSE(StringPiece("test2") == "test");
   CHECK_FALSE(StringPiece("test") == "test2");
-  CHECK_FALSE(StringPiece(std::vector<u8>{'t', 'e', 's', 't', '2'}) ==
-              "test");
+  CHECK_FALSE(StringPiece(std::vector<u8>{'t', 'e', 's', 't', '2'}) == "test");
   CHECK_FALSE(StringPiece(std::vector<u8>{'t', 'e', 's', 't'}) == "test2");
 
   // implicit construction of StringPiece here

@@ -5,8 +5,8 @@
 #ifndef JUMANPP_TYPES_HPP
 #define JUMANPP_TYPES_HPP
 
+#include <cstddef>
 #include <cstdint>
-#include <cstdlib>
 
 namespace jumanpp {
 

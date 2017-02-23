@@ -14,9 +14,10 @@
 namespace jumanpp {
 
 class StringPiece {
-private:
+ private:
   using char_t = const char;
   using char_ptr = char_t*;
+
  public:
   using value_type = const u8;
   using pointer_t = const value_type*;
@@ -37,9 +38,10 @@ private:
                                           size_t length) noexcept
       : begin_{begin}, end_{begin + length} {}
 
-  template <typename=std::enable_if<!std::is_same<char_t, value_type>::value>>
-  JPP_ALWAYS_INLINE StringPiece(char_ptr begin, char_ptr end) noexcept : begin_{reinterpret_cast<pointer_t>(begin)}, end_{
-      reinterpret_cast<pointer_t>(end)} {};
+  template <typename = std::enable_if<!std::is_same<char_t, value_type>::value>>
+  JPP_ALWAYS_INLINE StringPiece(char_ptr begin, char_ptr end) noexcept
+      : begin_{reinterpret_cast<pointer_t>(begin)},
+        end_{reinterpret_cast<pointer_t>(end)} {};
 
   JPP_ALWAYS_INLINE StringPiece(const std::string& str) noexcept
       : StringPiece(str.data(), str.data() + str.size()) {}
@@ -119,12 +121,12 @@ private:
     return StringPiece{begin(), std::min(begin() + num, end())};
   }
 
-  template <typename=std::enable_if<!std::is_same<char_t, value_type>::value>>
+  template <typename = std::enable_if<!std::is_same<char_t, value_type>::value>>
   JPP_ALWAYS_INLINE constexpr char_ptr char_begin() const noexcept {
     return reinterpret_cast<char_ptr>(begin_);
   };
 
-  template <typename=std::enable_if<!std::is_same<char_t, value_type>::value>>
+  template <typename = std::enable_if<!std::is_same<char_t, value_type>::value>>
   JPP_ALWAYS_INLINE constexpr char_ptr char_end() const noexcept {
     return reinterpret_cast<char_ptr>(end_);
   };

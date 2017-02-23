@@ -39,13 +39,13 @@ class IntListTraversal {
   i32 size() const noexcept { return length_; }
   i32 remaining() const noexcept { return length_ - position_; }
 
-  bool readOne(i32* result) noexcept {
+  inline bool readOne(i32* result) noexcept {
     bool ret = parser_.readInt(result) & (position_ < length_);
     position_ += 1;
     return ret;
   }
 
-  bool readOneCumulative(i32* result) noexcept {
+  inline bool readOneCumulative(i32* result) noexcept {
     i32 diff;
     if (readOne(&diff)) {
       *result += diff;

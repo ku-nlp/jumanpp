@@ -42,6 +42,13 @@ class IndexedEntries {
   i32 count() const { return count_; }
   i32 remaining() const { return remaining_; }
 
+  inline bool readOnePtr(i32 *result) {
+    if (remaining_ <= 0) { return false; }
+    JPP_RET_CHECK(entries_.readOneCumulative(&lastIdx));
+    *result = lastIdx;
+    return true;
+  }
+
   bool fillEntryData(util::MutableArraySlice<i32>* result) {
     if (remaining_ <= 0) {
       return false;

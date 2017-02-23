@@ -7,19 +7,19 @@
 
 #include <string.h>
 #include <algorithm>
+#include <cstdlib>
 #include <initializer_list>
 #include <iterator>
 #include <memory>
 #include <type_traits>
-#include "common.hpp"
-#include "types.hpp"
+#include "util/common.hpp"
+#include "util/types.hpp"
 
 namespace jumanpp {
 namespace util {
 
 namespace port {
 inline void* Malloc(size_t sz) { return std::malloc(sz); }
-
 inline void Free(void* mem) { std::free(mem); }
 }
 

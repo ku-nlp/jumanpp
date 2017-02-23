@@ -10,19 +10,16 @@ using namespace jumanpp::chars;
 using namespace jumanpp;
 
 bool toCodepoint(const char*& itr, const char* end, char32_t* result) noexcept {
-  return toCodepoint(
-      reinterpret_cast<StringPiece::pointer_t&>(itr),
-      reinterpret_cast<StringPiece::pointer_t>(end),
-      result
-  );
+  return toCodepoint(reinterpret_cast<StringPiece::pointer_t&>(itr),
+                     reinterpret_cast<StringPiece::pointer_t>(end), result);
 }
 
 Status checkByteSequence(std::initializer_list<u8> useq) {
   std::vector<InputCodepoint> result;
   std::vector<u8> malformed_seq{useq};
-  StringPiece sp(reinterpret_cast<const char *>(malformed_seq.data()),
-                 reinterpret_cast<const char *>(malformed_seq.data() +
-                                                malformed_seq.size()));
+  StringPiece sp(reinterpret_cast<const char*>(malformed_seq.data()),
+                 reinterpret_cast<const char*>(malformed_seq.data() +
+                                               malformed_seq.size()));
   return (preprocessRawData(sp, &result));
 }
 

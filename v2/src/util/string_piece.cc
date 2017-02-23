@@ -19,5 +19,6 @@ bool operator==(const StringPiece &l, const StringPiece &r) {
 }
 
 StringPiece::StringPiece(StringPiece::pointer_t begin)
-    : begin_{begin}, end_{begin + std::strlen(reinterpret_cast<char_ptr>(begin))} {}
+    : begin_{begin},
+      end_{begin + std::strlen(reinterpret_cast<char_ptr>(begin))} {}
 }
