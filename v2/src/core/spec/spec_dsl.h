@@ -36,7 +36,7 @@ enum class TransformType {
   AppendString
 };
 
-struct FieldTransform {
+struct FieldExpression {
   StringPiece fieldName;
   TransformType type = TransformType::Invalid;
   StringPiece transformString;
@@ -90,20 +90,20 @@ class FieldBuilder : public DslOpBase {
     return *this;
   }
 
-  FieldTransform value() const {
-    return FieldTransform{name_, TransformType::Value, "", 0};
+  FieldExpression value() const {
+    return FieldExpression{name_, TransformType::Value, "", 0};
   }
 
-  FieldTransform replaceWith(StringPiece value) const {
-    return FieldTransform{name_, TransformType::ReplaceString, value, 0};
+  FieldExpression replaceWith(StringPiece value) const {
+    return FieldExpression{name_, TransformType::ReplaceString, value, 0};
   }
 
-  FieldTransform replaceWith(i32 value) const {
-    return FieldTransform{name_, TransformType::ReplaceInt, "", value};
+  FieldExpression replaceWith(i32 value) const {
+    return FieldExpression{name_, TransformType::ReplaceInt, "", value};
   }
 
-  FieldTransform append(StringPiece value) const {
-    return FieldTransform{name_, TransformType::AppendString, value, 0};
+  FieldExpression append(StringPiece value) const {
+    return FieldExpression{name_, TransformType::AppendString, value, 0};
   }
 
   i32 getCsvColumn() const { return csvColumn_; }
@@ -128,8 +128,8 @@ class FeatureBuilder : DslOpBase {
   FeatureType type_ = FeatureType::Initial;
   StringPiece matchData_;
   util::InlinedVector<StringPiece, 4> fields_;
-  util::InlinedVector<FieldTransform, 8> trueTransforms_;
-  util::InlinedVector<FieldTransform, 8> falseTransforms_;
+  util::InlinedVector<FieldExpression, 8> trueTransforms_;
+  util::InlinedVector<FieldExpression, 8> falseTransforms_;
 
   void changeType(FeatureType target) {
     if (type_ == FeatureType::Initial) {
@@ -167,14 +167,14 @@ class FeatureBuilder : DslOpBase {
     return *this;
   }
 
-  FeatureBuilder& ifTrue(std::initializer_list<FieldTransform> transforms) {
+  FeatureBuilder& ifTrue(std::initializer_list<FieldExpression> transforms) {
     for (auto&& o : transforms) {
       trueTransforms_.emplace_back(o);
     }
     return *this;
   }
 
-  FeatureBuilder& ifFalse(std::initializer_list<FieldTransform> transforms) {
+  FeatureBuilder& ifFalse(std::initializer_list<FieldExpression> transforms) {
     for (auto&& o : transforms) {
       falseTransforms_.emplace_back(o);
     }
