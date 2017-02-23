@@ -92,7 +92,7 @@ class FieldBuilder : public DslOpBase {
   }
 
   FieldExpression value() const {
-    return FieldExpression{name_, TransformType::Value, "", 0};
+    return FieldExpression{name_, TransformType::Value, jumanpp::EMPTY_SP, 0};
   }
 
   FieldExpression replaceWith(StringPiece value) const {
@@ -100,7 +100,7 @@ class FieldBuilder : public DslOpBase {
   }
 
   FieldExpression replaceWith(i32 value) const {
-    return FieldExpression{name_, TransformType::ReplaceInt, "", value};
+    return FieldExpression{name_, TransformType::ReplaceInt, jumanpp::EMPTY_SP, value};
   }
 
   FieldExpression append(StringPiece value) const {

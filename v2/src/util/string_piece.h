@@ -130,6 +130,8 @@ private:
   };
 };
 
+static constexpr const StringPiece EMPTY_SP = StringPiece{};
+
 std::ostream& operator<<(std::ostream& str, const StringPiece& sp);
 
 bool operator==(const StringPiece& l, const StringPiece& r);
