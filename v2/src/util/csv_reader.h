@@ -25,13 +25,12 @@ class CsvReader {
   std::vector<char> temp_;
   char separator_;
   char quote_;
-  char escape_;
   const char* position_;
   const char* end_;
   i64 line_number_;
 
  public:
-  CsvReader(char separator = ',', char quote = '"', char escape = '\\');
+  CsvReader(char separator = ',', char quote = '"');
   Status open(const StringPiece& filename);
   Status initFromMemory(const StringPiece& data);
   bool nextLine();

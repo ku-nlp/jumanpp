@@ -7,8 +7,8 @@
 namespace jumanpp {
 namespace util {
 
-CsvReader::CsvReader(char separator_, char quote_, char escape_)
-    : separator_(separator_), quote_(quote_), escape_(escape_) {}
+CsvReader::CsvReader(char separator_, char quote_)
+    : separator_(separator_), quote_{quote_} {}
 
 Status CsvReader::open(const StringPiece &filename) {
   JPP_RETURN_IF_ERROR(file_.open(filename, MMapType::ReadOnly));

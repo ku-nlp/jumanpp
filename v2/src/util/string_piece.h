@@ -161,10 +161,8 @@ struct StringPieceHash {
 
 namespace std {
 template <>
-class hash<jumanpp::StringPiece> {
+struct hash<jumanpp::StringPiece> {
   jumanpp::util::impl::StringPieceHash impl_;
-
- public:
   using argument_type = jumanpp::StringPiece;
   using result_type = size_t;
   inline result_type operator()(argument_type const& p) const noexcept {

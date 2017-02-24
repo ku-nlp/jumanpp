@@ -48,7 +48,7 @@ struct TesterStep {
   TesterStep fillEntries() {
     if (content) {
       REQUIRE(content->remaining() == 0);
-      *content = std::move(trav.entries());
+      *content = trav.entries();
     } else {
       content.reset(new IndexedEntries{trav.entries()});
     }
