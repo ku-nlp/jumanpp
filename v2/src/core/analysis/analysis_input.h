@@ -29,6 +29,8 @@ class AnalysisInput {
   Status reset(StringPiece data);
 
   const CodepointStorage& codepoints() const { return codepoints_; }
+
+  u16 numCodepoints();
 };
 
 }  // analysis

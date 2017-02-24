@@ -21,12 +21,11 @@ bool DictionaryNodeCreator::spawnNodes(const AnalysisInput& input,
       auto& cp = points[position];
       TraverseStatus status = trav.step(cp.bytes);
       if (status == TraverseStatus::Ok) {
-        LatticePosition end = position + 1;
+        LatticePosition end = position + LatticePosition(1);
         auto dicEntries = trav.entries();
         i32 ptr = 0;
         while (dicEntries.readOnePtr(&ptr)) {
-          LatticeNodeSeed seed{ptr, begin, end};
-          lattice->appendSeed(seed);
+          lattice->appendSeed(ptr, begin, end);
         }
       } else if (status == TraverseStatus::NoNode) {
         break;

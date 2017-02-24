@@ -16,6 +16,7 @@ using namespace jumanpp::core::dic;
 using jumanpp::StringPiece;
 
 class NodeCreatorTestEnv {
+ public:
   AnalysisSpec dicSpec;
   jumanpp::core::dic::DictionaryBuilder dicBldr;
   AnalysisInput input;
@@ -35,13 +36,15 @@ class NodeCreatorTestEnv {
   void analyze(StringPiece str) {
     DictionaryNodeCreator dnc{DictionaryEntries{&holder}};
     CHECK_OK(input.reset(str));
-    latticeBldr.reset();
+    latticeBldr.reset(input.numCodepoints());
     dnc.spawnNodes(input, &latticeBldr);
   }
 };
 
-TEST_CASE("asdf") {
+TEST_CASE("it is possible to extract some nodes from input string") {
   NodeCreatorTestEnv env{
       "of\na\nan\napple\nabout\nargument\narg\ngum\nmug\nrgu\nfme"};
   env.analyze("argumentofme");
+  CHECK_OK(env.latticeBldr.prepare());
+  CHECK(env.latticeBldr.seeds().size() == 7);
 }
