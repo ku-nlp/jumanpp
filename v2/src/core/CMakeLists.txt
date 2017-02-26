@@ -3,11 +3,11 @@ set(core_srcs darts_trie.cc dictionary.cc impl/field_import.cc dic_builder.cc
         analysis/lattice_builder.cc analysis/analysis_input.cc spec/spec_dsl.cc)
 set(core_hdrs darts.h darts_trie.h dictionary.h impl/field_import.h impl/field_reader.h dic_entries.h
         dic_builder.h spec/spec_grammar.h spec/spec_dsl.h analysis/analysis_input.h analysis/lattice_builder.h
-        analysis/dictionary_node_creator.h spec/spec_types.h)
+        analysis/dictionary_node_creator.h spec/spec_types.h analysis/lattice_types.h)
 set(core_test_srcs darts_trie_test.cc dictionary_test.cc impl/field_import_test.cc
         impl/field_reader_test.cc )
 set(spec_test_srcs spec/spec_grammar_test.cc spec/spec_dsl_test.cc)
-set(analysis_test_srcs analysis/dictionary_node_creator_test.cc)
+set(analysis_test_srcs analysis/dictionary_node_creator_test.cc analysis/lattice_container_test.cc)
 
 add_library(jpp_core ${core_srcs} ${core_hdrs} ${libs3p_pegtl_headers})
 

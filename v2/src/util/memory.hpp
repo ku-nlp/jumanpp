@@ -12,8 +12,8 @@
 #endif
 
 #include <cstddef>
-#include <vector>
 #include <memory>
+#include <vector>
 #include "util/common.hpp"
 
 namespace jumanpp {
@@ -21,6 +21,7 @@ namespace util {
 namespace memory {
 
 inline bool IsPowerOf2(size_t val) { return (val & (val - 1)) == 0; }
+
 inline bool IsAligned(size_t val, size_t alignment) {
   return (val & (alignment - 1)) == 0;
 }
@@ -42,9 +43,9 @@ class Manager;
 
 template <typename T>
 struct DestructorOnlyDeleter {
-  using ptr_t = typename std::unique_ptr<T, DestructorOnlyDeleter<T>>::pointer;
+  using ptr_t = T *;
   void operator()(ptr_t ptr) const {
-    ptr->~T(); //call destructor
+    ptr->~T();  // call destructor
   }
 };
 
@@ -53,12 +54,15 @@ using ManagedPtr = std::unique_ptr<T, DestructorOnlyDeleter<T>>;
 
 class ManagedAllocatorCore {
   Manager *mgr_;
-  char *current_ = nullptr;
-  char *end_ = nullptr;
+  char *base_ = nullptr;
+  size_t offset_ = 0;
+  size_t end_ = 0;
   bool ensureAvailable(size_t size);
 
  public:
   ManagedAllocatorCore(Manager *manager) : mgr_(manager) {}
+  ManagedAllocatorCore(const ManagedAllocatorCore &o) = delete;
+
   void *allocate_memory(size_t size, size_t alignment);
 
   template <typename T>
@@ -84,35 +88,15 @@ class ManagedAllocatorCore {
   };
 };
 
-template <typename T, size_t Talign = alignof(T)>
-class ManagedAllocator {
-  ManagedAllocatorCore core_;
-
-  static constexpr size_t Tsize = sizeof(T);
-
- public:
-  ManagedAllocator(ManagedAllocatorCore core) : core_{core} {}
-
-  template <typename... Args>
-  T *make(Args... args) {
-    void *buffer = core_.allocate_memory(Tsize, Talign);
-    auto obj = new (buffer) T(std::forward<Args>(args)...);
-    return obj;
-  }
-};
-
 class Manager {
+  size_t currentPage = 0;
   std::vector<MemoryPage> pages_;
   size_t page_size_;
 
  public:
-  template <typename T>
-  ManagedAllocator<T> allocator() {
-    return ManagedAllocator<T>{ManagedAllocatorCore{this}};
-  }
-
-  ManagedAllocatorCore core() {
-    return ManagedAllocatorCore{this};
+  std::unique_ptr<ManagedAllocatorCore> core() {
+    return std::unique_ptr<ManagedAllocatorCore>(
+        new ManagedAllocatorCore{this});
   }
 
   Manager(size_t page_size) : page_size_{page_size} {}
@@ -123,35 +107,38 @@ class Manager {
   MemoryPage newPage();
 #endif
 
+  void reset();
+
   ~Manager();
 };
 
 template <typename T>
 class StlManagedAlloc {
-  ManagedAllocatorCore* core_;
-public:
+  ManagedAllocatorCore *core_;
+
+ public:
   using value_type = T;
-  using pointer = value_type*;
+  using pointer = value_type *;
 
-  StlManagedAlloc(ManagedAllocatorCore* core) noexcept : core_{core} {}
+  StlManagedAlloc(ManagedAllocatorCore *core) noexcept : core_{core} {}
 
-  pointer allocate(size_t n) {
-    return core_->allocateArray<T>(n);
+  pointer allocate(size_t n) { return core_->allocateArray<T>(n); }
+
+  void deallocate(T *obj, size_t n) noexcept {
+    // noop!
   }
 
-  void deallocate(T* obj, size_t n) noexcept {
-    //noop!
-  }
-
-  bool operator==(const StlManagedAlloc<T>& o) const noexcept {
+  bool operator==(const StlManagedAlloc<T> &o) const noexcept {
     return core_ == o.core_;
   }
 
-  bool operator!=(const StlManagedAlloc<T>& o) const noexcept {
+  bool operator!=(const StlManagedAlloc<T> &o) const noexcept {
     return !(*this == o);
   }
 };
 
+template <typename T>
+using ManagedVector = std::vector<T, StlManagedAlloc<T>>;
 }
 }
 }

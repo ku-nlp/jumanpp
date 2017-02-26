@@ -18,7 +18,7 @@ Status LatticeBuilder::prepare() {
   u16 nodeCount = 0;
   u32 nodeOffset = 0;
 
-  auto prepareNodes = [&](const LatticeNodeSeed& seed) {
+  auto prepareNodes = [&](const LatticeNodeSeed &seed) {
     while (curStart != seed.codepointStart) {
       boundaries_.emplace_back(curStart, nodeCount, nodeOffset);
       nodeOffset += nodeCount;
@@ -34,15 +34,12 @@ Status LatticeBuilder::prepare() {
     nodeCount += 1;
   }
   LatticePosition eosPos = maxBoundaries_ + 1;
-  LatticeNodeSeed eos {
-      std::numeric_limits<i32>::min(),
-      eosPos,
-      eosPos
-  };
+  LatticeNodeSeed eos{std::numeric_limits<i32>::min(), eosPos, eosPos};
   prepareNodes(eos);
 
   if (boundaries_.front().startCount == 0) {
-    return Status::InvalidParameter() << "could not build lattice, BOS was not connected to anything";
+    return Status::InvalidParameter()
+           << "could not build lattice, BOS was not connected to anything";
   }
   return Status::Ok();
 }

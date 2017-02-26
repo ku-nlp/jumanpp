@@ -36,7 +36,6 @@ TEST_CASE("align works") {
   CHECK(m::Align(4, 4) == 4);
   CHECK(m::Align(5, 4) == 8);
 
-
   CHECK(m::Align(0, 8) == 0);
   CHECK(m::Align(4, 8) == 8);
   CHECK(m::Align(5, 8) == 8);
@@ -46,21 +45,62 @@ TEST_CASE("align works") {
   CHECK(m::Align(9, 8) == 16);
 }
 
-TEST_CASE("basic allocator is working", "[memory]") {
-  m::Manager mgr{1 << 10};
-  auto alloc = mgr.allocator<int>();
-  auto intptr = alloc.make(1);
-  CHECK(intptr != nullptr);
-  CHECK(*intptr == 1);
+TEST_CASE("allocator works with several pages") {
+  m::Manager mgr{1024};
+  auto c = mgr.core();
+  auto a1 = c->allocateArray<int>(200);
+  auto a2 = c->allocateArray<int>(200);
+  auto a3 = c->allocateArray<int>(200);
+  auto a4 = c->allocateArray<int>(200);
+  CHECK(a1 != a2);
+  CHECK(a1 != a3);
+  CHECK(a3 != a4);
+}
+
+TEST_CASE("allocator works with several pages and reset") {
+  m::Manager mgr{1024};
+  auto c = mgr.core();
+  auto a1 = c->allocateArray<int>(200);
+  auto a2 = c->allocateArray<int>(200);
+  auto a3 = c->allocateArray<int>(200);
+  auto a4 = c->allocateArray<int>(200);
+  CHECK(a1 != a2);
+  CHECK(a1 != a3);
+  CHECK(a3 != a4);
+
+  mgr.reset();
+
+  auto b1 = c->allocateArray<int>(180);
+  auto b2 = c->allocateArray<int>(180);
+  auto b3 = c->allocateArray<int>(180);
+  auto b4 = c->allocateArray<int>(180);
+  CHECK(b1 != b2);
+  CHECK(b2 != b3);
+  CHECK(b3 != b4);
+  CHECK(b1 != b3);
+  CHECK(a1 == b1);
+  CHECK(a2 == b2);
+  CHECK(a3 == b3);
+  CHECK(a4 == b4);
+}
+
+TEST_CASE("memory is aligned") {
+  m::Manager mgr {1024};
+  auto c = mgr.core();
+  c->allocate_memory(4, 4);
+  auto ptr = c->allocate_memory(8, 8);
+  CHECK(m::IsAligned(reinterpret_cast<size_t>(ptr), 8));
+  auto ptr2 = c->allocate_memory(8, 128);
+  CHECK(m::IsAligned(reinterpret_cast<size_t>(ptr2), 128));
 }
 
 TEST_CASE("StlManagedAlloc adheres to stl spec") {
-  m::Manager mgr_{1024*1024};
+  m::Manager mgr_{1024 * 1024};
   auto core1 = mgr_.core();
   auto core2 = mgr_.core();
 
-  m::StlManagedAlloc<int> a1{&core1};
-  m::StlManagedAlloc<int> a2{&core2};
+  m::StlManagedAlloc<int> a1{core1.get()};
+  m::StlManagedAlloc<int> a2{core2.get()};
   CHECK(a1 != a2);
 
   m::StlManagedAlloc<int> a3{a2};
@@ -73,9 +113,9 @@ TEST_CASE("StlManagedAlloc adheres to stl spec") {
 }
 
 TEST_CASE("std::vector works with managedalloc") {
-  m::Manager mgr_{1024*1024};
+  m::Manager mgr_{1024};
   auto core = mgr_.core();
-  std::vector<int, m::StlManagedAlloc<int>> mvec{&core};
+  m::ManagedVector<int> mvec{core.get()};
   mvec.push_back(1);
   mvec.push_back(2);
   mvec.push_back(3);
