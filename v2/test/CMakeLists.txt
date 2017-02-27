@@ -1,6 +1,5 @@
 set(JPP_TEST_SOURCES
-        fixed_min_queue_test.cpp
-        status_test.cpp)
+        fixed_min_queue_test.cpp)
 
 
 jpp_test_executable(misc_tests ${JPP_TEST_SOURCES})

@@ -86,9 +86,19 @@ class LatticeBoundary {
   LatticeRightBoundary right;
   LatticeBoundaryConnection connections;
 
+
+  Status initialize() {
+    JPP_RETURN_IF_ERROR(left.initialize());
+    JPP_RETURN_IF_ERROR(right.initialize());
+    JPP_RETURN_IF_ERROR(connections.initialize());
+    return Status::Ok();
+  }
+
  public:
   LatticeBoundary(util::memory::ManagedAllocatorCore* alloc,
                   const LatticeConfig& lc, const LatticeBoundaryConfig& lbc);
+
+  friend class Lattice;
 };
 
 class Lattice {
@@ -98,6 +108,12 @@ class Lattice {
 
  public:
   Lattice(util::memory::ManagedAllocatorCore* alloc, const LatticeConfig& lc);
+  u32 createdBoundaryCount() const { return (u32)boundaries.size(); }
+  Status makeBoundary(const LatticeBoundaryConfig& lbc, LatticeBoundary** ptr);
+
+  LatticeBoundary* boundary(u32 idx) {
+    return &boundaries.at(idx);
+  }
 };
 
 }  // analysis

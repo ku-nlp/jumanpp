@@ -19,6 +19,7 @@ enum class StatusCode : int {
   InvalidParameter = 1,
   InvalidState = 2,
   NotImplemented = 3,
+  EndOfIteration = 4,
   MaxStatus
 };
 
@@ -71,6 +72,10 @@ class Status {
 
   static StatusConstructor NotImplemented() {
     return StatusConstructor{StatusCode::NotImplemented};
+  }
+
+  static Status EndOfIteration() {
+    return Status(StatusCode::EndOfIteration);
   }
 };
 

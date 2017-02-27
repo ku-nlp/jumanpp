@@ -18,7 +18,6 @@ class DictionaryNodeCreator {
 
  public:
   DictionaryNodeCreator(const dic::DictionaryEntries& entries_);
-
   bool spawnNodes(const AnalysisInput& input, LatticeBuilder* lattice);
 };
 

@@ -8,14 +8,14 @@
 namespace jumanpp {
 
 constexpr const char *const StatusNames[] = {
-    "Ok", "InvalidParameter", "InvalidState", "NotImplemented", "MaxStatus"};
+    "Ok", "InvalidParameter", "InvalidState", "NotImplemented", "EndOfIteration", "MaxStatus"};
 
 std::ostream &operator<<(std::ostream &str, const Status &st) {
   int idx = (int)st.code;
   auto *name = StatusNames[idx];
-  str << idx << ":" << name;
+  str << idx << ':' << name;
   if (!st.message.empty()) {
-    str << " " << st.message;
+    str << ' ' << st.message;
   }
   return str;
 }

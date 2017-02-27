@@ -37,6 +37,8 @@ struct BoundaryInfo {
    */
   u16 startCount;
 
+  u16 endCount;
+
   /**
    * If you put all nodes lattice nodes in a single array,
    * ordered by index of first codepoint, then this will
@@ -48,6 +50,10 @@ struct BoundaryInfo {
       : number(number),
         startCount(startCount),
         firstNodeOffset(firstNodeOffset) {}
+};
+
+class LatticeConstructionContext {
+
 };
 
 class LatticeBuilder {
@@ -69,9 +75,25 @@ class LatticeBuilder {
     maxBoundaries_ = maxBoundaries;
   }
 
-  const std::vector<LatticeNodeSeed>& seeds() { return seeds_; }
+  util::ArraySlice<LatticeNodeSeed> seeds() const {
+    return {seeds_.data(), seeds_.size()};
+  }
 
   Status prepare();
+
+  Status constructSingleBoundary(LatticeConstructionContext* context, Lattice* lattice) {
+    auto boundaryIdx = (u32)lattice->createdBoundaryCount();
+    LatticeBoundaryConfig lbc {
+        boundaryIdx,
+        (u32) boundaries_[boundaryIdx].startCount,
+        (u32) boundaries_[boundaryIdx].endCount
+    };
+    LatticeBoundary *boundary;
+    JPP_RETURN_IF_ERROR(lattice->makeBoundary(lbc, &boundary));
+    //fill boundary primitive features
+    //
+    return Status::Ok();
+  }
 };
 
 }  // analysis
