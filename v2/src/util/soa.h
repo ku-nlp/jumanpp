@@ -82,14 +82,12 @@ class StructOfArraysBase : public ManagedObject {
       nfo.byteSize = nfo.objSize * nfo.objects;
     }
 
-    // compute
+    // compute offsets
     size_t offset = 0;
     size_t maxAlignment = 0;
     for (size_t i = 0; i < fields_.size(); ++i) {
       auto& cur = infos->at(i);
-      if (!memory::IsAligned(offset, cur.alignment)) {
-        offset = (offset & (cur.alignment - 1)) + cur.alignment;
-      }
+      offset = Align(offset, cur.alignment);
       cur.offset = offset;
       offset += cur.byteSize;
       maxAlignment = std::max(maxAlignment, cur.alignment);
@@ -164,6 +162,14 @@ class StructOfArraysFactory : public StructOfArraysBase {
   StructOfArraysFactory(const StructOfArraysFactory<Child>& o)
       : StructOfArraysBase(o), itemCount_{o.itemCount_} {}
 
+  Child& child(size_t idx) {
+    return children_->at(idx);
+  }
+
+  const Child& child(size_t idx) const {
+    return children_->at(idx);
+  }
+
  private:
   void initialize(StructOfArraysFactory* child) {
     JPP_DCHECK_EQ(child->fields_.size(), fields_.size());
@@ -195,7 +201,7 @@ class StructOfArraysFactory : public StructOfArraysBase {
 template <typename T, size_t alignment = alignof(T)>
 class SizedArrayField : public SOAField {
   MutableArraySlice<T> objects_;
-  mutable size_t rowCnt_;
+  size_t rowCnt_;
 
  public:
   SizedArrayField(StructOfArraysBase* manager, size_t rows)
