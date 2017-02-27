@@ -162,13 +162,9 @@ class StructOfArraysFactory : public StructOfArraysBase {
   StructOfArraysFactory(const StructOfArraysFactory<Child>& o)
       : StructOfArraysBase(o), itemCount_{o.itemCount_} {}
 
-  Child& child(size_t idx) {
-    return children_->at(idx);
-  }
+  Child& child(size_t idx) { return children_->at(idx); }
 
-  const Child& child(size_t idx) const {
-    return children_->at(idx);
-  }
+  const Child& child(size_t idx) const { return children_->at(idx); }
 
  private:
   void initialize(StructOfArraysFactory* child) {

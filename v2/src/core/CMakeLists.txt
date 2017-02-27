@@ -1,5 +1,5 @@
 set(core_srcs darts_trie.cc dictionary.cc impl/field_import.cc dic_builder.cc
-        analysis/dictionary_node_creator.cc
+        analysis/dictionary_node_creator.cc analysis/lattice_types.cc
         analysis/lattice_builder.cc analysis/analysis_input.cc spec/spec_dsl.cc)
 set(core_hdrs darts.h darts_trie.h dictionary.h impl/field_import.h impl/field_reader.h dic_entries.h
         dic_builder.h spec/spec_grammar.h spec/spec_dsl.h analysis/analysis_input.h analysis/lattice_builder.h

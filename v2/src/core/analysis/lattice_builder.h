@@ -6,14 +6,13 @@
 #define JUMANPP_LATTICE_BUILDER_H
 
 #include <vector>
+#include "lattice_types.h"
 #include "util/status.hpp"
 #include "util/types.hpp"
 
 namespace jumanpp {
 namespace core {
 namespace analysis {
-
-using LatticePosition = u16;
 
 struct LatticeNodeSeed {
   i32 entryPtr;

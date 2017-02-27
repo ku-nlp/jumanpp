@@ -85,7 +85,7 @@ TEST_CASE("allocator works with several pages and reset") {
 }
 
 TEST_CASE("memory is aligned") {
-  m::Manager mgr {1024};
+  m::Manager mgr{1024};
   auto c = mgr.core();
   c->allocate_memory(4, 4);
   auto ptr = c->allocate_memory(8, 8);

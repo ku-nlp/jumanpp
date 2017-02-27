@@ -46,7 +46,7 @@ void* ManagedAllocatorCore::allocate_memory(size_t size, size_t alignment) {
   }
 
   offset_ += requiredSize;
-  //LOG_DEBUG() << "allocated " << requiredSize << " bytes";
+  // LOG_DEBUG() << "allocated " << requiredSize << " bytes";
   return base_ + address;
 }
 

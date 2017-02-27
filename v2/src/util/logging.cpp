@@ -14,7 +14,8 @@ WriteInDestructorLoggerImpl::~WriteInDestructorLoggerImpl() {
 }
 
 WriteInDestructorLoggerImpl::WriteInDestructorLoggerImpl(const char *file,
-                                                         int line, Level lvl): level_{lvl} {
+                                                         int line, Level lvl)
+    : level_{lvl} {
   switch (lvl) {
     case Level::Debug:
       data_ << "D ";

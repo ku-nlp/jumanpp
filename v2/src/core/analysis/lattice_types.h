@@ -7,12 +7,12 @@
 
 #include "util/soa.h"
 #include "util/types.hpp"
-#include "lattice_builder.h"
 
 namespace jumanpp {
 namespace core {
 namespace analysis {
 
+using LatticePosition = u16;
 using Score = float;
 
 struct ConnectionPtr {
@@ -48,10 +48,11 @@ struct ConnectionBeamElement {
 
 class LatticeLeftBoundary final : public util::memory::StructOfArrays {
   util::memory::SizedArrayField<LatticeNodePtr> endingNodes;
-public:
-  LatticeLeftBoundary(util::memory::ManagedAllocatorCore* alloc, const LatticeConfig& lc, const LatticeBoundaryConfig& lbc):
-      StructOfArrays(alloc, lbc.endNodes),
-      endingNodes{this, 1} {}
+
+ public:
+  LatticeLeftBoundary(util::memory::ManagedAllocatorCore* alloc,
+                      const LatticeConfig& lc,
+                      const LatticeBoundaryConfig& lbc);
 };
 
 class LatticeRightBoundary final : public util::memory::StructOfArrays {
@@ -59,28 +60,24 @@ class LatticeRightBoundary final : public util::memory::StructOfArrays {
   util::memory::SizedArrayField<i32, 64> primitiveFeatures;
   util::memory::SizedArrayField<u64, 64> featurePatterns;
   util::memory::SizedArrayField<ConnectionBeamElement, 64> beam;
-public:
-  LatticeRightBoundary(util::memory::ManagedAllocatorCore* alloc, const LatticeConfig& lc, const LatticeBoundaryConfig& lbc):
-      StructOfArrays(alloc, lbc.beginNodes),
-      dicPtrs{this, 1},
-      primitiveFeatures{this, lc.numPrimitiveFeatures},
-      featurePatterns{this, lc.numFeaturePatterns},
-      beam{this, lc.beamSize} {}
+
+ public:
+  LatticeRightBoundary(util::memory::ManagedAllocatorCore* alloc,
+                       const LatticeConfig& lc,
+                       const LatticeBoundaryConfig& lbc);
 };
 
-class LatticeBoundaryConnection final: public util::memory::StructOfArraysFactory<LatticeBoundaryConnection> {
+class LatticeBoundaryConnection final
+    : public util::memory::StructOfArraysFactory<LatticeBoundaryConnection> {
   util::memory::SizedArrayField<u32, 64> features;
   util::memory::SizedArrayField<Score> featureScores;
-public:
-  LatticeBoundaryConnection(util::memory::ManagedAllocatorCore* alloc, const LatticeConfig& lc, const LatticeBoundaryConfig& lbc):
-    StructOfArraysFactory(alloc, lbc.beginNodes * lc.beamSize, lbc.endNodes),
-    features{this, lc.numFinalFeatures},
-    featureScores{this, 1}{}
 
-  LatticeBoundaryConnection(const LatticeBoundaryConnection& o):
-      StructOfArraysFactory(o),
-      features{this, o.features.requiredSize()},
-      featureScores{this, 1} {}
+ public:
+  LatticeBoundaryConnection(util::memory::ManagedAllocatorCore* alloc,
+                            const LatticeConfig& lc,
+                            const LatticeBoundaryConfig& lbc);
+
+  LatticeBoundaryConnection(const LatticeBoundaryConnection& o);
 };
 
 class LatticeBoundary {
@@ -89,12 +86,9 @@ class LatticeBoundary {
   LatticeRightBoundary right;
   LatticeBoundaryConnection connections;
 
-public:
-  LatticeBoundary(util::memory::ManagedAllocatorCore* alloc, const LatticeConfig& lc, const LatticeBoundaryConfig& lbc):
-      config{lbc},
-      left{alloc, lc, lbc},
-      right{alloc, lc, lbc},
-      connections{alloc, lc, lbc} {}
+ public:
+  LatticeBoundary(util::memory::ManagedAllocatorCore* alloc,
+                  const LatticeConfig& lc, const LatticeBoundaryConfig& lbc);
 };
 
 class Lattice {
@@ -102,10 +96,8 @@ class Lattice {
   LatticeConfig lconf;
   util::memory::ManagedAllocatorCore* alloc;
 
-public:
-  Lattice(util::memory::ManagedAllocatorCore* alloc, const LatticeConfig& lc): boundaries{alloc}, alloc{alloc}, lconf{lc} {
-    boundaries.reserve(lc.numBoundaries);
-  }
+ public:
+  Lattice(util::memory::ManagedAllocatorCore* alloc, const LatticeConfig& lc);
 };
 
 }  // analysis
