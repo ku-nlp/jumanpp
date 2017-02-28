@@ -8,6 +8,7 @@
 #include <vector>
 #include "core/spec/spec_types.h"
 #include "util/inlined_vector.h"
+#include "util/memory.hpp"
 #include "util/status.hpp"
 #include "util/string_piece.h"
 
@@ -25,9 +26,7 @@ class DslOpBase {
 class FieldBuilder;
 class FeatureBuilder;
 class UnkWordBuilder;
-class UniFeatureBuilder;
-class BiFeatureBuilder;
-class TriFeatureBuilder;
+class FeatureCombinator;
 
 enum class TransformType {
   Invalid,
@@ -55,6 +54,7 @@ class FieldReference {
 };
 
 class FieldBuilder : public DslOpBase {
+  util::memory::ManagedAllocatorCore* alloc_;
   i32 csvColumn_;
   StringPiece name_;
   ColumnType columnType_ = ColumnType::Error;
@@ -64,8 +64,9 @@ class FieldBuilder : public DslOpBase {
   FieldBuilder() {}
 
  public:
-  FieldBuilder(i32 csvColumn_, const StringPiece& name_)
-      : csvColumn_(csvColumn_), name_(name_) {}
+  FieldBuilder(util::memory::ManagedAllocatorCore* alloc, i32 csvColumn_,
+               const StringPiece& name_)
+      : alloc_{alloc}, csvColumn_(csvColumn_), name_(name_) {}
 
   FieldBuilder& strings() {
     columnType_ = ColumnType::String;
@@ -111,7 +112,7 @@ class FieldBuilder : public DslOpBase {
 
   i32 getCsvColumn() const { return csvColumn_; }
 
-  const StringPiece& name() const { return name_; }
+  StringPiece name() const { return name_; }
 
   ColumnType getColumnType() const { return columnType_; }
 
@@ -187,24 +188,62 @@ class FeatureBuilder : DslOpBase {
   Status validate() const override;
 };
 
+class FeatureRef {
+  StringPiece name_;
+
+ public:
+  FeatureRef(const FieldBuilder& fld) : name_{fld.name()} {}
+  FeatureRef(const FeatureBuilder& ft) : name_{ft.name()} {}
+  StringPiece name() const { return name_; }
+};
+
+class FeatureCombinator {
+  util::memory::ManagedVector<util::memory::ManagedVector<FeatureRef>> data;
+  friend class ModelSpecBuilder;
+
+ public:
+  FeatureCombinator(util::memory::ManagedAllocatorCore* alloc) : data{alloc} {}
+};
+
 class ModelSpecBuilder : public DslOpBase {
-  std::vector<FieldBuilder> fields_;
-  std::vector<FeatureBuilder> features_;
+  util::memory::Manager memmgr_;
+  std::unique_ptr<util::memory::ManagedAllocatorCore> alloc_;
+  util::memory::ManagedVector<FieldBuilder*> fields_;
+  util::memory::ManagedVector<FeatureBuilder*> features_;
+  util::memory::ManagedVector<FeatureCombinator*> combinators_;
 
   void makeFields(AnalysisSpec* spec) const;
 
  public:
+  ModelSpecBuilder(size_t page_size = 16 * 1024)
+      : memmgr_{page_size},
+        alloc_{memmgr_.core()},
+        fields_{alloc_.get()},
+        features_{alloc_.get()},
+        combinators_{alloc_.get()} {}
+
   FieldBuilder& field(i32 csvColumn, StringPiece name) {
-    fields_.emplace_back(csvColumn, name);
-    return fields_.back();
+    auto ptr = alloc_->make<FieldBuilder>(alloc_.get(), csvColumn, name);
+    fields_.emplace_back(ptr);
+    return *ptr;
   }
 
   FeatureBuilder& feature(StringPiece name) {
-    features_.emplace_back(name);
-    return features_.back();
+    auto ptr = alloc_->make<FeatureBuilder>(name);
+    features_.emplace_back(ptr);
+    return *ptr;
+  }
+
+  void unigram(const std::initializer_list<FeatureRef>& f1) {
+    auto cmb = alloc_->make<FeatureCombinator>(alloc_.get());
+    auto& data = cmb->data;
+    data.emplace_back(f1, alloc_.get());
+    combinators_.emplace_back(cmb);
   }
 
   Status validateFields() const;
+  Status validateNames() const;
+  Status validateFeatures() const;
   virtual Status validate() const override;
   Status build(AnalysisSpec* spec) const;
 };

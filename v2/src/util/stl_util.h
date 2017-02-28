@@ -5,6 +5,8 @@
 #ifndef JUMANPP_STL_UTIL_H
 #define JUMANPP_STL_UTIL_H
 
+#include <initializer_list>
+
 namespace jumanpp {
 namespace util {
 
@@ -16,6 +18,11 @@ inline bool contains(const C& c, const I& i) {
     }
   }
   return false;
+}
+
+template <typename T>
+inline bool contains(std::initializer_list<T> data, const T& obj) {
+  return contains<std::initializer_list<T>, T>(data, obj);
 }
 
 }  // util

@@ -4,6 +4,7 @@
 
 #include "spec_dsl.h"
 #include "util/flatset.h"
+#include "util/stl_util.h"
 
 namespace jumanpp {
 namespace core {
@@ -12,21 +13,15 @@ namespace dsl {
 
 Status ModelSpecBuilder::validateFields() const {
   util::FlatSet<i32> fieldIdx;
-  util::FlatSet<StringPiece> fieldName;
   i32 indexCount = 0;
-  for (auto& f : fields_) {
+  for (auto fp : fields_) {
+    auto& f = *fp;
     JPP_RETURN_IF_ERROR(f.validate());
     if (fieldIdx.count(f.getCsvColumn()) == 0) {
       fieldIdx.insert(f.getCsvColumn());
     } else {
       return Status::InvalidParameter()
              << "coulmn indexes should be unique FAIL: " << f.name();
-    }
-    if (fieldName.count(f.name()) == 0) {
-      fieldName.insert(f.name());
-    } else {
-      return Status::InvalidParameter() << "field names should be unique, "
-                                        << f.name() << " is not";
     }
     if (f.isTrieIndex()) {
       indexCount += 1;
@@ -41,6 +36,28 @@ Status ModelSpecBuilder::validateFields() const {
 
 Status ModelSpecBuilder::validate() const {
   JPP_RETURN_IF_ERROR(validateFields());
+  JPP_RETURN_IF_ERROR(validateNames());
+  JPP_RETURN_IF_ERROR(validateFeatures());
+  return Status::Ok();
+}
+
+Status ModelSpecBuilder::validateNames() const {
+  util::FlatSet<StringPiece> current;
+  for (auto fld : fields_) {
+    if (current.count(fld->name()) != 0) {
+      return Status::InvalidParameter() << "field " << fld->name()
+                                        << " has non-unique name";
+    }
+    current.insert(fld->name());
+  }
+
+  for (auto feature : features_) {
+    if (current.count(feature->name()) != 0) {
+      return Status::InvalidParameter() << "feature " << feature->name()
+                                        << " has non-unique name";
+    }
+  }
+
   return Status::Ok();
 }
 
@@ -57,11 +74,19 @@ void ModelSpecBuilder::makeFields(AnalysisSpec* spec) const {
     cols.emplace_back();  // make one with default constructor
     auto* col = &cols.back();
     col->index = (i32)i;
-    f.fill(&cols.back());
-    if (f.isTrieIndex()) {
+    f->fill(&cols.back());
+    if (f->isTrieIndex()) {
       spec->indexColumn = (i32)i;
     }
   }
+}
+
+Status ModelSpecBuilder::validateFeatures() const {
+  for (auto f : features_) {
+    JPP_RETURN_IF_ERROR(f->validate());
+  }
+
+  return Status::Ok();
 }
 
 Status FieldBuilder::validate() const {
@@ -111,6 +136,20 @@ Status FeatureBuilder::validate() const {
   if (type_ == FeatureType::Length && fields_.size() != 1) {
     return Status::InvalidState() << "feature " << name_
                                   << " can contain only one field reference";
+  }
+
+  if ((trueTransforms_.size() != 0) ^ (falseTransforms_.size() != 0)) {
+    return Status::InvalidParameter()
+           << name_
+           << ": matching features must ether have both branches or have none";
+  }
+
+  if (trueTransforms_.size() != 0 && falseTransforms_.size() != 0) {
+    if (!util::contains({FeatureType::MatchCsv, FeatureType::MatchValue},
+                        type_)) {
+      return Status::InvalidParameter()
+             << name_ << ": only matching features can have branches";
+    }
   }
 
   return Status::Ok();

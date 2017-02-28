@@ -10,6 +10,17 @@ using namespace jumanpp::core::spec::dsl;
 #define VALID(x) CHECK_OK((x).validate());
 #define NOT_VALID(x) CHECK(!(x).validate().isOk());
 
+TEST_CASE("fields have names and references are stable") {
+  ModelSpecBuilder spec;
+  auto& f1 = spec.field(1, "d1");
+  auto& f2 = spec.field(2, "d2");
+  auto& f3 = spec.field(4, "d5");
+  auto& f4 = spec.field(5, "d7");
+  auto& f5 = spec.field(7, "d9");
+  CHECK(f1.name() == "d1");
+  CHECK(f2.name() == "d2");
+}
+
 TEST_CASE("create and validate fields") {
   ModelSpecBuilder spec;
   VALID(spec.field(1, "test").strings());
@@ -58,6 +69,8 @@ TEST_CASE("feature length transform") {
   VALID(spec);
 }
 
+// this pattern allows to implement
+// aux word feature from jppv1
 TEST_CASE("feature value match") {
   ModelSpecBuilder spec;
   auto& f1 = spec.field(1, "f1").strings().trieIndex();
@@ -68,5 +81,43 @@ TEST_CASE("feature value match") {
                   .ifTrue({f2.value(), f3.value()})
                   .ifFalse({f3.value()});
   VALID(ft1);
+  VALID(spec);
+}
+
+TEST_CASE("matching feature has only one branch") {
+  ModelSpecBuilder spec;
+  auto& f1 = spec.field(1, "f1").strings().trieIndex();
+  auto& f2 = spec.field(2, "f2").strings();
+  auto& f3 = spec.field(3, "f3").strings();
+  auto& ft1 = spec.feature("ft1")
+                  .matchValue(f1, "test")
+                  .ifTrue({f2.value(), f3.value()});
+  auto& ft2 = spec.feature("ft1").matchValue(f1, "test").ifFalse({f3.value()});
+  NOT_VALID(ft1);
+  NOT_VALID(ft2);
+}
+
+TEST_CASE("branches on non-matching features") {
+  ModelSpecBuilder spec;
+  auto& f1 = spec.field(1, "f1").strings().trieIndex();
+  auto& f2 = spec.field(2, "f2").strings();
+  auto& f3 = spec.field(3, "f3").strings();
+  auto& ft1 = spec.feature("ft1")
+                  .ifTrue({f2.value(), f3.value()})
+                  .ifFalse({f3.value()});
+  auto& ft2 = spec.feature("ft2").ifFalse({f3.value()});
+  auto& ft3 = spec.feature("ft3").ifTrue({f2.value(), f3.value()});
+  NOT_VALID(ft1);
+  NOT_VALID(ft2);
+  NOT_VALID(ft3);
+}
+
+TEST_CASE("can use unigram combiners") {
+  ModelSpecBuilder spec;
+  auto& f1 = spec.field(1, "f1").strings().trieIndex();
+  auto& f2 = spec.field(2, "f2").strings();
+  auto& f3 = spec.field(3, "f3").strings();
+  spec.unigram({f1});
+  spec.unigram({f2, f3});
   VALID(spec);
 }

@@ -14,7 +14,7 @@ namespace jumanpp {
 namespace core {
 namespace features {
 
-enum class PrimitiveFeatureKind { Copy, MatchDic, MatchAnyDic, Provided };
+using spec::PrimitiveFeatureKind;
 
 struct PrimitiveFeature {
   StringPiece name;
