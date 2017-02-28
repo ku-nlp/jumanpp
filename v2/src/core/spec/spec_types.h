@@ -26,7 +26,14 @@ struct FieldDescriptor {
   StringPiece emptyString = StringPiece{""};
 };
 
-enum class PrimitiveFeatureKind { Copy, MatchDic, MatchAnyDic, Provided };
+enum class PrimitiveFeatureKind {
+  Invalid,
+  Copy,
+  MatchDic,
+  MatchAnyDic,
+  Provided,
+  Length
+};
 
 struct PrimitiveFeatureDescriptor {
   i32 index;
@@ -36,13 +43,15 @@ struct PrimitiveFeatureDescriptor {
   std::vector<std::string> matchData;
 };
 
-enum class ComputationFeatureKind { Single, Tuple };
+struct MatchReference {
+  i32 featureIdx;
+  i32 dicFieldIdx;
+};
 
 struct ComputationFeatureDescriptor {
   i32 index;
   std::string name;
-  ComputationFeatureKind kind;
-  std::vector<i32> matchReference;
+  std::vector<MatchReference> matchReference;
   std::vector<std::string> matchData;
   std::vector<i32> trueBranch;
   std::vector<i32> falseBranch;
@@ -63,6 +72,7 @@ struct FeaturesSpec {
   std::vector<ComputationFeatureDescriptor> computation;
   std::vector<PatternFeatureDescriptor> pattern;
   std::vector<FinalFeatureDescriptor> final;
+  i32 totalPrimitives = -1;
 };
 
 struct AnalysisSpec {

@@ -50,6 +50,10 @@ class ExtraNodesContext {
     JPP_DCHECK_IN(idx, 0, extraNodes.size());
     return extraNodes[idx];
   }
+
+  i32 lengthOf(i32 field, i32 fieldPtr) {
+    return -1;  // TODO implement
+  }
 };
 
 }  // analysis

@@ -5,6 +5,7 @@
 #ifndef JUMANPP_FLATMAP_H
 #define JUMANPP_FLATMAP_H
 
+#include <functional>
 #include "common.hpp"
 #include "flatrep.h"
 #include "types.hpp"

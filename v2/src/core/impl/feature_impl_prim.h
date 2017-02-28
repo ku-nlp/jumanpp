@@ -29,6 +29,12 @@ class DicListTraversal {
   bool next(i32* result) { return trav_.readOneCumulative(result); }
 };
 
+/**
+ * This showsh which dictionary storage field for a column
+ * should be used for computations
+ */
+enum class LengthFieldSource { Invalid, Strings, Positions };
+
 class PrimitiveFeatureContext {
   analysis::ExtraNodesContext* extraCtx;
   dic::FieldsHolder* fields;
@@ -54,6 +60,37 @@ class PrimitiveFeatureContext {
       i32 field, std::initializer_list<spec::ColumnType> columnTypes) const;
 
   Status checkProvidedFeature(u32 index) const { return Status::Ok(); }
+
+  i32 lengthOf(i32 fieldNum, i32 fieldPtr, LengthFieldSource field) {
+    if (fieldPtr < 0) {
+      return extraCtx->lengthOf(fieldNum, fieldPtr);
+    }
+    auto fld = fields->at(fieldNum);
+    switch (field) {
+      case LengthFieldSource::Positions:
+        return fld.postions.lengthOf(fieldPtr);
+      case LengthFieldSource::Strings:
+        return fld.strings.lengthOf(fieldPtr);
+      default:
+        return -1;
+    }
+  }
+
+  Status setLengthField(i32 fieldNum, LengthFieldSource* field) {
+    auto fld = fields->at(fieldNum);
+    auto type = fld.columnType;
+    if (type == spec::ColumnType::StringList) {
+      *field = LengthFieldSource::Positions;
+    } else if (type == spec::ColumnType::String) {
+      *field = LengthFieldSource::Strings;
+    } else {
+      return Status::InvalidState()
+             << "field " << fld.name << " typed " << fld.columnType
+             << " can not be used for length calculation";
+    }
+
+    return Status::Ok();
+  }
 };
 
 class FeatureImplBase {
@@ -123,6 +160,29 @@ class ProvidedPrimFeatureImpl {
                     const util::ArraySlice<i32>& entry,
                     util::MutableArraySlice<u64>* features) const noexcept {
     features->at(featureIdx) = ctx->providedFeature(entryPtr, providedIdx);
+  }
+};
+
+class LengthPrimFeatureImpl {
+  u32 fieldIdx;
+  u32 featureIdx;
+  LengthFieldSource field = LengthFieldSource::Invalid;
+
+ public:
+  LengthPrimFeatureImpl() {}
+  constexpr LengthPrimFeatureImpl(u32 fieldIdx, u32 featureIdx,
+                                  LengthFieldSource fld)
+      : fieldIdx{fieldIdx}, featureIdx{featureIdx}, field{fld} {}
+
+  Status initialize(PrimitiveFeatureContext* ctx, const PrimitiveFeature& f);
+
+  inline void apply(PrimitiveFeatureContext* ctx, EntryPtr entryPtr,
+                    const util::ArraySlice<i32>& entry,
+                    util::MutableArraySlice<u64>* features) const noexcept {
+    auto fldPtr = entry[fieldIdx];
+    auto length = ctx->lengthOf(fieldIdx, fldPtr, field);
+    JPP_DCHECK_NE(length, -1);
+    features->at(featureIdx) = length;
   }
 };
 

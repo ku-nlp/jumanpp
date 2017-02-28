@@ -22,10 +22,10 @@ Status CopyPrimFeatureImpl::initialize(PrimitiveFeatureContext *ctx,
                                       << ": number of parameters must be 1";
   }
 
+  fieldIdx = static_cast<u32>(f.references.at(0));
+
   JPP_RETURN_IF_ERROR(ctx->checkFieldType(
       fieldIdx, {spec::ColumnType::String, spec::ColumnType::Int}));
-
-  fieldIdx = static_cast<u32>(f.references.at(0));
 
   return Status::Ok();
 }
@@ -45,6 +45,26 @@ Status ProvidedPrimFeatureImpl::initialize(PrimitiveFeatureContext *ctx,
   providedIdx = static_cast<u32>(f.references.at(0));
 
   JPP_RETURN_IF_ERROR(ctx->checkProvidedFeature(providedIdx));
+
+  return Status::Ok();
+}
+
+Status LengthPrimFeatureImpl::initialize(PrimitiveFeatureContext *ctx,
+                                         const PrimitiveFeature &f) {
+  if (f.kind != PrimitiveFeatureKind::Length) {
+    return Status::InvalidParameter() << f.name << ": type was not Length";
+  }
+
+  featureIdx = static_cast<u32>(f.index);
+
+  if (f.references.size() != 1) {
+    return Status::InvalidParameter() << f.name
+                                      << ": number of parameters must be 1";
+  }
+
+  fieldIdx = static_cast<u32>(f.references.at(0));
+
+  JPP_RETURN_IF_ERROR(ctx->setLengthField(fieldIdx, &field));
 
   return Status::Ok();
 }
@@ -124,6 +144,8 @@ Status PrimitiveFeaturesDynamicHolder::initialize(
   for (auto &f : featureData) {
     std::unique_ptr<PrimitiveFeatureImpl> feature;
     switch (f.kind) {
+      case PrimitiveFeatureKind::Invalid:
+        return Status::InvalidParameter() << "uninitialized feature " << f.name;
       case PrimitiveFeatureKind::Copy:
         feature.reset(new DynamicPrimitiveFeature<CopyPrimFeatureImpl>{});
         break;
@@ -137,6 +159,8 @@ Status PrimitiveFeaturesDynamicHolder::initialize(
         feature.reset(
             new DynamicPrimitiveFeature<MatchAnyDicPrimFeatureImpl>{});
         break;
+      case PrimitiveFeatureKind::Length:
+        feature.reset(new DynamicPrimitiveFeature<LengthPrimFeatureImpl>{});
     }
     JPP_RETURN_IF_ERROR(feature->initialize(ctx, f));
   }

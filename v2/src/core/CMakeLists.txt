@@ -7,7 +7,7 @@ set(core_hdrs darts.h darts_trie.h dictionary.h impl/field_import.h impl/field_r
         impl/feature_types.h impl/feature_impl_prim.h core_types.h)
 set(core_test_srcs darts_trie_test.cc dictionary_test.cc impl/field_import_test.cc
         impl/field_reader_test.cc impl/feature_impl_prim_test.cc)
-set(spec_test_srcs spec/spec_grammar_test.cc spec/spec_dsl_test.cc)
+set(spec_test_srcs spec/spec_grammar_test.cc spec/spec_dsl_test.cc spec/spec_dsl_feature_test.cc)
 set(analysis_test_srcs analysis/dictionary_node_creator_test.cc analysis/lattice_types_test.cc)
 
 add_library(jpp_core ${core_srcs} ${core_hdrs} ${libs3p_pegtl_headers} spec/spec_types.cc)

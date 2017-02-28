@@ -5,8 +5,10 @@
 #ifndef JUMANPP_SPEC_DSL_H
 #define JUMANPP_SPEC_DSL_H
 
+#include <util/array_slice.h>
 #include <vector>
 #include "core/spec/spec_types.h"
+#include "util/flatset.h"
 #include "util/inlined_vector.h"
 #include "util/memory.hpp"
 #include "util/status.hpp"
@@ -125,9 +127,17 @@ class FieldBuilder : public DslOpBase {
   void fill(FieldDescriptor* descriptor) const;
 };
 
-enum class FeatureType { Initial, Invalid, MatchValue, MatchCsv, Length };
+enum class FeatureType {
+  Initial,
+  Invalid,
+  MatchValue,
+  MatchCsv,
+  Length,
+  Placeholder
+};
 
 class FeatureBuilder : DslOpBase {
+  bool handled = false;
   StringPiece name_;
   FeatureType type_ = FeatureType::Initial;
   StringPiece matchData_;
@@ -143,10 +153,17 @@ class FeatureBuilder : DslOpBase {
     }
   }
 
+  friend class ModelSpecBuilder;
+
  public:
   FeatureBuilder(const StringPiece& name_) : name_(name_) {}
 
   StringPiece name() const { return name_; }
+
+  FeatureBuilder& placeholder() {
+    changeType(FeatureType::Placeholder);
+    return *this;
+  }
 
   FeatureBuilder& length(FieldBuilder& field) {
     fields_.push_back(field.name());
@@ -211,8 +228,21 @@ class ModelSpecBuilder : public DslOpBase {
   util::memory::ManagedVector<FieldBuilder*> fields_;
   util::memory::ManagedVector<FeatureBuilder*> features_;
   util::memory::ManagedVector<FeatureCombinator*> combinators_;
+  mutable i32 currentFeature_ = 0;
 
   void makeFields(AnalysisSpec* spec) const;
+  Status makeFeatures(AnalysisSpec* spec) const;
+  void collectUsedNames(util::FlatSet<StringPiece>* names) const;
+  void createCopyFeatures(
+      const util::ArraySlice<FieldDescriptor>& fields,
+      const util::FlatSet<StringPiece>& names,
+      std::vector<PrimitiveFeatureDescriptor>* result) const;
+  Status createRemainingPrimitiveFeatures(
+      const util::ArraySlice<FieldDescriptor>& fields,
+      std::vector<PrimitiveFeatureDescriptor>* result) const;
+  Status checkNoFeatureIsLeft() const;
+  Status createPatternsAndFinalFeatures(FeaturesSpec* spec) const;
+  Status createComputeFeatures(FeaturesSpec* fspec) const;
 
  public:
   ModelSpecBuilder(size_t page_size = 16 * 1024)

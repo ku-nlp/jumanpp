@@ -22,8 +22,16 @@ class StringStorageReader {
 
   bool readAt(i32 ptr, StringPiece* ret) const noexcept {
     util::CodedBufferParser parser;
-    parser.reset(data_.slice(ptr, data_.size()));
+    parser.reset(data_.from(ptr));
     return parser.readStringPiece(ret);
+  }
+
+  i32 lengthOf(i32 ptr) {
+    JPP_DCHECK_IN(ptr, 0, data_.size());
+    util::CodedBufferParser parser{data_.from(ptr)};
+    i32 value = -1;
+    parser.readInt(&value);
+    return value;
   }
 };
 
@@ -81,8 +89,7 @@ class IntStorageReader {
   IntStorageReader(const StringPiece& obj) : data_{obj} {}
 
   IntListTraversal rawWithLimit(i32 ptr, i32 length) {
-    JPP_DCHECK_GE(ptr, 0);
-    JPP_DCHECK_LT(ptr, data_.size());
+    JPP_DCHECK_IN(ptr, 0, data_.size());
     JPP_DCHECK_GE(length, 0);
     JPP_DCHECK_LE(length, data_.size() - ptr);  // this is a lower bound
     util::CodedBufferParser parser{data_.from(ptr)};
@@ -90,8 +97,7 @@ class IntStorageReader {
   }
 
   IntListTraversal listAt(i32 ptr) const noexcept {
-    JPP_DCHECK_GE(ptr, 0);
-    JPP_DCHECK_LT(ptr, data_.size());
+    JPP_DCHECK_IN(ptr, 0, data_.size());
     util::CodedBufferParser parser{data_.from(ptr)};
     i32 size;
     if (!parser.readInt(&size)) {
@@ -101,6 +107,14 @@ class IntStorageReader {
     }
 
     return IntListTraversal{size, parser};
+  }
+
+  i32 lengthOf(i32 ptr) {
+    JPP_DCHECK_IN(ptr, 0, data_.size());
+    util::CodedBufferParser parser{data_.from(ptr)};
+    i32 value = -1;
+    parser.readInt(&value);
+    return value;
   }
 };
 

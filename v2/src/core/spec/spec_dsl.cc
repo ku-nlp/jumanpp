@@ -3,6 +3,8 @@
 //
 
 #include "spec_dsl.h"
+#include "util/csv_reader.h"
+#include "util/flatmap.h"
 #include "util/flatset.h"
 #include "util/stl_util.h"
 
@@ -64,6 +66,7 @@ Status ModelSpecBuilder::validateNames() const {
 Status ModelSpecBuilder::build(AnalysisSpec* spec) const {
   JPP_RETURN_IF_ERROR(validate());
   makeFields(spec);
+  JPP_RETURN_IF_ERROR(makeFeatures(spec));
   return Status::Ok();
 }
 
@@ -83,9 +86,323 @@ void ModelSpecBuilder::makeFields(AnalysisSpec* spec) const {
 
 Status ModelSpecBuilder::validateFeatures() const {
   for (auto f : features_) {
+    f->handled = false;
     JPP_RETURN_IF_ERROR(f->validate());
   }
 
+  return Status::Ok();
+}
+
+Status ModelSpecBuilder::makeFeatures(AnalysisSpec* spec) const {
+  currentFeature_ = 0;
+  FeaturesSpec& feats = spec->features;
+  util::FlatSet<StringPiece> names;
+  collectUsedNames(&names);
+  createCopyFeatures(spec->columns, names, &feats.primitive);
+  JPP_RETURN_IF_ERROR(
+      createRemainingPrimitiveFeatures(spec->columns, &feats.primitive));
+  JPP_RETURN_IF_ERROR(createComputeFeatures(&feats));
+  JPP_RETURN_IF_ERROR(checkNoFeatureIsLeft());
+  JPP_RETURN_IF_ERROR(createPatternsAndFinalFeatures(&feats));
+  feats.totalPrimitives = currentFeature_;
+
+  return Status::Ok();
+}
+
+void ModelSpecBuilder::collectUsedNames(
+    util::FlatSet<StringPiece>* names) const {
+  for (auto c : combinators_) {
+    for (auto& vec : c->data) {
+      for (auto& ref : vec) {
+        names->insert(ref.name());
+      }
+    }
+  }
+  for (auto f : features_) {
+    for (auto& fld : f->fields_) {
+      names->insert(fld);
+    }
+    for (auto& x : f->trueTransforms_) {
+      names->insert(x.fieldName);
+    }
+    for (auto& x : f->falseTransforms_) {
+      names->insert(x.fieldName);
+    }
+  }
+}
+
+void ModelSpecBuilder::createCopyFeatures(
+    const util::ArraySlice<FieldDescriptor>& fields,
+    const util::FlatSet<StringPiece>& names,
+    std::vector<PrimitiveFeatureDescriptor>* result) const {
+  auto field_types = {ColumnType::String, ColumnType::Int};
+
+  for (auto& f : fields) {
+    if (!util::contains(field_types, f.columnType)) {
+      continue;
+    }
+
+    if (names.count(f.name) != 0) {
+      PrimitiveFeatureDescriptor copy;
+      copy.name = f.name;
+      copy.index = currentFeature_++;
+      copy.kind = PrimitiveFeatureKind::Copy;
+      copy.references.push_back(f.index);
+      result->push_back(copy);
+    }
+  }
+}
+
+Status findOnlyFieldForFeature(util::ArraySlice<FieldDescriptor> fields,
+                               StringPiece featureName,
+                               util::ArraySlice<StringPiece> references,
+                               i32* result) {
+  if (references.size() != 1) {
+    return Status::InvalidParameter()
+           << featureName << ": feature can have only one parameter";
+  }
+  auto fname = references[0];
+  auto res = std::find_if(
+      fields.begin(), fields.end(),
+      [fname](const FieldDescriptor& fd) -> bool { return fname == fd.name; });
+
+  if (res == fields.end()) {
+    return Status::InvalidState() << "feature " << featureName
+                                  << " was referring to unknown field "
+                                  << fname;
+  }
+
+  *result = res->index;
+
+  return Status::Ok();
+}
+
+Status ModelSpecBuilder::createRemainingPrimitiveFeatures(
+    const util::ArraySlice<FieldDescriptor>& fields,
+    std::vector<PrimitiveFeatureDescriptor>* result) const {
+  for (auto f : features_) {
+    auto type = f->type_;
+    PrimitiveFeatureDescriptor pfd;
+    pfd.kind = PrimitiveFeatureKind::Invalid;
+
+    if (type == FeatureType::Placeholder) {
+      f->handled = true;
+      pfd.kind = PrimitiveFeatureKind::Provided;
+    } else if (type == FeatureType::Length) {
+      i32 index = 0;
+      JPP_RETURN_IF_ERROR(
+          findOnlyFieldForFeature(fields, f->name(), f->fields_, &index));
+      f->handled = true;
+      pfd.kind = PrimitiveFeatureKind::Length;
+      pfd.references.push_back(index);
+    } else if (type == FeatureType::MatchValue) {
+      if (f->fields_.size() == 1) {
+        i32 index = 0;
+        JPP_RETURN_IF_ERROR(
+            findOnlyFieldForFeature(fields, f->name(), f->fields_, &index));
+        auto res = fields[index];
+        f->handled = true;
+        pfd.references.push_back(res.index);
+        pfd.matchData.push_back(f->matchData_.str());
+        using ct = ColumnType;
+        if (util::contains({ct::String, ct::Int}, res.columnType)) {
+          pfd.kind = PrimitiveFeatureKind::MatchDic;
+        } else if (ColumnType::StringList == res.columnType) {
+          pfd.kind = PrimitiveFeatureKind::MatchAnyDic;
+        } else {
+          return Status::NotImplemented()
+                 << "building match feature: unupported column class "
+                 << res.columnType << " for feature " << f->name();
+        }
+      }
+    }
+
+    if (f->handled) {
+      pfd.name = f->name().str();
+      pfd.index = currentFeature_++;
+      result->push_back(pfd);
+    }
+  }
+  return Status::Ok();
+}
+
+Status checkTfType(const FieldExpression& ex) {
+  if (ex.type != TransformType::Value) {
+    return Status::InvalidParameter()
+           << "match fields support only value references";
+  }
+  return Status::Ok();
+}
+
+Status readMatchDataCsv(StringPiece csvdata, size_t columns,
+                        std::vector<std::string>* result) {
+  util::CsvReader csvr;
+  JPP_RETURN_IF_ERROR(csvr.initFromMemory(csvdata));
+  while (csvr.nextLine()) {
+    if (csvr.numFields() != columns) {
+      return Status::InvalidParameter()
+             << "on line " << csvr.lineNumber() << " of csv there were "
+             << csvr.numFields() << " columns, expected " << columns;
+    }
+    for (i32 i = 0; i < columns; ++i) {
+      result->push_back(csvr.field(i).str());
+    }
+  }
+  return Status::Ok();
+}
+
+
+Status ModelSpecBuilder::createComputeFeatures(FeaturesSpec* fspec) const {
+  util::FlatMap<StringPiece, i32> name2prim;
+  name2prim.reserve(fspec->primitive.size() * 2);
+  for (auto& f : fspec->primitive) {
+    name2prim[f.name] = f.index;
+  }
+
+  for (auto f : features_) {
+    if (f->handled) {
+      continue;
+    }
+
+    if (f->trueTransforms_.size() == 0 && f->falseTransforms_.size() == 0) {
+      continue;
+    }
+
+    auto ftype = f->type_;
+    ComputationFeatureDescriptor cfd{};
+
+    for (auto& tex : f->trueTransforms_) {
+      JPP_RETURN_IF_ERROR(checkTfType(tex));
+      auto idx = name2prim.find(tex.fieldName);
+      if (idx == name2prim.end()) {
+        return Status::InvalidState() << f->name()
+                                      << ": could not find primitive feature "
+                                      << tex.fieldName;
+      }
+      cfd.trueBranch.push_back(idx->second);
+    }
+
+    for (auto& tex : f->falseTransforms_) {
+      JPP_RETURN_IF_ERROR(checkTfType(tex));
+      auto idx = name2prim.find(tex.fieldName);
+      if (idx == name2prim.end()) {
+        return Status::InvalidState() << f->name()
+                                      << ": could not find primitive feature "
+                                      << tex.fieldName;
+      }
+      cfd.falseBranch.push_back(idx->second);
+    }
+
+    for (auto& ref : f->fields_) {
+      auto idx = name2prim.find(ref);
+      if (idx == name2prim.end()) {
+        return Status::InvalidState()
+               << f->name() << ": could not find primitive feature " << ref;
+      }
+      MatchReference mr;
+      mr.featureIdx = idx->second;
+      auto& prim = fspec->primitive[idx->second];
+      if (prim.kind == PrimitiveFeatureKind::Copy) {
+        mr.dicFieldIdx = prim.references[0];
+      } else {
+        mr.dicFieldIdx = -1;
+      }
+      cfd.matchReference.push_back(mr);
+    }
+
+    if (f->matchData_.size() == 0) {
+      return Status::InvalidParameter() << f->name()
+                                        << " match feature needs match data";
+    }
+
+    if (ftype == FeatureType::MatchValue) {
+      cfd.matchData.push_back(f->matchData_.str());
+      f->handled = true;
+    } else if (ftype == FeatureType::MatchCsv) {
+      JPP_RETURN_IF_ERROR(readMatchDataCsv(
+          f->matchData_, cfd.matchReference.size(), &cfd.matchData));
+      f->handled = true;
+    }
+
+    if (f->handled) {
+      cfd.index = currentFeature_++;
+      cfd.name = f->name().str();
+      fspec->computation.push_back(cfd);
+    }
+  }
+  return Status::Ok();
+}
+
+Status ModelSpecBuilder::checkNoFeatureIsLeft() const {
+  for (auto f: features_) {
+    if (!f->handled) {
+      return Status::InvalidState() << f->name() << ": feature was not handled";
+    }
+  }
+  return Status::Ok();
+}
+
+Status convertRefToId(const util::FlatMap<StringPiece, i32>& f2id, const FeatureRef& ref, std::vector<i32>* result) {
+  auto res = f2id.find(ref.name());
+  if (res == f2id.end()) {
+    return Status::InvalidState() << "feature " << ref.name() << " was not in set of primitive features";
+  }
+  result->push_back(res->second);
+  return Status::Ok();
+}
+
+struct Vectori32Hash {
+  std::hash<i32> impl;
+  size_t operator()(const std::vector<i32>& vec) const {
+    size_t result = 0xdeadbeef123edafULL;
+    for (int i = 0; i < vec.size(); ++i) {
+      result ^= 31 * impl(vec[i]) ^ impl(i);
+    }
+    return result ^ impl((int) vec.size());
+  }
+};
+
+Status ModelSpecBuilder::createPatternsAndFinalFeatures(FeaturesSpec *spec) const {
+  util::FlatMap<StringPiece, i32> feature2id;
+  
+  //feature names are checked to be unique
+  for (auto &f : spec->primitive) {
+    feature2id[f.name] = f.index;
+  }  
+  for (auto &f : spec->computation) {
+    feature2id[f.name] = f.index;
+  }
+  
+  util::FlatMap<std::vector<i32>, i32, Vectori32Hash> pattern2id;
+  std::vector<i32> buffer;
+  i32 finalIdx = 0;
+  for (auto comb: combinators_) {
+    FinalFeatureDescriptor ffd;
+    ffd.index = finalIdx++;
+    for (auto& patStrings: comb->data) {
+      buffer.clear();
+      for (auto &pat : patStrings) {
+        JPP_RETURN_IF_ERROR(convertRefToId(feature2id, pat, &buffer)); 
+      }
+      auto res = pattern2id.find(buffer);
+      i32 nextId = static_cast<i32>(pattern2id.size());
+      if (res == pattern2id.end()) {
+        pattern2id[buffer] = nextId;
+      } else {
+        nextId = res->second;
+      }
+      ffd.references.push_back(nextId);
+    }
+    spec->final.push_back(ffd);
+  }
+
+  for (auto& p: pattern2id) {
+    PatternFeatureDescriptor pat;
+    pat.index = p.second;
+    pat.references = p.first;
+    spec->pattern.push_back(pat);
+  }
+  
   return Status::Ok();
 }
 
