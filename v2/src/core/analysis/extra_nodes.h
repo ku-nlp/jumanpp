@@ -5,6 +5,7 @@
 #ifndef JUMANPP_EXTRA_NODES_H
 #define JUMANPP_EXTRA_NODES_H
 
+#include "core/core_types.h"
 #include "util/array_slice.h"
 #include "util/memory.hpp"
 #include "util/types.hpp"

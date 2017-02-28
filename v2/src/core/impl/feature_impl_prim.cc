@@ -105,10 +105,9 @@ Status PrimitiveFeatureContext::checkFieldType(
     }
   }
 
-  StatusConstructor status = Status::InvalidParameter();
-  status << "dic field " << fld.name
-                                           << " had type " << fld.columnType
-                                           << " , allowed=[";
+  auto status = Status::InvalidParameter();
+  status << "dic field " << fld.name << " had type " << fld.columnType
+         << " , allowed=[";
   for (auto tp : columnTypes) {
     status << tp << " ";
   }
@@ -118,6 +117,40 @@ Status PrimitiveFeatureContext::checkFieldType(
   return status;
 }
 
+Status PrimitiveFeaturesDynamicHolder::initialize(
+    PrimitiveFeatureContext *ctx,
+    util::ArraySlice<PrimitiveFeature> featureData) {
+  features_.reserve(featureData.size());
+  for (auto &f : featureData) {
+    std::unique_ptr<PrimitiveFeatureImpl> feature;
+    switch (f.kind) {
+      case PrimitiveFeatureKind::Copy:
+        feature.reset(new DynamicPrimitiveFeature<CopyPrimFeatureImpl>{});
+        break;
+      case PrimitiveFeatureKind::Provided:
+        feature.reset(new DynamicPrimitiveFeature<ProvidedPrimFeatureImpl>{});
+        break;
+      case PrimitiveFeatureKind::MatchDic:
+        feature.reset(new DynamicPrimitiveFeature<MatchDicPrimFeatureImpl>{});
+        break;
+      case PrimitiveFeatureKind::MatchAnyDic:
+        feature.reset(
+            new DynamicPrimitiveFeature<MatchAnyDicPrimFeatureImpl>{});
+        break;
+    }
+    JPP_RETURN_IF_ERROR(feature->initialize(ctx, f));
+  }
+  return Status::Ok();
+}
+
+void PrimitiveFeaturesDynamicHolder::apply(
+    PrimitiveFeatureContext *ctx, EntryPtr entryPtr,
+    const util::ArraySlice<i32> &entry,
+    util::MutableArraySlice<u64> *features) const noexcept {
+  for (auto &f : features_) {
+    f->apply(ctx, entryPtr, entry, features);
+  }
+}
 }  // impl
 }  // features
 }  // core

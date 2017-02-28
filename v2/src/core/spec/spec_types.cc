@@ -2,10 +2,11 @@
 // Created by Arseny Tolmachev on 2017/02/28.
 //
 
-#include <iostream>
 #include "spec_types.h"
+#include <iostream>
 
-std::ostream &::jumanpp::core::spec::operator<<(std::ostream &o, jumanpp::core::spec::ColumnType ct) {
+std::ostream & ::jumanpp::core::spec::operator<<(
+    std::ostream &o, jumanpp::core::spec::ColumnType ct) {
   switch (ct) {
     case ColumnType::String:
       o << "String";

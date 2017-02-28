@@ -3,10 +3,10 @@
 //
 
 #include "memory.hpp"
-#include <cstring>
 #include <sys/mman.h>
 #include <cassert>
 #include <cstddef>
+#include <cstring>
 #include <memory>
 #include "logging.hpp"
 

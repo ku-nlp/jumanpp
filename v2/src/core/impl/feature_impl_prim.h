@@ -5,9 +5,9 @@
 #ifndef JUMANPP_FEATURE_IMPL_H
 #define JUMANPP_FEATURE_IMPL_H
 
-#include <core/dictionary.h>
 #include "core/analysis/extra_nodes.h"
 #include "core/core_types.h"
+#include "core/dictionary.h"
 #include "core/impl/feature_types.h"
 #include "core/impl/field_reader.h"
 #include "util/array_slice.h"
@@ -42,7 +42,8 @@ class PrimitiveFeatureContext {
 
   i32 providedFeature(EntryPtr entryPtr, u32 index) const {
     auto node = extraCtx->node(entryPtr);
-    if (node == nullptr || node->header.type != analysis::ExtraNodeType::Unknown) {
+    if (node == nullptr ||
+        node->header.type != analysis::ExtraNodeType::Unknown) {
       return 0;
     }
     auto features = node->header.unk.providedValues;
@@ -180,6 +181,18 @@ class MatchAnyDicPrimFeatureImpl {
     }
     features->at(featureIdx) = result;
   }
+};
+
+class PrimitiveFeaturesDynamicHolder {
+  std::vector<std::unique_ptr<PrimitiveFeatureImpl>> features_;
+
+ public:
+  Status initialize(PrimitiveFeatureContext* ctx,
+                    util::ArraySlice<PrimitiveFeature> featureData);
+
+  void apply(PrimitiveFeatureContext* ctx, EntryPtr entryPtr,
+             const util::ArraySlice<i32>& entry,
+             util::MutableArraySlice<u64>* features) const noexcept;
 };
 
 }  // impl
