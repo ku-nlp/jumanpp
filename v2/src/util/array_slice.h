@@ -120,7 +120,7 @@ class ArraySlice {
       : impl_(v.data(), v.size()) {}
 
   template <size_t N>
-  ArraySlice(const value_type (&a)[N])  // NOLINT(runtime/explicit)
+  constexpr ArraySlice(const value_type (&a)[N])  // NOLINT(runtime/explicit)
       : impl_(a, N) {}
 
   template <int N>
@@ -147,7 +147,8 @@ class ArraySlice {
   // ArraySlice. For example, "ArraySlice<int> s={1,2};" and "return
   // ArraySlice<int>({3,4});" are errors, as the resulting ArraySlice may
   // reference data that is no longer valid.
-  ArraySlice(std::initializer_list<value_type> v)  // NOLINT(runtime/explicit)
+  constexpr ArraySlice(
+      std::initializer_list<value_type> v)  // NOLINT(runtime/explicit)
       : impl_(v.begin(), v.size()) {}
 
   // Substring of another ArraySlice.

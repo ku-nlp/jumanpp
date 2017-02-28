@@ -15,6 +15,8 @@ namespace spec {
 
 enum class ColumnType { String, Int, StringList, Error };
 
+std::ostream& operator<<(std::ostream& o, ColumnType ct);
+
 struct FieldDescriptor {
   i32 index = -1;
   i32 position;

@@ -52,9 +52,7 @@ struct BoundaryInfo {
         firstNodeOffset(firstNodeOffset) {}
 };
 
-class LatticeConstructionContext {
-
-};
+class LatticeConstructionContext {};
 
 class LatticeBuilder {
   std::vector<LatticeNodeSeed> seeds_;
@@ -81,16 +79,15 @@ class LatticeBuilder {
 
   Status prepare();
 
-  Status constructSingleBoundary(LatticeConstructionContext* context, Lattice* lattice) {
+  Status constructSingleBoundary(LatticeConstructionContext* context,
+                                 Lattice* lattice) {
     auto boundaryIdx = (u32)lattice->createdBoundaryCount();
-    LatticeBoundaryConfig lbc {
-        boundaryIdx,
-        (u32) boundaries_[boundaryIdx].startCount,
-        (u32) boundaries_[boundaryIdx].endCount
-    };
-    LatticeBoundary *boundary;
+    LatticeBoundaryConfig lbc{boundaryIdx,
+                              (u32)boundaries_[boundaryIdx].startCount,
+                              (u32)boundaries_[boundaryIdx].endCount};
+    LatticeBoundary* boundary;
     JPP_RETURN_IF_ERROR(lattice->makeBoundary(lbc, &boundary));
-    //fill boundary primitive features
+    // fill boundary primitive features
     //
     return Status::Ok();
   }

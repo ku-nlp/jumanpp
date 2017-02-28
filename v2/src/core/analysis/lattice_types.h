@@ -86,7 +86,6 @@ class LatticeBoundary {
   LatticeRightBoundary right;
   LatticeBoundaryConnection connections;
 
-
   Status initialize() {
     JPP_RETURN_IF_ERROR(left.initialize());
     JPP_RETURN_IF_ERROR(right.initialize());
@@ -111,9 +110,7 @@ class Lattice {
   u32 createdBoundaryCount() const { return (u32)boundaries.size(); }
   Status makeBoundary(const LatticeBoundaryConfig& lbc, LatticeBoundary** ptr);
 
-  LatticeBoundary* boundary(u32 idx) {
-    return &boundaries.at(idx);
-  }
+  LatticeBoundary* boundary(u32 idx) { return &boundaries.at(idx); }
 };
 
 }  // analysis

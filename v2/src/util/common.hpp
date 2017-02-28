@@ -25,6 +25,8 @@
 #define JPP_DCHECK_LE(a, b) JPP_DCHECK((a) <= (b))
 #define JPP_DCHECK_LT(a, b) JPP_DCHECK((a) < (b))
 #define JPP_DCHECK_NOT(x) JPP_DCHECK(!(x))
+#define JPP_DCHECK_IN(val, low, high) \
+  JPP_DCHECK(((low) <= (val)) && ((val) < (high)))
 
 namespace jumanpp {
 namespace util {

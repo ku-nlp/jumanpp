@@ -147,7 +147,7 @@ class ArraySliceImplBase {
 
   static const size_type npos = static_cast<size_type>(-1);
 
-  ArraySliceImplBase(pointer array, size_type length)
+  constexpr ArraySliceImplBase(pointer array, size_type length)
       : ptr_(array), length_(length) {}
 
   // Substring of another ArraySlice.

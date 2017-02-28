@@ -74,9 +74,7 @@ class Status {
     return StatusConstructor{StatusCode::NotImplemented};
   }
 
-  static Status EndOfIteration() {
-    return Status(StatusCode::EndOfIteration);
-  }
+  static Status EndOfIteration() { return Status(StatusCode::EndOfIteration); }
 };
 
 std::ostream &operator<<(std::ostream &str, const Status &st);

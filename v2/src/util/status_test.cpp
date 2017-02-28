@@ -23,7 +23,7 @@ std::string statusString(Status s) {
 }
 
 TEST_CASE("ok has correct string representation") {
-   CHECK(statusString(Status::Ok()) == "0:Ok");
+  CHECK(statusString(Status::Ok()) == "0:Ok");
 }
 
 TEST_CASE("invalidparameter has correct string representation") {

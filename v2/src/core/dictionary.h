@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <vector>
+#include "core/core_types.h"
 #include "core/dic_builder.h"
 #include "core/dic_entries.h"
 #include "core/spec/spec_types.h"
@@ -27,6 +28,13 @@ struct DictionaryField {
 
 class FieldsHolder {
   std::vector<DictionaryField> fields_;
+
+ public:
+  const DictionaryField &at(i32 field) const {
+    JPP_DCHECK_GE(field, 0);
+    JPP_DCHECK_LT(field, fields_.size());
+    return fields_[field];
+  }
 };
 
 class DictionaryHolder {

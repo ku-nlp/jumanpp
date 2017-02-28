@@ -14,9 +14,10 @@ Lattice::Lattice(util::memory::ManagedAllocatorCore *alloc,
   boundaries.reserve(lc.numBoundaries);
 }
 
-Status Lattice::makeBoundary(const LatticeBoundaryConfig &lbc, LatticeBoundary **ptr) {
+Status Lattice::makeBoundary(const LatticeBoundaryConfig &lbc,
+                             LatticeBoundary **ptr) {
   boundaries.emplace_back(alloc, lconf, lbc);
-  LatticeBoundary& last = boundaries.back();
+  LatticeBoundary &last = boundaries.back();
   JPP_RETURN_IF_ERROR(last.initialize());
   *ptr = &last;
   return Status::Ok();

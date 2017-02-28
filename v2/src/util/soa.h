@@ -167,7 +167,7 @@ class StructOfArraysFactory : public StructOfArraysBase {
   const Child& child(size_t idx) const { return children_->at(idx); }
 
  private:
-  void initChild(StructOfArraysFactory *child) {
+  void initChild(StructOfArraysFactory* child) {
     JPP_DCHECK_EQ(child->fields_.size(), fields_.size());
     auto mem = reinterpret_cast<char*>(
         acore_->allocate_memory(totalSize_, maxAlignment_));
@@ -191,9 +191,7 @@ class StructOfArraysFactory : public StructOfArraysBase {
     return c;
   }
 
-  Status initialize() {
-    return initState();
-  }
+  Status initialize() { return initState(); }
 
   size_t arraySize() const override { return itemCount_; }
 };

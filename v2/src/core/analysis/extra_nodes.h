@@ -19,7 +19,9 @@ struct AliasNodeHeader {
   util::ArraySlice<i32> dictionaryNodes;
 };
 
-struct UnkNodeHeader {};
+struct UnkNodeHeader {
+  util::ArraySlice<i32> providedValues;
+};
 
 struct ExtraNodeHeader {
   ExtraNodeType type;
@@ -36,7 +38,17 @@ struct ExtraNode {
 
 class ExtraNodesContext {
   util::memory::ManagedAllocatorCore* alloc;
-  util::memory::ManagedVector<ExtraNodeHeader> extraNodes;
+  util::memory::ManagedVector<ExtraNode*> extraNodes;
+
+ public:
+  const ExtraNode* node(EntryPtr ptr) const {
+    if (!isSpecial(ptr)) {
+      return nullptr;
+    }
+    auto idx = idxFromEntryPtr(ptr);
+    JPP_DCHECK_IN(idx, 0, extraNodes.size());
+    return extraNodes[idx];
+  }
 };
 
 }  // analysis
