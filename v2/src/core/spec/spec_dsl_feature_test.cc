@@ -13,11 +13,14 @@ using namespace jumanpp::core::spec::dsl;
 
 using namespace jumanpp;
 
-template <typename T>
-std::ostream& operator<<(std::ostream& os, const util::ArraySlice<T>& as) {
+namespace jumanpp {
+namespace util {
+
+template <class Char, class Traits, class T>
+std::basic_ostream<Char, Traits>& operator<<(std::basic_ostream<Char, Traits>& os, const ArraySlice<T>& as) {
   os << '{';
   for (int i = 0; i < as.size(); ++i) {
-    auto&& obj = as[i];
+    auto& obj = as[i];
     os << obj;
     if (i != as.size() - 1) {
       os << ", ";
@@ -27,23 +30,15 @@ std::ostream& operator<<(std::ostream& os, const util::ArraySlice<T>& as) {
   return os;
 }
 
-//this abomination is needed because otherwise compiler does not want to
-//apply upper operator
-template <typename T>
-struct Str {
-  const T* ptr;
-};
-
-template <typename T>
-std::ostream& operator<<(std::ostream& os, const Str<T>& s) {
-  operator<< <typename T::value_type>(os, *s.ptr);
-  return os;
 }
+}
+
+
 
 template <typename T1, typename T2>
 void CheckEqImpl(const util::ArraySlice<T1>& s1, const util::ArraySlice<T2>& s2) {
-  INFO("left : " << Str<util::ArraySlice<T1>>{&s1});
-  INFO("right : " << Str<util::ArraySlice<T2>>{&s2});
+  INFO("left : " << s1);
+  INFO("right : " << s2);
   CHECK(s1.size() == s2.size());
   for (int i = 0; i < s1.size(); ++i) {
     INFO("index : " << i);
@@ -66,8 +61,14 @@ void SeqEq(const C1 &c1, const std::initializer_list<C2> &ilist) {
 }
 
 void SeqEq(const std::vector<std::string> &c1, std::initializer_list<StringPiece> c2) {
-  util::ArraySlice<std::string> sl1{c1};
-  util::ArraySlice<StringPiece> sl2{c2};
+  std::vector<StringPiece> copy;
+  for (auto& s: c1) {
+    copy.emplace_back(s);
+  }
+
+  util::ArraySlice<StringPiece> sl1{copy.data(), copy.size()};
+  util::ArraySlice<StringPiece> sl2{c2.begin(), c2.size()};
+
   CheckEqImpl(sl1, sl2);
 }
 
