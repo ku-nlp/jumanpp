@@ -3,7 +3,7 @@
 //
 
 #include "memory.hpp"
-#include <string.h>
+#include <cstring>
 #include <sys/mman.h>
 #include <cassert>
 #include <cstddef>

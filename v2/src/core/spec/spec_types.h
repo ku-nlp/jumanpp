@@ -23,7 +23,7 @@ struct FieldDescriptor {
   std::string name;
   bool isTrieKey = false;
   ColumnType columnType = ColumnType::Error;
-  StringPiece emptyString = "";
+  StringPiece emptyString = StringPiece{""};
 };
 
 struct AnalysisSpec {
