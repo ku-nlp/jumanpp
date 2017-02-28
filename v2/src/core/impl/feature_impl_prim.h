@@ -68,7 +68,7 @@ class PrimitiveFeatureImpl : public FeatureImplBase {
 
   virtual void apply(PrimitiveFeatureContext* ctx, EntryPtr entryPtr,
                      const util::ArraySlice<i32>& entry,
-                     util::MutableArraySlice<i32>* features) const noexcept = 0;
+                     util::MutableArraySlice<u64>* features) const noexcept = 0;
 };
 
 template <typename Impl>
@@ -83,7 +83,7 @@ class DynamicPrimitiveFeature : public PrimitiveFeatureImpl {
 
   virtual void apply(PrimitiveFeatureContext* ctx, EntryPtr entryPtr,
                      const util::ArraySlice<i32>& entry,
-                     util::MutableArraySlice<i32>* features) const
+                     util::MutableArraySlice<u64>* features) const
       noexcept override {
     impl.apply(ctx, entryPtr, entry, features);
   }
@@ -102,7 +102,7 @@ class CopyPrimFeatureImpl {
 
   inline void apply(PrimitiveFeatureContext* ctx, EntryPtr entryPtr,
                     const util::ArraySlice<i32>& entry,
-                    util::MutableArraySlice<i32>* features) const noexcept {
+                    util::MutableArraySlice<u64>* features) const noexcept {
     features->at(featureIdx) = entry.at(fieldIdx);
   }
 };
@@ -120,7 +120,7 @@ class ProvidedPrimFeatureImpl {
 
   inline void apply(PrimitiveFeatureContext* ctx, EntryPtr entryPtr,
                     const util::ArraySlice<i32>& entry,
-                    util::MutableArraySlice<i32>* features) const noexcept {
+                    util::MutableArraySlice<u64>* features) const noexcept {
     features->at(featureIdx) = ctx->providedFeature(entryPtr, providedIdx);
   }
 };
@@ -141,7 +141,7 @@ class MatchDicPrimFeatureImpl {
 
   inline void apply(PrimitiveFeatureContext* ctx, EntryPtr entryPtr,
                     const util::ArraySlice<i32>& entry,
-                    util::MutableArraySlice<i32>* features) const noexcept {
+                    util::MutableArraySlice<u64>* features) const noexcept {
     auto elem = entry.at(fieldIdx);
     i32 result = 0;
     if (contains(matchData, elem)) {
@@ -167,7 +167,7 @@ class MatchAnyDicPrimFeatureImpl {
 
   inline void apply(PrimitiveFeatureContext* ctx, EntryPtr entryPtr,
                     const util::ArraySlice<i32>& entry,
-                    util::MutableArraySlice<i32>* features) const noexcept {
+                    util::MutableArraySlice<u64>* features) const noexcept {
     auto elem = entry.at(fieldIdx);
     auto trav = ctx->traversal(fieldIdx, elem);
     i32 result = 0;
