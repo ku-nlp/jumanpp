@@ -105,10 +105,10 @@ StringPiece StringField::operator[](const NodeWalker &node) const {
       return result;
     }
     JPP_DCHECK_NOT("should fail in debug");
-    return "----READ_ERROR!!!----";
+    return StringPiece{"----READ_ERROR!!!----"};
   }
   JPP_DCHECK_NOT("should fail in debug");
-  return "-----STRING_FIELD_ERROR!!!----";
+  return StringPiece{"-----STRING_FIELD_ERROR!!!----"};
 }
 
 void StringField::initialize(i32 index, const ExtraNodesContext *xtra, dic::impl::StringStorageReader reader) {
