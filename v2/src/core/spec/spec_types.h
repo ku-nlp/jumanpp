@@ -6,6 +6,7 @@
 #define JUMANPP_SPEC_TYPES_H
 
 #include <vector>
+#include <limits>
 #include "util/characters.h"
 #include "util/string_piece.h"
 #include "util/types.hpp"

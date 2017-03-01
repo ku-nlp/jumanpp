@@ -5,6 +5,7 @@
 #ifndef JUMANPP_CORE_TYPES_H
 #define JUMANPP_CORE_TYPES_H
 
+#include <limits>
 #include "util/types.hpp"
 
 namespace jumanpp {
