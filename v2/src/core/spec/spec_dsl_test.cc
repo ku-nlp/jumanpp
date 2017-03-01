@@ -6,6 +6,7 @@
 #include "testing/standalone_test.h"
 
 using namespace jumanpp::core::spec::dsl;
+using jumanpp::chars::CharacterClass;
 
 #define VALID(x) CHECK_OK((x).validate());
 #define NOT_VALID(x) CHECK(!(x).validate().isOk());
@@ -119,5 +120,16 @@ TEST_CASE("can use unigram combiners") {
   auto& f3 = spec.field(3, "f3").strings();
   spec.unigram({f1});
   spec.unigram({f2, f3});
+  VALID(spec);
+}
+
+TEST_CASE("can specify unk makers") {
+  ModelSpecBuilder spec;
+  auto& f1 = spec.field(1, "f1").strings().trieIndex();
+  auto& f2 = spec.field(2, "f2").strings();
+  auto& ft1 = spec.feature("ft1").placeholder();
+  auto& unk1 = spec.unk("unk1", 1)
+                   .single(CharacterClass::SYMBOL)
+                   .outputTo({f1});
   VALID(spec);
 }

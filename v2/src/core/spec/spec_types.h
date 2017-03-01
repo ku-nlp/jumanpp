@@ -6,6 +6,7 @@
 #define JUMANPP_SPEC_TYPES_H
 
 #include <vector>
+#include "util/characters.h"
 #include "util/string_piece.h"
 #include "util/types.hpp"
 
@@ -24,6 +25,34 @@ struct FieldDescriptor {
   bool isTrieKey = false;
   ColumnType columnType = ColumnType::Error;
   StringPiece emptyString = StringPiece{""};
+};
+
+enum class UnkMakerType { Invalid, Single, Chunking, Onomatopoeia, Prolonging };
+
+enum class FieldExpressionKind {
+  Invalid,
+  ReplaceString,
+  ReplaceInt,
+  AppendString
+};
+
+static constexpr i32 InvalidIntConstant = std::numeric_limits<i32>::min();
+
+struct FieldExpression {
+  i32 fieldIndex = -1;
+  FieldExpressionKind kind = FieldExpressionKind::Invalid;
+  i32 intConstant = InvalidIntConstant;
+  std::string stringConstant;
+};
+
+struct UnkMaker {
+  i32 index = -1;
+  std::string name;
+  UnkMakerType type = UnkMakerType::Invalid;
+  i32 patternRow = -1;
+  chars::CharacterClass charClass = chars::CharacterClass::FAMILY_OTHERS;
+  std::vector<FieldExpression> featureExpressions;
+  std::vector<FieldExpression> outputExpressions;
 };
 
 enum class PrimitiveFeatureKind {
@@ -79,6 +108,7 @@ struct AnalysisSpec {
   std::vector<FieldDescriptor> columns;
   i32 indexColumn = -1;
   FeaturesSpec features;
+  std::vector<UnkMaker> unkCreators;
 };
 
 }  // spec

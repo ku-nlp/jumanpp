@@ -40,6 +40,7 @@ Status ModelSpecBuilder::validate() const {
   JPP_RETURN_IF_ERROR(validateFields());
   JPP_RETURN_IF_ERROR(validateNames());
   JPP_RETURN_IF_ERROR(validateFeatures());
+  JPP_RETURN_IF_ERROR(validateUnks());
   return Status::Ok();
 }
 
@@ -67,6 +68,7 @@ Status ModelSpecBuilder::build(AnalysisSpec* spec) const {
   JPP_RETURN_IF_ERROR(validate());
   makeFields(spec);
   JPP_RETURN_IF_ERROR(makeFeatures(spec));
+  JPP_RETURN_IF_ERROR(createUnkProcessors(spec));
   return Status::Ok();
 }
 
@@ -226,7 +228,7 @@ Status ModelSpecBuilder::createRemainingPrimitiveFeatures(
   return Status::Ok();
 }
 
-Status checkTfType(const FieldExpression& ex) {
+Status checkTfType(const FieldExpressionBldr& ex) {
   if (ex.type != TransformType::Value) {
     return Status::InvalidParameter()
            << "match fields support only value references";
@@ -250,7 +252,6 @@ Status readMatchDataCsv(StringPiece csvdata, size_t columns,
   }
   return Status::Ok();
 }
-
 
 Status ModelSpecBuilder::createComputeFeatures(FeaturesSpec* fspec) const {
   util::FlatMap<StringPiece, i32> name2prim;
@@ -334,7 +335,7 @@ Status ModelSpecBuilder::createComputeFeatures(FeaturesSpec* fspec) const {
 }
 
 Status ModelSpecBuilder::checkNoFeatureIsLeft() const {
-  for (auto f: features_) {
+  for (auto f : features_) {
     if (!f->handled) {
       return Status::InvalidState() << f->name() << ": feature was not handled";
     }
@@ -342,10 +343,12 @@ Status ModelSpecBuilder::checkNoFeatureIsLeft() const {
   return Status::Ok();
 }
 
-Status convertRefToId(const util::FlatMap<StringPiece, i32>& f2id, const FeatureRef& ref, std::vector<i32>* result) {
+Status convertRefToId(const util::FlatMap<StringPiece, i32>& f2id,
+                      const FeatureRef& ref, std::vector<i32>* result) {
   auto res = f2id.find(ref.name());
   if (res == f2id.end()) {
-    return Status::InvalidState() << "feature " << ref.name() << " was not in set of primitive features";
+    return Status::InvalidState() << "feature " << ref.name()
+                                  << " was not in set of primitive features";
   }
   result->push_back(res->second);
   return Status::Ok();
@@ -358,31 +361,32 @@ struct Vectori32Hash {
     for (int i = 0; i < vec.size(); ++i) {
       result ^= 31 * impl(vec[i]) ^ impl(i);
     }
-    return result ^ impl((int) vec.size());
+    return result ^ impl((int)vec.size());
   }
 };
 
-Status ModelSpecBuilder::createPatternsAndFinalFeatures(FeaturesSpec *spec) const {
+Status ModelSpecBuilder::createPatternsAndFinalFeatures(
+    FeaturesSpec* spec) const {
   util::FlatMap<StringPiece, i32> feature2id;
-  
-  //feature names are checked to be unique
-  for (auto &f : spec->primitive) {
-    feature2id[f.name] = f.index;
-  }  
-  for (auto &f : spec->computation) {
+
+  // feature names are checked to be unique
+  for (auto& f : spec->primitive) {
     feature2id[f.name] = f.index;
   }
-  
+  for (auto& f : spec->computation) {
+    feature2id[f.name] = f.index;
+  }
+
   util::FlatMap<std::vector<i32>, i32, Vectori32Hash> pattern2id;
   std::vector<i32> buffer;
   i32 finalIdx = 0;
-  for (auto comb: combinators_) {
+  for (auto comb : combinators_) {
     FinalFeatureDescriptor ffd;
     ffd.index = finalIdx++;
-    for (auto& patStrings: comb->data) {
+    for (auto& patStrings : comb->data) {
       buffer.clear();
-      for (auto &pat : patStrings) {
-        JPP_RETURN_IF_ERROR(convertRefToId(feature2id, pat, &buffer)); 
+      for (auto& pat : patStrings) {
+        JPP_RETURN_IF_ERROR(convertRefToId(feature2id, pat, &buffer));
       }
       auto res = pattern2id.find(buffer);
       i32 nextId = static_cast<i32>(pattern2id.size());
@@ -396,13 +400,98 @@ Status ModelSpecBuilder::createPatternsAndFinalFeatures(FeaturesSpec *spec) cons
     spec->final.push_back(ffd);
   }
 
-  for (auto& p: pattern2id) {
+  for (auto& p : pattern2id) {
     PatternFeatureDescriptor pat;
     pat.index = p.second;
     pat.references = p.first;
     spec->pattern.push_back(pat);
   }
-  
+
+  return Status::Ok();
+}
+
+Status ModelSpecBuilder::validateUnks() const {
+  for (auto unk : unks_) {
+    JPP_RETURN_IF_ERROR(unk->validate());
+  }
+  return Status::Ok();
+}
+
+Status fldType2Op(ColumnType ct, FieldExpressionKind* result) {
+  switch (ct) {
+    case ColumnType::StringList:
+      *result = FieldExpressionKind::AppendString;
+      return Status::Ok();
+    case ColumnType::String:
+      *result = FieldExpressionKind::ReplaceString;
+      return Status::Ok();
+    case ColumnType::Int:
+      *result = FieldExpressionKind::ReplaceInt;
+      return Status::Ok();
+    default:
+      return Status::InvalidParameter()
+             << "unsupported column type for surface unk op";
+  }
+}
+
+Status fillFieldExp(StringPiece name, const PrimitiveFeatureDescriptor& pfd,
+                    const FieldExpressionBldr& feb, FieldExpression* res) {
+  res->fieldIndex = pfd.index;
+  switch (feb.type) {
+    case TransformType::ReplaceInt:
+      res->kind = FieldExpressionKind::ReplaceInt;
+      res->intConstant = feb.transformInt;
+      break;
+    case TransformType::ReplaceString:
+      res->kind = FieldExpressionKind::ReplaceString;
+      res->stringConstant = feb.transformString.str();
+      break;
+    case TransformType::AppendString:
+      return Status::InvalidParameter()
+             << name << ": feature " << pfd.name
+             << " appending strings is not supported";
+    default:
+      return Status::NotImplemented() << name << ": feature " << pfd.name
+                                      << " combination was not implemented";
+  }
+  return Status::Ok();
+}
+
+Status ModelSpecBuilder::createUnkProcessors(AnalysisSpec* spec) const {
+  util::FlatMap<StringPiece, FieldDescriptor*> fld2id;
+  util::FlatMap<StringPiece, PrimitiveFeatureDescriptor*> feat2id;
+
+  for (auto& f : spec->columns) {
+    fld2id[f.name] = &f;
+  }
+  for (auto& f : spec->features.primitive) {
+    feat2id[f.name] = &f;
+  }
+
+  i32 cnt = 0;
+  for (auto u : unks_) {
+    UnkMaker mkr;
+    mkr.name = u->name().str();
+    mkr.index = cnt++;
+    mkr.patternRow = u->pattern_;
+    mkr.type = u->type_;
+    mkr.charClass = u->charClass_;
+
+    for (auto& x : u->surfaceFeatures_) {
+      FieldExpression fe;
+      auto fld = fld2id.at(x.name());
+      JPP_RETURN_IF_ERROR(fldType2Op(fld->columnType, &fe.kind));
+      fe.fieldIndex = fld->index;
+      mkr.featureExpressions.push_back(fe);
+    }
+
+    for (auto& x : u->output_) {
+      FieldExpression fe;
+      auto feat = feat2id.at(x.fieldName);
+      JPP_RETURN_IF_ERROR(fillFieldExp(u->name(), *feat, x, &fe));
+      mkr.outputExpressions.push_back(fe);
+    }
+  }
   return Status::Ok();
 }
 
@@ -471,6 +560,22 @@ Status FeatureBuilder::validate() const {
 
   return Status::Ok();
 }
+
+Status UnkProcBuilder::validate() const {
+  if (name_.size() == 0) {
+    return Status::InvalidParameter() << "unk processor must have a name";
+  }
+  if (type_ == UnkMakerType::Invalid) {
+    return Status::InvalidParameter() << name_
+                                      << ": unk processor was not initialized";
+  }
+  if (pattern_ == -1) {
+    return Status::InvalidParameter()
+           << name_ << ": unk processor must have pattern specified";
+  }
+  return Status::Ok();
+}
+
 }  // dsl
 }  // spec
 }  // core

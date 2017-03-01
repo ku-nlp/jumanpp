@@ -7,7 +7,7 @@
 
 #include <string>
 #include "util/array_slice.h"
-#include "util/characters.hpp"
+#include "util/characters.h"
 #include "util/status.hpp"
 #include "util/types.hpp"
 

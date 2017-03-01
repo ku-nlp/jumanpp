@@ -38,7 +38,7 @@ enum class TransformType {
   AppendString
 };
 
-struct FieldExpression {
+struct FieldExpressionBldr {
   StringPiece fieldName;
   TransformType type = TransformType::Invalid;
   StringPiece transformString;
@@ -56,7 +56,6 @@ class FieldReference {
 };
 
 class FieldBuilder : public DslOpBase {
-  util::memory::ManagedAllocatorCore* alloc_;
   i32 csvColumn_;
   StringPiece name_;
   ColumnType columnType_ = ColumnType::Error;
@@ -66,9 +65,8 @@ class FieldBuilder : public DslOpBase {
   FieldBuilder() {}
 
  public:
-  FieldBuilder(util::memory::ManagedAllocatorCore* alloc, i32 csvColumn_,
-               const StringPiece& name_)
-      : alloc_{alloc}, csvColumn_(csvColumn_), name_(name_) {}
+  FieldBuilder(i32 csvColumn_, const StringPiece& name_)
+      : csvColumn_(csvColumn_), name_(name_) {}
 
   FieldBuilder& strings() {
     columnType_ = ColumnType::String;
@@ -95,21 +93,26 @@ class FieldBuilder : public DslOpBase {
     return *this;
   }
 
-  FieldExpression value() const {
-    return FieldExpression{name_, TransformType::Value, jumanpp::EMPTY_SP, 0};
+  FieldExpressionBldr value() const {
+    return FieldExpressionBldr{name_, TransformType::Value, jumanpp::EMPTY_SP,
+                               0};
   }
 
-  FieldExpression replaceWith(StringPiece value) const {
-    return FieldExpression{name_, TransformType::ReplaceString, value, 0};
+  operator FieldExpressionBldr() const {
+    return value();
   }
 
-  FieldExpression replaceWith(i32 value) const {
-    return FieldExpression{name_, TransformType::ReplaceInt, jumanpp::EMPTY_SP,
-                           value};
+  FieldExpressionBldr replaceWith(StringPiece value) const {
+    return FieldExpressionBldr{name_, TransformType::ReplaceString, value, 0};
   }
 
-  FieldExpression append(StringPiece value) const {
-    return FieldExpression{name_, TransformType::AppendString, value, 0};
+  FieldExpressionBldr replaceWith(i32 value) const {
+    return FieldExpressionBldr{name_, TransformType::ReplaceInt,
+                               jumanpp::EMPTY_SP, value};
+  }
+
+  FieldExpressionBldr append(StringPiece value) const {
+    return FieldExpressionBldr{name_, TransformType::AppendString, value, 0};
   }
 
   i32 getCsvColumn() const { return csvColumn_; }
@@ -142,8 +145,8 @@ class FeatureBuilder : DslOpBase {
   FeatureType type_ = FeatureType::Initial;
   StringPiece matchData_;
   util::InlinedVector<StringPiece, 4> fields_;
-  util::InlinedVector<FieldExpression, 8> trueTransforms_;
-  util::InlinedVector<FieldExpression, 8> falseTransforms_;
+  util::InlinedVector<FieldExpressionBldr, 8> trueTransforms_;
+  util::InlinedVector<FieldExpressionBldr, 8> falseTransforms_;
 
   void changeType(FeatureType target) {
     if (type_ == FeatureType::Initial) {
@@ -156,6 +159,7 @@ class FeatureBuilder : DslOpBase {
   friend class ModelSpecBuilder;
 
  public:
+  FeatureBuilder(const FeatureBuilder&) = delete;
   FeatureBuilder(const StringPiece& name_) : name_(name_) {}
 
   StringPiece name() const { return name_; }
@@ -188,14 +192,16 @@ class FeatureBuilder : DslOpBase {
     return *this;
   }
 
-  FeatureBuilder& ifTrue(std::initializer_list<FieldExpression> transforms) {
+  FeatureBuilder& ifTrue(
+      std::initializer_list<FieldExpressionBldr> transforms) {
     for (auto&& o : transforms) {
       trueTransforms_.emplace_back(o);
     }
     return *this;
   }
 
-  FeatureBuilder& ifFalse(std::initializer_list<FieldExpression> transforms) {
+  FeatureBuilder& ifFalse(
+      std::initializer_list<FieldExpressionBldr> transforms) {
     for (auto&& o : transforms) {
       falseTransforms_.emplace_back(o);
     }
@@ -209,8 +215,10 @@ class FeatureRef {
   StringPiece name_;
 
  public:
+  FeatureRef() {}
   FeatureRef(const FieldBuilder& fld) : name_{fld.name()} {}
   FeatureRef(const FeatureBuilder& ft) : name_{ft.name()} {}
+  FeatureRef(const FeatureRef& o) = default;
   StringPiece name() const { return name_; }
 };
 
@@ -222,12 +230,66 @@ class FeatureCombinator {
   FeatureCombinator(util::memory::ManagedAllocatorCore* alloc) : data{alloc} {}
 };
 
+class UnkProcBuilder : public DslOpBase {
+  StringPiece name_;
+  UnkMakerType type_ = UnkMakerType::Invalid;
+  chars::CharacterClass charClass_ = chars::CharacterClass::FAMILY_OTHERS;
+  i32 pattern_ = -1;
+  FeatureRef notPrefix_;
+  std::vector<FeatureRef> surfaceFeatures_;
+  std::vector<FieldExpressionBldr> output_;
+
+  friend class ModelSpecBuilder;
+
+ public:
+  UnkProcBuilder(StringPiece name, i32 pattern)
+      : name_{name}, pattern_{pattern} {}
+
+  UnkProcBuilder(const UnkProcBuilder&) = delete;
+
+  UnkProcBuilder& single(chars::CharacterClass charClass) {
+    type_ = UnkMakerType::Single;
+    charClass_ = charClass;
+    return *this;
+  }
+
+  UnkProcBuilder& chunking(chars::CharacterClass charClass) {
+    type_ = UnkMakerType::Chunking;
+    charClass_ = charClass;
+    return *this;
+  }
+
+  UnkProcBuilder& notPrefixOfDicFeature(FeatureRef ref) {
+    notPrefix_ = ref;
+    return *this;
+  }
+
+  UnkProcBuilder& surfaceFeatures(std::initializer_list<FeatureRef> surface) {
+    for (auto& x : surface) {
+      surfaceFeatures_.push_back(x);
+    }
+    return *this;
+  }
+
+  UnkProcBuilder& outputTo(std::initializer_list<FieldExpressionBldr> field) {
+    for (auto& x : field) {
+      output_.push_back(x);
+    }
+    return *this;
+  }
+
+  StringPiece name() const { return name_; }
+
+  Status validate() const override;
+};
+
 class ModelSpecBuilder : public DslOpBase {
   util::memory::Manager memmgr_;
   std::unique_ptr<util::memory::ManagedAllocatorCore> alloc_;
   util::memory::ManagedVector<FieldBuilder*> fields_;
   util::memory::ManagedVector<FeatureBuilder*> features_;
   util::memory::ManagedVector<FeatureCombinator*> combinators_;
+  util::memory::ManagedVector<UnkProcBuilder*> unks_;
   mutable i32 currentFeature_ = 0;
 
   void makeFields(AnalysisSpec* spec) const;
@@ -243,6 +305,7 @@ class ModelSpecBuilder : public DslOpBase {
   Status checkNoFeatureIsLeft() const;
   Status createPatternsAndFinalFeatures(FeaturesSpec* spec) const;
   Status createComputeFeatures(FeaturesSpec* fspec) const;
+  Status createUnkProcessors(AnalysisSpec* spec) const;
 
  public:
   ModelSpecBuilder(size_t page_size = 16 * 1024)
@@ -250,10 +313,13 @@ class ModelSpecBuilder : public DslOpBase {
         alloc_{memmgr_.core()},
         fields_{alloc_.get()},
         features_{alloc_.get()},
-        combinators_{alloc_.get()} {}
+        combinators_{alloc_.get()},
+        unks_{alloc_.get()} {}
+
+  ModelSpecBuilder(const ModelSpecBuilder& o) = delete;
 
   FieldBuilder& field(i32 csvColumn, StringPiece name) {
-    auto ptr = alloc_->make<FieldBuilder>(alloc_.get(), csvColumn, name);
+    auto ptr = alloc_->make<FieldBuilder>(csvColumn, name);
     fields_.emplace_back(ptr);
     return *ptr;
   }
@@ -264,6 +330,12 @@ class ModelSpecBuilder : public DslOpBase {
     return *ptr;
   }
 
+  UnkProcBuilder& unk(StringPiece name, i32 pattern) {
+    auto ptr = alloc_->make<UnkProcBuilder>(name, pattern);
+    unks_.emplace_back(ptr);
+    return *ptr;
+  }
+
   void unigram(const std::initializer_list<FeatureRef>& f1) {
     auto cmb = alloc_->make<FeatureCombinator>(alloc_.get());
     auto& data = cmb->data;
@@ -271,9 +343,30 @@ class ModelSpecBuilder : public DslOpBase {
     combinators_.emplace_back(cmb);
   }
 
+  void bigram(const std::initializer_list<FeatureRef>& f1,
+              const std::initializer_list<FeatureRef>& f2) {
+    auto cmb = alloc_->make<FeatureCombinator>(alloc_.get());
+    auto& data = cmb->data;
+    data.emplace_back(f1, alloc_.get());
+    data.emplace_back(f2, alloc_.get());
+    combinators_.emplace_back(cmb);
+  }
+
+  void trigram(const std::initializer_list<FeatureRef>& f1,
+               const std::initializer_list<FeatureRef>& f2,
+               const std::initializer_list<FeatureRef>& f3) {
+    auto cmb = alloc_->make<FeatureCombinator>(alloc_.get());
+    auto& data = cmb->data;
+    data.emplace_back(f1, alloc_.get());
+    data.emplace_back(f2, alloc_.get());
+    data.emplace_back(f3, alloc_.get());
+    combinators_.emplace_back(cmb);
+  }
+
   Status validateFields() const;
   Status validateNames() const;
   Status validateFeatures() const;
+  Status validateUnks() const;
   virtual Status validate() const override;
   Status build(AnalysisSpec* spec) const;
 };

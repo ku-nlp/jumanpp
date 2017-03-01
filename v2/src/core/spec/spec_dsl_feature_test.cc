@@ -17,7 +17,8 @@ namespace jumanpp {
 namespace util {
 
 template <class Char, class Traits, class T>
-std::basic_ostream<Char, Traits>& operator<<(std::basic_ostream<Char, Traits>& os, const ArraySlice<T>& as) {
+std::basic_ostream<Char, Traits>& operator<<(
+    std::basic_ostream<Char, Traits>& os, const ArraySlice<T>& as) {
   os << '{';
   for (int i = 0; i < as.size(); ++i) {
     auto& obj = as[i];
@@ -29,14 +30,12 @@ std::basic_ostream<Char, Traits>& operator<<(std::basic_ostream<Char, Traits>& o
   os << '}';
   return os;
 }
-
 }
 }
-
-
 
 template <typename T1, typename T2>
-void CheckEqImpl(const util::ArraySlice<T1>& s1, const util::ArraySlice<T2>& s2) {
+void CheckEqImpl(const util::ArraySlice<T1>& s1,
+                 const util::ArraySlice<T2>& s2) {
   INFO("left : " << s1);
   INFO("right : " << s2);
   CHECK(s1.size() == s2.size());
@@ -54,15 +53,16 @@ void CheckEq(const C1& s1, const C2& s2) {
 }
 
 template <typename C1, typename C2>
-void SeqEq(const C1 &c1, const std::initializer_list<C2> &ilist) {
+void SeqEq(const C1& c1, const std::initializer_list<C2>& ilist) {
   util::ArraySlice<typename C1::value_type> sl1{c1};
   util::ArraySlice<C2> sl2{ilist};
   CheckEqImpl(sl1, sl2);
 }
 
-void SeqEq(const std::vector<std::string> &c1, std::initializer_list<StringPiece> c2) {
+void SeqEq(const std::vector<std::string>& c1,
+           std::initializer_list<StringPiece> c2) {
   std::vector<StringPiece> copy;
-  for (auto& s: c1) {
+  for (auto& s : c1) {
     copy.emplace_back(s);
   }
 
@@ -71,7 +71,6 @@ void SeqEq(const std::vector<std::string> &c1, std::initializer_list<StringPiece
 
   CheckEqImpl(sl1, sl2);
 }
-
 
 TEST_CASE("simple dsl creates descrptor") {
   ModelSpecBuilder bldr;
@@ -106,7 +105,7 @@ TEST_CASE("simple dsl with two fields and matcher") {
   ModelSpecBuilder bldr;
   auto& f1 = bldr.field(1, "f1").strings().trieIndex();
   auto& f2 = bldr.field(2, "f2").strings();
-  auto &ft1 = bldr.feature("ft1").matchValue(f1, "x");
+  auto& ft1 = bldr.feature("ft1").matchValue(f1, "x");
   bldr.unigram({ft1});
   bldr.unigram({f1, f2});
   AnalysisSpec spec{};
@@ -127,7 +126,7 @@ TEST_CASE("simple dsl with two fields and list matcher") {
   ModelSpecBuilder bldr;
   auto& f1 = bldr.field(1, "f1").strings().trieIndex();
   auto& f2 = bldr.field(2, "f2").stringLists();
-  auto &ft1 = bldr.feature("ft1").matchValue(f2, "x");
+  auto& ft1 = bldr.feature("ft1").matchValue(f2, "x");
   bldr.unigram({ft1});
   bldr.unigram({f1});
   AnalysisSpec spec{};
@@ -144,7 +143,7 @@ TEST_CASE("simple dsl with two fields and length matcher") {
   ModelSpecBuilder bldr;
   auto& f1 = bldr.field(1, "f1").strings().trieIndex();
   auto& f2 = bldr.field(2, "f2").stringLists();
-  auto &ft1 = bldr.feature("ft1").length(f2);
+  auto& ft1 = bldr.feature("ft1").length(f2);
   bldr.unigram({ft1});
   bldr.unigram({f1});
   AnalysisSpec spec{};
@@ -170,7 +169,7 @@ TEST_CASE("simple dsl with two fields and placeholder") {
   ModelSpecBuilder bldr;
   auto& f1 = bldr.field(1, "f1").strings().trieIndex();
   auto& f2 = bldr.field(2, "f2").stringLists();
-  auto &ft1 = bldr.feature("ft1").placeholder();
+  auto& ft1 = bldr.feature("ft1").placeholder();
   bldr.unigram({ft1});
   bldr.unigram({f1});
   AnalysisSpec spec{};
