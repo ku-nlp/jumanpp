@@ -73,10 +73,10 @@ class ExtraNodesContext {
   }
 
   const ExtraNode* node(EntryPtr ptr) const {
-    if (!isSpecial(ptr)) {
+    if (ptr.isDic()) {
       return nullptr;
     }
-    auto idx = idxFromEntryPtr(ptr);
+    auto idx = ptr.extPtr();
     JPP_DCHECK_IN(idx, 0, extraNodes_.size());
     return extraNodes_[idx];
   }
@@ -86,7 +86,7 @@ class ExtraNodesContext {
     i32 realPtr = ~fieldPtr;
     JPP_DCHECK_IN(realPtr, 0, strings_.size());
     auto sp = strings_[realPtr];
-    return (i32) sp.size();
+    return (i32)sp.size();
   }
 
   void reset() {
@@ -97,10 +97,11 @@ class ExtraNodesContext {
 
   /**
    * Register this string, so it would be usable as a pointer.
-   * This version does not intern content of a string, simply assings an id to one
+   * This version does not intern content of a string, simply assings an id to
+   * one
    * \see intern
-   * @param piece 
-   * @return 
+   * @param piece
+   * @return
    */
   i32 pointerFor(StringPiece piece) {
     auto it = stringPtrs_.find(piece);
@@ -115,7 +116,8 @@ class ExtraNodesContext {
   }
 
   /**
-   * Copy this string internally and register it, so it will be usable as a pointer.
+   * Copy this string internally and register it, so it will be usable as a
+   * pointer.
    * \see pointerFor
    * @param piece
    * @return
@@ -125,9 +127,16 @@ class ExtraNodesContext {
     if (it == stringPtrs_.end()) {
       auto ptr = alloc_->allocateArray<char>(piece.size());
       std::copy(piece.begin(), piece.end(), ptr);
-      return pointerFor(StringPiece{reinterpret_cast<StringPiece::pointer_t>(ptr), piece.size()});
+      return pointerFor(StringPiece{
+          reinterpret_cast<StringPiece::pointer_t>(ptr), piece.size()});
     }
     return it->second;
+  }
+
+  StringPiece string(i32 ptr) const {
+    i32 actual = ~ptr;
+    JPP_DCHECK_IN(actual, 0, strings_.size());
+    return strings_[actual];
   }
 };
 

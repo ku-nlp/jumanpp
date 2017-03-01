@@ -8,7 +8,9 @@ namespace jumanpp {
 namespace core {
 namespace analysis {
 
-bool ChunkingUnkMaker::spawnNodes(const AnalysisInput &input, UnkNodesContext *ctx, LatticeBuilder *lattice) const {
+bool ChunkingUnkMaker::spawnNodes(const AnalysisInput& input,
+                                  UnkNodesContext* ctx,
+                                  LatticeBuilder* lattice) const {
   auto& codepoints = input.codepoints();
   for (LatticePosition i = 0; i < codepoints.size(); ++i) {
     auto& codept = codepoints[i];
@@ -29,7 +31,7 @@ bool ChunkingUnkMaker::spawnNodes(const AnalysisInput &input, UnkNodesContext *c
           havePrefixInDic = false;
         case TraverseStatus::NoLeaf: {
           LatticePosition start = i;
-          LatticePosition end = (LatticePosition) (j + 1);
+          LatticePosition end = (LatticePosition)(j + 1);
           auto ptr =
               ctx->makePtr(input.surface(start, end), *info_, havePrefixInDic);
           lattice->appendSeed(ptr, start, end);

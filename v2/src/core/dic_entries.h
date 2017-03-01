@@ -5,11 +5,11 @@
 #ifndef JUMANPP_DIC_ENTRIES_H
 #define JUMANPP_DIC_ENTRIES_H
 
+#include "core/darts_trie.h"
 #include "core/impl/field_reader.h"
 #include "util/array_slice.h"
 #include "util/string_piece.h"
 #include "util/types.hpp"
-#include "core/darts_trie.h"
 
 namespace jumanpp {
 namespace core {

@@ -34,7 +34,7 @@ Status LatticeBuilder::prepare() {
     nodeCount += 1;
   }
   LatticePosition eosPos = maxBoundaries_ + 1;
-  LatticeNodeSeed eos{EntryPtr::BOS, eosPos, eosPos};
+  LatticeNodeSeed eos{EntryPtr::BOS(), eosPos, eosPos};
   prepareNodes(eos);
 
   if (boundaries_.front().startCount == 0) {

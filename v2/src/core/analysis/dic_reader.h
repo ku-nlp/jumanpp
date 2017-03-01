@@ -20,7 +20,7 @@ class DictNode {
   util::ArraySlice<i32> baseData;
 
  public:
-  DictNode(util::ArraySlice<i32> data): baseData{data} {}
+  DictNode(util::ArraySlice<i32> data) : baseData{data} {}
   util::MutableArraySlice<i32> copyTo(ExtraNode* node) const;
 };
 
@@ -28,7 +28,7 @@ class DicReader {
   util::memory::ManagedAllocatorCore* alloc_;
   dic::DictionaryHolder dic_;
 
-public:
+ public:
   DictNode readEntry(EntryPtr ptr) const;
 };
 

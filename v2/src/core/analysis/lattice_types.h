@@ -5,6 +5,7 @@
 #ifndef JUMANPP_LATTICE_TYPES_H
 #define JUMANPP_LATTICE_TYPES_H
 
+#include <core/core_types.h>
 #include "util/soa.h"
 #include "util/types.hpp"
 
@@ -61,6 +62,8 @@ class LatticeRightBoundary final : public util::memory::StructOfArrays {
   util::memory::SizedArrayField<u64, 64> featurePatterns;
   util::memory::SizedArrayField<ConnectionBeamElement, 64> beam;
 
+  friend class LatticeBoundary;
+
  public:
   LatticeRightBoundary(util::memory::ManagedAllocatorCore* alloc,
                        const LatticeConfig& lc,
@@ -97,6 +100,10 @@ class LatticeBoundary {
   LatticeBoundary(util::memory::ManagedAllocatorCore* alloc,
                   const LatticeConfig& lc, const LatticeBoundaryConfig& lbc);
 
+  EntryPtr entry(u32 position) const {
+    return EntryPtr{right.dicPtrs.data().at(position)};
+  }
+
   friend class Lattice;
 };
 
@@ -111,6 +118,7 @@ class Lattice {
   Status makeBoundary(const LatticeBoundaryConfig& lbc, LatticeBoundary** ptr);
 
   LatticeBoundary* boundary(u32 idx) { return &boundaries.at(idx); }
+  const LatticeBoundary* boundary(u32 idx) const { return &boundaries.at(idx); }
 };
 
 }  // analysis

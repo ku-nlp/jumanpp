@@ -17,17 +17,14 @@ util::MutableArraySlice<i32> DictNode::copyTo(ExtraNode *node) const {
 }
 
 DictNode DicReader::readEntry(EntryPtr ptr) const {
-  JPP_DCHECK_NOT(isSpecial(ptr));
-  i32 ipt = idxFromEntryPtr(ptr);
-  auto entrySize = (size_t) dic_.entries().entrySize();
+  i32 ipt = ptr.dicPtr();
+  auto entrySize = (size_t)dic_.entries().entrySize();
   auto memory = alloc_->allocateArray<i32>(entrySize);
-  util::MutableArraySlice<i32> slice {memory, entrySize};
+  util::MutableArraySlice<i32> slice{memory, entrySize};
   dic_.entries().entryAtPtr(ipt).fill(slice, entrySize);
-  return DictNode {slice};
+  return DictNode{slice};
 }
 
-} // analysis
-} // core
-} // jumanpp
-
-
+}  // analysis
+}  // core
+}  // jumanpp

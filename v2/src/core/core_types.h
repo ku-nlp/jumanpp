@@ -6,6 +6,7 @@
 #define JUMANPP_CORE_TYPES_H
 
 #include <limits>
+#include "util/common.hpp"
 #include "util/types.hpp"
 
 namespace jumanpp {
@@ -17,20 +18,37 @@ namespace core {
  * Positive values are dictionary entry pointers
  * Negative values are special entry pointers (1-complement representation)
  */
-enum class EntryPtr : i32 {
-  BOS = std::numeric_limits<i32>::min(),
-  EOS = std::numeric_limits<i32>::min() + 1,
+class EntryPtr {
+  i32 value_;
+
+ public:
+  constexpr explicit EntryPtr(i32 value) : value_{value} {}
+  constexpr EntryPtr(const EntryPtr&) = default;
+
+  constexpr inline bool isSpecial() const { return value_ < 0; }
+
+  constexpr inline bool isDic() const { return value_ >= 0; }
+
+  inline i32 dicPtr() const {
+    JPP_DCHECK_GE(value_, 0);
+    return value_;
+  }
+
+  inline i32 extPtr() const {
+    JPP_DCHECK_LT(value_, 0);
+    return ~value_;
+  }
+
+  static constexpr EntryPtr BOS() {
+    return EntryPtr{std::numeric_limits<i32>::min()};
+  }
+
+  static constexpr EntryPtr EOS() {
+    return EntryPtr{std::numeric_limits<i32>::min() + 1};
+  }
 };
 
-inline bool isSpecial(EntryPtr ptr) { return static_cast<i32>(ptr) < 0; }
-
-inline i32 idxFromEntryPtr(EntryPtr ptr) {
-  i32 intValue = static_cast<i32>(ptr);
-  if (intValue < 0) {
-    return ~intValue;
-  }
-  return intValue;
-}
+inline bool isSpecial(EntryPtr ptr) { return ptr.isSpecial(); }
 
 }  // core
 }  // jumanpp

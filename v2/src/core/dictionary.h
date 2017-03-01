@@ -10,8 +10,8 @@
 #include "core/core_types.h"
 #include "core/dic_builder.h"
 #include "core/dic_entries.h"
-#include "core/spec/spec_types.h"
 #include "core/impl/field_reader.h"
+#include "core/spec/spec_types.h"
 
 namespace jumanpp {
 namespace core {
@@ -31,10 +31,19 @@ class FieldsHolder {
   std::vector<DictionaryField> fields_;
 
  public:
-  const DictionaryField &at(i32 field) const {
+  const DictionaryField& at(i32 field) const {
     JPP_DCHECK_GE(field, 0);
     JPP_DCHECK_LT(field, fields_.size());
     return fields_[field];
+  }
+
+  const DictionaryField* byName(StringPiece name) const {
+    for (auto& f : fields_) {
+      if (f.name == name) {
+        return &f;
+      }
+    }
+    return nullptr;
   }
 };
 
@@ -43,14 +52,15 @@ class DictionaryHolder {
   EntriesHolder entries_;
   FieldsHolder fields_;
 
-public:
-
-  DictionaryEntries entries() const {
-    return DictionaryEntries { &entries_ };
+ public:
+  const DictionaryField* fieldByName(StringPiece name) const {
+    return fields_.byName(name);
   }
+
+  DictionaryEntries entries() const { return DictionaryEntries{&entries_}; }
 };
 
-Status fillEntriesHolder(const BuiltDictionary &dic, EntriesHolder *result);
+Status fillEntriesHolder(const BuiltDictionary& dic, EntriesHolder* result);
 
 }  // dic
 }  // core

@@ -6,11 +6,11 @@
 #define JUMANPP_UNK_NODES_CREATOR_H
 
 #include "core/analysis/analysis_input.h"
-#include "core/dic_entries.h"
+#include "core/analysis/dic_reader.h"
 #include "core/analysis/extra_nodes.h"
 #include "core/analysis/lattice_builder.h"
+#include "core/dic_entries.h"
 #include "util/characters.h"
-#include "core/analysis/dic_reader.h"
 
 namespace jumanpp {
 namespace core {
@@ -29,8 +29,10 @@ struct UnkNodeConfig {
 
 class UnkNodesContext {
   ExtraNodesContext* xtra_;
+
  public:
-  EntryPtr makePtr(StringPiece surface, const UnkNodeConfig& conf, bool notPrefix) {
+  EntryPtr makePtr(StringPiece surface, const UnkNodeConfig& conf,
+                   bool notPrefix) {
     auto node = xtra_->makeUnk(conf.base);
     auto data = xtra_->nodeContent(node);
     auto sptr = xtra_->pointerFor(surface);

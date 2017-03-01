@@ -6,10 +6,10 @@
 #define JUMANPP_LATTICE_BUILDER_H
 
 #include <vector>
+#include "core/core_types.h"
 #include "lattice_types.h"
 #include "util/status.hpp"
 #include "util/types.hpp"
-#include "core/core_types.h"
 
 namespace jumanpp {
 namespace core {
