@@ -9,17 +9,18 @@
 #include "lattice_types.h"
 #include "util/status.hpp"
 #include "util/types.hpp"
+#include "core/core_types.h"
 
 namespace jumanpp {
 namespace core {
 namespace analysis {
 
 struct LatticeNodeSeed {
-  i32 entryPtr;
+  EntryPtr entryPtr;
   LatticePosition codepointStart;
   LatticePosition codepointEnd;
 
-  LatticeNodeSeed(i32 entryPtr, LatticePosition codepointStart,
+  LatticeNodeSeed(EntryPtr entryPtr, LatticePosition codepointStart,
                   LatticePosition codepointEnd)
       : entryPtr(entryPtr),
         codepointStart(codepointStart),
@@ -60,7 +61,7 @@ class LatticeBuilder {
   LatticePosition maxBoundaries_;
 
  public:
-  inline void appendSeed(i32 entryPtr, LatticePosition start,
+  inline void appendSeed(EntryPtr entryPtr, LatticePosition start,
                          LatticePosition end) {
     seeds_.emplace_back(entryPtr, start, end);
   }

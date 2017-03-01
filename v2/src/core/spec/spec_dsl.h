@@ -98,9 +98,7 @@ class FieldBuilder : public DslOpBase {
                                0};
   }
 
-  operator FieldExpressionBldr() const {
-    return value();
-  }
+  operator FieldExpressionBldr() const { return value(); }
 
   FieldExpressionBldr replaceWith(StringPiece value) const {
     return FieldExpressionBldr{name_, TransformType::ReplaceString, value, 0};

@@ -5,10 +5,10 @@
 #ifndef JUMANPP_DIC_ENTRIES_H
 #define JUMANPP_DIC_ENTRIES_H
 
-#include <core/impl/field_reader.h>
-#include <util/array_slice.h>
-#include <util/string_piece.h>
-#include <util/types.hpp>
+#include "core/impl/field_reader.h"
+#include "util/array_slice.h"
+#include "util/string_piece.h"
+#include "util/types.hpp"
 #include "core/darts_trie.h"
 
 namespace jumanpp {
@@ -66,10 +66,10 @@ class IndexedEntries {
 
 class IndexTraversal {
   DoubleArrayTraversal da_;
-  EntriesHolder* dic_;
+  const EntriesHolder* dic_;
 
  public:
-  IndexTraversal(EntriesHolder* dic_)
+  IndexTraversal(const EntriesHolder* dic_)
       : da_(dic_->trie.traversal()), dic_(dic_) {}
   TraverseStatus step(const StringPiece& sp) { return da_.step(sp); }
   IndexedEntries entries() const {
@@ -79,12 +79,16 @@ class IndexTraversal {
 };
 
 class DictionaryEntries {
-  EntriesHolder* data_;
+  const EntriesHolder* data_;
 
  public:
-  DictionaryEntries(EntriesHolder* data_) noexcept : data_(data_) {}
+  DictionaryEntries(const EntriesHolder* data_) noexcept : data_(data_) {}
   i32 entrySize() const { return static_cast<i32>(data_->entrySize); }
   IndexTraversal traversal() const { return IndexTraversal(data_); }
+  impl::IntListTraversal entryAtPtr(i32 ptr) const {
+    auto rdr = data_->entries.rawWithLimit(ptr, data_->entrySize);
+    return rdr;
+  }
 };
 
 }  // dic

@@ -129,7 +129,8 @@ TEST_CASE("can specify unk makers") {
   auto& f2 = spec.field(2, "f2").strings();
   auto& ft1 = spec.feature("ft1").placeholder();
   auto& unk1 = spec.unk("unk1", 1)
-                   .single(CharacterClass::SYMBOL)
-                   .outputTo({f1});
+                   .chunking(CharacterClass::KATAKANA)
+                   .notPrefixOfDicFeature(ft1)
+                   .outputTo({f1, f2});
   VALID(spec);
 }

@@ -2,8 +2,8 @@
 // Created by Arseny Tolmachev on 2017/02/20.
 //
 
-#ifndef JUMANPP_DIC_READER_H
-#define JUMANPP_DIC_READER_H
+#ifndef JUMANPP_FIELD_READER_H
+#define JUMANPP_FIELD_READER_H
 
 #include <util/coded_io.h>
 
@@ -88,7 +88,7 @@ class IntStorageReader {
   IntStorageReader() {}
   IntStorageReader(const StringPiece& obj) : data_{obj} {}
 
-  IntListTraversal rawWithLimit(i32 ptr, i32 length) {
+  IntListTraversal rawWithLimit(i32 ptr, i32 length) const {
     JPP_DCHECK_IN(ptr, 0, data_.size());
     JPP_DCHECK_GE(length, 0);
     JPP_DCHECK_LE(length, data_.size() - ptr);  // this is a lower bound
@@ -141,4 +141,4 @@ class StringStorageTraversal {
 }  // core
 }  // jumanpp
 
-#endif  // JUMANPP_DIC_READER_H
+#endif  // JUMANPP_FIELD_READER_H

@@ -11,6 +11,7 @@
 #include "core/dic_builder.h"
 #include "core/dic_entries.h"
 #include "core/spec/spec_types.h"
+#include "core/impl/field_reader.h"
 
 namespace jumanpp {
 namespace core {
@@ -41,6 +42,12 @@ class DictionaryHolder {
   spec::AnalysisSpec spec_;
   EntriesHolder entries_;
   FieldsHolder fields_;
+
+public:
+
+  DictionaryEntries entries() const {
+    return DictionaryEntries { &entries_ };
+  }
 };
 
 Status fillEntriesHolder(const BuiltDictionary &dic, EntriesHolder *result);

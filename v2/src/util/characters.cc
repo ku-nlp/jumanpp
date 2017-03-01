@@ -2,7 +2,7 @@
 // Created by Arseny Tolmachev on 2017/02/20.
 //
 
-#include "characters.hpp"
+#include "characters.h"
 #include <util/flatset.h>
 
 namespace jumanpp {

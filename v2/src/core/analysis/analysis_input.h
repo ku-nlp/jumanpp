@@ -31,6 +31,11 @@ class AnalysisInput {
   const CodepointStorage& codepoints() const { return codepoints_; }
 
   u16 numCodepoints();
+
+  StringPiece surface(i32 start, i32 end) const {
+    StringPiece full{raw_input_};
+    return full.slice(start, end);
+  }
 };
 
 }  // analysis

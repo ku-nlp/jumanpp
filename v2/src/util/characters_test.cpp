@@ -2,7 +2,7 @@
 // Created by Arseny Tolmachev on 2017/02/18.
 //
 
-#include "util/characters.hpp"
+#include "util/characters.h"
 #include "testing/standalone_test.h"
 
 using jumanpp::StringPiece;

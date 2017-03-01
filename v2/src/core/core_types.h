@@ -16,7 +16,10 @@ namespace core {
  * Positive values are dictionary entry pointers
  * Negative values are special entry pointers (1-complement representation)
  */
-enum class EntryPtr : i32 {};
+enum class EntryPtr : i32 {
+  BOS = std::numeric_limits<i32>::min(),
+  EOS = std::numeric_limits<i32>::min() + 1,
+};
 
 inline bool isSpecial(EntryPtr ptr) { return static_cast<i32>(ptr) < 0; }
 
