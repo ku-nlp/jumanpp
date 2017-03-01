@@ -19,7 +19,6 @@ namespace dic {
 
 struct DictionaryField {
   i32 index;
-  i32 csvPosition;
   StringPiece name;
   spec::ColumnType columnType;
   impl::IntStorageReader postions;
@@ -45,10 +44,11 @@ class FieldsHolder {
     }
     return nullptr;
   }
+
+  Status load(const BuiltDictionary& dic);
 };
 
 class DictionaryHolder {
-  spec::AnalysisSpec spec_;
   EntriesHolder entries_;
   FieldsHolder fields_;
 
@@ -58,6 +58,8 @@ class DictionaryHolder {
   }
 
   DictionaryEntries entries() const { return DictionaryEntries{&entries_}; }
+
+  Status load(const BuiltDictionary& dic);
 };
 
 Status fillEntriesHolder(const BuiltDictionary& dic, EntriesHolder* result);

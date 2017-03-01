@@ -210,9 +210,9 @@ Status DictionaryBuilder::importCsv(StringPiece name, StringPiece data) {
   dic_->entryData = entries.buffer.contents();
   auto& flds = dic_->fieldData;
   for (auto& i : importers) {
-    BuiltField fld{i.descriptor->name, i.stringData.contents(),
-                   i.fieldData.contents(), i.useFieldData,
-                   i.importer->uniqueValues()};
+    BuiltField fld{i.descriptor->name,     i.stringData.contents(),
+                   i.fieldData.contents(), i.descriptor->columnType,
+                   i.useFieldData,         i.importer->uniqueValues()};
     flds.push_back(fld);
   }
 

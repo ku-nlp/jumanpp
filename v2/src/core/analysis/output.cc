@@ -3,6 +3,7 @@
 //
 
 #include "output.h"
+#include "core/analysis/lattice_types.h"
 
 namespace jumanpp {
 namespace core {
@@ -48,7 +49,7 @@ NodeWalker OutputManager::nodeWalker() const {
   return NodeWalker{slice};
 }
 
-bool OutputManager::locate(LatticeNodePtr ptr, NodeWalker* result) const {
+bool OutputManager::locate(LatticeNodePtr ptr, NodeWalker *result) const {
   auto bnd = lattice_->boundary(ptr.boundary);
   auto eptr = bnd->entry(ptr.position);
   return locate(eptr, result);
@@ -60,13 +61,12 @@ bool OutputManager::locate(EntryPtr ptr, NodeWalker *result) const {
   if (ptr.isSpecial()) {
     auto node = xtra_->node(ptr);
     if (node == nullptr) {
-
       return false;
     }
     if (node->header.type == ExtraNodeType::Alias) {
       result->status_ = NodeLookupStatus::Multiple;
-      auto& hdr = node->header.alias;
-      result->remaining_ = (i32) hdr.dictionaryNodes.size();
+      auto &hdr = node->header.alias;
+      result->remaining_ = (i32)hdr.dictionaryNodes.size();
       result->nodes_ = hdr.dictionaryNodes;
       return true;
     }
@@ -88,6 +88,16 @@ bool OutputManager::locate(EntryPtr ptr, NodeWalker *result) const {
   }
   return false;
 }
+
+OutputManager::OutputManager(util::memory::ManagedAllocatorCore *alloc,
+                             const ExtraNodesContext *xtra,
+                             const dic::DictionaryHolder *holder,
+                             const Lattice *lattice)
+    : alloc_(alloc),
+      xtra_(xtra),
+      holder_(holder),
+      entries_{holder->entries()},
+      lattice_(lattice) {}
 
 bool NodeWalker::handleMultiple() {
   EntryPtr eptr{nodes_.at(nodes_.size() - remaining_)};
@@ -111,7 +121,8 @@ StringPiece StringField::operator[](const NodeWalker &node) const {
   return StringPiece{"-----STRING_FIELD_ERROR!!!----"};
 }
 
-void StringField::initialize(i32 index, const ExtraNodesContext *xtra, dic::impl::StringStorageReader reader) {
+void StringField::initialize(i32 index, const ExtraNodesContext *xtra,
+                             dic::impl::StringStorageReader reader) {
   index_ = index;
   xtra_ = xtra;
   new (&reader_) dic::impl::StringStorageReader{reader};

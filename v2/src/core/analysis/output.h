@@ -6,7 +6,7 @@
 #define JUMANPP_OUTPUT_H
 
 #include "extra_nodes.h"
-#include "lattice_types.h"
+#include "lattice_config.h"
 
 namespace jumanpp {
 namespace core {
@@ -50,8 +50,6 @@ class NodeWalker {
   bool isSuccess() const { return status_ != NodeLookupStatus::Failure; }
 };
 
-
-
 class StringField {
   i32 index_;
   const ExtraNodesContext* xtra_;
@@ -73,7 +71,7 @@ class StringField {
 class OutputManager {
   util::memory::ManagedAllocatorCore* alloc_;
   const ExtraNodesContext* xtra_;
-  dic::DictionaryHolder* holder_;
+  const dic::DictionaryHolder* holder_;
   dic::DictionaryEntries entries_;
   const Lattice* lattice_;
 
@@ -82,6 +80,10 @@ class OutputManager {
   friend class NodeWalker;
 
  public:
+  OutputManager(util::memory::ManagedAllocatorCore* alloc,
+                const ExtraNodesContext* xtra,
+                const dic::DictionaryHolder* holder, const Lattice* lattice);
+
   bool locate(LatticeNodePtr ptr, NodeWalker* result) const;
   bool locate(EntryPtr ptr, NodeWalker* result) const;
   NodeWalker nodeWalker() const;

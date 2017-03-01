@@ -18,8 +18,8 @@ struct BuiltField {
   StringPiece name;
   StringPiece stringContent;
   StringPiece fieldContent;
+  spec::ColumnType colType;
   bool usesFieldContent;
-
   i32 uniqueValues;
 };
 

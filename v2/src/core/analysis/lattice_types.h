@@ -6,46 +6,13 @@
 #define JUMANPP_LATTICE_TYPES_H
 
 #include <core/core_types.h>
+#include "core/analysis/lattice_config.h"
 #include "util/soa.h"
 #include "util/types.hpp"
 
 namespace jumanpp {
 namespace core {
 namespace analysis {
-
-using LatticePosition = u16;
-using Score = float;
-
-struct ConnectionPtr {
-  u16 boundary;
-  u16 left;
-  u16 right;
-  u16 beam;
-};
-
-struct LatticeNodePtr {
-  u16 boundary;
-  u16 position;
-};
-
-struct LatticeConfig {
-  u32 numBoundaries;
-  u32 numPrimitiveFeatures;
-  u32 numFeaturePatterns;
-  u32 numFinalFeatures;
-  u32 beamSize;
-};
-
-struct LatticeBoundaryConfig {
-  u32 boundary;
-  u32 endNodes;
-  u32 beginNodes;
-};
-
-struct ConnectionBeamElement {
-  ConnectionPtr ptr;
-  Score totalScore;
-};
 
 class LatticeLeftBoundary final : public util::memory::StructOfArrays {
   util::memory::SizedArrayField<LatticeNodePtr> endingNodes;
@@ -119,6 +86,7 @@ class Lattice {
 
   LatticeBoundary* boundary(u32 idx) { return &boundaries.at(idx); }
   const LatticeBoundary* boundary(u32 idx) const { return &boundaries.at(idx); }
+  void reset();
 };
 
 }  // analysis
