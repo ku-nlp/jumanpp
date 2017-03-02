@@ -10,7 +10,7 @@ namespace jumanpp {
 namespace core {
 namespace analysis {
 
-class Analyzer {
+class AnalyzerImpl {
   AnalyzerConfig cfg_;
   const CoreHolder* core_;
   util::memory::Manager memMgr_;
@@ -21,10 +21,10 @@ class Analyzer {
   OutputManager outputManager_;
 
 public:
-  Analyzer(const Analyzer&) = delete;
-  Analyzer(Analyzer&&) = delete;
+  AnalyzerImpl(const AnalyzerImpl&) = delete;
+  AnalyzerImpl(AnalyzerImpl&&) = delete;
 
-  Analyzer(const CoreHolder* core, const AnalyzerConfig& cfg)
+  AnalyzerImpl(const CoreHolder* core, const AnalyzerConfig& cfg)
       : cfg_{cfg},
         core_{core},
         memMgr_{cfg.pageSize},
@@ -48,6 +48,15 @@ public:
 };
 
 
+Analyzer::Analyzer(const CoreHolder *core, const AnalyzerConfig &cfg):
+  pimpl_{new AnalyzerImpl{core, cfg}}
+{
+
+}
+
+Analyzer::~Analyzer() {
+
+}
 }  // analysis
 }  // core
 }  // jumanpp

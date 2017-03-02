@@ -17,6 +17,24 @@ struct AnalyzerConfig {
   size_t maxInputBytes = 4 * 1024;
 };
 
+/**
+ * This will depend on all core, so put it in pimpl idiom to reduce header overload.
+ *
+ * This will have only high-level calls, so we do not care about +1 level of indirection
+ */
+class AnalyzerImpl;
+
+class Analyzer {
+  std::unique_ptr<AnalyzerImpl> pimpl_;
+
+public:
+  Analyzer(const Analyzer&) = delete;
+  Analyzer(Analyzer&&) = delete;
+
+  Analyzer(const CoreHolder* core, const AnalyzerConfig& cfg);
+  ~Analyzer();
+};
+
 
 }  // analysis
 }  // core
