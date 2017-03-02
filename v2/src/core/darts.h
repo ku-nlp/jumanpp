@@ -56,7 +56,7 @@ class Length<char> {
 };
 
 template <class node_type_, class node_u_type_, class array_type_,
-          class array_u_type_, class length_func_ = Length<node_type_> >
+          class array_u_type_, class length_func_ = Length<node_type_>>
 class DoubleArrayImpl {
  public:
   typedef array_type_ value_type;
