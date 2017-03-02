@@ -9,7 +9,6 @@
 #include "util/string_piece.h"
 #include "util/types.hpp"
 
-#include <unordered_set>
 #include <vector>
 
 namespace jumanpp {

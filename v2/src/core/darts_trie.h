@@ -5,10 +5,10 @@
 #ifndef JUMANPP_DARTS_TRIE_H
 #define JUMANPP_DARTS_TRIE_H
 
-#include <util/string_piece.h>
+#include "util/string_piece.h"
 #include <memory>
-#include <util/status.hpp>
-#include <util/types.hpp>
+#include "util/status.hpp"
+#include "util/types.hpp"
 #include <vector>
 
 namespace Darts {

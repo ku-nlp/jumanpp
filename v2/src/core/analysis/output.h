@@ -5,12 +5,23 @@
 #ifndef JUMANPP_OUTPUT_H
 #define JUMANPP_OUTPUT_H
 
-#include "extra_nodes.h"
-#include "lattice_config.h"
+#include "core/analysis/lattice_config.h"
+#include "util/string_piece.h"
+#include "util/array_slice.h"
+#include "util/memory.hpp"
+#include "core/impl/field_reader.h"
+#include "core/dic_entries.h"
+#include "core/core_types.h"
 
 namespace jumanpp {
 namespace core {
+namespace dic {
+class DictionaryHolder;
+}
+
 namespace analysis {
+
+class ExtraNodesContext;
 
 enum class NodeLookupStatus { Failure, Single, Multiple };
 
