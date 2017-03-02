@@ -10,8 +10,7 @@ namespace analysis {
 
 Lattice::Lattice(util::memory::ManagedAllocatorCore *alloc,
                  const LatticeConfig &lc)
-    : boundaries{alloc}, lconf{lc}, alloc{alloc} {
-}
+    : boundaries{alloc}, lconf{lc}, alloc{alloc} {}
 
 Status Lattice::makeBoundary(const LatticeBoundaryConfig &lbc,
                              LatticeBoundary **ptr) {
@@ -22,9 +21,7 @@ Status Lattice::makeBoundary(const LatticeBoundaryConfig &lbc,
   return Status::Ok();
 }
 
-void Lattice::reset() {
-  boundaries.clear();
-}
+void Lattice::reset() { boundaries.clear(); }
 
 LatticeBoundary::LatticeBoundary(util::memory::ManagedAllocatorCore *alloc,
                                  const LatticeConfig &lc,
