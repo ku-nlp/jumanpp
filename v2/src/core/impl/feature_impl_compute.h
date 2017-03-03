@@ -29,16 +29,16 @@ class MatchTupleComputeFeatureImpl {
   i32 featureIdx;
 
   // indices of fields and features of question part of this feature
-  util::ArraySlice<const i32> references;
+  util::ArraySlice<i32> references;
 
   // this is assumed to contain tuples of field pointers
   // there are in total matchData.size() / references.size() tuples
-  util::ArraySlice<const i32> matchData;
+  util::ArraySlice<i32> matchData;
 
   // feature indices of true branch
-  util::ArraySlice<const i32> trueBranch;
+  util::ArraySlice<i32> trueBranch;
   // feature indices of fals branch
-  util::ArraySlice<const i32> falseBranch;
+  util::ArraySlice<i32> falseBranch;
 
   size_t dataEntries;
 
