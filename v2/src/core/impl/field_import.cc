@@ -81,7 +81,7 @@ i32 IntFieldImporter::fieldPointer(const util::CsvReader& csv) {
 
 bool IntFieldImporter::importString(StringPiece sp) {
   if (sp.size() == 0) return true;
-  return std::regex_match(sp.begin(), sp.end(), mr_, re_);
+  return std::regex_match(sp.char_begin(), sp.char_end(), mr_, re_);
 }
 
 Status StringStorage::makeStorage(util::CodedBuffer* result) {

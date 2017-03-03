@@ -207,7 +207,7 @@ void writePtrsAsDeltas(C& values, util::CodedBuffer& buffer) {
 class IntFieldImporter : public FieldImporter {
   i32 fld_;
   std::regex re_;
-  std::match_results<StringPiece::iterator> mr_;
+  std::match_results<const char*> mr_;
 
  public:
   IntFieldImporter(i32 field);
