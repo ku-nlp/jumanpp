@@ -10,6 +10,7 @@
 #include <util/flatmap.h>
 #include <algorithm>
 #include <array>
+#include <regex>
 #include <util/status.hpp>
 
 namespace jumanpp {
@@ -17,11 +18,33 @@ namespace core {
 namespace dic {
 namespace impl {
 
+/**
+ * Base interface for objects which import a single field from csv
+ * into dictionary
+ */
 class FieldImporter {
  public:
+  /**
+   * Make sure that the string gets into the index and will be assigned a
+   * pointer
+   * @param sp
+   * @return
+   */
+  virtual bool importString(StringPiece sp) = 0;
+
+  /**
+   * Import own field from csv row
+   * @param csv
+   * @return
+   */
   virtual bool importFieldValue(const util::CsvReader& csv) = 0;
+
+  /**
+   * Create the storage for saving to disk
+   * @param result
+   * @return
+   */
   virtual Status makeStorage(util::CodedBuffer* result) = 0;
-  virtual bool requiresFieldBuffer() const { return false; };
   virtual void injectFieldBuffer(util::CodedBuffer* buffer){};
   virtual i32 fieldPointer(const util::CsvReader& csv) = 0;
   virtual i32 uniqueValues() const = 0;
@@ -70,8 +93,8 @@ class CharBuffer {
   }
 };
 
-class StringFieldImporter : public FieldImporter {
- protected:
+class StringStorage {
+  using Mapping = util::FlatMap<StringPiece, i32>;
   /**
    * This hashmap has two usages in dictionary import.
    *
@@ -82,10 +105,10 @@ class StringFieldImporter : public FieldImporter {
    * positions of entries in the field storage.
    *
    */
-  jumanpp::util::FlatMap<StringPiece, i32> mapping_;
+  Mapping mapping_;
   CharBuffer<> contents_;
-  i32 field_;
 
+ public:
   bool increaseFieldValueCount(StringPiece sp) {
     if (mapping_.count(sp) == 0) {
       JPP_RET_CHECK(contents_.import(&sp));
@@ -96,39 +119,70 @@ class StringFieldImporter : public FieldImporter {
     return true;
   }
 
+  Status makeStorage(util::CodedBuffer* result);
+
+  i32 valueOf(StringPiece sp) const {
+    auto it = mapping_.find(sp);
+    if (it == mapping_.end()) {
+      return -1;
+    }
+    return it->second;
+  }
+
+  size_t size() const { return mapping_.size(); }
+
+  Mapping::const_iterator begin() const { return mapping_.begin(); }
+  Mapping::const_iterator end() const { return mapping_.end(); }
+};
+
+class StringFieldImporter : public FieldImporter {
+ protected:
+  StringStorage* storage_;
+  i32 field_;
+  StringPiece ignore_;
+
  public:
-  StringFieldImporter(i32 field) : field_{field} {}
+  StringFieldImporter(StringStorage* storage, i32 field, StringPiece ignore)
+      : storage_{storage}, field_{field}, ignore_{ignore} {}
 
   virtual bool importFieldValue(const util::CsvReader& csv) override {
     auto sp = csv.field(field_);
-    return increaseFieldValueCount(sp);
+    if (ignore_ == sp || sp.size() == 0) {
+      return true;
+    }
+    return storage_->increaseFieldValueCount(sp);
   }
 
   Status makeStorage(util::CodedBuffer* result) override;
 
   virtual i32 fieldPointer(const util::CsvReader& csv) override {
     auto sp = csv.field(field_);
-    return mapping_[sp];
+    auto val = storage_->valueOf(sp);
+    JPP_DCHECK_NE(val, -1);
+    return val;
   }
 
-  virtual i32 uniqueValues() const override { return (i32)mapping_.size(); }
+  virtual i32 uniqueValues() const override { return (i32)storage_->size(); }
+
+  bool importString(StringPiece sp) override {
+    return storage_->increaseFieldValueCount(sp);
+  }
 };
 
 class StringListFieldImporter : public StringFieldImporter {
+  /**
+   * This will hold individual list data
+   */
   util::CodedBuffer* buffer_;
   std::vector<i32> values_;
 
  public:
-  StringListFieldImporter(i32 field)
-      : StringFieldImporter::StringFieldImporter(field) {}
+  StringListFieldImporter(StringStorage* storage, i32 field, StringPiece ignore)
+      : StringFieldImporter::StringFieldImporter(storage, field, ignore) {}
 
   bool importFieldValue(const util::CsvReader& csv) override;
 
-  virtual bool requiresFieldBuffer() const override { return true; };
-
-  virtual void injectFieldBuffer(util::CodedBuffer* buffer) override {
-    buffer_ = buffer;
-  };
+  virtual void injectFieldBuffer(util::CodedBuffer* buffer) override;
 
   i32 fieldPointer(const util::CsvReader& csv) override;
 };
@@ -149,6 +203,30 @@ void writePtrsAsDeltas(C& values, util::CodedBuffer& buffer) {
     buffer.writeVarint(static_cast<u64>(v));
   }
 }
+
+class IntFieldImporter : public FieldImporter {
+  i32 fld_;
+  std::regex re_;
+  std::match_results<StringPiece::iterator> mr_;
+
+ public:
+  IntFieldImporter(i32 field);
+
+  bool importString(StringPiece sp) override;
+
+  bool importFieldValue(const util::CsvReader& csv) override {
+    StringPiece sp = csv.field(fld_);
+    return importString(sp);
+  }
+
+  Status makeStorage(util::CodedBuffer* result) override {
+    return Status::Ok();
+  }
+
+  i32 fieldPointer(const util::CsvReader& csv) override;
+
+  i32 uniqueValues() const override { return 0; }
+};
 
 }  // impl
 }  // dic

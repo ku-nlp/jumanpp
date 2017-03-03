@@ -21,7 +21,8 @@ bool feedData(util::CsvReader &csv, FieldImporter &importer) {
 
 TEST_CASE("string field importer processes storage") {
   StringPiece testData = "bug\nbeer\nblob\nbirch\nbug\ntoad";
-  StringFieldImporter importer{0};
+  StringStorage ss;
+  StringFieldImporter importer{&ss, 0, ""};
   util::CsvReader rdr;
   CHECK_OK(rdr.initFromMemory(testData));
   CHECK(feedData(rdr, importer));
@@ -36,7 +37,7 @@ TEST_CASE("string field importer processes storage") {
   }
   StringStorageReader storageReader{buffer.contents()};
   StringPiece piece;
-  CHECK(actualPositions.size() == 5);
+  CHECK(actualPositions.size() == 6); // 5 + empty
   CHECK_OK(rdr.initFromMemory(testData));
   CHECK(rdr.nextLine());
   auto ptr = importer.fieldPointer(rdr);
@@ -100,7 +101,8 @@ void checkSLFld(IntStorageReader &intStorage, StringStorageReader &strings,
 TEST_CASE("string list field processes input") {
   StringPiece testdata{"this is\nno more\n\nis it more\nno\n\n"};
   util::CodedBuffer fieldData;
-  StringListFieldImporter imp{0};
+  StringStorage ss;
+  StringListFieldImporter imp{&ss, 0, ""};
   imp.injectFieldBuffer(&fieldData);
   util::CsvReader csv;
   CHECK_OK(csv.initFromMemory(testdata));

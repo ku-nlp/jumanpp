@@ -19,12 +19,10 @@ struct BuiltField {
   StringPiece stringContent;
   StringPiece fieldContent;
   spec::ColumnType colType;
-  bool usesFieldContent;
   i32 uniqueValues;
 };
 
 struct BuiltDictionary {
-  StringPiece dicSpec;
   StringPiece trieContent;
   StringPiece entryPointers;
   StringPiece entryData;

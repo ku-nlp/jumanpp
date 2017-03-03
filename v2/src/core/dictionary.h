@@ -23,7 +23,6 @@ struct DictionaryField {
   spec::ColumnType columnType;
   impl::IntStorageReader postions;
   impl::StringStorageReader strings;
-  bool usesPositions;
 };
 
 class FieldsHolder {

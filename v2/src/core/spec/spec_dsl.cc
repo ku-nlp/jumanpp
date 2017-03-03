@@ -76,9 +76,9 @@ class StorageAssigner {
   util::FlatMap<StringPiece, i32> state_;
   i32 numInts_ = 0;
   i32 numStrings_ = 0;
-public:
-  Status assign(FieldDescriptor* fd, StringPiece stringName) {
 
+ public:
+  Status assign(FieldDescriptor* fd, StringPiece stringName) {
     switch (fd->columnType) {
       case ColumnType::Int:
         return Status::Ok();
@@ -91,14 +91,15 @@ public:
         numInts_ += 1;
         return Status::Ok();
       default:
-        return Status::NotImplemented() << fd->name << ": could not assing storage for field, unknown type " << fd->columnType;
+        return Status::NotImplemented()
+               << fd->name
+               << ": could not assing storage for field, unknown type "
+               << fd->columnType;
     }
   }
 
   i32 assignString(StringPiece stringName) {
-    auto newStr = [&]() {
-      return (numStrings_)++;
-    };
+    auto newStr = [&]() { return (numStrings_)++; };
 
     if (stringName.size() == 0) {
       return newStr();
@@ -107,13 +108,9 @@ public:
     }
   }
 
-  i32 getNumInts() const {
-    return numInts_;
-  }
+  i32 getNumInts() const { return numInts_; }
 
-  i32 getNumStrings() const {
-    return numStrings_;
-  }
+  i32 getNumStrings() const { return numStrings_; }
 };
 
 Status ModelSpecBuilder::makeFields(AnalysisSpec* anaSpec) const {
@@ -570,15 +567,19 @@ Status FieldBuilder::validate() const {
   }
 
   if (stringStorage_.size() > 0) {
-    if (!util::contains({ColumnType::StringList, ColumnType::String}, columnType_)) {
-      return Status::InvalidParameter() << "string storage can be specified only for string or stringList typed columns";
+    if (!util::contains({ColumnType::StringList, ColumnType::String},
+                        columnType_)) {
+      return Status::InvalidParameter() << "string storage can be specified "
+                                           "only for string or stringList "
+                                           "typed columns";
     }
   }
 
   return Status::Ok();
 }
 
-Status FieldBuilder::fill(FieldDescriptor* descriptor, StorageAssigner* sa) const {
+Status FieldBuilder::fill(FieldDescriptor* descriptor,
+                          StorageAssigner* sa) const {
   descriptor->position = csvColumn_;
   descriptor->columnType = columnType_;
   descriptor->emptyString = emptyValue_;

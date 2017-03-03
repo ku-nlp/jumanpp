@@ -18,12 +18,9 @@ Status fillEntriesHolder(const BuiltDictionary &dic, EntriesHolder *result) {
 Status FieldsHolder::load(const BuiltDictionary &dic) {
   for (i32 index = 0; index < dic.fieldData.size(); ++index) {
     auto &f = dic.fieldData[index];
-    DictionaryField df{index,
-                       f.name,
-                       f.colType,
+    DictionaryField df{index, f.name, f.colType,
                        impl::IntStorageReader{f.fieldContent},
-                       impl::StringStorageReader{f.stringContent},
-                       f.usesFieldContent};
+                       impl::StringStorageReader{f.stringContent}};
     fields_.push_back(df);
   }
   return Status::Ok();

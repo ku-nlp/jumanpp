@@ -297,7 +297,7 @@ class FlatMap {
     return v;
   }
 
-private:
+ private:
   using Rep = internal::FlatRep<Key, Bucket, Hash, Eq>;
 
   // Bucket stores kWidth <marker, key, value> triples.

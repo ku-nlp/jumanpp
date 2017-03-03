@@ -202,6 +202,34 @@ TEST_CASE("small with substrings dictionary is imported") {
       .step("x", TraverseStatus::NoNode);
 }
 
+TEST_CASE("dictionary with shared storage is imported") {
+  dsl::ModelSpecBuilder mb;
+  auto& fa = mb.field(1, "a").strings().trieIndex();
+  mb.field(2, "b").strings().stringStorage(fa);
+  AnalysisSpec spec;
+  CHECK_OK(mb.build(&spec));
+
+  StringPiece data{"a,b\na,a\ne,a\ng,a"};
+  DictionaryBuilder bldr;
+  CHECK_OK(bldr.importSpec(&spec));
+  CHECK_OK(bldr.importCsv("data", data));
+  auto& dic = bldr.result();
+  CHECK(dic.entryCount == 4);
+  CHECK(dic.fieldData.size() == 2);
+  CHECK(dic.fieldData[0].uniqueValues == 4);
+  CHECK(dic.fieldData[1].uniqueValues == 4);
+  CHECK(dic.fieldData[0].stringContent == dic.fieldData[1].stringContent);
+  CHECK(dic.fieldData[0].stringContent.size() == 9);
+
+  DataTester tester{dic};
+  tester()
+      .step("a", TraverseStatus::Ok)
+      .fillEntries()
+      .strings({"a", "b"})
+      .strings({"a", "a"})
+      .step("x", TraverseStatus::NoNode);
+}
+
 TEST_CASE("small dictionary where one of lines is corrupted is not imported") {
   TesterSpec test;
   StringPiece data{"a,b\nd\ne,f"};
