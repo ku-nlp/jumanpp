@@ -55,7 +55,9 @@ inline void NgramFeatureImpl<1>::apply(util::MutableArraySlice<u64> *result,
                                        const util::ArraySlice<u64> &t1,
                                        const util::ArraySlice<u64> &t0) const
     noexcept {
-  result->at(index) = util::hashing::hashCtSeq(UnigramSeed, t0[storage[0]]);
+  auto p0 = storage[0];
+  auto v0 = t0.at(p0);
+  result->at(index) = util::hashing::hashCtSeq(UnigramSeed, v0);
 };
 
 template <>
@@ -64,8 +66,12 @@ inline void NgramFeatureImpl<2>::apply(util::MutableArraySlice<u64> *result,
                                        const util::ArraySlice<u64> &t1,
                                        const util::ArraySlice<u64> &t0) const
     noexcept {
+  auto p0 = storage[0];
+  auto v0 = t0.at(p0);
+  auto p1 = storage[1];
+  auto v1 = t1.at(p1);
   result->at(index) =
-      util::hashing::hashCtSeq(BigramSeed, t0[storage[0]], t1[storage[1]]);
+      util::hashing::hashCtSeq(BigramSeed, v0, v1);
 };
 
 template <>
@@ -74,8 +80,13 @@ inline void NgramFeatureImpl<3>::apply(util::MutableArraySlice<u64> *result,
                                        const util::ArraySlice<u64> &t1,
                                        const util::ArraySlice<u64> &t0) const
     noexcept {
-  result->at(index) = util::hashing::hashCtSeq(TrigramSeed, t0[storage[0]],
-                                               t1[storage[1]], t2[storage[2]]);
+  auto p0 = storage[0];
+  auto v0 = t0.at(p0);
+  auto p1 = storage[1];
+  auto v1 = t1.at(p1);
+  auto p2 = storage[2];
+  auto v2 = t2.at(p2);
+  result->at(index) = util::hashing::hashCtSeq(TrigramSeed, v0, v1, v2);
 };
 
 }  // impl
