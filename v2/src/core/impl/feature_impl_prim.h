@@ -8,6 +8,8 @@
 #include "core/analysis/extra_nodes.h"
 #include "core/core_types.h"
 #include "core/dictionary.h"
+#include "core/features_api.h"
+#include "core/impl/feature_impl_types.h"
 #include "core/impl/feature_types.h"
 #include "core/impl/field_reader.h"
 #include "util/array_slice.h"
@@ -243,7 +245,21 @@ class MatchAnyDicPrimFeatureImpl {
   }
 };
 
-class PrimitiveFeaturesDynamicHolder {
+template <typename Child>
+class PrimitiveFeatureApplyImpl : PrimitiveFeatureApply {
+ public:
+  virtual void applyBatch(impl::PrimitiveFeatureContext* ctx,
+                          impl::PrimitiveFeatureData* data) const
+      noexcept override {
+    const Child& cld = static_cast<const Child&>(*this);
+    while (data->next()) {
+      cld.apply(ctx, data->entry(), data->entryData(), data->featureData());
+    }
+  }
+};
+
+class PrimitiveFeaturesDynamicApply final
+    : public PrimitiveFeatureApplyImpl<PrimitiveFeaturesDynamicApply> {
   std::vector<std::unique_ptr<PrimitiveFeatureImpl>> features_;
 
  public:

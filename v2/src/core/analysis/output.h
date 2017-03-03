@@ -6,12 +6,12 @@
 #define JUMANPP_OUTPUT_H
 
 #include "core/analysis/lattice_config.h"
-#include "util/string_piece.h"
+#include "core/core_types.h"
+#include "core/dic_entries.h"
+#include "core/impl/field_reader.h"
 #include "util/array_slice.h"
 #include "util/memory.hpp"
-#include "core/impl/field_reader.h"
-#include "core/dic_entries.h"
-#include "core/core_types.h"
+#include "util/string_piece.h"
 
 namespace jumanpp {
 namespace core {

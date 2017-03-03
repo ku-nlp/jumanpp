@@ -3,8 +3,8 @@
 //
 
 #include "output.h"
-#include "core/analysis/lattice_types.h"
 #include "core/analysis/extra_nodes.h"
+#include "core/analysis/lattice_types.h"
 
 namespace jumanpp {
 namespace core {

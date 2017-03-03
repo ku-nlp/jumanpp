@@ -5,8 +5,8 @@
 #ifndef JUMANPP_ANALYZER_H
 #define JUMANPP_ANALYZER_H
 
-#include "core/core.h"
 #include "core/analysis/output.h"
+#include "core/core.h"
 
 namespace jumanpp {
 namespace core {
@@ -18,23 +18,22 @@ struct AnalyzerConfig {
 };
 
 /**
- * This will depend on all core, so put it in pimpl idiom to reduce header overload.
- *
- * This will have only high-level calls, so we do not care about +1 level of indirection
+ * Analyser depends on all core, so put it in pimpl idiom to reduce header
+ * overload.
+ * It has only high-level APIs, so we do not care about +1 level of indirection
  */
 class AnalyzerImpl;
 
 class Analyzer {
   std::unique_ptr<AnalyzerImpl> pimpl_;
 
-public:
+ public:
   Analyzer(const Analyzer&) = delete;
   Analyzer(Analyzer&&) = delete;
 
   Analyzer(const CoreHolder* core, const AnalyzerConfig& cfg);
   ~Analyzer();
 };
-
 
 }  // analysis
 }  // core

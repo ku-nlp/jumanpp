@@ -7,14 +7,14 @@
 
 #include "core/analysis/lattice_config.h"
 #include "core/dictionary.h"
-#include "core/impl/feature_impl_prim.h"
+#include "core/features_api.h"
 #include "core/spec/spec_types.h"
 
 namespace jumanpp {
 namespace core {
 
 class FeatureHolder {
-  features::impl::PrimitiveFeaturesDynamicHolder primitive_;
+  std::unique_ptr<features::PrimitiveFeatureApply> primitive_;
 };
 
 class CoreHolder {

@@ -137,7 +137,7 @@ Status PrimitiveFeatureContext::checkFieldType(
   return status;
 }
 
-Status PrimitiveFeaturesDynamicHolder::initialize(
+Status PrimitiveFeaturesDynamicApply::initialize(
     PrimitiveFeatureContext *ctx,
     util::ArraySlice<PrimitiveFeature> featureData) {
   features_.reserve(featureData.size());
@@ -167,7 +167,7 @@ Status PrimitiveFeaturesDynamicHolder::initialize(
   return Status::Ok();
 }
 
-void PrimitiveFeaturesDynamicHolder::apply(
+void PrimitiveFeaturesDynamicApply::apply(
     PrimitiveFeatureContext *ctx, EntryPtr entryPtr,
     const util::ArraySlice<i32> &entry,
     util::MutableArraySlice<u64> *features) const noexcept {
