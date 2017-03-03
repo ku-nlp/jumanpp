@@ -160,8 +160,8 @@ class ArraySliceImplBase {
   // data. This is only the case in this internal class; ArraySlice and
   // MutableArraySlice provide deep-constness.
 
-  pointer data() const { return ptr_; }
-  size_type size() const { return length_; }
+  constexpr pointer data() const { return ptr_; }
+  constexpr size_type size() const { return length_; }
 
   void clear() {
     ptr_ = nullptr;

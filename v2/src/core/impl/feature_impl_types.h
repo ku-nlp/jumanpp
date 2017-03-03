@@ -5,10 +5,10 @@
 #ifndef JUMANPP_FEATURE_IMPL_TYPES_H
 #define JUMANPP_FEATURE_IMPL_TYPES_H
 
-#include "core/core_types.h"
-#include "util/array_slice.h"
 #include "core/analysis/extra_nodes.h"
+#include "core/core_types.h"
 #include "core/impl/field_reader.h"
+#include "util/array_slice.h"
 #include "util/status.hpp"
 
 namespace jumanpp {
@@ -19,7 +19,7 @@ namespace impl {
 class DicListTraversal {
   dic::impl::IntListTraversal trav_;
 
-public:
+ public:
   DicListTraversal(const dic::impl::IntListTraversal& trav) : trav_{trav} {}
   bool next(i32* result) { return trav_.readOneCumulative(result); }
 };
@@ -34,7 +34,7 @@ class PrimitiveFeatureContext {
   analysis::ExtraNodesContext* extraCtx;
   dic::FieldsHolder* fields;
 
-public:
+ public:
   DicListTraversal traversal(i32 fieldIdx, i32 fieldPtr) const {
     auto& fld = fields->at(fieldIdx);
     auto trav = fld.postions.listAt(fieldPtr);
@@ -80,8 +80,8 @@ public:
       *field = LengthFieldSource::Strings;
     } else {
       return Status::InvalidState()
-          << "field " << fld.name << " typed " << fld.columnType
-          << " can not be used for length calculation";
+             << "field " << fld.name << " typed " << fld.columnType
+             << " can not be used for length calculation";
     }
 
     return Status::Ok();

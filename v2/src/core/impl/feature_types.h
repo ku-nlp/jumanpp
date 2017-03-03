@@ -5,6 +5,7 @@
 #ifndef JUMANPP_FEATURE_TYPES_H
 #define JUMANPP_FEATURE_TYPES_H
 
+#include "core/spec/spec_types.h"
 #include "util/array_slice.h"
 #include "util/status.hpp"
 #include "util/string_piece.h"
@@ -22,6 +23,15 @@ struct PrimitiveFeature {
   PrimitiveFeatureKind kind;
   util::ArraySlice<i32> references;
   util::ArraySlice<i32> matchData;
+};
+
+struct ComputeFeature {
+  StringPiece name;
+  i32 index = -1;
+  util::ArraySlice<spec::MatchReference> references;
+  util::ArraySlice<i32> matchData;
+  util::ArraySlice<i32> trueBranch;
+  util::ArraySlice<i32> falseBranch;
 };
 
 }  // features

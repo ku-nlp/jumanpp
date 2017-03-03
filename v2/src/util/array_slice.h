@@ -158,10 +158,10 @@ class ArraySlice {
   ArraySlice(const ArraySlice& x, size_type pos, size_type len)
       : impl_(x.impl_, pos, len) {}
 
-  const_pointer data() const { return impl_.data(); }
-  size_type size() const { return impl_.size(); }
-  size_type length() const { return size(); }
-  bool empty() const { return size() == 0; }
+  constexpr const_pointer data() const { return impl_.data(); }
+  constexpr size_type size() const { return impl_.size(); }
+  constexpr size_type length() const { return size(); }
+  constexpr bool empty() const { return size() == 0; }
 
   void clear() { impl_.clear(); }
 
