@@ -21,7 +21,7 @@ inline u64 hashIndexed(u64 seed, util::ArraySlice<u64> input,
   return 0;
 }
 
-constexpr size_t MaxQueryElements = 16;
+constexpr size_t MaxQueryElements = 64;
 
 enum class ComareResult { Lesser, Equal, Greater };
 
