@@ -170,7 +170,7 @@ class ArraySliceImplBase {
 
   reference operator[](size_type i) const { return ptr_[i]; }
   reference at(size_type i) const {
-    JPP_DCHECK_LT(i, length_);
+    JPP_DCHECK_IN(i, 0, length_);
     return ptr_[i];
   }
   reference front() const {
