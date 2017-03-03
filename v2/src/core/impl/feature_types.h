@@ -34,6 +34,12 @@ struct ComputeFeature {
   util::ArraySlice<i32> falseBranch;
 };
 
+struct PatternFeature {
+  StringPiece name;
+  i32 index;
+  util::ArraySlice<i32> arguments;
+};
+
 }  // features
 }  // core
 }  // jumanpp

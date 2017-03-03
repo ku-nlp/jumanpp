@@ -16,6 +16,11 @@ namespace core {
 namespace features {
 namespace impl {
 
+constexpr static u64 PatternFeatureSeed = 0x7a11ed00000000ULL;
+constexpr static u64 UnigramSeed = 0x5123a31421fULL;
+constexpr static u64 BigramSeed = 0x5123a68442fULL;
+constexpr static u64 TrigramSeed = 0x51239ab41f1fULL;
+
 class DicListTraversal {
   dic::impl::IntListTraversal trav_;
 

@@ -10,10 +10,12 @@ set(core_hdrs darts.h darts_trie.h dictionary.h impl/field_import.h impl/field_r
         analysis/dictionary_node_creator.h spec/spec_types.h analysis/lattice_types.h analysis/extra_nodes.h
         impl/feature_types.h impl/feature_impl_prim.h core_types.h analysis/unk_nodes_creator.h
         analysis/dic_reader.h analysis/output.h core.h analysis/analyzer.h analysis/lattice_config.h
-        analysis/analyzer_impl.h features_api.h impl/feature_impl_types.h impl/feature_impl_compute.h )
+        analysis/analyzer_impl.h features_api.h impl/feature_impl_types.h impl/feature_impl_compute.h
+        impl/feature_impl_combine.h)
 
 set(core_test_srcs darts_trie_test.cc dictionary_test.cc impl/field_import_test.cc
-        impl/field_reader_test.cc impl/feature_impl_prim_test.cc impl/feature_impl_compute_test.cc)
+        impl/field_reader_test.cc impl/feature_impl_prim_test.cc impl/feature_impl_compute_test.cc
+        impl/feature_impl_combine_test.cc)
 set(spec_test_srcs spec/spec_grammar_test.cc spec/spec_dsl_test.cc spec/spec_dsl_feature_test.cc)
 set(analysis_test_srcs analysis/dictionary_node_creator_test.cc analysis/lattice_types_test.cc
         analysis/unk_nodes_creator_test.cc)
