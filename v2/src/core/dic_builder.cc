@@ -46,7 +46,7 @@ struct ColumnImportContext {
         importer.reset(new impl::StringListFieldImporter{descr->position - 1});
       default:
         return Status::NotImplemented()
-               << "importing field type=" << static_cast<int>(tp)
+               << "importing field type=" << tp
                << " is not implemented";
     }
 
@@ -125,11 +125,12 @@ Status DictionaryBuilder::importCsv(StringPiece name, StringPiece data) {
   i32 maxUsedCol = -1;
   StringPiece maxFieldName;
   storage_.reset(new DictionaryBuilderStorage);
+  auto& dicSpec = spec_->dictionary;
   auto& importers = storage_->importers;
-  importers.resize(spec_->columns.size());
+  importers.resize(dicSpec.columns.size());
 
-  for (int i = 0; i < spec_->columns.size(); ++i) {
-    const FieldDescriptor& column = spec_->columns[i];
+  for (int i = 0; i < dicSpec.columns.size(); ++i) {
+    const FieldDescriptor& column = dicSpec.columns[i];
     JPP_RETURN_IF_ERROR(importers[i].initialize(i, &column));
     auto colIdx = column.position - 1;
     if (maxUsedCol < colIdx) {

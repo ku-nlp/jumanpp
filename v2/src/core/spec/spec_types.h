@@ -26,6 +26,15 @@ struct FieldDescriptor {
   bool isTrieKey = false;
   ColumnType columnType = ColumnType::Error;
   StringPiece emptyString = StringPiece{""};
+  i32 stringStorage = -1;
+  i32 intStorage = -1;
+};
+
+struct DictionarySpec {
+  std::vector<FieldDescriptor> columns;
+  i32 indexColumn = -1;
+  i32 numIntStorage = -1;
+  i32 numStringStorage = -1;
 };
 
 enum class UnkMakerType { Invalid, Single, Chunking, Onomatopoeia, Prolonging };
@@ -106,8 +115,7 @@ struct FeaturesSpec {
 };
 
 struct AnalysisSpec {
-  std::vector<FieldDescriptor> columns;
-  i32 indexColumn = -1;
+  DictionarySpec dictionary;
   FeaturesSpec features;
   std::vector<UnkMaker> unkCreators;
 };

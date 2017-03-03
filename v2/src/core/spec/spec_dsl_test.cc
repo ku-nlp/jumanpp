@@ -6,6 +6,7 @@
 #include "testing/standalone_test.h"
 
 using namespace jumanpp::core::spec::dsl;
+using namespace jumanpp::core::spec;
 using jumanpp::chars::CharacterClass;
 
 #define VALID(x) CHECK_OK((x).validate());
@@ -60,6 +61,18 @@ TEST_CASE("check failed with non-unique field names") {
   VALID(spec.field(1, "test").strings());
   VALID(spec.field(2, "test").stringLists());
   CHECK_FALSE(spec.validateFields());
+}
+
+TEST_CASE("two fields have the same string storage") {
+  ModelSpecBuilder spec;
+  auto& f1 = spec.field(1, "test").strings().trieIndex();
+  spec.field(2, "test2").stringLists().stringStorage(f1);
+  AnalysisSpec res;
+  CHECK_OK(spec.build(&res));
+  CHECK(res.dictionary.numStringStorage == 1);
+  CHECK(res.dictionary.numIntStorage == 1);
+  CHECK(res.dictionary.columns[0].stringStorage == 0);
+  CHECK(res.dictionary.columns[1].stringStorage == 0);
 }
 
 TEST_CASE("feature length transform") {

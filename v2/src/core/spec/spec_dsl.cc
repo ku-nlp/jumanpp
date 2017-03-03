@@ -66,24 +66,73 @@ Status ModelSpecBuilder::validateNames() const {
 
 Status ModelSpecBuilder::build(AnalysisSpec* spec) const {
   JPP_RETURN_IF_ERROR(validate());
-  makeFields(spec);
+  JPP_RETURN_IF_ERROR(makeFields(spec));
   JPP_RETURN_IF_ERROR(makeFeatures(spec));
   JPP_RETURN_IF_ERROR(createUnkProcessors(spec));
   return Status::Ok();
 }
 
-void ModelSpecBuilder::makeFields(AnalysisSpec* spec) const {
+class StorageAssigner {
+  util::FlatMap<StringPiece, i32> state_;
+  i32 numInts_ = 0;
+  i32 numStrings_ = 0;
+public:
+  Status assign(FieldDescriptor* fd, StringPiece stringName) {
+
+    switch (fd->columnType) {
+      case ColumnType::Int:
+        return Status::Ok();
+      case ColumnType::String:
+        fd->stringStorage = assignString(stringName);
+        return Status::Ok();
+      case ColumnType::StringList:
+        fd->stringStorage = assignString(stringName);
+        fd->intStorage = numInts_;
+        numInts_ += 1;
+        return Status::Ok();
+      default:
+        return Status::NotImplemented() << fd->name << ": could not assing storage for field, unknown type " << fd->columnType;
+    }
+  }
+
+  i32 assignString(StringPiece stringName) {
+    auto newStr = [&]() {
+      return (numStrings_)++;
+    };
+
+    if (stringName.size() == 0) {
+      return newStr();
+    } else {
+      return state_.getOr(stringName, newStr);
+    }
+  }
+
+  i32 getNumInts() const {
+    return numInts_;
+  }
+
+  i32 getNumStrings() const {
+    return numStrings_;
+  }
+};
+
+Status ModelSpecBuilder::makeFields(AnalysisSpec* anaSpec) const {
+  auto spec = &anaSpec->dictionary;
   auto& cols = spec->columns;
+  StorageAssigner sa;
   for (size_t i = 0; i < fields_.size(); ++i) {
     auto& f = fields_[i];
     cols.emplace_back();  // make one with default constructor
     auto* col = &cols.back();
     col->index = (i32)i;
-    f->fill(&cols.back());
+    JPP_RETURN_IF_ERROR(f->fill(col, &sa));
     if (f->isTrieIndex()) {
       spec->indexColumn = (i32)i;
     }
   }
+  spec->numIntStorage = sa.getNumInts();
+  spec->numStringStorage = sa.getNumStrings();
+  return Status::Ok();
 }
 
 Status ModelSpecBuilder::validateFeatures() const {
@@ -96,13 +145,14 @@ Status ModelSpecBuilder::validateFeatures() const {
 }
 
 Status ModelSpecBuilder::makeFeatures(AnalysisSpec* spec) const {
+  auto dicSpec = &spec->dictionary;
   currentFeature_ = 0;
   FeaturesSpec& feats = spec->features;
   util::FlatSet<StringPiece> names;
   collectUsedNames(&names);
-  createCopyFeatures(spec->columns, names, &feats.primitive);
+  createCopyFeatures(dicSpec->columns, names, &feats.primitive);
   JPP_RETURN_IF_ERROR(
-      createRemainingPrimitiveFeatures(spec->columns, &feats.primitive));
+      createRemainingPrimitiveFeatures(dicSpec->columns, &feats.primitive));
   JPP_RETURN_IF_ERROR(createComputeFeatures(&feats));
   JPP_RETURN_IF_ERROR(checkNoFeatureIsLeft());
   JPP_RETURN_IF_ERROR(createPatternsAndFinalFeatures(&feats));
@@ -461,7 +511,7 @@ Status ModelSpecBuilder::createUnkProcessors(AnalysisSpec* spec) const {
   util::FlatMap<StringPiece, FieldDescriptor*> fld2id;
   util::FlatMap<StringPiece, PrimitiveFeatureDescriptor*> feat2id;
 
-  for (auto& f : spec->columns) {
+  for (auto& f : spec->dictionary.columns) {
     fld2id[f.name] = &f;
   }
   for (auto& f : spec->features.primitive) {
@@ -519,15 +569,24 @@ Status FieldBuilder::validate() const {
            << this->name_;
   }
 
+  if (stringStorage_.size() > 0) {
+    if (!util::contains({ColumnType::StringList, ColumnType::String}, columnType_)) {
+      return Status::InvalidParameter() << "string storage can be specified only for string or stringList typed columns";
+    }
+  }
+
   return Status::Ok();
 }
 
-void FieldBuilder::fill(FieldDescriptor* descriptor) const {
+Status FieldBuilder::fill(FieldDescriptor* descriptor, StorageAssigner* sa) const {
   descriptor->position = csvColumn_;
   descriptor->columnType = columnType_;
   descriptor->emptyString = emptyValue_;
   descriptor->isTrieKey = trieIndex_;
   descriptor->name = name_.str();
+  auto storName = stringStorage_.size() == 0 ? name() : stringStorage_;
+  JPP_RETURN_IF_ERROR(sa->assign(descriptor, storName));
+  return Status::Ok();
 }
 
 Status FeatureBuilder::validate() const {

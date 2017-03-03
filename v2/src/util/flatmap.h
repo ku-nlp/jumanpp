@@ -287,7 +287,17 @@ class FlatMap {
   // is a hint, and may have no effect.
   void prefetch_value(const Key& key) const { rep_.Prefetch(key); }
 
- private:
+  template <typename Fn>
+  Val& getOr(const Key& k, Fn f) {
+    auto t = rep_.FindOrInsert(k);
+    auto& v = t.b->val(t.index);
+    if (!t.found) {
+      v = f();
+    }
+    return v;
+  }
+
+private:
   using Rep = internal::FlatRep<Key, Bucket, Hash, Eq>;
 
   // Bucket stores kWidth <marker, key, value> triples.

@@ -55,12 +55,15 @@ class FieldReference {
   StringPiece name() const { return name_; }
 };
 
+class StorageAssigner;
+
 class FieldBuilder : public DslOpBase {
   i32 csvColumn_;
   StringPiece name_;
   ColumnType columnType_ = ColumnType::Error;
   bool trieIndex_ = false;
   StringPiece emptyValue_;
+  StringPiece stringStorage_;
 
   FieldBuilder() {}
 
@@ -90,6 +93,11 @@ class FieldBuilder : public DslOpBase {
 
   FieldBuilder& emptyValue(StringPiece data) {
     emptyValue_ = data;
+    return *this;
+  }
+
+  FieldBuilder& stringStorage(FieldReference ref) {
+    stringStorage_ = ref.name();
     return *this;
   }
 
@@ -125,7 +133,7 @@ class FieldBuilder : public DslOpBase {
 
   operator FieldReference() const { return FieldReference{name()}; }
 
-  void fill(FieldDescriptor* descriptor) const;
+  Status fill(FieldDescriptor* descriptor, StorageAssigner* sa) const;
 };
 
 enum class FeatureType {
@@ -290,7 +298,7 @@ class ModelSpecBuilder : public DslOpBase {
   util::memory::ManagedVector<UnkProcBuilder*> unks_;
   mutable i32 currentFeature_ = 0;
 
-  void makeFields(AnalysisSpec* spec) const;
+  Status makeFields(AnalysisSpec* spec) const;
   Status makeFeatures(AnalysisSpec* spec) const;
   void collectUsedNames(util::FlatSet<StringPiece>* names) const;
   void createCopyFeatures(

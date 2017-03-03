@@ -40,6 +40,12 @@ struct PatternFeature {
   util::ArraySlice<i32> arguments;
 };
 
+struct NgramFeature {
+  StringPiece name;
+  i32 index;
+  util::ArraySlice<i32> arguments;
+};
+
 }  // features
 }  // core
 }  // jumanpp

@@ -78,7 +78,7 @@ TEST_CASE("simple dsl creates descrptor") {
   bldr.unigram({f1});
   AnalysisSpec spec{};
   CHECK_OK(bldr.build(&spec));
-  CHECK(spec.columns.size() == 1);
+  CHECK(spec.dictionary.columns.size() == 1);
   CHECK(spec.features.totalPrimitives == 1);
   SeqEq(spec.features.primitive[0].references, {0});
   CHECK(spec.features.final.size() == 1);
@@ -92,7 +92,7 @@ TEST_CASE("simple dsl with two fields and two final features") {
   bldr.unigram({f1, f2});
   AnalysisSpec spec{};
   CHECK_OK(bldr.build(&spec));
-  CHECK(spec.columns.size() == 2);
+  CHECK(spec.dictionary.columns.size() == 2);
   CHECK(spec.features.totalPrimitives == 2);
   SeqEq(spec.features.primitive[0].references, {0});
   SeqEq(spec.features.primitive[1].references, {1});
@@ -110,7 +110,7 @@ TEST_CASE("simple dsl with two fields and matcher") {
   bldr.unigram({f1, f2});
   AnalysisSpec spec{};
   CHECK_OK(bldr.build(&spec));
-  CHECK(spec.columns.size() == 2);
+  CHECK(spec.dictionary.columns.size() == 2);
   CHECK(spec.features.totalPrimitives == 3);
   SeqEq(spec.features.primitive[0].references, {0});
   SeqEq(spec.features.primitive[1].references, {1});
@@ -131,7 +131,7 @@ TEST_CASE("simple dsl with two fields and list matcher") {
   bldr.unigram({f1});
   AnalysisSpec spec{};
   CHECK_OK(bldr.build(&spec));
-  CHECK(spec.columns.size() == 2);
+  CHECK(spec.dictionary.columns.size() == 2);
   CHECK(spec.features.totalPrimitives == 2);
   SeqEq(spec.features.primitive[0].references, {0});
   SeqEq(spec.features.primitive[1].references, {1});
@@ -148,7 +148,7 @@ TEST_CASE("simple dsl with two fields and length matcher") {
   bldr.unigram({f1});
   AnalysisSpec spec{};
   CHECK_OK(bldr.build(&spec));
-  CHECK(spec.columns.size() == 2);
+  CHECK(spec.dictionary.columns.size() == 2);
   CHECK(spec.features.totalPrimitives == 2);
   SeqEq(spec.features.primitive[0].references, {0});
   SeqEq(spec.features.primitive[1].references, {1});
@@ -174,7 +174,7 @@ TEST_CASE("simple dsl with two fields and placeholder") {
   bldr.unigram({f1});
   AnalysisSpec spec{};
   CHECK_OK(bldr.build(&spec));
-  CHECK(spec.columns.size() == 2);
+  CHECK(spec.dictionary.columns.size() == 2);
   CHECK(spec.features.totalPrimitives == 2);
   SeqEq(spec.features.primitive[0].references, {0});
   CHECK(spec.features.primitive[1].references.size() == 0);
