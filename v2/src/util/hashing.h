@@ -73,7 +73,7 @@ inline Hasher hashCtSeqImpl(Hasher h, u64 one, u64 two, Args... args) {
 
 template <typename ... Args>
 inline u64 hashCtSeq(u64 seed, Args... args) {
-  return impl::hashCtSeqImpl(Hasher{seed}, args..., sizeof...(args)).result();
+  return impl::hashCtSeqImpl(Hasher{seed}, static_cast<u64>(args)..., sizeof...(args)).result();
 }
 
 } // hashing
