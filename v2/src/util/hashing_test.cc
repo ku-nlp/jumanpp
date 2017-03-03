@@ -2,9 +2,9 @@
 // Created by Arseny Tolmachev on 2017/02/20.
 //
 
+#include "hashing.h"
 #include "murmur_hash.h"
 #include "testing/standalone_test.h"
-#include "hashing.h"
 #include "util/array_slice.h"
 
 using namespace jumanpp::util::hashing;

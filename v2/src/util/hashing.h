@@ -14,20 +14,21 @@ namespace hashing {
 class Hasher {
   impl::OWORD state_;
   constexpr Hasher() = delete;
-public:
-  constexpr Hasher(u64 seed): state_{seed, seed} {}
-  constexpr Hasher(u64 seed1, u64 seed2): state_{seed1, seed2} {}
+
+ public:
+  constexpr Hasher(u64 seed) : state_{seed, seed} {}
+  constexpr Hasher(u64 seed1, u64 seed2) : state_{seed1, seed2} {}
 
   inline Hasher merge(u64 one) const {
     Hasher copy(*this);
-    impl::OWORD value {one, 0};
+    impl::OWORD value{one, 0};
     impl::murmur_oword(value, &copy.state_);
     return copy;
   }
 
   inline Hasher merge(u64 one, u64 two) const {
     Hasher copy(*this);
-    impl::OWORD value {one, two};
+    impl::OWORD value{one, two};
     impl::murmur_oword(value, &copy.state_);
     return copy;
   }
@@ -56,28 +57,26 @@ inline u64 hashIndexedSeq(u64 seed, const Seq& seq, const Idx& idx) {
 }
 
 namespace impl {
-inline Hasher hashCtSeqImpl(Hasher h) {
-  return h;
-}
+inline Hasher hashCtSeqImpl(Hasher h) { return h; }
 
-inline Hasher hashCtSeqImpl(Hasher h, u64 one) {
-  return h.merge(one);
-}
+inline Hasher hashCtSeqImpl(Hasher h, u64 one) { return h.merge(one); }
 
-template <typename ... Args>
+template <typename... Args>
 inline Hasher hashCtSeqImpl(Hasher h, u64 one, u64 two, Args... args) {
   return hashCtSeqImpl(h.merge(one, two), args...);
 }
 
-} // impl
+}  // impl
 
-template <typename ... Args>
+template <typename... Args>
 inline u64 hashCtSeq(u64 seed, Args... args) {
-  return impl::hashCtSeqImpl(Hasher{seed}, static_cast<u64>(args)..., sizeof...(args)).result();
+  return impl::hashCtSeqImpl(Hasher{seed}, static_cast<u64>(args)...,
+                             sizeof...(args))
+      .result();
 }
 
-} // hashing
-} // util
-} // jumanpp
+}  // hashing
+}  // util
+}  // jumanpp
 
-#endif //JUMANPP_HASHING_H
+#endif  // JUMANPP_HASHING_H

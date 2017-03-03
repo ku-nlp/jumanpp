@@ -42,9 +42,9 @@ class MatchTupleComputeFeatureImpl {
   MatchTupleComputeFeatureImpl() {}
 
   template <size_t S1, size_t S2, size_t S3, size_t S4>
-  constexpr MatchTupleComputeFeatureImpl(i32 featureIdx,
-                                         const i32 (&refs)[S1],
-                                         const i32 (&data)[S2], const i32 (&trueB)[S3],
+  constexpr MatchTupleComputeFeatureImpl(i32 featureIdx, const i32 (&refs)[S1],
+                                         const i32 (&data)[S2],
+                                         const i32 (&trueB)[S3],
                                          const i32 (&falseB)[S4])
       : featureIdx{featureIdx},
         references{refs},
@@ -112,7 +112,8 @@ class MatchTupleComputeFeatureImpl {
                     const util::ArraySlice<i32>& entry,
                     util::MutableArraySlice<u64>* features) const noexcept {
     if (matches(entry)) {
-      features->at(featureIdx) = util::hashing::hashIndexedSeq(featureIdx, *features, trueBranch);
+      features->at(featureIdx) =
+          util::hashing::hashIndexedSeq(featureIdx, *features, trueBranch);
     } else {
       features->at(featureIdx) =
           util::hashing::hashIndexedSeq(featureIdx, *features, falseBranch);

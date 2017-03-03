@@ -30,7 +30,8 @@ JPP_ALWAYS_INLINE inline constexpr uint64_t fmix64(uint64_t k) {
   return k;
 }
 
-static constexpr OWORD MURMUR_CONSTANT = OWORD(0x87c37b91114253d5ULL, 0x4cf5ad432745937fULL);
+static constexpr OWORD MURMUR_CONSTANT =
+    OWORD(0x87c37b91114253d5ULL, 0x4cf5ad432745937fULL);
 
 JPP_ALWAYS_INLINE inline void mur1_oword(OWORD &block) {
   block.first *= MURMUR_CONSTANT.first;
@@ -56,8 +57,7 @@ JPP_ALWAYS_INLINE inline void mur2_oword(OWORD &block, OWORD *val) {
   return;
 }
 
-JPP_ALWAYS_INLINE inline void murmur_oword(OWORD &block,
-                                           OWORD *val) {
+JPP_ALWAYS_INLINE inline void murmur_oword(OWORD &block, OWORD *val) {
   mur1_oword(block);
   mur2_oword(block, val);
   return;
