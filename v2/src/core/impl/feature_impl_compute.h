@@ -8,6 +8,7 @@
 #include "core/features_api.h"
 #include "core/impl/feature_impl_types.h"
 #include "core/impl/feature_types.h"
+#include "util/hashing.h"
 
 namespace jumanpp {
 namespace core {
@@ -15,11 +16,6 @@ namespace features {
 namespace impl {
 
 class ComputeFeatureContext {};
-
-inline u64 hashIndexed(u64 seed, util::ArraySlice<u64> input,
-                       util::ArraySlice<i32> indices) {
-  return 0;
-}
 
 constexpr size_t MaxQueryElements = 64;
 
@@ -116,10 +112,10 @@ class MatchTupleComputeFeatureImpl {
                     const util::ArraySlice<i32>& entry,
                     util::MutableArraySlice<u64>* features) const noexcept {
     if (matches(entry)) {
-      features->at(featureIdx) = hashIndexed(featureIdx, *features, trueBranch);
+      features->at(featureIdx) = util::hashing::hashIndexedSeq(featureIdx, *features, trueBranch);
     } else {
       features->at(featureIdx) =
-          hashIndexed(featureIdx, *features, falseBranch);
+          util::hashing::hashIndexedSeq(featureIdx, *features, falseBranch);
     }
   }
 };
