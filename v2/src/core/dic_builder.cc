@@ -3,7 +3,7 @@
 //
 
 #include "core/dic_builder.h"
-#include <util/string_piece.h>
+#include "util/string_piece.h"
 #include <memory>
 #include <util/status.hpp>
 #include <vector>
@@ -15,6 +15,7 @@
 #include "util/csv_reader.h"
 #include "util/flatmap.h"
 #include "util/inlined_vector.h"
+#include "util/flatset.h"
 
 namespace jumanpp {
 namespace core {
@@ -90,6 +91,10 @@ struct DicTrieBuilder {
 };
 
 struct EntryTableBuilder {
+  /**
+   * This set contains row numbers which serve patterns for UNK builders
+   */
+  util::FlatSet<i32> ignoredRows;
   util::CodedBuffer buffer;
   DicTrieBuilder trieBuilder;
 
@@ -101,7 +106,7 @@ struct EntryTableBuilder {
       auto field = c.importer->fieldPointer(csv);
       auto uns = static_cast<u32>(field);
       buffer.writeVarint(uns);
-      if (c.isTrieIndexed) {
+      if (field != 0 && c.isTrieIndexed && ignoredRows.count(csv.lineNumber()) == 0) {
         trieBuilder.addEntry(field, iptr);
       }
     }
@@ -220,6 +225,51 @@ struct DictionaryBuilderStorage {
       flds.push_back(fld);
     }
   }
+
+  void importSpecData(const AnalysisSpec& spec) {
+    for (auto& x : spec.unkCreators) {
+      entries.ignoredRows.insert(x.patternRow);
+      for (auto& ex: x.outputExpressions) {
+        auto ss = importers[ex.fieldIndex].descriptor->stringStorage;
+        if (ex.stringConstant.size() > 0 && ss != -1) {
+          storage[ss].increaseFieldValueCount(ex.stringConstant);
+        }
+      }
+      for (auto& ex: x.featureExpressions) {
+        auto ss = importers[ex.fieldIndex].descriptor->stringStorage;
+        if (ex.stringConstant.size() > 0 && ss != -1) {
+          storage[ss].increaseFieldValueCount(ex.stringConstant);
+        }
+      }
+    }
+    
+    for (auto& f: spec.features.primitive) {      
+      for (auto fldIdx: f.references) {
+        auto ss = importers[fldIdx].descriptor->stringStorage;
+        if (ss != -1) {
+          auto& stor = storage[ss];
+          for (auto &s: f.matchData) {
+            stor.increaseFieldValueCount(s);
+          }
+        }
+      }
+    }
+    
+    for (auto& f: spec.features.computation) {
+      auto& data = f.matchData;
+      auto& refs = f.matchReference;
+      auto refSize = refs.size();
+      for (int i = 0; i < data.size(); ++i) {
+        auto refIdx = i % refSize;
+        auto& ref = refs[refIdx];
+        auto ss = importers[ref.dicFieldIdx].descriptor->stringStorage;
+        if (ss != -1) {
+          auto obj = data[i];
+          storage[ss].increaseFieldValueCount(obj);
+        }
+      }
+    }
+  }
 };
 
 Status DictionaryBuilder::importCsv(StringPiece name, StringPiece data) {
@@ -231,6 +281,7 @@ Status DictionaryBuilder::importCsv(StringPiece name, StringPiece data) {
 
   // first csv pass -- compute stats
   JPP_RETURN_IF_ERROR(storage_->computeStats(name, &csv));
+  storage_->importSpecData(*spec_);
 
   // build string storage and internal state for the third step
   JPP_RETURN_IF_ERROR(storage_->makeStorage());
