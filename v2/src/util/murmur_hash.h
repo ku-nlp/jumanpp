@@ -30,14 +30,16 @@ JPP_ALWAYS_INLINE inline constexpr uint64_t fmix64(uint64_t k) {
   return k;
 }
 
-JPP_ALWAYS_INLINE inline void mur1_oword(OWORD &block, const OWORD &constant) {
-  block.first *= constant.first;
-  block.first = rotl64(block.first, 31);
-  block.first *= constant.second;
+static constexpr OWORD MURMUR_CONSTANT = OWORD(0x87c37b91114253d5ULL, 0x4cf5ad432745937fULL);
 
-  block.second *= constant.second;
+JPP_ALWAYS_INLINE inline void mur1_oword(OWORD &block) {
+  block.first *= MURMUR_CONSTANT.first;
+  block.first = rotl64(block.first, 31);
+  block.first *= MURMUR_CONSTANT.second;
+
+  block.second *= MURMUR_CONSTANT.second;
   block.second = rotl64(block.second, 33);
-  block.second *= constant.first;
+  block.second *= MURMUR_CONSTANT.first;
   return;
 }
 
@@ -54,9 +56,9 @@ JPP_ALWAYS_INLINE inline void mur2_oword(OWORD &block, OWORD *val) {
   return;
 }
 
-JPP_ALWAYS_INLINE inline void murmur_oword(OWORD &block, const OWORD &constant,
+JPP_ALWAYS_INLINE inline void murmur_oword(OWORD &block,
                                            OWORD *val) {
-  mur1_oword(block, constant);
+  mur1_oword(block);
   mur2_oword(block, val);
   return;
 }
@@ -99,8 +101,6 @@ JPP_ALWAYS_INLINE inline void get_tail(const uint8_t *tail, const size_t len,
   return;
 }
 
-constexpr OWORD constant = OWORD(0x87c37b91114253d5LLU, 0x4cf5ad432745937fLLU);
-
 }  // impl
 
 JPP_ALWAYS_INLINE inline uint64_t murmur_combine(uint64_t hash1,
@@ -108,7 +108,7 @@ JPP_ALWAYS_INLINE inline uint64_t murmur_combine(uint64_t hash1,
   using namespace impl;
   OWORD key = OWORD(hash1, hash2);
   OWORD value = OWORD(0, 0);
-  murmur_oword(key, constant, &value);
+  murmur_oword(key, &value);
   return value.first;
 }
 
@@ -128,14 +128,14 @@ JPP_ALWAYS_INLINE inline uint64_t murmurhash3_memory(const u8 *begin,
 
   for (unsigned int i = 0; i < block_size; i++) {
     OWORD block = OWORD(blocks[i * 2], blocks[i * 2 + 1]);
-    murmur_oword(block, constant, &value);
+    murmur_oword(block, &value);
   }
 
   OWORD tail = OWORD(0, 0);
   const uint8_t *data_tail = (data + block_size * OWORDSIZE);
   get_tail(data_tail, len, &tail);
 
-  mur1_oword(tail, constant);
+  mur1_oword(tail);
   value.first ^= tail.first;
   value.second ^= tail.second;
 
