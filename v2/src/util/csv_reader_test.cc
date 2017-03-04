@@ -78,28 +78,32 @@ TEST_CASE("csv reader works with quoted and escaped fields", "[csv_reader]") {
   CHECK_FALSE(reader.nextLine());
 }
 
-TEST_CASE("csv reader rejects invalid field escape in beginning of line", "[csv_reader]") {
+TEST_CASE("csv reader rejects invalid field escape in beginning of line",
+          "[csv_reader]") {
   jumanpp::util::CsvReader reader;
   CHECK_OK(reader.initFromMemory("\"\"\",1"));
   CHECK_FALSE(reader.nextLine());
   CHECK(reader.lineNumber() == 1);
 }
 
-TEST_CASE("csv reader rejects invalid field escape in middle of line", "[csv_reader]") {
+TEST_CASE("csv reader rejects invalid field escape in middle of line",
+          "[csv_reader]") {
   jumanpp::util::CsvReader reader;
   CHECK_OK(reader.initFromMemory("1,\"\"\",1"));
   CHECK_FALSE(reader.nextLine());
   CHECK(reader.lineNumber() == 1);
 }
 
-TEST_CASE("csv reader rejects invalid field escape in end of line", "[csv_reader]") {
+TEST_CASE("csv reader rejects invalid field escape in end of line",
+          "[csv_reader]") {
   jumanpp::util::CsvReader reader;
   CHECK_OK(reader.initFromMemory("1,\"\"\""));
   CHECK_FALSE(reader.nextLine());
   CHECK(reader.lineNumber() == 1);
 }
 
-TEST_CASE("csv reader rejects invalid field escape in end of line2", "[csv_reader]") {
+TEST_CASE("csv reader rejects invalid field escape in end of line2",
+          "[csv_reader]") {
   jumanpp::util::CsvReader reader;
   CHECK_OK(reader.initFromMemory("1,\"\"\"\n"));
   CHECK_FALSE(reader.nextLine());
@@ -113,7 +117,8 @@ TEST_CASE("csv reader rejects non-closed literal", "[csv_reader]") {
   CHECK(reader.lineNumber() == 1);
 }
 
-TEST_CASE("csv reader accepts two quotes a row in first field", "[csv_reader]") {
+TEST_CASE("csv reader accepts two quotes a row in first field",
+          "[csv_reader]") {
   jumanpp::util::CsvReader reader;
   CHECK_OK(reader.initFromMemory("\"\"\"\"\"\",1\n"));
   CHECK(reader.nextLine());
@@ -121,7 +126,8 @@ TEST_CASE("csv reader accepts two quotes a row in first field", "[csv_reader]") 
   CHECK(reader.field(0) == "\"\"");
 }
 
-TEST_CASE("csv reader accepts two quotes a row in first field with prefix", "[csv_reader]") {
+TEST_CASE("csv reader accepts two quotes a row in first field with prefix",
+          "[csv_reader]") {
   jumanpp::util::CsvReader reader;
   CHECK_OK(reader.initFromMemory("\"a\"\"\"\"\",1\n"));
   CHECK(reader.nextLine());
@@ -129,7 +135,8 @@ TEST_CASE("csv reader accepts two quotes a row in first field with prefix", "[cs
   CHECK(reader.field(0) == "a\"\"");
 }
 
-TEST_CASE("csv reader accepts two quotes a row in first field with suffix", "[csv_reader]") {
+TEST_CASE("csv reader accepts two quotes a row in first field with suffix",
+          "[csv_reader]") {
   jumanpp::util::CsvReader reader;
   CHECK_OK(reader.initFromMemory("\"\"\"\"\"a\",1\n"));
   CHECK(reader.nextLine());
@@ -137,7 +144,8 @@ TEST_CASE("csv reader accepts two quotes a row in first field with suffix", "[cs
   CHECK(reader.field(0) == "\"\"a");
 }
 
-TEST_CASE("csv reader accepts two quotes a row in second field", "[csv_reader]") {
+TEST_CASE("csv reader accepts two quotes a row in second field",
+          "[csv_reader]") {
   jumanpp::util::CsvReader reader;
   CHECK_OK(reader.initFromMemory("1,\"\"\"\"\"\"\n"));
   CHECK(reader.nextLine());

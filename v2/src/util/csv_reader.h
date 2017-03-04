@@ -25,9 +25,11 @@ namespace util {
  *
  * Default separator is comma (,).
  *
- * If the field contains comma it must be enclosed with quote character (default = ").
+ * If the field contains comma it must be enclosed with quote character (default
+ * = ").
  *
- * If the field contains quote character it must be enclosed with quote character and all
+ * If the field contains quote character it must be enclosed with quote
+ * character and all
  * quote characters must be escaped.
  *
  * Test csv:
@@ -65,6 +67,11 @@ class CsvReader {
   const char* end_;
   i64 line_number_;
 
+  /**
+   * @param position
+   * @param result
+   * @return true if quoted string had contained escaped quote characters
+   */
   bool handleQuote(const char* position, StringPiece* result);
   bool unescapeString(StringPiece sp, StringPiece* result);
 

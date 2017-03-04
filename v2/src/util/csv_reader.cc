@@ -179,7 +179,7 @@ bool CsvReader::handleQuote(const char *position, StringPiece *result) {
     char ch = *position;
     if (ch == quote_) {
       ++position;
-      if (position == end) { //first case: quote followed by EOS
+      if (position == end) {  // first case: quote followed by EOS
         *result = StringPiece{start, position - 1};
         return wasQuoted;
       }
@@ -190,7 +190,7 @@ bool CsvReader::handleQuote(const char *position, StringPiece *result) {
         ++position;
         continue;
       } else {
-        *result = StringPiece { start, position - 1};
+        *result = StringPiece{start, position - 1};
         return wasQuoted;
       }
     }
@@ -198,6 +198,5 @@ bool CsvReader::handleQuote(const char *position, StringPiece *result) {
   }
   return false;
 }
-
 }
 }
