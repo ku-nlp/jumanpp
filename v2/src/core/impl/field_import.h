@@ -5,13 +5,13 @@
 #ifndef JUMANPP_DIC_IMPORT_H
 #define JUMANPP_DIC_IMPORT_H
 
-#include <util/coded_io.h>
-#include <util/csv_reader.h>
-#include <util/flatmap.h>
 #include <algorithm>
-#include <array>
 #include <regex>
-#include <util/status.hpp>
+#include "util/char_buffer.h"
+#include "util/coded_io.h"
+#include "util/csv_reader.h"
+#include "util/flatmap.h"
+#include "util/status.hpp"
 
 namespace jumanpp {
 namespace core {
@@ -51,48 +51,6 @@ class FieldImporter {
   virtual ~FieldImporter() {}
 };
 
-template <size_t PageSize = (1 << 20)>  // 1M by default
-class CharBuffer {
-  static constexpr ptrdiff_t page_size = PageSize;
-  using page = std::array<char, page_size>;
-  std::vector<page*> storage_;
-
-  page* current_ = nullptr;
-  ptrdiff_t position_ = page_size;
-
-  bool ensure_size(size_t sz) {
-    if (sz > page_size) {
-      return false;
-    }
-    ptrdiff_t remaining = page_size - position_;
-    if (remaining < sz) {
-      auto ptr = new page;
-      current_ = ptr;
-      position_ = 0;
-      storage_.push_back(ptr);
-    }
-
-    return true;
-  }
-
- public:
-  ~CharBuffer() {
-    for (auto p : storage_) {
-      delete p;
-    }
-  }
-
-  bool import(StringPiece* sp) {
-    auto psize = sp->size();
-    JPP_RET_CHECK(ensure_size(psize));
-    auto begin = current_->data() + position_;
-    std::copy(sp->begin(), sp->end(), begin);
-    *sp = StringPiece{begin, begin + psize};
-    position_ += psize;
-    return true;
-  }
-};
-
 class StringStorage {
   using Mapping = util::FlatMap<StringPiece, i32>;
   /**
@@ -106,7 +64,7 @@ class StringStorage {
    *
    */
   Mapping mapping_;
-  CharBuffer<> contents_;
+  util::CharBuffer<> contents_;
 
  public:
   bool increaseFieldValueCount(StringPiece sp) {

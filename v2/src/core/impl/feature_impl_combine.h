@@ -70,8 +70,7 @@ inline void NgramFeatureImpl<2>::apply(util::MutableArraySlice<u64> *result,
   auto v0 = t0.at(p0);
   auto p1 = storage[1];
   auto v1 = t1.at(p1);
-  result->at(index) =
-      util::hashing::hashCtSeq(BigramSeed, v0, v1);
+  result->at(index) = util::hashing::hashCtSeq(BigramSeed, v0, v1);
 };
 
 template <>

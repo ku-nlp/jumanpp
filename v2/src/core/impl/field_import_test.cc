@@ -37,7 +37,7 @@ TEST_CASE("string field importer processes storage") {
   }
   StringStorageReader storageReader{buffer.contents()};
   StringPiece piece;
-  CHECK(actualPositions.size() == 6); // 5 + empty
+  CHECK(actualPositions.size() == 6);  // 5 + empty
   CHECK_OK(rdr.initFromMemory(testData));
   CHECK(rdr.nextLine());
   auto ptr = importer.fieldPointer(rdr);

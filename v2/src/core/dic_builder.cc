@@ -3,7 +3,6 @@
 //
 
 #include "core/dic_builder.h"
-#include "util/string_piece.h"
 #include <memory>
 #include <util/status.hpp>
 #include <vector>
@@ -14,8 +13,9 @@
 #include "util/coded_io.h"
 #include "util/csv_reader.h"
 #include "util/flatmap.h"
-#include "util/inlined_vector.h"
 #include "util/flatset.h"
+#include "util/inlined_vector.h"
+#include "util/string_piece.h"
 
 namespace jumanpp {
 namespace core {
@@ -106,7 +106,8 @@ struct EntryTableBuilder {
       auto field = c.importer->fieldPointer(csv);
       auto uns = static_cast<u32>(field);
       buffer.writeVarint(uns);
-      if (field != 0 && c.isTrieIndexed && ignoredRows.count(csv.lineNumber()) == 0) {
+      if (field != 0 && c.isTrieIndexed &&
+          ignoredRows.count(csv.lineNumber()) == 0) {
         trieBuilder.addEntry(field, iptr);
       }
     }
@@ -215,7 +216,8 @@ struct DictionaryBuilderStorage {
       BuiltField fld;
       fld.name = i.descriptor->name;
       if (i.descriptor->stringStorage != -1) {
-        fld.stringContent = stringBuffers[i.descriptor->stringStorage].contents();
+        fld.stringContent =
+            stringBuffers[i.descriptor->stringStorage].contents();
       }
       if (i.descriptor->intStorage != -1) {
         fld.fieldContent = intBuffers[i.descriptor->intStorage].contents();
@@ -229,33 +231,33 @@ struct DictionaryBuilderStorage {
   void importSpecData(const AnalysisSpec& spec) {
     for (auto& x : spec.unkCreators) {
       entries.ignoredRows.insert(x.patternRow);
-      for (auto& ex: x.outputExpressions) {
+      for (auto& ex : x.outputExpressions) {
         auto ss = importers[ex.fieldIndex].descriptor->stringStorage;
         if (ex.stringConstant.size() > 0 && ss != -1) {
           storage[ss].increaseFieldValueCount(ex.stringConstant);
         }
       }
-      for (auto& ex: x.featureExpressions) {
+      for (auto& ex : x.featureExpressions) {
         auto ss = importers[ex.fieldIndex].descriptor->stringStorage;
         if (ex.stringConstant.size() > 0 && ss != -1) {
           storage[ss].increaseFieldValueCount(ex.stringConstant);
         }
       }
     }
-    
-    for (auto& f: spec.features.primitive) {      
-      for (auto fldIdx: f.references) {
+
+    for (auto& f : spec.features.primitive) {
+      for (auto fldIdx : f.references) {
         auto ss = importers[fldIdx].descriptor->stringStorage;
         if (ss != -1) {
           auto& stor = storage[ss];
-          for (auto &s: f.matchData) {
+          for (auto& s : f.matchData) {
             stor.increaseFieldValueCount(s);
           }
         }
       }
     }
-    
-    for (auto& f: spec.features.computation) {
+
+    for (auto& f : spec.features.computation) {
       auto& data = f.matchData;
       auto& refs = f.matchReference;
       auto refSize = refs.size();
