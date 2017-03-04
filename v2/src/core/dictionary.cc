@@ -12,7 +12,7 @@ namespace core {
 namespace dic {
 
 struct PairHash {
-  static std::hash<i32> h;
+  std::hash<i32> h;
   size_t operator()(const std::pair<i32, i32>& p) const {
     return 31 * h(p.first) + h(p.second);
   }

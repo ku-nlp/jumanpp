@@ -15,8 +15,6 @@ namespace serialization {
 class Saver;
 class Loader;
 
-// namespace {
-
 template <typename T>
 struct SerializeImpl {
   static inline void DoSerializeSave(T &o, Saver *s, util::CodedBuffer &buf) {
@@ -26,8 +24,6 @@ struct SerializeImpl {
   static inline bool DoSerializeLoad(T &o, Loader *s,
                                      util::CodedBufferParser &p);
 };
-
-//} //anon nsp
 
 class Saver {
   std::unique_ptr<CodedBuffer> owned_;
@@ -58,10 +54,16 @@ class Loader {
   bool status_ = true;
 
  public:
+  Loader() {}
   Loader(StringPiece data) : parser_{data} {}
 
   template <typename T>
   bool load(T *o) {
+    if (parser_.remaining() == 0) {
+      status_ = false;
+      return false;
+    }
+    status_ = true;
     auto ret = SerializeImpl<T>::DoSerializeLoad(*o, this, parser_);
     return ret && status_ && parser_.remaining() == 0;
   }
@@ -70,6 +72,8 @@ class Loader {
   void operator&(T &o) {
     status_ = SerializeImpl<T>::DoSerializeLoad(o, this, parser_);
   }
+
+  void reset(StringPiece data) { parser_.reset(data); }
 
   bool status() const { return status_; }
 };
@@ -85,39 +89,58 @@ inline bool SerializeImpl<T>::DoSerializeLoad(T &o, Loader *s,
 }
 
 template <>
-inline void SerializeImpl<i32>::DoSerializeSave(i32 &o, Saver *s,
-                                                util::CodedBuffer &buf) {
-  u32 value = static_cast<u32>(o);
-  buf.writeVarint(value);
-}
-
-template <>
-inline bool SerializeImpl<i32>::DoSerializeLoad(i32 &o, Loader *s,
-                                                util::CodedBufferParser &p) {
-  u32 v;
-  auto ret = p.readInt(&v);
-  if (ret) {
-    o = static_cast<i32>(v);
+struct SerializeImpl<i32> {
+  static inline void DoSerializeSave(i32 &o, Saver *s, util::CodedBuffer &buf) {
+    u32 value = static_cast<u32>(o);
+    buf.writeVarint(value);
   }
-  return ret;
-}
 
-template <>
-inline void SerializeImpl<std::string>::DoSerializeSave(
-    std::string &o, Saver *s, util::CodedBuffer &buf) {
-  buf.writeString(o);
-}
-
-template <>
-inline bool SerializeImpl<std::string>::DoSerializeLoad(
-    std::string &o, Loader *s, util::CodedBufferParser &p) {
-  StringPiece sp;
-  auto ret = p.readStringPiece(&sp);
-  if (ret) {
-    o = sp.str();
+  static inline bool DoSerializeLoad(i32 &o, Loader *s,
+                                     util::CodedBufferParser &p) {
+    u32 v;
+    auto ret = p.readInt(&v);
+    if (ret) {
+      o = static_cast<i32>(v);
+    }
+    return ret;
   }
-  return ret;
-}
+};
+
+template <>
+struct SerializeImpl<std::string> {
+  static inline void DoSerializeSave(std::string &o, Saver *s,
+                                     util::CodedBuffer &buf) {
+    buf.writeString(o);
+  }
+
+  static inline bool DoSerializeLoad(std::string &o, Loader *s,
+                                     util::CodedBufferParser &p) {
+    StringPiece sp;
+    auto ret = p.readStringPiece(&sp);
+    if (ret) {
+      o = sp.str();
+    }
+    return ret;
+  }
+};
+
+template <>
+struct SerializeImpl<StringPiece> {
+  static inline void DoSerializeSave(StringPiece &o, Saver *s,
+                                     util::CodedBuffer &buf) {
+    buf.writeString(o);
+  }
+
+  static inline bool DoSerializeLoad(StringPiece &o, Loader *s,
+                                     util::CodedBufferParser &p) {
+    StringPiece sp;
+    auto ret = p.readStringPiece(&sp);
+    if (ret) {
+      o = sp;
+    }
+    return ret;
+  }
+};
 
 template <>
 struct SerializeImpl<bool> {
@@ -133,6 +156,21 @@ struct SerializeImpl<bool> {
     JPP_RET_CHECK(SerializeImpl<i32>::DoSerializeLoad(res, s, p));
     if (res == -1) return false;
     o = (res == 1);
+    return true;
+  }
+};
+
+template <>
+struct SerializeImpl<u64> {
+  static inline void DoSerializeSave(u64 &o, Saver *s, util::CodedBuffer &buf) {
+    buf.writeVarint(o);
+  }
+
+  static inline bool DoSerializeLoad(u64 &o, Loader *s,
+                                     util::CodedBufferParser &p) {
+    u64 r;
+    JPP_RET_CHECK(p.readVarint64(&r));
+    o = r;
     return true;
   }
 };

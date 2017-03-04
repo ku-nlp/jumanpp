@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <string>
 
+#include "array_slice.h"
 #include "status.hpp"
 #include "string_piece.h"
 
@@ -33,6 +34,10 @@ class MappedFileFragment {
   friend class MappedFile;
 
   StringPiece asStringPiece();
+  util::MutableArraySlice<char> asMutableSlice() {
+    return util::MutableArraySlice<char>{reinterpret_cast<char *>(address()),
+                                         size()};
+  }
 };
 
 class MappedFile {

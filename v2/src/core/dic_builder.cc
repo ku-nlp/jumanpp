@@ -9,12 +9,15 @@
 #include "core/darts_trie.h"
 #include "core/impl/field_import.h"
 #include "core/impl/field_reader.h"
+#include "core/impl/runtime_ser.h"
 #include "core/spec/spec_types.h"
+#include "spec/spec_serialization.h"
 #include "util/coded_io.h"
 #include "util/csv_reader.h"
 #include "util/flatmap.h"
 #include "util/flatset.h"
 #include "util/inlined_vector.h"
+#include "util/serialization.h"
 #include "util/string_piece.h"
 
 namespace jumanpp {
@@ -69,7 +72,7 @@ struct ColumnImportContext {
 };
 
 struct DicTrieBuilder {
-  util::CodedBuffer buffer;
+  util::CodedBuffer entryPtrBuffer;
   util::FlatMap<i32, util::InlinedVector<i32, 4>> entriesWithField;
   DoubleArrayBuilder daBuilder;
 
@@ -82,8 +85,8 @@ struct DicTrieBuilder {
       StringPiece key = v.first;
       i32 keyPtr = v.second;
       auto& entries = entriesWithField[keyPtr];
-      auto entriesPtr = static_cast<i32>(buffer.position());
-      impl::writePtrsAsDeltas(entries, buffer);
+      auto entriesPtr = static_cast<i32>(entryPtrBuffer.position());
+      impl::writePtrsAsDeltas(entries, entryPtrBuffer);
       daBuilder.add(key, entriesPtr);
     }
     return daBuilder.build();
@@ -95,17 +98,17 @@ struct EntryTableBuilder {
    * This set contains row numbers which serve patterns for UNK builders
    */
   util::FlatSet<i32> ignoredRows;
-  util::CodedBuffer buffer;
+  util::CodedBuffer entryDataBuffer;
   DicTrieBuilder trieBuilder;
 
   i32 importOneLine(std::vector<ColumnImportContext>& columns,
                     const util::CsvReader& csv) {
-    auto ptr = buffer.position();
+    auto ptr = entryDataBuffer.position();
     auto iptr = static_cast<i32>(ptr);
     for (auto& c : columns) {
       auto field = c.importer->fieldPointer(csv);
       auto uns = static_cast<u32>(field);
-      buffer.writeVarint(uns);
+      entryDataBuffer.writeVarint(uns);
       if (field != 0 && c.isTrieIndexed &&
           ignoredRows.count(csv.lineNumber()) == 0) {
         trieBuilder.addEntry(field, iptr);
@@ -121,6 +124,12 @@ struct DictionaryBuilderStorage {
   std::vector<util::CodedBuffer> stringBuffers;
   std::vector<util::CodedBuffer> intBuffers;
   EntryTableBuilder entries;
+  util::CodedBuffer builtDicData;
+  util::CodedBuffer builtSpecData;
+  util::CodedBuffer builtRuntimeInfo;
+  std::unique_ptr<spec::AnalysisSpec> restoredSpec;
+  std::vector<StringPiece> builtStrings;
+  std::vector<StringPiece> builtInts;
 
   i32 maxUsedCol = -1;
   StringPiece maxFieldName;
@@ -208,19 +217,25 @@ struct DictionaryBuilderStorage {
   }
 
   void fillResult(BuiltDictionary* dic_) {
+    for (auto& b : stringBuffers) {
+      builtStrings.push_back(b.contents());
+    }
+    for (auto& b : intBuffers) {
+      builtInts.push_back(b.contents());
+    }
+
     dic_->trieContent = entries.trieBuilder.daBuilder.result();
-    dic_->entryPointers = entries.trieBuilder.buffer.contents();
-    dic_->entryData = entries.buffer.contents();
+    dic_->entryPointers = entries.trieBuilder.entryPtrBuffer.contents();
+    dic_->entryData = entries.entryDataBuffer.contents();
     auto& flds = dic_->fieldData;
     for (auto& i : importers) {
       BuiltField fld;
       fld.name = i.descriptor->name;
       if (i.descriptor->stringStorage != -1) {
-        fld.stringContent =
-            stringBuffers[i.descriptor->stringStorage].contents();
+        fld.stringContent = builtStrings[i.descriptor->stringStorage];
       }
       if (i.descriptor->intStorage != -1) {
-        fld.fieldContent = intBuffers[i.descriptor->intStorage].contents();
+        fld.fieldContent = builtInts[i.descriptor->intStorage];
       }
       fld.colType = i.descriptor->columnType;
       fld.uniqueValues = i.importer->uniqueValues();
@@ -269,6 +284,10 @@ struct DictionaryBuilderStorage {
 };
 
 Status DictionaryBuilder::importCsv(StringPiece name, StringPiece data) {
+  if (dic_) {
+    return Status::InvalidState() << "dictionary was already built or restored";
+  }
+
   util::CsvReader csv;
   storage_.reset(new DictionaryBuilderStorage);
 
@@ -308,6 +327,143 @@ Status DictionaryBuilder::importSpec(spec::AnalysisSpec* spec) {
 DictionaryBuilder::~DictionaryBuilder() {}
 
 DictionaryBuilder::DictionaryBuilder() {}
+
+template <typename Arch>
+void Serialize(Arch& a, BuiltField& o) {
+  a& o.uniqueValues;
+  a& o.name;
+}
+
+template <typename Arch>
+void Serialize(Arch& a, BuiltDictionary& o) {
+  a& o.entryCount;
+  a& o.fieldData;
+}
+
+Status DictionaryBuilder::fillModelPart(const RuntimeInfo& info,
+                                        model::ModelPart* part) {
+  if (!dic_) {
+    return Status::InvalidState() << "dictionary is not built yet";
+  }
+
+  util::serialization::Saver dicDataSaver{&storage_->builtDicData};
+  dicDataSaver.save(*dic_);
+  spec::saveSpec(*spec_, &storage_->builtSpecData);
+  util::serialization::Saver rtSaver{&storage_->builtRuntimeInfo};
+  rtSaver.save(info);
+
+  part->kind = model::ModelPartKind::Dictionary;
+  part->data.push_back(storage_->builtDicData.contents());
+  part->data.push_back(storage_->builtSpecData.contents());
+  part->data.push_back(storage_->builtRuntimeInfo.contents());
+  part->data.push_back(dic_->trieContent);
+  part->data.push_back(dic_->entryPointers);
+  part->data.push_back(dic_->entryData);
+  for (auto& sb : storage_->builtStrings) {
+    part->data.push_back(sb);
+  }
+  for (auto& ib : storage_->builtInts) {
+    part->data.push_back(ib);
+  }
+
+  return Status::Ok();
+}
+
+Status DictionaryBuilder::restoreDictionary(const model::ModelInfo& info,
+                                            RuntimeInfo* runtime) {
+  if (dic_) {
+    return Status::InvalidState() << "dictionary was already built or restored";
+  }
+  dic_.reset(new BuiltDictionary);
+  storage_.reset(new DictionaryBuilderStorage);
+
+  i32 dicInfoIdx = -1;
+  for (i32 i = 0; i < info.parts.size(); ++i) {
+    auto& part = info.parts[i];
+    if (part.kind == model::ModelPartKind::Dictionary) {
+      if (dicInfoIdx != -1) {
+        return Status::InvalidParameter()
+               << "saved dictionary had more than one dictionary entries";
+      }
+      dicInfoIdx = i;
+    }
+  }
+
+  if (dicInfoIdx == -1) {
+    return Status::InvalidParameter()
+           << "there was no dictionary information in saved model";
+  }
+
+  auto& dicInfo = info.parts[dicInfoIdx];
+
+  if (dicInfo.data.size() < 3) {
+    return Status::InvalidParameter() << "dictionary info must have at least "
+                                         "three fragments, probably corrupted "
+                                         "model file";
+  }
+
+  auto builtDicData = dicInfo.data[0];
+  auto specData = dicInfo.data[1];
+  auto runtimeData = dicInfo.data[2];
+
+  util::serialization::Loader loader{builtDicData};
+  if (!loader.load(dic_.get())) {
+    return Status::InvalidParameter()
+           << "failed to load dictionary metadata from model file";
+  }
+  loader.reset(specData);
+  storage_->restoredSpec.reset(new spec::AnalysisSpec);
+  if (!loader.load(storage_->restoredSpec.get())) {
+    return Status::InvalidParameter() << "failed to load spec from model file";
+  }
+  spec_ = storage_->restoredSpec.get();
+  loader.reset(runtimeData);
+  if (!loader.load(runtime)) {
+    return Status::InvalidParameter()
+           << "failed to load runtime data from model file";
+  }
+
+  return fixupDictionary(dicInfo);
+}
+
+Status DictionaryBuilder::fixupDictionary(const model::ModelPart& dicInfo) {
+  i32 expectedCount =
+      spec_->dictionary.numStringStorage + spec_->dictionary.numIntStorage + 6;
+  if (expectedCount != dicInfo.data.size()) {
+    return Status::InvalidParameter()
+           << "model file did not have all dictionary chunks";
+  }
+  dic_->trieContent = dicInfo.data[3];
+  dic_->entryPointers = dicInfo.data[4];
+  dic_->trieContent = dicInfo.data[5];
+  i32 cnt = 6;
+  for (int i = 0; i < spec_->dictionary.numStringStorage; ++i) {
+    storage_->builtStrings.push_back(dicInfo.data[cnt]);
+    ++cnt;
+  }
+  for (int i = 0; i < spec_->dictionary.numIntStorage; ++i) {
+    storage_->builtInts.push_back(dicInfo.data[cnt]);
+    ++cnt;
+  }
+  if (dic_->fieldData.size() != spec_->dictionary.columns.size()) {
+    return Status::InvalidParameter() << "number of columns in spec was not equal to loaded number of columns";
+  }
+  for (int j = 0; j < dic_->fieldData.size(); ++j) {
+    auto& f = dic_->fieldData[j];
+    auto& fd = spec_->dictionary.columns[j];
+    if (f.name != fd.name) {
+      return Status::InvalidParameter() << "column name check failed, probably the model is corrupted";
+    }
+    f.colType = fd.columnType;
+    if (fd.stringStorage != -1) {
+      f.stringContent = storage_->builtStrings[fd.stringStorage];
+    }
+    if (fd.intStorage != -1) {
+      f.fieldContent = storage_->builtInts[fd.intStorage];
+    }
+  }
+  return Status::Ok();
+}
 
 }  // dic
 }  // core
