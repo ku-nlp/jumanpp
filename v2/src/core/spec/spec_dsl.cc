@@ -582,7 +582,7 @@ Status FieldBuilder::fill(FieldDescriptor* descriptor,
                           StorageAssigner* sa) const {
   descriptor->position = csvColumn_;
   descriptor->columnType = columnType_;
-  descriptor->emptyString = emptyValue_;
+  descriptor->emptyString = emptyValue_.str();
   descriptor->isTrieKey = trieIndex_;
   descriptor->name = name_.str();
   auto storName = stringStorage_.size() == 0 ? name() : stringStorage_;

@@ -25,7 +25,7 @@ struct FieldDescriptor {
   std::string name;
   bool isTrieKey = false;
   ColumnType columnType = ColumnType::Error;
-  StringPiece emptyString = StringPiece{""};
+  std::string emptyString;
   i32 stringStorage = -1;
   i32 intStorage = -1;
 };
