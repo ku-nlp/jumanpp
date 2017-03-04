@@ -7,6 +7,7 @@
 #include "util/memory.hpp"
 #include "util/mmap.h"
 #include "util/stl_util.h"
+#include <cstring>
 
 namespace jumanpp {
 namespace core {

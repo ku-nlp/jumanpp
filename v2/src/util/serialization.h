@@ -5,6 +5,7 @@
 #ifndef JUMANPP_SERIALIZATION_H
 #define JUMANPP_SERIALIZATION_H
 
+#include <memory>
 #include <vector>
 #include "coded_io.h"
 
