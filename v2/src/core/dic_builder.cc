@@ -446,13 +446,15 @@ Status DictionaryBuilder::fixupDictionary(const model::ModelPart& dicInfo) {
     ++cnt;
   }
   if (dic_->fieldData.size() != spec_->dictionary.columns.size()) {
-    return Status::InvalidParameter() << "number of columns in spec was not equal to loaded number of columns";
+    return Status::InvalidParameter() << "number of columns in spec was not "
+                                         "equal to loaded number of columns";
   }
   for (int j = 0; j < dic_->fieldData.size(); ++j) {
     auto& f = dic_->fieldData[j];
     auto& fd = spec_->dictionary.columns[j];
     if (f.name != fd.name) {
-      return Status::InvalidParameter() << "column name check failed, probably the model is corrupted";
+      return Status::InvalidParameter()
+             << "column name check failed, probably the model is corrupted";
     }
     f.colType = fd.columnType;
     if (fd.stringStorage != -1) {
