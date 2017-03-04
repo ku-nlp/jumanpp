@@ -10,7 +10,6 @@
 #include "util/status.hpp"
 #include "util/string_piece.h"
 #include "util/types.hpp"
-
 namespace jumanpp {
 namespace core {
 namespace features {
@@ -21,29 +20,34 @@ struct PrimitiveFeature {
   StringPiece name;
   i32 index = -1;
   PrimitiveFeatureKind kind;
-  util::ArraySlice<i32> references;
-  util::ArraySlice<i32> matchData;
+  std::vector<i32> references;
+  std::vector<i32> matchData;
 };
 
 struct ComputeFeature {
   StringPiece name;
   i32 index = -1;
-  util::ArraySlice<spec::MatchReference> references;
-  util::ArraySlice<i32> matchData;
-  util::ArraySlice<i32> trueBranch;
-  util::ArraySlice<i32> falseBranch;
+  std::vector<spec::MatchReference> references;
+  std::vector<i32> matchData;
+  std::vector<i32> trueBranch;
+  std::vector<i32> falseBranch;
 };
 
 struct PatternFeature {
-  StringPiece name;
   i32 index;
-  util::ArraySlice<i32> arguments;
+  std::vector<i32> arguments;
 };
 
 struct NgramFeature {
-  StringPiece name;
   i32 index;
-  util::ArraySlice<i32> arguments;
+  std::vector<i32> arguments;
+};
+
+struct FeatureRuntimeInfo {
+  std::vector<features::PrimitiveFeature> primitive;
+  std::vector<features::ComputeFeature> compute;
+  std::vector<features::PatternFeature> patterns;
+  std::vector<features::NgramFeature> ngrams;
 };
 
 }  // features

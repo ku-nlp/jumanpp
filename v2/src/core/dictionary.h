@@ -11,7 +11,7 @@
 #include "core/dic_builder.h"
 #include "core/dic_entries.h"
 #include "core/impl/field_reader.h"
-#include "core/spec/spec_types.h"
+#include "core/runtime_info.h"
 
 namespace jumanpp {
 namespace core {
@@ -57,6 +57,9 @@ class DictionaryHolder {
   }
 
   DictionaryEntries entries() const { return DictionaryEntries{&entries_}; }
+
+  Status compileRuntimeInfo(const spec::AnalysisSpec& spec,
+                            RuntimeInfo* runtime);
 
   Status load(const BuiltDictionary& dic);
 };

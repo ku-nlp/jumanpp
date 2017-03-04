@@ -237,12 +237,6 @@ struct DictionaryBuilderStorage {
           storage[ss].increaseFieldValueCount(ex.stringConstant);
         }
       }
-      for (auto& ex : x.featureExpressions) {
-        auto ss = importers[ex.fieldIndex].descriptor->stringStorage;
-        if (ex.stringConstant.size() > 0 && ss != -1) {
-          storage[ss].increaseFieldValueCount(ex.stringConstant);
-        }
-      }
     }
 
     for (auto& f : spec.features.primitive) {

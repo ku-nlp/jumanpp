@@ -13,11 +13,10 @@ namespace core {
 namespace spec {
 
 void saveSpec(const AnalysisSpec& spec, util::CodedBuffer* buf);
-bool loadSpec(StringPiece data, AnalysisSpec*result);
+bool loadSpec(StringPiece data, AnalysisSpec* result);
 
-} // spec
-} // core
-} // jumanpp
+}  // spec
+}  // core
+}  // jumanpp
 
-
-#endif //JUMANPP_SPEC_SERIALIZATION_H
+#endif  // JUMANPP_SPEC_SERIALIZATION_H

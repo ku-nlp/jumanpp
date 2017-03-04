@@ -55,13 +55,20 @@ struct FieldExpression {
   std::string stringConstant;
 };
 
+enum class UnkFeatureType { NotPrefixOfDicWord };
+
+struct UnkMakerFeature {
+  UnkFeatureType type;
+  i32 reference;
+};
+
 struct UnkMaker {
   i32 index = -1;
   std::string name;
   UnkMakerType type = UnkMakerType::Invalid;
   i32 patternRow = -1;
   chars::CharacterClass charClass = chars::CharacterClass::FAMILY_OTHERS;
-  std::vector<FieldExpression> featureExpressions;
+  std::vector<UnkMakerFeature> features;
   std::vector<FieldExpression> outputExpressions;
 };
 

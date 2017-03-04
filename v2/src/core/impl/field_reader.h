@@ -79,6 +79,8 @@ class IntListTraversal {
     }
     return nread;
   }
+
+  i32 pointer() const noexcept { return parser_.position(); }
 };
 
 class IntStorageReader {

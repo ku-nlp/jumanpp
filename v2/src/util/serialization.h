@@ -31,18 +31,16 @@ struct SerializeImpl {
 
 class Saver {
   std::unique_ptr<CodedBuffer> owned_;
-  util::CodedBuffer* buf_;
+  util::CodedBuffer *buf_;
 
  public:
-  Saver(): owned_{new CodedBuffer}, buf_{owned_.get()} {}
+  Saver() : owned_{new CodedBuffer}, buf_{owned_.get()} {}
 
-  Saver(util::CodedBuffer* ptr): buf_{ptr} {
-
-  }
+  Saver(util::CodedBuffer *ptr) : buf_{ptr} {}
 
   template <typename T>
   void save(const T &o) {
-    SerializeImpl<T>::DoSerializeSave(const_cast<T&>(o), this, *buf_);
+    SerializeImpl<T>::DoSerializeSave(const_cast<T &>(o), this, *buf_);
   }
 
   template <typename T>

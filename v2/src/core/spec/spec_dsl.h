@@ -236,13 +236,17 @@ class FeatureCombinator {
   FeatureCombinator(util::memory::ManagedAllocatorCore* alloc) : data{alloc} {}
 };
 
+struct UnkProcFeature {
+  UnkFeatureType type;
+  FeatureRef ref;
+};
+
 class UnkProcBuilder : public DslOpBase {
   StringPiece name_;
   UnkMakerType type_ = UnkMakerType::Invalid;
   chars::CharacterClass charClass_ = chars::CharacterClass::FAMILY_OTHERS;
   i32 pattern_ = -1;
-  FeatureRef notPrefix_;
-  std::vector<FeatureRef> surfaceFeatures_;
+  std::vector<UnkProcFeature> surfaceFeatures_;
   std::vector<FieldExpressionBldr> output_;
 
   friend class ModelSpecBuilder;
@@ -266,14 +270,8 @@ class UnkProcBuilder : public DslOpBase {
   }
 
   UnkProcBuilder& notPrefixOfDicFeature(FeatureRef ref) {
-    notPrefix_ = ref;
-    return *this;
-  }
-
-  UnkProcBuilder& surfaceFeatures(std::initializer_list<FeatureRef> surface) {
-    for (auto& x : surface) {
-      surfaceFeatures_.push_back(x);
-    }
+    UnkProcFeature upf{UnkFeatureType::NotPrefixOfDicWord, ref};
+    surfaceFeatures_.emplace_back(upf);
     return *this;
   }
 

@@ -464,23 +464,6 @@ Status ModelSpecBuilder::validateUnks() const {
   return Status::Ok();
 }
 
-Status fldType2Op(ColumnType ct, FieldExpressionKind* result) {
-  switch (ct) {
-    case ColumnType::StringList:
-      *result = FieldExpressionKind::AppendString;
-      return Status::Ok();
-    case ColumnType::String:
-      *result = FieldExpressionKind::ReplaceString;
-      return Status::Ok();
-    case ColumnType::Int:
-      *result = FieldExpressionKind::ReplaceInt;
-      return Status::Ok();
-    default:
-      return Status::InvalidParameter()
-             << "unsupported column type for surface unk op";
-  }
-}
-
 Status fillFieldExp(StringPiece name, const PrimitiveFeatureDescriptor& pfd,
                     const FieldExpressionBldr& feb, FieldExpression* res) {
   res->fieldIndex = pfd.index;
@@ -525,11 +508,11 @@ Status ModelSpecBuilder::createUnkProcessors(AnalysisSpec* spec) const {
     mkr.charClass = u->charClass_;
 
     for (auto& x : u->surfaceFeatures_) {
-      FieldExpression fe;
-      auto fld = fld2id.at(x.name());
-      JPP_RETURN_IF_ERROR(fldType2Op(fld->columnType, &fe.kind));
-      fe.fieldIndex = fld->index;
-      mkr.featureExpressions.push_back(fe);
+      UnkMakerFeature fe;
+      auto fld = feat2id.at(x.ref.name());
+      fe.type = x.type;
+      fe.reference = fld->index;
+      mkr.features.push_back(fe);
     }
 
     for (auto& x : u->output_) {
