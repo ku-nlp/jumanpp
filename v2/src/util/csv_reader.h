@@ -29,8 +29,7 @@ namespace util {
  * = ").
  *
  * If the field contains quote character it must be enclosed with quote
- * character and all
- * quote characters must be escaped.
+ * character and all quote characters must be escaped.
  *
  * Test csv:
  *
