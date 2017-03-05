@@ -56,7 +56,7 @@ class TestEnv {
     REQUIRE(spec::loadSpec(buf.contents(), &saveLoad));
   }
 
-  void importDic(StringPiece data, StringPiece name = "test") {
+  void importDic(StringPiece data, StringPiece name = StringPiece{"test"}) {
     REQUIRE_OK(origDicBuilder.importSpec(&saveLoad));
     REQUIRE_OK(origDicBuilder.importCsv(name, data));
     RuntimeInfo runtimeOrig{};
