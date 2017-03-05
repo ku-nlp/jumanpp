@@ -119,9 +119,11 @@ public:
 
 TEST_CASE("extraction works with two different entries") {
   NodeCreatorTestEnv2 env {
-      "diag,1\ndump,5\ncor,1\ncor,2"
+      "diag,1\ndump,5\ncor,1\ncor,2\ncors,8"
   };
   env.analyze("zcors");
   CHECK(env.contains("cor", 1, "2"));
   CHECK(env.contains("cor", 1, "1"));
+  CHECK_FALSE(env.contains("cors", 1, "7"));
+  CHECK(env.contains("cors", 1, "8"));
 }
