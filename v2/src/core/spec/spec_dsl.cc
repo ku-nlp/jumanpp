@@ -523,6 +523,7 @@ Status ModelSpecBuilder::createUnkProcessors(AnalysisSpec* spec) const {
       JPP_RETURN_IF_ERROR(fillFieldExp(u->name(), *fld, x, &fe));
       mkr.outputExpressions.push_back(fe);
     }
+    spec->unkCreators.push_back(mkr);
   }
   return Status::Ok();
 }
