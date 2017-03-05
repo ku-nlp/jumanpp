@@ -109,9 +109,10 @@ struct EntryTableBuilder {
       auto field = c.importer->fieldPointer(csv);
       auto uns = static_cast<u32>(field);
       entryDataBuffer.writeVarint(uns);
-      if (field != 0 && c.isTrieIndexed &&
-          ignoredRows.count(csv.lineNumber()) == 0) {
-        trieBuilder.addEntry(field, iptr);
+      if (field != 0 && c.isTrieIndexed) {
+        if (ignoredRows.count(csv.lineNumber()) == 0) {
+          trieBuilder.addEntry(field, iptr);
+        }
       }
     }
     return iptr;
@@ -435,7 +436,7 @@ Status DictionaryBuilder::fixupDictionary(const model::ModelPart& dicInfo) {
   }
   dic_->trieContent = dicInfo.data[3];
   dic_->entryPointers = dicInfo.data[4];
-  dic_->trieContent = dicInfo.data[5];
+  dic_->entryData = dicInfo.data[5];
   i32 cnt = 6;
   for (int i = 0; i < spec_->dictionary.numStringStorage; ++i) {
     storage_->builtStrings.push_back(dicInfo.data[cnt]);

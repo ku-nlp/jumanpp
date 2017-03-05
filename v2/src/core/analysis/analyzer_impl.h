@@ -16,6 +16,7 @@ namespace core {
 namespace analysis {
 
 class AnalyzerImpl {
+ protected:
   AnalyzerConfig cfg_;
   const CoreHolder* core_;
   util::memory::Manager memMgr_;
@@ -29,16 +30,9 @@ class AnalyzerImpl {
  public:
   AnalyzerImpl(const AnalyzerImpl&) = delete;
   AnalyzerImpl(AnalyzerImpl&&) = delete;
+  AnalyzerImpl(const CoreHolder* core, const AnalyzerConfig& cfg);
 
-  AnalyzerImpl(const CoreHolder* core, const AnalyzerConfig& cfg)
-      : cfg_{cfg},
-        core_{core},
-        memMgr_{cfg.pageSize},
-        alloc_{memMgr_.core()},
-        input_{cfg.maxInputBytes},
-        lattice_{alloc_.get(), core->latticeConfig()},
-        xtra_{alloc_.get(), core->dic().entries().entrySize()},
-        outputManager_{alloc_.get(), &xtra_, &core->dic(), &lattice_} {}
+  const OutputManager& output() const { return outputManager_; }
 
   void reset() {
     memMgr_.reset();
@@ -46,13 +40,12 @@ class AnalyzerImpl {
     xtra_.reset();
   }
 
+  Status resetForInput(StringPiece input);
+  Status makeNodeSeedsFromDic();
+
   Status analyze(StringPiece input) {
-    reset();
-    size_t maxCodepoints =
-        std::min<size_t>({input.size(), cfg_.maxInputBytes,
-                          std::numeric_limits<LatticePosition>::max()});
-    latticeBldr_.reset(static_cast<LatticePosition>(maxCodepoints));
-    JPP_RETURN_IF_ERROR(input_.reset(input));
+    JPP_RETURN_IF_ERROR(resetForInput(input));
+    JPP_RETURN_IF_ERROR(makeNodeSeedsFromDic());
     return Status::Ok();
   }
 };

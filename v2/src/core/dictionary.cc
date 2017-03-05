@@ -78,13 +78,16 @@ class RuntimeInfoCompiler {
     for (auto& x : spec_.unkCreators) {
       patterns.push_back(x.patternRow);
     }
+    if (patterns.size() == 0) {
+      return Status::Ok();
+    }
+
     std::sort(patterns.begin(), patterns.end());
     auto last = std::unique(patterns.begin(), patterns.end());
     patterns.erase(last, patterns.end());
 
     auto esize = entries_.entrySize;
-    auto ents =
-        entries_.entries.rawWithLimit(0, std::numeric_limits<i32>::max());
+    auto ents = entries_.entries.raw();
     i32 ptr = 0;
     i32 cnt = 0;
     auto it = patterns.cbegin();

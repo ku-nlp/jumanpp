@@ -76,5 +76,6 @@ class TempFile {
 };
 
 #define CHECK_OK(x) CHECK_THAT(x, OkStatusMatcher())
+#define REQUIRE_OK(x) REQUIRE_THAT(x, OkStatusMatcher())
 
 #endif  // JUMANPP_STANDALONE_TEST_H

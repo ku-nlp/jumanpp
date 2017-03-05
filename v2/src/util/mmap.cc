@@ -15,6 +15,26 @@ namespace jumanpp {
 
 namespace util {
 
+MappedFile::MappedFile(MappedFile &&o) noexcept
+    : fd_{o.fd_},
+      filename_{std::move(o.filename_)},
+      type_{o.type_},
+      size_{o.size_} {
+  o.fd_ = 0;
+}
+
+MappedFile &MappedFile::operator=(MappedFile &&o) noexcept {
+  if (this->fd_ != 0) {
+    ::close(fd_);
+  }
+  fd_ = o.fd_;
+  filename_ = std::move(o.filename_);
+  type_ = o.type_;
+  size_ = o.size_;
+  o.fd_ = 0;
+  return *this;
+}
+
 MappedFile::~MappedFile() {
   if (this->fd_ != 0) {
     ::close(fd_);
@@ -124,7 +144,7 @@ Status MappedFile::map(MappedFileFragment *view, size_t offset, size_t size) {
   return Status::Ok();
 }
 
-MappedFileFragment::MappedFileFragment() : address_{MAP_FAILED} {}
+MappedFileFragment::MappedFileFragment() noexcept : address_{MAP_FAILED} {}
 
 MappedFileFragment::~MappedFileFragment() {
   if (!isClean()) {
@@ -147,6 +167,19 @@ StringPiece MappedFileFragment::asStringPiece() {
   StringPiece::pointer_t asChar =
       reinterpret_cast<StringPiece::pointer_t>(address_);
   return StringPiece(asChar, size_);
+}
+
+MappedFileFragment::MappedFileFragment(MappedFileFragment &&o) noexcept
+    : address_{o.address_}, size_{o.size_} {
+  o.address_ = MAP_FAILED;
+}
+
+MappedFileFragment &MappedFileFragment::operator=(
+    MappedFileFragment &&o) noexcept {
+  address_ = o.address_;
+  size_ = o.size_;
+  o.address_ = MAP_FAILED;
+  return *this;
 }
 }
 }

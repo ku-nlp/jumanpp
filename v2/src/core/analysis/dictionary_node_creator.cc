@@ -25,7 +25,7 @@ bool DictionaryNodeCreator::spawnNodes(const AnalysisInput& input,
         auto dicEntries = trav.entries();
         i32 ptr = 0;
         while (dicEntries.readOnePtr(&ptr)) {
-          EntryPtr eptr = static_cast<EntryPtr>(ptr);
+          EntryPtr eptr{ptr};
           lattice->appendSeed(eptr, begin, end);
         }
       } else if (status == TraverseStatus::NoNode) {

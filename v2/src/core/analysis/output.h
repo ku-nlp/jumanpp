@@ -45,11 +45,11 @@ class NodeWalker {
 
   bool next() {
     --remaining_;
-    if (remaining_ <= 0) return false;
+    if (remaining_ < 0) return false;
     if (status_ == NodeLookupStatus::Multiple) {
       handleMultiple();
     }
-    return false;
+    return remaining_ >= 0;
   }
 
   bool valueOf(i32 fieldIdx, i32* result) const {

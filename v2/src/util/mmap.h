@@ -22,8 +22,13 @@ class MappedFileFragment {
   void *address_;
   size_t size_;
 
+  MappedFileFragment(const MappedFileFragment &) = delete;
+  MappedFileFragment &operator=(const MappedFileFragment &) = delete;
+
  public:
-  MappedFileFragment();
+  MappedFileFragment() noexcept;
+  MappedFileFragment(MappedFileFragment &&o) noexcept;
+  MappedFileFragment &operator=(MappedFileFragment &&o) noexcept;
   ~MappedFileFragment();
 
   void *address() { return address_; }
@@ -46,7 +51,13 @@ class MappedFile {
   MMapType type_;
   size_t size_ = 0;
 
+  MappedFile(const MappedFile &) = delete;
+  MappedFile &operator=(const MappedFile &) = delete;
+
  public:
+  MappedFile() noexcept {}
+  MappedFile(MappedFile &&o) noexcept;
+  MappedFile &operator=(MappedFile &&o) noexcept;
   Status open(const StringPiece &filename, MMapType type);
   Status map(MappedFileFragment *view, size_t offset, size_t size);
 

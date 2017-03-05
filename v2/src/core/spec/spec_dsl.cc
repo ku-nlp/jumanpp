@@ -464,7 +464,8 @@ Status ModelSpecBuilder::validateUnks() const {
   return Status::Ok();
 }
 
-Status fillFieldExp(StringPiece name, const FieldDescriptor& fld, const FieldExpressionBldr& feb, FieldExpression* res) {
+Status fillFieldExp(StringPiece name, const FieldDescriptor& fld,
+                    const FieldExpressionBldr& feb, FieldExpression* res) {
   res->fieldIndex = fld.index;
   switch (feb.type) {
     case TransformType::Value:

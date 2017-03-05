@@ -90,6 +90,8 @@ class IntStorageReader {
   IntStorageReader() {}
   IntStorageReader(const StringPiece& obj) : data_{obj} {}
 
+  IntListTraversal raw() const { return rawWithLimit(0, data_.size()); }
+
   IntListTraversal rawWithLimit(i32 ptr, i32 length) const {
     JPP_DCHECK_IN(ptr, 0, data_.size());
     JPP_DCHECK_GE(length, 0);

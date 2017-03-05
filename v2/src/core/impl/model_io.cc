@@ -32,6 +32,7 @@ Status ModelSaver::open(StringPiece name) {
   }
   file_.reset(new ModelFile);
   JPP_RETURN_IF_ERROR(file_->mmap.open(name, util::MMapType::ReadWrite));
+  file_->name = name;
   return Status::Ok();
 }
 
@@ -97,6 +98,7 @@ Status FilesystemModel::open(StringPiece name) {
   }
   file_.reset(new ModelFile);
   JPP_RETURN_IF_ERROR(file_->mmap.open(name, util::MMapType::ReadOnly));
+  file_->name = name;
   return Status::Ok();
 }
 
@@ -108,7 +110,8 @@ Status FilesystemModel::load(ModelInfo* info) {
   util::MappedFileFragment hdrFrag;
   JPP_RETURN_IF_ERROR(file_->mmap.map(&hdrFrag, 0, 4096));
   auto sp = hdrFrag.asStringPiece();
-  if (!std::strncmp(sp.char_begin(), ModelMagic, sizeof(ModelMagic))) {
+  auto magicSp = StringPiece{ModelMagic};
+  if (sp.take(magicSp.size()) != magicSp) {
     return Status::InvalidState() << "model file " << file_->name
                                   << " has corrupted header";
   }

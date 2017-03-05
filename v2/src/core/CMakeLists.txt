@@ -24,7 +24,7 @@ set(analysis_test_srcs analysis/dictionary_node_creator_test.cc analysis/lattice
 add_library(jpp_core ${core_srcs} ${core_hdrs} ${libs3p_pegtl_headers})
 
 jpp_test_executable(jpp_core_tests ${core_test_srcs} ${core_hdrs})
-jpp_test_executable(jpp_core_analysis_tests ${analysis_test_srcs})
+jpp_test_executable(jpp_core_analysis_tests ${analysis_test_srcs} ../testing/test_analyzer.h)
 jpp_test_executable(jpp_core_spec_tests ${spec_test_srcs})
 
 target_link_libraries(jpp_core jpp_util)
