@@ -5,6 +5,7 @@
 #ifndef JUMANPP_FEATURE_API_H
 #define JUMANPP_FEATURE_API_H
 
+#include <memory>
 #include "runtime_info.h"
 
 namespace jumanpp {

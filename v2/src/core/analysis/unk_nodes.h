@@ -5,6 +5,7 @@
 #ifndef JUMANPP_UNK_NODES_H
 #define JUMANPP_UNK_NODES_H
 
+#include <memory>
 #include "core/analysis/unk_maker_types.h"
 
 namespace jumanpp {
