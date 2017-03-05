@@ -12,11 +12,9 @@ namespace analysis {
 
 Status AnalyzerImpl::resetForInput(StringPiece input) {
   reset();
-  size_t maxCodepoints =
-      std::min<size_t>({input.size(), cfg_.maxInputBytes,
-                        std::numeric_limits<LatticePosition>::max()});
-  latticeBldr_.reset(static_cast<LatticePosition>(maxCodepoints));
   JPP_RETURN_IF_ERROR(input_.reset(input));
+  latticeBldr_.reset(input_.numCodepoints());
+
   return Status::Ok();
 }
 
@@ -50,6 +48,38 @@ Status AnalyzerImpl::makeUnkNodes1() {
   }
 
   return Status::Ok();
+}
+
+bool AnalyzerImpl::checkLatticeConnectivity() {
+  return latticeBldr_.checkConnectability();
+}
+
+Status AnalyzerImpl::makeUnkNodes2() {
+  auto& unk = core_->unkMakers();
+  analysis::UnkNodesContext unc{&xtra_};
+  for (auto& m : unk.stage2) {
+    if (!m->spawnNodes(input_, &unc, &latticeBldr_)) {
+      return Status::InvalidState() << "failed to create unk nodes (2)";
+    }
+  }
+
+  return Status::Ok();
+}
+
+Status AnalyzerImpl::buildLattice() {
+  JPP_RETURN_IF_ERROR(makeUnkNodes1());
+  if (!checkLatticeConnectivity()) {
+    JPP_RETURN_IF_ERROR(makeUnkNodes2());
+    if (!checkLatticeConnectivity()) {
+      return Status::InvalidState() << "could not build lattice";
+    }
+  }
+
+  LatticeConstructionContext lcc;
+
+  JPP_RETURN_IF_ERROR(latticeBldr_.makeBos(&lcc, &lattice_));
+
+  return Status::NotImplemented();
 }
 
 }  // analysis

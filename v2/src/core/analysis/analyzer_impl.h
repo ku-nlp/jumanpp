@@ -47,6 +47,7 @@ class AnalyzerImpl {
   Status makeUnkNodes2();
   Status buildLattice();
   Status computeNodeFeatures();
+  Status computeFeatures();
   Status computeScores();
 
   Status analyze(StringPiece input) {

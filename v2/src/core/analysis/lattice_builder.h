@@ -10,6 +10,7 @@
 #include "lattice_types.h"
 #include "util/status.hpp"
 #include "util/types.hpp"
+#include "extra_nodes.h"
 
 namespace jumanpp {
 namespace core {
@@ -53,11 +54,18 @@ struct BoundaryInfo {
         firstNodeOffset(firstNodeOffset) {}
 };
 
-class LatticeConstructionContext {};
+class LatticeConstructionContext {
+  ExtraNodesContext* xtra;
+public:
+  Status addBos(LatticeBoundary* lb) {
+    return Status::NotImplemented();
+  }
+};
 
 class LatticeBuilder {
   std::vector<LatticeNodeSeed> seeds_;
   std::vector<BoundaryInfo> boundaries_;
+  std::vector<bool> connectible;
   LatticePosition maxBoundaries_;
 
  public:
@@ -66,32 +74,19 @@ class LatticeBuilder {
     seeds_.emplace_back(entryPtr, start, end);
   }
 
-  void reset(LatticePosition maxBoundaries) {
-    seeds_.clear();
-    boundaries_.clear();
-    boundaries_.reserve(
-        static_cast<std::make_unsigned<LatticePosition>::type>(maxBoundaries));
-    maxBoundaries_ = maxBoundaries;
-  }
+  void sortSeeds();
+  bool checkConnectability();
+  void reset(LatticePosition maxCodepoints);
 
   util::ArraySlice<LatticeNodeSeed> seeds() const {
     return {seeds_.data(), seeds_.size()};
   }
 
   Status prepare();
-
   Status constructSingleBoundary(LatticeConstructionContext* context,
-                                 Lattice* lattice) {
-    auto boundaryIdx = (u32)lattice->createdBoundaryCount();
-    LatticeBoundaryConfig lbc{boundaryIdx,
-                              (u32)boundaries_[boundaryIdx].startCount,
-                              (u32)boundaries_[boundaryIdx].endCount};
-    LatticeBoundary* boundary;
-    JPP_RETURN_IF_ERROR(lattice->makeBoundary(lbc, &boundary));
-    // fill boundary primitive features
-    //
-    return Status::Ok();
-  }
+                                 Lattice* lattice);
+
+  Status makeBos(LatticeConstructionContext* ctx, Lattice *lattice);
 };
 
 }  // analysis
