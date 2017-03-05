@@ -35,7 +35,7 @@ class UnkNodesContext {
   ExtraNodesContext* xtra_;
 
  public:
-  UnkNodesContext(ExtraNodesContext* xtra): xtra_{xtra} {}
+  UnkNodesContext(ExtraNodesContext* xtra) : xtra_{xtra} {}
 
   EntryPtr makePtr(StringPiece surface, const UnkNodeConfig& conf,
                    bool notPrefix) {

@@ -9,19 +9,20 @@ using namespace jumanpp::core::dic;
 using namespace jumanpp::testing;
 using namespace jumanpp;
 
-
 namespace {
 class UnkNodeTestEnv {
   TestEnv tenv;
   StringField flda;
   StringField fldb;
 
-public:
+ public:
   UnkNodeTestEnv(StringPiece csvData) {
     tenv.spec([](dsl::ModelSpecBuilder& specBldr) {
       auto& a = specBldr.field(1, "a").strings().trieIndex();
       specBldr.field(2, "b").strings();
-      specBldr.unk("chars", 1).chunking(chars::CharacterClass::ALPH).outputTo({a});
+      specBldr.unk("chars", 1)
+          .chunking(chars::CharacterClass::ALPH)
+          .outputTo({a});
     });
     CHECK(tenv.saveLoad.unkCreators.size() == 1);
     tenv.importDic(csvData);
@@ -71,10 +72,10 @@ public:
     auto seeds = tenv.analyzer->latticeBuilder().seeds();
 
     for (auto& seed : seeds) {
-        CHECK(output.locate(seed.entryPtr, &walker));
-        while (walker.next()) {
-          WARN("NODE:" << flda[walker] << "||" << fldb[walker]);
-        }
+      CHECK(output.locate(seed.entryPtr, &walker));
+      while (walker.next()) {
+        WARN("NODE:" << flda[walker] << "||" << fldb[walker]);
+      }
     }
   }
 

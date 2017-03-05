@@ -77,7 +77,7 @@ class TestEnv {
     REQUIRE_OK(dic.load(dicBuilder.result()));
     CoreConfig coreConf{beamSize};
     core.reset(new CoreHolder(coreConf, actualRuntime, dic));
-    REQUIRE_OK(core->initialize());
+    REQUIRE_OK(core->initialize(nullptr));
     analyzer.reset(new TestAnalyzer(core.get(), aconf));
   }
 };

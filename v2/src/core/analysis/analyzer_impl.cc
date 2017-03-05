@@ -3,8 +3,8 @@
 //
 
 #include "analyzer_impl.h"
-#include "dictionary_node_creator.h"
 #include "core/analysis/unk_nodes_creator.h"
+#include "dictionary_node_creator.h"
 
 namespace jumanpp {
 namespace core {
@@ -20,7 +20,7 @@ Status AnalyzerImpl::resetForInput(StringPiece input) {
   return Status::Ok();
 }
 
-AnalyzerImpl::AnalyzerImpl(const CoreHolder *core, const AnalyzerConfig &cfg)
+AnalyzerImpl::AnalyzerImpl(const CoreHolder* core, const AnalyzerConfig& cfg)
     : cfg_{cfg},
       core_{core},
       memMgr_{cfg.pageSize},

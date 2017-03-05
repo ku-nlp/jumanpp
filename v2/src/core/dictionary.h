@@ -56,6 +56,7 @@ class DictionaryHolder {
     return fields_.byName(name);
   }
 
+  const FieldsHolder& fields() const { return fields_; }
   DictionaryEntries entries() const { return DictionaryEntries{&entries_}; }
 
   Status compileRuntimeInfo(const spec::AnalysisSpec& spec,

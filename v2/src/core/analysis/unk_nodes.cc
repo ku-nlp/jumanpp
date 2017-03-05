@@ -3,10 +3,10 @@
 //
 
 #include "unk_nodes.h"
+#include "core/core.h"
 #include "dic_reader.h"
 #include "unk_nodes_creator.h"
 #include "util/stl_util.h"
-#include "core/core.h"
 
 namespace jumanpp {
 namespace core {

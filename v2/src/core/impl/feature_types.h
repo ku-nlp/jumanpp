@@ -27,7 +27,7 @@ struct PrimitiveFeature {
 struct ComputeFeature {
   StringPiece name;
   i32 index = -1;
-  std::vector<spec::MatchReference> references;
+  std::vector<i32> references;
   std::vector<i32> matchData;
   std::vector<i32> trueBranch;
   std::vector<i32> falseBranch;

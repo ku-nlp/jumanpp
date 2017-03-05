@@ -75,7 +75,7 @@ class RuntimeInfoCompiler {
 
   Status resolveEntryPtrs() {
     std::vector<i32> patterns;
-    for (auto& x : spec_.unkCreators) { //raw line number is 1-based
+    for (auto& x : spec_.unkCreators) {  // raw line number is 1-based
       patterns.push_back(x.patternRow - 1);
     }
     if (patterns.size() == 0) {
@@ -248,7 +248,9 @@ class RuntimeInfoCompiler {
       auto& cf = comp.back();
       cf.name = cfd.name;
       cf.index = cfd.index;
-      util::copy(cfd.matchReference, cf.references);
+      for (auto& x : cfd.matchReference) {
+        cf.references.push_back(x.dicFieldIdx);
+      }
       util::copy(cfd.trueBranch, cf.trueBranch);
       util::copy(cfd.falseBranch, cf.falseBranch);
       fields.clear();

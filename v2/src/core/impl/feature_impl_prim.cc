@@ -9,7 +9,7 @@ namespace core {
 namespace features {
 namespace impl {
 
-Status CopyPrimFeatureImpl::initialize(PrimitiveFeatureContext *ctx,
+Status CopyPrimFeatureImpl::initialize(FeatureConstructionContext *ctx,
                                        const PrimitiveFeature &f) {
   if (f.kind != PrimitiveFeatureKind::Copy) {
     return Status::InvalidParameter() << f.name << ": type was not Copy";
@@ -30,7 +30,7 @@ Status CopyPrimFeatureImpl::initialize(PrimitiveFeatureContext *ctx,
   return Status::Ok();
 }
 
-Status ProvidedPrimFeatureImpl::initialize(PrimitiveFeatureContext *ctx,
+Status ProvidedPrimFeatureImpl::initialize(FeatureConstructionContext *ctx,
                                            const PrimitiveFeature &f) {
   if (f.kind != PrimitiveFeatureKind::Provided) {
     return Status::InvalidParameter() << f.name << ": type was not Provided";
@@ -49,7 +49,7 @@ Status ProvidedPrimFeatureImpl::initialize(PrimitiveFeatureContext *ctx,
   return Status::Ok();
 }
 
-Status LengthPrimFeatureImpl::initialize(PrimitiveFeatureContext *ctx,
+Status LengthPrimFeatureImpl::initialize(FeatureConstructionContext *ctx,
                                          const PrimitiveFeature &f) {
   if (f.kind != PrimitiveFeatureKind::Length) {
     return Status::InvalidParameter() << f.name << ": type was not Length";
@@ -69,7 +69,7 @@ Status LengthPrimFeatureImpl::initialize(PrimitiveFeatureContext *ctx,
   return Status::Ok();
 }
 
-Status MatchDicPrimFeatureImpl::initialize(PrimitiveFeatureContext *ctx,
+Status MatchDicPrimFeatureImpl::initialize(FeatureConstructionContext *ctx,
                                            const PrimitiveFeature &f) {
   if (f.kind != PrimitiveFeatureKind::MatchDic) {
     return Status::InvalidParameter() << f.name << ": type was not MatchDic";
@@ -92,7 +92,7 @@ Status MatchDicPrimFeatureImpl::initialize(PrimitiveFeatureContext *ctx,
   return Status::Ok();
 }
 
-Status MatchAnyDicPrimFeatureImpl::initialize(PrimitiveFeatureContext *ctx,
+Status MatchAnyDicPrimFeatureImpl::initialize(FeatureConstructionContext *ctx,
                                               const PrimitiveFeature &f) {
   if (f.kind != PrimitiveFeatureKind::MatchAnyDic) {
     return Status::InvalidParameter() << f.name << ": type was not MatchAnyDic";
@@ -115,7 +115,7 @@ Status MatchAnyDicPrimFeatureImpl::initialize(PrimitiveFeatureContext *ctx,
   return Status::Ok();
 }
 
-Status PrimitiveFeatureContext::checkFieldType(
+Status FeatureConstructionContext::checkFieldType(
     i32 field, std::initializer_list<spec::ColumnType> columnTypes) const {
   auto &fld = fields->at(field);
 
@@ -137,8 +137,12 @@ Status PrimitiveFeatureContext::checkFieldType(
   return status;
 }
 
+FeatureConstructionContext::FeatureConstructionContext(
+    const dic::FieldsHolder *fields)
+    : fields(fields) {}
+
 Status PrimitiveFeaturesDynamicApply::initialize(
-    PrimitiveFeatureContext *ctx,
+    FeatureConstructionContext *ctx,
     util::ArraySlice<PrimitiveFeature> featureData) {
   features_.reserve(featureData.size());
   for (auto &f : featureData) {
@@ -175,6 +179,7 @@ void PrimitiveFeaturesDynamicApply::apply(
     f->apply(ctx, entryPtr, entry, features);
   }
 }
+
 }  // impl
 }  // features
 }  // core

@@ -35,6 +35,34 @@ class DicListTraversal {
  */
 enum class LengthFieldSource { Invalid, Strings, Positions };
 
+class FeatureConstructionContext {
+  const dic::FieldsHolder* fields;
+
+ public:
+  FeatureConstructionContext(const dic::FieldsHolder* fields);
+
+  Status checkFieldType(
+      i32 field, std::initializer_list<spec::ColumnType> columnTypes) const;
+
+  Status checkProvidedFeature(u32 index) const { return Status::Ok(); }
+
+  Status setLengthField(i32 fieldNum, LengthFieldSource* field) {
+    auto fld = fields->at(fieldNum);
+    auto type = fld.columnType;
+    if (type == spec::ColumnType::StringList) {
+      *field = LengthFieldSource::Positions;
+    } else if (type == spec::ColumnType::String) {
+      *field = LengthFieldSource::Strings;
+    } else {
+      return Status::InvalidState()
+             << "field " << fld.name << " typed " << fld.columnType
+             << " can not be used for length calculation";
+    }
+
+    return Status::Ok();
+  }
+};
+
 class PrimitiveFeatureContext {
   analysis::ExtraNodesContext* extraCtx;
   dic::FieldsHolder* fields;
@@ -55,11 +83,6 @@ class PrimitiveFeatureContext {
     return extraCtx->placeholderData(entryPtr, index);
   }
 
-  Status checkFieldType(
-      i32 field, std::initializer_list<spec::ColumnType> columnTypes) const;
-
-  Status checkProvidedFeature(u32 index) const { return Status::Ok(); }
-
   i32 lengthOf(i32 fieldNum, i32 fieldPtr, LengthFieldSource field) {
     if (fieldPtr < 0) {
       return extraCtx->lengthOf(fieldNum, fieldPtr);
@@ -73,22 +96,6 @@ class PrimitiveFeatureContext {
       default:
         return -1;
     }
-  }
-
-  Status setLengthField(i32 fieldNum, LengthFieldSource* field) {
-    auto fld = fields->at(fieldNum);
-    auto type = fld.columnType;
-    if (type == spec::ColumnType::StringList) {
-      *field = LengthFieldSource::Positions;
-    } else if (type == spec::ColumnType::String) {
-      *field = LengthFieldSource::Strings;
-    } else {
-      return Status::InvalidState()
-             << "field " << fld.name << " typed " << fld.columnType
-             << " can not be used for length calculation";
-    }
-
-    return Status::Ok();
   }
 };
 
@@ -124,6 +131,89 @@ class PrimitiveFeatureData {
   util::MutableArraySlice<u64> featureData() const {
     return util::MutableArraySlice<u64>{features_, index_ * featureCnt_,
                                         featureCnt_};
+  }
+};
+
+class PatternFeatureData {
+  util::ArraySlice<u64> primitive_;
+  util::MutableArraySlice<u64> patterns_;
+  i32 index_ = -1;
+  u64 primitiveSize;
+  u64 patternSize;
+  u64 total_;
+
+ public:
+  PatternFeatureData(const util::ArraySlice<u64>& primitive_,
+                     const util::MutableArraySlice<u64>& patterns_,
+                     u64 primitiveSize, u64 patternSize)
+      : primitive_(primitive_),
+        patterns_(patterns_),
+        primitiveSize(primitiveSize),
+        patternSize(patternSize),
+        total_{primitive_.size() / primitiveSize} {}
+
+  bool next() {
+    ++index_;
+    return index_ < total_;
+  }
+
+  util::ArraySlice<u64> primitive() const {
+    return util::ArraySlice<u64>{primitive_, index_ * primitiveSize,
+                                 primitiveSize};
+  }
+
+  util::MutableArraySlice<u64> pattern() const {
+    return util::MutableArraySlice<u64>{patterns_, index_ * patternSize,
+                                        patternSize};
+  }
+};
+
+class NgramFeatureData {
+  util::ArraySlice<u64> t2;  // beam size
+  util::ArraySlice<u64> t1;  // only one
+  util::ArraySlice<u64> t0;  // all in lattice boundary
+  util::MutableArraySlice<u64> final;
+  i32 t2index = -1;
+  i32 t0index = -1;
+  u64 t2size;
+  u64 t0size;
+  u64 finalSize;
+
+ public:
+  NgramFeatureData(const util::ArraySlice<u64>& t2,
+                   const util::ArraySlice<u64>& t1,
+                   const util::ArraySlice<u64>& t0,
+                   const util::MutableArraySlice<u64>& final)
+      : t2(t2),
+        t1(t1),
+        t0(t0),
+        final(final),
+        t2size{t2.size() / t1.size()},
+        t0size{t0.size() / t1.size()},
+        finalSize{final.size() / t0size} {}
+
+  bool nextT2() {
+    ++t2index;
+    return t2index < t2size;
+  }
+
+  bool nextT0() {
+    ++t0index;
+    return t0index < t0size;
+  }
+
+  util::ArraySlice<u64> patternT2() const {
+    return util::ArraySlice<u64>{t2, t2index * t2size, t2size};
+  }
+
+  util::ArraySlice<u64> patternT1() const { return t1; }
+
+  util::ArraySlice<u64> patternT0() const {
+    return util::ArraySlice<u64>{t0, t0index * t0size, t0size};
+  }
+
+  util::MutableArraySlice<u64> finalFeatures() const {
+    return util::MutableArraySlice<u64>{final, t0index * finalSize, finalSize};
   }
 };
 

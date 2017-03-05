@@ -28,7 +28,7 @@ class FeatureImplBase {
 
 class PrimitiveFeatureImpl : public FeatureImplBase {
  public:
-  virtual Status initialize(PrimitiveFeatureContext* ctx,
+  virtual Status initialize(FeatureConstructionContext* ctx,
                             const PrimitiveFeature& f) = 0;
 
   virtual void apply(PrimitiveFeatureContext* ctx, EntryPtr entryPtr,
@@ -41,7 +41,7 @@ class DynamicPrimitiveFeature : public PrimitiveFeatureImpl {
   Impl impl;
 
  public:
-  virtual Status initialize(PrimitiveFeatureContext* ctx,
+  virtual Status initialize(FeatureConstructionContext* ctx,
                             const PrimitiveFeature& f) override {
     return impl.initialize(ctx, f);
   }
@@ -63,7 +63,7 @@ class CopyPrimFeatureImpl {
   constexpr CopyPrimFeatureImpl(u32 fieldIdx, u32 featureIdx)
       : fieldIdx{fieldIdx}, featureIdx{featureIdx} {}
 
-  Status initialize(PrimitiveFeatureContext* ctx, const PrimitiveFeature& f);
+  Status initialize(FeatureConstructionContext* ctx, const PrimitiveFeature& f);
 
   inline void apply(PrimitiveFeatureContext* ctx, EntryPtr entryPtr,
                     const util::ArraySlice<i32>& entry,
@@ -81,7 +81,7 @@ class ProvidedPrimFeatureImpl {
   constexpr ProvidedPrimFeatureImpl(u32 providedIdx, u32 featureIdx)
       : providedIdx(providedIdx), featureIdx(featureIdx) {}
 
-  Status initialize(PrimitiveFeatureContext* ctx, const PrimitiveFeature& f);
+  Status initialize(FeatureConstructionContext* ctx, const PrimitiveFeature& f);
 
   inline void apply(PrimitiveFeatureContext* ctx, EntryPtr entryPtr,
                     const util::ArraySlice<i32>& entry,
@@ -101,7 +101,7 @@ class LengthPrimFeatureImpl {
                                   LengthFieldSource fld)
       : fieldIdx{fieldIdx}, featureIdx{featureIdx}, field{fld} {}
 
-  Status initialize(PrimitiveFeatureContext* ctx, const PrimitiveFeature& f);
+  Status initialize(FeatureConstructionContext* ctx, const PrimitiveFeature& f);
 
   inline void apply(PrimitiveFeatureContext* ctx, EntryPtr entryPtr,
                     const util::ArraySlice<i32>& entry,
@@ -125,7 +125,7 @@ class MatchDicPrimFeatureImpl {
                                     const i32 (&matchData)[S])
       : fieldIdx{fieldIdx}, featureIdx{featureIdx}, matchData{matchData} {}
 
-  Status initialize(PrimitiveFeatureContext* ctx, const PrimitiveFeature& f);
+  Status initialize(FeatureConstructionContext* ctx, const PrimitiveFeature& f);
 
   inline void apply(PrimitiveFeatureContext* ctx, EntryPtr entryPtr,
                     const util::ArraySlice<i32>& entry,
@@ -151,7 +151,7 @@ class MatchAnyDicPrimFeatureImpl {
                                        const i32 (&matchData)[S])
       : fieldIdx{fieldIdx}, featureIdx{featureIdx}, matchData{matchData} {}
 
-  Status initialize(PrimitiveFeatureContext* ctx, const PrimitiveFeature& f);
+  Status initialize(FeatureConstructionContext* ctx, const PrimitiveFeature& f);
 
   inline void apply(PrimitiveFeatureContext* ctx, EntryPtr entryPtr,
                     const util::ArraySlice<i32>& entry,
@@ -171,14 +171,15 @@ class MatchAnyDicPrimFeatureImpl {
 };
 
 template <typename Child>
-class PrimitiveFeatureApplyImpl : PrimitiveFeatureApply {
+class PrimitiveFeatureApplyImpl : public PrimitiveFeatureApply {
  public:
   virtual void applyBatch(impl::PrimitiveFeatureContext* ctx,
                           impl::PrimitiveFeatureData* data) const
       noexcept override {
     const Child& cld = static_cast<const Child&>(*this);
     while (data->next()) {
-      cld.apply(ctx, data->entry(), data->entryData(), data->featureData());
+      auto slice = data->featureData();
+      cld.apply(ctx, data->entry(), data->entryData(), &slice);
     }
   }
 };
@@ -188,7 +189,7 @@ class PrimitiveFeaturesDynamicApply final
   std::vector<std::unique_ptr<PrimitiveFeatureImpl>> features_;
 
  public:
-  Status initialize(PrimitiveFeatureContext* ctx,
+  Status initialize(FeatureConstructionContext* ctx,
                     util::ArraySlice<PrimitiveFeature> featureData);
 
   void apply(PrimitiveFeatureContext* ctx, EntryPtr entryPtr,

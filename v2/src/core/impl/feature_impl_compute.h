@@ -57,6 +57,22 @@ class MatchTupleComputeFeatureImpl {
                "matchData should have correct number of entries");
   }
 
+  MatchTupleComputeFeatureImpl(i32 featureIdx,
+                               const util::ArraySlice<i32>& refs,
+                               const util::ArraySlice<i32>& data,
+                               const util::ArraySlice<i32>& trueB,
+                               const util::ArraySlice<i32>& falseB)
+      : featureIdx{featureIdx},
+        references{refs},
+        matchData{data},
+        trueBranch{trueB},
+        falseBranch{falseB},
+        dataEntries{matchData.size() / references.size()} {
+    JPP_DCHECK_GT(dataEntries, 0);
+    JPP_DCHECK((matchData.size() % dataEntries == 0) &&
+               "matchData should have correct number of entries");
+  }
+
   inline static ComareResult compareSameSize(util::ArraySlice<i32> left,
                                              util::ArraySlice<i32> right) {
     for (int i = 0; i < left.size(); ++i) {
@@ -117,6 +133,38 @@ class MatchTupleComputeFeatureImpl {
     } else {
       features->at(featureIdx) =
           util::hashing::hashIndexedSeq(featureIdx, *features, falseBranch);
+    }
+  }
+};
+
+template <typename Child>
+class ComputeFeatureApplyImpl : public ComputeFeatureApply {
+ public:
+  void applyBatch(impl::ComputeFeatureContext* ctx,
+                  impl::PrimitiveFeatureData* data) const noexcept override {
+    const Child& cld = static_cast<const Child&>(*this);
+    while (data->next()) {
+      auto slice = data->featureData();
+      cld.apply(ctx, data->entry(), data->entryData(), &slice);
+    }
+  }
+};
+
+class ComputeFeatureDynamicApply final
+    : public ComputeFeatureApplyImpl<ComputeFeatureDynamicApply> {
+  std::vector<MatchTupleComputeFeatureImpl> features;
+
+ public:
+  void makeFeature(const ComputeFeature& cf) {
+    features.emplace_back(cf.index, cf.references, cf.matchData, cf.trueBranch,
+                          cf.falseBranch);
+  }
+
+  void apply(ComputeFeatureContext* ctx, EntryPtr entryPtr,
+             const util::ArraySlice<i32>& entry,
+             util::MutableArraySlice<u64>* features) const noexcept {
+    for (auto& f : this->features) {
+      f.apply(ctx, entryPtr, entry, features);
     }
   }
 };

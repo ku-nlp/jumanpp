@@ -48,8 +48,7 @@ bool ChunkingUnkMaker::spawnNodes(const AnalysisInput& input,
         case TraverseStatus::NoLeaf: {
           LatticePosition start = i;
           LatticePosition end = (LatticePosition)(j + 1);
-          auto ptr =
-              ctx->makePtr(input.surface(start, end), info_, false);
+          auto ptr = ctx->makePtr(input.surface(start, end), info_, false);
           lattice->appendSeed(ptr, start, end);
           break;
         }

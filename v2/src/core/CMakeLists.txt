@@ -3,7 +3,7 @@ set(core_srcs darts_trie.cc dictionary.cc impl/field_import.cc dic_builder.cc
         analysis/lattice_builder.cc analysis/analysis_input.cc spec/spec_dsl.cc impl/feature_impl_prim.cc
         analysis/unk_nodes_creator.cc analysis/extra_nodes.cc analysis/dic_reader.cc analysis/output.cc
         core.cc analysis/analyzer.cc analysis/analyzer_impl.cc impl/feature_impl_compute.cc
-        spec/spec_types.cc spec/spec_serialization.cc impl/model_io.cc analysis/unk_nodes.cc)
+        spec/spec_types.cc spec/spec_serialization.cc impl/model_io.cc analysis/unk_nodes.cc features_api.cc)
 
 set(core_hdrs darts.h darts_trie.h dictionary.h impl/field_import.h impl/field_reader.h dic_entries.h
         dic_builder.h spec/spec_grammar.h spec/spec_dsl.h analysis/analysis_input.h analysis/lattice_builder.h
