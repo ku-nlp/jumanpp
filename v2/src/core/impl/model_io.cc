@@ -3,11 +3,11 @@
 //
 
 #include "model_io.h"
+#include <cstring>
 #include "model_format_ser.h"
 #include "util/memory.hpp"
 #include "util/mmap.h"
 #include "util/stl_util.h"
-#include <cstring>
 
 namespace jumanpp {
 namespace core {
