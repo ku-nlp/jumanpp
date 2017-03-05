@@ -67,6 +67,7 @@ struct UnkMaker {
   i32 index = -1;
   std::string name;
   UnkMakerType type = UnkMakerType::Invalid;
+  // 1-based
   i32 patternRow = -1;
   chars::CharacterClass charClass = chars::CharacterClass::FAMILY_OTHERS;
   std::vector<UnkMakerFeature> features;

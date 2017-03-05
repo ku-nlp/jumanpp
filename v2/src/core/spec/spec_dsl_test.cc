@@ -146,4 +146,10 @@ TEST_CASE("can specify unk makers") {
                    .notPrefixOfDicFeature(ft1)
                    .outputTo({f1, f2});
   VALID(spec);
+  AnalysisSpec res;
+  CHECK_OK(spec.build(&res));
+  CHECK(res.unkCreators.size() == 1);
+  CHECK(res.unkCreators[0].index == 0);
+  CHECK(res.unkCreators[0].type == UnkMakerType::Chunking);
+  CHECK(res.unkCreators[0].charClass == CharacterClass::KATAKANA);
 }

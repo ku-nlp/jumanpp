@@ -24,7 +24,8 @@ struct UnkMakerInfo {
   std::vector<i32> output;
 };
 
-struct UnkMakers {
+struct UnkMakersInfo {
+  i32 numPlaceholders;
   std::vector<UnkMakerInfo> makers;
 };
 

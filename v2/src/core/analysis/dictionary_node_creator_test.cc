@@ -6,7 +6,6 @@
 #include "core/dic_builder.h"
 #include "core/dictionary.h"
 #include "core/spec/spec_dsl.h"
-#include "testing/standalone_test.h"
 #include "testing/test_analyzer.h"
 #include "util/string_piece.h"
 
@@ -18,13 +17,14 @@ using namespace jumanpp;
 
 using jumanpp::StringPiece;
 
+namespace {
 class NodeCreatorTestEnv {
   TestEnv tenv;
   StringField fld;
 
  public:
   NodeCreatorTestEnv(StringPiece csvData) {
-    tenv.spec([](dsl::ModelSpecBuilder &specBldr) {
+    tenv.spec([](dsl::ModelSpecBuilder& specBldr) {
       specBldr.field(1, "a").strings().trieIndex();
     });
     tenv.importDic(csvData);
@@ -47,7 +47,7 @@ class NodeCreatorTestEnv {
     std::vector<chars::InputCodepoint> cp;
     chars::preprocessRawData(str, &cp);
     i32 end = start + cp.size();
-    for (auto& seed: seeds) {
+    for (auto& seed : seeds) {
       if (seed.codepointStart == start && seed.codepointEnd == end) {
         CHECK(output.locate(seed.entryPtr, &walker));
         while (walker.next()) {
@@ -61,7 +61,7 @@ class NodeCreatorTestEnv {
     return false;
   }
 };
-
+}
 
 TEST_CASE("it is possible to extract some nodes from input string") {
   NodeCreatorTestEnv env{
@@ -71,14 +71,15 @@ TEST_CASE("it is possible to extract some nodes from input string") {
   CHECK(env.exists("gum", 2));
 }
 
+namespace {
 class NodeCreatorTestEnv2 {
   TestEnv tenv;
   StringField flda;
   StringField fldb;
 
-public:
+ public:
   NodeCreatorTestEnv2(StringPiece csvData) {
-    tenv.spec([](dsl::ModelSpecBuilder &specBldr) {
+    tenv.spec([](dsl::ModelSpecBuilder& specBldr) {
       specBldr.field(1, "a").strings().trieIndex();
       specBldr.field(2, "b").strings();
     });
@@ -103,7 +104,7 @@ public:
     std::vector<chars::InputCodepoint> cp;
     chars::preprocessRawData(str, &cp);
     i32 end = start + cp.size();
-    for (auto& seed: seeds) {
+    for (auto& seed : seeds) {
       if (seed.codepointStart == start && seed.codepointEnd == end) {
         CHECK(output.locate(seed.entryPtr, &walker));
         while (walker.next()) {
@@ -116,11 +117,10 @@ public:
     return false;
   }
 };
+}
 
 TEST_CASE("extraction works with two different entries") {
-  NodeCreatorTestEnv2 env {
-      "diag,1\ndump,5\ncor,1\ncor,2\ncors,8"
-  };
+  NodeCreatorTestEnv2 env{"diag,1\ndump,5\ncor,1\ncor,2\ncors,8"};
   env.analyze("zcors");
   CHECK(env.contains("cor", 1, "2"));
   CHECK(env.contains("cor", 1, "1"));

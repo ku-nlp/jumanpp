@@ -52,8 +52,7 @@ class PrimitiveFeatureContext {
         node->header.type != analysis::ExtraNodeType::Unknown) {
       return 0;
     }
-    auto features = node->header.unk.providedValues;
-    return features[index];
+    return extraCtx->placeholderData(entryPtr, index);
   }
 
   Status checkFieldType(

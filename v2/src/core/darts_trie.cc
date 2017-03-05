@@ -57,7 +57,9 @@ Status DoubleArrayBuilder::build() {
   return Status::Ok();
 }
 
-size_t DoubleArrayBuilder::underlyingByteSize() const { return array_->total_size(); }
+size_t DoubleArrayBuilder::underlyingByteSize() const {
+  return array_->total_size();
+}
 
 const void* DoubleArrayBuilder::underlyingStorage() const {
   return array_->array();

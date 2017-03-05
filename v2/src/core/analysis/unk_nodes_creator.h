@@ -9,6 +9,7 @@
 #include "core/analysis/dic_reader.h"
 #include "core/analysis/extra_nodes.h"
 #include "core/analysis/lattice_builder.h"
+#include "core/analysis/unk_nodes.h"
 #include "core/dic_entries.h"
 #include "util/characters.h"
 
@@ -17,20 +18,25 @@ namespace core {
 namespace analysis {
 
 struct UnkNodeConfig {
-  DictNode base;
-  util::ArraySlice<i32> replaceWithSurface;
+  OwningDictNode base;
+  std::vector<i32> replaceWithSurface;
+  i32 notPrefixIndex = -1;
 
   void fillElems(util::MutableArraySlice<i32> buffer, i32 data) const {
     for (auto idx : replaceWithSurface) {
       buffer.at(idx) = data;
     }
   }
+
+  UnkNodeConfig(const OwningDictNode& base) : base(base) {}
 };
 
 class UnkNodesContext {
   ExtraNodesContext* xtra_;
 
  public:
+  UnkNodesContext(ExtraNodesContext* xtra): xtra_{xtra} {}
+
   EntryPtr makePtr(StringPiece surface, const UnkNodeConfig& conf,
                    bool notPrefix) {
     auto node = xtra_->makeUnk(conf.base);
@@ -41,15 +47,30 @@ class UnkNodesContext {
   }
 };
 
-class ChunkingUnkMaker {
+class ChunkingUnkMaker : public UnkMaker {
   dic::DictionaryEntries entries_;
   chars::CharacterClass charClass_;
-  UnkNodeConfig* info_;
+  UnkNodeConfig info_;
 
  public:
-  Status initialize(UnkNodesContext* ctx, dic::DictionaryEntries entries);
+  ChunkingUnkMaker(const dic::DictionaryEntries& entries_,
+                   chars::CharacterClass charClass_, UnkNodeConfig&& info_);
+
   bool spawnNodes(const AnalysisInput& input, UnkNodesContext* ctx,
-                  LatticeBuilder* lattice) const;
+                  LatticeBuilder* lattice) const override;
+};
+
+class SingleUnkMaker : public UnkMaker {
+  dic::DictionaryEntries entries_;
+  chars::CharacterClass charClass_;
+  UnkNodeConfig info_;
+
+ public:
+  SingleUnkMaker(const dic::DictionaryEntries& entries_,
+                 chars::CharacterClass charClass_, UnkNodeConfig&& info_);
+
+  bool spawnNodes(const AnalysisInput& input, UnkNodesContext* ctx,
+                  LatticeBuilder* lattice) const override;
 };
 
 }  // analysis

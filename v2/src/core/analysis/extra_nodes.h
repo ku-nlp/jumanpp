@@ -22,9 +22,7 @@ struct AliasNodeHeader {
   util::ArraySlice<i32> dictionaryNodes;
 };
 
-struct UnkNodeHeader {
-  util::ArraySlice<i32> providedValues;
-};
+struct UnkNodeHeader {};
 
 struct ExtraNodeHeader {
   i32 index;
@@ -39,18 +37,20 @@ struct ExtraNode {
   ExtraNodeHeader header;
   i32 content[];
 
-  EntryPtr ptr() const { return static_cast<EntryPtr>(header.index); }
+  EntryPtr ptr() const { return EntryPtr{~header.index}; }
 };
 
 class ExtraNodesContext {
   size_t numFields_;
+  size_t numPlaceholders_;
   util::memory::ManagedAllocatorCore* alloc_;
   std::vector<ExtraNode*> extraNodes_;
   util::FlatMap<StringPiece, i32> stringPtrs_;
   std::vector<StringPiece> strings_;
 
   ExtraNode* allocateExtra() {
-    size_t memory = sizeof(ExtraNodeHeader) + sizeof(i32) * numFields_;
+    size_t memory =
+        sizeof(ExtraNodeHeader) + sizeof(i32) * (numFields_ + numPlaceholders_);
     void* rawPtr = alloc_->allocate_memory(memory, alignof(ExtraNode));
     auto ptr = reinterpret_cast<ExtraNode*>(rawPtr);
     ptr->header.index = (i32)extraNodes_.size();
@@ -59,8 +59,11 @@ class ExtraNodesContext {
   }
 
  public:
-  ExtraNodesContext(util::memory::ManagedAllocatorCore* alloc, i32 numFields)
-      : numFields_{(size_t)numFields}, alloc_{alloc} {}
+  ExtraNodesContext(util::memory::ManagedAllocatorCore* alloc, i32 numFields,
+                    i32 numPlaceholders)
+      : numFields_{(size_t)numFields},
+        numPlaceholders_{(size_t)numPlaceholders},
+        alloc_{alloc} {}
 
   ExtraNode* makeUnk(const DictNode& pat);
 
@@ -87,6 +90,20 @@ class ExtraNodesContext {
     JPP_DCHECK_IN(realPtr, 0, strings_.size());
     auto sp = strings_[realPtr];
     return (i32)sp.size();
+  }
+
+  void putPlaceholderData(EntryPtr ptr, i32 idx, i32 value) {
+    JPP_DCHECK(ptr.isSpecial());
+    JPP_DCHECK_IN(idx, 0, numPlaceholders_);
+    ExtraNode* n = extraNodes_[ptr.extPtr()];
+    n->content[numFields_ + idx] = value;
+  }
+
+  i32 placeholderData(EntryPtr ptr, i32 idx) const {
+    JPP_DCHECK(ptr.isSpecial());
+    JPP_DCHECK_IN(idx, 0, numPlaceholders_);
+    ExtraNode* n = extraNodes_[ptr.extPtr()];
+    return n->content[numFields_ + idx];
   }
 
   void reset() {

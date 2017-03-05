@@ -75,8 +75,8 @@ class RuntimeInfoCompiler {
 
   Status resolveEntryPtrs() {
     std::vector<i32> patterns;
-    for (auto& x : spec_.unkCreators) {
-      patterns.push_back(x.patternRow);
+    for (auto& x : spec_.unkCreators) { //raw line number is 1-based
+      patterns.push_back(x.patternRow - 1);
     }
     if (patterns.size() == 0) {
       return Status::Ok();
@@ -190,6 +190,13 @@ class RuntimeInfoCompiler {
 
   Status compileFeatures(features::FeatureRuntimeInfo* fri) {
     auto& specf = spec_.features;
+
+    for (auto& pfd : specf.primitive) {
+      if (pfd.kind == spec::PrimitiveFeatureKind::Provided) {
+        fri->placeholderMapping.push_back(pfd.index);
+      }
+    }
+
     auto& prim = fri->primitive;
     for (auto& pfd : specf.primitive) {
       prim.emplace_back();
@@ -197,8 +204,21 @@ class RuntimeInfoCompiler {
       pf.name = pfd.name;
       pf.index = pfd.index;
       pf.kind = pfd.kind;
-      std::copy(pfd.references.begin(), pfd.references.end(),
-                std::back_inserter(pf.references));
+      if (pfd.kind == spec::PrimitiveFeatureKind::Provided) {
+        for (int i = 0; i < fri->placeholderMapping.size(); ++i) {
+          auto idx = fri->placeholderMapping[i];
+          if (idx == pfd.index) {
+            pf.references.push_back(i);
+          }
+        }
+        if (pf.references.size() == 0) {
+          return Status::InvalidState() << "placeholder feature " << pfd.name
+                                        << " could not be processed";
+        }
+      } else {
+        std::copy(pfd.references.begin(), pfd.references.end(),
+                  std::back_inserter(pf.references));
+      }
       if (pfd.references.size() == 0) {
         if (pfd.matchData.size() != 0) {
           return Status::InvalidParameter()
@@ -259,7 +279,7 @@ class RuntimeInfoCompiler {
     return Status::Ok();
   }
 
-  Status compileUnks(analysis::UnkMakers* result) {
+  Status compileUnks(analysis::UnkMakersInfo* result) {
     auto& makers = result->makers;
     for (auto& unk : spec_.unkCreators) {
       makers.emplace_back();
@@ -269,7 +289,7 @@ class RuntimeInfoCompiler {
       mk.type = unk.type;
       mk.charClass = unk.charClass;
       util::copy(unk.features, mk.features);
-      mk.patternPtr = ptrsOfEntries.at(unk.patternRow);
+      mk.patternPtr = ptrsOfEntries.at(unk.patternRow - 1);
       for (auto& x : unk.outputExpressions) {
         mk.output.push_back(x.fieldIndex);
       }
@@ -281,6 +301,8 @@ class RuntimeInfoCompiler {
   Status compile(RuntimeInfo* result) {
     JPP_RETURN_IF_ERROR(compileFeatures(&result->features));
     JPP_RETURN_IF_ERROR(compileUnks(&result->unkMakers));
+    result->unkMakers.numPlaceholders =
+        result->features.placeholderMapping.size();
     return Status::Ok();
   }
 };

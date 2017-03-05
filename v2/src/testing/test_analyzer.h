@@ -36,7 +36,7 @@ class TestEnv {
   std::shared_ptr<TestAnalyzer> analyzer;
   std::shared_ptr<CoreHolder> core;
   spec::AnalysisSpec saveLoad;
-  AnalyzerConfig cfg;
+  AnalyzerConfig aconf;
   dic::DictionaryBuilder origDicBuilder;
   dic::DictionaryBuilder dicBuilder;
   TempFile tmpFile;
@@ -77,7 +77,7 @@ class TestEnv {
     REQUIRE_OK(dic.load(dicBuilder.result()));
     CoreConfig coreConf{beamSize};
     core.reset(new CoreHolder(coreConf, actualRuntime, dic));
-    AnalyzerConfig aconf{};
+    REQUIRE_OK(core->initialize());
     analyzer.reset(new TestAnalyzer(core.get(), aconf));
   }
 };

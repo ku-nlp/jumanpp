@@ -13,7 +13,7 @@ namespace core {
 
 struct RuntimeInfo {
   features::FeatureRuntimeInfo features;
-  analysis::UnkMakers unkMakers;
+  analysis::UnkMakersInfo unkMakers;
 };
 
 }  // core

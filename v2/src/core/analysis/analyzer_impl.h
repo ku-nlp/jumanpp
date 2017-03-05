@@ -42,6 +42,12 @@ class AnalyzerImpl {
 
   Status resetForInput(StringPiece input);
   Status makeNodeSeedsFromDic();
+  Status makeUnkNodes1();
+  bool checkLatticeConnectivity();
+  Status makeUnkNodes2();
+  Status buildLattice();
+  Status computeNodeFeatures();
+  Status computeScores();
 
   Status analyze(StringPiece input) {
     JPP_RETURN_IF_ERROR(resetForInput(input));

@@ -48,6 +48,7 @@ struct FeatureRuntimeInfo {
   std::vector<features::ComputeFeature> compute;
   std::vector<features::PatternFeature> patterns;
   std::vector<features::NgramFeature> ngrams;
+  std::vector<i32> placeholderMapping;
 };
 
 }  // features

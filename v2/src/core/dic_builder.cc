@@ -84,10 +84,13 @@ struct DicTrieBuilder {
     for (auto& v : strings) {
       StringPiece key = v.first;
       i32 keyPtr = v.second;
-      auto& entries = entriesWithField[keyPtr];
-      auto entriesPtr = static_cast<i32>(entryPtrBuffer.position());
-      impl::writePtrsAsDeltas(entries, entryPtrBuffer);
-      daBuilder.add(key, entriesPtr);
+      auto it = entriesWithField.find(keyPtr);
+      if (it != entriesWithField.end()) {
+        auto& entries = it->second;
+        auto entriesPtr = static_cast<i32>(entryPtrBuffer.position());
+        impl::writePtrsAsDeltas(entries, entryPtrBuffer);
+        daBuilder.add(key, entriesPtr);
+      }
     }
     return daBuilder.build();
   }

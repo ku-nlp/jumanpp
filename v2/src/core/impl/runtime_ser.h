@@ -26,7 +26,8 @@ void Serialize(Arch& a, UnkMakerInfo& o) {
 }
 
 template <typename Arch>
-void Serialize(Arch& a, UnkMakers& o) {
+void Serialize(Arch& a, UnkMakersInfo& o) {
+  a& o.numPlaceholders;
   a& o.makers;
 }
 }  // analysis
@@ -70,6 +71,7 @@ void Serialize(Arch& a, FeatureRuntimeInfo& o) {
   a& o.compute;
   a& o.patterns;
   a& o.ngrams;
+  a& o.placeholderMapping;
 }
 
 }  // features
