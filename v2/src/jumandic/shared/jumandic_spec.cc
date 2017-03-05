@@ -30,8 +30,8 @@ Status SpecFactory::makeSpec(core::spec::AnalysisSpec* spec) {
   auto& conjtype = bldr.field(7, "conjtype").strings();
   auto& conjform = bldr.field(8, "conjform").strings();
   auto& baseform = bldr.field(9, "baseform").strings().stringStorage(surface);
-  /*auto& reading = */bldr.field(10, "reading").strings().stringStorage(surface);
-  /*auto& canonic = */bldr.field(11, "canonic").strings();
+  auto& reading = bldr.field(10, "reading").strings().stringStorage(surface);
+  /*auto& canonic = */ bldr.field(11, "canonic").strings();
   auto& features = bldr.field(12, "features").stringLists();
 
   auto& auxWord = bldr.feature("auxWord")
@@ -45,7 +45,20 @@ Status SpecFactory::makeSpec(core::spec::AnalysisSpec* spec) {
   auto& lexicalized =
       bldr.feature("lexicalized")
           .matchAnyRowOfCsv(lexicalizedData, {baseform, pos, subpos, conjtype})
-          .ifTrue({surface, pos, subpos, conjtype, conjform}).ifFalse({pos});
+          .ifTrue({surface, pos, subpos, conjtype, conjform})
+          .ifFalse({pos});
+
+  bldr.unk("symbols", 1)
+      .single(chars::CharacterClass::FAMILY_SYMBOL)
+      .outputTo({surface, baseform, reading});
+  bldr.unk("katakana", 2)
+      .chunking(chars::CharacterClass::KATAKANA)
+      .notPrefixOfDicFeature(notPrefix)
+      .outputTo({surface, baseform, reading});
+  bldr.unk("kanji", 3)
+      .chunking(chars::CharacterClass::FAMILY_KANJI)
+      .notPrefixOfDicFeature(notPrefix)
+      .outputTo({surface, baseform, reading});
 
   bldr.unigram({surface});
   bldr.unigram({auxWord});

@@ -464,10 +464,12 @@ Status ModelSpecBuilder::validateUnks() const {
   return Status::Ok();
 }
 
-Status fillFieldExp(StringPiece name, const PrimitiveFeatureDescriptor& pfd,
-                    const FieldExpressionBldr& feb, FieldExpression* res) {
-  res->fieldIndex = pfd.index;
+Status fillFieldExp(StringPiece name, const FieldDescriptor& fld, const FieldExpressionBldr& feb, FieldExpression* res) {
+  res->fieldIndex = fld.index;
   switch (feb.type) {
+    case TransformType::Value:
+      res->kind = FieldExpressionKind::ReplaceWithMatch;
+      break;
     case TransformType::ReplaceInt:
       res->kind = FieldExpressionKind::ReplaceInt;
       res->intConstant = feb.transformInt;
@@ -478,10 +480,10 @@ Status fillFieldExp(StringPiece name, const PrimitiveFeatureDescriptor& pfd,
       break;
     case TransformType::AppendString:
       return Status::InvalidParameter()
-             << name << ": feature " << pfd.name
+             << name << ": field " << fld.name
              << " appending strings is not supported";
     default:
-      return Status::NotImplemented() << name << ": feature " << pfd.name
+      return Status::NotImplemented() << name << ": field " << fld.name
                                       << " combination was not implemented";
   }
   return Status::Ok();
@@ -517,8 +519,8 @@ Status ModelSpecBuilder::createUnkProcessors(AnalysisSpec* spec) const {
 
     for (auto& x : u->output_) {
       FieldExpression fe;
-      auto feat = feat2id.at(x.fieldName);
-      JPP_RETURN_IF_ERROR(fillFieldExp(u->name(), *feat, x, &fe));
+      auto fld = fld2id.at(x.fieldName);
+      JPP_RETURN_IF_ERROR(fillFieldExp(u->name(), *fld, x, &fe));
       mkr.outputExpressions.push_back(fe);
     }
   }

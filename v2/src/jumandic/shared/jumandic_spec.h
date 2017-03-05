@@ -11,7 +11,7 @@ namespace jumanpp {
 namespace jumandic {
 
 class SpecFactory {
-public:
+ public:
   static const StringPiece lexicalizedData;
   static Status makeSpec(core::spec::AnalysisSpec* spec);
 };

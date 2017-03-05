@@ -41,6 +41,7 @@ enum class UnkMakerType { Invalid, Single, Chunking, Onomatopoeia, Prolonging };
 
 enum class FieldExpressionKind {
   Invalid,
+  ReplaceWithMatch,
   ReplaceString,
   ReplaceInt,
   AppendString
