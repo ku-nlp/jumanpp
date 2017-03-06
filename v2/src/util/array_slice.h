@@ -156,7 +156,10 @@ class ArraySlice {
   // len must be non-negative and will be pinned to at most x.length() - pos.
   // If len==npos, the substring continues till the end of x.
   ArraySlice(const ArraySlice& x, size_type pos, size_type len)
-      : impl_(x.impl_, pos, len) {}
+      : impl_(x.impl_, pos, len) {
+    JPP_DCHECK_IN(pos, 0, x.size());
+    JPP_DCHECK_LE(pos + len, x.size());
+  }
 
   constexpr const_pointer data() const { return impl_.data(); }
   constexpr size_type size() const { return impl_.size(); }

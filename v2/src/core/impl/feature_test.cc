@@ -82,7 +82,7 @@ class PrimFeatureTestEnv {
   Node uniqueNode(StringPiece surface, i32 position) {
     CAPTURE(surface);
     CAPTURE(position);
-    auto l = tenv.analyzer->lattice();
+    auto& l = tenv.analyzer->lattice();
     auto b = l.boundary(position + 2);
     auto starts = b->starts();
     auto& output = tenv.analyzer->output();
@@ -214,4 +214,25 @@ TEST_CASE("match list feature works") {
   auto p2 = env.uniqueNode("カ", 0);
   CHECK(p2.primitve.size() == 4);
   CHECK(p2.primitve[3] == 1);
+}
+
+TEST_CASE("match list feature works with several entries") {
+  StringPiece dic = "XXX,z,XANA DATA\nカラ,b,XAS BAR KANA\nラ,c,A B KANA\n";
+  PrimFeatureTestEnv env{dic, [](dsl::ModelSpecBuilder& specBldr, FeatureSet& fs){
+    specBldr.feature("mtch").matchValue(fs.c, "KANA");
+  }};
+  REQUIRE(env.spec().features.primitive[3].name == "mtch");
+  env.analyze("カラフ");
+  auto p1 = env.uniqueNode("カラ", 0);
+  CHECK(p1.primitve.size() == 4);
+  CHECK(p1.primitve[3] == 1);
+  auto p2 = env.uniqueNode("カ", 0);
+  CHECK(p2.primitve.size() == 4);
+  CHECK(p2.primitve[3] == 0);
+  auto p3 = env.uniqueNode("ラ", 1);
+  CHECK(p3.primitve.size() == 4);
+  CHECK(p3.primitve[3] == 1);
+  auto p4 = env.uniqueNode("ラフ", 1);
+  CHECK(p4.primitve.size() == 4);
+  CHECK(p4.primitve[3] == 0);
 }

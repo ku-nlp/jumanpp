@@ -92,6 +92,7 @@ class Lattice {
   util::memory::ManagedAllocatorCore* alloc;
 
  public:
+  Lattice(const Lattice&) = delete;
   Lattice(util::memory::ManagedAllocatorCore* alloc, const LatticeConfig& lc);
   u32 createdBoundaryCount() const { return (u32)boundaries.size(); }
   Status makeBoundary(const LatticeBoundaryConfig& lbc, LatticeBoundary** ptr);
