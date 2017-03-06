@@ -24,6 +24,18 @@ Status OutputManager::stringField(StringPiece name, StringField *result) const {
   return Status::Ok();
 }
 
+Status OutputManager::stringListField(StringPiece name, StringListField *result) const {
+  auto fld = holder_->fieldByName(name);
+  if (fld == nullptr) {
+    return Status::InvalidParameter() << "dictionary field with name " << name << " was not found";
+  }
+  if (fld->columnType != spec::ColumnType::StringList) {
+    return Status::InvalidParameter() << "field " << name << " was not stringlist";
+  }
+  result->initialize(fld->index, fld->postions, fld->strings);
+  return Status::Ok();
+}
+
 bool OutputManager::fillEntry(EntryPtr ptr,
                               util::MutableArraySlice<i32> entries) const {
   if (ptr.isSpecial()) {
@@ -127,6 +139,24 @@ void StringField::initialize(i32 index, const ExtraNodesContext *xtra,
   index_ = index;
   xtra_ = xtra;
   new (&reader_) dic::impl::StringStorageReader{reader};
+}
+
+StringListIterator StringListField::operator[](const NodeWalker &node) const {
+  i32 ptr = -1;
+  auto status = node.valueOf(index_, &ptr);
+  JPP_DCHECK(status);
+  JPP_DCHECK_NE(ptr, -1);
+  if (ptr == -1) {
+    ptr = 0;
+  }
+  return StringListIterator{ strings_ , ints_.listAt(ptr) };
+}
+
+void StringListField::initialize(i32 index, const dic::impl::IntStorageReader &ints,
+                                 const dic::impl::StringStorageReader &strings) {
+  this->index_ = index;
+  this->ints_ = ints;
+  this->strings_ = strings;
 }
 
 }  // analysis

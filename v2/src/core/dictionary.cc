@@ -184,7 +184,7 @@ class RuntimeInfoCompiler {
 
     util::sort(slices, cmp);
     for (auto& sl : slices) {
-      util::copy(sl, *result);
+      util::copy_insert(sl, *result);
     }
   }
 
@@ -251,8 +251,8 @@ class RuntimeInfoCompiler {
       for (auto& x : cfd.matchReference) {
         cf.references.push_back(x.dicFieldIdx);
       }
-      util::copy(cfd.trueBranch, cf.trueBranch);
-      util::copy(cfd.falseBranch, cf.falseBranch);
+      util::copy_insert(cfd.trueBranch, cf.trueBranch);
+      util::copy_insert(cfd.falseBranch, cf.falseBranch);
       fields.clear();
       for (auto& fr : cfd.matchReference) {
         fields.push_back(fr.dicFieldIdx);
@@ -267,7 +267,7 @@ class RuntimeInfoCompiler {
       pat.emplace_back();
       auto& pf = pat.back();
       pf.index = pfd.index;
-      util::copy(pfd.references, pf.arguments);
+      util::copy_insert(pfd.references, pf.arguments);
     }
 
     auto& ngram = fri->ngrams;
@@ -275,7 +275,7 @@ class RuntimeInfoCompiler {
       ngram.emplace_back();
       auto& nf = ngram.back();
       nf.index = ng.index;
-      util::copy(ng.references, nf.arguments);
+      util::copy_insert(ng.references, nf.arguments);
     }
 
     return Status::Ok();
@@ -290,7 +290,7 @@ class RuntimeInfoCompiler {
       mk.name = unk.name;
       mk.type = unk.type;
       mk.charClass = unk.charClass;
-      util::copy(unk.features, mk.features);
+      util::copy_insert(unk.features, mk.features);
       mk.patternPtr = ptrsOfEntries.at(unk.patternRow - 1);
       for (auto& x : unk.outputExpressions) {
         mk.output.push_back(x.fieldIndex);

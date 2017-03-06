@@ -16,7 +16,7 @@ class LatticeBldrTestEnv {
   StringField flda;
   StringField fldb;
 
-public:
+ public:
   LatticeBldrTestEnv(StringPiece csvData) {
     tenv.spec([](dsl::ModelSpecBuilder& specBldr) {
       auto& a = specBldr.field(1, "a").strings().trieIndex();
@@ -38,9 +38,7 @@ public:
     CHECK_OK(tenv.analyzer->makeUnkNodes1());
   }
 
-  bool isConnected() {
-    return tenv.analyzer->checkLatticeConnectivity();
-  }
+  bool isConnected() { return tenv.analyzer->checkLatticeConnectivity(); }
 
   size_t numNodeSeeds() const {
     return tenv.analyzer->latticeBuilder().seeds().size();
@@ -79,7 +77,8 @@ public:
     for (auto& seed : seeds) {
       CHECK(output.locate(seed.entryPtr, &walker));
       while (walker.next()) {
-        WARN("NODE:[" << seed.codepointStart << "," << seed.codepointEnd << "] " << flda[walker] << "||" << fldb[walker]);
+        WARN("NODE:[" << seed.codepointStart << "," << seed.codepointEnd << "] "
+                      << flda[walker] << "||" << fldb[walker]);
       }
     }
   }

@@ -22,7 +22,9 @@ struct AliasNodeHeader {
   util::ArraySlice<i32> dictionaryNodes;
 };
 
-struct UnkNodeHeader {};
+struct UnkNodeHeader {
+  i32 contentHash;
+};
 
 struct ExtraNodeHeader {
   i32 index;
@@ -94,9 +96,13 @@ class ExtraNodesContext {
 
   void putPlaceholderData(EntryPtr ptr, i32 idx, i32 value) {
     JPP_DCHECK(ptr.isSpecial());
-    JPP_DCHECK_IN(idx, 0, numPlaceholders_);
     ExtraNode* n = extraNodes_[ptr.extPtr()];
-    n->content[numFields_ + idx] = value;
+    putPlaceholderData(n, idx, value);
+  }
+
+  void putPlaceholderData(ExtraNode* node, i32 idx, i32 value) {
+    JPP_DCHECK_IN(idx, 0, numPlaceholders_);
+    node->content[numFields_ + idx] = value;
   }
 
   i32 placeholderData(EntryPtr ptr, i32 idx) const {

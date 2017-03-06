@@ -3,6 +3,7 @@
 //
 
 #include "unk_nodes_creator.h"
+#include "util/murmur_hash.h"
 
 namespace jumanpp {
 namespace core {
@@ -74,10 +75,44 @@ bool SingleUnkMaker::spawnNodes(const AnalysisInput& input,
     if (!codept.hasClass(charClass_)) {
       continue;
     } else {
-      return false;  // TODO: fix
+      auto trav = entries_.traversal();
+      auto result = trav.step(codept.bytes);
+      bool notPrefix;
+      switch (result) {
+        case TraverseStatus::Ok:
+          continue;
+        case TraverseStatus::NoNode:
+          notPrefix = true;
+          break;
+        case TraverseStatus::NoLeaf:
+          notPrefix = false;
+          break;
+      }
+      LatticePosition start = i;
+      LatticePosition end = start;
+      ++end;
+      auto ptr = ctx->makePtr(codept.bytes, info_, notPrefix);
+      lattice->appendSeed(ptr, start, end);
     }
   }
   return true;
+}
+
+EntryPtr UnkNodesContext::makePtr(StringPiece surface,
+                                  const UnkNodeConfig& conf, bool notPrefix) {
+  auto node = xtra_->makeUnk(conf.base);
+  auto data = xtra_->nodeContent(node);
+  auto sptr = xtra_->pointerFor(surface);
+  u64 hash = util::hashing::murmurhash3_memory(surface.begin(), surface.end(),
+                                               0xa76210bf);
+  u32 trimmed = (u32)hash;
+  node->header.unk.contentHash = static_cast<i32>(trimmed) | 0x8000'0000;
+  JPP_DCHECK_LT(node->header.unk.contentHash, 0);
+  conf.fillElems(data, sptr);
+  if (conf.notPrefixIndex != -1) {
+    xtra_->putPlaceholderData(node, conf.notPrefixIndex, (i32)notPrefix);
+  }
+  return node->ptr();
 }
 }  // analysis
 }  // core

@@ -35,6 +35,7 @@ class CoreHolder {
   const dic::DictionaryHolder& dic() const { return dic_; }
   const RuntimeInfo& runtime() const { return runtime_; }
   const analysis::UnkMakers& unkMakers() const { return unkMakers_; }
+  const features::FeatureHolder& features() const { return features_; }
 };
 
 }  // core

@@ -14,10 +14,10 @@ Lattice::Lattice(util::memory::ManagedAllocatorCore *alloc,
 
 Status Lattice::makeBoundary(const LatticeBoundaryConfig &lbc,
                              LatticeBoundary **ptr) {
-  boundaries.emplace_back(alloc, lconf, lbc);
-  LatticeBoundary &last = boundaries.back();
-  JPP_RETURN_IF_ERROR(last.initialize());
-  *ptr = &last;
+  auto bnd = alloc->make<LatticeBoundary>(alloc, lconf, lbc);
+  JPP_RETURN_IF_ERROR(bnd->initialize());
+  this->boundaries.push_back(bnd);
+  *ptr = bnd;
   return Status::Ok();
 }
 
@@ -48,7 +48,8 @@ LatticeRightBoundary::LatticeRightBoundary(
     util::memory::ManagedAllocatorCore *alloc, const LatticeConfig &lc,
     const LatticeBoundaryConfig &lbc)
     : StructOfArrays(alloc, lbc.beginNodes),
-      dicPtrs{this, 1},
+      entryPtrs{this, 1},
+      entryDataStorage{this, lc.entrySize},
       primitiveFeatures{this, lc.numPrimitiveFeatures},
       featurePatterns{this, lc.numFeaturePatterns},
       beam{this, lc.beamSize} {}

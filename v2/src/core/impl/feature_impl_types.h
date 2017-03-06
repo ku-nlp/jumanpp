@@ -9,6 +9,7 @@
 #include "core/core_types.h"
 #include "core/impl/field_reader.h"
 #include "util/array_slice.h"
+#include "util/sliceable_array.h"
 #include "util/status.hpp"
 
 namespace jumanpp {
@@ -65,11 +66,15 @@ class FeatureConstructionContext {
 
 class PrimitiveFeatureContext {
   analysis::ExtraNodesContext* extraCtx;
-  dic::FieldsHolder* fields;
+  const dic::FieldsHolder& fields;
 
  public:
+  PrimitiveFeatureContext(analysis::ExtraNodesContext* extraCtx,
+                          const dic::FieldsHolder& fields)
+      : extraCtx(extraCtx), fields(fields) {}
+
   DicListTraversal traversal(i32 fieldIdx, i32 fieldPtr) const {
-    auto& fld = fields->at(fieldIdx);
+    auto& fld = fields.at(fieldIdx);
     auto trav = fld.postions.listAt(fieldPtr);
     return DicListTraversal{trav};
   }
@@ -87,7 +92,7 @@ class PrimitiveFeatureContext {
     if (fieldPtr < 0) {
       return extraCtx->lengthOf(fieldNum, fieldPtr);
     }
-    auto fld = fields->at(fieldNum);
+    auto fld = fields.at(fieldNum);
     switch (field) {
       case LengthFieldSource::Positions:
         return fld.postions.lengthOf(fieldPtr);
@@ -99,23 +104,19 @@ class PrimitiveFeatureContext {
   }
 };
 
+class ComputeFeatureContext {};
+
 class PrimitiveFeatureData {
   util::ArraySlice<EntryPtr> entries_;
-  util::ArraySlice<i32> entryData_;
-  util::MutableArraySlice<u64> features_;
+  util::Sliceable<i32> entryData_;
+  mutable util::Sliceable<u64> features_;
   i32 index_ = -1;
-  size_t entrySize_;
-  size_t featureCnt_;
 
  public:
   PrimitiveFeatureData(const util::ArraySlice<EntryPtr>& entries_,
-                       const util::ArraySlice<i32>& entryData_,
-                       const util::MutableArraySlice<u64>& features_)
-      : entries_(entries_),
-        entryData_(entryData_),
-        features_(features_),
-        entrySize_{entryData_.size() / entries_.size()},
-        featureCnt_{features_.size() / entries_.size()} {}
+                       const util::Sliceable<i32>& entryData_,
+                       const util::Sliceable<u64>& features_)
+      : entries_(entries_), entryData_(entryData_), features_(features_) {}
 
   bool next() {
     ++index_;
@@ -124,48 +125,31 @@ class PrimitiveFeatureData {
 
   EntryPtr entry() const { return entries_[index_]; }
 
-  util::ArraySlice<i32> entryData() const {
-    return util::ArraySlice<i32>{entryData_, index_ * entrySize_, entrySize_};
-  }
+  util::ArraySlice<i32> entryData() const { return entryData_.row(index_); }
 
   util::MutableArraySlice<u64> featureData() const {
-    return util::MutableArraySlice<u64>{features_, index_ * featureCnt_,
-                                        featureCnt_};
+    return features_.row(index_);
   }
 };
 
 class PatternFeatureData {
-  util::ArraySlice<u64> primitive_;
-  util::MutableArraySlice<u64> patterns_;
+  util::Sliceable<u64> primitive_;
+  mutable util::Sliceable<u64> patterns_;
   i32 index_ = -1;
-  u64 primitiveSize;
-  u64 patternSize;
-  u64 total_;
 
  public:
-  PatternFeatureData(const util::ArraySlice<u64>& primitive_,
-                     const util::MutableArraySlice<u64>& patterns_,
-                     u64 primitiveSize, u64 patternSize)
-      : primitive_(primitive_),
-        patterns_(patterns_),
-        primitiveSize(primitiveSize),
-        patternSize(patternSize),
-        total_{primitive_.size() / primitiveSize} {}
+  PatternFeatureData(const util::Sliceable<u64>& primitive_,
+                     const util::Sliceable<u64>& patterns_)
+      : primitive_(primitive_), patterns_(patterns_) {}
 
   bool next() {
     ++index_;
-    return index_ < total_;
+    return index_ < primitive_.numRows();
   }
 
-  util::ArraySlice<u64> primitive() const {
-    return util::ArraySlice<u64>{primitive_, index_ * primitiveSize,
-                                 primitiveSize};
-  }
+  util::ArraySlice<u64> primitive() const { return primitive_.row(index_); }
 
-  util::MutableArraySlice<u64> pattern() const {
-    return util::MutableArraySlice<u64>{patterns_, index_ * patternSize,
-                                        patternSize};
-  }
+  util::MutableArraySlice<u64> pattern() const { return patterns_.row(index_); }
 };
 
 class NgramFeatureData {

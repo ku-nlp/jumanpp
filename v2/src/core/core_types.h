@@ -46,9 +46,12 @@ class EntryPtr {
   static constexpr EntryPtr EOS() {
     return EntryPtr{std::numeric_limits<i32>::min() + 1};
   }
-};
 
-inline bool isSpecial(EntryPtr ptr) { return ptr.isSpecial(); }
+  inline i32 rawValue() const { return value_; }
+
+  inline bool operator==(const EntryPtr&o) const { return value_ == o.value_;}
+  inline bool operator!=(const EntryPtr&o) const { return value_ != o.value_;}
+};
 
 }  // core
 }  // jumanpp

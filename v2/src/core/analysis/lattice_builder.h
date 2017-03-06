@@ -5,12 +5,13 @@
 #ifndef JUMANPP_LATTICE_BUILDER_H
 #define JUMANPP_LATTICE_BUILDER_H
 
+#include <util/stl_util.h>
 #include <vector>
 #include "core/core_types.h"
+#include "extra_nodes.h"
 #include "lattice_types.h"
 #include "util/status.hpp"
 #include "util/types.hpp"
-#include "extra_nodes.h"
 
 namespace jumanpp {
 namespace core {
@@ -47,19 +48,12 @@ struct BoundaryInfo {
    * be the index of the first node with starting codepoint == \refitem number
    */
   u32 firstNodeOffset;
-
-  BoundaryInfo(u16 number, u16 startCount, u32 firstNodeOffset)
-      : number(number),
-        startCount(startCount),
-        firstNodeOffset(firstNodeOffset) {}
 };
 
 class LatticeConstructionContext {
-  ExtraNodesContext* xtra;
-public:
-  Status addBos(LatticeBoundary* lb) {
-    return Status::NotImplemented();
-  }
+
+ public:
+  Status addBos(LatticeBoundary* lb);
 };
 
 class LatticeBuilder {
@@ -83,10 +77,10 @@ class LatticeBuilder {
   }
 
   Status prepare();
-  Status constructSingleBoundary(LatticeConstructionContext* context,
-                                 Lattice* lattice);
+  Status constructSingleBoundary(Lattice* lattice, LatticeBoundary** result);
+  bool isAccessible(i32 boundary) const { return connectible[boundary]; }
 
-  Status makeBos(LatticeConstructionContext* ctx, Lattice *lattice);
+  Status makeBos(LatticeConstructionContext* ctx, Lattice* lattice);
 };
 
 }  // analysis

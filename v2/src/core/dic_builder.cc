@@ -168,7 +168,7 @@ struct DictionaryBuilderStorage {
                << "when processing file: " << name << ", on line "
                << csv->lineNumber() << " there were " << ncols
                << " columns, however field " << maxFieldName
-               << " is defined as " << maxUsedCol << "th column";
+               << " is defined as column #" << maxUsedCol + 1;
       }
 
       for (auto& imp : importers) {

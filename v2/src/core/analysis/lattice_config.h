@@ -27,6 +27,7 @@ struct LatticeNodePtr {
 };
 
 struct LatticeConfig {
+  u32 entrySize;
   u32 numPrimitiveFeatures;
   u32 numFeaturePatterns;
   u32 numFinalFeatures;

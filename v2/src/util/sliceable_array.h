@@ -1,0 +1,58 @@
+//
+// Created by Arseny Tolmachev on 2017/03/06.
+//
+
+#ifndef JUMANPP_SLICEABLE_ARRAY_H
+#define JUMANPP_SLICEABLE_ARRAY_H
+
+#include "util/array_slice.h"
+
+namespace jumanpp {
+namespace util {
+
+template <typename T>
+class Sliceable {
+  using underlying = util::MutableArraySlice<T>;
+  underlying data_;
+  size_t rowSize_;
+  size_t numRows_;
+
+ public:
+  using size_type = typename util::MutableArraySlice<T>::size_type;
+  constexpr Sliceable(const MutableArraySlice<T>& data_, size_t rowSize_,
+                      size_t numRows_)
+      : data_(data_), rowSize_(rowSize_), numRows_{numRows_} {
+    JPP_DCHECK_EQ(data_.size(), rowSize_ * numRows_);
+  }
+
+  T& operator[](size_type idx) { return data_.at(idx); }
+  const T& operator[](size_type idx) const { return data_.at(idx); }
+  T& at(size_type idx) { return data_.at(idx); }
+  const T& at(size_type idx) const { return data_.at(idx); }
+  util::MutableArraySlice<T> row(i32 i) {
+    JPP_DCHECK_IN(i, 0, numRows_);
+    return util::MutableArraySlice<T>{data_, rowSize_ * i, rowSize_};
+  }
+  util::ArraySlice<T> row(i32 i) const {
+    JPP_DCHECK_IN(i, 0, numRows_);
+    return util::ArraySlice<T>{data_, rowSize_ * i, rowSize_};
+  }
+
+  util::MutableArraySlice<T> data() { return data_; }
+
+  util::ArraySlice<T> data() const { return util::ArraySlice<T>{data_}; }
+
+  size_t size() const { return data_.size(); }
+  size_t rowSize() const { return rowSize_; }
+  size_t numRows() const { return numRows_; }
+
+  typename underlying::iterator begin() { return data_.begin(); }
+  typename underlying::const_iterator begin() const { return data_.begin(); }
+  typename underlying::iterator end() { return data_.end(); }
+  typename underlying::const_iterator end() const { return data_.end(); }
+};
+
+}  // util
+}  // jumanpp
+
+#endif  // JUMANPP_SLICEABLE_ARRAY_H

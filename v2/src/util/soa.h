@@ -7,6 +7,7 @@
 
 #include "util/array_slice.h"
 #include "util/memory.hpp"
+#include "util/sliceable_array.h"
 #include "util/status.hpp"
 
 namespace jumanpp {
@@ -25,7 +26,8 @@ class SOAField : public ManagedObject {
   StructOfArraysBase* manager_;
 
  public:
-  SOAField(StructOfArraysBase* manager) : manager_(manager) {}
+  SOAField(StructOfArraysBase* manager) noexcept : manager_(manager) {}
+  SOAField(const SOAField&) = delete;
   virtual size_t objSize() const = 0;
   virtual size_t requiredSize() const = 0;
   virtual size_t requiredAlign() const = 0;
@@ -57,7 +59,7 @@ class StructOfArraysBase : public ManagedObject {
 
   StructOfArraysBase(const StructOfArraysBase& o)
       : acore_{o.acore_},
-        fields_{acore_},  // do NOT initialize fields
+        fields_{o.acore_},  // do NOT initialize fields
         dataInfo_{o.dataInfo_},
         totalSize_{o.totalSize_},
         maxAlignment_{o.maxAlignment_} {
@@ -107,6 +109,13 @@ class StructOfArraysBase : public ManagedObject {
   void registerField(SOAField* field) { fields_.push_back(field); }
 
  public:
+  bool hasField(const SOAField* field) const {
+    for (auto f: fields_) {
+      if (field == f) return true;
+    }
+    return false;
+  }
+
   virtual size_t arraySize() const = 0;
   friend class FieldUtil;
 };
@@ -147,7 +156,7 @@ class StructOfArrays : public StructOfArraysBase {
 
 template <typename Child>
 class StructOfArraysFactory : public StructOfArraysBase {
-  ManagedPtr<ManagedVector<Child>> children_;
+  ManagedPtr<ManagedVector<Child*>> children_;
 
  protected:
   size_t itemCount_ = 0;
@@ -155,7 +164,7 @@ class StructOfArraysFactory : public StructOfArraysBase {
   StructOfArraysFactory(ManagedAllocatorCore* alloc, size_t itemCount,
                         size_t appxChildren)
       : StructOfArraysBase(alloc), itemCount_(itemCount) {
-    children_ = alloc->make_unique<ManagedVector<Child>>(alloc);
+    children_ = alloc->make_unique<ManagedVector<Child*>>(alloc);
     children_->reserve(appxChildren);
   }
 
@@ -185,10 +194,11 @@ class StructOfArraysFactory : public StructOfArraysBase {
     if (dataInfo_.size() != fields_.size()) {
       initState();
     }
-    children_->emplace_back(static_cast<Child&>(*this));
-    Child& c = children_->back();
-    initChild(&c);
-    return c;
+    auto& ref = static_cast<const Child&>(*this);
+    auto ptr = acore_->make<Child>(ref);
+    children_->push_back(ptr);
+    initChild(ptr);
+    return *ptr;
   }
 
   Status initialize() { return initState(); }
@@ -202,41 +212,62 @@ class SizedArrayField : public SOAField {
   size_t rowCnt_;
 
  public:
-  SizedArrayField(StructOfArraysBase* manager, size_t rows)
+  SizedArrayField(StructOfArraysBase* manager, size_t rows) noexcept
       : SOAField{manager}, rowCnt_{rows} {
     FieldUtil::regField(this, manager);
   }
 
-  size_t objSize() const override { return sizeof(T); }
+  SizedArrayField(SizedArrayField&& o) noexcept: SOAField{o.manager_}, objects_{o.objects_}, rowCnt_{o.rowCnt_} {}
 
-  size_t requiredSize() const override { return rowCnt_; }
+  size_t objSize() const override {
+    JPP_DCHECK(manager_->hasField(this));
+    return sizeof(T);
+  }
 
-  size_t requiredAlign() const override { return alignment; }
+  size_t requiredSize() const override {
+    JPP_DCHECK(manager_->hasField(this));
+    return rowCnt_;
+  }
+
+  size_t requiredAlign() const override {
+    JPP_DCHECK(manager_->hasField(this));
+    return alignment;
+  }
 
   void injectMemoty(void* memory) override {
+    JPP_DCHECK(manager_->hasField(this));
     auto ptr = reinterpret_cast<T*>(memory);
     objects_ =
         util::MutableArraySlice<T>(ptr, requiredSize() * manager_->arraySize());
   }
 
   util::MutableArraySlice<T> row(size_t row) {
+    JPP_DCHECK(manager_->hasField(this));
     JPP_DCHECK_NE(objects_.data(), nullptr);
     return util::MutableArraySlice<T>(objects_, rowCnt_ * row, rowCnt_);
   }
 
   util::ArraySlice<T> row(size_t row) const {
+    JPP_DCHECK(manager_->hasField(this));
     JPP_DCHECK_NE(objects_.data(), nullptr);
     return util::ArraySlice<T>(objects_, rowCnt_ * row, rowCnt_);
   }
 
   util::MutableArraySlice<T> data() {
+    JPP_DCHECK(manager_->hasField(this));
     JPP_DCHECK_NE(objects_.data(), nullptr);
     return objects_;
   }
 
   util::ArraySlice<T> data() const {
+    JPP_DCHECK(manager_->hasField(this));
     JPP_DCHECK_NE(objects_.data(), nullptr);
     return objects_;
+  }
+
+  operator Sliceable<T>() {
+    JPP_DCHECK(manager_->hasField(this));
+    return Sliceable<T>{objects_, rowCnt_, manager_->arraySize()};
   }
 };
 

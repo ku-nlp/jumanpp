@@ -38,13 +38,7 @@ class UnkNodesContext {
   UnkNodesContext(ExtraNodesContext* xtra) : xtra_{xtra} {}
 
   EntryPtr makePtr(StringPiece surface, const UnkNodeConfig& conf,
-                   bool notPrefix) {
-    auto node = xtra_->makeUnk(conf.base);
-    auto data = xtra_->nodeContent(node);
-    auto sptr = xtra_->pointerFor(surface);
-    conf.fillElems(data, sptr);
-    return node->ptr();
-  }
+                   bool notPrefix);
 };
 
 class ChunkingUnkMaker : public UnkMaker {

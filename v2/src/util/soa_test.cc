@@ -41,6 +41,7 @@ class BoundaryConnection final
       : StructOfArraysFactory(alloc, beamSize * rightCount, leftCount),
         ptrs{this, 10},
         vectors{this, 96} {}
+
   BoundaryConnection(const BoundaryConnection& o)
       : StructOfArraysFactory(o), ptrs{this, 10}, vectors{this, 96} {}
 

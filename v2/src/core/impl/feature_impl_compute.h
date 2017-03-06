@@ -15,8 +15,6 @@ namespace core {
 namespace features {
 namespace impl {
 
-class ComputeFeatureContext {};
-
 constexpr size_t MaxQueryElements = 64;
 
 enum class ComareResult { Lesser, Equal, Greater };

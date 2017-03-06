@@ -5,8 +5,8 @@
 #ifndef JUMANPP_LATTICE_TYPES_H
 #define JUMANPP_LATTICE_TYPES_H
 
-#include <core/core_types.h>
 #include "core/analysis/lattice_config.h"
+#include "core/core_types.h"
 #include "util/soa.h"
 #include "util/types.hpp"
 
@@ -24,8 +24,9 @@ class LatticeLeftBoundary final : public util::memory::StructOfArrays {
 };
 
 class LatticeRightBoundary final : public util::memory::StructOfArrays {
-  util::memory::SizedArrayField<i32> dicPtrs;
-  util::memory::SizedArrayField<i32, 64> primitiveFeatures;
+  util::memory::SizedArrayField<EntryPtr> entryPtrs;
+  util::memory::SizedArrayField<i32, 64> entryDataStorage;
+  util::memory::SizedArrayField<u64, 64> primitiveFeatures;
   util::memory::SizedArrayField<u64, 64> featurePatterns;
   util::memory::SizedArrayField<ConnectionBeamElement, 64> beam;
 
@@ -35,6 +36,11 @@ class LatticeRightBoundary final : public util::memory::StructOfArrays {
   LatticeRightBoundary(util::memory::ManagedAllocatorCore* alloc,
                        const LatticeConfig& lc,
                        const LatticeBoundaryConfig& lbc);
+
+  util::Sliceable<EntryPtr> entryPtrData() { return entryPtrs; }
+  util::Sliceable<i32> entryData() { return entryDataStorage; }
+  util::Sliceable<u64> primitiveFeatureData() { return primitiveFeatures; }
+  util::Sliceable<u64> patternFeatureData() { return featurePatterns; }
 };
 
 class LatticeBoundaryConnection final
@@ -67,15 +73,21 @@ class LatticeBoundary {
   LatticeBoundary(util::memory::ManagedAllocatorCore* alloc,
                   const LatticeConfig& lc, const LatticeBoundaryConfig& lbc);
 
+
   EntryPtr entry(u32 position) const {
-    return EntryPtr{right.dicPtrs.data().at(position)};
+    return right.entryPtrs.data().at(position);
   }
+
+  LatticeRightBoundary* starts() {
+    return &right;
+  }
+  u32 localNodeCount() const { return config.beginNodes; }
 
   friend class Lattice;
 };
 
 class Lattice {
-  util::memory::ManagedVector<LatticeBoundary> boundaries;
+  util::memory::ManagedVector<LatticeBoundary*> boundaries;
   LatticeConfig lconf;
   util::memory::ManagedAllocatorCore* alloc;
 
@@ -84,8 +96,8 @@ class Lattice {
   u32 createdBoundaryCount() const { return (u32)boundaries.size(); }
   Status makeBoundary(const LatticeBoundaryConfig& lbc, LatticeBoundary** ptr);
 
-  LatticeBoundary* boundary(u32 idx) { return &boundaries.at(idx); }
-  const LatticeBoundary* boundary(u32 idx) const { return &boundaries.at(idx); }
+  LatticeBoundary* boundary(u32 idx) { return boundaries.at(idx); }
+  const LatticeBoundary* boundary(u32 idx) const { return boundaries.at(idx); }
   void reset();
 };
 

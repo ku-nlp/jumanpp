@@ -78,6 +78,10 @@ class TestEnv {
     CoreConfig coreConf{beamSize};
     core.reset(new CoreHolder(coreConf, actualRuntime, dic));
     REQUIRE_OK(core->initialize(nullptr));
+    REQUIRE(core->features().primitive != nullptr);
+    REQUIRE(core->features().compute != nullptr);
+    REQUIRE(core->features().pattern != nullptr);
+    REQUIRE(core->features().ngram != nullptr);
     analyzer.reset(new TestAnalyzer(core.get(), aconf));
   }
 };

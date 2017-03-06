@@ -79,6 +79,44 @@ class StringField {
   StringPiece operator[](const NodeWalker& node) const;
 };
 
+class StringListIterator {
+  const dic::impl::StringStorageReader& reader_;
+  dic::impl::IntListTraversal elements_;
+  i32 current_;
+
+ public:
+  StringListIterator(const dic::impl::StringStorageReader& reader_,
+                     const dic::impl::IntListTraversal& elements_)
+      : reader_(reader_), elements_(elements_), current_{0} {}
+
+  bool next(StringPiece* result) {
+    bool status = elements_.readOneCumulative(&current_);
+    if (status) {
+      return reader_.readAt(current_, result);
+    }
+    return false;
+  }
+};
+
+class StringListField {
+  i32 index_;
+  union {
+    dic::impl::IntStorageReader ints_;
+  };
+  union {
+    dic::impl::StringStorageReader strings_;
+  };
+
+  friend class OutputManager;
+
+  void initialize(i32 index, const dic::impl::IntStorageReader& ints, const dic::impl::StringStorageReader& strings);
+
+ public:
+  StringListField() {}
+  StringListField(const StringListField&) = delete;
+  StringListIterator operator[](const NodeWalker& node) const;
+};
+
 class OutputManager {
   util::memory::ManagedAllocatorCore* alloc_;
   const ExtraNodesContext* xtra_;
@@ -99,6 +137,7 @@ class OutputManager {
   bool locate(EntryPtr ptr, NodeWalker* result) const;
   NodeWalker nodeWalker() const;
   Status stringField(StringPiece name, StringField* result) const;
+  Status stringListField(StringPiece name, StringListField* result) const;
 };
 
 }  // analysis

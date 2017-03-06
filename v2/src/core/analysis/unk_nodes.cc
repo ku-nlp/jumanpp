@@ -51,7 +51,7 @@ class UnkMakerFactory {
       switch (x.type) {
         case spec::UnkMakerType::Chunking: {
           UnkNodeConfig cfg{rdr.readEntry(EntryPtr{x.patternPtr})};
-          util::copy(x.output, cfg.replaceWithSurface);
+          util::copy_insert(x.output, cfg.replaceWithSurface);
           handlePrefixIndex(x, &cfg);
           result->stage1.emplace_back(
               new ChunkingUnkMaker{entries, x.charClass, std::move(cfg)});
@@ -59,7 +59,7 @@ class UnkMakerFactory {
         }
         case spec::UnkMakerType::Single: {
           UnkNodeConfig cfg{rdr.readEntry(EntryPtr{x.patternPtr})};
-          util::copy(x.output, cfg.replaceWithSurface);
+          util::copy_insert(x.output, cfg.replaceWithSurface);
           handlePrefixIndex(x, &cfg);
           result->stage1.emplace_back(
               new SingleUnkMaker{entries, x.charClass, std::move(cfg)});

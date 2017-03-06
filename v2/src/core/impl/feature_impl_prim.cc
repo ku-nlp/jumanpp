@@ -167,6 +167,7 @@ Status PrimitiveFeaturesDynamicApply::initialize(
         feature.reset(new DynamicPrimitiveFeature<LengthPrimFeatureImpl>{});
     }
     JPP_RETURN_IF_ERROR(feature->initialize(ctx, f));
+    features_.emplace_back(std::move(feature));
   }
   return Status::Ok();
 }

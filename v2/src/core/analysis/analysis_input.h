@@ -33,8 +33,15 @@ class AnalysisInput {
   u16 numCodepoints();
 
   StringPiece surface(i32 start, i32 end) const {
-    StringPiece full{raw_input_};
-    return full.slice(start, end);
+    if (start == end) {
+      return EMPTY_SP;
+    }
+    JPP_DCHECK_LT(start, end);
+    auto &startc = codepoints_[start];
+    auto &endc = codepoints_[end - 1];
+    auto s = startc.bytes.begin();
+    auto e = endc.bytes.end();
+    return StringPiece{s, e};
   }
 };
 
