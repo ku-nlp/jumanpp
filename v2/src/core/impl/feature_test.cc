@@ -371,10 +371,10 @@ TEST_CASE("same values from different columns have different hash") {
 TEST_CASE("same values from same columns have same hash") {
   StringPiece dic =
       "z,z,z\n"
-          "a,a,a\n"
-          "b,b,b\n"
-          "c,c,c\n"
-          "d,a,d\n";
+      "a,a,a\n"
+      "b,b,b\n"
+      "c,c,c\n"
+      "d,a,d\n";
   PrimFeatureTestEnv env{dic,
                          [](dsl::ModelSpecBuilder& specBldr, FeatureSet& fs) {
                            specBldr.unigram({fs.a});
