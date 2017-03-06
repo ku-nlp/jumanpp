@@ -132,6 +132,10 @@ class PrimFeatureTestEnv {
     return pBoundary->primitiveFeatureData().row(node);
   }
 
+  const spec::AnalysisSpec& spec() const {
+    return tenv.dicBuilder.spec();
+  }
+
   void printAll() {
     auto& output = tenv.analyzer->output();
     auto walker = output.nodeWalker();
@@ -180,4 +184,19 @@ TEST_CASE("not prefix feature works") {
   auto p3 = env.uniqueNode("カラフ", 0);
   CHECK(p3.eptr.isSpecial());
   CHECK(p3.primitve[2] == 1);
+}
+
+TEST_CASE("match list feature works") {
+  StringPiece dic = "XXX,z,KANA\nカラ,b,\nb,c,\n";
+  PrimFeatureTestEnv env{dic, [](dsl::ModelSpecBuilder& specBldr, FeatureSet& fs){
+    specBldr.feature("mtch").matchValue(fs.c, "KANA");
+  }};
+  REQUIRE(env.spec().features.primitive[3].name == "mtch");
+  env.analyze("カラフ");
+  auto p1 = env.uniqueNode("カラ", 0);
+  CHECK(p1.primitve.size() == 4);
+  CHECK(p1.primitve[3] == 0);
+  auto p2 = env.uniqueNode("カ", 0);
+  CHECK(p2.primitve.size() == 4);
+  CHECK(p2.primitve[3] == 1);
 }

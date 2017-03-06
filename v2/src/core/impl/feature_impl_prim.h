@@ -68,7 +68,7 @@ class CopyPrimFeatureImpl {
   inline void apply(PrimitiveFeatureContext* ctx, EntryPtr entryPtr,
                     const util::ArraySlice<i32>& entry,
                     util::MutableArraySlice<u64>* features) const noexcept {
-    features->at(featureIdx) = entry.at(fieldIdx);
+    features->at(featureIdx) = (u32)entry.at(fieldIdx);
   }
 };
 
@@ -86,7 +86,7 @@ class ProvidedPrimFeatureImpl {
   inline void apply(PrimitiveFeatureContext* ctx, EntryPtr entryPtr,
                     const util::ArraySlice<i32>& entry,
                     util::MutableArraySlice<u64>* features) const noexcept {
-    features->at(featureIdx) = ctx->providedFeature(entryPtr, providedIdx);
+    features->at(featureIdx) = (u32)ctx->providedFeature(entryPtr, providedIdx);
   }
 };
 
@@ -109,7 +109,7 @@ class LengthPrimFeatureImpl {
     auto fldPtr = entry[fieldIdx];
     auto length = ctx->lengthOf(fieldIdx, fldPtr, field);
     JPP_DCHECK_NE(length, -1);
-    features->at(featureIdx) = length;
+    features->at(featureIdx) = (u32)length;
   }
 };
 
@@ -135,7 +135,7 @@ class MatchDicPrimFeatureImpl {
     if (contains(matchData, elem)) {
       result = 1;
     }
-    features->at(featureIdx) = result;
+    features->at(featureIdx) = (u32)result;
   }
 };
 
@@ -159,14 +159,14 @@ class MatchAnyDicPrimFeatureImpl {
     auto elem = entry.at(fieldIdx);
     auto trav = ctx->traversal(fieldIdx, elem);
     i32 result = 0;
-    i32 value = -1;
+    i32 value = 0;
     while (trav.next(&value)) {
       if (contains(matchData, value)) {
         result = 1;
         break;
       }
     }
-    features->at(featureIdx) = result;
+    features->at(featureIdx) = (u32)result;
   }
 };
 
