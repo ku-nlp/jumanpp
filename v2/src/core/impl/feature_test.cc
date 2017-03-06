@@ -217,7 +217,7 @@ TEST_CASE("match list feature works") {
 }
 
 TEST_CASE("match list feature works with several entries") {
-  StringPiece dic = "XXX,z,XANA DATA\nカラ,b,XAS BAR KANA\nラ,c,A B KANA\n";
+  StringPiece dic = "XXX,z,XANA DATA\nカラ,b,XAS KANA BAR\nラ,c,A B KANA\n";
   PrimFeatureTestEnv env{dic, [](dsl::ModelSpecBuilder& specBldr, FeatureSet& fs){
     specBldr.feature("mtch").matchValue(fs.c, "KANA");
   }};
