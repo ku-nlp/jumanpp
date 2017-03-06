@@ -186,6 +186,21 @@ TEST_CASE("not prefix feature works") {
   CHECK(p3.primitve[2] == 1);
 }
 
+TEST_CASE("match string feature works") {
+  StringPiece dic = "XXX,z,KANA\nカラ,b,\nb,c,\n";
+  PrimFeatureTestEnv env{dic, [](dsl::ModelSpecBuilder& specBldr, FeatureSet& fs){
+    specBldr.feature("mtch").matchValue(fs.b, "b");
+  }};
+  REQUIRE(env.spec().features.primitive[3].name == "mtch");
+  env.analyze("カラフ");
+  auto p1 = env.uniqueNode("カラ", 0);
+  CHECK(p1.primitve.size() == 4);
+  CHECK(p1.primitve[3] == 1);
+  auto p2 = env.uniqueNode("カ", 0);
+  CHECK(p2.primitve.size() == 4);
+  CHECK(p2.primitve[3] == 0);
+}
+
 TEST_CASE("match list feature works") {
   StringPiece dic = "XXX,z,KANA\nカラ,b,\nb,c,\n";
   PrimFeatureTestEnv env{dic, [](dsl::ModelSpecBuilder& specBldr, FeatureSet& fs){
