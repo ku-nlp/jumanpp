@@ -161,7 +161,8 @@ Status AnalyzerImpl::buildLattice() {
   i32 totalBnds = input_.numCodepoints();
   for (i32 boundary = 0; boundary < totalBnds; ++boundary) {
     LatticeBoundary* bnd;
-    JPP_RETURN_IF_ERROR(latticeBldr_.constructSingleBoundary(&lattice_, &bnd, boundary));
+    JPP_RETURN_IF_ERROR(
+        latticeBldr_.constructSingleBoundary(&lattice_, &bnd, boundary));
     if (latticeBldr_.isAccessible(boundary)) {
       fc.importEntryData(bnd);
       fc.applyPrimitiveFeatures(bnd);

@@ -18,7 +18,7 @@ Status makeFeatures(const CoreHolder &info, const StaticFeatureFactory *sff,
   impl::FeatureConstructionContext fcc{&info.dic().fields()};
   std::unique_ptr<impl::PrimitiveFeaturesDynamicApply> dynamic{
       new impl::PrimitiveFeaturesDynamicApply};
-  auto& runtimeFeatures = info.runtime().features;
+  auto &runtimeFeatures = info.runtime().features;
   JPP_RETURN_IF_ERROR(dynamic->initialize(&fcc, runtimeFeatures.primitive));
   result->primitiveDynamic = std::move(dynamic);
 

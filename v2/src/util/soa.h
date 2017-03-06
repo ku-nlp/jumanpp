@@ -110,7 +110,7 @@ class StructOfArraysBase : public ManagedObject {
 
  public:
   bool hasField(const SOAField* field) const {
-    for (auto f: fields_) {
+    for (auto f : fields_) {
       if (field == f) return true;
     }
     return false;
@@ -217,7 +217,8 @@ class SizedArrayField : public SOAField {
     FieldUtil::regField(this, manager);
   }
 
-  SizedArrayField(SizedArrayField&& o) noexcept: SOAField{o.manager_}, objects_{o.objects_}, rowCnt_{o.rowCnt_} {}
+  SizedArrayField(SizedArrayField&& o) noexcept
+      : SOAField{o.manager_}, objects_{o.objects_}, rowCnt_{o.rowCnt_} {}
 
   size_t objSize() const override {
     JPP_DCHECK(manager_->hasField(this));

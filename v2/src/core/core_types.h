@@ -49,8 +49,8 @@ class EntryPtr {
 
   inline i32 rawValue() const { return value_; }
 
-  inline bool operator==(const EntryPtr&o) const { return value_ == o.value_;}
-  inline bool operator!=(const EntryPtr&o) const { return value_ != o.value_;}
+  inline bool operator==(const EntryPtr& o) const { return value_ == o.value_; }
+  inline bool operator!=(const EntryPtr& o) const { return value_ != o.value_; }
 };
 
 }  // core

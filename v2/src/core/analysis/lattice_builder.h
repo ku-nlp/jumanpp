@@ -51,7 +51,6 @@ struct BoundaryInfo {
 };
 
 class LatticeConstructionContext {
-
  public:
   Status addBos(LatticeBoundary* lb);
 };
@@ -77,7 +76,8 @@ class LatticeBuilder {
   }
 
   Status prepare();
-  Status constructSingleBoundary(Lattice* lattice, LatticeBoundary** result, i32 numBoundary);
+  Status constructSingleBoundary(Lattice* lattice, LatticeBoundary** result,
+                                 i32 numBoundary);
   bool isAccessible(i32 boundary) const { return connectible[boundary]; }
 
   Status makeBos(LatticeConstructionContext* ctx, Lattice* lattice);

@@ -110,7 +110,7 @@ class PatternDynamicApplyImpl final
 
  public:
   void addChild(const PatternFeature &pf) {
-    util::ArraySlice<i32> args { pf.arguments };
+    util::ArraySlice<i32> args{pf.arguments};
     children.emplace_back(pf.index, args);
   }
 

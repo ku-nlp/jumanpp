@@ -136,7 +136,8 @@ class RuntimeInfoCompiler {
       auto res = strmap.find(s);
       if (res == strmap.end()) {
         return Status::InvalidState()
-               << " when loading single column csv match data field #" << field << " storage did not contain string " << s;
+               << " when loading single column csv match data field #" << field
+               << " storage did not contain string " << s;
       }
       result->push_back(res->second);
     }
@@ -153,9 +154,9 @@ class RuntimeInfoCompiler {
       auto s = data[i];
       auto res = strmap.find(s);
       if (res == strmap.end()) {
-        return Status::InvalidState() << "when loading multicolumn csv match data field #" << fldIdx
-                                      << " storage did not contain string "
-                                      << s;
+        return Status::InvalidState()
+               << "when loading multicolumn csv match data field #" << fldIdx
+               << " storage did not contain string " << s;
       }
       result->push_back(res->second);
     }

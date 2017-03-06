@@ -73,14 +73,11 @@ class LatticeBoundary {
   LatticeBoundary(util::memory::ManagedAllocatorCore* alloc,
                   const LatticeConfig& lc, const LatticeBoundaryConfig& lbc);
 
-
   EntryPtr entry(u32 position) const {
     return right.entryPtrs.data().at(position);
   }
 
-  LatticeRightBoundary* starts() {
-    return &right;
-  }
+  LatticeRightBoundary* starts() { return &right; }
   u32 localNodeCount() const { return config.beginNodes; }
 
   friend class Lattice;

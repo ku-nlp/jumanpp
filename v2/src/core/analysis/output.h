@@ -109,7 +109,8 @@ class StringListField {
 
   friend class OutputManager;
 
-  void initialize(i32 index, const dic::impl::IntStorageReader& ints, const dic::impl::StringStorageReader& strings);
+  void initialize(i32 index, const dic::impl::IntStorageReader& ints,
+                  const dic::impl::StringStorageReader& strings);
 
  public:
   StringListField() {}

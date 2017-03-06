@@ -11,7 +11,7 @@ namespace analysis {
 Status LatticeBuilder::prepare() {
   boundaries_.resize(maxBoundaries_);
 
-  boundaries_[0].endCount = 1; //BOS
+  boundaries_[0].endCount = 1;  // BOS
 
   for (auto &seed : seeds_) {
     boundaries_[seed.codepointStart].startCount++;
@@ -56,11 +56,12 @@ void LatticeBuilder::reset(LatticePosition maxCodepoints) {
 }
 
 Status LatticeBuilder::constructSingleBoundary(Lattice *lattice,
-                                               LatticeBoundary **result, i32 boundaryIdx) {
-  JPP_DCHECK_EQ(boundaryIdx, lattice->createdBoundaryCount() - 2); // substract 2 BOS
+                                               LatticeBoundary **result,
+                                               i32 boundaryIdx) {
+  JPP_DCHECK_EQ(boundaryIdx,
+                lattice->createdBoundaryCount() - 2);  // substract 2 BOS
   auto &bndInfo = boundaries_[boundaryIdx];
-  LatticeBoundaryConfig lbc{(u32)(boundaryIdx + 2),
-                            (u32)bndInfo.endCount,
+  LatticeBoundaryConfig lbc{(u32)(boundaryIdx + 2), (u32)bndInfo.endCount,
                             (u32)bndInfo.startCount};
   LatticeBoundary *boundary;
   JPP_RETURN_IF_ERROR(lattice->makeBoundary(lbc, &boundary));

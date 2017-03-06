@@ -5,8 +5,8 @@
 #ifndef JUMANPP_STL_UTIL_H
 #define JUMANPP_STL_UTIL_H
 
-#include <initializer_list>
 #include <algorithm>
+#include <initializer_list>
 #include "common.hpp"
 
 namespace jumanpp {
