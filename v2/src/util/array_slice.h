@@ -157,7 +157,8 @@ class ArraySlice {
   // If len==npos, the substring continues till the end of x.
   ArraySlice(const ArraySlice& x, size_type pos, size_type len)
       : impl_(x.impl_, pos, len) {
-    JPP_DCHECK_IN(pos, 0, x.size());
+    JPP_DCHECK_GE(pos, 0);
+    JPP_DCHECK_LE(pos, x.size());
     JPP_DCHECK_LE(pos + len, x.size());
   }
 

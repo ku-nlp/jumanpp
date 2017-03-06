@@ -136,7 +136,7 @@ class RuntimeInfoCompiler {
       auto res = strmap.find(s);
       if (res == strmap.end()) {
         return Status::InvalidState()
-               << "field #" << field << " storage did not contain string " << s;
+               << " when loading single column csv match data field #" << field << " storage did not contain string " << s;
       }
       result->push_back(res->second);
     }
@@ -147,13 +147,13 @@ class RuntimeInfoCompiler {
                    const std::vector<std::string>& data,
                    std::vector<i32>* result) {
     for (int i = 0; i < data.size(); ++i) {
-      auto fldIdx = i % fields.size();
+      auto fldIdx = fields.at(i % fields.size());
       auto sidx = strings(fldIdx);
       auto strmap = word2id_[sidx];
       auto s = data[i];
       auto res = strmap.find(s);
       if (res == strmap.end()) {
-        return Status::InvalidState() << "field #" << fldIdx
+        return Status::InvalidState() << "when loading multicolumn csv match data field #" << fldIdx
                                       << " storage did not contain string "
                                       << s;
       }

@@ -115,6 +115,44 @@ class PrimFeatureTestEnv {
     return n;
   }
 
+  Node uniqueNode(StringPiece af, StringPiece bf, i32 position) {
+    CAPTURE(af);
+    CAPTURE(bf);
+    CAPTURE(position);
+    auto& l = tenv.analyzer->lattice();
+    auto b = l.boundary(position + 2);
+    auto starts = b->starts();
+    auto& output = tenv.analyzer->output();
+    auto walker = output.nodeWalker();
+    EntryPtr x = EntryPtr::EOS();
+    i32 pos = 0;
+    i32 i = 0;
+    for (auto &eptr: starts->entryPtrData()) {
+      REQUIRE(output.locate(eptr, &walker));
+      auto cont = flda[walker];
+      auto nodefb = fldb[walker];
+      if (cont == af && bf == nodefb) {
+        if (x != EntryPtr::EOS()) {
+          FAIL("found second node with surface " << af);
+        }
+        x = eptr;
+        pos = i;
+      }
+      ++i;
+    }
+    if (x == EntryPtr::EOS()) {
+      FAIL("could not find a node " << position << ": [" << af << " " << bf << "]");
+    }
+
+    Node n;
+    n.surface = af.str();
+    n.eptr = x;
+    util::copy_insert(starts->entryData().row(pos), n.entries);
+    util::copy_insert(starts->primitiveFeatureData().row(pos), n.primitve);
+    util::copy_insert(starts->patternFeatureData().row(pos), n.pattern);
+    return n;
+  }
+
 
   i32 idxa(StringPiece data) {
     auto it = a2idx.find(data);
@@ -144,7 +182,7 @@ class PrimFeatureTestEnv {
     for (auto& seed : seeds) {
       CHECK(output.locate(seed.entryPtr, &walker));
       while (walker.next()) {
-        WARN("NODE:" << flda[walker] << "||" << fldb[walker]);
+        WARN("NODE [" << seed.codepointStart << ", " << seed.codepointEnd << "]: " << flda[walker] << " " << fldb[walker]);
       }
     }
   }
@@ -235,4 +273,31 @@ TEST_CASE("match list feature works with several entries") {
   auto p4 = env.uniqueNode("ラフ", 1);
   CHECK(p4.primitve.size() == 4);
   CHECK(p4.primitve[3] == 0);
+}
+
+TEST_CASE("match csv feature works with single target") {
+  StringPiece dic =
+      "XXX,z,x\n"
+      "a,a,xR\n"
+      "sa,a,xR\n"
+      "ab,b,xR\n"
+      "ab,d,xR\n"
+      "sab,c,xR\n"
+      "aab,d,xR\n"
+      "b,e,xR\n"
+      "ar,b,xR\n"
+      "bar,e,x\n";
+  PrimFeatureTestEnv env{dic, [](dsl::ModelSpecBuilder& specBldr, FeatureSet& fs){
+    specBldr.feature("mtch").matchAnyRowOfCsv("z\nd\nf\ng", {fs.b})
+        .ifTrue({fs.a, fs.b})
+        .ifFalse({fs.b});
+  }};
+  env.analyze("saabar");
+  auto n1 = env.uniqueNode("ab", "b", 2);
+  auto n2 = env.uniqueNode("ab", "d", 2);
+  auto n3 = env.uniqueNode("ar", "b", 4);
+  CHECK(n1.primitve.size() == 4);
+  CHECK(n1.primitve[3] == n3.primitve[3]);
+  CHECK(n1.primitve[3] != n2.primitve[3]);
+  CHECK(n1.primitve[3] != n2.primitve[3]);
 }
