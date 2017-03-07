@@ -16,14 +16,14 @@ class LatticePlugin;
 using LatticePosition = u16;
 using Score = float;
 
-struct ConnectionPtr {
+struct alignas(alignof(u64)) ConnectionPtr {
   u16 boundary;
   u16 left;
   u16 right;
   u16 beam;
 };
 
-struct LatticeNodePtr {
+struct alignas(alignof(u64)) LatticeNodePtr {
   u16 boundary;
   u16 position;
 };

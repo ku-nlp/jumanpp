@@ -52,7 +52,8 @@ struct BoundaryInfo {
 
 class LatticeConstructionContext {
  public:
-  Status addBos(LatticeBoundary* lb);
+  void addBos(LatticeBoundary* lb);
+  void addEos(LatticeBoundary* lb);
 };
 
 class LatticeBuilder {
@@ -79,8 +80,9 @@ class LatticeBuilder {
   Status constructSingleBoundary(Lattice* lattice, LatticeBoundary** result,
                                  i32 numBoundary);
   bool isAccessible(i32 boundary) const { return connectible[boundary]; }
-
   Status makeBos(LatticeConstructionContext* ctx, Lattice* lattice);
+  Status makeEos(LatticeConstructionContext* ctx, Lattice* lattice);
+  Status fillEnds(Lattice* l);
 };
 
 }  // analysis

@@ -5,9 +5,9 @@
 #ifndef JUMANPP_LATTICE_PLUGIN_H
 #define JUMANPP_LATTICE_PLUGIN_H
 
+#include <utility>
 #include "util/memory.hpp"
 #include "util/types.hpp"
-#include <utility>
 
 namespace jumanpp {
 namespace core {
@@ -17,9 +17,10 @@ class LatticeRightBoundary;
 class LatticeBoundaryConnection;
 
 class LatticePlugin {
-public:
+ public:
   virtual ~LatticePlugin() = default;
-  virtual LatticePlugin* clone(util::memory::ManagedAllocatorCore* alloc) const = 0;
+  virtual LatticePlugin* clone(
+      util::memory::ManagedAllocatorCore* alloc) const = 0;
   virtual void install(LatticeRightBoundary* right) = 0;
   virtual void install(LatticeBoundaryConnection* connection) = 0;
 };
@@ -31,16 +32,14 @@ class LazyField {
     T value_;
   };
 
-public:
-  LazyField(): flag_{0xdeadbeefdeadbeefULL} {}
+ public:
+  LazyField() : flag_{0xdeadbeefdeadbeefULL} {}
 
-  bool isInitialized() const {
-    return flag_ != 0xdeadbeefdeadbeefULL;
-  }
+  bool isInitialized() const { return flag_ != 0xdeadbeefdeadbeefULL; }
 
-  template <typename ... Args>
+  template <typename... Args>
   void initialize(Args... args) {
-    new (&value_) T {std::forward<Args>(args)...};
+    new (&value_) T{std::forward<Args>(args)...};
   }
 
   T& value() {
@@ -60,8 +59,8 @@ public:
   }
 };
 
-} // analysis
-} // core
-} // jumanpp
+}  // analysis
+}  // core
+}  // jumanpp
 
-#endif //JUMANPP_LATTICE_PLUGIN_H
+#endif  // JUMANPP_LATTICE_PLUGIN_H

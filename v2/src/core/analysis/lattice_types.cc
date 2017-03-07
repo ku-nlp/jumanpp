@@ -27,9 +27,7 @@ Status Lattice::makeBoundary(const LatticeBoundaryConfig &lbc,
 
 void Lattice::reset() { boundaries.clear(); }
 
-void Lattice::installPlugin(LatticePlugin *plugin) {
-  this->plugin = plugin;
-}
+void Lattice::installPlugin(LatticePlugin *plugin) { this->plugin = plugin; }
 
 LatticeBoundary::LatticeBoundary(util::memory::ManagedAllocatorCore *alloc,
                                  const LatticeConfig &lc,
@@ -37,7 +35,8 @@ LatticeBoundary::LatticeBoundary(util::memory::ManagedAllocatorCore *alloc,
     : config{lbc},
       left{alloc, lc, lbc},
       right{alloc, lc, lbc},
-      connections{alloc, lc, lbc} {}
+      connections{alloc, lc, lbc},
+      currentEnding_{0} {}
 
 Status LatticeBoundary::initialize() {
   JPP_RETURN_IF_ERROR(left.initialize());
@@ -53,6 +52,11 @@ void LatticeBoundary::installPlugin(LatticePlugin *plugin) {
   connections.localPlugin = plugin;
 }
 
+void LatticeBoundary::addEnd(LatticeNodePtr nodePtr) {
+  left.endingNodes.data().at(currentEnding_) = nodePtr;
+  ++currentEnding_;
+}
+
 LatticeBoundaryConnection::LatticeBoundaryConnection(
     util::memory::ManagedAllocatorCore *alloc, const LatticeConfig &lc,
     const LatticeBoundaryConfig &lbc)
@@ -65,8 +69,7 @@ LatticeBoundaryConnection::LatticeBoundaryConnection(
     : StructOfArraysFactory(o),
       features{this, o.features.requiredSize()},
       featureScores{this, 1},
-      localPlugin{o.localPlugin->clone(o.acore_)}
-{
+      localPlugin{o.localPlugin->clone(o.acore_)} {
   localPlugin->install(this);
 }
 

@@ -171,6 +171,9 @@ Status AnalyzerImpl::buildLattice() {
     }
   }
 
+  JPP_RETURN_IF_ERROR(latticeBldr_.makeEos(&lcc, &lattice_));
+  JPP_RETURN_IF_ERROR(latticeBldr_.fillEnds(&lattice_));
+
   return Status::Ok();
 }
 

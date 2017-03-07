@@ -20,6 +20,7 @@ class LatticeLeftBoundary final : public util::memory::StructOfArrays {
   util::memory::SizedArrayField<LatticeNodePtr> endingNodes;
 
   friend class LatticeBoundary;
+
  public:
   LatticeLeftBoundary(util::memory::ManagedAllocatorCore* alloc,
                       const LatticeConfig& lc,
@@ -33,7 +34,7 @@ class LatticeRightBoundary final : public util::memory::StructOfArrays {
   util::memory::SizedArrayField<u64, 64> featurePatterns;
   util::memory::SizedArrayField<ConnectionBeamElement, 64> beam;
 
-  LatticePlugin *localPlugin;
+  LatticePlugin* localPlugin = nullptr;
 
   friend class LatticeBoundary;
 
@@ -43,7 +44,9 @@ class LatticeRightBoundary final : public util::memory::StructOfArrays {
                        const LatticeBoundaryConfig& lbc);
 
   template <typename Plugin>
-  Plugin* plugin() { return dynamic_cast<Plugin*>(localPlugin); }
+  Plugin* plugin() {
+    return dynamic_cast<Plugin*>(localPlugin);
+  }
 
   util::Sliceable<EntryPtr> entryPtrData() { return entryPtrs; }
   util::Sliceable<i32> entryData() { return entryDataStorage; }
@@ -56,7 +59,7 @@ class LatticeBoundaryConnection final
   util::memory::SizedArrayField<u32, 64> features;
   util::memory::SizedArrayField<Score> featureScores;
 
-  LatticePlugin *localPlugin;
+  LatticePlugin* localPlugin = nullptr;
 
   friend class LatticeBoundary;
 
@@ -68,7 +71,9 @@ class LatticeBoundaryConnection final
   LatticeBoundaryConnection(const LatticeBoundaryConnection& o);
 
   template <typename Plugin>
-  Plugin* plugin() { return dynamic_cast<Plugin*>(localPlugin); }
+  Plugin* plugin() {
+    return dynamic_cast<Plugin*>(localPlugin);
+  }
 };
 
 class LatticeBoundary {
@@ -76,6 +81,7 @@ class LatticeBoundary {
   LatticeLeftBoundary left;
   LatticeRightBoundary right;
   LatticeBoundaryConnection connections;
+  u32 currentEnding_;
 
   Status initialize();
   void installPlugin(LatticePlugin* plugin);
@@ -92,6 +98,8 @@ class LatticeBoundary {
   u32 localNodeCount() const { return config.beginNodes; }
 
   friend class Lattice;
+
+  void addEnd(LatticeNodePtr nodePtr);
 };
 
 class Lattice {

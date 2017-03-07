@@ -9,9 +9,14 @@ namespace core {
 namespace analysis {
 
 Status LatticeBuilder::prepare() {
+  if (maxBoundaries_ == 0) {
+    return Status::Ok();
+  }
+
   boundaries_.resize(maxBoundaries_);
 
-  boundaries_[0].endCount = 1;  // BOS
+  boundaries_[0].endCount = 1;                     // BOS
+  boundaries_[maxBoundaries_ - 1].startCount = 1;  // EOS
 
   for (auto &seed : seeds_) {
     boundaries_[seed.codepointStart].startCount++;
@@ -61,7 +66,7 @@ Status LatticeBuilder::constructSingleBoundary(Lattice *lattice,
   JPP_DCHECK_EQ(boundaryIdx,
                 lattice->createdBoundaryCount() - 2);  // substract 2 BOS
   auto &bndInfo = boundaries_[boundaryIdx];
-  LatticeBoundaryConfig lbc{(u32)(boundaryIdx + 2), (u32)bndInfo.endCount,
+  LatticeBoundaryConfig lbc{boundaryIdx + 2u, (u32)bndInfo.endCount,
                             (u32)bndInfo.startCount};
   LatticeBoundary *boundary;
   JPP_RETURN_IF_ERROR(lattice->makeBoundary(lbc, &boundary));
@@ -71,6 +76,8 @@ Status LatticeBuilder::constructSingleBoundary(Lattice *lattice,
   for (int i = 0; i < entryData.size(); ++i) {
     entryData[i] = seeds[i].entryPtr;
   }
+
+  connectible[boundaryIdx] = lbc.beginNodes != 0 && lbc.endNodes != 0;
 
   *result = boundary;
   return Status::Ok();
@@ -89,12 +96,44 @@ Status LatticeBuilder::makeBos(LatticeConstructionContext *ctx,
   return Status::Ok();
 }
 
-Status LatticeConstructionContext::addBos(LatticeBoundary *lb) {
+Status LatticeBuilder::makeEos(LatticeConstructionContext *ctx,
+                               Lattice *lattice) {
+  LatticeBoundary *lb;
+  LatticeBoundaryConfig eos{maxBoundaries_ + 2u,
+                            (u32)boundaries_[maxBoundaries_ - 1].endCount, 1u};
+  JPP_RETURN_IF_ERROR(lattice->makeBoundary(eos, &lb));
+  ctx->addEos(lb);
+  return Status::Ok();
+}
+
+Status LatticeBuilder::fillEnds(Lattice *l) {
+  // connect BOS nodes
+  l->boundary(1)->addEnd(LatticeNodePtr{0, 0});
+  l->boundary(2)->addEnd(LatticeNodePtr{1, 0});
+
+  for (int i = 0; i < seeds_.size(); ++i) {
+    auto &seed = seeds_[i];
+    u32 idx = seed.codepointEnd + 2u;
+    auto bnd = l->boundary(idx);
+    LatticeNodePtr nodePtr{(u16)idx, (u16)seed.codepointStart};
+    bnd->addEnd(nodePtr);
+  }
+
+  return Status::Ok();
+}
+
+void LatticeConstructionContext::addBos(LatticeBoundary *lb) {
   JPP_DCHECK_EQ(lb->localNodeCount(), 1);
   lb->starts()->entryPtrData()[0] = EntryPtr::BOS();
   auto features = lb->starts()->entryData();
   util::fill(features, EntryPtr::BOS().rawValue());
-  return Status::Ok();
+}
+
+void LatticeConstructionContext::addEos(LatticeBoundary *lb) {
+  JPP_DCHECK_EQ(lb->localNodeCount(), 1);
+  lb->starts()->entryPtrData()[0] = EntryPtr::EOS();
+  auto features = lb->starts()->entryData();
+  util::fill(features, EntryPtr::EOS().rawValue());
 }
 }  // analysis
 }  // core
