@@ -36,8 +36,6 @@ class PrimFeatureTestEnv {
   util::FlatMap<StringPiece, i32> a2idx;
 
  public:
-  static void noop(...) {}
-
   template <typename Fn>
   PrimFeatureTestEnv(StringPiece csvData, Fn fn) {
     tenv.spec([fn](dsl::ModelSpecBuilder& specBldr) {

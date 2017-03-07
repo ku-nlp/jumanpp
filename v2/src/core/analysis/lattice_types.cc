@@ -3,6 +3,7 @@
 //
 
 #include "lattice_types.h"
+#include "lattice_plugin.h"
 
 namespace jumanpp {
 namespace core {
@@ -15,6 +16,9 @@ Lattice::Lattice(util::memory::ManagedAllocatorCore *alloc,
 Status Lattice::makeBoundary(const LatticeBoundaryConfig &lbc,
                              LatticeBoundary **ptr) {
   auto bnd = alloc->make<LatticeBoundary>(alloc, lconf, lbc);
+  if (plugin != nullptr) {
+    bnd->installPlugin(plugin->clone(alloc));
+  }
   JPP_RETURN_IF_ERROR(bnd->initialize());
   this->boundaries.push_back(bnd);
   *ptr = bnd;
@@ -23,6 +27,10 @@ Status Lattice::makeBoundary(const LatticeBoundaryConfig &lbc,
 
 void Lattice::reset() { boundaries.clear(); }
 
+void Lattice::installPlugin(LatticePlugin *plugin) {
+  this->plugin = plugin;
+}
+
 LatticeBoundary::LatticeBoundary(util::memory::ManagedAllocatorCore *alloc,
                                  const LatticeConfig &lc,
                                  const LatticeBoundaryConfig &lbc)
@@ -30,6 +38,20 @@ LatticeBoundary::LatticeBoundary(util::memory::ManagedAllocatorCore *alloc,
       left{alloc, lc, lbc},
       right{alloc, lc, lbc},
       connections{alloc, lc, lbc} {}
+
+Status LatticeBoundary::initialize() {
+  JPP_RETURN_IF_ERROR(left.initialize());
+  JPP_RETURN_IF_ERROR(right.initialize());
+  JPP_RETURN_IF_ERROR(connections.initialize());
+  return Status::Ok();
+}
+
+void LatticeBoundary::installPlugin(LatticePlugin *plugin) {
+  plugin->install(&right);
+  right.localPlugin = plugin;
+  plugin->install(&connections);
+  connections.localPlugin = plugin;
+}
 
 LatticeBoundaryConnection::LatticeBoundaryConnection(
     util::memory::ManagedAllocatorCore *alloc, const LatticeConfig &lc,
@@ -42,7 +64,11 @@ LatticeBoundaryConnection::LatticeBoundaryConnection(
     const LatticeBoundaryConnection &o)
     : StructOfArraysFactory(o),
       features{this, o.features.requiredSize()},
-      featureScores{this, 1} {}
+      featureScores{this, 1},
+      localPlugin{o.localPlugin->clone(o.acore_)}
+{
+  localPlugin->install(this);
+}
 
 LatticeRightBoundary::LatticeRightBoundary(
     util::memory::ManagedAllocatorCore *alloc, const LatticeConfig &lc,

@@ -14,9 +14,12 @@ namespace jumanpp {
 namespace core {
 namespace analysis {
 
+class LatticePlugin;
+
 class LatticeLeftBoundary final : public util::memory::StructOfArrays {
   util::memory::SizedArrayField<LatticeNodePtr> endingNodes;
 
+  friend class LatticeBoundary;
  public:
   LatticeLeftBoundary(util::memory::ManagedAllocatorCore* alloc,
                       const LatticeConfig& lc,
@@ -30,12 +33,17 @@ class LatticeRightBoundary final : public util::memory::StructOfArrays {
   util::memory::SizedArrayField<u64, 64> featurePatterns;
   util::memory::SizedArrayField<ConnectionBeamElement, 64> beam;
 
+  LatticePlugin *localPlugin;
+
   friend class LatticeBoundary;
 
  public:
   LatticeRightBoundary(util::memory::ManagedAllocatorCore* alloc,
                        const LatticeConfig& lc,
                        const LatticeBoundaryConfig& lbc);
+
+  template <typename Plugin>
+  Plugin* plugin() { return dynamic_cast<Plugin*>(localPlugin); }
 
   util::Sliceable<EntryPtr> entryPtrData() { return entryPtrs; }
   util::Sliceable<i32> entryData() { return entryDataStorage; }
@@ -48,12 +56,19 @@ class LatticeBoundaryConnection final
   util::memory::SizedArrayField<u32, 64> features;
   util::memory::SizedArrayField<Score> featureScores;
 
+  LatticePlugin *localPlugin;
+
+  friend class LatticeBoundary;
+
  public:
   LatticeBoundaryConnection(util::memory::ManagedAllocatorCore* alloc,
                             const LatticeConfig& lc,
                             const LatticeBoundaryConfig& lbc);
 
   LatticeBoundaryConnection(const LatticeBoundaryConnection& o);
+
+  template <typename Plugin>
+  Plugin* plugin() { return dynamic_cast<Plugin*>(localPlugin); }
 };
 
 class LatticeBoundary {
@@ -62,12 +77,8 @@ class LatticeBoundary {
   LatticeRightBoundary right;
   LatticeBoundaryConnection connections;
 
-  Status initialize() {
-    JPP_RETURN_IF_ERROR(left.initialize());
-    JPP_RETURN_IF_ERROR(right.initialize());
-    JPP_RETURN_IF_ERROR(connections.initialize());
-    return Status::Ok();
-  }
+  Status initialize();
+  void installPlugin(LatticePlugin* plugin);
 
  public:
   LatticeBoundary(util::memory::ManagedAllocatorCore* alloc,
@@ -87,6 +98,7 @@ class Lattice {
   util::memory::ManagedVector<LatticeBoundary*> boundaries;
   LatticeConfig lconf;
   util::memory::ManagedAllocatorCore* alloc;
+  LatticePlugin* plugin = nullptr;
 
  public:
   Lattice(const Lattice&) = delete;
@@ -96,6 +108,7 @@ class Lattice {
 
   LatticeBoundary* boundary(u32 idx) { return boundaries.at(idx); }
   const LatticeBoundary* boundary(u32 idx) const { return boundaries.at(idx); }
+  void installPlugin(LatticePlugin* plugin);
   void reset();
 };
 

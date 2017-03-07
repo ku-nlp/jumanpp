@@ -3,7 +3,8 @@ set(core_srcs darts_trie.cc dictionary.cc impl/field_import.cc dic_builder.cc
         analysis/lattice_builder.cc analysis/analysis_input.cc spec/spec_dsl.cc impl/feature_impl_prim.cc
         analysis/unk_nodes_creator.cc analysis/extra_nodes.cc analysis/dic_reader.cc analysis/output.cc
         core.cc analysis/analyzer.cc analysis/analyzer_impl.cc impl/feature_impl_compute.cc
-        spec/spec_types.cc spec/spec_serialization.cc impl/model_io.cc analysis/unk_nodes.cc features_api.cc)
+        spec/spec_types.cc spec/spec_serialization.cc impl/model_io.cc analysis/unk_nodes.cc features_api.cc
+        analysis/lattice_plugin.cc)
 
 set(core_hdrs darts.h darts_trie.h dictionary.h impl/field_import.h impl/field_reader.h dic_entries.h
         dic_builder.h spec/spec_grammar.h spec/spec_dsl.h analysis/analysis_input.h analysis/lattice_builder.h
@@ -13,14 +14,14 @@ set(core_hdrs darts.h darts_trie.h dictionary.h impl/field_import.h impl/field_r
         analysis/analyzer_impl.h features_api.h impl/feature_impl_types.h impl/feature_impl_compute.h
         impl/feature_impl_combine.h spec/spec_serialization.h runtime_info.h analysis/unk_maker_types.h
         impl/model_format.h impl/model_io.h impl/model_format_ser.h impl/runtime_ser.h spec/spec_ser.h
-        analysis/unk_nodes.h)
+        analysis/unk_nodes.h analysis/lattice_plugin.h)
 
 set(core_test_srcs darts_trie_test.cc dictionary_test.cc impl/field_import_test.cc
         impl/field_reader_test.cc impl/feature_impl_prim_test.cc impl/feature_impl_compute_test.cc
         impl/feature_impl_combine_test.cc impl/feature_test.cc)
 set(spec_test_srcs spec/spec_grammar_test.cc spec/spec_dsl_test.cc spec/spec_dsl_feature_test.cc)
 set(analysis_test_srcs analysis/dictionary_node_creator_test.cc analysis/lattice_types_test.cc
-        analysis/unk_nodes_creator_test.cc analysis/lattice_builder_test.cc)
+        analysis/unk_nodes_creator_test.cc analysis/lattice_builder_test.cc analysis/lattice_plugin_test.cc)
 
 add_library(jpp_core ${core_srcs} ${core_hdrs} ${libs3p_pegtl_headers})
 
