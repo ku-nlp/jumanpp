@@ -356,14 +356,13 @@ TEST_CASE("same values from different columns have different hash") {
   auto n2 = env.uniqueNode("b", 0);
   auto n3 = env.uniqueNode("d", 2);
 
-  // pattern 0 is default
   CHECK(n1.pattern.size() == 3);
   CHECK(n1.primitve[0] == n1.primitve[1]);
-  CHECK(n1.pattern[1] != n1.pattern[2]);
+  CHECK(n1.pattern[0] != n1.pattern[1]);
   CHECK(n2.primitve[0] == n2.primitve[1]);
-  CHECK(n2.pattern[1] != n2.pattern[2]);
+  CHECK(n2.pattern[0] != n2.pattern[1]);
   CHECK(n3.primitve[0] == n3.primitve[1]);
-  CHECK(n3.pattern[1] != n3.pattern[2]);
+  CHECK(n3.pattern[0] != n3.pattern[1]);
 }
 
 TEST_CASE("same values from same columns have same hash") {
@@ -382,8 +381,9 @@ TEST_CASE("same values from same columns have same hash") {
   auto n1 = env.uniqueNode("a", 1);
   auto n2 = env.uniqueNode("d", 2);
 
-  // pattern 0 is default
   CHECK(n1.pattern.size() == 3);
-  CHECK(n1.pattern[2] != n2.pattern[2]);
-  CHECK(n1.pattern[3] != n2.pattern[3]);
+  CHECK(n1.primitve[0] != n2.primitve[0]);
+  CHECK(n1.pattern[0] != n2.pattern[0]);
+  CHECK(n1.primitve[1] == n2.primitve[1]);
+  CHECK(n1.pattern[1] == n2.pattern[1]);
 }

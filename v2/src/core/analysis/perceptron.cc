@@ -10,12 +10,9 @@ namespace core {
 namespace analysis {
 
 void HashedFeaturePerceptron::compute(util::MutableArraySlice<float> result,
-                                      const Lattice *lattice,
-                                      const LatticeBoundary *focus,
-                                      LatticeBoundaryConnection *connection) {
+                                      util::Sliceable<u32> ngrams) {
   JPP_DCHECK(util::memory::IsPowerOf2(features_.size()));
   u32 mask = static_cast<u32>(features_.size() - 1);
-  auto ngrams = connection->ngramFeatures();
   for (int i = 0; i < ngrams.numRows(); ++i) {
     result.at(i) =
         impl::computeUnrolled4Perceptron(features_, ngrams.row(i), mask);

@@ -42,14 +42,12 @@ inline float computeUnrolled4Perceptron(const util::ArraySlice<float> weights,
 }
 }
 
-class HashedFeaturePerceptron : public ScoreComputer {
+class HashedFeaturePerceptron : public FeatureScorer {
   util::ArraySlice<float> features_;
 
  public:
-  void compute(util::MutableArraySlice<float> result, const Lattice *lattice,
-               const LatticeBoundary *focus,
-               LatticeBoundaryConnection *connection) override;
-
+  void compute(util::MutableArraySlice<float> result,
+               util::Sliceable<u32> ngrams) override;
   Status load(const model::ModelInfo &model) override;
 };
 

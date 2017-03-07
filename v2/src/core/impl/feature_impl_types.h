@@ -155,49 +155,30 @@ class PatternFeatureData {
 class NgramFeatureData {
   util::ArraySlice<u64> t2;  // beam size
   util::ArraySlice<u64> t1;  // only one
-  util::ArraySlice<u64> t0;  // all in lattice boundary
-  util::MutableArraySlice<u64> final;
-  i32 t2index = -1;
+  util::Sliceable<u64> t0;   // all in lattice boundary
+  mutable util::Sliceable<u32> final;
   i32 t0index = -1;
-  u64 t2size;
-  u64 t0size;
-  u64 finalSize;
 
  public:
-  NgramFeatureData(const util::ArraySlice<u64>& t2,
+  NgramFeatureData(const util::Sliceable<u32>& final,
+                   const util::ArraySlice<u64>& t2,
                    const util::ArraySlice<u64>& t1,
-                   const util::ArraySlice<u64>& t0,
-                   const util::MutableArraySlice<u64>& final)
-      : t2(t2),
-        t1(t1),
-        t0(t0),
-        final(final),
-        t2size{t2.size() / t1.size()},
-        t0size{t0.size() / t1.size()},
-        finalSize{final.size() / t0size} {}
-
-  bool nextT2() {
-    ++t2index;
-    return t2index < t2size;
-  }
+                   const util::Sliceable<u64>& t0)
+      : t2(t2), t1(t1), t0(t0), final(final) {}
 
   bool nextT0() {
     ++t0index;
-    return t0index < t0size;
+    return t0index < t0.numRows();
   }
 
-  util::ArraySlice<u64> patternT2() const {
-    return util::ArraySlice<u64>{t2, t2index * t2size, t2size};
-  }
+  util::ArraySlice<u64> patternT2() const { return t2; }
 
   util::ArraySlice<u64> patternT1() const { return t1; }
 
-  util::ArraySlice<u64> patternT0() const {
-    return util::ArraySlice<u64>{t0, t0index * t0size, t0size};
-  }
+  util::ArraySlice<u64> patternT0() const { return t0.row(t0index); }
 
-  util::MutableArraySlice<u64> finalFeatures() const {
-    return util::MutableArraySlice<u64>{final, t0index * finalSize, finalSize};
+  util::MutableArraySlice<u32> finalFeatures() const {
+    return final.row(t0index);
   }
 };
 

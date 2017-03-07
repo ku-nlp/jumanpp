@@ -10,6 +10,7 @@
 #include "core/analysis/extra_nodes.h"
 #include "core/analysis/lattice_builder.h"
 #include "core/analysis/lattice_types.h"
+#include "core/analysis/score_processor.h"
 
 namespace jumanpp {
 namespace core {
@@ -26,6 +27,7 @@ class AnalyzerImpl {
   LatticeBuilder latticeBldr_;
   ExtraNodesContext xtra_;
   OutputManager outputManager_;
+  ScoreProcessor* sproc_;
 
  public:
   AnalyzerImpl(const AnalyzerImpl&) = delete;
@@ -46,9 +48,7 @@ class AnalyzerImpl {
   bool checkLatticeConnectivity();
   Status makeUnkNodes2();
   Status buildLattice();
-  Status computeNodeFeatures();
-  Status computeFeatures();
-  Status computeScores();
+  Status computeScores(ScoreConfig* sconf);
 
   Status analyze(StringPiece input) {
     JPP_RETURN_IF_ERROR(resetForInput(input));

@@ -25,6 +25,10 @@ class LatticeLeftBoundary final : public util::memory::StructOfArrays {
   LatticeLeftBoundary(util::memory::ManagedAllocatorCore* alloc,
                       const LatticeConfig& lc,
                       const LatticeBoundaryConfig& lbc);
+
+  util::ArraySlice<LatticeNodePtr> nodePtrs() const {
+    return endingNodes.data();
+  }
 };
 
 class LatticeRightBoundary final : public util::memory::StructOfArrays {
@@ -52,11 +56,14 @@ class LatticeRightBoundary final : public util::memory::StructOfArrays {
   util::Sliceable<i32> entryData() { return entryDataStorage; }
   util::Sliceable<u64> primitiveFeatureData() { return primitiveFeatures; }
   util::Sliceable<u64> patternFeatureData() { return featurePatterns; }
+  util::Sliceable<ConnectionBeamElement> beamData() { return beam; }
 };
 
 class LatticeBoundaryConnection final
     : public util::memory::StructOfArraysFactory<LatticeBoundaryConnection> {
-  util::memory::SizedArrayField<u32, 64> features;
+  const LatticeConfig& lconf;
+  const LatticeBoundaryConfig& lbconf;
+  util::memory::SizedArrayField<Score> scores;
   LatticePlugin* localPlugin = nullptr;
 
   friend class LatticeBoundary;
@@ -68,12 +75,15 @@ class LatticeBoundaryConnection final
 
   LatticeBoundaryConnection(const LatticeBoundaryConnection& o);
 
+  LatticeBoundaryConnection* element(i32 idx) { return child(idx); }
+
+  void importBeamScore(i32 scorer, i32 beam, util::ArraySlice<Score> scores);
+  util::Sliceable<Score> entryScores(i32 beam);
+
   template <typename Plugin>
   Plugin* plugin() {
     return dynamic_cast<Plugin*>(localPlugin);
   }
-
-  util::Sliceable<u32> ngramFeatures() { return features; }
 };
 
 class LatticeBoundary {
@@ -94,12 +104,21 @@ class LatticeBoundary {
     return right.entryPtrs.data().at(position);
   }
 
+  bool endingsFilled() const {
+    return left.endingNodes.data().size() == currentEnding_;
+  }
+
+  LatticeLeftBoundary* ends() { return &left; }
   LatticeRightBoundary* starts() { return &right; }
   u32 localNodeCount() const { return config.beginNodes; }
 
   friend class Lattice;
 
   void addEnd(LatticeNodePtr nodePtr);
+  Status newConnection(LatticeBoundaryConnection** result);
+  LatticeBoundaryConnection* connection(i32 index) {
+    return connections.element(index);
+  }
 };
 
 class Lattice {
@@ -113,11 +132,11 @@ class Lattice {
   Lattice(util::memory::ManagedAllocatorCore* alloc, const LatticeConfig& lc);
   u32 createdBoundaryCount() const { return (u32)boundaries.size(); }
   Status makeBoundary(const LatticeBoundaryConfig& lbc, LatticeBoundary** ptr);
-
   LatticeBoundary* boundary(u32 idx) { return boundaries.at(idx); }
   const LatticeBoundary* boundary(u32 idx) const { return boundaries.at(idx); }
   void installPlugin(LatticePlugin* plugin);
   void reset();
+  const LatticeConfig& config() { return lconf; }
 };
 
 }  // analysis

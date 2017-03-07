@@ -52,6 +52,11 @@ void LatticeBoundary::installPlugin(LatticePlugin *plugin) {
   connections.localPlugin = plugin;
 }
 
+Status LatticeBoundary::newConnection(LatticeBoundaryConnection **result) {
+  *result = &connections.makeOne();
+  return Status::Ok();
+}
+
 void LatticeBoundary::addEnd(LatticeNodePtr nodePtr) {
   left.endingNodes.data().at(currentEnding_) = nodePtr;
   ++currentEnding_;
@@ -61,15 +66,35 @@ LatticeBoundaryConnection::LatticeBoundaryConnection(
     util::memory::ManagedAllocatorCore *alloc, const LatticeConfig &lc,
     const LatticeBoundaryConfig &lbc)
     : StructOfArraysFactory(alloc, lbc.beginNodes * lc.beamSize, lbc.endNodes),
-      features{this, lc.numFinalFeatures} {}
+      lconf{lc},
+      lbconf{lbc},
+      scores{this, lc.scoreCnt} {}
 
 LatticeBoundaryConnection::LatticeBoundaryConnection(
     const LatticeBoundaryConnection &o)
-    : StructOfArraysFactory(o), features{this, o.features.requiredSize()} {
+    : StructOfArraysFactory(o),
+      lconf{o.lconf},
+      lbconf{o.lbconf},
+      scores{this, o.scores.requiredSize()} {
   if (o.localPlugin != nullptr) {
     localPlugin = o.localPlugin->clone(acore_);
     localPlugin->install(this);
   }
+}
+
+void LatticeBoundaryConnection::importBeamScore(
+    i32 scorer, i32 beam, util::ArraySlice<Score> scores) {
+  auto data = entryScores(beam);
+  for (int i = 0; i < data.numRows(); ++i) {
+    data.row(i).at(scorer) = scores.at(i);
+  }
+}
+
+util::Sliceable<Score> LatticeBoundaryConnection::entryScores(i32 beam) {
+  auto beamDataSize = lconf.scoreCnt * lbconf.beginNodes;
+  auto beamOffset = beam * beamDataSize;
+  util::MutableArraySlice<Score> slice{scores.data(), beamOffset, beamDataSize};
+  return util::Sliceable<Score>{slice, lconf.scoreCnt, lbconf.beginNodes};
 }
 
 LatticeRightBoundary::LatticeRightBoundary(

@@ -24,15 +24,15 @@ TEST_CASE("ngram features can be compiled") {
   constexpr NgramFeatureImpl<1> uni{0, 1};
   constexpr NgramFeatureImpl<2> bi{1, 1, 2};
   constexpr NgramFeatureImpl<3> tri{2, 1, 2, 0};
-  u64 data[] = {0, 0, 0};
-  util::MutableArraySlice<u64> res{data};
+  u32 data[] = {0, 0, 0};
+  util::MutableArraySlice<u32> res{data};
   util::ArraySlice<u64> t2{1, 1, 1};
   util::ArraySlice<u64> t1{1, 1, 1};
   util::ArraySlice<u64> t0{1, 1, 1};
   uni.apply(&res, t2, t1, t0);
   bi.apply(&res, t2, t1, t0);
   tri.apply(&res, t2, t1, t0);
-  CHECK(data[0] == 0x2675e08780d27ccbULL);
-  CHECK(data[1] == 0x6bffbb7bbe8bbd5ULL);
-  CHECK(data[2] == 0xab88760ea19b9568ULL);
+  CHECK(data[0] == 0x80d27ccb);
+  CHECK(data[1] == 0xbbe8bbd5);
+  CHECK(data[2] == 0xa19b9568);
 }

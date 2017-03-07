@@ -14,6 +14,7 @@
 #include <cstddef>
 #include <memory>
 #include <vector>
+#include "util/array_slice.h"
 #include "util/common.hpp"
 
 namespace jumanpp {
@@ -73,6 +74,13 @@ class ManagedAllocatorCore {
   template <typename T>
   T *allocateArray(size_t count, size_t align = alignof(T)) {
     return (T *)allocate_memory(sizeof(T) * count, align);
+  }
+
+  template <typename T>
+  util::MutableArraySlice<T> allocateBuf(size_t count,
+                                         size_t align = alignof(T)) {
+    auto mem = (T *)allocate_memory(sizeof(T) * count, align);
+    return util::MutableArraySlice<T>{mem, count};
   }
 
   template <typename T, typename... Args>

@@ -2,10 +2,12 @@
 // Created by Arseny Tolmachev on 2017/03/03.
 //
 
-#include "analyzer_impl.h"
+#include "core/analysis/analyzer_impl.h"
+#include "core/analysis/dictionary_node_creator.h"
+#include "core/analysis/score_api.h"
+#include "core/analysis/score_processor.h"
 #include "core/analysis/unk_nodes_creator.h"
 #include "core/impl/feature_impl_types.h"
-#include "dictionary_node_creator.h"
 
 namespace jumanpp {
 namespace core {
@@ -173,6 +175,48 @@ Status AnalyzerImpl::buildLattice() {
 
   JPP_RETURN_IF_ERROR(latticeBldr_.makeEos(&lcc, &lattice_));
   JPP_RETURN_IF_ERROR(latticeBldr_.fillEnds(&lattice_));
+
+  sproc_ = ScoreProcessor::make(&lattice_, alloc_.get());
+
+  return Status::Ok();
+}
+
+Status AnalyzerImpl::computeScores(ScoreConfig* sconf) {
+  auto bndCount = lattice_.createdBoundaryCount();
+  if (bndCount <= 3) {  // 2xBOS + EOS
+    return Status::Ok();
+  }
+
+  for (i32 boundary = 2; boundary < bndCount; ++boundary) {
+    auto bnd = lattice_.boundary(boundary);
+    JPP_DCHECK(bnd->endingsFilled());
+    auto left = bnd->ends()->nodePtrs();
+
+    auto t0features = bnd->starts()->patternFeatureData();
+    auto& proc = *this->sproc_;
+
+    for (i32 t1idx = 0; t1idx < left.size(); ++t1idx) {
+      auto& t1node = left[t1idx];
+      auto t1data = lattice_.boundary(t1node.boundary)->starts();
+      auto t1beam = t1data->beamData().row(t1node.position);
+      proc.gatherT2Features(t1beam, lattice_);
+      auto t1features = t1data->patternFeatureData().row(t1node.position);
+      LatticeBoundaryConnection* bndconn = bnd->connection(t1idx);
+      // compute 1st feature data per beam computation is made so that active
+      // dataset will fit into L1 cache
+      for (i32 beamIdx = 0; beamIdx < proc.activeBeamSize(); ++beamIdx) {
+        proc.computeNgramFeatures(beamIdx, core_->features(), t0features,
+                                  t1features);
+        proc.computeFeatureScores(beamIdx, sconf->feature,
+                                  bnd->localNodeCount());
+      }
+      proc.copyFeatureScores(bndconn);
+      // compute other features data
+      // TODO: implement
+
+      proc.updateBeam(boundary, t1idx, bnd, bndconn, sconf);
+    }
+  }
 
   return Status::Ok();
 }

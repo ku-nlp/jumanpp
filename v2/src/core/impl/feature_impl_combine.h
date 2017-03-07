@@ -49,24 +49,24 @@ class NgramFeatureImpl {
                   "+ 1 (index of feature)");
   }
 
-  void apply(util::MutableArraySlice<u64> result,
+  void apply(util::MutableArraySlice<u32> result,
              const util::ArraySlice<u64> &t2, const util::ArraySlice<u64> &t1,
              const util::ArraySlice<u64> &t0) const noexcept;
 };
 
 template <>
-inline void NgramFeatureImpl<1>::apply(util::MutableArraySlice<u64> result,
+inline void NgramFeatureImpl<1>::apply(util::MutableArraySlice<u32> result,
                                        const util::ArraySlice<u64> &t2,
                                        const util::ArraySlice<u64> &t1,
                                        const util::ArraySlice<u64> &t0) const
     noexcept {
   auto p0 = storage[0];
   auto v0 = t0.at(p0);
-  result.at(index) = util::hashing::hashCtSeq(UnigramSeed, index, v0);
+  result.at(index) = (u32)util::hashing::hashCtSeq(UnigramSeed, index, v0);
 };
 
 template <>
-inline void NgramFeatureImpl<2>::apply(util::MutableArraySlice<u64> result,
+inline void NgramFeatureImpl<2>::apply(util::MutableArraySlice<u32> result,
                                        const util::ArraySlice<u64> &t2,
                                        const util::ArraySlice<u64> &t1,
                                        const util::ArraySlice<u64> &t0) const
@@ -75,11 +75,11 @@ inline void NgramFeatureImpl<2>::apply(util::MutableArraySlice<u64> result,
   auto v0 = t0.at(p0);
   auto p1 = storage[1];
   auto v1 = t1.at(p1);
-  result.at(index) = util::hashing::hashCtSeq(BigramSeed, index, v0, v1);
+  result.at(index) = (u32)util::hashing::hashCtSeq(BigramSeed, index, v0, v1);
 };
 
 template <>
-inline void NgramFeatureImpl<3>::apply(util::MutableArraySlice<u64> result,
+inline void NgramFeatureImpl<3>::apply(util::MutableArraySlice<u32> result,
                                        const util::ArraySlice<u64> &t2,
                                        const util::ArraySlice<u64> &t1,
                                        const util::ArraySlice<u64> &t0) const
@@ -90,7 +90,8 @@ inline void NgramFeatureImpl<3>::apply(util::MutableArraySlice<u64> result,
   auto v1 = t1.at(p1);
   auto p2 = storage[2];
   auto v2 = t2.at(p2);
-  result.at(index) = util::hashing::hashCtSeq(TrigramSeed, index, v0, v1, v2);
+  result.at(index) =
+      (u32)util::hashing::hashCtSeq(TrigramSeed, index, v0, v1, v2);
 };
 
 template <typename Child>
@@ -124,7 +125,7 @@ class PatternDynamicApplyImpl final
 
 class DynamicNgramFeature : public FeatureApply {
  public:
-  virtual void apply(util::MutableArraySlice<u64> result,
+  virtual void apply(util::MutableArraySlice<u32> result,
                      const util::ArraySlice<u64> &t2,
                      const util::ArraySlice<u64> &t1,
                      const util::ArraySlice<u64> &t0) const noexcept = 0;
@@ -138,7 +139,7 @@ class NgramFeatureDynamicAdapter : public DynamicNgramFeature {
   template <typename... Args>
   NgramFeatureDynamicAdapter(i32 index, Args... rest) : impl{index, rest...} {}
 
-  virtual void apply(util::MutableArraySlice<u64> result,
+  virtual void apply(util::MutableArraySlice<u32> result,
                      const util::ArraySlice<u64> &t2,
                      const util::ArraySlice<u64> &t1,
                      const util::ArraySlice<u64> &t0) const noexcept override {
@@ -151,11 +152,9 @@ class NgramFeatureApplyImpl : public NgramFeatureApply {
  public:
   void applyBatch(impl::NgramFeatureData *data) const noexcept override {
     const Child &child = static_cast<const Child &>(*this);
-    while (data->nextT2()) {
-      while (data->nextT0()) {
-        child.apply(data->finalFeatures(), data->patternT2(), data->patternT1(),
-                    data->patternT0());
-      }
+    while (data->nextT0()) {
+      child.apply(data->finalFeatures(), data->patternT2(), data->patternT1(),
+                  data->patternT0());
     }
   }
 };
@@ -190,7 +189,7 @@ class NgramDynamicFeatureApply
     return Status::Ok();
   }
 
-  void apply(util::MutableArraySlice<u64> result,
+  void apply(util::MutableArraySlice<u32> result,
              const util::ArraySlice<u64> &t2, const util::ArraySlice<u64> &t1,
              const util::ArraySlice<u64> &t0) const noexcept {
     for (auto &c : children) {

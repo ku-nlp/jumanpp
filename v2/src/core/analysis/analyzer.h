@@ -24,6 +24,8 @@ struct AnalyzerConfig {
  */
 class AnalyzerImpl;
 
+struct ScoreConfig;
+
 class Analyzer {
   std::unique_ptr<AnalyzerImpl> pimpl_;
 

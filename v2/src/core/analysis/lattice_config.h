@@ -20,7 +20,6 @@ struct alignas(alignof(u64)) ConnectionPtr {
   u16 boundary;
   u16 left;
   u16 right;
-  u16 beam;
 };
 
 struct alignas(alignof(u64)) LatticeNodePtr {
@@ -34,6 +33,7 @@ struct LatticeConfig {
   u32 numFeaturePatterns;
   u32 numFinalFeatures;
   u32 beamSize;
+  u32 scoreCnt;
 };
 
 struct LatticeBoundaryConfig {

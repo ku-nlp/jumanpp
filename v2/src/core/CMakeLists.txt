@@ -14,7 +14,8 @@ set(core_hdrs darts.h darts_trie.h dictionary.h impl/field_import.h impl/field_r
         analysis/analyzer_impl.h features_api.h impl/feature_impl_types.h impl/feature_impl_compute.h
         impl/feature_impl_combine.h spec/spec_serialization.h runtime_info.h analysis/unk_maker_types.h
         impl/model_format.h impl/model_io.h impl/model_format_ser.h impl/runtime_ser.h spec/spec_ser.h
-        analysis/unk_nodes.h analysis/lattice_plugin.h analysis/score_api.h analysis/perceptron.h)
+        analysis/unk_nodes.h analysis/lattice_plugin.h analysis/score_api.h analysis/perceptron.h
+        analysis/score_processor.h analysis/score_processor.cc)
 
 set(core_test_srcs darts_trie_test.cc dictionary_test.cc impl/field_import_test.cc
         impl/field_reader_test.cc impl/feature_impl_prim_test.cc impl/feature_impl_compute_test.cc
@@ -22,7 +23,7 @@ set(core_test_srcs darts_trie_test.cc dictionary_test.cc impl/field_import_test.
 set(spec_test_srcs spec/spec_grammar_test.cc spec/spec_dsl_test.cc spec/spec_dsl_feature_test.cc)
 set(analysis_test_srcs analysis/dictionary_node_creator_test.cc analysis/lattice_types_test.cc
         analysis/unk_nodes_creator_test.cc analysis/lattice_builder_test.cc analysis/lattice_plugin_test.cc
-        analysis/perceptron_test.cc)
+        analysis/perceptron_test.cc analysis/score_processor_test.cc)
 
 add_library(jpp_core ${core_srcs} ${core_hdrs} ${libs3p_pegtl_headers})
 
