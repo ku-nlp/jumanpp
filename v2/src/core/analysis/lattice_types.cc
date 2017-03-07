@@ -61,16 +61,15 @@ LatticeBoundaryConnection::LatticeBoundaryConnection(
     util::memory::ManagedAllocatorCore *alloc, const LatticeConfig &lc,
     const LatticeBoundaryConfig &lbc)
     : StructOfArraysFactory(alloc, lbc.beginNodes * lc.beamSize, lbc.endNodes),
-      features{this, lc.numFinalFeatures},
-      featureScores{this, 1} {}
+      features{this, lc.numFinalFeatures} {}
 
 LatticeBoundaryConnection::LatticeBoundaryConnection(
     const LatticeBoundaryConnection &o)
-    : StructOfArraysFactory(o),
-      features{this, o.features.requiredSize()},
-      featureScores{this, 1},
-      localPlugin{o.localPlugin->clone(o.acore_)} {
-  localPlugin->install(this);
+    : StructOfArraysFactory(o), features{this, o.features.requiredSize()} {
+  if (o.localPlugin != nullptr) {
+    localPlugin = o.localPlugin->clone(acore_);
+    localPlugin->install(this);
+  }
 }
 
 LatticeRightBoundary::LatticeRightBoundary(

@@ -57,8 +57,6 @@ class LatticeRightBoundary final : public util::memory::StructOfArrays {
 class LatticeBoundaryConnection final
     : public util::memory::StructOfArraysFactory<LatticeBoundaryConnection> {
   util::memory::SizedArrayField<u32, 64> features;
-  util::memory::SizedArrayField<Score> featureScores;
-
   LatticePlugin* localPlugin = nullptr;
 
   friend class LatticeBoundary;
@@ -74,6 +72,8 @@ class LatticeBoundaryConnection final
   Plugin* plugin() {
     return dynamic_cast<Plugin*>(localPlugin);
   }
+
+  util::Sliceable<u32> ngramFeatures() { return features; }
 };
 
 class LatticeBoundary {
