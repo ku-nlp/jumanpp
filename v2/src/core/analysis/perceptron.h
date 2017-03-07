@@ -30,11 +30,11 @@ inline float computeUnrolled4Perceptron(const util::ArraySlice<float> weights,
   JPP_DCHECK_IN(rest, 0, 4);
   switch (rest & 0x3) {
     case 3:
-      r1 += weights.at(indices.at(i + 2) & mask);
+      r3 += weights.at(indices.at(i + 2) & mask);
     case 2:
       r2 += weights.at(indices.at(i + 1) & mask);
     case 1:
-      r3 += weights.at(indices.at(i) & mask);
+      r1 += weights.at(indices.at(i) & mask);
     case 0:
     default:;  // noop
   }
