@@ -16,7 +16,7 @@ namespace impl {
 inline float computeUnrolled4Perceptron(const util::ArraySlice<float> weights,
                                         const util::ArraySlice<u32> indices,
                                         u32 mask) {
-  //basically the sole purpose of this unrolling
+  // basically the sole purpose of this unrolling
   // is to be able to do several parallel memory fetches at once
   float r1 = 0, r2 = 0, r3 = 0, r4 = 0;
   int i;
@@ -40,7 +40,6 @@ inline float computeUnrolled4Perceptron(const util::ArraySlice<float> weights,
   }
   return r1 + r2 + r3 + r4;
 }
-
 }
 
 class HashedFeaturePerceptron : public ScoreComputer {

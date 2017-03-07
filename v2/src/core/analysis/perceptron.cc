@@ -17,7 +17,8 @@ void HashedFeaturePerceptron::compute(util::MutableArraySlice<float> result,
   u32 mask = static_cast<u32>(features_.size() - 1);
   auto ngrams = connection->ngramFeatures();
   for (int i = 0; i < ngrams.numRows(); ++i) {
-    result.at(i) = impl::computeUnrolled4Perceptron(features_, ngrams.row(i), mask);
+    result.at(i) =
+        impl::computeUnrolled4Perceptron(features_, ngrams.row(i), mask);
   }
 }
 
