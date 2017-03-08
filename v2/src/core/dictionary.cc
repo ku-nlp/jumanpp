@@ -150,8 +150,8 @@ class RuntimeInfoCompiler {
     for (int i = 0; i < data.size(); ++i) {
       auto fldIdx = fields.at(i % fields.size());
       auto sidx = strings(fldIdx);
-      auto strmap = word2id_[sidx];
-      auto s = data[i];
+      auto& strmap = word2id_[sidx];
+      auto& s = data[i];
       auto res = strmap.find(s);
       if (res == strmap.end()) {
         return Status::InvalidState()

@@ -8,12 +8,14 @@
 #include "util/logging.hpp"
 #include "core/impl/model_io.h"
 #include "core/dictionary.h"
+#include <iostream>
 
 using namespace jumanpp;
 
 Status importDictionary(StringPiece path, StringPiece target) {
   core::spec::AnalysisSpec spec;
-  jumandic::SpecFactory::makeSpec(&spec);
+  JPP_RETURN_IF_ERROR(jumandic::SpecFactory::makeSpec(&spec));
+  std::cout << "spec is valid!\n";
 
   util::MappedFile file;
   JPP_RETURN_IF_ERROR(file.open(path, util::MMapType::ReadOnly));
@@ -22,23 +24,29 @@ Status importDictionary(StringPiece path, StringPiece target) {
 
   core::dic::DictionaryBuilder builder;
   JPP_RETURN_IF_ERROR(builder.importSpec(&spec));
+  std::cout << "reading csv file..." << std::flush;
   JPP_RETURN_IF_ERROR(builder.importCsv(path, frag.asStringPiece()));
+  std::cout << "done!\n";
 
 
   core::dic::DictionaryHolder holder;
   JPP_RETURN_IF_ERROR(holder.load(builder.result()));
 
+  std::cout << "compiling dynamic features..." << std::flush;
   core::RuntimeInfo runtime;
   JPP_RETURN_IF_ERROR(holder.compileRuntimeInfo(builder.spec(), &runtime));
+  std::cout << "done!\n";
 
   core::model::ModelInfo minfo {};
   minfo.parts.emplace_back();
   JPP_RETURN_IF_ERROR(builder.fillModelPart(runtime, &minfo.parts.back()));
 
 
+  std::cout << "saving dictionary...";
   core::model::ModelSaver saver;
   JPP_RETURN_IF_ERROR(saver.open(target));
-  JPP_RETURN_IF_ERROR(saver.save(minfo));
+  JPP_RETURN_IF_ERROR(saver.save(minfo))
+  std::cout << "done!\n";
 
   return Status::Ok();
 }

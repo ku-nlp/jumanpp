@@ -18,7 +18,7 @@ bool operator==(const StringPiece &l, const StringPiece &r) {
   return std::strncmp(l.char_begin(), r.char_begin(), l.size()) == 0;
 }
 
-StringPiece::StringPiece(StringPiece::pointer_t begin)
-    : begin_{begin},
-      end_{begin + std::strlen(reinterpret_cast<char_ptr>(begin))} {}
+StringPiece::StringPiece(StringPiece::char_ptr ptr) noexcept :StringPiece(ptr, ptr + std::strlen(ptr)) {
+
+}
 }

@@ -46,6 +46,8 @@ class StringPiece {
   JPP_ALWAYS_INLINE StringPiece(const std::string& str) noexcept
       : StringPiece(str.data(), str.data() + str.size()) {}
 
+  explicit StringPiece(char_ptr ptr) noexcept;
+
   JPP_ALWAYS_INLINE constexpr StringPiece(const StringPiece& other) noexcept =
       default;
 
@@ -66,8 +68,6 @@ class StringPiece {
       --end_;
     }
   }
-
-  explicit StringPiece(pointer_t begin);
 
   /**
    * Constructor for everything that has .data(), .size() and its type can be
