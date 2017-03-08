@@ -45,7 +45,8 @@ class Sliceable {
   Sliceable<T> topRows(size_t nrows) const {
     JPP_DCHECK_GE(nrows, 0);
     JPP_DCHECK_LE(nrows, numRows_);
-    return Sliceable<T>{data_, rowSize_, nrows};
+    util::MutableArraySlice<T> slice{data_, 0, rowSize_ * nrows};
+    return Sliceable<T>{slice, rowSize_, nrows};
   }
 
   size_t size() const { return data_.size(); }

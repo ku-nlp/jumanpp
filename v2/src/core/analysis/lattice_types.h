@@ -134,6 +134,7 @@ class Lattice {
   Status makeBoundary(const LatticeBoundaryConfig& lbc, LatticeBoundary** ptr);
   LatticeBoundary* boundary(u32 idx) { return boundaries.at(idx); }
   const LatticeBoundary* boundary(u32 idx) const { return boundaries.at(idx); }
+  void hintSize(u32 size);
   void installPlugin(LatticePlugin* plugin);
   void reset();
   const LatticeConfig& config() { return lconf; }

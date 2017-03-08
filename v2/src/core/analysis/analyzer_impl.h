@@ -48,6 +48,7 @@ class AnalyzerImpl {
   bool checkLatticeConnectivity();
   Status makeUnkNodes2();
   Status buildLattice();
+  void fixupLattice();
   Status computeScores(ScoreConfig* sconf);
 
   Status analyze(StringPiece input) {

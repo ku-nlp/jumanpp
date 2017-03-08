@@ -54,9 +54,9 @@ void ScoreProcessor::computeNgramFeatures(
   features.ngram->applyBatch(&nfd);
 }
 
-void ScoreProcessor::updateBeam(i32 boundary, i32 endPos, LatticeBoundary *bnd,
-                                LatticeBoundaryConnection *bndconn,
-                                ScoreConfig *sc) {
+void ScoreProcessor::updateBeams(i32 boundary, i32 endPos, LatticeBoundary *bnd,
+                                 LatticeBoundaryConnection *bndconn,
+                                 ScoreConfig *sc) {
   auto beam = bnd->starts()->beamData();
   u16 bnd16 = (u16)boundary;
   u16 end16 = (u16)endPos;
@@ -66,13 +66,14 @@ void ScoreProcessor::updateBeam(i32 boundary, i32 endPos, LatticeBoundary *bnd,
     for (i32 beginPos = 0; beginPos < beam.numRows(); ++beginPos) {
       auto itemBeam = beam.row(beginPos);
       auto scores = scoreData.row(beginPos);
-      u16 start16 = (u16)beginPos;
-      ConnectionPtr cptr{bnd16, start16, end16};
       Score s = 0;
       for (int sw = 0; sw < scoreWeights.size(); ++sw) {
         s += scoreWeights[sw] * scores[sw];
       }
-      ConnectionBeamElement cbe{cptr, s};
+      auto& prevBi = this->beamPtrs[prevBeam];
+      auto cumScore = s + prevBi.totalScore;
+      ConnectionPtr cptr{bnd16, end16, ((u16)beginPos), (u16)prevBeam, &prevBi.ptr};
+      ConnectionBeamElement cbe{cptr, cumScore};
       EntryBeam beamObj{itemBeam};
       beamObj.pushItem(cbe);
     }
@@ -97,16 +98,21 @@ void ScoreProcessor::gatherT2Features(
     util::ArraySlice<ConnectionBeamElement> beam, Lattice &lattice) {
   beamSize_ = 0;
   for (auto &e : beam) {
-    if (!EntryBeam::isFake(e)) {
-      beamPtrs[beamSize_] = e;
-      ++beamSize_;
+    if (EntryBeam::isFake(e)) {
+      break;
     }
+    ++beamSize_;
   }
+  beamPtrs = util::ArraySlice<ConnectionBeamElement>{beam, 0, (u32)beamSize_};
 
   for (int i = 0; i < beamSize_; ++i) {
     auto &ptr = beamPtrs[i];
-    auto bnd = lattice.boundary(ptr.ptr.boundary);
-    auto patfeatures = bnd->starts()->patternFeatureData().row(ptr.ptr.right);
+    //get actual nodeptr
+    auto bnd1 = lattice.boundary(ptr.ptr.boundary);
+    auto nodePtr = bnd1->ends()->nodePtrs().at(ptr.ptr.left);
+    //get pattern features
+    auto bnd2 = lattice.boundary(nodePtr.boundary);
+    auto patfeatures = bnd2->starts()->patternFeatureData().row(nodePtr.position);
     auto row = t2features.row(i);
     util::copy_buffer(patfeatures, row);
   }

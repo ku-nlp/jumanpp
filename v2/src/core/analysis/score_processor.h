@@ -35,18 +35,23 @@ class EntryBeam {
       util::MutableArraySlice<ConnectionBeamElement> elems) {
     u16 pat = (u16)(0xffffu);
     auto val = std::numeric_limits<Score>::lowest();
-    ConnectionBeamElement zero{{pat, pat, pat}, val};
+    ConnectionBeamElement zero{{pat, pat, pat, pat}, val};
     std::fill(elems.begin(), elems.end(), zero);
   }
 
   void pushItem(const ConnectionBeamElement& item) {
     // keep min-heap (minimum element at 0)
     // if our element is better than minimum, swap them
-    if (compare(item, elements_[0])) {
+    auto& tip = elements_[0];
+    if (compare(item, tip)) {
       std::pop_heap(elements_.begin(), elements_.end(), compare);
       elements_.back() = item;
       std::push_heap(elements_.begin(), elements_.end(), compare);
     }
+  }
+
+  static void fixupBeam(util::MutableArraySlice<ConnectionBeamElement>& data) {
+    std::sort_heap(data.begin(), data.end(), compare);
   }
 
   static bool isFake(const ConnectionBeamElement& e) {
@@ -59,8 +64,9 @@ class ScoreProcessor {
   Lattice* lattice_;
   util::Sliceable<u64> t2features;     // pattern x beamsize
   util::Sliceable<Score> scoreBuffer;  // maxstart x beamsize
-  util::MutableArraySlice<ConnectionBeamElement> beamPtrs;  // beamsize
   util::Sliceable<u32> ngramFeatures;  // features x maxstart
+  //is set to the actual beam by gatherT2features
+  util::ArraySlice<ConnectionBeamElement> beamPtrs;
   i32 beamSize_;
 
  public:
@@ -86,8 +92,8 @@ class ScoreProcessor {
 
   void copyFeatureScores(LatticeBoundaryConnection* bndconn);
 
-  void updateBeam(i32 boundary, i32 endPos, LatticeBoundary* bnd,
-                  LatticeBoundaryConnection* bndconn, ScoreConfig* sc);
+  void updateBeams(i32 boundary, i32 endPos, LatticeBoundary *bnd,
+                   LatticeBoundaryConnection *bndconn, ScoreConfig *sc);
 };
 
 }  // analysis

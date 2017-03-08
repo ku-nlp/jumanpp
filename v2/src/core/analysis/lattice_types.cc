@@ -29,13 +29,17 @@ void Lattice::reset() { boundaries.clear(); }
 
 void Lattice::installPlugin(LatticePlugin *plugin) { this->plugin = plugin; }
 
+void Lattice::hintSize(u32 size) {
+  boundaries.reserve(size);
+}
+
 LatticeBoundary::LatticeBoundary(util::memory::ManagedAllocatorCore *alloc,
                                  const LatticeConfig &lc,
                                  const LatticeBoundaryConfig &lbc)
     : config{lbc},
-      left{alloc, lc, lbc},
-      right{alloc, lc, lbc},
-      connections{alloc, lc, lbc},
+      left{alloc, lc, config},
+      right{alloc, lc, config},
+      connections{alloc, lc, config},
       currentEnding_{0} {}
 
 Status LatticeBoundary::initialize() {

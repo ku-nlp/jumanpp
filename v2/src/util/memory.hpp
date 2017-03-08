@@ -84,14 +84,14 @@ class ManagedAllocatorCore {
   }
 
   template <typename T, typename... Args>
-  T *make(Args... args) {
+  T *make(Args&&... args) {
     T *buffer = allocate<T>(alignof(T));
     auto obj = new (buffer) T(std::forward<Args>(args)...);
     return obj;
   };
 
   template <typename T, typename... Args>
-  ManagedPtr<T> make_unique(Args... args) {
+  ManagedPtr<T> make_unique(Args&&... args) {
     return ManagedPtr<T>(make<T, Args...>(std::forward<Args...>(args...)));
   };
 };

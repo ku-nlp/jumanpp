@@ -38,7 +38,7 @@ class LazyField {
   bool isInitialized() const { return flag_ != 0xdeadbeefdeadbeefULL; }
 
   template <typename... Args>
-  void initialize(Args... args) {
+  void initialize(Args&&... args) {
     new (&value_) T{std::forward<Args>(args)...};
   }
 

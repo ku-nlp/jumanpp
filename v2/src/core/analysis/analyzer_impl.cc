@@ -146,6 +146,7 @@ class InNodeFeatureComputer {
 };
 
 Status AnalyzerImpl::buildLattice() {
+  lattice_.hintSize(input_.numCodepoints() + 3);
   JPP_RETURN_IF_ERROR(makeUnkNodes1());
   if (!checkLatticeConnectivity()) {
     JPP_RETURN_IF_ERROR(makeUnkNodes2());
@@ -176,9 +177,34 @@ Status AnalyzerImpl::buildLattice() {
   JPP_RETURN_IF_ERROR(latticeBldr_.makeEos(&lcc, &lattice_));
   JPP_RETURN_IF_ERROR(latticeBldr_.fillEnds(&lattice_));
 
+  return Status::Ok();
+}
+
+void AnalyzerImpl::fixupLattice() {
   sproc_ = ScoreProcessor::make(&lattice_, alloc_.get());
 
-  return Status::Ok();
+  auto bndCount = lattice_.createdBoundaryCount();
+  for (int boundary = 0; boundary < bndCount; ++boundary) {
+    auto bnd = lattice_.boundary(boundary);
+    auto left = bnd->ends();
+    auto sz = left->arraySize();
+
+    //create all boundary connections
+    for (int i = 0; i < sz; ++i) {
+      LatticeBoundaryConnection* lbc;
+      bnd->newConnection(&lbc);
+    }
+  }
+
+  //bootstrap beam pointers
+  auto beam0 = lattice_.boundary(0)->starts()->beamData().data();
+  EntryBeam::initializeBlock(beam0);
+  auto &bosRef = beam0.at(0);
+  bosRef = ConnectionBeamElement {{0,0,0,0, nullptr}, 0};
+  auto beam1 = lattice_.boundary(1)->starts()->beamData().data();
+  EntryBeam::initializeBlock(beam1);
+  auto &bos1Ref = beam1.at(0);
+  bos1Ref = ConnectionBeamElement {{1,0,0,0,&bosRef.ptr}, 0};
 }
 
 Status AnalyzerImpl::computeScores(ScoreConfig* sconf) {
@@ -188,6 +214,7 @@ Status AnalyzerImpl::computeScores(ScoreConfig* sconf) {
   }
 
   for (i32 boundary = 2; boundary < bndCount; ++boundary) {
+
     auto bnd = lattice_.boundary(boundary);
     JPP_DCHECK(bnd->endingsFilled());
     auto left = bnd->ends()->nodePtrs();
@@ -195,11 +222,14 @@ Status AnalyzerImpl::computeScores(ScoreConfig* sconf) {
     auto t0features = bnd->starts()->patternFeatureData();
     auto& proc = *this->sproc_;
 
+    EntryBeam::initializeBlock(bnd->starts()->beamData().data());
+
     for (i32 t1idx = 0; t1idx < left.size(); ++t1idx) {
       auto& t1node = left[t1idx];
       auto t1data = lattice_.boundary(t1node.boundary)->starts();
       auto t1beam = t1data->beamData().row(t1node.position);
       proc.gatherT2Features(t1beam, lattice_);
+
       auto t1features = t1data->patternFeatureData().row(t1node.position);
       LatticeBoundaryConnection* bndconn = bnd->connection(t1idx);
       // compute 1st feature data per beam computation is made so that active
@@ -214,7 +244,15 @@ Status AnalyzerImpl::computeScores(ScoreConfig* sconf) {
       // compute other features data
       // TODO: implement
 
-      proc.updateBeam(boundary, t1idx, bnd, bndconn, sconf);
+      proc.updateBeams(boundary, t1idx, bnd, bndconn, sconf);
+    }
+
+    //finally sort beam items
+    auto starts = bnd->starts();
+    auto t2items = starts->arraySize();
+    for (int i = 0; i < t2items; ++i) {
+      auto beamData = starts->beamData().row(i);
+      EntryBeam::fixupBeam(beamData);
     }
   }
 

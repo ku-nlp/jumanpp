@@ -16,6 +16,7 @@ namespace core {
 
 struct CoreConfig {
   i32 beamSize;
+  i32 numScorers;
 };
 
 class CoreHolder {

@@ -115,7 +115,12 @@ Status LatticeBuilder::fillEnds(Lattice *l) {
     auto &seed = seeds_[i];
     u32 idx = seed.codepointEnd + 2u;
     auto bnd = l->boundary(idx);
-    LatticeNodePtr nodePtr{(u16)idx, (u16)seed.codepointStart};
+    u16 bndPtr = (u16)(seed.codepointStart + 2);
+    auto binfo = boundaries_[seed.codepointStart];
+    i32 offset = i - binfo.firstNodeOffset;
+    JPP_DCHECK_IN(offset, 0, binfo.startCount);
+    u16 endOffset = (u16)offset;
+    LatticeNodePtr nodePtr{bndPtr, endOffset};
     bnd->addEnd(nodePtr);
   }
 
@@ -125,14 +130,14 @@ Status LatticeBuilder::fillEnds(Lattice *l) {
 void LatticeConstructionContext::addBos(LatticeBoundary *lb) {
   JPP_DCHECK_EQ(lb->localNodeCount(), 1);
   lb->starts()->entryPtrData()[0] = EntryPtr::BOS();
-  auto features = lb->starts()->entryData();
+  auto features = lb->starts()->patternFeatureData();
   util::fill(features, EntryPtr::BOS().rawValue());
 }
 
 void LatticeConstructionContext::addEos(LatticeBoundary *lb) {
   JPP_DCHECK_EQ(lb->localNodeCount(), 1);
   lb->starts()->entryPtrData()[0] = EntryPtr::EOS();
-  auto features = lb->starts()->entryData();
+  auto features = lb->starts()->patternFeatureData();
   util::fill(features, EntryPtr::EOS().rawValue());
 }
 }  // analysis

@@ -16,6 +16,7 @@ CoreHolder::CoreHolder(const CoreConfig &conf, const RuntimeInfo &runtime,
       runtime.features.primitive.size() + runtime.features.compute.size();
   latticeCfg_.numFeaturePatterns = runtime.features.patterns.size();
   latticeCfg_.numFinalFeatures = runtime.features.ngrams.size();
+  latticeCfg_.scoreCnt = conf.numScorers;
 }
 
 Status CoreHolder::initialize(const features::StaticFeatureFactory *sff) {

@@ -75,7 +75,7 @@ class TestEnv {
     REQUIRE_OK(fsModel.load(&actualInfo));
     REQUIRE_OK(dicBuilder.restoreDictionary(actualInfo, &actualRuntime));
     REQUIRE_OK(dic.load(dicBuilder.result()));
-    CoreConfig coreConf{beamSize};
+    CoreConfig coreConf{beamSize, 1};
     core.reset(new CoreHolder(coreConf, actualRuntime, dic));
     REQUIRE_OK(core->initialize(nullptr));
     REQUIRE(core->features().primitive != nullptr);
