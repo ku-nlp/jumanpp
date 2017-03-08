@@ -115,6 +115,9 @@ class StringFieldImporter : public FieldImporter {
 
   virtual i32 fieldPointer(const util::CsvReader& csv) override {
     auto sp = csv.field(field_);
+    if (sp.size() == 0 || ignore_ == sp) {
+      return 0;
+    }
     auto val = storage_->valueOf(sp);
     JPP_DCHECK_NE(val, -1);
     return val;

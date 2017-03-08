@@ -68,7 +68,7 @@ JPP_ALWAYS_INLINE inline void prefetch(const void* x) {
   }
 
 namespace port {
-constexpr bool kLittleEndian = false;
+constexpr bool kLittleEndian = true;
 }
 
 }  // util

@@ -40,7 +40,8 @@ struct ColumnImportContext {
 
     auto tp = descr->columnType;
     auto colpos = descr->position - 1;
-    auto emptyStr = descr->emptyString;
+    //we want to have original content here
+    StringPiece emptyStr = descr->emptyString;
 
     switch (tp) {
       case ColumnType::Int:

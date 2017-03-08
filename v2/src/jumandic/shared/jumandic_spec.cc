@@ -8,6 +8,12 @@
 namespace jumanpp {
 namespace jumandic {
 
+Status SpecFactory::makeSpec(core::spec::AnalysisSpec* spec) {
+  core::spec::dsl::ModelSpecBuilder bldr;
+  fillSpec(bldr);
+  return bldr.build(spec);
+}
+
 //頂く,
 // 0,
 // 0,
@@ -20,24 +26,21 @@ namespace jumandic {
 // いただく,
 // 頂く/いただく,
 // 付属動詞候補（タ系） 謙譲動詞:貰う/もらう;食べる/たべる;飲む/のむ
-
-Status SpecFactory::makeSpec(core::spec::AnalysisSpec* spec) {
-  core::spec::dsl::ModelSpecBuilder bldr;
-
+void SpecFactory::fillSpec(core::spec::dsl::ModelSpecBuilder &bldr) {
   auto& surface = bldr.field(1, "surface").strings().trieIndex();
-  auto& pos = bldr.field(5, "pos").strings();
-  auto& subpos = bldr.field(6, "subpos").strings();
-  auto& conjtype = bldr.field(7, "conjtype").strings();
-  auto& conjform = bldr.field(8, "conjform").strings();
+  auto& pos = bldr.field(5, "pos").strings().emptyValue("*");
+  auto& subpos = bldr.field(6, "subpos").strings().emptyValue("*");
+  auto& conjtype = bldr.field(7, "conjtype").strings().emptyValue("*");
+  auto& conjform = bldr.field(8, "conjform").strings().emptyValue("*");
   auto& baseform = bldr.field(9, "baseform").strings().stringStorage(surface);
   auto& reading = bldr.field(10, "reading").strings().stringStorage(surface);
   /*auto& canonic = */ bldr.field(11, "canonic").strings();
-  auto& features = bldr.field(12, "features").stringLists();
+  auto& features = bldr.field(12, "features").stringLists().emptyValue("NIL");
 
   auto& auxWord = bldr.feature("auxWord")
-                      .matchAnyRowOfCsv("助詞\n助動詞\n判定詞", {pos})
-                      .ifTrue({surface, pos, subpos})
-                      .ifFalse({pos});
+      .matchAnyRowOfCsv("助詞\n助動詞\n判定詞", {pos})
+      .ifTrue({surface, pos, subpos})
+      .ifFalse({pos});
   auto& surfaceLength = bldr.feature("surfaceLength").length(surface);
   auto& isDevoiced = bldr.feature("isDevoiced").matchValue(features, "濁音化");
   auto& nominalize = bldr.feature("nominalize").matchValue(features, "名詞化");
@@ -133,8 +136,6 @@ Status SpecFactory::makeSpec(core::spec::AnalysisSpec* spec) {
   bldr.trigram({pos, subpos, conjform}, {pos, subpos, conjform},
                {pos, subpos, conjform});
   bldr.trigram({lexicalized}, {lexicalized}, {lexicalized});
-
-  return bldr.build(spec);
 }
 
 }  // jumandic

@@ -15,7 +15,7 @@ set(core_hdrs darts.h darts_trie.h dictionary.h impl/field_import.h impl/field_r
         impl/feature_impl_combine.h spec/spec_serialization.h runtime_info.h analysis/unk_maker_types.h
         impl/model_format.h impl/model_io.h impl/model_format_ser.h impl/runtime_ser.h spec/spec_ser.h
         analysis/unk_nodes.h analysis/lattice_plugin.h analysis/score_api.h analysis/perceptron.h
-        analysis/score_processor.h)
+        analysis/score_processor.h analysis/analysis_result.h)
 
 set(core_test_srcs darts_trie_test.cc dictionary_test.cc impl/field_import_test.cc
         impl/field_reader_test.cc impl/feature_impl_prim_test.cc impl/feature_impl_compute_test.cc
