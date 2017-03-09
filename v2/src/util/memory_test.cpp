@@ -69,6 +69,7 @@ TEST_CASE("allocator works with several pages and reset") {
   CHECK(a3 != a4);
 
   mgr.reset();
+  c.reset();
 
   auto b1 = c->allocateArray<int>(180);
   auto b2 = c->allocateArray<int>(180);

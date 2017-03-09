@@ -36,6 +36,14 @@ Manager::~Manager() {
     free(obj.base);
   }
 }
+
+void Manager::reset() {
+  for (auto& page: pages_) {
+    free(page.base);
+  }
+  pages_.clear();
+}
+
 #else
 void* ManagedAllocatorCore::allocate_memory(size_t size, size_t alignment) {
   auto address = Align(offset_, alignment);
@@ -106,6 +114,12 @@ Manager::~Manager() {
 }
 
 #endif  // JUMANPP_USE_DEFAULT_ALLOCATION
+
+void ManagedAllocatorCore::reset() {
+  base_ = nullptr;
+  offset_ = 0;
+  end_ = 0;
+}
 }
 }
 }

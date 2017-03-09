@@ -37,9 +37,11 @@ class AnalyzerImpl {
   const OutputManager& output() const { return outputManager_; }
 
   void reset() {
-    memMgr_.reset();
     lattice_.reset();
     xtra_.reset();
+    memMgr_.reset();
+    alloc_->reset();
+    sproc_ = nullptr;
   }
 
   Status resetForInput(StringPiece input);

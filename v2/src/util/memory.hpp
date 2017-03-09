@@ -94,6 +94,8 @@ class ManagedAllocatorCore {
   ManagedPtr<T> make_unique(Args&&... args) {
     return ManagedPtr<T>(make<T, Args...>(std::forward<Args...>(args...)));
   };
+
+  void reset();
 };
 
 class Manager {

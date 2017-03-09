@@ -28,7 +28,7 @@ protected:
   std::unique_ptr<core::CoreHolder> coreHolder;
   //loaded model up to here
 
-  std::vector<float> perceptronWeights{1024*1024};
+  std::vector<float> perceptronWeights;
   core::analysis::ScoreConfig scorers;
 
   //use default values
@@ -39,7 +39,9 @@ public:
 
   virtual Status initPerceptron() {
     std::default_random_engine rng{0xfeed};
-    std::uniform_real_distribution<float> dirst{-0.001f, 0.001f};
+    std::normal_distribution<float> dirst{0, 0.001};
+    constexpr size_t perc_size = 4 * 1024 * 1024;
+    perceptronWeights.resize(perc_size);
     for (size_t i = 0; i < perceptronWeights.size(); ++i) {
       perceptronWeights[i] = dirst(rng);
     }

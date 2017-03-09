@@ -49,7 +49,6 @@ class ExtraNodesContext {
   util::memory::ManagedAllocatorCore* alloc_;
   std::vector<ExtraNode*> extraNodes_;
   util::FlatMap<StringPiece, i32> stringPtrs_;
-  std::vector<StringPiece> strings_;
 
   ExtraNode* allocateExtra() {
     size_t memory =
@@ -113,7 +112,6 @@ class ExtraNodesContext {
 
   void reset() {
     extraNodes_.clear();
-    strings_.clear();
     stringPtrs_.clear();
   }
 

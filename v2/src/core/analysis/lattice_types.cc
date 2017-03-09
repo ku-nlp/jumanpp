@@ -25,7 +25,10 @@ Status Lattice::makeBoundary(const LatticeBoundaryConfig &lbc,
   return Status::Ok();
 }
 
-void Lattice::reset() { boundaries.clear(); }
+void Lattice::reset() {
+  boundaries.clear();
+  boundaries.shrink_to_fit();
+}
 
 void Lattice::installPlugin(LatticePlugin *plugin) { this->plugin = plugin; }
 
