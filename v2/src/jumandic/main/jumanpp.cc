@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
     Status st = exec.analyze(input);
     if (!st) {
       std::cerr << "error when analyzing sentence [ " << input << "] :" << st.message;
-      return 1;
+      std::cout << "EOS\n";
     } else {
       std::cout << exec.output();
     }
