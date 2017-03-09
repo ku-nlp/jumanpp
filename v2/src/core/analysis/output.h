@@ -33,6 +33,7 @@ class NodeWalker {
   util::ArraySlice<i32> nodes_;
   i32 remaining_;
   const OutputManager* mgr_;
+  EntryPtr current_ {EntryPtr::EOS()};
   friend class OutputManager;
 
   bool handleMultiple();
@@ -57,6 +58,8 @@ class NodeWalker {
     *result = values_.at(fieldIdx);
     return true;
   }
+
+  EntryPtr eptr() const { return current_; }
 
   bool isSuccess() const { return status_ != NodeLookupStatus::Failure; }
 };

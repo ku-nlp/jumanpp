@@ -102,13 +102,14 @@ EntryPtr UnkNodesContext::makePtr(StringPiece surface,
                                   const UnkNodeConfig& conf, bool notPrefix) {
   auto node = xtra_->makeUnk(conf.base);
   auto data = xtra_->nodeContent(node);
-  auto sptr = xtra_->pointerFor(surface);
+  node->header.unk.surface = surface;
   u64 hash = util::hashing::murmurhash3_memory(surface.begin(), surface.end(),
                                                0xa76210bf);
   u32 trimmed = (u32)hash;
-  node->header.unk.contentHash = static_cast<i32>(trimmed) | 0x8000'0000;
+  auto hashValue = static_cast<i32>(trimmed) | 0x8000'0000;
+  node->header.unk.contentHash = hashValue;
   JPP_DCHECK_LT(node->header.unk.contentHash, 0);
-  conf.fillElems(data, sptr);
+  conf.fillElems(data, hashValue);
   if (conf.notPrefixIndex != -1) {
     xtra_->putPlaceholderData(node, conf.notPrefixIndex, (i32)notPrefix);
   }

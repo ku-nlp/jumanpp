@@ -24,6 +24,7 @@ struct AliasNodeHeader {
 
 struct UnkNodeHeader {
   i32 contentHash;
+  StringPiece surface;
 };
 
 struct ExtraNodeHeader {
@@ -88,10 +89,8 @@ class ExtraNodesContext {
 
   i32 lengthOf(EntryPtr eptr) {
     JPP_DCHECK(eptr.isSpecial());
-    i32 realPtr = eptr.extPtr();
-    JPP_DCHECK_IN(realPtr, 0, strings_.size());
-    auto sp = strings_[realPtr];
-    return (i32)sp.size();
+    auto n = node(eptr);
+    return n->header.unk.surface.size();
   }
 
   void putPlaceholderData(EntryPtr ptr, i32 idx, i32 value) {
@@ -118,25 +117,6 @@ class ExtraNodesContext {
     stringPtrs_.clear();
   }
 
-  /**
-   * Register this string, so it would be usable as a pointer.
-   * This version does not intern content of a string, simply assings an id to
-   * one
-   * \see intern
-   * @param piece
-   * @return
-   */
-  i32 pointerFor(StringPiece piece) {
-    auto it = stringPtrs_.find(piece);
-    if (it == stringPtrs_.end()) {
-      i32 idx = ~static_cast<i32>(strings_.size());
-      stringPtrs_[piece] = idx;
-      strings_.push_back(piece);
-      return idx;
-    } else {
-      return it->second;
-    }
-  }
 
   /**
    * Copy this string internally and register it, so it will be usable as a
@@ -145,22 +125,18 @@ class ExtraNodesContext {
    * @param piece
    * @return
    */
-  i32 intern(StringPiece piece) {
+  StringPiece intern(StringPiece piece) {
     auto it = stringPtrs_.find(piece);
     if (it == stringPtrs_.end()) {
       auto ptr = alloc_->allocateArray<char>(piece.size());
       std::copy(piece.begin(), piece.end(), ptr);
-      return pointerFor(StringPiece{
-          reinterpret_cast<StringPiece::pointer_t>(ptr), piece.size()});
+      StringPiece copied {ptr, ptr + piece.size()};
+      stringPtrs_[copied] = 0;
     }
-    return it->second;
+    return it->first;
   }
 
-  StringPiece string(i32 ptr) const {
-    i32 actual = ~ptr;
-    JPP_DCHECK_IN(actual, 0, strings_.size());
-    return strings_[actual];
-  }
+
 };
 
 }  // analysis

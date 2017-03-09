@@ -90,6 +90,7 @@ bool OutputManager::locate(EntryPtr ptr, NodeWalker *result) const {
     if (node->header.type == ExtraNodeType::Unknown) {
       result->status_ = NodeLookupStatus::Single;
       result->remaining_ = 1;
+      result->current_ = ptr;
       auto data = xtra_->nodeContent(node);
       std::copy(data.begin(), data.end(), result->values_.begin());
       return true;
@@ -100,6 +101,7 @@ bool OutputManager::locate(EntryPtr ptr, NodeWalker *result) const {
     entry.fill(result->values_, result->values_.size());
     result->remaining_ = 1;
     result->status_ = NodeLookupStatus::Single;
+    result->current_ = ptr;
     return true;
   }
   return false;
@@ -124,7 +126,7 @@ StringPiece StringField::operator[](const NodeWalker &node) const {
   i32 value = 0;
   if (node.valueOf(index_, &value)) {
     if (value < 0) {
-      return xtra_->string(value);
+      return xtra_->node(node.eptr())->header.unk.surface;
     }
     StringPiece result;
     if (reader_.readAt(value, &result)) {
