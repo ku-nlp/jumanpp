@@ -144,6 +144,12 @@ void StringField::initialize(i32 index, const ExtraNodesContext *xtra,
   new (&reader_) dic::impl::StringStorageReader{reader};
 }
 
+i32 StringField::pointer(const NodeWalker &node) const {
+  i32 value = 0;
+  node.valueOf(index_, &value);
+  return value;
+}
+
 StringListIterator StringListField::operator[](const NodeWalker &node) const {
   i32 ptr = -1;
   auto status = node.valueOf(index_, &ptr);

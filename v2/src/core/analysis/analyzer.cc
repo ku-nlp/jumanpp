@@ -14,6 +14,10 @@ Analyzer::Analyzer(const CoreHolder *core, const AnalyzerConfig &cfg)
 
 Analyzer::~Analyzer() {}
 
+const OutputManager &Analyzer::output() const {
+  return pimpl_->output();
+}
+
 }  // analysis
 }  // core
 }  // jumanpp

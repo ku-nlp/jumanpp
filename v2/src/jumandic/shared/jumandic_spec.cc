@@ -11,7 +11,14 @@ namespace jumandic {
 Status SpecFactory::makeSpec(core::spec::AnalysisSpec* spec) {
   core::spec::dsl::ModelSpecBuilder bldr;
   fillSpec(bldr);
-  return bldr.build(spec);
+  JPP_RETURN_IF_ERROR(bldr.build(spec));
+  auto specColSize = spec->dictionary.columns.size();
+  if (JumandicNumFields != specColSize) {
+    return Status::InvalidState() 
+        << "please fix number of columns in jumandic::SpecFactory" <<
+        "right now spec has " << specColSize << " and SpecFactory has " << JumandicNumFields;
+  }
+  return Status::Ok();
 }
 
 //頂く,
@@ -26,6 +33,7 @@ Status SpecFactory::makeSpec(core::spec::AnalysisSpec* spec) {
 // いただく,
 // 頂く/いただく,
 // 付属動詞候補（タ系） 謙譲動詞:貰う/もらう;食べる/たべる;飲む/のむ
+
 void SpecFactory::fillSpec(core::spec::dsl::ModelSpecBuilder &bldr) {
   auto& surface = bldr.field(1, "surface").strings().trieIndex();
   auto& pos = bldr.field(5, "pos").strings().emptyValue("*");

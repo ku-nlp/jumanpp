@@ -11,6 +11,8 @@
 namespace jumanpp {
 namespace jumandic {
 
+static constexpr i32 JumandicNumFields = 9;
+
 class SpecFactory {
  public:
   static const StringPiece lexicalizedData;

@@ -34,6 +34,7 @@ class Analyzer {
   Analyzer(Analyzer&&) = delete;
 
   Analyzer(const CoreHolder* core, const AnalyzerConfig& cfg);
+  const OutputManager& output() const;
   ~Analyzer();
 };
 

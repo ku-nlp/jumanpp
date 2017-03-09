@@ -77,6 +77,7 @@ class StringField {
   StringField() {}
   StringField(const StringField&) = delete;
   StringPiece operator[](const NodeWalker& node) const;
+  i32 pointer(const NodeWalker& node) const;
 };
 
 class StringListIterator {
@@ -95,6 +96,10 @@ class StringListIterator {
       return reader_.readAt(current_, result);
     }
     return false;
+  }
+
+  bool isEmpty() const {
+    return elements_.remaining() == 0;
   }
 };
 
