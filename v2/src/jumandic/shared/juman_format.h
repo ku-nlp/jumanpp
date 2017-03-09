@@ -51,7 +51,7 @@ class JumanFormat {
   core::analysis::NodeWalker walker;
 
 public:
-  JumanFormat(i32 entrySize): walker{&fieldBuffer} {
+  JumanFormat(): walker{&fieldBuffer} {
 
   }
 

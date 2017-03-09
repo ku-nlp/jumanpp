@@ -16,16 +16,50 @@ namespace analysis {
 class Lattice;
 
 class AnalysisPath {
-  std::vector<ConnectionBeamElement> beam_;
-  std::vector<u32> sizes_;
+  // Pointers to beam elements from EOS to BOS order (!)
+  // it is reversed morhpeme order!
+  // Pointers to nodes with the same score are stored in beam order.
+  std::vector<ConnectionPtr> elems_;
+  // offsets to elements of previous array
+  // begin[last] == offsets[0]
+  // begin[last-1] == end[last] == offsets[1]
+  // ...
+  // begin[first] == end[first+1] == offsets[offsets.size - 2]
+  // end[first] == offsets[offsets.size - 1]
+  std::vector<u32> offsets_;
   i32 currentChunk_;
   i32 currentNode_;
 public:
 
-  bool nextChunk();
-  i32 remainingNodesInChunk() const;
-  i32 totalNodesInChunk() const;
-  bool nextNode(ConnectionBeamElement* result);
+  bool nextBoundary() {
+    currentChunk_ += 1;
+    currentNode_ = -1;
+    return currentChunk_ < offsets_.size() - 1;
+  }
+
+  i32 remainingNodesInChunk() const {
+    return totalNodesInChunk() - currentNode_;
+  }
+
+  i32 totalNodesInChunk() const {
+    auto idx = offsets_.size() - currentChunk_ - 1;
+    JPP_DCHECK_IN(idx, 1, offsets_.size());
+    return offsets_[idx] - offsets_[idx - 1];
+  }
+
+  bool nextNode(ConnectionPtr* result) {
+    currentNode_ += 1;
+    bool status = remainingNodesInChunk() > 0;
+    if (status) {
+      auto beginIdx = offsets_.size() - currentChunk_ - 2;
+      JPP_DCHECK_IN(beginIdx, 0, offsets_.size());
+      auto begin = offsets_[beginIdx];
+      auto idx = begin + currentNode_;
+      JPP_DCHECK_IN(idx, 0, elems_.size());
+      *result = elems_[idx];
+    }
+    return status;
+  }
 
 
   Status fillIn(Lattice* l);

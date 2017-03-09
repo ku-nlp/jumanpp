@@ -7,6 +7,7 @@
 
 #include "testing/test_analyzer.h"
 #include "core/analysis/perceptron.h"
+#include "core/analysis/analysis_result.h"
 
 namespace tests {
 
@@ -30,6 +31,8 @@ struct Node {
   std::vector<i32> entries;
   std::vector<u64> primitve;
   std::vector<u64> pattern;
+  std::string f1;
+  std::string f2;
 };
 
 class PrimFeatureTestEnv {
@@ -42,6 +45,7 @@ class PrimFeatureTestEnv {
 
   std::unique_ptr<HashedFeaturePerceptron> hfp;
   ScoreConfig sconf;
+  AnalysisPath top1;
 
 public:
   template <typename Fn>
@@ -79,6 +83,10 @@ public:
     sconf.feature = hfp.get();
   }
 
+  AnalysisPath& top() {
+    return top1;
+  }
+
   void analyze(StringPiece str) {
     CAPTURE(str);
     CHECK_OK(tenv.analyzer->resetForInput(str));
@@ -90,6 +98,7 @@ public:
     analyze(str);
     tenv.analyzer->fixupLattice();
     CHECK_OK(tenv.analyzer->computeScores(&sconf));
+    top1.fillIn(tenv.analyzer->lattice());
   }
 
   size_t numNodeSeeds() const {
@@ -99,7 +108,7 @@ public:
   Node uniqueNode(StringPiece surface, i32 position) {
     CAPTURE(surface);
     CAPTURE(position);
-    auto& l = tenv.analyzer->lattice();
+    auto& l = *tenv.analyzer->lattice();
     auto b = l.boundary(position + 2);
     auto starts = b->starts();
     auto& output = tenv.analyzer->output();
@@ -136,7 +145,7 @@ public:
     CAPTURE(af);
     CAPTURE(bf);
     CAPTURE(position);
-    auto& l = tenv.analyzer->lattice();
+    auto& l = *tenv.analyzer->lattice();
     auto b = l.boundary(position + 2);
     auto starts = b->starts();
     auto& output = tenv.analyzer->output();
@@ -181,7 +190,7 @@ public:
 
   util::ArraySlice<u64> prim(i32 start, i32 node) {
     CAPTURE(start);
-    auto bnd = tenv.analyzer->lattice().boundary(start + 2);
+    auto bnd = tenv.analyzer->lattice()->boundary(start + 2);
     auto pBoundary = bnd->starts();
     REQUIRE(pBoundary->arraySize() > 0);
     return pBoundary->primitiveFeatureData().row(node);
@@ -201,6 +210,24 @@ public:
                       << "]: " << flda[walker] << " " << fldb[walker]);
       }
     }
+  }
+  
+  Node target(const ConnectionPtr& ptr) {
+    auto bnd = tenv.analyzer->lattice()->boundary(ptr.boundary);
+    auto starts = bnd->starts();
+    Node n;
+    auto pos = ptr.right;
+    util::copy_insert(starts->entryData().row(pos), n.entries);
+    util::copy_insert(starts->primitiveFeatureData(), n.primitve);
+    util::copy_insert(starts->patternFeatureData(), n.pattern);
+    n.eptr = starts->entryPtrData().at(pos);
+
+    auto o = tenv.analyzer->output();
+    auto w = o.nodeWalker();
+    REQUIRE(o.locate(LatticeNodePtr{ptr.boundary, ptr.right}, &w));
+    n.f1 = flda[w].str();
+    n.f2 = fldb[w].str();
+    return n;
   }
 
   ~PrimFeatureTestEnv() {

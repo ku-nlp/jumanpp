@@ -86,9 +86,9 @@ class ExtraNodesContext {
     return extraNodes_[idx];
   }
 
-  i32 lengthOf(i32 field, i32 fieldPtr) {
-    JPP_DCHECK_LT(fieldPtr, 0);
-    i32 realPtr = ~fieldPtr;
+  i32 lengthOf(EntryPtr eptr) {
+    JPP_DCHECK(eptr.isSpecial());
+    i32 realPtr = eptr.extPtr();
     JPP_DCHECK_IN(realPtr, 0, strings_.size());
     auto sp = strings_[realPtr];
     return (i32)sp.size();

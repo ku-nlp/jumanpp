@@ -9,30 +9,32 @@ namespace jumandic {
 namespace output {
 
 Status JumanFormat::format(const core::analysis::Analyzer &analysis) {
+  printer.reset();
   JPP_RETURN_IF_ERROR(analysisResult.reset(analysis));
   JPP_RETURN_IF_ERROR(analysisResult.fillTop1(&top1));
 
   auto& outMgr = analysis.output();
 
-  while (top1.nextChunk()) {
+  while (top1.nextBoundary()) {
     if(top1.remainingNodesInChunk() <= 0) {
       return Status::InvalidState() << "no nodes in chunk";
     }
-    core::analysis::ConnectionBeamElement cbe;
-    if (!top1.nextNode(&cbe)) {
+    core::analysis::ConnectionPtr connPtr;
+    if (!top1.nextNode(&connPtr)) {
       return Status::InvalidState() << "failed to load a node";
     }
 
-    formatOne(outMgr, cbe.ptr, true);
-    while (top1.nextNode(&cbe)) {
-      formatOne(outMgr, cbe.ptr, false);
+    formatOne(outMgr, connPtr, true);
+    while (top1.nextNode(&connPtr)) {
+      formatOne(outMgr, connPtr, false);
     }
   }
+  printer << "EOS\n";
 
-  return Status::NotImplemented();
+  return Status::Ok();
 }
 
-StringPiece ifEmpty(const StringPiece& s1, const StringPiece& s2) {
+inline const StringPiece& ifEmpty(const StringPiece& s1, const StringPiece& s2) {
   if (s1.size() > 0) {
     return s1;
   }
@@ -44,7 +46,7 @@ bool JumanFormat::formatOne(const core::analysis::OutputManager& om, const core:
   JPP_RET_CHECK(om.locate(nodePtr, &walker));
   while (walker.next()) {
     if (!first) {
-      printer << "@";
+      printer << "@ ";
     }
     printer << flds.surface[walker] << " ";
     printer << flds.baseform[walker] << " ";

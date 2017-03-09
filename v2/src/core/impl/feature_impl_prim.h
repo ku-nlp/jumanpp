@@ -107,7 +107,7 @@ class LengthPrimFeatureImpl {
                     const util::ArraySlice<i32>& entry,
                     util::MutableArraySlice<u64>* features) const noexcept {
     auto fldPtr = entry[fieldIdx];
-    auto length = ctx->lengthOf(fieldIdx, fldPtr, field);
+    auto length = ctx->lengthOf(entryPtr, fieldIdx, fldPtr, field);
     JPP_DCHECK_NE(length, -1);
     features->at(featureIdx) = (u32)length;
   }

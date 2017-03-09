@@ -28,13 +28,21 @@ struct ScoreConfig;
 
 class Analyzer {
   std::unique_ptr<AnalyzerImpl> pimpl_;
+  AnalyzerImpl* ptr_;
+  ScoreConfig* scorer_;
 
  public:
+  Analyzer();
   Analyzer(const Analyzer&) = delete;
   Analyzer(Analyzer&&) = delete;
 
-  Analyzer(const CoreHolder* core, const AnalyzerConfig& cfg);
+  Status initialize(const CoreHolder* core, const AnalyzerConfig& cfg, ScoreConfig* scorer);
+  Status initialize(AnalyzerImpl* impl, ScoreConfig* scorer);
+  Status analyze(StringPiece input);
   const OutputManager& output() const;
+
+  ScoreConfig* scorer() const { return scorer_; }
+  AnalyzerImpl* impl() const { return ptr_; }
   ~Analyzer();
 };
 

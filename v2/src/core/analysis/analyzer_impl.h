@@ -51,7 +51,9 @@ class AnalyzerImpl {
   void fixupLattice();
   Status computeScores(ScoreConfig* sconf);
 
-  Status analyze(StringPiece input) {
+  Lattice* lattice() { return &lattice_; }
+
+  Status preprocess(StringPiece input) {
     JPP_RETURN_IF_ERROR(resetForInput(input));
     JPP_RETURN_IF_ERROR(makeNodeSeedsFromDic());
     return Status::Ok();

@@ -53,6 +53,7 @@ class MatchTupleComputeFeatureImpl {
     JPP_DCHECK_GT(dataEntries, 0);
     JPP_DCHECK((matchData.size() % dataEntries == 0) &&
                "matchData should have correct number of entries");
+    JPP_DCHECK_LT(references.size(), MaxQueryElements);
   }
 
   MatchTupleComputeFeatureImpl(i32 featureIdx,
@@ -69,6 +70,7 @@ class MatchTupleComputeFeatureImpl {
     JPP_DCHECK_GT(dataEntries, 0);
     JPP_DCHECK((matchData.size() % dataEntries == 0) &&
                "matchData should have correct number of entries");
+    JPP_DCHECK_LT(references.size(), MaxQueryElements);
   }
 
   inline static ComareResult compareSameSize(util::ArraySlice<i32> left,
@@ -86,7 +88,6 @@ class MatchTupleComputeFeatureImpl {
   }
 
   inline bool matches(const util::ArraySlice<i32>& entry) const noexcept {
-    JPP_DCHECK_LT(dataEntries, MaxQueryElements);
     JPP_DCHECK_EQ(matchData.size() % dataEntries, 0);
     i32 buffer[MaxQueryElements];
 

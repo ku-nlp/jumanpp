@@ -28,7 +28,7 @@ ScoreProcessor *ScoreProcessor::make(
   auto scoreBuf = alloc->allocateBuf<Score>(maxstart * beamsize);
   auto connBuf = alloc->allocateBuf<ConnectionBeamElement>(beamsize);
   auto ngramBuf = alloc->allocateBuf<u32>(numFeatures * maxstart);
-  util::Sliceable<u64> t2sl{t2fbuffer, numFeatures, beamsize};
+  util::Sliceable<u64> t2sl{t2fbuffer, patFeatures, beamsize};
   util::Sliceable<Score> scoreSl{scoreBuf, maxstart, beamsize};
   util::Sliceable<u32> ngramSl{ngramBuf, numFeatures, maxstart};
   return alloc->make<ScoreProcessor>(lattice, t2sl, scoreSl, connBuf, ngramSl);
@@ -42,8 +42,8 @@ ScoreProcessor::ScoreProcessor(
     : lattice_(lattice_),
       t2features(t2features),
       scoreBuffer(scoreBuffer),
-      beamPtrs(beamPtrs),
-      ngramFeatures(ngramFeatures) {}
+      ngramFeatures(ngramFeatures),
+      beamPtrs(beamPtrs) {}
 
 void ScoreProcessor::computeNgramFeatures(
     i32 beamIdx, const features::FeatureHolder &features,

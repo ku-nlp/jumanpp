@@ -26,7 +26,6 @@ class TestAnalyzer : public core::analysis::AnalyzerImpl {
  public:
   TestAnalyzer(const CoreHolder* core, const AnalyzerConfig& cfg)
       : AnalyzerImpl(core, cfg) {}
-  Lattice& lattice() { return lattice_; }
   LatticeBuilder& latticeBuilder() { return latticeBldr_; }
 };
 
@@ -56,7 +55,7 @@ class TestEnv {
     REQUIRE(spec::loadSpec(buf.contents(), &saveLoad));
   }
 
-  void importDic(StringPiece data, StringPiece name = StringPiece{"test"}) {
+  void saveDic(const StringPiece &data, const StringPiece name = StringPiece{"test"}) {
     REQUIRE_OK(origDicBuilder.importSpec(&saveLoad));
     REQUIRE_OK(origDicBuilder.importCsv(name, data));
     RuntimeInfo runtimeOrig{};
@@ -71,6 +70,10 @@ class TestEnv {
       REQUIRE_OK(saver.open(tmpFile.name()));
       REQUIRE_OK(saver.save(nfo));
     }
+  }
+
+  void importDic(StringPiece data, StringPiece name = StringPiece{"test"}) {
+    saveDic(data, name);
     REQUIRE_OK(fsModel.open(tmpFile.name()));
     REQUIRE_OK(fsModel.load(&actualInfo));
     REQUIRE_OK(dicBuilder.restoreDictionary(actualInfo, &actualRuntime));
