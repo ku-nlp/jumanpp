@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
     std::getline(*inputSrc, input);
     Status st = exec.analyze(input);
     if (!st) {
-      std::cerr << "error when analyzing sentence [ " << input << "] :" << st.message;
+      std::cerr << "error when analyzing sentence [ " << input << "] :" << st.message << "\n";
       std::cout << "EOS\n";
     } else {
       std::cout << exec.output();
