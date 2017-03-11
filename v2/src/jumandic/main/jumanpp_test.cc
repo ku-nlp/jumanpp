@@ -15,7 +15,7 @@ class JumandicEnv : protected JumanppExec {
   analysis::AnalysisPath top1;
 
  public:
-  JumandicEnv() {
+  JumandicEnv() : JumanppExec({}) {
     tenv.spec([](spec::dsl::ModelSpecBuilder& bldr) {
       jumanpp::jumandic::SpecFactory::fillSpec(bldr);
     });
@@ -25,7 +25,9 @@ class JumandicEnv : protected JumanppExec {
     util::MappedFileFragment frag;
     REQUIRE_OK(fl.map(&frag, 0, fl.size()));
     tenv.saveDic(frag.asStringPiece(), "minimal.dic");
-    REQUIRE_OK(init(tenv.tmpFile.name()));
+    conf.modelFile = tenv.tmpFile.name();
+    conf.rnnModelFile = "rnn/testlm";
+    REQUIRE_OK(init());
   }
 
   void testAnalyze(StringPiece s) {
