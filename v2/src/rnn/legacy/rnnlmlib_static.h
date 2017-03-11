@@ -7,6 +7,7 @@
 
 #include <unordered_map>
 #include "rnnlmlib.h"
+#include "memory.h"
 
 namespace RNNLM_legacy {
 

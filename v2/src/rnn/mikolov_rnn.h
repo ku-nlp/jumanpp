@@ -9,6 +9,7 @@
 #include "util/status.hpp"
 #include "util/string_piece.h"
 #include "util/types.hpp"
+#include <memory>
 
 namespace jumanpp {
 namespace rnn {
