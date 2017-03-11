@@ -46,10 +46,11 @@ bool LatticeBuilder::checkConnectability() {
 }
 
 void LatticeBuilder::sortSeeds() {
-  std::stable_sort(seeds_.begin(), seeds_.end(),
-            [](const LatticeNodeSeed &l, const LatticeNodeSeed &r) -> bool {
-              return l.codepointStart < r.codepointStart;
-            });
+  std::stable_sort(
+      seeds_.begin(), seeds_.end(),
+      [](const LatticeNodeSeed &l, const LatticeNodeSeed &r) -> bool {
+        return l.codepointStart < r.codepointStart;
+      });
 }
 
 void LatticeBuilder::reset(LatticePosition maxCodepoints) {

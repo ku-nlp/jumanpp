@@ -6,7 +6,6 @@
 
 using namespace tests;
 
-
 TEST_CASE("primitive features are computed") {
   StringPiece dic = "XXX,z,KANA\na,b,\nb,c,\n";
   PrimFeatureTestEnv env{

@@ -115,7 +115,6 @@ class ExtraNodesContext {
     stringPtrs_.clear();
   }
 
-
   /**
    * Copy this string internally and register it, so it will be usable as a
    * pointer.
@@ -128,13 +127,11 @@ class ExtraNodesContext {
     if (it == stringPtrs_.end()) {
       auto ptr = alloc_->allocateArray<char>(piece.size());
       std::copy(piece.begin(), piece.end(), ptr);
-      StringPiece copied {ptr, ptr + piece.size()};
+      StringPiece copied{ptr, ptr + piece.size()};
       stringPtrs_[copied] = 0;
     }
     return it->first;
   }
-
-
 };
 
 }  // analysis

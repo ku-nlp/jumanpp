@@ -14,9 +14,10 @@ Status SpecFactory::makeSpec(core::spec::AnalysisSpec* spec) {
   JPP_RETURN_IF_ERROR(bldr.build(spec));
   auto specColSize = spec->dictionary.columns.size();
   if (JumandicNumFields != specColSize) {
-    return Status::InvalidState() 
-        << "please fix number of columns in jumandic::SpecFactory" <<
-        "right now spec has " << specColSize << " and SpecFactory has " << JumandicNumFields;
+    return Status::InvalidState()
+           << "please fix number of columns in jumandic::SpecFactory"
+           << "right now spec has " << specColSize << " and SpecFactory has "
+           << JumandicNumFields;
   }
   return Status::Ok();
 }
@@ -34,7 +35,7 @@ Status SpecFactory::makeSpec(core::spec::AnalysisSpec* spec) {
 // 頂く/いただく,
 // 付属動詞候補（タ系） 謙譲動詞:貰う/もらう;食べる/たべる;飲む/のむ
 
-void SpecFactory::fillSpec(core::spec::dsl::ModelSpecBuilder &bldr) {
+void SpecFactory::fillSpec(core::spec::dsl::ModelSpecBuilder& bldr) {
   auto& surface = bldr.field(1, "surface").strings().trieIndex();
   auto& pos = bldr.field(5, "pos").strings().emptyValue("*");
   auto& subpos = bldr.field(6, "subpos").strings().emptyValue("*");
@@ -46,9 +47,9 @@ void SpecFactory::fillSpec(core::spec::dsl::ModelSpecBuilder &bldr) {
   auto& features = bldr.field(12, "features").stringLists().emptyValue("NIL");
 
   auto& auxWord = bldr.feature("auxWord")
-      .matchAnyRowOfCsv("助詞\n助動詞\n判定詞", {pos})
-      .ifTrue({surface, pos, subpos})
-      .ifFalse({pos});
+                      .matchAnyRowOfCsv("助詞\n助動詞\n判定詞", {pos})
+                      .ifTrue({surface, pos, subpos})
+                      .ifFalse({pos});
   auto& surfaceLength = bldr.feature("surfaceLength").length(surface);
   auto& isDevoiced = bldr.feature("isDevoiced").matchValue(features, "濁音化");
   auto& nominalize = bldr.feature("nominalize").matchValue(features, "名詞化");

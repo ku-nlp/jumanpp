@@ -14,8 +14,8 @@
 #include <cstddef>
 #include <memory>
 #include <vector>
-#include "util/sliceable_array.h"
 #include "util/common.hpp"
+#include "util/sliceable_array.h"
 
 namespace jumanpp {
 namespace util {
@@ -84,20 +84,21 @@ class ManagedAllocatorCore {
   }
 
   template <typename T>
-  util::Sliceable<T> allocate2d(size_t rows, size_t cols, size_t align = alignof(T)) {
-    auto buf = allocateBuf<T>(rows*cols, align);
+  util::Sliceable<T> allocate2d(size_t rows, size_t cols,
+                                size_t align = alignof(T)) {
+    auto buf = allocateBuf<T>(rows * cols, align);
     return util::Sliceable<T>{buf, cols, rows};
   }
 
   template <typename T, typename... Args>
-  T *make(Args&&... args) {
+  T *make(Args &&... args) {
     T *buffer = allocate<T>(alignof(T));
     auto obj = new (buffer) T(std::forward<Args>(args)...);
     return obj;
   };
 
   template <typename T, typename... Args>
-  ManagedPtr<T> make_unique(Args&&... args) {
+  ManagedPtr<T> make_unique(Args &&... args) {
     return ManagedPtr<T>(make<T, Args...>(std::forward<Args...>(args...)));
   };
 

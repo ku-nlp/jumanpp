@@ -70,9 +70,10 @@ void ScoreProcessor::updateBeams(i32 boundary, i32 endPos, LatticeBoundary *bnd,
       for (int sw = 0; sw < scoreWeights.size(); ++sw) {
         s += scoreWeights[sw] * scores[sw];
       }
-      auto& prevBi = this->beamPtrs[prevBeam];
+      auto &prevBi = this->beamPtrs[prevBeam];
       auto cumScore = s + prevBi.totalScore;
-      ConnectionPtr cptr{bnd16, end16, ((u16)beginPos), (u16)prevBeam, &prevBi.ptr};
+      ConnectionPtr cptr{bnd16, end16, ((u16)beginPos), (u16)prevBeam,
+                         &prevBi.ptr};
       ConnectionBeamElement cbe{cptr, cumScore};
       EntryBeam beamObj{itemBeam};
       beamObj.pushItem(cbe);
@@ -107,12 +108,13 @@ void ScoreProcessor::gatherT2Features(
 
   for (int i = 0; i < beamSize_; ++i) {
     auto &ptr = beamPtrs[i];
-    //get actual nodeptr
+    // get actual nodeptr
     auto bnd1 = lattice.boundary(ptr.ptr.boundary);
     auto nodePtr = bnd1->ends()->nodePtrs().at(ptr.ptr.left);
-    //get pattern features
+    // get pattern features
     auto bnd2 = lattice.boundary(nodePtr.boundary);
-    auto patfeatures = bnd2->starts()->patternFeatureData().row(nodePtr.position);
+    auto patfeatures =
+        bnd2->starts()->patternFeatureData().row(nodePtr.position);
     auto row = t2features.row(i);
     util::copy_buffer(patfeatures, row);
   }

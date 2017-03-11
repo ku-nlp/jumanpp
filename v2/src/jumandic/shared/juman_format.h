@@ -5,13 +5,13 @@
 #ifndef JUMANPP_JUMAN_FORMAT_H
 #define JUMANPP_JUMAN_FORMAT_H
 
+#include <array>
+#include <sstream>
+#include "core/analysis/analysis_result.h"
 #include "core/analysis/analyzer.h"
 #include "core/analysis/output.h"
-#include "core/analysis/analysis_result.h"
-#include "util/printer.h"
 #include "jumandic/shared/jumandic_spec.h"
-#include <sstream>
-#include <array>
+#include "util/printer.h"
 
 namespace jumanpp {
 namespace jumandic {
@@ -50,22 +50,21 @@ class JumanFormat {
   std::array<i32, JumandicNumFields> fieldBuffer;
   core::analysis::NodeWalker walker;
 
-public:
-  JumanFormat(): walker{&fieldBuffer} {
-
-  }
+ public:
+  JumanFormat() : walker{&fieldBuffer} {}
 
   Status initialize(const core::analysis::OutputManager& om) {
     return flds.initialize(om);
   }
 
-  bool formatOne(const core::analysis::OutputManager& om, const core::analysis::ConnectionPtr& ptr, bool first);
+  bool formatOne(const core::analysis::OutputManager& om,
+                 const core::analysis::ConnectionPtr& ptr, bool first);
   Status format(const core::analysis::Analyzer& analysis);
   StringPiece result() const { return printer.result(); }
 };
 
-} // output
-} // jumandic
-} // jumanpp
+}  // output
+}  // jumandic
+}  // jumanpp
 
-#endif //JUMANPP_JUMAN_FORMAT_H
+#endif  // JUMANPP_JUMAN_FORMAT_H

@@ -2,12 +2,11 @@
 // Created by Arseny Tolmachev on 2017/03/09.
 //
 
-#include <iostream>
-#include <fstream>
 #include "jumanpp.h"
+#include <fstream>
+#include <iostream>
 
 using namespace jumanpp;
-
 
 int main(int argc, char** argv) {
   if (argc < 2) {
@@ -42,7 +41,8 @@ int main(int argc, char** argv) {
     std::getline(*inputSrc, input);
     Status st = exec.analyze(input);
     if (!st) {
-      std::cerr << "error when analyzing sentence [ " << input << "] :" << st.message << "\n";
+      std::cerr << "error when analyzing sentence [ " << input
+                << "] :" << st.message << "\n";
       std::cout << "EOS\n";
     } else {
       std::cout << exec.output();

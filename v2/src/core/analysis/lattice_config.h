@@ -19,15 +19,16 @@ using Score = float;
 struct alignas(alignof(u64)) ConnectionPtr {
   // boundary where the connection was created
   u16 boundary;
-  // offset of ending node inside the boundary (get the actual pointer from boundary.ends[left])
+  // offset of ending node inside the boundary (get the actual pointer from
+  // boundary.ends[left])
   u16 left;
-  //offset of starting node inside the boundary
+  // offset of starting node inside the boundary
   u16 right;
   // beam index for getting additional context
   // the context is stored in the current boundary
   u16 beam;
 
-  //pointer to the previous entry
+  // pointer to the previous entry
   const ConnectionPtr* previous;
 };
 

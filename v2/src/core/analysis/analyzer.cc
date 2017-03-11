@@ -11,22 +11,23 @@ namespace analysis {
 
 Analyzer::~Analyzer() {}
 
-const OutputManager &Analyzer::output() const {
-  return ptr_->output();
-}
+const OutputManager &Analyzer::output() const { return ptr_->output(); }
 
-Status Analyzer::initialize(const CoreHolder *core, const AnalyzerConfig &cfg, ScoreConfig* scorer) {
+Status Analyzer::initialize(const CoreHolder *core, const AnalyzerConfig &cfg,
+                            ScoreConfig *scorer) {
   auto totalScorerSize = scorer->others.size() + 1;
   if (core->latticeConfig().scoreCnt != totalScorerSize) {
-    return Status::InvalidParameter() << "number of scorers in core config does not match actual scorer number";
+    return Status::InvalidParameter() << "number of scorers in core config "
+                                         "does not match actual scorer number";
   }
-  
+
   if (scorer->feature == nullptr) {
     return Status::InvalidParameter() << "main scorer is not specified";
   }
-  
+
   if (scorer->scoreWeights.size() != totalScorerSize) {
-    return Status::InvalidParameter() << "total scorer size does not match size of score weights";
+    return Status::InvalidParameter()
+           << "total scorer size does not match size of score weights";
   }
 
   pimpl_.reset(new AnalyzerImpl{core, cfg});
@@ -35,7 +36,7 @@ Status Analyzer::initialize(const CoreHolder *core, const AnalyzerConfig &cfg, S
   return Status::Ok();
 }
 
-Status Analyzer::initialize(AnalyzerImpl *impl, ScoreConfig* scorer) {
+Status Analyzer::initialize(AnalyzerImpl *impl, ScoreConfig *scorer) {
   ptr_ = impl;
   scorer_ = scorer;
   return Status::Ok();
@@ -49,7 +50,7 @@ Status Analyzer::analyze(StringPiece input) {
   return Status::Ok();
 }
 
-Analyzer::Analyzer(){}
+Analyzer::Analyzer() {}
 
 }  // analysis
 }  // core

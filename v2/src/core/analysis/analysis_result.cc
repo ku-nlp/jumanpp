@@ -2,16 +2,15 @@
 // Created by Arseny Tolmachev on 2017/03/09.
 //
 
-#include <util/status.hpp>
 #include "analysis_result.h"
+#include <cmath>
+#include <util/status.hpp>
 #include "analyzer.h"
 #include "analyzer_impl.h"
-#include <cmath>
 
 namespace jumanpp {
 namespace core {
 namespace analysis {
-
 
 jumanpp::Status AnalysisResult::reset(const Analyzer &analyzer) {
   this->ptr_ = analyzer.impl()->lattice();
@@ -19,7 +18,7 @@ jumanpp::Status AnalysisResult::reset(const Analyzer &analyzer) {
 }
 
 Status AnalysisResult::fillTop1(AnalysisPath *result) {
-  return result->fillIn(ptr_);  
+  return result->fillIn(ptr_);
 }
 
 Status AnalysisPath::fillIn(Lattice *l) {
@@ -28,7 +27,7 @@ Status AnalysisPath::fillIn(Lattice *l) {
   offsets_.clear();
   elems_.reserve(bnds * 2);
   offsets_.reserve(bnds);
-  if (bnds == 3) { //empty string
+  if (bnds == 3) {  // empty string
     return Status::Ok();
   }
 
@@ -43,9 +42,9 @@ Status AnalysisPath::fillIn(Lattice *l) {
     return Status::InvalidState() << "last node was not EOS";
   }
 
-  const ConnectionPtr* topPtr = &lastStart->beamData().at(0).ptr;
+  const ConnectionPtr *topPtr = &lastStart->beamData().at(0).ptr;
 
-  //0 and 1 are BOS
+  // 0 and 1 are BOS
   offsets_.push_back(0);
   while (topPtr->boundary > 2) {
     auto bnd = l->boundary(topPtr->boundary);
@@ -62,7 +61,7 @@ Status AnalysisPath::fillIn(Lattice *l) {
       }
       elems_.push_back(*nextItem.ptr.previous);
     }
-    offsets_.push_back((u32) elems_.size());
+    offsets_.push_back((u32)elems_.size());
     topPtr = topPtr->previous;
   }
 
@@ -70,6 +69,6 @@ Status AnalysisPath::fillIn(Lattice *l) {
 
   return Status::Ok();
 }
-} // analysis
-} // core
-} // jumanpp
+}  // analysis
+}  // core
+}  // jumanpp

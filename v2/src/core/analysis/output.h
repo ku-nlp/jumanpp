@@ -33,7 +33,7 @@ class NodeWalker {
   util::ArraySlice<i32> nodes_;
   i32 remaining_;
   const OutputManager* mgr_;
-  EntryPtr current_ {EntryPtr::EOS()};
+  EntryPtr current_{EntryPtr::EOS()};
   friend class OutputManager;
 
   bool handleMultiple();
@@ -101,9 +101,7 @@ class StringListIterator {
     return false;
   }
 
-  bool isEmpty() const {
-    return elements_.remaining() == 0;
-  }
+  bool isEmpty() const { return elements_.remaining() == 0; }
 };
 
 class StringListField {

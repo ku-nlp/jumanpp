@@ -5,10 +5,10 @@
 #ifndef JUMANPP_CODEGEN_H
 #define JUMANPP_CODEGEN_H
 
-#include "util/string_piece.h"
 #include <vector>
-#include "util/printer.h"
 #include "util/array_slice.h"
+#include "util/printer.h"
+#include "util/string_piece.h"
 
 namespace jumanpp {
 namespace util {
@@ -23,11 +23,10 @@ std::string to_str(const T& o) {
 
 class PrintSemicolon {
   io::Printer& p;
-public:
-  PrintSemicolon(io::Printer &p) : p(p) {}
-  ~PrintSemicolon() {
-    p << ";\n";
-  }
+
+ public:
+  PrintSemicolon(io::Printer& p) : p(p) {}
+  ~PrintSemicolon() { p << ";\n"; }
 };
 
 struct ConstDeclaration {
@@ -66,7 +65,7 @@ struct GeneratedClass {
   std::vector<ConstDeclaration> decls;
 
   void addI32Const(StringPiece name, i32 v) {
-    ConstDeclaration decl {"jumanpp::i32", name.str(), {to_str(v)}};
+    ConstDeclaration decl{"jumanpp::i32", name.str(), {to_str(v)}};
     decls.push_back(decl);
   }
 
@@ -74,15 +73,14 @@ struct GeneratedClass {
     ConstDeclaration c;
     c.type = "jumanpp::i32";
     c.name = name.str() + " []";
-    for (auto i: vals) {
+    for (auto i : vals) {
       c.initialize.push_back(to_str(i));
     }
   }
-
 };
 
-} // codegen
-} // util
-} // jumanpp
+}  // codegen
+}  // util
+}  // jumanpp
 
-#endif //JUMANPP_CODEGEN_H
+#endif  // JUMANPP_CODEGEN_H

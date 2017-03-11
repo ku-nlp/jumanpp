@@ -5,9 +5,9 @@
 #ifndef JUMANPP_TEST_ANALYZER_ENV_H
 #define JUMANPP_TEST_ANALYZER_ENV_H
 
-#include "testing/test_analyzer.h"
-#include "core/analysis/perceptron.h"
 #include "core/analysis/analysis_result.h"
+#include "core/analysis/perceptron.h"
+#include "testing/test_analyzer.h"
 
 namespace tests {
 
@@ -16,7 +16,6 @@ using namespace jumanpp::core::spec;
 using namespace jumanpp::core::dic;
 using namespace jumanpp::testing;
 using namespace jumanpp;
-
 
 struct FeatureSet {
   dsl::FieldBuilder& a;
@@ -47,7 +46,7 @@ class PrimFeatureTestEnv {
   ScoreConfig sconf;
   AnalysisPath top1;
 
-public:
+ public:
   template <typename Fn>
   PrimFeatureTestEnv(StringPiece csvData, Fn fn, i32 beamSize = 1) {
     tenv.beamSize = beamSize;
@@ -83,9 +82,7 @@ public:
     sconf.feature = hfp.get();
   }
 
-  AnalysisPath& top() {
-    return top1;
-  }
+  AnalysisPath& top() { return top1; }
 
   void analyze(StringPiece str) {
     CAPTURE(str);
@@ -211,7 +208,7 @@ public:
       }
     }
   }
-  
+
   Node target(const ConnectionPtr& ptr) {
     auto bnd = tenv.analyzer->lattice()->boundary(ptr.boundary);
     auto starts = bnd->starts();
@@ -238,4 +235,4 @@ public:
 };
 }
 
-#endif //JUMANPP_TEST_ANALYZER_ENV_H
+#endif  // JUMANPP_TEST_ANALYZER_ENV_H

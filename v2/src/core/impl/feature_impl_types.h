@@ -88,7 +88,8 @@ class PrimitiveFeatureContext {
     return extraCtx->placeholderData(entryPtr, index);
   }
 
-  i32 lengthOf(EntryPtr eptr, i32 fieldNum, i32 fieldPtr, LengthFieldSource field) {
+  i32 lengthOf(EntryPtr eptr, i32 fieldNum, i32 fieldPtr,
+               LengthFieldSource field) {
     if (fieldPtr < 0) {
       return extraCtx->lengthOf(eptr);
     }

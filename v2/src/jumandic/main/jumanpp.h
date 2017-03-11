@@ -5,38 +5,37 @@
 #ifndef JUMANPP_JUMANPP_H
 #define JUMANPP_JUMANPP_H
 
+#include <random>
+#include "core/analysis/perceptron.h"
+#include "core/analysis/score_api.h"
 #include "core/impl/model_io.h"
 #include "jumandic/shared/juman_format.h"
-#include "core/analysis/score_api.h"
-#include "core/analysis/perceptron.h"
-#include <random>
 
 namespace jumanpp {
 
 class JumanppExec {
-protected:
+ protected:
   core::model::FilesystemModel model;
   jumandic::output::JumanFormat format;
   core::model::ModelInfo modelInfo;
   core::dic::DictionaryBuilder dicbldr;
   core::RuntimeInfo runtimeInfo;
   core::dic::DictionaryHolder dicHolder;
-  core::CoreConfig coreConf {
-      5, //beamSize
-      1, //numScorers
+  core::CoreConfig coreConf{
+      5,  // beamSize
+      1,  // numScorers
   };
   std::unique_ptr<core::CoreHolder> coreHolder;
-  //loaded model up to here
+  // loaded model up to here
 
   std::vector<float> perceptronWeights;
   core::analysis::ScoreConfig scorers;
 
-  //use default values
+  // use default values
   core::analysis::AnalyzerConfig analyzerConfig;
   core::analysis::Analyzer analyzer;
 
-public:
-
+ public:
   virtual Status initPerceptron() {
     std::default_random_engine rng{0xfeed};
     std::normal_distribution<float> dirst{0, 0.001};
@@ -55,11 +54,13 @@ public:
     JPP_RETURN_IF_ERROR(dicbldr.restoreDictionary(modelInfo, &runtimeInfo));
     JPP_RETURN_IF_ERROR(dicHolder.load(dicbldr.result()));
     coreHolder.reset(new core::CoreHolder{coreConf, runtimeInfo, dicHolder});
-    //inject static features here
+    // inject static features here
     JPP_RETURN_IF_ERROR(coreHolder->initialize(nullptr));
     JPP_RETURN_IF_ERROR(initPerceptron());
-    scorers.feature = new core::analysis::HashedFeaturePerceptron(perceptronWeights);
-    JPP_RETURN_IF_ERROR(analyzer.initialize(coreHolder.get(), analyzerConfig, &scorers));
+    scorers.feature =
+        new core::analysis::HashedFeaturePerceptron(perceptronWeights);
+    JPP_RETURN_IF_ERROR(
+        analyzer.initialize(coreHolder.get(), analyzerConfig, &scorers));
     JPP_RETURN_IF_ERROR(format.initialize(analyzer.output()));
     return Status::Ok();
   }
@@ -70,13 +71,10 @@ public:
     return Status::Ok();
   }
 
-  StringPiece output() const {
-    return format.result();
-  }
+  StringPiece output() const { return format.result(); }
 
   virtual ~JumanppExec() {}
 };
-
 }
 
-#endif //JUMANPP_JUMANPP_H
+#endif  // JUMANPP_JUMANPP_H

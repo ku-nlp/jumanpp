@@ -2,13 +2,13 @@
 // Created by Arseny Tolmachev on 2017/03/08.
 //
 
-#include "jumandic/shared/jumandic_spec.h"
-#include "core/dic_builder.h"
-#include "util/mmap.h"
-#include "util/logging.hpp"
-#include "core/impl/model_io.h"
-#include "core/dictionary.h"
 #include <iostream>
+#include "core/dic_builder.h"
+#include "core/dictionary.h"
+#include "core/impl/model_io.h"
+#include "jumandic/shared/jumandic_spec.h"
+#include "util/logging.hpp"
+#include "util/mmap.h"
 
 using namespace jumanpp;
 
@@ -28,7 +28,6 @@ Status importDictionary(StringPiece path, StringPiece target) {
   JPP_RETURN_IF_ERROR(builder.importCsv(path, frag.asStringPiece()));
   std::cout << "done!\n";
 
-
   core::dic::DictionaryHolder holder;
   JPP_RETURN_IF_ERROR(holder.load(builder.result()));
 
@@ -37,10 +36,9 @@ Status importDictionary(StringPiece path, StringPiece target) {
   JPP_RETURN_IF_ERROR(holder.compileRuntimeInfo(builder.spec(), &runtime));
   std::cout << "done!\n";
 
-  core::model::ModelInfo minfo {};
+  core::model::ModelInfo minfo{};
   minfo.parts.emplace_back();
   JPP_RETURN_IF_ERROR(builder.fillModelPart(runtime, &minfo.parts.back()));
-
 
   std::cout << "saving dictionary...";
   core::model::ModelSaver saver;
@@ -52,9 +50,9 @@ Status importDictionary(StringPiece path, StringPiece target) {
 }
 
 int main(int argc, char* argv[]) {
-
   if (argc != 3) {
-    LOG_ERROR() << "invalid args, must provide dictionary as second, and target as third parameters";
+    LOG_ERROR() << "invalid args, must provide dictionary as second, and "
+                   "target as third parameters";
   }
 
   StringPiece filename{argv[1]};

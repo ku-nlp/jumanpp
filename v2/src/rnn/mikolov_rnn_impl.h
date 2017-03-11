@@ -5,11 +5,11 @@
 #ifndef JUMANPP_MIKOLOV_RNN_IMPL_H
 #define JUMANPP_MIKOLOV_RNN_IMPL_H
 
+#include <array>
 #include "mikolov_rnn.h"
 #include "simple_rnn_impl.h"
-#include "util/stl_util.h"
-#include <array>
 #include "util/logging.hpp"
+#include "util/stl_util.h"
 
 namespace jumanpp {
 namespace rnn {
@@ -21,9 +21,10 @@ class MikolovScoreCalculator {
   util::ArraySlice<u64> indices;
   util::ArraySlice<float> weights;
   u64 hashMax;
-public:
 
-  MikolovScoreCalculator(const util::ArraySlice<u64> &indices, const util::ArraySlice<float> &weights, u64 hashMax)
+ public:
+  MikolovScoreCalculator(const util::ArraySlice<u64> &indices,
+                         const util::ArraySlice<float> &weights, u64 hashMax)
       : indices(indices), weights(weights), hashMax(hashMax) {}
 
   inline float calcScores1(i32 word) const {
@@ -52,18 +53,31 @@ public:
     return weights[idx0] + weights[idx1] + weights[idx2] + weights[idx3];
   }
 
-  void addScores(util::ArraySlice<i32> words, util::MutableArraySlice<float> result) const {
+  void addScores(util::ArraySlice<i32> words,
+                 util::MutableArraySlice<float> result) const {
     switch (indices.size()) {
       case 0:
         util::fill(result, 0);
         break;
-      case 1: for (int i = 0; i < words.size(); ++i) { result.at(i) += calcScores1(words.at(i)); }
+      case 1:
+        for (int i = 0; i < words.size(); ++i) {
+          result.at(i) += calcScores1(words.at(i));
+        }
         break;
-      case 2: for (int i = 0; i < words.size(); ++i) { result.at(i) += calcScores2(words.at(i)); }
+      case 2:
+        for (int i = 0; i < words.size(); ++i) {
+          result.at(i) += calcScores2(words.at(i));
+        }
         break;
-      case 3: for (int i = 0; i < words.size(); ++i) { result.at(i) += calcScores3(words.at(i)); }
+      case 3:
+        for (int i = 0; i < words.size(); ++i) {
+          result.at(i) += calcScores3(words.at(i));
+        }
         break;
-      case 4: for (int i = 0; i < words.size(); ++i) { result.at(i) += calcScores4(words.at(i)); }
+      case 4:
+        for (int i = 0; i < words.size(); ++i) {
+          result.at(i) += calcScores4(words.at(i));
+        }
         break;
       default: {
         for (int i = 0; i < words.size(); ++i) {
@@ -83,11 +97,12 @@ public:
 class MikolovIndexCalculator {
   u64 hashMax;
 
-public:
-  MikolovIndexCalculator(u64 directMentsize, u64 vocabSize):
-      hashMax{directMentsize - vocabSize} {}
+ public:
+  MikolovIndexCalculator(u64 directMentsize, u64 vocabSize)
+      : hashMax{directMentsize - vocabSize} {}
 
-  void calcIndices(util::ArraySlice<i32> context, util::MutableArraySlice<u64> result) const {
+  void calcIndices(util::ArraySlice<i32> context,
+                   util::MutableArraySlice<u64> result) const {
     for (int i = 0; i < result.size(); ++i) {
       u64 x = PRIMES[0] * PRIMES[1];
       for (int j = 1; j <= i; ++j) {
@@ -102,21 +117,22 @@ public:
     }
   }
 
-  void addScores(util::ArraySlice<i32> context, util::ArraySlice<i32> words, util::ArraySlice<float> weights,
+  void addScores(util::ArraySlice<i32> context, util::ArraySlice<i32> words,
+                 util::ArraySlice<float> weights,
                  util::MutableArraySlice<float> scores) {
-    std::array<u64, 20> hashedIndex {{0}};
+    std::array<u64, 20> hashedIndex{{0}};
     JPP_DCHECK_IN(context.size(), 0, 20);
-    util::MutableArraySlice<u64> slice {hashedIndex.data(), context.size() + 1};
+    util::MutableArraySlice<u64> slice{hashedIndex.data(), context.size() + 1};
     calcIndices(context, slice);
-    MikolovScoreCalculator msc {slice, weights, hashMax};
+    MikolovScoreCalculator msc{slice, weights, hashMax};
     msc.addScores(words, scores);
   }
-
 };
 
 class MikolovRnnImpl {
-  const MikolovRnn& rnn;
-public:
+  const MikolovRnn &rnn;
+
+ public:
   MikolovRnnImpl(const MikolovRnn &rnn) : rnn(rnn) {}
 
   void computeNewContext(StepData *data) {
@@ -128,8 +144,8 @@ public:
     auto result = impl::asMatrix(data->beamContext, esize, beamSize);
 
     result.noalias() = nnWeight.transpose() * oldCtx;
-    result.colwise() +=  myEmb.col(0);
-    result = 1/(1+Eigen::exp(-result.array())); //sigmoid
+    result.colwise() += myEmb.col(0);
+    result = 1 / (1 + Eigen::exp(-result.array()));  // sigmoid
   }
 
   void computeContextScores(StepData *data) {
@@ -143,7 +159,7 @@ public:
   }
 
   void computeMaxentScores(StepData *data) {
-    MikolovIndexCalculator calc {rnn.header.maxentSize, rnn.header.vocabSize};
+    MikolovIndexCalculator calc{rnn.header.maxentSize, rnn.header.vocabSize};
     auto contexts = data->contextIds;
     auto words = data->rightIds;
     auto scorePack = data->scores;
@@ -161,13 +177,13 @@ public:
     result.array() -= rnn.header.nceLnz;
   }
 
-  //original formula
-  //neu2[word].ac = std::exp( rnn_score + direct_score - nce_lnz );
-  //however the value is not used as it is, the log_10 is taken from it
-  //so we can use the value itself (divided by log_e 10).
-  //Still, grid search tries to find a multiplier for the score in any case
-  //so just output the raw score
-  void apply(StepData* data) {
+  // original formula
+  // neu2[word].ac = std::exp( rnn_score + direct_score - nce_lnz );
+  // however the value is not used as it is, the log_10 is taken from it
+  // so we can use the value itself (divided by log_e 10).
+  // Still, grid search tries to find a multiplier for the score in any case
+  // so just output the raw score
+  void apply(StepData *data) {
     computeNewContext(data);
     computeContextScores(data);
     computeMaxentScores(data);
@@ -175,9 +191,8 @@ public:
   }
 };
 
+}  // mikolov
+}  // rnn
+}  // jumanpp
 
-} // mikolov
-} // rnn
-} // jumanpp
-
-#endif //JUMANPP_MIKOLOV_RNN_IMPL_H
+#endif  // JUMANPP_MIKOLOV_RNN_IMPL_H

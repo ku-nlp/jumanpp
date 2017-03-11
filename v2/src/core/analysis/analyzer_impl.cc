@@ -189,22 +189,22 @@ void AnalyzerImpl::fixupLattice() {
     auto left = bnd->ends();
     auto sz = left->arraySize();
 
-    //create all boundary connections
+    // create all boundary connections
     for (int i = 0; i < sz; ++i) {
       LatticeBoundaryConnection* lbc;
       bnd->newConnection(&lbc);
     }
   }
 
-  //bootstrap beam pointers
+  // bootstrap beam pointers
   auto beam0 = lattice_.boundary(0)->starts()->beamData().data();
   EntryBeam::initializeBlock(beam0);
-  auto &bosRef = beam0.at(0);
-  bosRef = ConnectionBeamElement {{0,0,0,0, nullptr}, 0};
+  auto& bosRef = beam0.at(0);
+  bosRef = ConnectionBeamElement{{0, 0, 0, 0, nullptr}, 0};
   auto beam1 = lattice_.boundary(1)->starts()->beamData().data();
   EntryBeam::initializeBlock(beam1);
-  auto &bos1Ref = beam1.at(0);
-  bos1Ref = ConnectionBeamElement {{1,0,0,0,&bosRef.ptr}, 0};
+  auto& bos1Ref = beam1.at(0);
+  bos1Ref = ConnectionBeamElement{{1, 0, 0, 0, &bosRef.ptr}, 0};
 }
 
 Status AnalyzerImpl::computeScores(ScoreConfig* sconf) {
@@ -214,7 +214,6 @@ Status AnalyzerImpl::computeScores(ScoreConfig* sconf) {
   }
 
   for (i32 boundary = 2; boundary < bndCount; ++boundary) {
-
     auto bnd = lattice_.boundary(boundary);
     JPP_DCHECK(bnd->endingsFilled());
     auto left = bnd->ends()->nodePtrs();
@@ -247,7 +246,7 @@ Status AnalyzerImpl::computeScores(ScoreConfig* sconf) {
       proc.updateBeams(boundary, t1idx, bnd, bndconn, sconf);
     }
 
-    //finally sort beam items
+    // finally sort beam items
     auto starts = bnd->starts();
     auto t2items = starts->arraySize();
     for (int i = 0; i < t2items; ++i) {

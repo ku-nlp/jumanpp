@@ -36,7 +36,8 @@ class Analyzer {
   Analyzer(const Analyzer&) = delete;
   Analyzer(Analyzer&&) = delete;
 
-  Status initialize(const CoreHolder* core, const AnalyzerConfig& cfg, ScoreConfig* scorer);
+  Status initialize(const CoreHolder* core, const AnalyzerConfig& cfg,
+                    ScoreConfig* scorer);
   Status initialize(AnalyzerImpl* impl, ScoreConfig* scorer);
   Status analyze(StringPiece input);
   const OutputManager& output() const;

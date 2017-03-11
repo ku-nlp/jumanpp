@@ -6,9 +6,9 @@
 #define JUMANPP_MIKOLOV_RNN_H
 
 #include "util/sliceable_array.h"
-#include "util/types.hpp"
 #include "util/status.hpp"
 #include "util/string_piece.h"
+#include "util/types.hpp"
 
 namespace jumanpp {
 namespace rnn {
@@ -37,19 +37,18 @@ struct MikolovRnnModelHeader {
 };
 
 struct StepData {
-  //HMM part
-  util::Sliceable<i32> contextIds; // (HMM ctx size - 1) x beam
-  util::ArraySlice<i32> rightIds; //rightSize
+  // HMM part
+  util::Sliceable<i32> contextIds;  // (HMM ctx size - 1) x beam
+  util::ArraySlice<i32> rightIds;   // rightSize
 
-  //RNN part
-  util::Sliceable<float> context; //size x beam
-  util::ArraySlice<float> leftEmbedding; //size
-  util::Sliceable<float> rightEmbeddings; //size x rightSize
+  // RNN part
+  util::Sliceable<float> context;          // size x beam
+  util::ArraySlice<float> leftEmbedding;   // size
+  util::Sliceable<float> rightEmbeddings;  // size x rightSize
 
-  //Output
-  util::Sliceable<float> beamContext; //size x beam
-  util::Sliceable<float> scores; //rightSize x beam
-
+  // Output
+  util::Sliceable<float> beamContext;  // size x beam
+  util::Sliceable<float> scores;       // rightSize x beam
 };
 
 Status readHeader(StringPiece data, MikolovRnnModelHeader* header);
@@ -58,7 +57,8 @@ struct MikolovModelReaderData;
 
 class MikolovModelReader {
   std::unique_ptr<MikolovModelReaderData> data_;
-public:
+
+ public:
   MikolovModelReader();
   ~MikolovModelReader();
   Status open(StringPiece filename);
@@ -77,15 +77,16 @@ class MikolovRnn {
   util::ArraySlice<float> maxentWeights;
 
   friend class MikolovRnnImpl;
-public:
-  Status init(const MikolovRnnModelHeader& header, const util::ArraySlice<float> &weights, const util::ArraySlice<float> &maxentW);
+
+ public:
+  Status init(const MikolovRnnModelHeader& header,
+              const util::ArraySlice<float>& weights,
+              const util::ArraySlice<float>& maxentW);
   void apply(StepData* data);
 };
 
+}  // mikolov
+}  // rnn
+}  // jumanpp
 
-
-} // mikolov
-} // rnn
-} // jumanpp
-
-#endif //JUMANPP_MIKOLOV_RNN_H
+#endif  // JUMANPP_MIKOLOV_RNN_H

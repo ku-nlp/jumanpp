@@ -12,10 +12,7 @@ StringPiece impl::PrinterBuffer::contents() const {
   return StringPiece{pbase(), pptr()};
 }
 
-void impl::PrinterBuffer::reset() {
-  setp(pbase(), epptr());
+void impl::PrinterBuffer::reset() { setp(pbase(), epptr()); }
 }
-
-}
-} // util
+}  // util
 }

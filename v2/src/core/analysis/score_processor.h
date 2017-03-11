@@ -65,7 +65,7 @@ class ScoreProcessor {
   util::Sliceable<u64> t2features;     // pattern x beamsize
   util::Sliceable<Score> scoreBuffer;  // maxstart x beamsize
   util::Sliceable<u32> ngramFeatures;  // features x maxstart
-  //is set to the actual beam by gatherT2features
+  // is set to the actual beam by gatherT2features
   util::ArraySlice<ConnectionBeamElement> beamPtrs;
   i32 beamSize_;
 
@@ -92,8 +92,8 @@ class ScoreProcessor {
 
   void copyFeatureScores(LatticeBoundaryConnection* bndconn);
 
-  void updateBeams(i32 boundary, i32 endPos, LatticeBoundary *bnd,
-                   LatticeBoundaryConnection *bndconn, ScoreConfig *sc);
+  void updateBeams(i32 boundary, i32 endPos, LatticeBoundary* bnd,
+                   LatticeBoundaryConnection* bndconn, ScoreConfig* sc);
 };
 
 }  // analysis

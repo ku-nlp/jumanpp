@@ -32,9 +32,7 @@ void Lattice::reset() {
 
 void Lattice::installPlugin(LatticePlugin *plugin) { this->plugin = plugin; }
 
-void Lattice::hintSize(u32 size) {
-  boundaries.reserve(size);
-}
+void Lattice::hintSize(u32 size) { boundaries.reserve(size); }
 
 LatticeBoundary::LatticeBoundary(util::memory::ManagedAllocatorCore *alloc,
                                  const LatticeConfig &lc,

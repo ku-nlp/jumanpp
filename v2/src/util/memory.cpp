@@ -38,7 +38,7 @@ Manager::~Manager() {
 }
 
 void Manager::reset() {
-  for (auto& page: pages_) {
+  for (auto &page : pages_) {
     free(page.base);
   }
   pages_.clear();

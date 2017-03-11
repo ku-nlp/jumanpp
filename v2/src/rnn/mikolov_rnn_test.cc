@@ -2,13 +2,13 @@
 // Created by Arseny Tolmachev on 2017/03/09.
 //
 
-#include <util/memory.hpp>
-#include "testing/standalone_test.h"
 #include "mikolov_rnn.h"
+#include <util/memory.hpp>
+#include "legacy/rnnlmlib_static.h"
+#include "testing/standalone_test.h"
+#include "util/logging.hpp"
 #include "util/mmap.h"
 #include "util/stl_util.h"
-#include "legacy/rnnlmlib_static.h"
-#include "util/logging.hpp"
 
 using namespace jumanpp;
 using namespace jumanpp::rnn::mikolov;
@@ -32,7 +32,8 @@ struct CtxAndScore {
 
 class LegacyTester {
   RNNLM_legacy::CRnnLM_stat lm;
-public:
+
+ public:
   LegacyTester() {
     lm.setDebugMode(0);
     lm.setRnnLMFile("rnn/testlm");
@@ -64,30 +65,29 @@ struct MyContext {
   }
 };
 
-struct MyMultiContext {
-
-};
+struct MyMultiContext {};
 
 template <typename T>
 util::Sliceable<T> asSlice(util::MutableArraySlice<T> mas, i32 nRows = 1) {
-  return util::Sliceable<T> {mas, mas.size() / nRows, (u32)nRows};
+  return util::Sliceable<T>{mas, mas.size() / nRows, (u32)nRows};
 }
 
 template <typename T>
 util::Sliceable<T> asSliceX(T& o) {
-  util::MutableArraySlice<T> mas {&o, 1};
-  return util::Sliceable<T> {mas, 1, 1};
+  util::MutableArraySlice<T> mas{&o, 1};
+  return util::Sliceable<T>{mas, 1, 1};
 }
 
 class MyTester {
-public:
+ public:
   MikolovModelReader rdr;
   std::unordered_map<StringPiece, i32> s2i;
   MikolovRnn rnn;
-  util::memory::Manager mgr{1024*1024};
+  util::memory::Manager mgr{1024 * 1024};
   std::shared_ptr<util::memory::ManagedAllocatorCore> alloc;
-public:
-  MyTester(): alloc{mgr.core()} {
+
+ public:
+  MyTester() : alloc{mgr.core()} {
     REQUIRE_OK(rdr.open("rnn/testlm"));
     REQUIRE_OK(rdr.parse());
     auto& strings = rdr.words();
@@ -95,11 +95,13 @@ public:
       auto& s = strings[i];
       s2i[s] = i;
     }
-    REQUIRE_OK( rnn.init(rdr.header(),rdr.rnnMatrix(), rdr.maxentWeights()));
+    REQUIRE_OK(rnn.init(rdr.header(), rdr.rnnMatrix(), rdr.maxentWeights()));
   }
 
-  util::MutableArraySlice<i32> changeState(util::MutableArraySlice<i32> old, int one) {
-    auto buf = alloc->allocateBuf<i32>(std::min<u32>(old.size() + 1, rdr.header().maxentOrder - 1));
+  util::MutableArraySlice<i32> changeState(util::MutableArraySlice<i32> old,
+                                           int one) {
+    auto buf = alloc->allocateBuf<i32>(
+        std::min<u32>(old.size() + 1, rdr.header().maxentOrder - 1));
     for (int i = 0; i < buf.size() - 1; ++i) {
       buf.at(i + 1) = old.at(i);
     }
@@ -108,35 +110,34 @@ public:
     return buf;
   }
 
-  std::vector<MyContext> stepBeam(std::initializer_list<MyContext> ctxs, std::initializer_list<StringPiece> data) {
+  std::vector<MyContext> stepBeam(std::initializer_list<MyContext> ctxs,
+                                  std::initializer_list<StringPiece> data) {
     std::vector<i32> words;
-    for (auto sp: data) {
+    for (auto sp : data) {
       words.push_back(s2i.at(sp));
     }
-    
+
     auto& h = rdr.header();
-    util::MutableArraySlice<float> embedHack {
-        const_cast<float*>(rdr.embeddings().data()),
-        rdr.embeddings().size()
-    };
+    util::MutableArraySlice<float> embedHack{
+        const_cast<float*>(rdr.embeddings().data()), rdr.embeddings().size()};
 
     auto embeds = asSlice(embedHack, h.vocabSize);
 
-    util::MutableArraySlice<float> nceHack {
+    util::MutableArraySlice<float> nceHack{
         const_cast<float*>(rdr.nceEmbeddings().data()),
-        rdr.embeddings().size()
-    };
+        rdr.embeddings().size()};
 
     auto nceSlice = asSlice(nceHack, h.vocabSize);
 
-    
     auto prev = ctxs.begin()[0].prevWords[0];
     for (int i = 1; i < ctxs.size(); ++i) {
       REQUIRE(ctxs.begin()[i].prevWords[0] == prev);
-      REQUIRE(ctxs.begin()[i].prevWords.size() == ctxs.begin()[0].prevWords.size());
+      REQUIRE(ctxs.begin()[i].prevWords.size() ==
+              ctxs.begin()[0].prevWords.size());
     }
-    
-    auto ctxData = alloc->allocate2d<i32>(ctxs.size(), ctxs.begin()[0].prevWords.size());
+
+    auto ctxData =
+        alloc->allocate2d<i32>(ctxs.size(), ctxs.begin()[0].prevWords.size());
     auto ctxVecs = alloc->allocate2d<float>(ctxs.size(), h.layerSize, 64);
     for (int j = 0; j < ctxs.size(); ++j) {
       auto& ctx = ctxs.begin()[j];
@@ -156,27 +157,17 @@ public:
     auto scoreData = alloc->allocate2d<float>(ctxs.size(), words.size(), 64);
     util::fill(scoreData, 0);
 
-    auto d = StepData {
-        ctxData,
-        words,
-        ctxVecs,
-        embeds.row(prev), //left embedding
-        nceVecs,//right embedding
-        newCtxs,
-        scoreData
-    };
+    auto d = StepData{ctxData,          words,    ctxVecs,
+                      embeds.row(prev),  // left embedding
+                      nceVecs,           // right embedding
+                      newCtxs,          scoreData};
 
     rnn.apply(&d);
 
     std::vector<MyContext> result;
     for (int l = 0; l < ctxs.size(); ++l) {
-      result.push_back({
-          changeState(ctxData.row(l), prev), //state
-          newCtxs.row(l),
-          0.f,
-          0.f,
-          scoreData.row(l)
-                          });
+      result.push_back({changeState(ctxData.row(l), prev),  // state
+                        newCtxs.row(l), 0.f, 0.f, scoreData.row(l)});
     }
 
     return result;
@@ -187,39 +178,30 @@ public:
 
     auto& h = rdr.header();
 
-    util::MutableArraySlice<float> embedHack {
-        const_cast<float*>(rdr.embeddings().data()),
-        rdr.embeddings().size()
-    };
+    util::MutableArraySlice<float> embedHack{
+        const_cast<float*>(rdr.embeddings().data()), rdr.embeddings().size()};
 
     auto embeds = asSlice(embedHack, h.vocabSize);
 
-    util::MutableArraySlice<float> nceHack {
+    util::MutableArraySlice<float> nceHack{
         const_cast<float*>(rdr.nceEmbeddings().data()),
-        rdr.embeddings().size()
-    };
+        rdr.embeddings().size()};
 
     auto nceSlice = asSlice(nceHack, h.vocabSize);
 
-    util::Sliceable<float> nceItem {
-        nceSlice.row(wordId),
-        h.layerSize,
-        1
-    };
+    util::Sliceable<float> nceItem{nceSlice.row(wordId), h.layerSize, 1};
 
     auto scoreData = alloc->allocateBuf<float>(1, 64);
     scoreData[0] = 0;
 
     auto ctx2 = makeCtx();
-    auto d = StepData {
-        asSlice(ctx.prevWords),
-        asSliceX(wordId).data(),
-        asSlice(ctx.context),
-        embeds.row(ctx.prevWords[0]), //left embedding
-        nceItem,//right embedding
-        asSlice(ctx2.context),
-        asSlice(scoreData)
-    };
+    auto d = StepData{asSlice(ctx.prevWords),
+                      asSliceX(wordId).data(),
+                      asSlice(ctx.context),
+                      embeds.row(ctx.prevWords[0]),  // left embedding
+                      nceItem,                       // right embedding
+                      asSlice(ctx2.context),
+                      asSlice(scoreData)};
 
     rnn.apply(&d);
 
@@ -244,7 +226,6 @@ public:
     ct.prevWords[0] = 0;
     return ct;
   }
-
 };
 
 TEST_CASE("legacy rnn reader works") {

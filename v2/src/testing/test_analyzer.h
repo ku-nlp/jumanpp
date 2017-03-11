@@ -55,7 +55,8 @@ class TestEnv {
     REQUIRE(spec::loadSpec(buf.contents(), &saveLoad));
   }
 
-  void saveDic(const StringPiece &data, const StringPiece name = StringPiece{"test"}) {
+  void saveDic(const StringPiece& data,
+               const StringPiece name = StringPiece{"test"}) {
     REQUIRE_OK(origDicBuilder.importSpec(&saveLoad));
     REQUIRE_OK(origDicBuilder.importCsv(name, data));
     RuntimeInfo runtimeOrig{};

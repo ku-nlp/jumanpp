@@ -8,7 +8,7 @@ namespace jumanpp {
 namespace jumandic {
 namespace output {
 
-Status JumanFormat::format(const core::analysis::Analyzer &analysis) {
+Status JumanFormat::format(const core::analysis::Analyzer& analysis) {
   printer.reset();
   JPP_RETURN_IF_ERROR(analysisResult.reset(analysis));
   JPP_RETURN_IF_ERROR(analysisResult.fillTop1(&top1));
@@ -16,7 +16,7 @@ Status JumanFormat::format(const core::analysis::Analyzer &analysis) {
   auto& outMgr = analysis.output();
 
   while (top1.nextBoundary()) {
-    if(top1.remainingNodesInChunk() <= 0) {
+    if (top1.remainingNodesInChunk() <= 0) {
       return Status::InvalidState() << "no nodes in chunk";
     }
     core::analysis::ConnectionPtr connPtr;
@@ -34,15 +34,18 @@ Status JumanFormat::format(const core::analysis::Analyzer &analysis) {
   return Status::Ok();
 }
 
-inline const StringPiece& ifEmpty(const StringPiece& s1, const StringPiece& s2) {
+inline const StringPiece& ifEmpty(const StringPiece& s1,
+                                  const StringPiece& s2) {
   if (s1.size() > 0) {
     return s1;
   }
   return s2;
 }
 
-bool JumanFormat::formatOne(const core::analysis::OutputManager& om, const core::analysis::ConnectionPtr &ptr, bool first) {
-  core::analysis::LatticeNodePtr nodePtr {ptr.boundary, ptr.right};
+bool JumanFormat::formatOne(const core::analysis::OutputManager& om,
+                            const core::analysis::ConnectionPtr& ptr,
+                            bool first) {
+  core::analysis::LatticeNodePtr nodePtr{ptr.boundary, ptr.right};
   JPP_RET_CHECK(om.locate(nodePtr, &walker));
   while (walker.next()) {
     if (!first) {
@@ -86,6 +89,6 @@ bool JumanFormat::formatOne(const core::analysis::OutputManager& om, const core:
   return true;
 }
 
-} // output
-} // jumandic
-} // jumanpp
+}  // output
+}  // jumandic
+}  // jumanpp
