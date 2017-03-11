@@ -7,6 +7,7 @@
 
 #include "lattice_config.h"
 #include "util/array_slice.h"
+#include "util/status.hpp"
 
 namespace jumanpp {
 namespace core {

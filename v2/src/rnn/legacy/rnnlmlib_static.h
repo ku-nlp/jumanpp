@@ -313,7 +313,8 @@ class CRnnLM_stat : public CRnnLM {
   void saveWeights();     // saves current weights and unit activations
   void restoreWeights();  // restores current weights and unit activations from
                           // backup copy
-  // void saveWeights2();		//allows 2. copy to be stored, useful for
+  // void saveWeights2();		//allows 2. copy to be stored, useful
+  // for
   // dynamic
   // rescoring of nbest lists
   // void restoreWeights2();
