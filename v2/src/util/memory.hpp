@@ -14,7 +14,7 @@
 #include <cstddef>
 #include <memory>
 #include <vector>
-#include "util/array_slice.h"
+#include "util/sliceable_array.h"
 #include "util/common.hpp"
 
 namespace jumanpp {
@@ -81,6 +81,12 @@ class ManagedAllocatorCore {
                                          size_t align = alignof(T)) {
     auto mem = (T *)allocate_memory(sizeof(T) * count, align);
     return util::MutableArraySlice<T>{mem, count};
+  }
+
+  template <typename T>
+  util::Sliceable<T> allocate2d(size_t rows, size_t cols, size_t align = alignof(T)) {
+    auto buf = allocateBuf<T>(rows*cols, align);
+    return util::Sliceable<T>{buf, cols, rows};
   }
 
   template <typename T, typename... Args>

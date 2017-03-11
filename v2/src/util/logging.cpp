@@ -10,12 +10,18 @@ namespace util {
 namespace logging {
 
 WriteInDestructorLoggerImpl::~WriteInDestructorLoggerImpl() {
-  std::cerr << data_.str() << "\n";
+  if (level_ <= CurrentLogLevel) {
+    std::cerr << data_.str() << "\n";
+  }
 }
 
 WriteInDestructorLoggerImpl::WriteInDestructorLoggerImpl(const char *file,
                                                          int line, Level lvl)
     : level_{lvl} {
+  if (level_ > CurrentLogLevel) {
+    return;
+  }
+
   switch (lvl) {
     case Level::Debug:
       data_ << "D ";

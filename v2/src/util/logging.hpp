@@ -28,7 +28,7 @@ class WriteInDestructorLoggerImpl {
 
   template <typename T>
   WriteInDestructorLoggerImpl &operator<<(const T &obj) {
-    if (level_ >= CurrentLogLevel) data_ << obj;
+    if (level_ <= CurrentLogLevel) data_ << obj;
     return *this;
   }
 };

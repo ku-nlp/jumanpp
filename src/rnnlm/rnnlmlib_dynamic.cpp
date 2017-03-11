@@ -569,7 +569,7 @@ namespace RNNLM{
         }
     }//}}}
 
-    void CRnnLM_dyn::get_initial_context_FR(context *c) 
+    void CRnnLM_dyn::get_initial_context_FR(struct context *c) 
     {//{{{
         if (debug_mode>0) std::cerr << "initializing RNNLM FR" << std::endl;
         restoreNet_FR(); // initialize モデル読込  重い
