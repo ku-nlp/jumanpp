@@ -5,11 +5,11 @@
 #ifndef JUMANPP_MIKOLOV_RNN_H
 #define JUMANPP_MIKOLOV_RNN_H
 
+#include <memory>
 #include "util/sliceable_array.h"
 #include "util/status.hpp"
 #include "util/string_piece.h"
 #include "util/types.hpp"
-#include <memory>
 
 namespace jumanpp {
 namespace rnn {

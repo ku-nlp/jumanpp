@@ -205,6 +205,10 @@ void AnalyzerImpl::fixupLattice() {
   EntryBeam::initializeBlock(beam1);
   auto& bos1Ref = beam1.at(0);
   bos1Ref = ConnectionBeamElement{{1, 0, 0, 0, &bosRef.ptr}, 0};
+
+  for (auto& s : scorers_) {
+    s->preScore(&lattice_);
+  }
 }
 
 Status AnalyzerImpl::computeScores(ScoreConfig* sconf) {
@@ -240,9 +244,17 @@ Status AnalyzerImpl::computeScores(ScoreConfig* sconf) {
                                   bnd->localNodeCount());
       }
       proc.copyFeatureScores(bndconn);
-      // compute other features data
-      // TODO: implement
+    }
 
+    // use other scorers if any
+    i32 scorerIdx = 1;
+    for (auto& s : scorers_) {
+      s->scoreBoundary(scorerIdx, &lattice_, boundary);
+      scorerIdx += 1;
+    }
+
+    for (i32 t1idx = 0; t1idx < left.size(); ++t1idx) {
+      LatticeBoundaryConnection* bndconn = bnd->connection(t1idx);
       proc.updateBeams(boundary, t1idx, bnd, bndconn, sconf);
     }
 

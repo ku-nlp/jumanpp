@@ -2,8 +2,8 @@
 // Created by Arseny Tolmachev on 2017/03/11.
 //
 
-#include <iostream>
 #include "jumanpp_args.h"
+#include <iostream>
 #include "args.h"
 
 namespace jumanpp {
@@ -15,11 +15,14 @@ bool parseArgs(int argc, char* argv[], JumanppConf* result) {
   args::Group outputType{parser, "Output type"};
   args::Flag juman{outputType, "juman", "Juman", {'j', "juman"}};
 
-
   args::Group modelParams{parser, "Model parameters"};
-  args::ValueFlag<std::string> modelFile{modelParams, "model", "Model filename", {"model"}};
+  args::ValueFlag<std::string> modelFile{
+      modelParams, "model", "Model filename", {"model"}};
+  args::ValueFlag<std::string> rnnModelFile{
+      modelParams, "rnn model", "RNN model filename", {"rnn-model"}};
 
-  args::Positional<std::string> input{parser, "input", "Input filename (- for stdin)", "-"};
+  args::Positional<std::string> input{parser, "input",
+                                      "Input filename (- for stdin)", "-"};
 
   if (result == nullptr) {
     std::cerr << parser;
@@ -44,16 +47,17 @@ bool parseArgs(int argc, char* argv[], JumanppConf* result) {
     result->outputType = OutputType::Juman;
   }
 
-  result->inputFile = input;
+  result->inputFile = input.Get();
 
   if (!modelFile) {
     std::cerr << "model file is not specified\n";
     return false;
   }
-  result->modelFile = modelFile;
+  result->modelFile = modelFile.Get();
+  result->rnnModelFile = rnnModelFile.Get();
 
   return true;
 }
 
-} // jumandic
-} // jumanpp
+}  // jumandic
+}  // jumanpp

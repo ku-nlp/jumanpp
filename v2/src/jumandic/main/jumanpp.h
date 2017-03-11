@@ -7,14 +7,18 @@
 
 #include <random>
 #include "core/analysis/perceptron.h"
+#include "core/analysis/rnn_scorer.h"
 #include "core/analysis/score_api.h"
 #include "core/impl/model_io.h"
+#include "jumandic/main/jumanpp_args.h"
 #include "jumandic/shared/juman_format.h"
+#include "rnn/mikolov_rnn.h"
 
 namespace jumanpp {
 
 class JumanppExec {
  protected:
+  jumandic::JumanppConf conf;
   core::model::FilesystemModel model;
   jumandic::output::JumanFormat format;
   core::model::ModelInfo modelInfo;
@@ -35,7 +39,13 @@ class JumanppExec {
   core::analysis::AnalyzerConfig analyzerConfig;
   core::analysis::Analyzer analyzer;
 
+  // rnn
+  rnn::mikolov::MikolovModelReader mikolovModel;
+  core::analysis::rnn::RnnHolder rnnHolder;
+
  public:
+  JumanppExec(const jumandic::JumanppConf& conf) : conf{conf} {}
+
   virtual Status initPerceptron() {
     std::default_random_engine rng{0xfeed};
     std::normal_distribution<float> dirst{0, 0.001};
@@ -48,9 +58,23 @@ class JumanppExec {
     return Status::Ok();
   }
 
-  virtual Status init(StringPiece modelFile) {
-    JPP_RETURN_IF_ERROR(model.open(modelFile));
+  virtual Status initRnn() {
+    if (conf.rnnModelFile.size() > 0) {
+      JPP_RETURN_IF_ERROR(mikolovModel.open(conf.rnnModelFile));
+      JPP_RETURN_IF_ERROR(mikolovModel.parse());
+      JPP_RETURN_IF_ERROR(rnnHolder.init(mikolovModel));
+      scorers.scoreWeights.push_back(1.0f);
+      scorers.others.push_back(&rnnHolder);
+      coreConf.numScorers += 1;
+    }
+
+    return Status::Ok();
+  }
+
+  virtual Status init() {
+    JPP_RETURN_IF_ERROR(model.open(conf.modelFile));
     JPP_RETURN_IF_ERROR(model.load(&modelInfo));
+    JPP_RETURN_IF_ERROR(initRnn());
     JPP_RETURN_IF_ERROR(dicbldr.restoreDictionary(modelInfo, &runtimeInfo));
     JPP_RETURN_IF_ERROR(dicHolder.load(dicbldr.result()));
     coreHolder.reset(new core::CoreHolder{coreConf, runtimeInfo, dicHolder});

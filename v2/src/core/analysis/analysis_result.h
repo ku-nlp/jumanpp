@@ -34,7 +34,7 @@ class AnalysisPath {
   bool nextBoundary() {
     currentChunk_ += 1;
     currentNode_ = -1;
-    return currentChunk_ < offsets_.size() - 1;
+    return currentChunk_ < (i64)(offsets_.size()) - 1;
   }
 
   i32 remainingNodesInChunk() const {

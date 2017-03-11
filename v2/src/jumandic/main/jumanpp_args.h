@@ -10,20 +10,18 @@
 namespace jumanpp {
 namespace jumandic {
 
-enum class OutputType {
-  Juman
-};
+enum class OutputType { Juman };
 
 struct JumanppConf {
   std::string modelFile;
-  OutputType outputType;
-  std::string inputFile;
+  OutputType outputType = OutputType::Juman;
+  std::string inputFile = "-";
+  std::string rnnModelFile;
 };
 
 bool parseArgs(int argc, char* argv[], JumanppConf* result);
 
-} // jumandic
-} // jumanpp
+}  // jumandic
+}  // jumanpp
 
-
-#endif //JUMANPP_JUMANPP_ARGS_H
+#endif  // JUMANPP_JUMANPP_ARGS_H

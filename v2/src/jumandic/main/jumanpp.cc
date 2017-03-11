@@ -3,15 +3,13 @@
 //
 
 #include "jumanpp.h"
-#include "jumanpp_args.h"
 #include <fstream>
 #include <iostream>
+#include "jumanpp_args.h"
 
 using namespace jumanpp;
 
 int main(int argc, char** argv) {
-
-
   std::istream* inputSrc;
   std::unique_ptr<std::ifstream> filePtr;
 
@@ -21,9 +19,8 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  JumanppExec exec;
-  StringPiece modelName{conf.modelFile};
-  Status s = exec.init(modelName);
+  JumanppExec exec{conf};
+  Status s = exec.init();
   if (!s.isOk()) {
     std::cerr << "failed to load model from disk: " << s.message;
     return 1;

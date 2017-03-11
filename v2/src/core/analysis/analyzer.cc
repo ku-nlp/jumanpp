@@ -31,12 +31,11 @@ Status Analyzer::initialize(const CoreHolder *core, const AnalyzerConfig &cfg,
   }
 
   pimpl_.reset(new AnalyzerImpl{core, cfg});
-  ptr_ = pimpl_.get();
-  scorer_ = scorer;
-  return Status::Ok();
+  return initialize(pimpl_.get(), scorer);
 }
 
 Status Analyzer::initialize(AnalyzerImpl *impl, ScoreConfig *scorer) {
+  JPP_RETURN_IF_ERROR(impl->initScorers(*scorer));
   ptr_ = impl;
   scorer_ = scorer;
   return Status::Ok();

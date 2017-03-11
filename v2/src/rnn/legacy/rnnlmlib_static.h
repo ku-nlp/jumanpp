@@ -6,8 +6,8 @@
 #define _RNNLMLIB_STAT_H_
 
 #include <unordered_map>
-#include "rnnlmlib.h"
 #include "memory.h"
+#include "rnnlmlib.h"
 
 namespace RNNLM_legacy {
 

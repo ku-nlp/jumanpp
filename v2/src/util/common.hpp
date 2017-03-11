@@ -14,8 +14,10 @@
 
 #ifndef NDEBUG
 #define JPP_DCHECK(x) (assert(x))
+#define JPP_INDEBUG(x) x
 #else
 #define JPP_DCHECK(x)
+#define JPP_INDEBUG(x)
 #endif
 
 #define JPP_DCHECK_EQ(a, b) JPP_DCHECK((a) == (b))
