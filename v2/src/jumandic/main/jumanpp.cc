@@ -3,37 +3,41 @@
 //
 
 #include "jumanpp.h"
+#include "jumanpp_args.h"
 #include <fstream>
 #include <iostream>
 
 using namespace jumanpp;
 
 int main(int argc, char** argv) {
-  if (argc < 2) {
-    std::cerr << "must pass model file as a second argument\n";
-    return 1;
-  }
+
 
   std::istream* inputSrc;
   std::unique_ptr<std::ifstream> filePtr;
 
-  if (argc == 3) {
-    auto inputFile = argv[2];
-    filePtr.reset(new std::ifstream{inputFile, std::ios::in});
-    if (!*filePtr) {
-      std::cerr << "could not open input file " << inputFile << "\n";
-    }
-    inputSrc = filePtr.get();
-  } else {
-    inputSrc = &std::cin;
+  jumandic::JumanppConf conf;
+  if (!jumandic::parseArgs(argc, argv, &conf)) {
+    jumandic::parseArgs(0, nullptr, nullptr);
+    return 1;
   }
 
   JumanppExec exec;
-  StringPiece modelName{argv[1]};
+  StringPiece modelName{conf.modelFile};
   Status s = exec.init(modelName);
   if (!s.isOk()) {
     std::cerr << "failed to load model from disk: " << s.message;
     return 1;
+  }
+
+  if (conf.inputFile == "-") {
+    inputSrc = &std::cin;
+  } else {
+    filePtr.reset(new std::ifstream{conf.inputFile});
+    if (!*filePtr) {
+      std::cerr << "could not open file " << conf.inputFile << " for reading";
+      return 1;
+    }
+    inputSrc = filePtr.get();
   }
 
   std::string input;
