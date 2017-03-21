@@ -287,6 +287,10 @@ class UnkProcBuilder : public DslOpBase {
   Status validate() const override;
 };
 
+class TrainExampleSpec {
+  std::vector<std::pair<FieldReference, float>> fields;
+};
+
 class ModelSpecBuilder : public DslOpBase {
   util::memory::Manager memmgr_;
   std::unique_ptr<util::memory::ManagedAllocatorCore> alloc_;
@@ -294,6 +298,7 @@ class ModelSpecBuilder : public DslOpBase {
   util::memory::ManagedVector<FeatureBuilder*> features_;
   util::memory::ManagedVector<FeatureCombinator*> combinators_;
   util::memory::ManagedVector<UnkProcBuilder*> unks_;
+  util::memory::ManagedPtr<TrainExampleSpec> train_;
   mutable i32 currentFeature_ = 0;
 
   Status makeFields(AnalysisSpec* spec) const;
@@ -365,6 +370,11 @@ class ModelSpecBuilder : public DslOpBase {
     data.emplace_back(f2, alloc_.get());
     data.emplace_back(f3, alloc_.get());
     combinators_.emplace_back(cmb);
+  }
+
+  TrainExampleSpec& train() {
+    train_ = alloc_->make_unique<TrainExampleSpec>();
+    return *train_;
   }
 
   Status validateFields() const;

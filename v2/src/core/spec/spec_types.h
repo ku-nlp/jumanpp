@@ -123,6 +123,16 @@ struct FeaturesSpec {
   i32 totalPrimitives = -1;
 };
 
+struct TrainingField {
+  i32 index;
+  float weight;
+};
+
+struct TrainingSpec {
+  std::vector<TrainingField> fields;
+};
+
+
 struct AnalysisSpec {
   DictionarySpec dictionary;
   FeaturesSpec features;

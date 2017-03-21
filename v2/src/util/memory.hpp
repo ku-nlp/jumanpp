@@ -99,7 +99,7 @@ class ManagedAllocatorCore {
 
   template <typename T, typename... Args>
   ManagedPtr<T> make_unique(Args &&... args) {
-    return ManagedPtr<T>(make<T, Args...>(std::forward<Args...>(args...)));
+    return ManagedPtr<T>(make<T, Args...>(std::forward<Args>(args)...));
   };
 
   void reset();
