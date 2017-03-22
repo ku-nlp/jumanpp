@@ -30,7 +30,9 @@ AnalyzerImpl::AnalyzerImpl(const CoreHolder* core, const AnalyzerConfig& cfg)
       lattice_{alloc_.get(), core->latticeConfig()},
       xtra_{alloc_.get(), core->dic().entries().entrySize(),
             core->runtime().unkMakers.numPlaceholders},
-      outputManager_{alloc_.get(), &xtra_, &core->dic(), &lattice_} {}
+      outputManager_{alloc_.get(), &xtra_, &core->dic(), &lattice_},
+      compactor_{core->dic().entries()}
+{}
 
 Status AnalyzerImpl::makeNodeSeedsFromDic() {
   DictionaryNodeCreator dnc{core_->dic().entries()};
@@ -96,6 +98,9 @@ class InNodeFeatureComputer {
             e = hash;
           }
         }
+      } else if (node->header.type == ExtraNodeType::Alias) {
+        auto nodeData = xtra_.nodeContent(node);
+        util::copy_buffer(nodeData, result);
       } else {
         return false;
       }
@@ -164,6 +169,7 @@ Status AnalyzerImpl::buildLattice() {
   i32 totalBnds = input_.numCodepoints();
   for (i32 boundary = 0; boundary < totalBnds; ++boundary) {
     LatticeBoundary* bnd;
+    latticeBldr_.compactBoundary(boundary, &compactor_);
     JPP_RETURN_IF_ERROR(
         latticeBldr_.constructSingleBoundary(&lattice_, &bnd, boundary));
     if (latticeBldr_.isAccessible(boundary)) {
@@ -267,6 +273,18 @@ Status AnalyzerImpl::computeScores(ScoreConfig* sconf) {
     }
   }
 
+  return Status::Ok();
+}
+
+Status AnalyzerImpl::initScorers(const ScoreConfig &cfg) {
+  JPP_RETURN_IF_ERROR(compactor_.initialize(&xtra_,
+                                            core_->runtime()));
+  scorers_.reserve(cfg.others.size());
+  for (auto& sf : cfg.others) {
+    std::unique_ptr<ScoreComputer> comp;
+    JPP_RETURN_IF_ERROR(sf->makeInstance(&comp));
+    scorers_.emplace_back(std::move(comp));
+  }
   return Status::Ok();
 }
 

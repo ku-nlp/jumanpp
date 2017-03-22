@@ -118,7 +118,7 @@ OutputManager::OutputManager(util::memory::ManagedAllocatorCore *alloc,
       lattice_(lattice) {}
 
 bool NodeWalker::handleMultiple() {
-  EntryPtr eptr{nodes_.at(nodes_.size() - remaining_)};
+  EntryPtr eptr{nodes_.at(nodes_.size() - (remaining_ + 1))};
   return mgr_->fillEntry(eptr, values_);
 }
 

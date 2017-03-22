@@ -50,15 +50,7 @@ class ExtraNodesContext {
   std::vector<ExtraNode*> extraNodes_;
   util::FlatMap<StringPiece, i32> stringPtrs_;
 
-  ExtraNode* allocateExtra() {
-    size_t memory =
-        sizeof(ExtraNodeHeader) + sizeof(i32) * (numFields_ + numPlaceholders_);
-    void* rawPtr = alloc_->allocate_memory(memory, alignof(ExtraNode));
-    auto ptr = reinterpret_cast<ExtraNode*>(rawPtr);
-    ptr->header.index = (i32)extraNodes_.size();
-    extraNodes_.push_back(ptr);
-    return ptr;
-  }
+  ExtraNode* allocateExtra();
 
  public:
   ExtraNodesContext(util::memory::ManagedAllocatorCore* alloc, i32 numFields,
@@ -68,6 +60,7 @@ class ExtraNodesContext {
         alloc_{alloc} {}
 
   ExtraNode* makeUnk(const DictNode& pat);
+  ExtraNode* makeAlias();
 
   util::MutableArraySlice<i32> nodeContent(ExtraNode* ptr) const {
     return util::MutableArraySlice<i32>{ptr->content, numFields_};
@@ -76,6 +69,8 @@ class ExtraNodesContext {
   util::ArraySlice<i32> nodeContent(ExtraNode const* ptr) const {
     return util::ArraySlice<i32>{ptr->content, numFields_};
   }
+
+  util::MutableArraySlice<i32> aliasBuffer(ExtraNode* node, size_t numNodes);
 
   const ExtraNode* node(EntryPtr ptr) const {
     if (ptr.isDic()) {

@@ -80,6 +80,7 @@ class PrimFeatureTestEnv {
     static float defaultWeights[] = {0.1f, -0.1f, 0.05f, -0.2f};
     hfp.reset(new HashedFeaturePerceptron{defaultWeights});
     sconf.feature = hfp.get();
+    REQUIRE_OK(tenv.analyzer->initScorers(sconf));
   }
 
   AnalysisPath& top() { return top1; }

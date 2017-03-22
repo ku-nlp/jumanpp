@@ -3,6 +3,8 @@
 //
 
 #include "lattice_builder.h"
+#include "util/array_slice_util.h"
+#include "util/hashing.h"
 
 namespace jumanpp {
 namespace core {
@@ -114,6 +116,9 @@ Status LatticeBuilder::fillEnds(Lattice *l) {
 
   for (int i = 0; i < seeds_.size(); ++i) {
     auto &seed = seeds_[i];
+    if (seed.codepointStart == seed.codepointEnd) {
+      continue;
+    }
     u32 idx = seed.codepointEnd + 2u;
     auto bnd = l->boundary(idx);
     u16 bndPtr = (u16)(seed.codepointStart + 2);
@@ -126,6 +131,24 @@ Status LatticeBuilder::fillEnds(Lattice *l) {
   }
 
   return Status::Ok();
+}
+
+void LatticeBuilder::compactBoundary(i32 boundary,
+                                     LatticeCompactor *compactor) {
+  auto &bndInfo = boundaries_[boundary];
+  util::MutableArraySlice<LatticeNodeSeed> seeds{
+      &seeds_, bndInfo.firstNodeOffset, (u32)bndInfo.startCount};
+  compactor->computeHashes(seeds);
+  if (compactor->compact(&seeds)) {
+    // mark evacuated seeds as erased
+    auto start = static_cast<i32>(seeds.size()) - compactor->numDeleted();
+    for (int idx = start; idx < seeds.size(); ++idx) {
+      auto &s = seeds.at(idx);
+      boundaries_[s.codepointEnd].endCount -= 1;
+      s.codepointEnd = s.codepointStart;
+    }
+    bndInfo.startCount = static_cast<u16>(start);
+  }
 }
 
 void LatticeConstructionContext::addBos(LatticeBoundary *lb) {
@@ -141,6 +164,115 @@ void LatticeConstructionContext::addEos(LatticeBoundary *lb) {
   auto features = lb->starts()->patternFeatureData();
   util::fill(features, EntryPtr::EOS().rawValue());
 }
+
+void LatticeCompactor::computeHashes(util::ArraySlice<LatticeNodeSeed> seeds) {
+  entries.clear();
+  entries.resize(seeds.size() * dicEntries.entrySize());
+  hashes.clear();
+  hashes.resize(seeds.size());
+
+  util::Sliceable<i32> entryData{&entries, (u32)dicEntries.entrySize(),
+                                 seeds.size()};
+  for (int i = 0; i < seeds.size(); ++i) {
+    auto &s = seeds[i];
+    auto result = entryData.row(i);
+    auto ptr = s.entryPtr;
+    if (ptr.isSpecial()) {
+      util::copy_buffer(xtra->nodeContent(xtra->node(ptr)), result);
+    } else {
+      dicEntries.entryAtPtr(ptr.dicPtr()).fill(result, result.size());
+    }
+
+    hashes[i] = util::hashing::hashIndexedSeq(0x23fa23a12, result, features);
+  }
+}
+
+class ValueChecker {
+  util::ArraySlice<i32> indices;
+
+ public:
+  ValueChecker(const util::ArraySlice<i32> &indices) : indices(indices) {}
+
+  bool valuesEqual(const util::Sliceable<i32> &data, i32 e1, i32 e2) const {
+    auto row1 = data.row(e1);
+    auto row2 = data.row(e2);
+
+    for (auto &idx : indices) {
+      if (row1.at(idx) != row2.at(idx)) {
+        return false;
+      }
+    }
+    return true;
+  }
+};
+
+bool LatticeCompactor::compact(
+    util::MutableArraySlice<LatticeNodeSeed> *seeds) {
+  processed.clear_no_resize();
+  auto numElems = hashes.size();
+  JPP_DCHECK_EQ(seeds->size(), numElems);
+  util::Sliceable<i32> entryData{&entries, (u32)dicEntries.entrySize(),
+                                 numElems};
+  ValueChecker valueChecker{features};
+  for (int i = 0; i < numElems; ++i) {
+    if (processed.count(i) != 0) {
+      continue;
+    }
+    group.clear();
+    for (int j = i + 1; j < numElems; ++j) {
+      if (processed.count(j) != 0) {
+        continue;
+      }
+      if (hashes[i] == hashes[j] && valueChecker.valuesEqual(entryData, i, j)) {
+        group.push_back(j);
+        processed.insert(j);
+      }
+    }
+
+    if (!group.empty()) {
+      auto node = xtra->makeAlias();
+      auto data = xtra->nodeContent(node);
+      util::copy_buffer(entryData.row(i), data);
+      auto buffer = xtra->aliasBuffer(node, group.size() + 1);
+      buffer[0] = seeds->at(i).entryPtr.rawValue();
+      for (int j = 0; j < group.size(); ++j) {
+        buffer[j + 1] = seeds->at(group[j]).entryPtr.rawValue();
+      }
+      seeds->at(i).entryPtr = node->ptr();
+    }
+  }
+
+  // there weren't any combinable nodes
+  if (processed.empty()) {
+    return false;
+  }
+
+  group.clear();
+  util::copy_insert(processed, group);
+  util::sort(group);
+  util::compact(*seeds, group);
+
+  return true;
+}
+
+LatticeCompactor::LatticeCompactor(const dic::DictionaryEntries &dicEntries) : dicEntries(dicEntries) {}
+
+Status LatticeCompactor::initialize(
+                                    ExtraNodesContext *ctx,
+                                    const RuntimeInfo &spec) {
+  xtra = ctx;
+
+  for (auto &f : spec.features.primitive) {
+    if (f.kind == spec::PrimitiveFeatureKind::Copy) {
+      features.push_back(f.references[0]);
+    }
+  }
+
+  util::sort(features);
+
+  return Status::Ok();
+}
+
 }  // analysis
 }  // core
 }  // jumanpp

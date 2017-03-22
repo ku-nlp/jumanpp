@@ -132,7 +132,6 @@ struct TrainingSpec {
   std::vector<TrainingField> fields;
 };
 
-
 struct AnalysisSpec {
   DictionarySpec dictionary;
   FeaturesSpec features;

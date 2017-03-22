@@ -39,7 +39,7 @@ inline void copy_buffer(const C1& data, C2& result) {
 }
 
 template <typename C1, typename Fn = std::less<typename C1::value_type>>
-inline void sort(C1& c, Fn fn) {
+inline void sort(C1& c, Fn fn = Fn()) {
   std::sort(std::begin(c), std::end(c), fn);
 };
 

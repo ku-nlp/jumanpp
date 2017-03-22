@@ -29,6 +29,7 @@ class AnalyzerImpl {
   OutputManager outputManager_;
   ScoreProcessor* sproc_;
   std::vector<std::unique_ptr<ScoreComputer>> scorers_;
+  LatticeCompactor compactor_;
 
  public:
   AnalyzerImpl(const AnalyzerImpl&) = delete;
@@ -37,15 +38,7 @@ class AnalyzerImpl {
 
   const OutputManager& output() const { return outputManager_; }
 
-  Status initScorers(const ScoreConfig& cfg) {
-    scorers_.reserve(cfg.others.size());
-    for (auto& sf : cfg.others) {
-      std::unique_ptr<ScoreComputer> comp;
-      JPP_RETURN_IF_ERROR(sf->makeInstance(&comp));
-      scorers_.emplace_back(std::move(comp));
-    }
-    return Status::Ok();
-  }
+  Status initScorers(const ScoreConfig& cfg);
 
   void reset() {
     lattice_.reset();

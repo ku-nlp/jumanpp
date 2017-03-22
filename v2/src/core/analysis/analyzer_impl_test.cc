@@ -28,8 +28,9 @@ TEST_CASE("at least some scores can be computed") {
   CHECK_FALSE(top.nextBoundary());
 }
 
-//TODO fixme
-TEST_CASE("at least some scores can be computed with multiple paths", "[!mayfail]") {
+// TODO fixme
+TEST_CASE("at least some scores can be computed with multiple paths",
+          "[!mayfail]") {
   StringPiece dic = "XXX,z,KANA\na,b,\nb,c,\naf,b,\nfb,c,\nf,a,\n";
   PrimFeatureTestEnv env{
       dic, [](dsl::ModelSpecBuilder& specBldr, FeatureSet& fs) {}, 2};

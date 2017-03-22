@@ -27,7 +27,8 @@ set(analysis_test_srcs
 
         analysis/dictionary_node_creator_test.cc analysis/lattice_types_test.cc
         analysis/unk_nodes_creator_test.cc analysis/lattice_builder_test.cc analysis/lattice_plugin_test.cc
-        analysis/perceptron_test.cc analysis/score_processor_test.cc analysis/analyzer_impl_test.cc)
+        analysis/perceptron_test.cc analysis/score_processor_test.cc analysis/analyzer_impl_test.cc
+        analysis/lattice_compactor_test.cc)
 
 add_library(jpp_core ${core_srcs} ${core_hdrs} ${libs3p_pegtl_headers})
 

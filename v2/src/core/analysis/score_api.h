@@ -5,12 +5,12 @@
 #ifndef JUMANPP_SCORE_API_H
 #define JUMANPP_SCORE_API_H
 
-#include "util/sliceable_array.h"
+#include <memory>
 #include "core/analysis/lattice_config.h"
 #include "core/impl/model_format.h"
 #include "util/array_slice.h"
+#include "util/sliceable_array.h"
 #include "util/status.hpp"
-#include <memory>
 
 namespace jumanpp {
 namespace core {
