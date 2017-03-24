@@ -342,7 +342,7 @@ int main(int argc, char **argv) { //{{{
     if (option.exist("usepos"))
         param.usepos = true;
 
-    if (option.exist("nornnlm") &&
+    if (option.exist("nornnlm") ||
         (option.exist("train") && !option.exist("rnnasfeature"))) {
         param.set_rnnlm(false);
         param.set_nce(false);
@@ -369,24 +369,26 @@ int main(int argc, char **argv) { //{{{
     Morph::Node::set_param(&param);
 
     RNNLM::CRnnLM *p_rnnlm;
-    if (option.exist("static"))
-        p_rnnlm = new RNNLM::CRnnLM_stat();
-    else
-        p_rnnlm = new RNNLM::CRnnLM_dyn();
-    p_rnnlm->setRnnLMFile(rnnlm_model_path.c_str());
+    if (param.rnnlm){ 
+        if (option.exist("static"))
+            p_rnnlm = new RNNLM::CRnnLM_stat();
+        else
+            p_rnnlm = new RNNLM::CRnnLM_dyn();
+        p_rnnlm->setRnnLMFile(rnnlm_model_path.c_str());
 
-    if (option.exist("rnndebug")) {
-        p_rnnlm->setDebugMode(1);
-        param.rnndebug = true;
-    } else {
-        p_rnnlm->setDebugMode(0);
+        if (option.exist("rnndebug")) {
+            p_rnnlm->setDebugMode(1);
+            param.rnndebug = true;
+        } else {
+            p_rnnlm->setDebugMode(0);
+        }
+
+        if (param.lpenalty)
+            p_rnnlm->setLweight(param.lweight);
+        srand(1);
+
+        Morph::Sentence::init_rnnlm_FR(p_rnnlm);
     }
-
-    if (param.lpenalty)
-        p_rnnlm->setLweight(param.lweight);
-    srand(1);
-
-    Morph::Sentence::init_rnnlm_FR(p_rnnlm);
 
 #ifdef USE_SRILM /*{{{*/
     Vocab *vocab;
