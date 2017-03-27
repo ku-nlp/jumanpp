@@ -79,10 +79,9 @@ class LatticeCompactor {
   util::FlatSet<i32> processed;
 
  public:
-  LatticeCompactor(const dic::DictionaryEntries &dicEntries);
+  LatticeCompactor(const dic::DictionaryEntries& dicEntries);
 
-  Status initialize(ExtraNodesContext* ctx,
-                    const RuntimeInfo& spec);
+  Status initialize(ExtraNodesContext* ctx, const RuntimeInfo& spec);
   void computeHashes(util::ArraySlice<LatticeNodeSeed> seeds);
   bool compact(util::MutableArraySlice<LatticeNodeSeed>* seeds);
   i32 numDeleted() const { return processed.size(); }
@@ -116,6 +115,7 @@ class LatticeBuilder {
   Status makeBos(LatticeConstructionContext* ctx, Lattice* lattice);
   Status makeEos(LatticeConstructionContext* ctx, Lattice* lattice);
   Status fillEnds(Lattice* l);
+  const BoundaryInfo& infoAt(i32 boundary) const;
 };
 
 }  // analysis

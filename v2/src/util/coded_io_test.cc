@@ -84,3 +84,21 @@ TEST_CASE("read fails when string buffer is truncated") {
   u::CodedBufferParser p{slice};
   CHECK_FALSE(p.readStringPiece(nullptr));
 }
+
+TEST_CASE("read-write works with fixed u32s") {
+  u::CodedBuffer buf;
+  auto check = [&](jumanpp::u32 v) {
+    buf.writeFixed32(v);
+    jumanpp::u32 v2 = 0;
+    u::CodedBufferParser cbp{buf.contents()};
+    CAPTURE(v);
+    REQUIRE(cbp.readFixed32(&v2));
+    CHECK(cbp.remaining() == 0);
+    return v2;
+  };
+  SECTION("value = 0") { CHECK(check(0) == 0); }
+  SECTION("value = 1") { CHECK(check(1) == 1); }
+  SECTION("value = 0xff") { CHECK(check(0xffu) == 0xffu); }
+  SECTION("value = 0xf00u") { CHECK(check(0xf00u) == 0xf00u); }
+  SECTION("value = -1") { CHECK(check(0xffffffffu) == 0xffffffffu); }
+}

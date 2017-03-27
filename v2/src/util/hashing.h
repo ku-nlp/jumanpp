@@ -68,6 +68,14 @@ inline Hasher hashCtSeqImpl(Hasher h, u64 one, u64 two, Args... args) {
 
 }  // impl
 
+/**
+ * Hash sequence with compile-time passed parameters.
+ *
+ * Implementation uses C++11 vararg templates.
+ * @param seed seed value for hash calcuation
+ * @param args values for hash calculation
+ * @return hash value
+ */
 template <typename... Args>
 inline u64 hashCtSeq(u64 seed, Args... args) {
   return impl::hashCtSeqImpl(Hasher{seed}, static_cast<u64>(args)...,

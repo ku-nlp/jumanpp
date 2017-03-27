@@ -129,6 +129,7 @@ struct TrainingField {
 };
 
 struct TrainingSpec {
+  i32 surfaceIdx;
   std::vector<TrainingField> fields;
 };
 
@@ -136,6 +137,7 @@ struct AnalysisSpec {
   DictionarySpec dictionary;
   FeaturesSpec features;
   std::vector<UnkMaker> unkCreators;
+  TrainingSpec training;
 };
 
 }  // spec

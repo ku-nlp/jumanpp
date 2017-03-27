@@ -176,6 +176,32 @@ struct SerializeImpl<u64> {
   }
 };
 
+// memcpy here is for C++ strict aliasing rules
+// modern compilers optimize it to nothing
+template <>
+struct SerializeImpl<float> {
+  static inline void DoSerializeSave(float &o, Saver *s,
+                                     util::CodedBuffer &buf) {
+    static_assert(sizeof(float) == sizeof(u32),
+                  "size of float and u32 should be equal");
+    u32 value;
+    std::memcpy(&value, &o, sizeof(float));
+    buf.writeFixed32(value);
+  }
+
+  static inline bool DoSerializeLoad(float &o, Loader *s,
+                                     util::CodedBufferParser &p) {
+    static_assert(sizeof(float) == sizeof(u32),
+                  "size of float and u32 should be equal");
+    u32 bytes;
+    JPP_RET_CHECK(p.readFixed32(&bytes));
+    float r;
+    std::memcpy(&r, &bytes, sizeof(float));
+    o = r;
+    return true;
+  }
+};
+
 template <typename T, typename A>
 struct SerializeImpl<std::vector<T, A>> {
   static inline void DoSerializeSave(std::vector<T, A> &o, Saver *s,

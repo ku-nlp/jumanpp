@@ -103,10 +103,7 @@ EntryPtr UnkNodesContext::makePtr(StringPiece surface,
   auto node = xtra_->makeUnk(conf.base);
   auto data = xtra_->nodeContent(node);
   node->header.unk.surface = surface;
-  u64 hash = util::hashing::murmurhash3_memory(surface.begin(), surface.end(),
-                                               0xa76210bf);
-  u32 trimmed = (u32)hash;
-  auto hashValue = static_cast<i32>(trimmed) | 0x8000'0000;
+  i32 hashValue = hashUnkString(surface);
   node->header.unk.contentHash = hashValue;
   JPP_DCHECK_LT(node->header.unk.contentHash, 0);
   conf.fillElems(data, hashValue);
@@ -115,6 +112,16 @@ EntryPtr UnkNodesContext::makePtr(StringPiece surface,
   }
   return node->ptr();
 }
+
+i32 hashUnkString(StringPiece sp) {
+  constexpr u64 unkStringSeed = 0xa76210bfULL;
+  u64 hash =
+      util::hashing::murmurhash3_memory(sp.begin(), sp.end(), unkStringSeed);
+  u32 trimmed = static_cast<u32>(hash);
+  auto hashValue = static_cast<i32>(trimmed) | 0x8000'0000;
+  return hashValue;
+}
+
 }  // analysis
 }  // core
 }  // jumanpp

@@ -289,6 +289,13 @@ class UnkProcBuilder : public DslOpBase {
 
 class TrainExampleSpec {
   std::vector<std::pair<FieldReference, float>> fields;
+  friend class ModelSpecBuilder;
+
+ public:
+  TrainExampleSpec& field(FieldReference ref, float weight) {
+    fields.push_back({ref, weight});
+    return *this;
+  }
 };
 
 class ModelSpecBuilder : public DslOpBase {
@@ -315,6 +322,7 @@ class ModelSpecBuilder : public DslOpBase {
   Status createPatternsAndFinalFeatures(FeaturesSpec* spec) const;
   Status createComputeFeatures(FeaturesSpec* fspec) const;
   Status createUnkProcessors(AnalysisSpec* spec) const;
+  Status createTrainSpec(AnalysisSpec* spec) const;
 
  public:
   ModelSpecBuilder(size_t page_size = 16 * 1024)

@@ -12,6 +12,7 @@ namespace util {
 
 template <typename C1, typename C2>
 void compact(C1& data, const C2& toErase) {
+  using std::swap;
   JPP_DCHECK_GT(toErase.size(), 0);
   auto erasingIdx = 1;
   auto copyTarget = toErase[0];
@@ -21,7 +22,7 @@ void compact(C1& data, const C2& toErase) {
       continue;
     }
 
-    data[copyTarget] = std::move(data[copySrc]);
+    swap(data[copyTarget], data[copySrc]);
     copyTarget += 1;
   }
 };

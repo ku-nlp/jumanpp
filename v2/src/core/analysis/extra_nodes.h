@@ -59,6 +59,7 @@ class ExtraNodesContext {
         numPlaceholders_{(size_t)numPlaceholders},
         alloc_{alloc} {}
 
+  ExtraNode* makeZeroedUnk();
   ExtraNode* makeUnk(const DictNode& pat);
   ExtraNode* makeAlias();
 

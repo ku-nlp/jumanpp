@@ -118,10 +118,23 @@ void Serialize(Arch &a, FeaturesSpec &o) {
 }
 
 template <typename Arch>
+void Serialize(Arch &a, TrainingField &o) {
+  a &o.index;
+  a &o.weight;
+}
+
+template <typename Arch>
+void Serialize(Arch &a, TrainingSpec &o) {
+  a &o.fields;
+  a &o.surfaceIdx;
+}
+
+template <typename Arch>
 void Serialize(Arch &a, AnalysisSpec &spec) {
   a &spec.dictionary;
   a &spec.features;
   a &spec.unkCreators;
+  a &spec.training;
 }
 
 }  // spec

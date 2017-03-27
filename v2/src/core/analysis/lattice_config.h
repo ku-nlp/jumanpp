@@ -32,7 +32,7 @@ struct alignas(alignof(u64)) ConnectionPtr {
   const ConnectionPtr* previous;
 };
 
-struct alignas(alignof(u64)) LatticeNodePtr {
+struct alignas(alignof(u32)) LatticeNodePtr {
   u16 boundary;
   u16 position;
 };

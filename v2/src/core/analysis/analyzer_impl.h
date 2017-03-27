@@ -53,15 +53,18 @@ class AnalyzerImpl {
   Status makeUnkNodes1();
   bool checkLatticeConnectivity();
   Status makeUnkNodes2();
+  Status prepareNodeSeeds();
   Status buildLattice();
-  void fixupLattice();
+  void bootstrapAnalysis();
   Status computeScores(ScoreConfig* sconf);
 
   Lattice* lattice() { return &lattice_; }
+  LatticeBuilder* latticeBldr() { return &latticeBldr_; }
+  ExtraNodesContext* extraNodesContext() { return &xtra_; }
+  const dic::DictionaryHolder& dic() const { return core_->dic(); }
 
   Status preprocess(StringPiece input) {
     JPP_RETURN_IF_ERROR(resetForInput(input));
-    JPP_RETURN_IF_ERROR(makeNodeSeedsFromDic());
     return Status::Ok();
   }
 };

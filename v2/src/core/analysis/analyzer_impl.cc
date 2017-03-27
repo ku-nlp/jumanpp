@@ -31,8 +31,7 @@ AnalyzerImpl::AnalyzerImpl(const CoreHolder* core, const AnalyzerConfig& cfg)
       xtra_{alloc_.get(), core->dic().entries().entrySize(),
             core->runtime().unkMakers.numPlaceholders},
       outputManager_{alloc_.get(), &xtra_, &core->dic(), &lattice_},
-      compactor_{core->dic().entries()}
-{}
+      compactor_{core->dic().entries()} {}
 
 Status AnalyzerImpl::makeNodeSeedsFromDic() {
   DictionaryNodeCreator dnc{core_->dic().entries()};
@@ -150,8 +149,8 @@ class InNodeFeatureComputer {
   }
 };
 
-Status AnalyzerImpl::buildLattice() {
-  lattice_.hintSize(input_.numCodepoints() + 3);
+Status AnalyzerImpl::prepareNodeSeeds() {
+  JPP_RETURN_IF_ERROR(makeNodeSeedsFromDic());
   JPP_RETURN_IF_ERROR(makeUnkNodes1());
   if (!checkLatticeConnectivity()) {
     JPP_RETURN_IF_ERROR(makeUnkNodes2());
@@ -159,13 +158,18 @@ Status AnalyzerImpl::buildLattice() {
       return Status::InvalidState() << "could not build lattice";
     }
   }
+  JPP_RETURN_IF_ERROR(latticeBldr_.prepare());
+  return Status::Ok();
+}
+
+Status AnalyzerImpl::buildLattice() {
+  lattice_.hintSize(input_.numCodepoints() + 3);
 
   LatticeConstructionContext lcc;
   InNodeFeatureComputer fc{core_->dic(), core_->features(), &xtra_};
 
   JPP_RETURN_IF_ERROR(latticeBldr_.makeBos(&lcc, &lattice_));
   JPP_DCHECK_EQ(lattice_.createdBoundaryCount(), 2);
-  JPP_RETURN_IF_ERROR(latticeBldr_.prepare());
   i32 totalBnds = input_.numCodepoints();
   for (i32 boundary = 0; boundary < totalBnds; ++boundary) {
     LatticeBoundary* bnd;
@@ -186,7 +190,7 @@ Status AnalyzerImpl::buildLattice() {
   return Status::Ok();
 }
 
-void AnalyzerImpl::fixupLattice() {
+void AnalyzerImpl::bootstrapAnalysis() {
   sproc_ = ScoreProcessor::make(&lattice_, alloc_.get());
 
   auto bndCount = lattice_.createdBoundaryCount();
@@ -276,9 +280,8 @@ Status AnalyzerImpl::computeScores(ScoreConfig* sconf) {
   return Status::Ok();
 }
 
-Status AnalyzerImpl::initScorers(const ScoreConfig &cfg) {
-  JPP_RETURN_IF_ERROR(compactor_.initialize(&xtra_,
-                                            core_->runtime()));
+Status AnalyzerImpl::initScorers(const ScoreConfig& cfg) {
+  JPP_RETURN_IF_ERROR(compactor_.initialize(&xtra_, core_->runtime()));
   scorers_.reserve(cfg.others.size());
   for (auto& sf : cfg.others) {
     std::unique_ptr<ScoreComputer> comp;

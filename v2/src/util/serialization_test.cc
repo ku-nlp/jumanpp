@@ -53,3 +53,23 @@ TEST_CASE("serialization works with enum classes") {
   CHECK(l.load(&d2));
   CHECK(d2 == TestClass::C);
 }
+
+TEST_CASE("serialization works with floats") {
+  auto check = [](float v) {
+    CAPTURE(v);
+    Saver s;
+    s.save(v);
+    float v2 = 0;
+    Loader l{s.result()};
+    REQUIRE(l.load(&v2));
+    return v2;
+  };
+
+  auto nan1 = std::numeric_limits<float>::quiet_NaN();
+  CHECK(std::isnan(check(nan1)));
+  CHECK(check(0.0f) == 0.0f);
+  CHECK(check(1.0f) == 1.0f);
+  CHECK(check(-1.0f) == -1.0f);
+  auto inf = std::numeric_limits<float>::infinity();
+  CHECK(check(inf) == inf);
+}

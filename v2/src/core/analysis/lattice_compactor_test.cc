@@ -13,7 +13,8 @@ using namespace jumanpp;
 namespace {
 class LatticeCompactorTestEnv {
   TestEnv tenv;
-public:
+
+ public:
   StringField flda;
   StringField fldb;
   StringField fldc;
@@ -34,14 +35,14 @@ public:
     REQUIRE_OK(tenv.analyzer->output().stringField("a", &flda));
     REQUIRE_OK(tenv.analyzer->output().stringField("b", &fldb));
     REQUIRE_OK(tenv.analyzer->output().stringField("c", &fldc));
-    ScoreConfig scfg {};
+    ScoreConfig scfg{};
     REQUIRE_OK(tenv.analyzer->initScorers(scfg));
   }
 
   void analyze(StringPiece str) {
     CAPTURE(str);
     CHECK_OK(tenv.analyzer->resetForInput(str));
-    CHECK_OK(tenv.analyzer->makeNodeSeedsFromDic());
+    CHECK_OK(tenv.analyzer->prepareNodeSeeds());
     CHECK_OK(tenv.analyzer->buildLattice());
   }
 
@@ -72,13 +73,16 @@ public:
 }
 
 TEST_CASE("compactor works") {
-  LatticeCompactorTestEnv env{"KANA,0,x\nすもも,1,x\nすもも,1,y\nもも,2,x\nもも,2,z\nも,3,x\nうち,4,x\nの,5,x"};
+  LatticeCompactorTestEnv env{
+      "KANA,0,x\nすもも,1,x\nすもも,1,y\nもも,2,x\nもも,2,z\nも,3,x\nうち,4,"
+      "x\nの,5,x"};
   env.analyze("すもももももももものうち");
   CHECK(1 == env.lattice()->boundary(2)->localNodeCount());
   CHECK(2 == env.lattice()->boundary(3)->localNodeCount());
   auto& output = env.output();
   auto walker = output.nodeWalker();
-  CHECK(output.locate(env.lattice()->boundary(3)->starts()->entryPtrData().at(1), &walker));
+  CHECK(output.locate(
+      env.lattice()->boundary(3)->starts()->entryPtrData().at(1), &walker));
   CHECK(walker.remaining() == 2);
   CHECK(walker.next());
   CHECK(env.fldc[walker] == "x");

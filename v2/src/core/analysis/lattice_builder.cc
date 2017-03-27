@@ -151,6 +151,11 @@ void LatticeBuilder::compactBoundary(i32 boundary,
   }
 }
 
+const BoundaryInfo &LatticeBuilder::infoAt(i32 boundary) const {
+  JPP_DCHECK_IN(boundary, 0, boundaries_.size());
+  return boundaries_[boundary];
+}
+
 void LatticeConstructionContext::addBos(LatticeBoundary *lb) {
   JPP_DCHECK_EQ(lb->localNodeCount(), 1);
   lb->starts()->entryPtrData()[0] = EntryPtr::BOS();
@@ -255,10 +260,10 @@ bool LatticeCompactor::compact(
   return true;
 }
 
-LatticeCompactor::LatticeCompactor(const dic::DictionaryEntries &dicEntries) : dicEntries(dicEntries) {}
+LatticeCompactor::LatticeCompactor(const dic::DictionaryEntries &dicEntries)
+    : dicEntries(dicEntries) {}
 
-Status LatticeCompactor::initialize(
-                                    ExtraNodesContext *ctx,
+Status LatticeCompactor::initialize(ExtraNodesContext *ctx,
                                     const RuntimeInfo &spec) {
   xtra = ctx;
 

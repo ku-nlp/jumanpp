@@ -31,6 +31,8 @@ struct UnkNodeConfig {
   UnkNodeConfig(const OwningDictNode& base) : base(base) {}
 };
 
+i32 hashUnkString(StringPiece sp);
+
 class UnkNodesContext {
   ExtraNodesContext* xtra_;
 

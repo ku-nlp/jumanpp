@@ -55,9 +55,20 @@ class CodedBuffer {
 
   void writeVarint(u64 value) {
     if (JPP_UNLIKELY(remaining() < impl::UInt64MaxSize)) {
-      grow(10);
+      grow(impl::UInt64MaxSize);
     }
     front_ = impl::writeVarint64ToArray(value, front_);
+  }
+
+  void writeFixed32(u32 value) {
+    if (JPP_UNLIKELY(remaining() < sizeof(u32))) {
+      grow(sizeof(u32));
+    }
+    *(front_ + 0) = static_cast<u8>((value >> 0) & 0xff);
+    *(front_ + 1) = static_cast<u8>((value >> 8) & 0xff);
+    *(front_ + 2) = static_cast<u8>((value >> 16) & 0xff);
+    *(front_ + 3) = static_cast<u8>((value >> 24) & 0xff);
+    front_ += 4;
   }
 
   void writeString(StringPiece value) {
@@ -124,6 +135,20 @@ class CodedBufferParser {
     u64 mem;
     JPP_RET_CHECK(readVarint64(&mem));
     *ptr = static_cast<T>(mem);
+    return true;
+  }
+
+  inline bool readFixed32(u32* result) {
+    if (remaining() < sizeof(u32)) {
+      return false;
+    }
+    u32 data = 0;
+    data |= static_cast<u32>(*(position_ + 0)) << 0;
+    data |= static_cast<u32>(*(position_ + 1)) << 8;
+    data |= static_cast<u32>(*(position_ + 2)) << 16;
+    data |= static_cast<u32>(*(position_ + 3)) << 24;
+    *result = data;
+    position_ += 4;
     return true;
   }
 

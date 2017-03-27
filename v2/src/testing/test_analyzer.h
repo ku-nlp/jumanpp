@@ -32,8 +32,8 @@ class TestAnalyzer : public core::analysis::AnalyzerImpl {
 class TestEnv {
  public:
   i32 beamSize = 1;
-  std::shared_ptr<TestAnalyzer> analyzer;
-  std::shared_ptr<CoreHolder> core;
+  std::unique_ptr<TestAnalyzer> analyzer;
+  std::unique_ptr<CoreHolder> core;
   spec::AnalysisSpec saveLoad;
   AnalyzerConfig aconf;
   dic::DictionaryBuilder origDicBuilder;

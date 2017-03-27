@@ -6,6 +6,9 @@ set(core_srcs darts_trie.cc dictionary.cc impl/field_import.cc dic_builder.cc
         spec/spec_types.cc spec/spec_serialization.cc impl/model_io.cc analysis/unk_nodes.cc features_api.cc
         analysis/lattice_plugin.cc analysis/perceptron.cc analysis/score_processor.cc analysis/analysis_result.cc)
 
+set(core_train_srcs
+        training/training_io.cc training/loss.cc training/gold_example.cc training/trainer.cc training/trainer.h)
+
 set(core_hdrs darts.h darts_trie.h dictionary.h impl/field_import.h impl/field_reader.h dic_entries.h
         dic_builder.h spec/spec_grammar.h spec/spec_dsl.h analysis/analysis_input.h analysis/lattice_builder.h
         analysis/dictionary_node_creator.h spec/spec_types.h analysis/lattice_types.h analysis/extra_nodes.h
@@ -15,11 +18,15 @@ set(core_hdrs darts.h darts_trie.h dictionary.h impl/field_import.h impl/field_r
         impl/feature_impl_combine.h spec/spec_serialization.h runtime_info.h analysis/unk_maker_types.h
         impl/model_format.h impl/model_io.h impl/model_format_ser.h impl/runtime_ser.h spec/spec_ser.h
         analysis/unk_nodes.h analysis/lattice_plugin.h analysis/score_api.h analysis/perceptron.h
-        analysis/score_processor.h analysis/analysis_result.h analysis/rnn_scorer.cc analysis/rnn_scorer.h)
+        analysis/score_processor.h analysis/analysis_result.h analysis/rnn_scorer.cc analysis/rnn_scorer.h
+        training/training_io.h training/loss.h training/gold_example.h)
 
 set(core_test_srcs darts_trie_test.cc dictionary_test.cc impl/field_import_test.cc
         impl/field_reader_test.cc impl/feature_impl_prim_test.cc impl/feature_impl_compute_test.cc
         impl/feature_impl_combine_test.cc impl/feature_test.cc)
+
+set(core_train_test_srcs training/gold_example_test.cc)
+
 set(spec_test_srcs spec/spec_grammar_test.cc spec/spec_dsl_test.cc spec/spec_dsl_feature_test.cc)
 set(analysis_test_srcs
 
@@ -31,12 +38,16 @@ set(analysis_test_srcs
         analysis/lattice_compactor_test.cc)
 
 add_library(jpp_core ${core_srcs} ${core_hdrs} ${libs3p_pegtl_headers})
+add_library(jpp_core_train ${core_train_srcs} ${core_hdrs})
 
 jpp_test_executable(jpp_core_tests ${core_test_srcs} ${core_hdrs})
 jpp_test_executable(jpp_core_analysis_tests ${analysis_test_srcs} ../testing/test_analyzer.h)
 jpp_test_executable(jpp_core_spec_tests ${spec_test_srcs})
+jpp_test_executable(jpp_core_train_tests ${core_train_test_srcs})
 
 target_link_libraries(jpp_core jpp_util jpp_rnn)
-target_link_libraries(jpp_core_tests jpp_core jpp_util)
-target_link_libraries(jpp_core_analysis_tests jpp_core jpp_util)
-target_link_libraries(jpp_core_spec_tests jpp_core jpp_util)
+target_link_libraries(jpp_core_train jpp_core)
+target_link_libraries(jpp_core_tests jpp_core)
+target_link_libraries(jpp_core_analysis_tests jpp_core)
+target_link_libraries(jpp_core_spec_tests jpp_core)
+target_link_libraries(jpp_core_train_tests jpp_core_train)

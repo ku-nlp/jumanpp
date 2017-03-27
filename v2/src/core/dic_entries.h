@@ -5,6 +5,7 @@
 #ifndef JUMANPP_DIC_ENTRIES_H
 #define JUMANPP_DIC_ENTRIES_H
 
+#include "core/core_types.h"
 #include "core/darts_trie.h"
 #include "core/impl/field_reader.h"
 #include "util/array_slice.h"
@@ -85,6 +86,9 @@ class DictionaryEntries {
   DictionaryEntries(const EntriesHolder* data_) noexcept : data_(data_) {}
   i32 entrySize() const { return static_cast<i32>(data_->entrySize); }
   IndexTraversal traversal() const { return IndexTraversal(data_); }
+  impl::IntListTraversal entryAtPtr(EntryPtr ptr) const {
+    return entryAtPtr(ptr.dicPtr());
+  }
   impl::IntListTraversal entryAtPtr(i32 ptr) const {
     auto rdr = data_->entries.rawWithLimit(ptr, data_->entrySize);
     return rdr;

@@ -38,7 +38,7 @@ struct MikolovRnnModelHeader {
 };
 
 struct StepData {
-  // HMM part
+  // MaxEnt part
   util::Sliceable<i32> contextIds;  // (HMM ctx size - 1) x beam
   util::ArraySlice<i32> rightIds;   // rightSize
 

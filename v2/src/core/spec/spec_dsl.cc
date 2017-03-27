@@ -69,6 +69,7 @@ Status ModelSpecBuilder::build(AnalysisSpec* spec) const {
   JPP_RETURN_IF_ERROR(makeFields(spec));
   JPP_RETURN_IF_ERROR(makeFeatures(spec));
   JPP_RETURN_IF_ERROR(createUnkProcessors(spec));
+  JPP_RETURN_IF_ERROR(createTrainSpec(spec));
   return Status::Ok();
 }
 
@@ -525,6 +526,33 @@ Status ModelSpecBuilder::createUnkProcessors(AnalysisSpec* spec) const {
       mkr.outputExpressions.push_back(fe);
     }
     spec->unkCreators.push_back(mkr);
+  }
+  return Status::Ok();
+}
+
+Status ModelSpecBuilder::createTrainSpec(AnalysisSpec* spec) const {
+  spec->training.surfaceIdx = -1;
+
+  if (!train_) {
+    return Status::Ok();
+  }
+
+  auto& tr = *train_;
+  for (int i = 0; i < tr.fields.size(); ++i) {
+    auto& f = tr.fields[i];
+    for (auto& fld : spec->dictionary.columns) {
+      if (f.first.name() == fld.name) {
+        if (fld.isTrieKey) {
+          spec->training.surfaceIdx = i;
+        }
+        spec->training.fields.push_back({fld.index, f.second});
+      }
+    }
+  }
+
+  if (spec->training.surfaceIdx == -1) {
+    return Status::InvalidParameter()
+           << "trie-indexed field was not selected for training";
   }
   return Status::Ok();
 }

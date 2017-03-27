@@ -88,13 +88,13 @@ class PrimFeatureTestEnv {
   void analyze(StringPiece str) {
     CAPTURE(str);
     CHECK_OK(tenv.analyzer->resetForInput(str));
-    CHECK_OK(tenv.analyzer->makeNodeSeedsFromDic());
+    CHECK_OK(tenv.analyzer->prepareNodeSeeds());
     CHECK_OK(tenv.analyzer->buildLattice());
   }
 
   void analyze2(StringPiece str) {
     analyze(str);
-    tenv.analyzer->fixupLattice();
+    tenv.analyzer->bootstrapAnalysis();
     CHECK_OK(tenv.analyzer->computeScores(&sconf));
     top1.fillIn(tenv.analyzer->lattice());
   }

@@ -4,10 +4,19 @@
 
 #include "extra_nodes.h"
 #include "core/analysis/dic_reader.h"
+#include "util/stl_util.h"
 
 namespace jumanpp {
 namespace core {
 namespace analysis {
+
+ExtraNode *ExtraNodesContext::makeZeroedUnk() {
+  auto node = allocateExtra();
+  node->header.type = ExtraNodeType::Unknown;
+  auto cont = nodeContent(node);
+  util::fill(cont, 0);
+  return node;
+}
 
 ExtraNode *ExtraNodesContext::makeUnk(const DictNode &pat) {
   auto node = allocateExtra();
