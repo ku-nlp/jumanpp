@@ -46,9 +46,9 @@ Status TrainingDataReader::readFullExample(analysis::ExtraNodesContext *xtra,
       auto fld = csv_.field(i);
       auto it = map.find(fld);
       if (it == map.end()) {
-        auto emb = xtra->intern(fld);
+        auto interned = xtra->intern(fld);
         i32 item = static_cast<i32>(result->strings_.size());
-        result->strings_.push_back(emb);
+        result->strings_.emplace_back(interned);
         result->data_.push_back(~item);
       } else {
         result->data_.push_back(it->second);

@@ -15,6 +15,7 @@ Status LatticeBuilder::prepare() {
     return Status::Ok();
   }
 
+  boundaries_.clear();
   boundaries_.resize(maxBoundaries_);
 
   boundaries_[0].endCount = 1;                     // BOS

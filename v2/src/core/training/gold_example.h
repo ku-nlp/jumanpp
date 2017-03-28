@@ -57,7 +57,7 @@ class TrainingExampleAdapter {
   bool matchUnkNodeData(const analysis::ExtraNode *pNode,
                         const ExampleNode &node);
   int nodeSeedExists(const ExampleNode &node);
-  void makeUnkTrainingNode(const ExampleNode &node);
+  EntryPtr makeUnkTrainingNode(const ExampleNode &node);
 
   /**
    * Resolve or add new nodes for training.
@@ -81,9 +81,11 @@ class TrainingExampleAdapter {
       int boundary = exNode.position;
       if (nodePos < 0) {
         auto &bnfo = latticeBuilder->infoAt(boundary);
-        auto size = bnfo.endCount - bnfo.startCount;
-        makeUnkTrainingNode(exNode);
+        auto size = bnfo.startCount;
+        auto eptr = makeUnkTrainingNode(exNode);
         path->addGoldNode(boundary, size);
+        u16 endPos = static_cast<u16>(bnfo.number + exNode.length);
+        latticeBuilder->appendSeed(eptr, bnfo.number, endPos);
         createdNewNode = true;
       } else {
         path->addGoldNode(boundary, nodePos);

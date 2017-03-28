@@ -48,7 +48,12 @@ class AnalyzerImpl {
     sproc_ = nullptr;
   }
 
+  /**
+   * This function calls reset() internally
+   * and can not be used in training.
+   */
   Status resetForInput(StringPiece input);
+  Status setNewInput(StringPiece input);
   Status makeNodeSeedsFromDic();
   Status makeUnkNodes1();
   bool checkLatticeConnectivity();

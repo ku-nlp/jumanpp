@@ -83,7 +83,7 @@ int TrainingExampleAdapter::nodeSeedExists(const ExampleNode &node) {
   return -1;
 }
 
-void TrainingExampleAdapter::makeUnkTrainingNode(const ExampleNode &node) {
+EntryPtr TrainingExampleAdapter::makeUnkTrainingNode(const ExampleNode &node) {
   auto unk = xtra->makeZeroedUnk();
   auto nodeData = xtra->nodeContent(unk);
   auto contHash = analysis::hashUnkString(node.surface);
@@ -98,6 +98,7 @@ void TrainingExampleAdapter::makeUnkTrainingNode(const ExampleNode &node) {
   }
   unk->header.unk.contentHash = contHash;
   unk->header.unk.surface = node.surface;
+  return unk->ptr();
 }
 
 int TrainingExampleAdapter::findNodeInBoundary(
@@ -105,13 +106,21 @@ int TrainingExampleAdapter::findNodeInBoundary(
     analysis::LatticeNodePtr nodePtr) {
   int start = std::min<int>(pBoundary->localNodeCount() - 1, nodePtr.position);
 
+  auto contentHash = analysis::hashUnkString(node.surface);
   auto &exdata = spec->fields;
 
   for (int i = start; i >= 0; --i) {
     auto data = pBoundary->starts()->entryData().row(i);
     for (int j = 0; j < exdata.size(); ++j) {
       auto idx = exdata[j].index;
-      if (data[idx] != node.data[j]) {
+      auto latticeItem = data[idx];
+      i32 refItem = 0;
+      if (latticeItem < 0) {
+        refItem = contentHash;
+      } else {
+        refItem = node.data[j];
+      }
+      if (latticeItem != refItem) {
         goto nextItem;
       }
     }

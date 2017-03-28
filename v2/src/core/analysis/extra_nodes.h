@@ -125,6 +125,7 @@ class ExtraNodesContext {
       std::copy(piece.begin(), piece.end(), ptr);
       StringPiece copied{ptr, ptr + piece.size()};
       stringPtrs_[copied] = 0;
+      return copied;
     }
     return it->first;
   }
