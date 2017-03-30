@@ -131,6 +131,22 @@ class LossCalculator {
     return sz;
   }
 
+  i32 maxViolation() const {
+    i32 val = 0;
+    auto sz = fullSize();
+    float viol = 0;
+    for (int i = 0; i < sz; ++i) {
+      auto& cmp = comparison[i];
+      if (util::contains({ComparitionClass::Both, ComparitionClass::TopOnly}, cmp.cmpClass)) {
+        if (cmp.violation > viol) {
+          val = i;
+          viol = cmp.violation;
+        }
+      }
+    }
+    return val;
+  }
+
   void computeNgrams(std::vector<u32>* result, i32 boundary, i32 position);
   void computeGoldNgrams(i32 numGold);
 

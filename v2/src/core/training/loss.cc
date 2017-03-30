@@ -253,23 +253,30 @@ float LossCalculator::computeLoss(i32 till) {
   goldFeatures.clear();
   top1Features.clear();
   float loss = 0;
-  for (int i = 0; i < till; ++i) {
+  auto size = fullSize();
+  for (int i = 0; i < size; ++i) {
     auto& cmp = comparison[i];
     if (cmp.cmpClass == ComparitionClass::GoldOnly) {
       loss += fullWeight;
-      computeGoldNgrams(cmp.goldPosition);
+      if (i < till) {
+        computeGoldNgrams(cmp.goldPosition);
+      }
     } else if (cmp.cmpClass == ComparitionClass::TopOnly) {
       loss += fullWeight;
-      computeNgrams(&top1Features, cmp.boundary, cmp.topPosition);
+      if (i < till) {
+        computeNgrams(&top1Features, cmp.boundary, cmp.topPosition);
+      }
     } else if (cmp.cmpClass == ComparitionClass::Both) {
       if (cmp.numMismatches > 0) {
         loss += cmp.mismatchWeight;
-        computeGoldNgrams(cmp.goldPosition);
-        computeNgrams(&top1Features, cmp.boundary, cmp.topPosition);
+        if (i < till) {
+          computeGoldNgrams(cmp.goldPosition);
+          computeNgrams(&top1Features, cmp.boundary, cmp.topPosition);
+        }
       }
     }
   }
-  return loss / (fullSize() * fullWeight);
+  return loss / (size * fullWeight);
 }
 
 void LossCalculator::computeGoldNgrams(i32 numGold) {

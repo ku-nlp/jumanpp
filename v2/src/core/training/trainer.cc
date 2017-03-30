@@ -49,7 +49,7 @@ float Trainer::computeTrainingLoss() {
       break;
     }
     case TrainingMode::MaxViolation: {
-      JPP_DCHECK(false);
+      usedSteps = loss_.maxViolation();
       break;
     }
   }

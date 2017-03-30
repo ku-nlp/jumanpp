@@ -9,7 +9,18 @@ namespace jumanpp {
 namespace core {
 namespace training {
 
-enum class TrainingMode { Full, FalloffBeam, MaxViolation };
+// values of this enum specify how
+// the difference between top and gold
+// features will be computed
+enum class TrainingMode {
+  // compute features for the whole example
+  Full,
+  // compute features until gold falls off the beam
+  FalloffBeam,
+  // compute features until maximum violation -
+  // difference between top1 and gold score.
+  MaxViolation
+};
 
 struct ScwConfig {
   float C = 1.0f;
