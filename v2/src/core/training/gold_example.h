@@ -29,6 +29,8 @@ class GoldenPath {
   void fixBoundaryPos(int nodeIdx, int newPosition) {
     goldPath[nodeIdx].position = static_cast<u16>(newPosition);
   }
+
+  void reset() { goldPath.clear(); }
 };
 
 class TrainingExampleAdapter {
@@ -47,6 +49,8 @@ class TrainingExampleAdapter {
         latticeBuilder{impl->latticeBldr()},
         xtra{impl->extraNodesContext()},
         entries{impl->dic().entries()} {}
+
+  void reset() { entryBuffer.clear(); }
 
   bool matchDicNodeData(const ExampleNode &node);
   void loadDicSeedData(const analysis::LatticeNodeSeed &seed) {

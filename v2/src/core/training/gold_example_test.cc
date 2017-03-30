@@ -151,7 +151,8 @@ TEST_CASE("we can create a testing environment with unk nodes") {
   CHECK(env.firstNode(nodes[2]) == (ExampleData{"もも", "3", ""}));
 }
 
-TEST_CASE("we can create a testing environment with unk nodes and unk surface") {
+TEST_CASE(
+    "we can create a testing environment with unk nodes and unk surface") {
   StringPiece dic = "もも,1,1\nも,2,2\nが,3,3\n";
   StringPiece ex = "もも,1,1\nも,2,2\nうめ,3,3\n";
   GoldExampleEnv env{dic};

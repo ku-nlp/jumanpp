@@ -47,6 +47,13 @@ class AnalysisPath {
     return offsets_[idx] - offsets_[idx - 1];
   }
 
+  i32 currentBoundary() const {
+    auto beginIdx = offsets_.size() - currentChunk_ - 2;
+    JPP_DCHECK_IN(beginIdx, 0, offsets_.size());
+    auto begin = offsets_[beginIdx];
+    return elems_[begin].boundary;
+  }
+
   bool nextNode(ConnectionPtr* result) {
     currentNode_ += 1;
     bool status = remainingNodesInChunk() > 0;
@@ -60,6 +67,12 @@ class AnalysisPath {
     }
     return status;
   }
+
+  i32 curNode() const { return currentNode_; }
+
+  i32 numBoundaries() { return static_cast<i32>(offsets_.size()) - 1; }
+
+  void reset() { currentChunk_ = -1; }
 
   Status fillIn(Lattice* l);
 };

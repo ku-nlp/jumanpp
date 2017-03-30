@@ -67,6 +67,7 @@ class AnalyzerImpl {
   LatticeBuilder* latticeBldr() { return &latticeBldr_; }
   ExtraNodesContext* extraNodesContext() { return &xtra_; }
   const dic::DictionaryHolder& dic() const { return core_->dic(); }
+  const CoreHolder& core() const { return *core_; }
 
   Status preprocess(StringPiece input) {
     JPP_RETURN_IF_ERROR(resetForInput(input));
