@@ -99,6 +99,6 @@ class JumanppExec {
 
   virtual ~JumanppExec() {}
 };
-}
+}  // namespace jumanpp
 
 #endif  // JUMANPP_JUMANPP_H

@@ -106,7 +106,7 @@ Status StringStorage::makeStorage(util::CodedBuffer* result) {
 
   return Status::Ok();
 }
-}  // impl
-}  // dic
-}  // core
-}  // jumanpp
+}  // namespace impl
+}  // namespace dic
+}  // namespace core
+}  // namespace jumanpp

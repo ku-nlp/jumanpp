@@ -315,7 +315,7 @@ class FlatRep {
 
 }  // namespace internal
 
-}  // util
-}  // jumanpp
+}  // namespace util
+}  // namespace jumanpp
 
 #endif  // JUMANPP_FLATREP_H

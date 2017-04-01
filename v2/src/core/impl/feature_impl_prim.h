@@ -197,9 +197,9 @@ class PrimitiveFeaturesDynamicApply final
              util::MutableArraySlice<u64>* features) const noexcept;
 };
 
-}  // impl
-}  // features
-}  // core
-}  // jumanpp
+}  // namespace impl
+}  // namespace features
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_FEATURE_IMPL_H

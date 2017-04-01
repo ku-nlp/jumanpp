@@ -59,8 +59,8 @@ struct ConnectionBeamElement {
 
 class Lattice;
 
-}  // analysis
-}  // core
-}  // jumanpp
+}  // namespace analysis
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_LATTICE_CONFIG_H

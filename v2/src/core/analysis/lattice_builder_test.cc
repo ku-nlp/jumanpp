@@ -60,7 +60,7 @@ class LatticeBldrTestEnv {
     }
   }
 };
-}
+}  // namespace
 
 TEST_CASE("connected lattice") {
   LatticeBldrTestEnv env{"KANA,0\nすもも,1\nもも,2\nも,3\nうち,4\nの,5"};

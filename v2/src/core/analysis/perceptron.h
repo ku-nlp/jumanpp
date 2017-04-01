@@ -40,7 +40,7 @@ inline float computeUnrolled4Perceptron(const util::ArraySlice<float> weights,
   }
   return r1 + r2 + r3 + r4;
 }
-}
+}  // namespace impl
 
 class HashedFeaturePerceptron : public FeatureScorer {
   util::ArraySlice<float> weights_;
@@ -55,8 +55,8 @@ class HashedFeaturePerceptron : public FeatureScorer {
   Status load(const model::ModelInfo& model) override;
 };
 
-}  // analysis
-}  // core
-}  // jumanpp
+}  // namespace analysis
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_PERCEPTRON_H

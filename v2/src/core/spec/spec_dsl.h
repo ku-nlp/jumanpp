@@ -392,9 +392,9 @@ class ModelSpecBuilder : public DslOpBase {
   virtual Status validate() const override;
   Status build(AnalysisSpec* spec) const;
 };
-}
-}  // spec
-}  // core
-}  // jumanpp
+}  // namespace dsl
+}  // namespace spec
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_SPEC_DSL_H

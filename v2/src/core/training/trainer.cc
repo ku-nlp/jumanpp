@@ -13,6 +13,14 @@ Status Trainer::prepare() {
 
   JPP_RETURN_IF_ERROR(analyzer->setNewInput(example_.surface()));
   Status seedStatus = analyzer->prepareNodeSeeds();
+
+  if (!seedStatus) {
+    // lattice was discontinous
+    // but we need latticeinfo for building gold nodes
+    latBldr->sortSeeds();
+    JPP_RETURN_IF_ERROR(latBldr->prepare());
+  }
+
   if (adapter_.ensureNodes(example_, &loss_.goldPath())) {
     // ok, we have created at least one more node
     // that should have fixed any connectability errors
@@ -65,6 +73,6 @@ Status Trainer::compute(analysis::ScoreConfig *sconf) {
   return Status::Ok();
 }
 
-}  // training
-}  // core
-}  // jumanpp
+}  // namespace training
+}  // namespace core
+}  // namespace jumanpp

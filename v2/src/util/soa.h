@@ -272,8 +272,8 @@ class SizedArrayField : public SOAField {
   }
 };
 
-}  // memory
-}  // util
-}  // jumanpp
+}  // namespace memory
+}  // namespace util
+}  // namespace jumanpp
 
 #endif  // JUMANPP_SOA_H

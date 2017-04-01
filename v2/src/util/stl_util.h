@@ -48,7 +48,7 @@ inline void fill(C& c, const T& t) {
   std::fill(std::begin(c), std::end(c), t);
 };
 
-}  // util
-}  // jumanpp
+}  // namespace util
+}  // namespace jumanpp
 
 #endif  // JUMANPP_STL_UTIL_H

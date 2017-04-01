@@ -41,6 +41,6 @@ DictionaryNodeCreator::DictionaryNodeCreator(
     const dic::DictionaryEntries& entries_)
     : entries_(entries_) {}
 
-}  // analysis
-}  // core
-}  // jumanpp
+}  // namespace analysis
+}  // namespace core
+}  // namespace jumanpp

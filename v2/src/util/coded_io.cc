@@ -89,7 +89,7 @@ done:
            (static_cast<u64>(part2) << 56);
   return std::make_pair(true, ptr);
 }
-}  // impl
+}  // namespace impl
 
 bool CodedBufferParser::readVarint64Slowpath(u64* pInt) noexcept {
   if (remaining() == 0) return false;
@@ -128,5 +128,5 @@ bool CodedBufferParser::readVarint64Slowpath(u64* pInt) noexcept {
   return true;
 }
 
-}  // jumanpp
-}  // util
+}  // namespace util
+}  // namespace jumanpp

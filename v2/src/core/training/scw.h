@@ -7,7 +7,7 @@
 
 #include <cmath>
 #include <vector>
-#include <core/analysis/perceptron.h>
+#include "core/analysis/perceptron.h"
 #include "core/training/loss.h"
 #include "core/training/training_types.h"
 
@@ -29,6 +29,7 @@ class SoftConfidenceWeighted {
   double psi;
 
   analysis::HashedFeaturePerceptron perceptron;
+  analysis::ScoreConfig sconf;
 
   void updateMatrix(float beta, util::ArraySlice<ScoredFeature> features);
 
@@ -49,10 +50,11 @@ class SoftConfidenceWeighted {
   SoftConfidenceWeighted(const TrainingConfig& conf);
   Status validate() const;
   void update(float loss, util::ArraySlice<ScoredFeature> features);
+  analysis::ScoreConfig* scoreConfig() { return &sconf; }
 };
 
-}  // training
-}  // core
-}  // jumanpp
+}  // namespace training
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_SCW_H

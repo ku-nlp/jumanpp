@@ -75,5 +75,5 @@ class CRnnLM {
   virtual real test_word_selfnm(context *c, context *new_c,
                                 std::string next_word, size_t word_length) = 0;
 };
-}
+}  // namespace RNNLM_legacy
 #endif

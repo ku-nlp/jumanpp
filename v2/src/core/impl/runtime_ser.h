@@ -30,7 +30,7 @@ void Serialize(Arch& a, UnkMakersInfo& o) {
   a& o.numPlaceholders;
   a& o.makers;
 }
-}  // analysis
+}  // namespace analysis
 
 namespace features {
 
@@ -74,7 +74,7 @@ void Serialize(Arch& a, FeatureRuntimeInfo& o) {
   a& o.placeholderMapping;
 }
 
-}  // features
+}  // namespace features
 
 template <typename Arch>
 void Serialize(Arch& a, RuntimeInfo& o) {
@@ -82,7 +82,7 @@ void Serialize(Arch& a, RuntimeInfo& o) {
   a& o.unkMakers;
 }
 
-}  // core
-}  // jumanpp
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_RUNTIME_SER_H

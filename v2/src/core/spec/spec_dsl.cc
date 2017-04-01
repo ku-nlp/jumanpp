@@ -48,16 +48,16 @@ Status ModelSpecBuilder::validateNames() const {
   util::FlatSet<StringPiece> current;
   for (auto fld : fields_) {
     if (current.count(fld->name()) != 0) {
-      return Status::InvalidParameter() << "field " << fld->name()
-                                        << " has non-unique name";
+      return Status::InvalidParameter()
+             << "field " << fld->name() << " has non-unique name";
     }
     current.insert(fld->name());
   }
 
   for (auto feature : features_) {
     if (current.count(feature->name()) != 0) {
-      return Status::InvalidParameter() << "feature " << feature->name()
-                                        << " has non-unique name";
+      return Status::InvalidParameter()
+             << "feature " << feature->name() << " has non-unique name";
     }
   }
 
@@ -217,9 +217,9 @@ Status findOnlyFieldForFeature(util::ArraySlice<FieldDescriptor> fields,
       [fname](const FieldDescriptor& fd) -> bool { return fname == fd.name; });
 
   if (res == fields.end()) {
-    return Status::InvalidState() << "feature " << featureName
-                                  << " was referring to unknown field "
-                                  << fname;
+    return Status::InvalidState()
+           << "feature " << featureName << " was referring to unknown field "
+           << fname;
   }
 
   *result = res->index;
@@ -324,9 +324,9 @@ Status ModelSpecBuilder::createComputeFeatures(FeaturesSpec* fspec) const {
       JPP_RETURN_IF_ERROR(checkTfType(tex));
       auto idx = name2prim.find(tex.fieldName);
       if (idx == name2prim.end()) {
-        return Status::InvalidState() << f->name()
-                                      << ": could not find primitive feature "
-                                      << tex.fieldName;
+        return Status::InvalidState()
+               << f->name() << ": could not find primitive feature "
+               << tex.fieldName;
       }
       cfd.trueBranch.push_back(idx->second);
     }
@@ -335,9 +335,9 @@ Status ModelSpecBuilder::createComputeFeatures(FeaturesSpec* fspec) const {
       JPP_RETURN_IF_ERROR(checkTfType(tex));
       auto idx = name2prim.find(tex.fieldName);
       if (idx == name2prim.end()) {
-        return Status::InvalidState() << f->name()
-                                      << ": could not find primitive feature "
-                                      << tex.fieldName;
+        return Status::InvalidState()
+               << f->name() << ": could not find primitive feature "
+               << tex.fieldName;
       }
       cfd.falseBranch.push_back(idx->second);
     }
@@ -360,8 +360,8 @@ Status ModelSpecBuilder::createComputeFeatures(FeaturesSpec* fspec) const {
     }
 
     if (f->matchData_.size() == 0) {
-      return Status::InvalidParameter() << f->name()
-                                        << " match feature needs match data";
+      return Status::InvalidParameter()
+             << f->name() << " match feature needs match data";
     }
 
     if (ftype == FeatureType::MatchValue) {
@@ -567,8 +567,8 @@ Status FieldBuilder::validate() const {
            << " has " << csvColumn_;
   }
   if (columnType_ == ColumnType::Error) {
-    return Status::InvalidParameter() << "coumn " << name_
-                                      << " do not have type";
+    return Status::InvalidParameter()
+           << "coumn " << name_ << " do not have type";
   }
   if (trieIndex_ && columnType_ != ColumnType::String) {
     return Status::InvalidParameter()
@@ -607,16 +607,16 @@ Status FieldBuilder::fill(FieldDescriptor* descriptor,
 
 Status FeatureBuilder::validate() const {
   if (type_ == FeatureType::Initial) {
-    return Status::InvalidParameter() << "feature " << name_
-                                      << " was not initialized";
+    return Status::InvalidParameter()
+           << "feature " << name_ << " was not initialized";
   }
   if (type_ == FeatureType::Invalid) {
-    return Status::InvalidParameter() << "feature " << name_
-                                      << " was initialized more than one time";
+    return Status::InvalidParameter()
+           << "feature " << name_ << " was initialized more than one time";
   }
   if (type_ == FeatureType::Length && fields_.size() != 1) {
-    return Status::InvalidState() << "feature " << name_
-                                  << " can contain only one field reference";
+    return Status::InvalidState()
+           << "feature " << name_ << " can contain only one field reference";
   }
 
   if ((trueTransforms_.size() != 0) ^ (falseTransforms_.size() != 0)) {
@@ -641,8 +641,8 @@ Status UnkProcBuilder::validate() const {
     return Status::InvalidParameter() << "unk processor must have a name";
   }
   if (type_ == UnkMakerType::Invalid) {
-    return Status::InvalidParameter() << name_
-                                      << ": unk processor was not initialized";
+    return Status::InvalidParameter()
+           << name_ << ": unk processor was not initialized";
   }
   if (pattern_ == -1) {
     return Status::InvalidParameter()
@@ -651,7 +651,7 @@ Status UnkProcBuilder::validate() const {
   return Status::Ok();
 }
 
-}  // dsl
-}  // spec
-}  // core
-}  // jumanpp
+}  // namespace dsl
+}  // namespace spec
+}  // namespace core
+}  // namespace jumanpp

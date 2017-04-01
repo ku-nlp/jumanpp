@@ -774,4 +774,4 @@ real CRnnLM_stat::test_word_selfnm(context *c, context *new_c,
 
   return senp;
 }
-}
+}  // namespace RNNLM_legacy

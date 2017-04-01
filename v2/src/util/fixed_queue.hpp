@@ -96,6 +96,6 @@ class fixed_queue {
    */
   size_t size() const { return std::min(data_.capacity(), data_.size()); }
 };
-}
+}  // namespace jumanpp
 
 #endif  // JUMANPP_FIXED_QUEUE_HPP

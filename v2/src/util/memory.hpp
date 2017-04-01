@@ -156,8 +156,8 @@ class StlManagedAlloc {
 
 template <typename T>
 using ManagedVector = std::vector<T, StlManagedAlloc<T>>;
-}
-}
-}
+}  // namespace memory
+}  // namespace util
+}  // namespace jumanpp
 
 #endif  // JUMANPP_MEMORY_HPP

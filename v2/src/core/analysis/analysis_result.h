@@ -87,8 +87,8 @@ class AnalysisResult {
   Status fillTop1(AnalysisPath* result);
 };
 
-}  // analysis
-}  // core
-}  // jumanpp
+}  // namespace analysis
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_ANALYSIS_RESULT_H

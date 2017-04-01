@@ -3,8 +3,8 @@
 //
 
 #include "scw.h"
-#include "util/memory.hpp"
 #include <random>
+#include "util/memory.hpp"
 
 namespace jumanpp {
 namespace core {
@@ -85,11 +85,14 @@ void SoftConfidenceWeighted::updateMatrix(
   }
 }
 
-SoftConfidenceWeighted::SoftConfidenceWeighted(const TrainingConfig &conf) :
-    phi{conf.scw.phi}, C{conf.scw.C}, zeta { 1 + phi * phi}, psi{1 + phi * phi / 2} {
+SoftConfidenceWeighted::SoftConfidenceWeighted(const TrainingConfig& conf)
+    : phi{conf.scw.phi},
+      C{conf.scw.C},
+      zeta{1 + phi * phi},
+      psi{1 + phi * phi / 2} {
   usableWeights.reserve(conf.numHashedFeatures);
   matrixDiagonal.resize(conf.numHashedFeatures);
-  
+
   std::default_random_engine eng{conf.randomSeed};
   float boundary = 1.0f / conf.numHashedFeatures;
   std::uniform_real_distribution<float> dist{-boundary, boundary};
@@ -98,15 +101,19 @@ SoftConfidenceWeighted::SoftConfidenceWeighted(const TrainingConfig &conf) :
   }
 
   perceptron = analysis::HashedFeaturePerceptron(usableWeights);
+  sconf.feature = &perceptron;
+  sconf.scoreWeights.clear();
+  sconf.scoreWeights.push_back(1.0f);
 }
 
 Status SoftConfidenceWeighted::validate() const {
   if (!util::memory::IsPowerOf2(usableWeights.size())) {
-    return Status::InvalidParameter() << "number of features must be a power of 2";
+    return Status::InvalidParameter()
+           << "number of features must be a power of 2";
   }
   return Status::Ok();
 }
 
-}  // training
-}  // core
-}  // jumanpp
+}  // namespace training
+}  // namespace core
+}  // namespace jumanpp

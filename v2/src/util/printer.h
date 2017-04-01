@@ -23,7 +23,7 @@ class PrinterStream final : public std::ostream {
  public:
   PrinterStream(PrinterBuffer* ptr) : std::ostream(ptr) {}
 };
-}
+}  // namespace impl
 
 class Printer {
   impl::PrinterBuffer buf_;
@@ -89,8 +89,8 @@ class Indent {
   ~Indent() { printer->addIndent(-indent); }
 };
 
-}  // io
-}  // util
-}  // jumanpp
+}  // namespace io
+}  // namespace util
+}  // namespace jumanpp
 
 #endif  // JUMANPP_PRINTER_H

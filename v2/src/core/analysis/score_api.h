@@ -48,8 +48,8 @@ struct ScoreConfig {
   std::vector<Score> scoreWeights;
 };
 
-}  // analysis
-}  // core
-}  // jumanpp
+}  // namespace analysis
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_SCORE_API_H

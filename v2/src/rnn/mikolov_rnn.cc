@@ -30,8 +30,8 @@ Status readHeader(StringPiece data, MikolovRnnModelHeader* header) {
   auto sv = packed->sizeVersion;
   auto vers = sv / VersionStepSize;
   if (vers != 6) {
-    return Status::InvalidParameter() << "invalid rnn model version " << vers
-                                      << " can handle only 6";
+    return Status::InvalidParameter()
+           << "invalid rnn model version " << vers << " can handle only 6";
   }
 
   if (!packed->useNce) {
@@ -200,6 +200,6 @@ util::ArraySlice<float> MikolovModelReader::nceEmbeddings() const {
       data_->nceEmbeddingData.get(),
       data_->header.vocabSize * data_->header.layerSize};
 }
-}
-}
-}
+}  // namespace mikolov
+}  // namespace rnn
+}  // namespace jumanpp

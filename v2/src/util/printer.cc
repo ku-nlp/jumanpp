@@ -13,6 +13,6 @@ StringPiece impl::PrinterBuffer::contents() const {
 }
 
 void impl::PrinterBuffer::reset() { setp(pbase(), epptr()); }
-}
-}  // util
-}
+}  // namespace io
+}  // namespace util
+}  // namespace jumanpp

@@ -97,6 +97,11 @@ class LossCalculator {
                  const spec::TrainingSpec* spec)
       : analyzer{analyzer}, spec{spec} {
     featureBuffer.resize(analyzer->core().runtime().features.ngrams.size());
+
+    fullWeight = 0;
+    for (auto& x: spec->fields) {
+      fullWeight += x.weight;
+    }
   }
 
   Status resolveTop1() { return top1.fillIn(analyzer->lattice()); }
@@ -137,7 +142,8 @@ class LossCalculator {
     float viol = 0;
     for (int i = 0; i < sz; ++i) {
       auto& cmp = comparison[i];
-      if (util::contains({ComparitionClass::Both, ComparitionClass::TopOnly}, cmp.cmpClass)) {
+      if (util::contains({ComparitionClass::Both, ComparitionClass::TopOnly},
+                         cmp.cmpClass)) {
         if (cmp.violation > viol) {
           val = i;
           viol = cmp.violation;
@@ -157,8 +163,8 @@ class LossCalculator {
   GoldenPath& goldPath() { return gold; }
 };
 
-}  // training
-}  // core
-}  // jumanpp
+}  // namespace training
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_LOSS_H

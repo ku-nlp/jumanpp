@@ -295,6 +295,6 @@ Status AnalyzerImpl::initScorers(const ScoreConfig& cfg) {
   return Status::Ok();
 }
 
-}  // analysis
-}  // core
-}  // jumanpp
+}  // namespace analysis
+}  // namespace core
+}  // namespace jumanpp

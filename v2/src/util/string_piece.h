@@ -155,9 +155,9 @@ struct StringPieceHash {
     return static_cast<size_t>(hv);
   }
 };
-}  // impl
-}
-}  // jumanpp
+}  // namespace impl
+}  // namespace util
+}  // namespace jumanpp
 
 namespace std {
 template <>
@@ -169,6 +169,6 @@ struct hash<jumanpp::StringPiece> {
     return impl_(p);
   }
 };
-}  // std
+}  // namespace std
 
 #endif  // JUMANPP_STRING_PIECE_H

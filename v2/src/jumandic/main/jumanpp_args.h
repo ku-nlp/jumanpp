@@ -21,7 +21,7 @@ struct JumanppConf {
 
 bool parseArgs(int argc, char* argv[], JumanppConf* result);
 
-}  // jumandic
-}  // jumanpp
+}  // namespace jumandic
+}  // namespace jumanpp
 
 #endif  // JUMANPP_JUMANPP_ARGS_H

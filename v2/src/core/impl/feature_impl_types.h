@@ -183,9 +183,9 @@ class NgramFeatureData {
   }
 };
 
-}  // impl
-}  // features
-}  // core
-}  // jumanpp
+}  // namespace impl
+}  // namespace features
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_FEATURE_IMPL_TYPES_H

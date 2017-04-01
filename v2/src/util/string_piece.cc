@@ -20,4 +20,4 @@ bool operator==(const StringPiece &l, const StringPiece &r) {
 
 StringPiece::StringPiece(StringPiece::char_ptr ptr) noexcept
     : StringPiece(ptr, ptr + std::strlen(ptr)) {}
-}
+}  // namespace jumanpp

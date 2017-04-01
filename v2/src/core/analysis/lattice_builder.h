@@ -118,8 +118,8 @@ class LatticeBuilder {
   const BoundaryInfo& infoAt(i32 boundary) const;
 };
 
-}  // analysis
-}  // core
-}  // jumanpp
+}  // namespace analysis
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_LATTICE_CONSTRUCTION_H

@@ -234,7 +234,7 @@ struct SerializeImpl<std::vector<T, A>> {
     nm_ = static_cast<name>(var_);             \
   }
 
-}  // serialization
-}  // util
-}  // jumanpp
+}  // namespace serialization
+}  // namespace util
+}  // namespace jumanpp
 #endif  // JUMANPP_SERIALIZATION_H

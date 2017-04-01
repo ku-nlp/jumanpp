@@ -86,8 +86,8 @@ class MikolovRnn {
   void apply(StepData* data);
 };
 
-}  // mikolov
-}  // rnn
-}  // jumanpp
+}  // namespace mikolov
+}  // namespace rnn
+}  // namespace jumanpp
 
 #endif  // JUMANPP_MIKOLOV_RNN_H

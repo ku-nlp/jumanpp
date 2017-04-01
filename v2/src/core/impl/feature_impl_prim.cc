@@ -18,8 +18,8 @@ Status CopyPrimFeatureImpl::initialize(FeatureConstructionContext *ctx,
   featureIdx = static_cast<u32>(f.index);
 
   if (f.references.size() != 1) {
-    return Status::InvalidParameter() << f.name
-                                      << ": number of parameters must be 1";
+    return Status::InvalidParameter()
+           << f.name << ": number of parameters must be 1";
   }
 
   fieldIdx = static_cast<u32>(f.references.at(0));
@@ -38,8 +38,8 @@ Status ProvidedPrimFeatureImpl::initialize(FeatureConstructionContext *ctx,
 
   featureIdx = static_cast<u32>(f.index);
   if (f.references.size() != 1) {
-    return Status::InvalidParameter() << f.name
-                                      << ": number of parameters must be 1";
+    return Status::InvalidParameter()
+           << f.name << ": number of parameters must be 1";
   }
 
   providedIdx = static_cast<u32>(f.references.at(0));
@@ -58,8 +58,8 @@ Status LengthPrimFeatureImpl::initialize(FeatureConstructionContext *ctx,
   featureIdx = static_cast<u32>(f.index);
 
   if (f.references.size() != 1) {
-    return Status::InvalidParameter() << f.name
-                                      << ": number of parameters must be 1";
+    return Status::InvalidParameter()
+           << f.name << ": number of parameters must be 1";
   }
 
   fieldIdx = static_cast<u32>(f.references.at(0));
@@ -78,8 +78,8 @@ Status MatchDicPrimFeatureImpl::initialize(FeatureConstructionContext *ctx,
   featureIdx = static_cast<u32>(f.index);
 
   if (f.references.size() != 1) {
-    return Status::InvalidParameter() << f.name
-                                      << ": number of parameters must be 1";
+    return Status::InvalidParameter()
+           << f.name << ": number of parameters must be 1";
   }
 
   fieldIdx = static_cast<u32>(f.references.at(0));
@@ -101,8 +101,8 @@ Status MatchAnyDicPrimFeatureImpl::initialize(FeatureConstructionContext *ctx,
   featureIdx = static_cast<u32>(f.index);
 
   if (f.references.size() != 1) {
-    return Status::InvalidParameter() << f.name
-                                      << ": number of parameters must be 1";
+    return Status::InvalidParameter()
+           << f.name << ": number of parameters must be 1";
   }
 
   fieldIdx = static_cast<u32>(f.references.at(0));
@@ -181,7 +181,7 @@ void PrimitiveFeaturesDynamicApply::apply(
   }
 }
 
-}  // impl
-}  // features
-}  // core
-}  // jumanpp
+}  // namespace impl
+}  // namespace features
+}  // namespace core
+}  // namespace jumanpp

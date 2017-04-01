@@ -21,8 +21,8 @@ class DictionaryNodeCreator {
   bool spawnNodes(const AnalysisInput& input, LatticeBuilder* lattice);
 };
 
-}  // analysis
-}  // core
-}  // jumanpp
+}  // namespace analysis
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_DICTIONARY_NODE_CREATOR_H

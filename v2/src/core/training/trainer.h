@@ -5,11 +5,11 @@
 #ifndef JUMANPP_TRAINER_H
 #define JUMANPP_TRAINER_H
 
+#include "core/analysis/perceptron.h"
 #include "gold_example.h"
 #include "loss.h"
 #include "training_io.h"
 #include "training_types.h"
-#include "core/analysis/perceptron.h"
 
 namespace jumanpp {
 namespace core {
@@ -49,8 +49,8 @@ class Trainer {
   }
 };
 
-}  // training
-}  // core
-}  // jumanpp
+}  // namespace training
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_TRAINER_H

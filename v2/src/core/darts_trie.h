@@ -37,7 +37,7 @@ struct PieceWithValue {
   int value;
   PieceWithValue(const StringPiece& key, int value) : key(key), value(value) {}
 };
-}
+}  // namespace impl
 
 class DoubleArrayBuilder {
   std::unique_ptr<impl::DoubleArrayCore> array_;
@@ -80,7 +80,7 @@ class DoubleArrayTraversal {
 namespace impl {
 struct DoubleArrayBackingFile;
 constexpr size_t InvalidSize = ~size_t(0);
-}
+}  // namespace impl
 
 class DoubleArray {
   std::unique_ptr<impl::DoubleArrayCore> underlying_;
@@ -99,7 +99,7 @@ class DoubleArray {
 
   friend class DoubleArrayTraversal;
 };
-}
-}
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_DARTS_TRIE_H

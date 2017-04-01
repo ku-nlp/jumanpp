@@ -15,8 +15,8 @@ namespace spec {
 void saveSpec(const AnalysisSpec& spec, util::CodedBuffer* buf);
 bool loadSpec(StringPiece data, AnalysisSpec* result);
 
-}  // spec
-}  // core
-}  // jumanpp
+}  // namespace spec
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_SPEC_SERIALIZATION_H

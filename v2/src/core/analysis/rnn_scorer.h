@@ -42,9 +42,9 @@ class RnnScorer : public ScoreComputer {
   bool scoreBoundary(i32 scorerIdx, Lattice* l, i32 boundary);
 };
 
-}  // rnn
-}  // analysis
-}  // core
-}  // jumanpp
+}  // namespace rnn
+}  // namespace analysis
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_RNN_SCORER_H

@@ -49,8 +49,8 @@ inline Matrix asMatrix(const util::Sliceable<FpType> &sl, size_t rows,
   return Matrix(ptr, rows, cols);
 }
 
-}  // impl
-}  // rnn
-}  // jumanpp
+}  // namespace impl
+}  // namespace rnn
+}  // namespace jumanpp
 
 #endif  // JUMANPP_SIMPLE_RNN_IMPL_H

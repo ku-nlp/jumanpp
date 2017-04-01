@@ -372,7 +372,7 @@ class FlatMap {
   Rep rep_;
 };
 
-}  // util
-}  // jumanpp
+}  // namespace util
+}  // namespace jumanpp
 
 #endif  // JUMANPP_FLATMAP_H

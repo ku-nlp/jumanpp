@@ -89,6 +89,6 @@ bool JumanFormat::formatOne(const core::analysis::OutputManager& om,
   return true;
 }
 
-}  // output
-}  // jumandic
-}  // jumanpp
+}  // namespace output
+}  // namespace jumandic
+}  // namespace jumanpp

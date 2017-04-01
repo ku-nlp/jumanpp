@@ -39,7 +39,7 @@ class CoreHolder {
   const features::FeatureHolder& features() const { return features_; }
 };
 
-}  // core
-}  // jumanpp
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_CORE_H

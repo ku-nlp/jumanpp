@@ -103,10 +103,10 @@ class TrainingExampleAdapter {
                          analysis::LatticeNodePtr nodePtr);
 
   /**
-     * After the Lattice is built, we need to fixup pointers of GoldenPath.
-     * Equivalent node compression could have invalidated our pointers, so
-     * recheck them.
-     */
+   * After the Lattice is built, we need to fixup pointers of GoldenPath.
+   * Equivalent node compression could have invalidated our pointers, so
+   * recheck them.
+   */
   Status repointPathPointers(const FullyAnnotatedExample &ex,
                              GoldenPath *path) {
     for (int i = 0; i < ex.numNodes(); ++i) {
@@ -124,7 +124,7 @@ class TrainingExampleAdapter {
   }
 };
 
-}  // training
-}  // core
-}  // jumanpp
+}  // namespace training
+}  // namespace core
+}  // namespace jumanpp
 #endif  // JUMANPP_GOLD_EXAMPLE_H

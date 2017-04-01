@@ -60,8 +60,8 @@ struct ColumnImportContext {
         break;
       }
       default:
-        return Status::NotImplemented() << "importing field type=" << tp
-                                        << " is not implemented";
+        return Status::NotImplemented()
+               << "importing field type=" << tp << " is not implemented";
     }
 
     return Status::Ok();
@@ -472,6 +472,6 @@ Status DictionaryBuilder::fixupDictionary(const model::ModelPart& dicInfo) {
   return Status::Ok();
 }
 
-}  // dic
-}  // core
-}  // jumanpp
+}  // namespace dic
+}  // namespace core
+}  // namespace jumanpp

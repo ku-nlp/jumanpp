@@ -68,7 +68,7 @@ class Sliceable {
   typename underlying::const_iterator end() const { return data_.end(); }
 };
 
-}  // util
-}  // jumanpp
+}  // namespace util
+}  // namespace jumanpp
 
 #endif  // JUMANPP_SLICEABLE_ARRAY_H

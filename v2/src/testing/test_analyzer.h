@@ -90,7 +90,7 @@ class TestEnv {
   }
 };
 
-}  // testing
-}  // jumanpp
+}  // namespace testing
+}  // namespace jumanpp
 
 #endif  // JUMANPP_TEST_ANALYZER_H

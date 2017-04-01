@@ -301,7 +301,7 @@ template <typename T>
 const typename ArraySlice<T>::size_type ArraySlice<T>::npos;
 template <typename T>
 const typename MutableArraySlice<T>::size_type MutableArraySlice<T>::npos;
-}
-}
+}  // namespace util
+}  // namespace jumanpp
 
 #endif  // JUMANPP_ARRAY_SLICE_H

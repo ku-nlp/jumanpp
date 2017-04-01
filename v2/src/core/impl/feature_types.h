@@ -51,8 +51,8 @@ struct FeatureRuntimeInfo {
   std::vector<i32> placeholderMapping;
 };
 
-}  // features
-}  // core
-}  // jumanpp
+}  // namespace features
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_FEATURE_TYPES_H

@@ -342,6 +342,6 @@ Status DictionaryHolder::compileRuntimeInfo(const spec::AnalysisSpec& spec,
   return Status::Ok();
 }
 
-}  // dic
-}  // core
-}  // jumanpp
+}  // namespace dic
+}  // namespace core
+}  // namespace jumanpp

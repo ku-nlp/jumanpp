@@ -63,23 +63,39 @@ class FullyAnnotatedExample {
   i32 numNodes() const { return static_cast<i32>(lengths_.size()); }
 };
 
+enum class DataReaderMode { SimpleCsv, DoubleCsv };
+
 class TrainingDataReader {
+  DataReaderMode mode_;
   util::CsvReader csv_;
   bool finished_;
   std::vector<util::FlatMap<StringPiece, i32>> fields_;
   std::vector<chars::InputCodepoint> codepts_;
   i32 surfaceField_;
+  char doubleFldSep_;
+
+  Status readSingleExampleFragment(const util::CsvReader& csv,
+                                   analysis::ExtraNodesContext* xtra,
+                                   FullyAnnotatedExample* result);
 
  public:
   Status initialize(const spec::TrainingSpec& spec, const CoreHolder& core);
+
+  Status initDoubleCsv(StringPiece data, char tokenSep = ' ',
+                       char fieldSep = '_');
+
   Status initCsv(StringPiece data);
   bool finished() const { return finished_; }
+  Status readFullExampleDblCsv(analysis::ExtraNodesContext* xtra,
+                               FullyAnnotatedExample* result);
+  Status readFullExampleCsv(analysis::ExtraNodesContext* xtra,
+                            FullyAnnotatedExample* result);
   Status readFullExample(analysis::ExtraNodesContext* xtra,
                          FullyAnnotatedExample* result);
 };
 
-}  // training
-}  // core
-}  // jumanpp
+}  // namespace training
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_TRAINING_IO_H

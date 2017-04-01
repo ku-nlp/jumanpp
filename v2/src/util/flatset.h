@@ -260,7 +260,7 @@ class FlatSet {
   Rep rep_;
 };
 
-}  // util
-}  // jumanpp
+}  // namespace util
+}  // namespace jumanpp
 
 #endif  // JUMANPP_FLATSET_H

@@ -140,9 +140,9 @@ class StringStorageTraversal {
   }
 };
 
-}  // impl
-}  // dic
-}  // core
-}  // jumanpp
+}  // namespace impl
+}  // namespace dic
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_FIELD_READER_H

@@ -145,9 +145,9 @@ struct tri_list_3 : arglist {};
 struct tri_data : p::if_must<kw_trigram, sep, tri_list_1, sep, tri_list_2, sep,
                              tri_list_3> {};
 
-}  // parser
-}  // spec
-}  // core
-}  // jumanpp
+}  // namespace parser
+}  // namespace spec
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_SPEC_FIELD_PARSER_H

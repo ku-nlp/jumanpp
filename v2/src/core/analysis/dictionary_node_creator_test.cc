@@ -61,7 +61,7 @@ class NodeCreatorTestEnv {
     return false;
   }
 };
-}
+}  // namespace
 
 TEST_CASE("it is possible to extract some nodes from input string") {
   NodeCreatorTestEnv env{
@@ -117,7 +117,7 @@ class NodeCreatorTestEnv2 {
     return false;
   }
 };
-}
+}  // namespace
 
 TEST_CASE("extraction works with two different entries") {
   NodeCreatorTestEnv2 env{"diag,1\ndump,5\ncor,1\ncor,2\ncors,8"};

@@ -79,8 +79,8 @@ struct GeneratedClass {
   }
 };
 
-}  // codegen
-}  // util
-}  // jumanpp
+}  // namespace codegen
+}  // namespace util
+}  // namespace jumanpp
 
 #endif  // JUMANPP_CODEGEN_H

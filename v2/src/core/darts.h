@@ -449,9 +449,8 @@ class DoubleArrayImpl {
       next_check_pos_ = pos;
 
     used_[begin] = 1;
-    size_ = _max(
-        size_,
-        begin + static_cast<size_t>(siblings[siblings.size() - 1].code + 1));
+    size_ = _max(size_, begin + static_cast<size_t>(
+                                    siblings[siblings.size() - 1].code + 1));
 
     for (size_t i = 0; i < siblings.size(); ++i)
       array_[begin + siblings[i].code].check = begin;
@@ -505,5 +504,5 @@ typedef Darts::DoubleArrayImpl<char, unsigned char, long long,
                                unsigned long long>
     DoubleArray;
 #endif
-}
+}  // namespace Darts
 #endif

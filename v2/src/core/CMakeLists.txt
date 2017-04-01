@@ -7,7 +7,8 @@ set(core_srcs darts_trie.cc dictionary.cc impl/field_import.cc dic_builder.cc
         analysis/lattice_plugin.cc analysis/perceptron.cc analysis/score_processor.cc analysis/analysis_result.cc)
 
 set(core_train_srcs
-        training/training_io.cc training/loss.cc training/gold_example.cc training/trainer.cc training/scw.cc training/training_types.h)
+        training/training_io.cc training/loss.cc training/gold_example.cc training/trainer.cc training/scw.cc
+        training/training_types.h training/training_test_common.h)
 
 set(core_hdrs darts.h darts_trie.h dictionary.h impl/field_import.h impl/field_reader.h dic_entries.h
         dic_builder.h spec/spec_grammar.h spec/spec_dsl.h analysis/analysis_input.h analysis/lattice_builder.h
@@ -25,7 +26,7 @@ set(core_test_srcs darts_trie_test.cc dictionary_test.cc impl/field_import_test.
         impl/field_reader_test.cc impl/feature_impl_prim_test.cc impl/feature_impl_compute_test.cc
         impl/feature_impl_combine_test.cc impl/feature_test.cc)
 
-set(core_train_test_srcs training/gold_example_test.cc)
+set(core_train_test_srcs training/gold_example_test.cc training/trainer_test.cc)
 
 set(spec_test_srcs spec/spec_grammar_test.cc spec/spec_dsl_test.cc spec/spec_dsl_feature_test.cc)
 set(analysis_test_srcs

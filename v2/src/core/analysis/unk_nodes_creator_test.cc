@@ -85,7 +85,7 @@ class UnkNodeTestEnv {
     }
   }
 };
-}
+}  // namespace
 
 TEST_CASE("unk nodes are spawned") {
   UnkNodeTestEnv env{"x,a\nxa,b\n"};

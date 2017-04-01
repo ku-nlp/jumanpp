@@ -70,7 +70,7 @@ class LatticeCompactorTestEnv {
     }
   }
 };
-}
+}  // namespace
 
 TEST_CASE("compactor works") {
   LatticeCompactorTestEnv env{

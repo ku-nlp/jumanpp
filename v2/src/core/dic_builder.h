@@ -53,8 +53,8 @@ class DictionaryBuilder {
   const spec::AnalysisSpec& spec() const { return *spec_; }
 };
 
-}  // dic
-}  // core
-}  // jumanpp
+}  // namespace dic
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_DIC_BUILDER_H

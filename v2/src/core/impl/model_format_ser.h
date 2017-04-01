@@ -33,8 +33,8 @@ void Serialize(Arch& a, ModelInfoRaw& o) {
   a& o.parts;
 }
 
-}  // model
-}  // core
-}  // jumanpp
+}  // namespace model
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_MODEL_FORMAT_SER_H

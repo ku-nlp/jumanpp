@@ -168,9 +168,9 @@ class ComputeFeatureDynamicApply final
   }
 };
 
-}  // impl
-}  // features
-}  // core
-}  // jumanpp
+}  // namespace impl
+}  // namespace features
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_FEATURE_IMPL_COMPUTE_H

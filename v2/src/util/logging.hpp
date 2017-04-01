@@ -32,9 +32,9 @@ class WriteInDestructorLoggerImpl {
     return *this;
   }
 };
-}
-}
-}
+}  // namespace logging
+}  // namespace util
+}  // namespace jumanpp
 
 #define JPP_LOG(level)                                                       \
   (::jumanpp::util::logging::WriteInDestructorLoggerImpl{__FILE__, __LINE__, \

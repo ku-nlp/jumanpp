@@ -69,6 +69,6 @@ Status AnalysisPath::fillIn(Lattice *l) {
 
   return Status::Ok();
 }
-}  // analysis
-}  // core
-}  // jumanpp
+}  // namespace analysis
+}  // namespace core
+}  // namespace jumanpp

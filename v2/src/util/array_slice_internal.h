@@ -246,8 +246,8 @@ class MutableArraySliceImpl : public ArraySliceImplBase<T> {
       : ArraySliceImplBase<T>(ContainerMutableData<T, C>::Get(v),
                               ContainerSize<C>::Get(v)) {}
 };
-}
-}
-}
+}  // namespace internal
+}  // namespace util
+}  // namespace jumanpp
 
 #endif  // JUMANPP_ARRAY_SLICE_INTERNAL_H

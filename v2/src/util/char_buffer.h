@@ -87,7 +87,7 @@ class CharBuffer {
   }
 };
 
-}  // util
-}  // jumanpp
+}  // namespace util
+}  // namespace jumanpp
 
 #endif  // JUMANPP_CHAR_BUFFER_H

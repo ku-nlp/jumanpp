@@ -191,8 +191,8 @@ class MikolovRnnImpl {
   }
 };
 
-}  // mikolov
-}  // rnn
-}  // jumanpp
+}  // namespace mikolov
+}  // namespace rnn
+}  // namespace jumanpp
 
 #endif  // JUMANPP_MIKOLOV_RNN_IMPL_H

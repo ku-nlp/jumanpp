@@ -47,8 +47,8 @@ class Analyzer {
   ~Analyzer();
 };
 
-}  // analysis
-}  // core
-}  // jumanpp
+}  // namespace analysis
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_ANALYZER_H

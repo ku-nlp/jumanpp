@@ -65,7 +65,7 @@ class MappedFile {
 
   ~MappedFile();
 };
-}
-}
+}  // namespace util
+}  // namespace jumanpp
 
 #endif  // JUMANPP_MMAP_HPP

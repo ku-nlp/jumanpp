@@ -38,8 +38,8 @@ class FilesystemModel {
   Status load(ModelInfo* info);
 };
 
-}  // model
-}  // core
-}  // jumanpp
+}  // namespace model
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_MODEL_IO_H

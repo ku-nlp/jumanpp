@@ -198,5 +198,5 @@ bool CsvReader::handleQuote(const char *position, StringPiece *result) {
   }
   return false;
 }
-}
-}
+}  // namespace util
+}  // namespace jumanpp

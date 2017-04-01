@@ -27,8 +27,8 @@ ModelSaver::~ModelSaver() {}
 
 Status ModelSaver::open(StringPiece name) {
   if (file_) {
-    return Status::InvalidState() << "another file, " << file_->name
-                                  << " is already opened";
+    return Status::InvalidState()
+           << "another file, " << file_->name << " is already opened";
   }
   file_.reset(new ModelFile);
   JPP_RETURN_IF_ERROR(file_->mmap.open(name, util::MMapType::ReadWrite));
@@ -93,8 +93,8 @@ FilesystemModel::~FilesystemModel() {}
 
 Status FilesystemModel::open(StringPiece name) {
   if (file_) {
-    return Status::InvalidState() << "another file, " << file_->name
-                                  << " is already opened";
+    return Status::InvalidState()
+           << "another file, " << file_->name << " is already opened";
   }
   file_.reset(new ModelFile);
   JPP_RETURN_IF_ERROR(file_->mmap.open(name, util::MMapType::ReadOnly));
@@ -112,24 +112,24 @@ Status FilesystemModel::load(ModelInfo* info) {
   auto sp = hdrFrag.asStringPiece();
   auto magicSp = StringPiece{ModelMagic};
   if (sp.take(magicSp.size()) != magicSp) {
-    return Status::InvalidState() << "model file " << file_->name
-                                  << " has corrupted header";
+    return Status::InvalidState()
+           << "model file " << file_->name << " has corrupted header";
   }
 
   auto rest = sp.slice(sizeof(ModelMagic), 4096 - sizeof(ModelMagic));
   util::CodedBufferParser cbp{rest};
   u64 hdrSize = 0;
   if (!cbp.readVarint64(&hdrSize)) {
-    return Status::InvalidState() << "could not read header size from "
-                                  << file_->name;
+    return Status::InvalidState()
+           << "could not read header size from " << file_->name;
   }
 
   util::serialization::Loader l{
       rest.slice(cbp.position(), cbp.position() + hdrSize)};
   ModelInfoRaw mir;
   if (!l.load(&mir)) {
-    return Status::InvalidState() << "model file " << file_->name
-                                  << " has corrupted model header";
+    return Status::InvalidState()
+           << "model file " << file_->name << " has corrupted model header";
   }
 
   info->specHash = mir.specHash;
@@ -152,6 +152,6 @@ Status FilesystemModel::load(ModelInfo* info) {
   return Status::Ok();
 }
 
-}  // model
-}  // core
-}  // jumanpp
+}  // namespace model
+}  // namespace core
+}  // namespace jumanpp

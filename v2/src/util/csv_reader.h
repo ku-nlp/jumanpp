@@ -83,7 +83,7 @@ class CsvReader {
   StringPiece field(i32 idx) const;
   i64 lineNumber() const { return line_number_; }
 };
-}
-}
+}  // namespace util
+}  // namespace jumanpp
 
 #endif  // JUMANPP_CSV_READER_H

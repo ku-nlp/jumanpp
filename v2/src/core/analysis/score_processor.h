@@ -96,8 +96,8 @@ class ScoreProcessor {
                    LatticeBoundaryConnection* bndconn, ScoreConfig* sc);
 };
 
-}  // analysis
-}  // core
-}  // jumanpp
+}  // namespace analysis
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_SCORE_PROCESSOR_H

@@ -73,7 +73,7 @@ namespace port {
 constexpr bool kLittleEndian = true;
 }
 
-}  // util
-}  // jumanpp
+}  // namespace util
+}  // namespace jumanpp
 
 #endif  // JUMANPP_COMMON_HPP

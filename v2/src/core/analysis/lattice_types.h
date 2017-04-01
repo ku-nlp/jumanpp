@@ -140,8 +140,8 @@ class Lattice {
   const LatticeConfig& config() { return lconf; }
 };
 
-}  // analysis
-}  // core
-}  // jumanpp
+}  // namespace analysis
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_LATTICE_TYPES_H

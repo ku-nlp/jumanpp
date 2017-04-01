@@ -118,8 +118,8 @@ Status LossCalculator::computeComparison() {
       // top1 boundary comes first
       analysis::ConnectionPtr ptr;
       if (!top1.nextNode(&ptr)) {
-        return Status::InvalidState() << "boundary #" << curTopBnd
-                                      << " did not have any nodes";
+        return Status::InvalidState()
+               << "boundary #" << curTopBnd << " did not have any nodes";
       }
 
       auto bnd = lattice->boundary(ptr.boundary);
@@ -259,7 +259,7 @@ float LossCalculator::computeLoss(i32 till) {
     if (cmp.cmpClass == ComparitionClass::GoldOnly) {
       loss += fullWeight;
       if (i < till) {
-        computeGoldNgrams(cmp.goldPosition);
+        computeGoldNgrams(cmp.numGold);
       }
     } else if (cmp.cmpClass == ComparitionClass::TopOnly) {
       loss += fullWeight;
@@ -270,7 +270,7 @@ float LossCalculator::computeLoss(i32 till) {
       if (cmp.numMismatches > 0) {
         loss += cmp.mismatchWeight;
         if (i < till) {
-          computeGoldNgrams(cmp.goldPosition);
+          computeGoldNgrams(cmp.numGold);
           computeNgrams(&top1Features, cmp.boundary, cmp.topPosition);
         }
       }
@@ -312,6 +312,6 @@ void LossCalculator::computeGoldNgrams(i32 numGold) {
   util::copy_insert(featureBuffer, goldFeatures);
 }
 
-}  // training
-}  // core
-}  // jumanpp
+}  // namespace training
+}  // namespace core
+}  // namespace jumanpp

@@ -29,8 +29,8 @@ struct UnkMakersInfo {
   std::vector<UnkMakerInfo> makers;
 };
 
-}  // analysis
-}  // core
-}  // jumanpp
+}  // namespace analysis
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_UNK_MAKE_TYPES_H

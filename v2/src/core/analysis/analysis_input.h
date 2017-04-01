@@ -45,8 +45,8 @@ class AnalysisInput {
   }
 };
 
-}  // analysis
-}  // core
-}  // jumanpp
+}  // namespace analysis
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_ANALYSIS_INPUT_H

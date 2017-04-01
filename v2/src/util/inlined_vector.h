@@ -21,7 +21,7 @@ namespace util {
 namespace port {
 inline void* Malloc(size_t sz) { return std::malloc(sz); }
 inline void Free(void* mem) { std::free(mem); }
-}
+}  // namespace port
 
 // An InlinedVector<T,N,A> is like a std::vector<T,A>, except that storage
 // for sequences of length <= N are provided inline without requiring
@@ -666,7 +666,7 @@ inline void InlinedVector<T, N>::AppendRange(Iter first, Iter last) {
   AppendRange(first, last, IterTag());
 }
 
-}  // util
-}  // jumanpp
+}  // namespace util
+}  // namespace jumanpp
 
 #endif  // JUMANPP_INLINED_VECTOR_H

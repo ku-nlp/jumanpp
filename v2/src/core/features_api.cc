@@ -79,6 +79,6 @@ Status makeFeatures(const CoreHolder &info, const StaticFeatureFactory *sff,
   return Status::Ok();
 }
 
-}  // features
-}  // core
-}  // jumanpp
+}  // namespace features
+}  // namespace core
+}  // namespace jumanpp

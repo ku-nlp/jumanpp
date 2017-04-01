@@ -28,7 +28,7 @@ struct StringMaker<jumanpp::StringPiece> {
     return s.str();
   }
 };
-}
+}  // namespace Catch
 
 class OkStatusMatcher
     : public Catch::Matchers::Impl::MatcherBase<jumanpp::Status> {

@@ -27,7 +27,7 @@ void compact(C1& data, const C2& toErase) {
   }
 };
 
-}  // util
-}  // jumanpp
+}  // namespace util
+}  // namespace jumanpp
 
 #endif  // JUMANPP_ARRAY_SLICE_UTIL_H

@@ -131,6 +131,6 @@ int TrainingExampleAdapter::findNodeInBoundary(
   return -1;
 }
 
-}  // training
-}  // core
-}  // jumanpp
+}  // namespace training
+}  // namespace core
+}  // namespace jumanpp

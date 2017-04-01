@@ -131,8 +131,8 @@ class ExtraNodesContext {
   }
 };
 
-}  // analysis
-}  // core
-}  // jumanpp
+}  // namespace analysis
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_EXTRA_NODES_H

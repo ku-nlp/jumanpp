@@ -101,7 +101,7 @@ JPP_ALWAYS_INLINE inline void get_tail(const uint8_t *tail, const size_t len,
   return;
 }
 
-}  // impl
+}  // namespace impl
 
 JPP_ALWAYS_INLINE inline uint64_t murmur_combine(uint64_t hash1,
                                                  uint64_t hash2) {  //{{{
@@ -154,8 +154,8 @@ JPP_ALWAYS_INLINE inline uint64_t murmurhash3_memory(const u8 *begin,
   return value.first;
 }
 
-}  // hashing
-}  // util
-}  // jumanpp
+}  // namespace hashing
+}  // namespace util
+}  // namespace jumanpp
 
 #endif  // JUMANPP_MURMUR_HASH_H

@@ -189,9 +189,9 @@ class IntFieldImporter : public FieldImporter {
   i32 uniqueValues() const override { return 0; }
 };
 
-}  // impl
-}  // dic
-}  // core
-}  // jumanpp
+}  // namespace impl
+}  // namespace dic
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_DIC_IMPORT_H

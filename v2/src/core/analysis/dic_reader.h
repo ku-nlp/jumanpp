@@ -48,8 +48,8 @@ class DicReader {
   DictNode readEntry(EntryPtr ptr) const;
 };
 
-}  // analysis
-}  // core
-}  // jumanpp
+}  // namespace analysis
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_DIC_READER_H

@@ -121,5 +121,5 @@ void ManagedAllocatorCore::reset() {
   end_ = 0;
 }
 }
-}
-}
+}  // namespace util
+}  // namespace jumanpp

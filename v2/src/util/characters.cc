@@ -282,5 +282,5 @@ Status preprocessRawData(StringPiece utf8data,
   return Status::Ok();
 }
 
-}  // chars
-}  // jumanpp
+}  // namespace chars
+}  // namespace jumanpp

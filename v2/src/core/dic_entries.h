@@ -95,8 +95,8 @@ class DictionaryEntries {
   }
 };
 
-}  // dic
-}  // core
-}  // jumanpp
+}  // namespace dic
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_DIC_ENTRIES_H

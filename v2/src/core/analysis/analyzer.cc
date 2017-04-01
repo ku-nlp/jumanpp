@@ -52,6 +52,6 @@ Status Analyzer::analyze(StringPiece input) {
 
 Analyzer::Analyzer() {}
 
-}  // analysis
-}  // core
-}  // jumanpp
+}  // namespace analysis
+}  // namespace core
+}  // namespace jumanpp

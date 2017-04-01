@@ -116,6 +116,6 @@ LatticeLeftBoundary::LatticeLeftBoundary(
     util::memory::ManagedAllocatorCore *alloc, const LatticeConfig &lc,
     const LatticeBoundaryConfig &lbc)
     : StructOfArrays(alloc, lbc.endNodes), endingNodes{this, 1} {}
-}  // analysis
-}  // core
-}  // jumanpp
+}  // namespace analysis
+}  // namespace core
+}  // namespace jumanpp

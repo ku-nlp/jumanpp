@@ -59,8 +59,8 @@ class LazyField {
   }
 };
 
-}  // analysis
-}  // core
-}  // jumanpp
+}  // namespace analysis
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_LATTICE_PLUGIN_H

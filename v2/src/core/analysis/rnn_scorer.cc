@@ -326,7 +326,7 @@ Status RnnScorer::init(const RnnHolder& holder) {
   return state_->init(holder);
 }
 
-}  // rnn
-}  // analysis
-}  // core
-}  // jumanpp
+}  // namespace rnn
+}  // namespace analysis
+}  // namespace core
+}  // namespace jumanpp

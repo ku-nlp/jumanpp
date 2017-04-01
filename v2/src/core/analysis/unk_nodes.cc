@@ -66,8 +66,8 @@ class UnkMakerFactory {
           break;
         }
         default:
-          return Status::NotImplemented() << x.name
-                                          << ": unk is not implemented";
+          return Status::NotImplemented()
+                 << x.name << ": unk is not implemented";
       }
     }
     return Status::Ok();
@@ -80,6 +80,6 @@ Status makeMakers(const CoreHolder& core, const UnkMakersInfo& info,
   return factory.make(info, result);
 }
 
-}  // analysis
-}  // core
-}  // jumanpp
+}  // namespace analysis
+}  // namespace core
+}  // namespace jumanpp

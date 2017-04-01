@@ -33,8 +33,8 @@ struct UnkMakers {
 Status makeMakers(const CoreHolder& core, const UnkMakersInfo& info,
                   UnkMakers* result);
 
-}  // analysis
-}  // core
-}  // jumanpp
+}  // namespace analysis
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_UNK_NODES_H

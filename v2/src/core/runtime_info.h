@@ -16,7 +16,7 @@ struct RuntimeInfo {
   analysis::UnkMakersInfo unkMakers;
 };
 
-}  // core
-}  // jumanpp
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_RUNTIME_INFO_H

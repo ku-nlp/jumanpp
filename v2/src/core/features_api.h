@@ -21,7 +21,7 @@ class ComputeFeatureContext;
 class PrimitiveFeatureData;
 class PatternFeatureData;
 class NgramFeatureData;
-}
+}  // namespace impl
 
 class FeatureApply {
  public:
@@ -77,8 +77,8 @@ struct FeatureHolder {
 Status makeFeatures(const CoreHolder& core, const StaticFeatureFactory* sff,
                     FeatureHolder* result);
 
-}  // features
-}  // core
-}  // jumanpp
+}  // namespace features
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_FEATURE_API_H

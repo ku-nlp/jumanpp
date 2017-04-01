@@ -20,7 +20,7 @@ class SpecFactory {
   static Status makeSpec(core::spec::AnalysisSpec* spec);
 };
 
-}  // jumandic
-}  // jumanpp
+}  // namespace jumandic
+}  // namespace jumanpp
 
 #endif  // JUMANPP_JUMANDIC_SPEC_H

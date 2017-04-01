@@ -137,8 +137,8 @@ void Serialize(Arch &a, AnalysisSpec &spec) {
   a &spec.training;
 }
 
-}  // spec
-}  // core
-}  // jumanpp
+}  // namespace spec
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_SPEC_SER_H

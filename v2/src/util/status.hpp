@@ -84,6 +84,6 @@ std::ostream &operator<<(std::ostream &str, const Status &st);
     Status __status__ = (expr);                              \
     if (JPP_UNLIKELY(!__status__.isOk())) return __status__; \
   }
-}
+}  // namespace jumanpp
 
 #endif  // JUMANPP_STATUS_HPP

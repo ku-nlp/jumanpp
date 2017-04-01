@@ -140,8 +140,8 @@ struct AnalysisSpec {
   TrainingSpec training;
 };
 
-}  // spec
-}  // core
-}  // jumanpp
+}  // namespace spec
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_SPEC_TYPES_H

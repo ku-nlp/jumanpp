@@ -67,8 +67,8 @@ class DictionaryHolder {
 
 Status fillEntriesHolder(const BuiltDictionary& dic, EntriesHolder* result);
 
-}  // dic
-}  // core
-}  // jumanpp
+}  // namespace dic
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_DICTIONARY_H

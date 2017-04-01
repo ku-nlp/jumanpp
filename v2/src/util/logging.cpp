@@ -33,6 +33,6 @@ WriteInDestructorLoggerImpl::WriteInDestructorLoggerImpl(const char *file,
 
 // Enable all logging by default
 /*thread_local*/ Level CurrentLogLevel = Level::Debug;
-}
-}
-}
+}  // namespace logging
+}  // namespace util
+}  // namespace jumanpp

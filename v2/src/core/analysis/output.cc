@@ -13,12 +13,12 @@ namespace analysis {
 Status OutputManager::stringField(StringPiece name, StringField *result) const {
   auto fld = holder_->fieldByName(name);
   if (fld == nullptr) {
-    return Status::InvalidParameter() << "dictionary field with name " << name
-                                      << " was not found";
+    return Status::InvalidParameter()
+           << "dictionary field with name " << name << " was not found";
   }
   if (fld->columnType != spec::ColumnType::String) {
-    return Status::InvalidParameter() << "field " << name
-                                      << " was not string typed";
+    return Status::InvalidParameter()
+           << "field " << name << " was not string typed";
   }
   result->initialize(fld->index, xtra_, fld->strings);
   return Status::Ok();
@@ -28,12 +28,12 @@ Status OutputManager::stringListField(StringPiece name,
                                       StringListField *result) const {
   auto fld = holder_->fieldByName(name);
   if (fld == nullptr) {
-    return Status::InvalidParameter() << "dictionary field with name " << name
-                                      << " was not found";
+    return Status::InvalidParameter()
+           << "dictionary field with name " << name << " was not found";
   }
   if (fld->columnType != spec::ColumnType::StringList) {
-    return Status::InvalidParameter() << "field " << name
-                                      << " was not stringlist";
+    return Status::InvalidParameter()
+           << "field " << name << " was not stringlist";
   }
   result->initialize(fld->index, fld->postions, fld->strings);
   return Status::Ok();
@@ -171,6 +171,6 @@ void StringListField::initialize(
   this->strings_ = strings;
 }
 
-}  // analysis
-}  // core
-}  // jumanpp
+}  // namespace analysis
+}  // namespace core
+}  // namespace jumanpp

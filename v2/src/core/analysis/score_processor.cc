@@ -119,6 +119,6 @@ void ScoreProcessor::gatherT2Features(
     util::copy_buffer(patfeatures, row);
   }
 }
-}
-}
-}
+}  // namespace analysis
+}  // namespace core
+}  // namespace jumanpp

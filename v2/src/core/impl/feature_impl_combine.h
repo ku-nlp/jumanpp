@@ -182,9 +182,9 @@ class NgramDynamicFeatureApply
         break;
       }
       default:
-        return Status::InvalidState() << "invalid ngram feature of order "
-                                      << nf.arguments.size()
-                                      << " only 1-3 are supported";
+        return Status::InvalidState()
+               << "invalid ngram feature of order " << nf.arguments.size()
+               << " only 1-3 are supported";
     }
     return Status::Ok();
   }
@@ -198,9 +198,9 @@ class NgramDynamicFeatureApply
   }
 };
 
-}  // impl
-}  // features
-}  // core
-}  // jumanpp
+}  // namespace impl
+}  // namespace features
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_FEATURE_IMPL_COMBINE_H

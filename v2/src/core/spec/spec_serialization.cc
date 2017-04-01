@@ -19,6 +19,6 @@ bool loadSpec(StringPiece data, AnalysisSpec* result) {
   return l.load(result);
 }
 
-}  // spec
-}  // core
-}  // jumanpp
+}  // namespace spec
+}  // namespace core
+}  // namespace jumanpp

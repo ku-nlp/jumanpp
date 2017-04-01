@@ -66,7 +66,7 @@ inline Hasher hashCtSeqImpl(Hasher h, u64 one, u64 two, Args... args) {
   return hashCtSeqImpl(h.merge(one, two), args...);
 }
 
-}  // impl
+}  // namespace impl
 
 /**
  * Hash sequence with compile-time passed parameters.
@@ -83,8 +83,8 @@ inline u64 hashCtSeq(u64 seed, Args... args) {
       .result();
 }
 
-}  // hashing
-}  // util
-}  // jumanpp
+}  // namespace hashing
+}  // namespace util
+}  // namespace jumanpp
 
 #endif  // JUMANPP_HASHING_H

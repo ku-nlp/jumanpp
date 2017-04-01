@@ -26,5 +26,5 @@ Status CoreHolder::initialize(const features::StaticFeatureFactory *sff) {
   return Status::Ok();
 }
 
-}  // core
-}  // jumanpp
+}  // namespace core
+}  // namespace jumanpp

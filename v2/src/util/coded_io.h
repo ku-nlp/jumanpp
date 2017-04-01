@@ -35,7 +35,7 @@ inline u8* writeRawBytes(const u8* begin, const u8* end, u8* target) {
   return target + std::distance(begin, end);
 }
 
-}  // impl
+}  // namespace impl
 
 class CodedBuffer {
   std::vector<u8> buffer_;
@@ -167,7 +167,7 @@ class CodedBufferParser {
   }
 };
 
-}  // util
-}  // jumanpp
+}  // namespace util
+}  // namespace jumanpp
 
 #endif  // JUMANPP_CODED_IO_H

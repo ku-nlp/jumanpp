@@ -69,8 +69,8 @@ class SingleUnkMaker : public UnkMaker {
                   LatticeBuilder* lattice) const override;
 };
 
-}  // analysis
-}  // core
-}  // jumanpp
+}  // namespace analysis
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_UNK_NODES_CREATOR_H

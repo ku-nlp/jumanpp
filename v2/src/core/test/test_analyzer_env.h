@@ -234,6 +234,6 @@ class PrimFeatureTestEnv {
     }
   }
 };
-}
+}  // namespace tests
 
 #endif  // JUMANPP_TEST_ANALYZER_ENV_H

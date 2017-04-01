@@ -23,6 +23,6 @@ Status HashedFeaturePerceptron::load(const model::ModelInfo &model) {
   return Status::NotImplemented();
 }
 
-}  // analysis
-}  // core
-}  // jumanpp
+}  // namespace analysis
+}  // namespace core
+}  // namespace jumanpp

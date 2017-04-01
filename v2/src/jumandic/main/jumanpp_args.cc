@@ -59,5 +59,5 @@ bool parseArgs(int argc, char* argv[], JumanppConf* result) {
   return true;
 }
 
-}  // jumandic
-}  // jumanpp
+}  // namespace jumandic
+}  // namespace jumanpp

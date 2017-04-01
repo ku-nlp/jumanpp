@@ -365,5 +365,5 @@ class CRnnLM_stat : public CRnnLM {
                      struct synapse *srcmatrix, int matrix_width, int from,
                      int to, int from2, int to2, int type);
 };
-}
+}  // namespace RNNLM_legacy
 #endif

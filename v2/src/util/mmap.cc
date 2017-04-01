@@ -43,8 +43,8 @@ MappedFile::~MappedFile() {
 
 Status MappedFile::open(const StringPiece &filename, MMapType type) {
   if (fd_ != 0) {
-    return Status::InvalidState() << "mmap has already opened file "
-                                  << this->filename_;
+    return Status::InvalidState()
+           << "mmap has already opened file " << this->filename_;
   }
 
   this->filename_ = filename.str();
@@ -116,15 +116,15 @@ Status MappedFile::map(MappedFileFragment *view, size_t offset, size_t size) {
         off_t fileoffset = static_cast<off_t>(endoffset) - 1;
         auto retval = ::lseek(fd_, fileoffset, SEEK_SET);
         if (retval == -1) {
-          return Status::InvalidState() << "[seek] could not extend file "
-                                        << filename_ << " to " << endoffset
-                                        << "bytes";
+          return Status::InvalidState()
+                 << "[seek] could not extend file " << filename_ << " to "
+                 << endoffset << "bytes";
         }
         auto write_ret = write(fd_, ZERO, 1);
         if (write_ret == -1) {
-          return Status::InvalidState() << "[write] could not extend file "
-                                        << filename_ << " to " << endoffset
-                                        << "bytes";
+          return Status::InvalidState()
+                 << "[write] could not extend file " << filename_ << " to "
+                 << endoffset << "bytes";
         }
       }
       protection = PROT_READ | PROT_WRITE;
@@ -134,8 +134,8 @@ Status MappedFile::map(MappedFileFragment *view, size_t offset, size_t size) {
 
   void *addr = ::mmap(NULL, size, protection, flags, this->fd_, (off_t)offset);
   if (addr == MAP_FAILED) {
-    return Status::InvalidState() << "mmap call failed: error code = "
-                                  << strerror(errno);
+    return Status::InvalidState()
+           << "mmap call failed: error code = " << strerror(errno);
   }
 
   view->address_ = addr;
@@ -157,8 +157,8 @@ bool MappedFileFragment::isClean() { return address_ == MAP_FAILED; }
 Status MappedFileFragment::flush() {
   int status = ::msync(address_, size(), MS_SYNC);
   if (status != 0) {
-    return Status::InvalidState() << "could not flush mapped contents, error: "
-                                  << strerror(errno);
+    return Status::InvalidState()
+           << "could not flush mapped contents, error: " << strerror(errno);
   }
   return Status::Ok();
 }
@@ -181,5 +181,5 @@ MappedFileFragment &MappedFileFragment::operator=(
   o.address_ = MAP_FAILED;
   return *this;
 }
-}
-}
+}  // namespace util
+}  // namespace jumanpp

@@ -25,6 +25,6 @@ DictNode DicReader::readEntry(EntryPtr ptr) const {
   return DictNode{slice};
 }
 
-}  // analysis
-}  // core
-}  // jumanpp
+}  // namespace analysis
+}  // namespace core
+}  // namespace jumanpp

@@ -41,8 +41,8 @@ struct ModelInfoRaw {
   std::vector<ModelPartRaw> parts;
 };
 
-}  // model
-}  // core
-}  // jumanpp
+}  // namespace model
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_MODEL_FORMAT_H

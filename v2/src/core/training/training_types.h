@@ -24,7 +24,7 @@ enum class TrainingMode {
 
 struct ScwConfig {
   float C = 1.0f;
-  float phi = 1.0f;
+  float phi = 5.0f;
 };
 
 struct TrainingConfig {
@@ -34,8 +34,8 @@ struct TrainingConfig {
   u32 randomSeed = 0xdeadbeef;
 };
 
-}  // training
-}  // core
-}  // jumanpp
+}  // namespace training
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_TRAINING_TYPES_H

@@ -26,6 +26,6 @@ using size_t = std::size_t;
 using ptrdiff_t = std::ptrdiff_t;
 using uint32 = u32;
 using uint8 = u8;
-}
+}  // namespace jumanpp
 
 #endif  // JUMANPP_TYPES_HPP

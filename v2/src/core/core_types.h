@@ -53,7 +53,7 @@ class EntryPtr {
   inline bool operator!=(const EntryPtr& o) const { return value_ != o.value_; }
 };
 
-}  // core
-}  // jumanpp
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_CORE_TYPES_H

@@ -147,8 +147,8 @@ class OutputManager {
   Status stringListField(StringPiece name, StringListField* result) const;
 };
 
-}  // analysis
-}  // core
-}  // jumanpp
+}  // namespace analysis
+}  // namespace core
+}  // namespace jumanpp
 
 #endif  // JUMANPP_OUTPUT_H

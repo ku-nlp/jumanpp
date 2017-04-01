@@ -35,6 +35,6 @@ LatticePosition AnalysisInput::numCodepoints() {
   return static_cast<LatticePosition>(codepoints_.size());
 }
 
-}  // analysis
-}  // core
-}  // jumanpp
+}  // namespace analysis
+}  // namespace core
+}  // namespace jumanpp

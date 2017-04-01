@@ -63,8 +63,8 @@ class JumanFormat {
   StringPiece result() const { return printer.result(); }
 };
 
-}  // output
-}  // jumandic
-}  // jumanpp
+}  // namespace output
+}  // namespace jumandic
+}  // namespace jumanpp
 
 #endif  // JUMANPP_JUMAN_FORMAT_H

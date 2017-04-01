@@ -23,4 +23,4 @@ std::ostream &operator<<(std::ostream &str, const Status &st) {
   }
   return str;
 }
-}
+}  // namespace jumanpp

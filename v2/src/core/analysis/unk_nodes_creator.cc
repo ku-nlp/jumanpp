@@ -122,6 +122,6 @@ i32 hashUnkString(StringPiece sp) {
   return hashValue;
 }
 
-}  // analysis
-}  // core
-}  // jumanpp
+}  // namespace analysis
+}  // namespace core
+}  // namespace jumanpp

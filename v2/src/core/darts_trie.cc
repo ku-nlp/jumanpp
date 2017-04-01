@@ -50,8 +50,8 @@ Status DoubleArrayBuilder::build() {
       array_->build(keys.size(), keys.data(), lengths.data(), values.data());
 
   if (retval != 0) {
-    return Status::InvalidState() << "double array build failed, code="
-                                  << retval;
+    return Status::InvalidState()
+           << "double array build failed, code=" << retval;
   }
 
   return Status::Ok();
@@ -73,7 +73,7 @@ struct DoubleArrayBackingFile {
   jumanpp::util::MappedFile file;
   jumanpp::util::MappedFileFragment fragment;
 };
-}
+}  // namespace impl
 
 Status DoubleArray::loadFromMemory(StringPiece memory) {
   underlying_.reset(new DoubleArrayCore());

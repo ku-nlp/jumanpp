@@ -147,5 +147,5 @@ void SpecFactory::fillSpec(core::spec::dsl::ModelSpecBuilder& bldr) {
   bldr.trigram({lexicalized}, {lexicalized}, {lexicalized});
 }
 
-}  // jumandic
-}  // jumanpp
+}  // namespace jumandic
+}  // namespace jumanpp

@@ -30,8 +30,8 @@ std::basic_ostream<Char, Traits>& operator<<(
   os << '}';
   return os;
 }
-}
-}
+}  // namespace util
+}  // namespace jumanpp
 
 template <typename T1, typename T2>
 void CheckEqImpl(const util::ArraySlice<T1>& s1,
