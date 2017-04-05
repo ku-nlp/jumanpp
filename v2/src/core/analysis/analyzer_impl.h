@@ -73,6 +73,16 @@ class AnalyzerImpl {
     JPP_RETURN_IF_ERROR(resetForInput(input));
     return Status::Ok();
   }
+
+  u64 allocatedMemory() const {
+    return memMgr_.used() + sizeof(AnalyzerImpl);
+  }
+
+  u64 usedMemory() const {
+    auto allocated = allocatedMemory();
+    auto remaining = alloc_->remaining();
+    return allocated - remaining;
+  }
 };
 
 }  // namespace analysis

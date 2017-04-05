@@ -53,11 +53,16 @@ TEST_CASE(
   SoftConfidenceWeighted scw{TrainerEnv::testConf()};
   CHECK(env.trainer.example().numNodes() == 3);
   CHECK(env.trainer.prepare());
+  auto mem1 = env.anaImpl()->usedMemory();
   CHECK(env.trainer.compute(scw.scoreConfig()));
   env.trainer.computeTrainingLoss();
+  auto mem2 = env.anaImpl()->usedMemory();
   CHECK(env.trainer.lossValue() > 0);
   scw.update(env.trainer.lossValue(), env.trainer.featureDiff());
   CHECK(env.trainer.compute(scw.scoreConfig()));
   env.trainer.computeTrainingLoss();
+  auto mem3 = env.anaImpl()->usedMemory();
   CHECK(env.trainer.lossValue() == 0);
+  CHECK(mem1 == mem2);
+  CHECK(mem1 == mem3);
 }
