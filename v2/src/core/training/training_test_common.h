@@ -17,7 +17,7 @@ struct ExampleData {
   StringPiece b;
   StringPiece c;
 
-  ExampleData(StringPiece a, StringPiece b, StringPiece c): a{a}, b{b}, c{c} {}
+  ExampleData(StringPiece a, StringPiece b, StringPiece c) : a{a}, b{b}, c{c} {}
 
   bool operator==(const ExampleData& o) const noexcept {
     return a == o.a && b == o.b && c == o.c;

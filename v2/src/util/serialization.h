@@ -5,9 +5,9 @@
 #ifndef JUMANPP_SERIALIZATION_H
 #define JUMANPP_SERIALIZATION_H
 
+#include <cstring>
 #include <memory>
 #include <vector>
-#include <cstring>
 #include "coded_io.h"
 
 namespace jumanpp {
