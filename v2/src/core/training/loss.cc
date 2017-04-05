@@ -4,6 +4,7 @@
 
 #include "loss.h"
 
+#include <numeric>
 #include "core/analysis/unk_nodes_creator.h"
 #include "core/impl/feature_impl_types.h"
 
@@ -76,16 +77,23 @@ bool LossCalculator::findWorstTopNode(i32 goldPos, ComparisonStep* step) {
 
 Status LossCalculator::computeComparison() {
   comparison.clear();
-  comparison.reserve(top1.numBoundaries() + gold.nodes().size());
+  comparison.reserve(top1.numBoundaries() + gold.nodes().size() + 1);
+  JPP_DCHECK_EQ(goldScores.size(), gold.nodes().size() + 1);
   float goldScore = 0;
   bool hasNextTop = top1.nextBoundary();
   int curGold = 0;
   auto goldPtrs = gold.nodes();
   auto totalGold = goldPtrs.size();
   auto lattice = analyzer->lattice();
-  while (hasNextTop && curGold < totalGold) {
+  while (hasNextTop || curGold < totalGold) {
     auto curTopBnd = top1.currentBoundary();
-    auto curGoldPtr = goldPtrs[curGold];
+    analysis::LatticeNodePtr curGoldPtr;
+    if (curGold < totalGold) {
+      curGoldPtr = goldPtrs[curGold];
+    } else {
+      u16 eosPos = static_cast<u16>(lattice->createdBoundaryCount() - 1);
+      curGoldPtr = {eosPos, 0};
+    }
 
     if (curGoldPtr.boundary == curTopBnd) {
       // case when boundaries match
@@ -97,10 +105,11 @@ Status LossCalculator::computeComparison() {
                << "could not find a worst top node for position #" << curTopBnd;
       }
       auto bndBeamData = lattice->boundary(curTopBnd)->starts()->beamData();
-      auto goldBeam = bndBeamData.row(curGoldPtr.position);
-      goldScore = goldBeam[0].totalScore;
       auto top1Beam = bndBeamData.row(stepData.topPosition);
       auto top1Score = top1Beam[0].totalScore;
+      goldScore = goldScores[curGold];
+      auto goldBeam = bndBeamData.row(curGoldPtr.position);
+
       stepData.lastGoldScore = goldScore;
       stepData.violation = top1Score - goldScore;
       stepData.goldInBeam = isGoldStillInBeam(goldBeam, curGold);
@@ -138,7 +147,7 @@ Status LossCalculator::computeComparison() {
       auto goldPtr = goldPtrs.at(curGold);
       auto bnd = lattice->boundary(goldPtr.boundary);
       auto goldBeam = bnd->starts()->beamData().row(goldPtr.position);
-      goldScore = goldBeam[0].totalScore;
+      goldScore = goldScores[curGold];
 
       auto stepData = ComparisonStep::goldOnly();
       stepData.goldPosition = goldPtr.position;
@@ -151,6 +160,25 @@ Status LossCalculator::computeComparison() {
       curGold += 1;
     }
   }
+
+  auto eosPos = lattice->createdBoundaryCount() - 1;
+  auto eosBnd = lattice->boundary(eosPos);
+  auto eosBeam = eosBnd->starts()->beamData();
+  JPP_DCHECK_EQ(eosBeam.numRows(), 1);
+  auto eosTopNode = eosBeam.data()[0];
+  auto stepData = ComparisonStep::both();
+  JPP_DCHECK_EQ(curGold, goldScores.size() - 1);
+  goldScore = goldScores[curGold];
+  stepData.boundary = eosPos;
+  stepData.topPosition = 0;
+  stepData.goldPosition = 0;
+  stepData.lastGoldScore = goldScore;
+  stepData.violation = eosTopNode.totalScore - goldScore;
+  stepData.goldInBeam = isGoldStillInBeam(eosBeam.row(0), curGold);
+  stepData.numGold = curGold;
+  stepData.numMismatches = 0;
+  stepData.mismatchWeight = 0;
+  comparison.push_back(stepData);
 
   return Status::Ok();
 }
@@ -192,7 +220,7 @@ void LossCalculator::computeFeatureDiff(u32 mask) {
 
   util::sort(goldFeatures);
 
-  while (topPos < topCnt || goldPos < goldCnt) {
+  while (topPos < topCnt && goldPos < goldCnt) {
     u32 goldEl = goldFeatures[goldPos];
     u32 topEl = top1Features[topPos];
     if (goldEl == topEl) {
@@ -206,11 +234,11 @@ void LossCalculator::computeFeatureDiff(u32 mask) {
 
     if (goldEl < topEl) {
       target = goldEl;
-      score = -1;
+      score = 1;
       goldPos += 1;
     } else {
       target = topEl;
-      score = 1;
+      score = -1;
       topPos += 1;
     }
 
@@ -218,11 +246,11 @@ void LossCalculator::computeFeatureDiff(u32 mask) {
   }
 
   for (; topPos < topCnt; ++topPos) {
-    mergeOne(top1Features[topPos], 1);
+    mergeOne(top1Features[topPos], -1);
   }
 
   for (; goldPos < goldCnt; ++goldPos) {
-    mergeOne(goldFeatures[goldPos], -1);
+    mergeOne(goldFeatures[goldPos], 1);
   }
 }
 
@@ -249,7 +277,7 @@ void LossCalculator::computeNgrams(std::vector<u32>* result, i32 boundary,
 }
 
 float LossCalculator::computeLoss(i32 till) {
-  JPP_DCHECK_IN(till, 0, comparison.size());
+  JPP_DCHECK_IN(till, 0, comparison.size() + 1);
   goldFeatures.clear();
   top1Features.clear();
   float loss = 0;
@@ -267,7 +295,7 @@ float LossCalculator::computeLoss(i32 till) {
         computeNgrams(&top1Features, cmp.boundary, cmp.topPosition);
       }
     } else if (cmp.cmpClass == ComparitionClass::Both) {
-      if (cmp.numMismatches > 0) {
+      if (cmp.numMismatches > 0 || cmp.violation > 0) {
         loss += cmp.mismatchWeight;
         if (i < till) {
           computeGoldNgrams(cmp.numGold);
@@ -279,37 +307,48 @@ float LossCalculator::computeLoss(i32 till) {
   return loss / (size * fullWeight);
 }
 
-void LossCalculator::computeGoldNgrams(i32 numGold) {
-  NgramFeatureRef nfr;
-  auto nodes = gold.nodes();
-  switch (numGold) {
-    case 0: {
-      auto goldPtr = nodes.at(0);
-      JPP_DCHECK_EQ(2, goldPtr.boundary);
-      nfr = NgramFeatureRef{{0, 0}, {1, 0}, {2, goldPtr.position}};
-      break;
-    }
-    case 1: {
-      auto gp0 = nodes.at(0);
-      auto gp1 = nodes.at(1);
-      JPP_DCHECK_EQ(0, gp0.boundary);
-      nfr = NgramFeatureRef{
-          {1, 0}, {2, gp0.position}, {gp1.boundary, gp1.position}};
-      break;
-    }
-    default: {
-      auto gp2 = nodes.at(numGold);
-      auto gp1 = nodes.at(numGold - 1);
-      auto gp0 = nodes.at(numGold - 2);
-      nfr = NgramFeatureRef{{gp0.boundary, gp0.position},
-                            {gp1.boundary, gp1.position},
-                            {gp2.boundary, gp2.position}};
-    }
+void LossCalculator::computeGoldNgrams(i32 position) {
+  auto numNgrams = analyzer->core().runtime().features.ngrams.size();
+  util::ArraySlice<u32> slice{rawGoldFeatures, position * numNgrams, numNgrams};
+  util::copy_insert(slice, goldFeatures);
+}
+
+Status LossCalculator::resolveGold() {
+  NgramExampleFeatureCalculator nefc{analyzer->lattice(),
+                                     analyzer->core().features()};
+  auto goldNodes = gold.nodes();
+  auto numNodes = goldNodes.size();
+  auto withEos = numNodes + 1;
+  auto numNgrams = analyzer->core().runtime().features.ngrams.size();
+  rawGoldFeatures.resize(withEos * numNgrams);
+  if (numNodes == 0) {
+    return Status::Ok();
   }
-  NgramExampleFeatureCalculator nfc{analyzer->lattice(),
-                                    analyzer->core().features()};
-  nfc.calculateNgramFeatures(nfr, &featureBuffer);
-  util::copy_insert(featureBuffer, goldFeatures);
+  util::Sliceable<u32> goldNgrams{&rawGoldFeatures, numNgrams, withEos};
+  auto nfr = NgramFeatureRef::init(goldNodes.at(0));
+  nefc.calculateNgramFeatures(nfr, goldNgrams.row(0));
+  for (int idx = 1; idx < numNodes; ++idx) {
+    nfr = nfr.next(goldNodes.at(idx));
+    nefc.calculateNgramFeatures(nfr, goldNgrams.row(idx));
+  }
+
+  auto totalBndCount = analyzer->lattice()->createdBoundaryCount();
+  u16 eosBoundary = static_cast<u16>(totalBndCount - 1);
+  nfr = nfr.next({eosBoundary, 0});  // EOS
+  nefc.calculateNgramFeatures(nfr, goldNgrams.row(numNodes));
+  return Status::Ok();
+}
+
+void LossCalculator::computeGoldScores(analysis::ScoreConfig* scores) {
+  auto numGoldNodes = gold.nodes().size() + 1;  // EOS as well
+  goldNodeScores.resize(numGoldNodes);
+  goldScores.resize(numGoldNodes);
+  util::MutableArraySlice<float> scoreBuf{&goldNodeScores};
+  auto numNgrams = analyzer->core().runtime().features.ngrams.size();
+  util::Sliceable<u32> features{&rawGoldFeatures, numNgrams, numGoldNodes};
+  scores->feature->compute(scoreBuf, features);
+  std::partial_sum(goldNodeScores.begin(), goldNodeScores.end(),
+                   goldScores.begin());
 }
 
 }  // namespace training

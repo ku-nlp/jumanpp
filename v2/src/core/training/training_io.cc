@@ -42,7 +42,8 @@ Status TrainingDataReader::readFullExample(analysis::ExtraNodesContext *xtra,
 
 Status TrainingDataReader::initCsv(StringPiece data) {
   if (fields_.size() == 0) {
-    return Status::InvalidState() << "field data is not initialized, you must do that first";
+    return Status::InvalidState()
+           << "field data is not initialized, you must do that first";
   }
 
   mode_ = DataReaderMode::SimpleCsv;
@@ -53,7 +54,8 @@ Status TrainingDataReader::initCsv(StringPiece data) {
 Status TrainingDataReader::initDoubleCsv(StringPiece data, char tokenSep,
                                          char fieldSep) {
   if (fields_.size() == 0) {
-    return Status::InvalidState() << "field data is not initialized, you must do that first";
+    return Status::InvalidState()
+           << "field data is not initialized, you must do that first";
   }
 
   mode_ = DataReaderMode::DoubleCsv;

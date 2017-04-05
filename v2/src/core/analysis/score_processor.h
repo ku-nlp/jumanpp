@@ -69,6 +69,8 @@ class ScoreProcessor {
   util::ArraySlice<ConnectionBeamElement> beamPtrs;
   i32 beamSize_;
 
+  ConnectionPtr* realPtr(const ConnectionPtr& ptr) const;
+
  public:
   ScoreProcessor(Lattice* lattice_, const util::Sliceable<u64>& t2features,
                  const util::Sliceable<Score>& scoreBuffer,
@@ -80,8 +82,7 @@ class ScoreProcessor {
 
   i32 activeBeamSize() const { return beamSize_; }
 
-  void gatherT2Features(util::ArraySlice<ConnectionBeamElement> beam,
-                        Lattice& lattice);
+  void gatherT2Features(i32 boundary, i32 position);
 
   void computeNgramFeatures(i32 beamIdx,
                             const features::FeatureHolder& features,
@@ -94,6 +95,8 @@ class ScoreProcessor {
 
   void updateBeams(i32 boundary, i32 endPos, LatticeBoundary* bnd,
                    LatticeBoundaryConnection* bndconn, ScoreConfig* sc);
+
+  void resolveBeamAt(i32 boundary, i32 position);
 };
 
 }  // namespace analysis

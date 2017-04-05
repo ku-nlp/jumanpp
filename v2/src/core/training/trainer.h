@@ -21,6 +21,7 @@ class Trainer {
   TrainingExampleAdapter adapter_;
   LossCalculator loss_;
   TrainingConfig config_;
+  float currentLoss_;
 
  public:
   Trainer(analysis::AnalyzerImpl* analyzer, const spec::TrainingSpec* spec,
@@ -42,7 +43,9 @@ class Trainer {
 
   Status compute(analysis::ScoreConfig* sconf);
 
-  float computeTrainingLoss();
+  void computeTrainingLoss();
+
+  float lossValue() const { return currentLoss_; }
 
   util::ArraySlice<ScoredFeature> featureDiff() const {
     return loss_.featureDiff();

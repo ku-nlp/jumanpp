@@ -244,8 +244,7 @@ Status AnalyzerImpl::computeScores(ScoreConfig* sconf) {
     for (i32 t1idx = 0; t1idx < left.size(); ++t1idx) {
       auto& t1node = left[t1idx];
       auto t1data = lattice_.boundary(t1node.boundary)->starts();
-      auto t1beam = t1data->beamData().row(t1node.position);
-      proc.gatherT2Features(t1beam, lattice_);
+      proc.gatherT2Features(t1node.boundary, t1node.position);
 
       auto t1features = t1data->patternFeatureData().row(t1node.position);
       LatticeBoundaryConnection* bndconn = bnd->connection(t1idx);

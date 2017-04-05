@@ -42,10 +42,11 @@ Status Trainer::prepare() {
   JPP_RETURN_IF_ERROR(
       adapter_.repointPathPointers(example_, &loss_.goldPath()));
   analyzer->bootstrapAnalysis();
+  JPP_RETURN_IF_ERROR(loss_.resolveGold());
   return Status::Ok();
 }
 
-float Trainer::computeTrainingLoss() {
+void Trainer::computeTrainingLoss() {
   i32 usedSteps = -1;
   switch (config_.mode) {
     case TrainingMode::Full: {
@@ -61,12 +62,12 @@ float Trainer::computeTrainingLoss() {
       break;
     }
   }
-  auto loss = loss_.computeLoss(usedSteps);
+  currentLoss_ = loss_.computeLoss(usedSteps);
   loss_.computeFeatureDiff(config_.numHashedFeatures - 1);
-  return loss;
 }
 
 Status Trainer::compute(analysis::ScoreConfig *sconf) {
+  loss_.computeGoldScores(sconf);
   JPP_RETURN_IF_ERROR(analyzer->computeScores(sconf));
   JPP_RETURN_IF_ERROR(loss_.resolveTop1());
   JPP_RETURN_IF_ERROR(loss_.computeComparison());

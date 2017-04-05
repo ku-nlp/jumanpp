@@ -61,6 +61,8 @@ void ScoreProcessor::updateBeams(i32 boundary, i32 endPos, LatticeBoundary *bnd,
   u16 bnd16 = (u16)boundary;
   u16 end16 = (u16)endPos;
   auto &scoreWeights = sc->scoreWeights;
+  auto ptr = bnd->ends()->nodePtrs().at(endPos);
+  resolveBeamAt(ptr.boundary, ptr.position);
   for (int prevBeam = 0; prevBeam < beamSize_; ++prevBeam) {
     auto scoreData = bndconn->entryScores(prevBeam);
     for (i32 beginPos = 0; beginPos < beam.numRows(); ++beginPos) {
@@ -95,8 +97,27 @@ void ScoreProcessor::computeFeatureScores(i32 beamIdx, FeatureScorer *scorer,
   scorer->compute(scores, features);
 }
 
-void ScoreProcessor::gatherT2Features(
-    util::ArraySlice<ConnectionBeamElement> beam, Lattice &lattice) {
+void ScoreProcessor::gatherT2Features(i32 boundary, i32 position) {
+  resolveBeamAt(boundary, position);
+
+  for (int i = 0; i < beamSize_; ++i) {
+    auto &ptr = beamPtrs[i];
+    // get actual nodeptr
+    auto bnd1 = lattice_->boundary(ptr.ptr.boundary);
+    auto nodePtr = bnd1->ends()->nodePtrs().at(ptr.ptr.left);
+    // get pattern features
+    auto bnd2 = lattice_->boundary(nodePtr.boundary);
+    auto patfeatures =
+        bnd2->starts()->patternFeatureData().row(nodePtr.position);
+    auto row = t2features.row(i);
+    util::copy_buffer(patfeatures, row);
+  }
+}
+
+void ScoreProcessor::resolveBeamAt(i32 boundary, i32 position) {
+  auto bnd = lattice_->boundary(boundary);
+  auto startData = bnd->starts();
+  auto beam = startData->beamData().row(position);
   beamSize_ = 0;
   for (auto &e : beam) {
     if (EntryBeam::isFake(e)) {
@@ -105,19 +126,14 @@ void ScoreProcessor::gatherT2Features(
     ++beamSize_;
   }
   beamPtrs = util::ArraySlice<ConnectionBeamElement>{beam, 0, (u32)beamSize_};
+}
 
-  for (int i = 0; i < beamSize_; ++i) {
-    auto &ptr = beamPtrs[i];
-    // get actual nodeptr
-    auto bnd1 = lattice.boundary(ptr.ptr.boundary);
-    auto nodePtr = bnd1->ends()->nodePtrs().at(ptr.ptr.left);
-    // get pattern features
-    auto bnd2 = lattice.boundary(nodePtr.boundary);
-    auto patfeatures =
-        bnd2->starts()->patternFeatureData().row(nodePtr.position);
-    auto row = t2features.row(i);
-    util::copy_buffer(patfeatures, row);
-  }
+ConnectionPtr *ScoreProcessor::realPtr(const ConnectionPtr &ptr) const {
+  auto bnd = lattice_->boundary(ptr.boundary);
+  auto itemPtr = bnd->ends()->nodePtrs().at(ptr.left);
+  auto bnd2 = lattice_->boundary(itemPtr.boundary);
+  auto beam = bnd2->starts()->beamData().row(itemPtr.position);
+  return &beam.at(ptr.beam).ptr;
 }
 }  // namespace analysis
 }  // namespace core

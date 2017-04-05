@@ -34,7 +34,8 @@ void SoftConfidenceWeighted::update(float loss,
 void SoftConfidenceWeighted::updateWeights(
     float alpha, float y, util::ArraySlice<ScoredFeature> features) {
   for (auto& v : features) {
-    usableWeights[v.feature] += alpha * y * matrixDiagonal[v.feature] * v.score;
+    auto update = alpha * y * matrixDiagonal[v.feature] * v.score;
+    usableWeights[v.feature] += update;
   }
 }
 
@@ -91,7 +92,7 @@ SoftConfidenceWeighted::SoftConfidenceWeighted(const TrainingConfig& conf)
       zeta{1 + phi * phi},
       psi{1 + phi * phi / 2} {
   usableWeights.reserve(conf.numHashedFeatures);
-  matrixDiagonal.resize(conf.numHashedFeatures);
+  matrixDiagonal.resize(conf.numHashedFeatures, 1.0);
 
   std::default_random_engine eng{conf.randomSeed};
   float boundary = 1.0f / conf.numHashedFeatures;

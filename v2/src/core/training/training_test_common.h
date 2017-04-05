@@ -28,7 +28,7 @@ struct ExampleData {
 };
 
 class GoldExampleEnv {
-protected:
+ protected:
   testing::TestEnv env;
   StringField fa;
   StringField fb;

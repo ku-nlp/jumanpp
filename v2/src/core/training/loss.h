@@ -18,6 +18,14 @@ struct NgramFeatureRef {
   analysis::LatticeNodePtr t2;
   analysis::LatticeNodePtr t1;
   analysis::LatticeNodePtr t0;
+
+  static NgramFeatureRef init(analysis::LatticeNodePtr ptr) {
+    return {{0, 0},  // BOS0
+            {1, 0},  // BOS1
+            ptr};
+  }
+
+  NgramFeatureRef next(analysis::LatticeNodePtr ptr) { return {t1, t0, ptr}; }
 };
 
 class NgramExampleFeatureCalculator {
@@ -82,6 +90,9 @@ class LossCalculator {
   analysis::AnalysisPath top1;
   analysis::AnalyzerImpl* analyzer;
   const spec::TrainingSpec* spec;
+  std::vector<u32> rawGoldFeatures;
+  std::vector<float> goldScores;
+  std::vector<float> goldNodeScores;
   std::vector<u32> top1Features;
   std::vector<u32> goldFeatures;
   std::vector<ScoredFeature> scored;
@@ -99,12 +110,16 @@ class LossCalculator {
     featureBuffer.resize(analyzer->core().runtime().features.ngrams.size());
 
     fullWeight = 0;
-    for (auto& x: spec->fields) {
+    for (auto& x : spec->fields) {
       fullWeight += x.weight;
     }
   }
 
   Status resolveTop1() { return top1.fillIn(analyzer->lattice()); }
+
+  Status resolveGold();
+
+  void computeGoldScores(analysis::ScoreConfig* scores);
 
   bool findWorstTopNode(i32 goldPos, ComparisonStep* step);
 
