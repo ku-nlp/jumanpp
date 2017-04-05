@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <vector>
+#include <cstring>
 #include "coded_io.h"
 
 namespace jumanpp {
