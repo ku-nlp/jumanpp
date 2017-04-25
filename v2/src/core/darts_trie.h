@@ -61,7 +61,12 @@ class DoubleArrayBuilder {
 
 class DoubleArray;
 
-enum class TraverseStatus { Ok, NoLeaf, NoNode };
+enum class TraverseStatus {
+  Ok,      // There was a leaf node in the trie
+  NoLeaf,  // There wasn't a leaf node, but there may exist one
+           // when continuing searching
+  NoNode   // Even if continue searching there would be no nodes in the trie
+};
 
 class DoubleArrayTraversal {
   const impl::DoubleArrayCore* base_;
