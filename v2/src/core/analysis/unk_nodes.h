@@ -22,7 +22,7 @@ class UnkMaker {
  public:
   virtual bool spawnNodes(const AnalysisInput& input, UnkNodesContext* ctx,
                           LatticeBuilder* lattice) const = 0;
-  ~UnkMaker() = default;
+  virtual ~UnkMaker() = default;
 };
 
 struct UnkMakers {
