@@ -649,7 +649,9 @@ Status UnkProcBuilder::validate() const {
            << name_ << ": unk processor must have pattern specified";
   }
   if (pattern_ <= 0) {
-    return Status::InvalidParameter() << name_ << ": unk pattern row numbers start from 1, found " << pattern_;
+    return Status::InvalidParameter()
+           << name_ << ": unk pattern row numbers start from 1, found "
+           << pattern_;
   }
   return Status::Ok();
 }
