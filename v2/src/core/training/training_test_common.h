@@ -35,6 +35,7 @@ class GoldExampleEnv {
   StringField fa;
   StringField fb;
   StringField fc;
+  AnalysisPath path;
 
  public:
   GoldExampleEnv(StringPiece dic, bool katakanaUnks = false) {
@@ -51,7 +52,9 @@ class GoldExampleEnv {
       bldr.train().field(a, 1.0f).field(b, 1.0f);
 
       if (katakanaUnks) {
-        bldr.unk("katakana", 1).chunking(chars::CharacterClass::KATAKANA).outputTo({a});
+        bldr.unk("katakana", 1)
+            .chunking(chars::CharacterClass::KATAKANA)
+            .outputTo({a});
       }
     });
     env.importDic(dic);
@@ -75,6 +78,15 @@ class GoldExampleEnv {
     REQUIRE(omgr.locate(ptr, &w));
     REQUIRE(w.next());
     return {fa[w], fb[w], fc[w]};
+  }
+
+  ExampleData top1Node(int idx) {
+    REQUIRE_OK(path.fillIn(env.analyzer->lattice()));
+    path.moveToBoundary(idx);
+    REQUIRE(path.totalNodesInChunk() == 1);
+    ConnectionPtr ptr;
+    REQUIRE(path.nextNode(&ptr));
+    return firstNode({ptr.boundary, ptr.right});
   }
 };
 

@@ -74,6 +74,12 @@ class AnalysisPath {
 
   void reset() { currentChunk_ = -1; }
 
+  void moveToBoundary(i32 pos) {
+    JPP_DCHECK_IN(pos, 0, offsets_.size());
+    currentChunk_ = pos;
+    currentNode_ = -1;
+  }
+
   Status fillIn(Lattice* l);
 };
 
