@@ -102,9 +102,7 @@ class ManagedAllocatorCore {
     return ManagedPtr<T>(make<T, Args...>(std::forward<Args>(args)...));
   };
 
-  u64 remaining() const {
-    return end_ - offset_;
-  }
+  u64 remaining() const { return end_ - offset_; }
 
   void reset();
 };
@@ -132,7 +130,7 @@ class Manager {
 
   u64 used() const {
     u64 total = 0;
-    for (auto& m: pages_) {
+    for (auto &m : pages_) {
       total += m.size;
     }
     return total;

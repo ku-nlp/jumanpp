@@ -52,6 +52,78 @@ class Trainer {
   }
 };
 
+struct TrainerFullConfig {
+  const analysis::AnalyzerConfig& analyzerConfig;
+  const CoreHolder& core;
+  const spec::TrainingSpec& trainingSpec;
+  const TrainingConfig& trainingConfig;
+};
+
+class OwningTrainer {
+  analysis::AnalyzerImpl analyzer_;
+  Trainer trainer_;
+  bool wasPrepared = false;
+
+ public:
+  OwningTrainer(const TrainerFullConfig& conf)
+      : analyzer_{&conf.core, conf.analyzerConfig},
+        trainer_{&analyzer_, &conf.trainingSpec, conf.trainingConfig} {}
+
+  void reset() {
+    wasPrepared = false;
+    trainer_.reset();
+  }
+
+  Status readExample(TrainingDataReader* rdr) {
+    return rdr->readFullExample(analyzer_.extraNodesContext(),
+                                &trainer_.example());
+  }
+
+  Status prepare() {
+    if (wasPrepared) return Status::Ok();
+    wasPrepared = true;
+    return trainer_.prepare();
+  }
+
+  Status compute(analysis::ScoreConfig* sconf) {
+    JPP_RETURN_IF_ERROR(trainer_.compute(sconf));
+    trainer_.computeTrainingLoss();
+    return Status::Ok();
+  }
+
+  float loss() const { return trainer_.lossValue(); }
+
+  util::ArraySlice<ScoredFeature> featureDiff() const {
+    return trainer_.featureDiff();
+  }
+};
+
+class BatchedTrainer {
+  TrainerFullConfig config_;
+  std::vector<std::unique_ptr<OwningTrainer>> trainers_;
+  i32 current_;
+
+ public:
+  BatchedTrainer(const TrainerFullConfig& tfc, i32 numTrainers) : config_{tfc} {
+    trainers_.reserve(numTrainers);
+    for (int i = 0; i < numTrainers; ++i) {
+      trainers_.emplace_back(new OwningTrainer{config_});
+    }
+  }
+
+  Status readBatch(TrainingDataReader* rdr) {
+    current_ = 0;
+    int trIdx = 0;
+    for (; trIdx < trainers_.size() && !rdr->finished(); ++trIdx) {
+      auto& tr = trainers_[trIdx];
+      tr->reset();
+      JPP_RETURN_IF_ERROR(tr->readExample(rdr));
+    }
+    current_ = trIdx;
+    return Status::Ok();
+  }
+};
+
 }  // namespace training
 }  // namespace core
 }  // namespace jumanpp

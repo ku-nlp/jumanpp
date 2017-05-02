@@ -22,6 +22,8 @@ enum class TrainingMode {
   MaxViolation
 };
 
+enum class InputFormat { Csv, Morph };
+
 struct ScwConfig {
   float C = 1.0f;
   float phi = 5.0f;
@@ -29,6 +31,7 @@ struct ScwConfig {
 
 struct TrainingConfig {
   TrainingMode mode = TrainingMode::Full;
+  InputFormat inputFormat = InputFormat::Morph;
   u32 numHashedFeatures;
   ScwConfig scw;
   u32 randomSeed = 0xdeadbeef;

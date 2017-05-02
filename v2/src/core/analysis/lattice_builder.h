@@ -116,6 +116,11 @@ class LatticeBuilder {
   Status makeEos(LatticeConstructionContext* ctx, Lattice* lattice);
   Status fillEnds(Lattice* l);
   const BoundaryInfo& infoAt(i32 boundary) const;
+
+  u64 usedMemory() const {
+    return seeds_.size() * sizeof(LatticeNodeSeed) +
+           boundaries_.size() * sizeof(BoundaryInfo) + connectible.size() / 8;
+  }
 };
 
 }  // namespace analysis

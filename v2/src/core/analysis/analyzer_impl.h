@@ -75,7 +75,7 @@ class AnalyzerImpl {
   }
 
   u64 allocatedMemory() const {
-    return memMgr_.used() + sizeof(AnalyzerImpl);
+    return memMgr_.used() + latticeBldr_.usedMemory() + sizeof(AnalyzerImpl);
   }
 
   u64 usedMemory() const {
