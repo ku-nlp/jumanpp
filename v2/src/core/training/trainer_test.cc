@@ -18,8 +18,8 @@ class TrainerEnv : public GoldExampleEnv {
 
   core::training::TrainingDataReader rdr;
   Trainer trainer;
-  TrainerEnv(StringPiece s)
-      : GoldExampleEnv(s),
+  TrainerEnv(StringPiece s, bool kataUnks = false)
+      : GoldExampleEnv(s, kataUnks),
         trainer{anaImpl(), &env.saveLoad.training, testConf()} {
     rdr.initialize(env.saveLoad.training, core());
   }
@@ -65,4 +65,21 @@ TEST_CASE(
   CHECK(env.trainer.lossValue() == 0);
   CHECK(mem1 == mem2);
   CHECK(mem1 == mem3);
+}
+
+TEST_CASE("trainer can compute score for sentence with unks") {
+  StringPiece dic = "UNK,N,10\nもも,N,0\nも,PRT,1\nモ,PRT,2";
+  StringPiece ex = "モモ_N_10 も_PRT_1 もも_N_0\n";
+  TrainerEnv env{dic, true}; // use unks
+  env.parseMrph(ex);
+  SoftConfidenceWeighted scw{TrainerEnv::testConf()};
+  CHECK(env.trainer.example().numNodes() == 3);
+  CHECK(env.trainer.prepare());
+  CHECK(env.trainer.compute(scw.scoreConfig()));
+  env.trainer.computeTrainingLoss();
+  CHECK(env.trainer.lossValue() > 0);
+  scw.update(env.trainer.lossValue(), env.trainer.featureDiff());
+  CHECK(env.trainer.compute(scw.scoreConfig()));
+  env.trainer.computeTrainingLoss();
+  CHECK(env.trainer.lossValue() == 0);
 }

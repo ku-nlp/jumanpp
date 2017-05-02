@@ -305,7 +305,7 @@ class RuntimeInfoCompiler {
     JPP_RETURN_IF_ERROR(compileFeatures(&result->features));
     JPP_RETURN_IF_ERROR(compileUnks(&result->unkMakers));
     result->unkMakers.numPlaceholders =
-        result->features.placeholderMapping.size();
+        static_cast<i32>(result->features.placeholderMapping.size());
     return Status::Ok();
   }
 };

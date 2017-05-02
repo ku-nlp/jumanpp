@@ -37,9 +37,9 @@ class GoldExampleEnv {
   StringField fc;
 
  public:
-  GoldExampleEnv(StringPiece dic) {
+  GoldExampleEnv(StringPiece dic, bool katakanaUnks = false) {
     env.beamSize = 2;
-    env.spec([](core::spec::dsl::ModelSpecBuilder& bldr) {
+    env.spec([katakanaUnks](core::spec::dsl::ModelSpecBuilder& bldr) {
       auto& a = bldr.field(1, "a").strings().trieIndex();
       auto& b = bldr.field(2, "b").strings();
       bldr.field(3, "c").strings();
@@ -49,6 +49,10 @@ class GoldExampleEnv {
       bldr.bigram({a, b}, {a, b});
       bldr.trigram({a}, {a}, {a});
       bldr.train().field(a, 1.0f).field(b, 1.0f);
+
+      if (katakanaUnks) {
+        bldr.unk("katakana", 1).chunking(chars::CharacterClass::KATAKANA).outputTo({a});
+      }
     });
     env.importDic(dic);
     ScoreConfig scoreConfig{};
