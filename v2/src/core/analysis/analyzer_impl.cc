@@ -225,7 +225,7 @@ void AnalyzerImpl::bootstrapAnalysis() {
   }
 }
 
-Status AnalyzerImpl::computeScores(ScoreConfig* sconf) {
+Status AnalyzerImpl::computeScores(const ScoreConfig* sconf) {
   auto bndCount = lattice_.createdBoundaryCount();
   if (bndCount <= 3) {  // 2xBOS + EOS
     return Status::Ok();

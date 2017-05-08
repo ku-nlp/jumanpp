@@ -56,7 +56,7 @@ void ScoreProcessor::computeNgramFeatures(
 
 void ScoreProcessor::updateBeams(i32 boundary, i32 endPos, LatticeBoundary *bnd,
                                  LatticeBoundaryConnection *bndconn,
-                                 ScoreConfig *sc) {
+                                 const ScoreConfig *sc) {
   auto beam = bnd->starts()->beamData();
   u16 bnd16 = (u16)boundary;
   u16 end16 = (u16)endPos;
@@ -90,7 +90,8 @@ void ScoreProcessor::copyFeatureScores(LatticeBoundaryConnection *bndconn) {
   }
 }
 
-void ScoreProcessor::computeFeatureScores(i32 beamIdx, FeatureScorer *scorer,
+void ScoreProcessor::computeFeatureScores(i32 beamIdx,
+                                          const FeatureScorer *scorer,
                                           u32 sliceSize) {
   auto features = ngramFeatures.topRows(sliceSize);
   auto scores = scoreBuffer.row(beamIdx);

@@ -89,12 +89,13 @@ class ScoreProcessor {
                             util::Sliceable<u64> t0features,
                             util::ArraySlice<u64> t1features);
 
-  void computeFeatureScores(i32 beamIdx, FeatureScorer* scorer, u32 sliceSize);
+  void computeFeatureScores(i32 beamIdx, const FeatureScorer* scorer,
+                            u32 sliceSize);
 
   void copyFeatureScores(LatticeBoundaryConnection* bndconn);
 
   void updateBeams(i32 boundary, i32 endPos, LatticeBoundary* bnd,
-                   LatticeBoundaryConnection* bndconn, ScoreConfig* sc);
+                   LatticeBoundaryConnection* bndconn, const ScoreConfig* sc);
 
   void resolveBeamAt(i32 boundary, i32 position);
 };

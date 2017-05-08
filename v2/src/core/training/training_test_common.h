@@ -29,13 +29,54 @@ struct ExampleData {
   }
 };
 
-class GoldExampleEnv {
+class AnalyzerMethods {
  protected:
-  testing::TestEnv env;
+  AnalysisPath path;
+  std::array<i32, 3> nodeData;
+  NodeWalker walker;
   StringField fa;
   StringField fb;
   StringField fc;
-  AnalysisPath path;
+  AnalyzerImpl* analyzer;
+
+ public:
+  AnalyzerMethods() : walker{&nodeData} {}
+
+  explicit AnalyzerMethods(AnalyzerImpl* analyzer) : AnalyzerMethods() {
+    REQUIRE_OK(initialize(analyzer));
+  }
+
+  Status initialize(AnalyzerImpl* analyzerImpl) {
+    analyzer = analyzerImpl;
+    auto omg = analyzer->output();
+    JPP_RETURN_IF_ERROR(omg.stringField("a", &fa));
+    JPP_RETURN_IF_ERROR(omg.stringField("b", &fb));
+    JPP_RETURN_IF_ERROR(omg.stringField("c", &fc));
+    return Status::Ok();
+  }
+
+  ExampleData firstNode(LatticeNodePtr ptr) {
+    auto omgr = analyzer->output();
+    auto& w = walker;
+    REQUIRE(omgr.locate(ptr, &w));
+    REQUIRE(w.next());
+    return {fa[w], fb[w], fc[w]};
+  }
+
+  ExampleData top1Node(int idx) {
+    REQUIRE_OK(path.fillIn(analyzer->lattice()));
+    path.moveToBoundary(idx);
+    REQUIRE(path.totalNodesInChunk() == 1);
+    ConnectionPtr ptr;
+    REQUIRE(path.nextNode(&ptr));
+    return firstNode({ptr.boundary, ptr.right});
+  }
+};
+
+class GoldExampleEnv {
+ protected:
+  testing::TestEnv env;
+  AnalyzerMethods am;
 
  public:
   GoldExampleEnv(StringPiece dic, bool katakanaUnks = false) {
@@ -60,10 +101,7 @@ class GoldExampleEnv {
     env.importDic(dic);
     ScoreConfig scoreConfig{};
     REQUIRE_OK(env.analyzer->initScorers(scoreConfig));
-    auto omgr = env.analyzer->output();
-    REQUIRE_OK(omgr.stringField("a", &fa));
-    REQUIRE_OK(omgr.stringField("b", &fb));
-    REQUIRE_OK(omgr.stringField("c", &fc));
+    am.initialize(env.analyzer.get());
   }
 
   const core::spec::AnalysisSpec& spec() const { return env.saveLoad; }
@@ -72,22 +110,9 @@ class GoldExampleEnv {
 
   const core::CoreHolder& core() const { return *env.core; }
 
-  ExampleData firstNode(LatticeNodePtr ptr) {
-    auto omgr = env.analyzer->output();
-    auto w = omgr.nodeWalker();
-    REQUIRE(omgr.locate(ptr, &w));
-    REQUIRE(w.next());
-    return {fa[w], fb[w], fc[w]};
-  }
+  ExampleData firstNode(LatticeNodePtr ptr) { return am.firstNode(ptr); }
 
-  ExampleData top1Node(int idx) {
-    REQUIRE_OK(path.fillIn(env.analyzer->lattice()));
-    path.moveToBoundary(idx);
-    REQUIRE(path.totalNodesInChunk() == 1);
-    ConnectionPtr ptr;
-    REQUIRE(path.nextNode(&ptr));
-    return firstNode({ptr.boundary, ptr.right});
-  }
+  ExampleData top1Node(int idx) { return am.top1Node(idx); }
 };
 
 #endif  // JUMANPP_TRAINING_TEST_COMMON_H

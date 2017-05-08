@@ -27,7 +27,7 @@ class ScorerBase {
 class FeatureScorer : public ScorerBase {
  public:
   virtual void compute(util::MutableArraySlice<float> result,
-                       util::Sliceable<u32> features) = 0;
+                       util::Sliceable<u32> features) const = 0;
 };
 
 class ScoreComputer {

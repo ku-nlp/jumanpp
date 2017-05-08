@@ -26,7 +26,17 @@ class TestAnalyzer : public core::analysis::AnalyzerImpl {
  public:
   TestAnalyzer(const CoreHolder* core, const AnalyzerConfig& cfg)
       : AnalyzerImpl(core, cfg) {}
+
   LatticeBuilder& latticeBuilder() { return latticeBldr_; }
+
+  Status fullAnalyze(StringPiece input, ScoreConfig* sconf) {
+    JPP_RETURN_IF_ERROR(this->resetForInput(input));
+    JPP_RETURN_IF_ERROR(this->prepareNodeSeeds());
+    JPP_RETURN_IF_ERROR(this->buildLattice());
+    this->bootstrapAnalysis();
+    JPP_RETURN_IF_ERROR(this->computeScores(sconf));
+    return Status::Ok();
+  }
 };
 
 class TestEnv {

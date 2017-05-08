@@ -51,7 +51,7 @@ class HashedFeaturePerceptron : public FeatureScorer {
       : weights_{weights} {}
 
   void compute(util::MutableArraySlice<float> result,
-               util::Sliceable<u32> ngrams) override;
+               util::Sliceable<u32> ngrams) const override;
   Status load(const model::ModelInfo& model) override;
 };
 

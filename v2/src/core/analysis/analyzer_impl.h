@@ -48,31 +48,29 @@ class AnalyzerImpl {
     sproc_ = nullptr;
   }
 
+  // This set of functions is internal
+  // They are called from prepareNodeSeeds
+  Status makeNodeSeedsFromDic();
+  Status makeUnkNodes1();
+  bool checkLatticeConnectivity();
+  Status makeUnkNodes2();
+
   /**
    * This function calls reset() internally
    * and can not be used in training.
    */
   Status resetForInput(StringPiece input);
   Status setNewInput(StringPiece input);
-  Status makeNodeSeedsFromDic();
-  Status makeUnkNodes1();
-  bool checkLatticeConnectivity();
-  Status makeUnkNodes2();
   Status prepareNodeSeeds();
   Status buildLattice();
   void bootstrapAnalysis();
-  Status computeScores(ScoreConfig* sconf);
+  Status computeScores(const ScoreConfig* sconf);
 
   Lattice* lattice() { return &lattice_; }
   LatticeBuilder* latticeBldr() { return &latticeBldr_; }
   ExtraNodesContext* extraNodesContext() { return &xtra_; }
   const dic::DictionaryHolder& dic() const { return core_->dic(); }
   const CoreHolder& core() const { return *core_; }
-
-  Status preprocess(StringPiece input) {
-    JPP_RETURN_IF_ERROR(resetForInput(input));
-    return Status::Ok();
-  }
 
   u64 allocatedMemory() const {
     return memMgr_.used() + latticeBldr_.usedMemory() + sizeof(AnalyzerImpl);

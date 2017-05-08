@@ -42,7 +42,7 @@ Status Analyzer::initialize(AnalyzerImpl *impl, ScoreConfig *scorer) {
 }
 
 Status Analyzer::analyze(StringPiece input) {
-  JPP_RETURN_IF_ERROR(ptr_->preprocess(input));
+  JPP_RETURN_IF_ERROR(ptr_->resetForInput(input));
   JPP_RETURN_IF_ERROR(ptr_->prepareNodeSeeds());
   JPP_RETURN_IF_ERROR(ptr_->buildLattice());
   ptr_->bootstrapAnalysis();

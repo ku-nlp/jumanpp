@@ -10,7 +10,7 @@ namespace core {
 namespace analysis {
 
 void HashedFeaturePerceptron::compute(util::MutableArraySlice<float> result,
-                                      util::Sliceable<u32> ngrams) {
+                                      util::Sliceable<u32> ngrams) const {
   JPP_DCHECK(util::memory::IsPowerOf2(weights_.size()));
   u32 mask = static_cast<u32>(weights_.size() - 1);
   for (int i = 0; i < ngrams.numRows(); ++i) {

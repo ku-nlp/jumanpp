@@ -29,6 +29,13 @@ class TrainerEnv : public GoldExampleEnv {
     REQUIRE_OK(rdr.readFullExample(anaImpl()->extraNodesContext(),
                                    &trainer.example()));
   }
+
+  std::unique_ptr<testing::TestAnalyzer> newAnalyzer(const ScoreConfig* sconf) {
+    std::unique_ptr<testing::TestAnalyzer> ptr{
+        new testing::TestAnalyzer{env.core.get(), env.aconf}};
+    ptr->initScorers(*sconf);
+    return ptr;
+  }
 };
 
 TEST_CASE("trainer can compute score for a simple sentence") {
@@ -102,9 +109,8 @@ TEST_CASE("trainer can compute score for sentence with part unks") {
   CHECK(env.top1Node(0) == ExampleData("モモ", "N", "5"));
 }
 
-//todo fix this
-TEST_CASE("trainer can compute score for sentence with other POS unks", "[.]") {
-  StringPiece dic = "UNK,N,5\nもも,N,0\nも,PRT,1\nモ,PRT,2";
+TEST_CASE("trainer can compute score for sentence with other POS unks") {
+  StringPiece dic = "UNK,N,5\nもも,N,0\nも,PRT,1\nモ,PRT,2\n寝る,V,3";
   StringPiece ex = "モモ_V_10 も_PRT_1 もも_N_0\n";
   TrainerEnv env{dic, true};  // use unks
   env.parseMrph(ex);
@@ -118,5 +124,9 @@ TEST_CASE("trainer can compute score for sentence with other POS unks", "[.]") {
   CHECK(env.trainer.compute(scw.scoreConfig()));
   env.trainer.computeTrainingLoss();
   CHECK(env.trainer.lossValue() == 0);
-  CHECK(env.top1Node(0) == ExampleData("モモ", "N", "5"));
+
+  auto ana2 = env.newAnalyzer(scw.scoreConfig());
+  REQUIRE_OK(ana2->fullAnalyze("モモももも", scw.scoreConfig()));
+  AnalyzerMethods am{ana2.get()};
+  CHECK(am.top1Node(0) == ExampleData("モモ", "N", "5"));
 }
