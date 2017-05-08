@@ -10,16 +10,21 @@
 #include "core/analysis/perceptron.h"
 #include "core/training/loss.h"
 #include "core/training/training_types.h"
+#include "core/impl/model_format.h"
 
 namespace jumanpp {
 namespace core {
 namespace training {
+
+struct ScwData;
 
 /**
  * Structured learning perceptron-like algorithm
  * http://icml.cc/2012/papers/86.pdf
  */
 class SoftConfidenceWeighted {
+  std::unique_ptr<ScwData> data_;
+
   std::vector<float> usableWeights;
   std::vector<float> matrixDiagonal;
 
@@ -51,6 +56,8 @@ class SoftConfidenceWeighted {
   Status validate() const;
   void update(float loss, util::ArraySlice<ScoredFeature> features);
   analysis::ScoreConfig* scoreConfig() { return &sconf; }
+  void save(model::ModelInfo* model);
+  ~SoftConfidenceWeighted();
 };
 
 }  // namespace training

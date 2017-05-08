@@ -4,6 +4,8 @@
 
 #include "core/analysis/perceptron.h"
 #include "core/analysis/lattice_types.h"
+#include "core/impl/perceptron_io.h"
+#include "util/serialization.h"
 
 namespace jumanpp {
 namespace core {
@@ -20,7 +22,56 @@ void HashedFeaturePerceptron::compute(util::MutableArraySlice<float> result,
 }
 
 Status HashedFeaturePerceptron::load(const model::ModelInfo &model) {
-  return Status::NotImplemented();
+  const model::ModelPart* savedPerc = nullptr;
+  for (auto& part: model.parts) {
+    if (part.kind == model::ModelPartKind::Perceprton) {
+      savedPerc = &part;
+      break;
+    }
+  }
+
+  if (savedPerc == nullptr) {
+    return Status::InvalidState() << "perceptron: saved model did not have perceptron attached";
+  }
+
+  if (savedPerc->data.size() != 2) {
+    return Status::InvalidState() << "perceptron: saved model did not have exactly two parts";
+  }
+
+  auto& data = savedPerc->data;
+
+  util::serialization::Loader ldr {data[0]};
+  PerceptronInfo pi {};
+  if (!ldr.load(&pi)) {
+    return Status::InvalidState() << "perceptron: failed to load perceptron information";
+  }
+
+  if (pi.modelSizeExponent < 0) {
+    return Status::InvalidState() << "perceptron: size exponent can't be negative";
+  }
+
+  if (pi.modelSizeExponent >= 64) {
+    return Status::InvalidState() << "perceptron: size exponent must be lesser than 64";
+  }
+
+  auto dataSize = size_t{1} << pi.modelSizeExponent;
+
+  StringPiece modelData = data[1];
+
+  auto sliceSize = modelData.size() / sizeof(float);
+
+  if (sliceSize != dataSize) {
+    return Status::InvalidState() << "perceptron: slice size was not equal to model size in header";
+  }
+
+  util::ArraySlice<float> weightData {
+      reinterpret_cast<const float*>(modelData.begin()),
+      dataSize
+  };
+
+  weights_ = weightData;
+
+  return Status::Ok();
 }
 
 }  // namespace analysis

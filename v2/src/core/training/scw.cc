@@ -4,7 +4,10 @@
 
 #include "scw.h"
 #include <random>
-#include "util/memory.hpp"
+#include <cmath>
+#include "util/coded_io.h"
+#include "util/serialization.h"
+#include "core/impl/perceptron_io.h"
 
 namespace jumanpp {
 namespace core {
@@ -95,7 +98,7 @@ SoftConfidenceWeighted::SoftConfidenceWeighted(const TrainingConfig& conf)
   matrixDiagonal.resize(conf.numHashedFeatures, 1.0);
 
   std::default_random_engine eng{conf.randomSeed};
-  float boundary = 1.0f / conf.numHashedFeatures;
+  float boundary = (float)(1.0 / std::sqrt(conf.numHashedFeatures));
   std::uniform_real_distribution<float> dist{-boundary, boundary};
   for (int i = 0; i < conf.numHashedFeatures; ++i) {
     usableWeights.push_back(dist(eng));
@@ -113,6 +116,40 @@ Status SoftConfidenceWeighted::validate() const {
            << "number of features must be a power of 2";
   }
   return Status::Ok();
+}
+
+struct ScwData {
+  util::CodedBuffer cbuf;
+};
+
+void SoftConfidenceWeighted::save(model::ModelInfo *model) {
+  data_.reset(new ScwData);
+  util::serialization::Saver svr{&data_->cbuf};
+  PerceptronInfo pi;
+  
+  pi.modelSizeExponent = 10;
+  svr.save(pi);
+  
+  model::ModelPart part;
+  part.kind = model::ModelPartKind::Perceprton;
+  part.data.push_back(data_->cbuf.contents());
+  
+  
+  float* weightsPtr = usableWeights.data();
+
+  auto charPtr = reinterpret_cast<char*>(weightsPtr);
+  StringPiece weightsMemory {
+      charPtr,
+      charPtr + usableWeights.size() * sizeof(float)
+  };
+
+  part.data.push_back(weightsMemory);
+
+  model->parts.push_back(std::move(part));
+}
+
+SoftConfidenceWeighted::~SoftConfidenceWeighted() {
+
 }
 
 }  // namespace training
