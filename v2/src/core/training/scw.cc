@@ -3,11 +3,11 @@
 //
 
 #include "scw.h"
-#include <random>
 #include <cmath>
+#include <random>
+#include "core/impl/perceptron_io.h"
 #include "util/coded_io.h"
 #include "util/serialization.h"
-#include "core/impl/perceptron_io.h"
 
 namespace jumanpp {
 namespace core {
@@ -122,35 +122,30 @@ struct ScwData {
   util::CodedBuffer cbuf;
 };
 
-void SoftConfidenceWeighted::save(model::ModelInfo *model) {
+void SoftConfidenceWeighted::save(model::ModelInfo* model) {
   data_.reset(new ScwData);
   util::serialization::Saver svr{&data_->cbuf};
   PerceptronInfo pi;
-  
+
   pi.modelSizeExponent = 10;
   svr.save(pi);
-  
+
   model::ModelPart part;
   part.kind = model::ModelPartKind::Perceprton;
   part.data.push_back(data_->cbuf.contents());
-  
-  
+
   float* weightsPtr = usableWeights.data();
 
   auto charPtr = reinterpret_cast<char*>(weightsPtr);
-  StringPiece weightsMemory {
-      charPtr,
-      charPtr + usableWeights.size() * sizeof(float)
-  };
+  StringPiece weightsMemory{charPtr,
+                            charPtr + usableWeights.size() * sizeof(float)};
 
   part.data.push_back(weightsMemory);
 
   model->parts.push_back(std::move(part));
 }
 
-SoftConfidenceWeighted::~SoftConfidenceWeighted() {
-
-}
+SoftConfidenceWeighted::~SoftConfidenceWeighted() {}
 
 }  // namespace training
 }  // namespace core

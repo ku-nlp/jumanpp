@@ -16,11 +16,10 @@ struct PerceptronInfo {
 
 template <typename Arch>
 void Serialize(Arch& arch, PerceptronInfo& obj) {
-  arch & obj.modelSizeExponent;
+  arch& obj.modelSizeExponent;
 }
 
-} // core
-} // jumanpp
+}  // namespace core
+}  // namespace jumanpp
 
-
-#endif //JUMANPP_PERCEPTRON_IO_H
+#endif  // JUMANPP_PERCEPTRON_IO_H

@@ -8,9 +8,9 @@
 #include <cmath>
 #include <vector>
 #include "core/analysis/perceptron.h"
+#include "core/impl/model_format.h"
 #include "core/training/loss.h"
 #include "core/training/training_types.h"
-#include "core/impl/model_format.h"
 
 namespace jumanpp {
 namespace core {
