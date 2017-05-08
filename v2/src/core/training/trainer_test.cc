@@ -129,4 +129,6 @@ TEST_CASE("trainer can compute score for sentence with other POS unks") {
   REQUIRE_OK(ana2->fullAnalyze("モモももも", scw.scoreConfig()));
   AnalyzerMethods am{ana2.get()};
   CHECK(am.top1Node(0) == ExampleData("モモ", "N", "5"));
+  CHECK(am.top1Node(1) == ExampleData("も", "PRT", "1"));
+  CHECK(am.top1Node(2) == ExampleData("もも", "N", "0"));
 }
