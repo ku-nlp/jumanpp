@@ -20,6 +20,7 @@ void Serialize(Arch& a, UnkMakerInfo& o) {
   a& o.name;
   a& o.type;
   a& o.patternPtr;
+  a& o.priority;
   a& o.charClass;
   a& o.features;
   a& o.output;

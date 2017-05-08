@@ -48,12 +48,29 @@ class UnkMakerFactory {
 
   Status make(const UnkMakersInfo& info, UnkMakers* result) const {
     for (auto& x : info.makers) {
+      // resolve unk processing stage
+      std::vector<std::unique_ptr<UnkMaker>>* stage;
+      switch (x.priority) {
+        case 0: {
+          stage = &result->stage1;
+          break;
+        }
+        case 1: {
+          stage = &result->stage2;
+          break;
+        }
+        default:
+          return Status::InvalidState() << "UNK " << x.name << ": priority "
+                                        << x.priority << " is not supported";
+      }
+
+      // resolve processor itself
       switch (x.type) {
         case spec::UnkMakerType::Chunking: {
           UnkNodeConfig cfg{rdr.readEntry(EntryPtr{x.patternPtr})};
           util::copy_insert(x.output, cfg.replaceWithSurface);
           handlePrefixIndex(x, &cfg);
-          result->stage1.emplace_back(
+          stage->emplace_back(
               new ChunkingUnkMaker{entries, x.charClass, std::move(cfg)});
           break;
         }
@@ -61,7 +78,7 @@ class UnkMakerFactory {
           UnkNodeConfig cfg{rdr.readEntry(EntryPtr{x.patternPtr})};
           util::copy_insert(x.output, cfg.replaceWithSurface);
           handlePrefixIndex(x, &cfg);
-          result->stage1.emplace_back(
+          stage->emplace_back(
               new SingleUnkMaker{entries, x.charClass, std::move(cfg)});
           break;
         }

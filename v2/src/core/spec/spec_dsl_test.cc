@@ -153,3 +153,28 @@ TEST_CASE("can specify unk makers") {
   CHECK(res.unkCreators[0].type == UnkMakerType::Chunking);
   CHECK(res.unkCreators[0].charClass == CharacterClass::KATAKANA);
 }
+
+TEST_CASE("can specify low prio unk makers") {
+  ModelSpecBuilder spec;
+  auto& f1 = spec.field(1, "f1").strings().trieIndex();
+  auto& f2 = spec.field(2, "f2").strings();
+  auto& ft1 = spec.feature("ft1").placeholder();
+  auto& unk1 = spec.unk("unk1", 1)
+                   .chunking(CharacterClass::KATAKANA)
+                   .notPrefixOfDicFeature(ft1)
+                   .outputTo({f1, f2});
+  auto& unk2 = spec.unk("unk2", 2)
+                   .chunking(CharacterClass::HIRAGANA)
+                   .notPrefixOfDicFeature(ft1)
+                   .outputTo({f1, f2})
+                   .lowPriority();
+  VALID(spec);
+  AnalysisSpec res;
+  CHECK_OK(spec.build(&res));
+  CHECK(res.unkCreators.size() == 2);
+  CHECK(res.unkCreators[0].index == 0);
+  CHECK(res.unkCreators[0].type == UnkMakerType::Chunking);
+  CHECK(res.unkCreators[0].charClass == CharacterClass::KATAKANA);
+  CHECK(res.unkCreators[0].priority == 0);
+  CHECK(res.unkCreators[1].priority == 1);
+}

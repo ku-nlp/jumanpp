@@ -246,6 +246,7 @@ class UnkProcBuilder : public DslOpBase {
   UnkMakerType type_ = UnkMakerType::Invalid;
   chars::CharacterClass charClass_ = chars::CharacterClass::FAMILY_OTHERS;
   i32 pattern_ = -1;
+  i32 priority_ = 0;
   std::vector<UnkProcFeature> surfaceFeatures_;
   std::vector<FieldExpressionBldr> output_;
 
@@ -279,6 +280,11 @@ class UnkProcBuilder : public DslOpBase {
     for (auto& x : field) {
       output_.push_back(x);
     }
+    return *this;
+  }
+
+  UnkProcBuilder& lowPriority() {
+    priority_ = 1;
     return *this;
   }
 

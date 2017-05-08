@@ -507,6 +507,7 @@ Status ModelSpecBuilder::createUnkProcessors(AnalysisSpec* spec) const {
     UnkMaker mkr;
     mkr.name = u->name().str();
     mkr.index = cnt++;
+    mkr.priority = u->priority_;
     mkr.patternRow = u->pattern_;
     mkr.type = u->type_;
     mkr.charClass = u->charClass_;

@@ -64,6 +64,7 @@ void Serialize(Arch &a, UnkMaker &o) {
   a &o.name;
   a &o.type;
   a &o.patternRow;
+  a &o.priority;
   a &o.charClass;
   a &o.features;
   a &o.outputExpressions;

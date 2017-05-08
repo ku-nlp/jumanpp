@@ -69,6 +69,7 @@ struct UnkMaker {
   UnkMakerType type = UnkMakerType::Invalid;
   // 1-based
   i32 patternRow = -1;
+  i32 priority = 0;
   chars::CharacterClass charClass = chars::CharacterClass::FAMILY_OTHERS;
   std::vector<UnkMakerFeature> features;
   std::vector<FieldExpression> outputExpressions;

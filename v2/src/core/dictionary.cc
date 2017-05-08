@@ -292,6 +292,7 @@ class RuntimeInfoCompiler {
       mk.type = unk.type;
       mk.charClass = unk.charClass;
       util::copy_insert(unk.features, mk.features);
+      mk.priority = unk.priority;
       mk.patternPtr = ptrsOfEntries.at(unk.patternRow - 1);
       for (auto& x : unk.outputExpressions) {
         mk.output.push_back(x.fieldIndex);

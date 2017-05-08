@@ -18,6 +18,7 @@ struct UnkMakerInfo {
   i32 index;
   StringPiece name;
   spec::UnkMakerType type;
+  i32 priority;
   i32 patternPtr;
   chars::CharacterClass charClass;
   std::vector<spec::UnkMakerFeature> features;
