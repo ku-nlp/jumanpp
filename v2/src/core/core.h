@@ -32,6 +32,13 @@ class CoreHolder {
              const dic::DictionaryHolder& dic);
 
   Status initialize(const features::StaticFeatureFactory* sff);
+
+  void updateCoreConfig(const CoreConfig& conf) {
+    cfg_ = conf;
+    latticeCfg_.beamSize = (u32)conf.beamSize;
+    latticeCfg_.scoreCnt = (u32)conf.numScorers;
+  }
+
   const analysis::LatticeConfig& latticeConfig() const { return latticeCfg_; }
   const dic::DictionaryHolder& dic() const { return dic_; }
   const RuntimeInfo& runtime() const { return runtime_; }

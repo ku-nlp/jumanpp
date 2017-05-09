@@ -92,6 +92,8 @@ class TrainingDataReader {
                             FullyAnnotatedExample* result);
   Status readFullExample(analysis::ExtraNodesContext* xtra,
                          FullyAnnotatedExample* result);
+
+  i64 lineNumber() const { return csv_.lineNumber(); }
 };
 
 }  // namespace training

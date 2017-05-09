@@ -48,10 +48,10 @@ class JumanFormat {
   core::analysis::AnalysisResult analysisResult;
   core::analysis::AnalysisPath top1;
   std::array<i32, JumandicNumFields> fieldBuffer;
-  core::analysis::NodeWalker walker;
+  core::analysis::NodeWalker walker{&fieldBuffer};
 
  public:
-  JumanFormat() : walker{&fieldBuffer} {}
+  JumanFormat() {}
 
   Status initialize(const core::analysis::OutputManager& om) {
     return flds.initialize(om);

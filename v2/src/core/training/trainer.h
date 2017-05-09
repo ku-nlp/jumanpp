@@ -63,6 +63,7 @@ class OwningTrainer {
   analysis::AnalyzerImpl analyzer_;
   Trainer trainer_;
   bool wasPrepared = false;
+  i64 lineNo_ = -1;
 
  public:
   OwningTrainer(const TrainerFullConfig& conf)
@@ -75,8 +76,10 @@ class OwningTrainer {
   }
 
   Status readExample(TrainingDataReader* rdr) {
-    return rdr->readFullExample(analyzer_.extraNodesContext(),
-                                &trainer_.example());
+    Status s = rdr->readFullExample(analyzer_.extraNodesContext(),
+                                    &trainer_.example());
+    lineNo_ = rdr->lineNumber();
+    return s;
   }
 
   Status prepare() {
@@ -93,21 +96,23 @@ class OwningTrainer {
 
   float loss() const { return trainer_.lossValue(); }
 
+  i64 line() const { return lineNo_; }
+
   util::ArraySlice<ScoredFeature> featureDiff() const {
     return trainer_.featureDiff();
   }
 };
 
 class BatchedTrainer {
-  TrainerFullConfig config_;
   std::vector<std::unique_ptr<OwningTrainer>> trainers_;
   i32 current_;
 
  public:
-  BatchedTrainer(const TrainerFullConfig& tfc, i32 numTrainers) : config_{tfc} {
+  void initialize(const TrainerFullConfig& tfc, i32 numTrainers) {
+    trainers_.clear();
     trainers_.reserve(numTrainers);
     for (int i = 0; i < numTrainers; ++i) {
-      trainers_.emplace_back(new OwningTrainer{config_});
+      trainers_.emplace_back(new OwningTrainer{tfc});
     }
   }
 
@@ -122,6 +127,10 @@ class BatchedTrainer {
     current_ = trIdx;
     return Status::Ok();
   }
+
+  OwningTrainer* trainer(i32 idx) const { return trainers_[idx].get(); }
+
+  i32 activeTrainers() const { return current_; }
 };
 
 }  // namespace training

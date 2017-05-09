@@ -5,6 +5,9 @@
 #ifndef JUMANPP_TRAINING_TYPES_H
 #define JUMANPP_TRAINING_TYPES_H
 
+#include "util/common.hpp"
+#include "util/types.hpp"
+
 namespace jumanpp {
 namespace core {
 namespace training {
@@ -37,7 +40,7 @@ struct TrainingConfig {
   u32 randomSeed = 0xdeadbeef;
 
   u32 numFeatures() const {
-    JPP_DCHECK_LT(featureNumberExponent, 64);
+    JPP_DCHECK_LT(featureNumberExponent, 31);
     return u32{1} << featureNumberExponent;
   }
 };

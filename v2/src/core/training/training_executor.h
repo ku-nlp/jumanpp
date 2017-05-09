@@ -22,65 +22,55 @@ struct TrainingExecutionResult {
   Status processStatus;
 };
 
+enum class ExecutorThreadState {
+  WaitingForInput,
+  HaveInput,
+  RunningComputation,
+  ComputationFinished,
+  Exiting
+};
+
 class TrainingExecutorThread {
   analysis::ScoreConfig* scoreConf_;
   Status processStatus_;
   std::thread thread_;
   std::mutex mutex_;
   std::condition_variable input_ready_;
-  std::condition_variable output_ready_;
   OwningTrainer* trainer_;
-  std::atomic<bool> finished_;
-  std::atomic<bool> running_;
+  std::atomic<ExecutorThreadState> state_{ExecutorThreadState::WaitingForInput};
 
-  void run() {
-    while (true) {
-      std::unique_lock<std::mutex> lck{mutex_};
-      input_ready_.wait(lck);
-      if (finished_) {
-        return;
-      }
-      running_ = true;
-      auto t = trainer_;  // read trainer field only once
-      processStatus_ = t->prepare();
-      if (processStatus_) {
-        processStatus_ = t->compute(scoreConf_);
-      }
-      running_ = false;
-      output_ready_.notify_all();
-    }
-  }
+  void run();
 
+  // an entry poinf the the thread
   static void runMain(TrainingExecutorThread* ctx) { ctx->run(); }
 
  public:
-  TrainingExecutorThread(analysis::ScoreConfig* conf)
-      : scoreConf_{conf},
-        processStatus_{Status::Ok()},
-        thread_{TrainingExecutorThread::runMain, this} {}
-
-  void publishTrainer(OwningTrainer* trainer) {
-    trainer_ = trainer;
-    input_ready_.notify_all();
-  }
-
-  TrainingExecutionResult waitForTrainer() {
-    if (!running_) {
-      return {nullptr, Status::NotImplemented()};
-    }
-    std::unique_lock<std::mutex> lck{mutex_};
-    output_ready_.wait(lck);
-    return {trainer_, processStatus_};
-  }
-
-  ~TrainingExecutorThread() {
-    finished_ = true;
-    input_ready_.notify_all();
-    thread_.join();
-  }
+  explicit TrainingExecutorThread(analysis::ScoreConfig* conf);
+  void publishTrainer(OwningTrainer* trainer);
+  TrainingExecutionResult waitForTrainer();
+  ~TrainingExecutorThread();
 };
 
-class TrainingExecutor {};
+class TrainingExecutor {
+  std::vector<std::unique_ptr<TrainingExecutorThread>> threads_;
+  u32 head_;
+  u32 tail_;
+
+ public:
+  void initialize(analysis::ScoreConfig* sconf, u32 nthreads);
+
+  u32 capacity() const { return (u32)threads_.size(); }
+
+  u32 used() const { return head_ - tail_; }
+
+  u32 available() const { return capacity() - used(); }
+
+  bool nonProcessedExist() const { return head_ != tail_; }
+
+  bool runNext(OwningTrainer* next, TrainingExecutionResult* result);
+
+  TrainingExecutionResult waitOne();
+};
 
 }  // namespace training
 }  // namespace core
