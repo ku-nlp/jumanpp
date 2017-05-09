@@ -52,6 +52,29 @@ TrainingExecutorThread::~TrainingExecutorThread() {
   thread_.join();
 }
 
+void TrainingExecutorThread::run() {
+  std::unique_lock<std::mutex> lck{mutex_};
+  while (true) {
+    input_ready_.wait(lck);
+    auto st = state_.load();
+    if (st == ExecutorThreadState::Exiting) {
+      return;
+    }
+    JPP_DCHECK_EQ(st, ExecutorThreadState::HaveInput);
+    state_ = ExecutorThreadState::RunningComputation;
+    // read trainer field only once
+    auto t = trainer_;
+    processStatus_ = t->prepare();
+    if (processStatus_) {
+      processStatus_ = t->compute(scoreConf_);
+    }
+    auto s2 = state_.exchange(ExecutorThreadState::ComputationFinished);
+    if (s2 == ExecutorThreadState::Exiting) {
+      return;
+    }
+  }
+}
+
 void TrainingExecutor::initialize(analysis::ScoreConfig *sconf, u32 nthreads) {
   threads_.clear();
   for (u32 i = 0; i < nthreads; ++i) {
@@ -84,29 +107,6 @@ TrainingExecutionResult TrainingExecutor::waitOne() {
   auto &thread = threads_[lastId];
   tail_ += 1;
   return thread->waitForTrainer();
-}
-
-void TrainingExecutorThread::run() {
-  std::unique_lock<std::mutex> lck{mutex_};
-  while (true) {
-    input_ready_.wait(lck);
-    auto st = state_.load();
-    if (st == ExecutorThreadState::Exiting) {
-      return;
-    }
-    JPP_DCHECK_EQ(st, ExecutorThreadState::HaveInput);
-    state_ = ExecutorThreadState::RunningComputation;
-    // read trainer field only once
-    auto t = trainer_;
-    processStatus_ = t->prepare();
-    if (processStatus_) {
-      processStatus_ = t->compute(scoreConf_);
-    }
-    auto s2 = state_.exchange(ExecutorThreadState::ComputationFinished);
-    if (s2 == ExecutorThreadState::Exiting) {
-      return;
-    }
-  }
 }
 
 }  // namespace training
