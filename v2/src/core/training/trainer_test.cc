@@ -12,7 +12,7 @@ class TrainerEnv : public GoldExampleEnv {
  public:
   static TrainingConfig testConf() {
     TrainingConfig tc;
-    tc.numHashedFeatures = 4096;
+    tc.featureNumberExponent = 12;
     return tc;
   }
 

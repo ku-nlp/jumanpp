@@ -32,9 +32,14 @@ struct ScwConfig {
 struct TrainingConfig {
   TrainingMode mode = TrainingMode::Full;
   InputFormat inputFormat = InputFormat::Morph;
-  u32 numHashedFeatures;
+  u32 featureNumberExponent;
   ScwConfig scw;
   u32 randomSeed = 0xdeadbeef;
+
+  u32 numFeatures() const {
+    JPP_DCHECK_LT(featureNumberExponent, 64);
+    return u32{1} << featureNumberExponent;
+  }
 };
 
 }  // namespace training

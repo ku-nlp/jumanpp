@@ -63,7 +63,7 @@ void Trainer::computeTrainingLoss() {
     }
   }
   currentLoss_ = loss_.computeLoss(usedSteps);
-  loss_.computeFeatureDiff(config_.numHashedFeatures - 1);
+  loss_.computeFeatureDiff(config_.numFeatures() - 1);
 }
 
 Status Trainer::compute(analysis::ScoreConfig *sconf) {

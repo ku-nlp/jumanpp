@@ -90,17 +90,18 @@ void SoftConfidenceWeighted::updateMatrix(
 }
 
 SoftConfidenceWeighted::SoftConfidenceWeighted(const TrainingConfig& conf)
-    : phi{conf.scw.phi},
+    : featureExponent_{conf.featureNumberExponent},
+      phi{conf.scw.phi},
       C{conf.scw.C},
       zeta{1 + phi * phi},
       psi{1 + phi * phi / 2} {
-  usableWeights.reserve(conf.numHashedFeatures);
-  matrixDiagonal.resize(conf.numHashedFeatures, 1.0);
+  usableWeights.reserve(conf.numFeatures());
+  matrixDiagonal.resize(conf.numFeatures(), 1.0);
 
   std::default_random_engine eng{conf.randomSeed};
-  float boundary = (float)(1.0 / std::sqrt(conf.numHashedFeatures));
+  float boundary = (float)(1.0 / std::sqrt(conf.numFeatures()));
   std::uniform_real_distribution<float> dist{-boundary, boundary};
-  for (int i = 0; i < conf.numHashedFeatures; ++i) {
+  for (int i = 0; i < conf.numFeatures(); ++i) {
     usableWeights.push_back(dist(eng));
   }
 
@@ -127,7 +128,7 @@ void SoftConfidenceWeighted::save(model::ModelInfo* model) {
   util::serialization::Saver svr{&data_->cbuf};
   PerceptronInfo pi;
 
-  pi.modelSizeExponent = 10;
+  pi.modelSizeExponent = featureExponent_;
   svr.save(pi);
 
   model::ModelPart part;

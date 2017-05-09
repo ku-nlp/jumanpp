@@ -24,6 +24,7 @@ struct ScwData;
  */
 class SoftConfidenceWeighted {
   std::unique_ptr<ScwData> data_;
+  u32 featureExponent_;
 
   std::vector<float> usableWeights;
   std::vector<float> matrixDiagonal;
