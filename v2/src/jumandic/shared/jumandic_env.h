@@ -32,6 +32,8 @@ class JumandicEnv {
   const core::RuntimeInfo& runtimeInfo() const { return runtime_; }
   const core::spec::AnalysisSpec& spec() const { return dicBldr_.spec(); }
   bool hasPerceptronModel() const;
+
+  Status initFeatures(const core::features::StaticFeatureFactory* pFactory);
 };
 
 }  // namespace jumandic

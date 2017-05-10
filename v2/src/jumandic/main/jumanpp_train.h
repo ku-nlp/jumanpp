@@ -12,10 +12,13 @@
 namespace jumanpp {
 namespace jumandic {
 
-struct JumanppTrainArgs {
-  u32 beamSize;
-  u32 batchSize;
-  u32 numThreads;
+struct TrainingArguments {
+  u32 beamSize = 5;
+  u32 batchSize = 1;
+  u32 numThreads = 1;
+  u32 batchMaxIterations = 1;
+  u32 maxEpochs = 1;
+  float batchLossEpsilon = 1e-3f;
   std::string modelFilename;
   std::string outputFilename;
   std::string corpusFilename;

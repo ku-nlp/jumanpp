@@ -37,5 +37,10 @@ void JumandicEnv::setBeamSize(u32 size) {
   core_->updateCoreConfig(coreConf_);
 }
 
+Status JumandicEnv::initFeatures(
+    const core::features::StaticFeatureFactory* sff) {
+  return core_->initialize(sff);
+}
+
 }  // namespace jumandic
 }  // namespace jumanpp

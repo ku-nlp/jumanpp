@@ -16,7 +16,7 @@
 using namespace jumanpp;
 
 Status parseArgs(int argc, const char** argv,
-                 jumanpp::jumandic::JumanppTrainArgs* args) {
+                 jumanpp::jumandic::TrainingArguments* args) {
   args::ArgumentParser parser{"Juman++ Training"};
 
   args::Group ioGroup{parser, "Input/Output"};
@@ -79,11 +79,11 @@ Status parseArgs(int argc, const char** argv,
 }
 
 class JumandicTrainingExec {
-  const jumandic::JumanppTrainArgs& args_;
+  const jumandic::TrainingArguments& args_;
   jumandic::JumandicEnv* env_;
   core::analysis::AnalyzerConfig aconf_;
   core::training::TrainingDataReader dataReader_;
-  core::training::BatchedTrainer trainer_;
+  core::training::BatchedTrainer trainers_;
   core::training::SoftConfidenceWeighted scw_;
   core::training::TrainingExecutor executor_;
 
@@ -95,7 +95,7 @@ class JumandicTrainingExec {
   float totalLoss_;
 
  public:
-  JumandicTrainingExec(const jumandic::JumanppTrainArgs& args,
+  JumandicTrainingExec(const jumandic::TrainingArguments& args,
                        jumandic::JumandicEnv* env)
       : args_{args}, env_{env}, scw_{args.trainingConfig} {
     aconf_.pageSize = 256 * 1024;
@@ -110,9 +110,13 @@ class JumandicTrainingExec {
         dataReader_.initialize(env_->spec().training, *pHolder));
     core::training::TrainerFullConfig conf{
         aconf_, *pHolder, env_->spec().training, args_.trainingConfig};
-    trainer_.initialize(conf, args_.batchSize);
+    trainers_.initialize(conf, args_.batchSize);
     executor_.initialize(scw_.scoreConfig(), args_.numThreads);
     return Status::Ok();
+  }
+
+  Status initFeatures(const core::features::StaticFeatureFactory* sff) {
+    return env_->initFeatures(sff);
   }
 
   Status loadInputData(StringPiece data) {
@@ -144,7 +148,7 @@ class JumandicTrainingExec {
     return loadInputData(data);
   }
 
-  Status readOneBatch() { return trainer_.readBatch(&dataReader_); }
+  Status readOneBatch() { return trainers_.readBatch(&dataReader_); }
 
   Status handleProcessedTrainer(core::training::TrainingExecutionResult result,
                                 float* curLoss) {
@@ -167,10 +171,11 @@ class JumandicTrainingExec {
   Status trainOneBatch() {
     float curLoss = 0;
 
-    core::training::TrainingExecutionResult result{nullptr, Status::Ok()};
+    core::training::TrainingExecutionResult result{nullptr,
+                                                   Status::NotImplemented()};
 
-    for (int i = 0; i < trainer_.activeTrainers(); ++i) {
-      auto example = trainer_.trainer(i);
+    for (int i = 0; i < trainers_.activeTrainers(); ++i) {
+      auto example = trainers_.trainer(i);
       if (executor_.runNext(example, &result)) {
         JPP_RETURN_IF_ERROR(handleProcessedTrainer(result, &curLoss));
       }
@@ -185,10 +190,33 @@ class JumandicTrainingExec {
     batchLoss_ = curLoss;
     return Status::Ok();
   }
+
+  Status trainOneEpoch() {
+    while (!dataReader_.finished()) {
+      JPP_RETURN_IF_ERROR(readOneBatch());
+      float lastLoss = -100000000.f;
+      float lossSum = 0;
+      for (u32 batchIter = 0; batchIter < args_.batchMaxIterations;
+           ++batchIter) {
+        JPP_RETURN_IF_ERROR(trainOneBatch());
+        lossSum += batchLoss_;
+
+        auto normLoss =
+            std::abs(lastLoss - batchLoss_) / trainers_.activeTrainers();
+        auto firstTrainer = trainers_.trainer(0)->line();
+        auto lastTrainer = firstTrainer + trainers_.activeTrainers();
+        LOG_DEBUG() << "batch [" << firstTrainer << "-" << lastTrainer << "]|"
+                    << batchIter << ": " << normLoss;
+        if (normLoss < args_.batchLossEpsilon) {
+          break;
+        }
+      }
+    }
+  }
 };
 
 int main(int argc, const char** argv) {
-  jumandic::JumanppTrainArgs args{};
+  jumandic::TrainingArguments args{};
   Status s = parseArgs(argc, argv, &args);
   if (!s) {
     LOG_ERROR() << "failed to parse arguments: " << s.message;
