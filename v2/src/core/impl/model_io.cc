@@ -152,6 +152,13 @@ Status FilesystemModel::load(ModelInfo* info) {
   return Status::Ok();
 }
 
+StringPiece FilesystemModel::name() const {
+  if (file_) {
+    return file_->name;
+  }
+  return StringPiece("<not opened>");
+}
+
 }  // namespace model
 }  // namespace core
 }  // namespace jumanpp

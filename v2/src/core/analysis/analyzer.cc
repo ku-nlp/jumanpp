@@ -14,7 +14,7 @@ Analyzer::~Analyzer() {}
 const OutputManager &Analyzer::output() const { return ptr_->output(); }
 
 Status Analyzer::initialize(const CoreHolder *core, const AnalyzerConfig &cfg,
-                            ScoreConfig *scorer) {
+                            const ScoreConfig *scorer) {
   auto totalScorerSize = scorer->others.size() + 1;
   if (core->latticeConfig().scoreCnt != totalScorerSize) {
     return Status::InvalidParameter() << "number of scorers in core config "
@@ -34,7 +34,7 @@ Status Analyzer::initialize(const CoreHolder *core, const AnalyzerConfig &cfg,
   return initialize(pimpl_.get(), scorer);
 }
 
-Status Analyzer::initialize(AnalyzerImpl *impl, ScoreConfig *scorer) {
+Status Analyzer::initialize(AnalyzerImpl *impl, const ScoreConfig *scorer) {
   JPP_RETURN_IF_ERROR(impl->initScorers(*scorer));
   ptr_ = impl;
   scorer_ = scorer;

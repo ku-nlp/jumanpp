@@ -36,6 +36,7 @@ class FilesystemModel {
   ~FilesystemModel();
   Status open(StringPiece name);
   Status load(ModelInfo* info);
+  StringPiece name() const;
 };
 
 }  // namespace model

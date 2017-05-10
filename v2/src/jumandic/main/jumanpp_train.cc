@@ -80,7 +80,7 @@ Status parseArgs(int argc, const char** argv,
 
 class JumandicTrainingExec {
   const jumandic::TrainingArguments& args_;
-  jumandic::JumandicEnv* env_;
+  core::JumanppEnv* env_;
   core::analysis::AnalyzerConfig aconf_;
   core::training::TrainingDataReader dataReader_;
   core::training::BatchedTrainer trainers_;
@@ -96,7 +96,7 @@ class JumandicTrainingExec {
 
  public:
   JumandicTrainingExec(const jumandic::TrainingArguments& args,
-                       jumandic::JumandicEnv* env)
+                       core::JumanppEnv* env)
       : args_{args}, env_{env}, scw_{args.trainingConfig} {
     aconf_.pageSize = 256 * 1024;
   }
@@ -212,6 +212,7 @@ class JumandicTrainingExec {
         }
       }
     }
+    return Status::Ok();
   }
 };
 
@@ -223,7 +224,7 @@ int main(int argc, const char** argv) {
     return 1;
   }
 
-  jumandic::JumandicEnv env;
+  core::JumanppEnv env;
 
   s = env.loadModel(args.modelFilename);
   if (!s) {
