@@ -41,7 +41,7 @@ class Trainer {
 
   Status prepare();
 
-  Status compute(analysis::ScoreConfig* sconf);
+  Status compute(const analysis::ScoreConfig* sconf);
 
   void computeTrainingLoss();
 
@@ -88,7 +88,7 @@ class OwningTrainer {
     return trainer_.prepare();
   }
 
-  Status compute(analysis::ScoreConfig* sconf) {
+  Status compute(const analysis::ScoreConfig* sconf) {
     JPP_RETURN_IF_ERROR(trainer_.compute(sconf));
     trainer_.computeTrainingLoss();
     return Status::Ok();

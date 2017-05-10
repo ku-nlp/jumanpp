@@ -41,7 +41,8 @@ void TrainingExecutorThread::publishTrainer(OwningTrainer *trainer) {
   input_ready_.notify_all();
 }
 
-TrainingExecutorThread::TrainingExecutorThread(analysis::ScoreConfig *conf)
+TrainingExecutorThread::TrainingExecutorThread(
+    const analysis::ScoreConfig *conf)
     : scoreConf_{conf},
       processStatus_{Status::Ok()},
       thread_{TrainingExecutorThread::runMain, this} {}
@@ -75,7 +76,8 @@ void TrainingExecutorThread::run() {
   }
 }
 
-void TrainingExecutor::initialize(analysis::ScoreConfig *sconf, u32 nthreads) {
+void TrainingExecutor::initialize(const analysis::ScoreConfig *sconf,
+                                  u32 nthreads) {
   threads_.clear();
   for (u32 i = 0; i < nthreads; ++i) {
     threads_.emplace_back(new TrainingExecutorThread{sconf});

@@ -339,7 +339,7 @@ Status LossCalculator::resolveGold() {
   return Status::Ok();
 }
 
-void LossCalculator::computeGoldScores(analysis::ScoreConfig* scores) {
+void LossCalculator::computeGoldScores(const analysis::ScoreConfig* scores) {
   auto numGoldNodes = gold.nodes().size() + 1;  // EOS as well
   goldNodeScores.resize(numGoldNodes);
   goldScores.resize(numGoldNodes);

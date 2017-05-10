@@ -29,7 +29,7 @@ class TestAnalyzer : public core::analysis::AnalyzerImpl {
 
   LatticeBuilder& latticeBuilder() { return latticeBldr_; }
 
-  Status fullAnalyze(StringPiece input, ScoreConfig* sconf) {
+  Status fullAnalyze(StringPiece input, const ScoreConfig* sconf) {
     JPP_RETURN_IF_ERROR(this->resetForInput(input));
     JPP_RETURN_IF_ERROR(this->prepareNodeSeeds());
     JPP_RETURN_IF_ERROR(this->buildLattice());
