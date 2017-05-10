@@ -26,7 +26,7 @@ class JumanppEnv {
   analysis::HashedFeaturePerceptron perceptron_;
   analysis::ScoreConfig scoreConfig_;
 
-public:
+ public:
   Status loadModel(StringPiece filename);
 
   Status initFeatures(const features::StaticFeatureFactory* pFactory);
@@ -39,14 +39,15 @@ public:
 
   Status makeAnalyzer(std::unique_ptr<analysis::Analyzer>* result) const {
     if (!hasPerceptronModel()) {
-      return Status::InvalidState() << "loaded model (" << modelFile_.name() << ") does not have was not trained";
+      return Status::InvalidState() << "loaded model (" << modelFile_.name()
+                                    << ") does not have was not trained";
     }
     result->reset(new analysis::Analyzer());
     return (*result)->initialize(coreHolder(), analyzerConfig_, &scoreConfig_);
   }
 };
 
-} // core
-} // jumanpp
+}  // namespace core
+}  // namespace jumanpp
 
-#endif //JUMANPP_ENV_H
+#endif  // JUMANPP_ENV_H

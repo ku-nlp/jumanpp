@@ -39,11 +39,9 @@ void JumanppEnv::setBeamSize(u32 size) {
   core_->updateCoreConfig(coreConf_);
 }
 
-Status JumanppEnv::initFeatures(
-    const features::StaticFeatureFactory* sff) {
+Status JumanppEnv::initFeatures(const features::StaticFeatureFactory* sff) {
   return core_->initialize(sff);
 }
 
-
-} // core
-} // jumanpp
+}  // namespace core
+}  // namespace jumanpp

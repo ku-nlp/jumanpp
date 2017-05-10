@@ -5,8 +5,5 @@
 #include "jumandic_env.h"
 
 namespace jumanpp {
-namespace jumandic {
-
-
-}  // namespace jumandic
+namespace jumandic {}  // namespace jumandic
 }  // namespace jumanpp
