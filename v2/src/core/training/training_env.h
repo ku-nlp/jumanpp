@@ -26,17 +26,17 @@ struct TrainingArguments {
   std::string modelFilename;
   std::string outputFilename;
   std::string corpusFilename;
-  core::training::TrainingConfig trainingConfig;
+  TrainingConfig trainingConfig;
 };
 
 class TrainingEnv {
   const TrainingArguments& args_;
   core::JumanppEnv* env_;
   core::analysis::AnalyzerConfig aconf_;
-  core::training::TrainingDataReader dataReader_;
-  core::training::BatchedTrainer trainers_;
-  core::training::SoftConfidenceWeighted scw_;
-  core::training::TrainingExecutor executor_;
+  TrainingDataReader dataReader_;
+  BatchedTrainer trainers_;
+  SoftConfidenceWeighted scw_;
+  TrainingExecutor executor_;
 
   StringPiece currentFilename_;
   util::MappedFile currentFile_;
@@ -46,7 +46,7 @@ class TrainingEnv {
   float totalLoss_;
 
  public:
-  TrainingEnv(const TrainingArguments& args, core::JumanppEnv* env)
+  TrainingEnv(const TrainingArguments& args, JumanppEnv* env)
       : args_{args}, env_{env}, scw_{args.trainingConfig} {
     aconf_.pageSize = 256 * 1024;
   }
@@ -61,14 +61,13 @@ class TrainingEnv {
 
   Status readOneBatch() { return trainers_.readBatch(&dataReader_); }
 
-  Status handleProcessedTrainer(core::training::TrainingExecutionResult result,
-                                float* curLoss);
+  Status handleProcessedTrainer(TrainingExecutionResult result, float* curLoss);
 
   Status trainOneBatch();
 
   Status trainOneEpoch();
 
-  std::unique_ptr<core::analysis::Analyzer> makeAnalyzer() const;
+  std::unique_ptr<analysis::Analyzer> makeAnalyzer() const;
 };
 
 }  // namespace training

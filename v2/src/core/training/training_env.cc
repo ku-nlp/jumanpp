@@ -91,9 +91,9 @@ Status TrainingEnv::loadInput(StringPiece fileName) {
 
 Status TrainingEnv::loadInputData(StringPiece data) {
   auto format = this->args_.trainingConfig.inputFormat;
-  if (format == core::training::InputFormat::Csv) {
+  if (format == InputFormat::Csv) {
     this->dataReader_.initCsv(data);
-  } else if (format == core::training::InputFormat::Morph) {
+  } else if (format == InputFormat::Morph) {
     this->dataReader_.initDoubleCsv(data);
   } else {
     return Status::InvalidState() << "unsupported input format";
@@ -120,9 +120,8 @@ Status TrainingEnv::initialize() {
   return Status::Ok();
 }
 
-std::unique_ptr<core::analysis::Analyzer> TrainingEnv::makeAnalyzer() const {
-  auto ptr =
-      std::unique_ptr<core::analysis::Analyzer>(new core::analysis::Analyzer{});
+std::unique_ptr<analysis::Analyzer> TrainingEnv::makeAnalyzer() const {
+  auto ptr = std::unique_ptr<analysis::Analyzer>(new analysis::Analyzer{});
   if (!ptr->initialize(env_->coreHolder(), aconf_, scw_.scoreConfig())) {
     ptr.reset();
   }
