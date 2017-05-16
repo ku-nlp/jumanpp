@@ -56,8 +56,9 @@ TEST_CASE("jumanpp can correctly read stuff") {
   env.initialize();
   REQUIRE_OK(env.trainEnv.value().loadInput("jumandic/train_mini_01.txt"));
   REQUIRE_OK(env.trainEnv.value().readOneBatch());
-  auto t0 = env.trainEnv.value().trainer(0);
-  REQUIRE_OK(t0->prepare());
+  REQUIRE_OK(env.trainEnv.value().trainOneBatch());
+  REQUIRE_OK(env.trainEnv.value().trainOneBatch());
+  CHECK(env.trainEnv.value().batchLoss() == Approx(0.0f));
 }
 
 TEST_CASE("jumanpp can learn with minidic") {

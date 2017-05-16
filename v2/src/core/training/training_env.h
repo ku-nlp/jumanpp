@@ -63,6 +63,8 @@ class TrainingEnv {
 
   Status trainOneBatch();
 
+  float batchLoss() const { return batchLoss_; }
+
   Status trainOneEpoch();
 
   OwningTrainer* trainer(i32 idx) { return trainers_.trainer(idx); }
