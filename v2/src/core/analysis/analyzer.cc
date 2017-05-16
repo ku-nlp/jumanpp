@@ -14,9 +14,10 @@ Analyzer::~Analyzer() {}
 const OutputManager &Analyzer::output() const { return ptr_->output(); }
 
 Status Analyzer::initialize(const CoreHolder *core, const AnalyzerConfig &cfg,
-                            const ScoreConfig *scorer) {
+                            const ScoringConfig &scoreConf,
+                            const ScorerDef *scorer) {
   auto totalScorerSize = scorer->others.size() + 1;
-  if (core->latticeConfig().scoreCnt != totalScorerSize) {
+  if (scoreConf.numScorers != totalScorerSize) {
     return Status::InvalidParameter() << "number of scorers in core config "
                                          "does not match actual scorer number";
   }
@@ -30,11 +31,11 @@ Status Analyzer::initialize(const CoreHolder *core, const AnalyzerConfig &cfg,
            << "total scorer size does not match size of score weights";
   }
 
-  pimpl_.reset(new AnalyzerImpl{core, cfg});
+  pimpl_.reset(new AnalyzerImpl{core, scoreConf, cfg});
   return initialize(pimpl_.get(), scorer);
 }
 
-Status Analyzer::initialize(AnalyzerImpl *impl, const ScoreConfig *scorer) {
+Status Analyzer::initialize(AnalyzerImpl *impl, const ScorerDef *scorer) {
   JPP_RETURN_IF_ERROR(impl->initScorers(*scorer));
   ptr_ = impl;
   scorer_ = scorer;

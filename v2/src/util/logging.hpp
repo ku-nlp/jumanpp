@@ -13,7 +13,7 @@ namespace jumanpp {
 namespace util {
 namespace logging {
 
-enum class Level { None, Error, Warning, Info, Debug };
+enum class Level : int { None, Error, Warning, Info, Debug, Trace };
 
 extern /*thread_local*/ Level CurrentLogLevel;
 
@@ -39,6 +39,8 @@ class WriteInDestructorLoggerImpl {
 #define JPP_LOG(level)                                                       \
   (::jumanpp::util::logging::WriteInDestructorLoggerImpl{__FILE__, __LINE__, \
                                                          level})
+
+#define LOG_TRACE() JPP_LOG(::jumanpp::util::logging::Level::Trace)
 #define LOG_DEBUG() JPP_LOG(::jumanpp::util::logging::Level::Debug)
 #define LOG_INFO() JPP_LOG(::jumanpp::util::logging::Level::Info)
 #define LOG_WARN() JPP_LOG(::jumanpp::util::logging::Level::Warning)

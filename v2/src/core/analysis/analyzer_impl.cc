@@ -25,17 +25,42 @@ Status AnalyzerImpl::setNewInput(StringPiece input) {
   return Status::Ok();
 }
 
-AnalyzerImpl::AnalyzerImpl(const CoreHolder* core, const AnalyzerConfig& cfg)
+AnalyzerImpl::AnalyzerImpl(const CoreHolder* core, const ScoringConfig& sconf,
+                           const AnalyzerConfig& cfg)
     : cfg_{cfg},
       core_{core},
       memMgr_{cfg.pageSize},
       alloc_{memMgr_.core()},
       input_{cfg.maxInputBytes},
-      lattice_{alloc_.get(), core->latticeConfig()},
+      latticeConfig_{core->latticeConfig(sconf)},
+      lattice_{alloc_.get(), latticeConfig_},
       xtra_{alloc_.get(), core->dic().entries().entrySize(),
             core->runtime().unkMakers.numPlaceholders},
       outputManager_{alloc_.get(), &xtra_, &core->dic(), &lattice_},
       compactor_{core->dic().entries()} {}
+
+Status AnalyzerImpl::initScorers(const ScorerDef& cfg) {
+  if (cfg.scoreWeights.size() != latticeConfig_.scoreCnt) {
+    return Status::InvalidState() << "AnalyzerImpl: number of scorers was "
+                                     "different from number of score "
+                                     "coefficients";
+  }
+
+  if (latticeConfig_.beamSize == 0) {
+    return Status::InvalidState()
+           << "AnalyzerImpl: beam size can not be zero for scoring";
+  }
+
+  JPP_RETURN_IF_ERROR(compactor_.initialize(&xtra_, core_->runtime()));
+  scorers_.clear();
+  scorers_.reserve(cfg.others.size());
+  for (auto& sf : cfg.others) {
+    std::unique_ptr<ScoreComputer> comp;
+    JPP_RETURN_IF_ERROR(sf->makeInstance(&comp));
+    scorers_.emplace_back(std::move(comp));
+  }
+  return Status::Ok();
+}
 
 Status AnalyzerImpl::makeNodeSeedsFromDic() {
   DictionaryNodeCreator dnc{core_->dic().entries()};
@@ -225,7 +250,12 @@ void AnalyzerImpl::bootstrapAnalysis() {
   }
 }
 
-Status AnalyzerImpl::computeScores(const ScoreConfig* sconf) {
+Status AnalyzerImpl::computeScores(const ScorerDef* sconf) {
+  JPP_DCHECK_NE(sconf, nullptr);
+  JPP_DCHECK_NE(sconf->feature, nullptr);
+  JPP_DCHECK_NE(sproc_, nullptr);
+  JPP_DCHECK_EQ(sconf->others.size(), scorers_.size());
+
   auto bndCount = lattice_.createdBoundaryCount();
   if (bndCount <= 3) {  // 2xBOS + EOS
     return Status::Ok();
@@ -280,17 +310,6 @@ Status AnalyzerImpl::computeScores(const ScoreConfig* sconf) {
     }
   }
 
-  return Status::Ok();
-}
-
-Status AnalyzerImpl::initScorers(const ScoreConfig& cfg) {
-  JPP_RETURN_IF_ERROR(compactor_.initialize(&xtra_, core_->runtime()));
-  scorers_.reserve(cfg.others.size());
-  for (auto& sf : cfg.others) {
-    std::unique_ptr<ScoreComputer> comp;
-    JPP_RETURN_IF_ERROR(sf->makeInstance(&comp));
-    scorers_.emplace_back(std::move(comp));
-  }
   return Status::Ok();
 }
 

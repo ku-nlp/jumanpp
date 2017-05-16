@@ -15,12 +15,12 @@ Status JumanppEnv::loadModel(StringPiece filename) {
 
   if (hasPerceptronModel()) {
     JPP_RETURN_IF_ERROR(perceptron_.load(modelInfo_));
-    scoreConfig_.feature = &perceptron_;
-    scoreConfig_.scoreWeights.push_back(1);
-    coreConf_.numScorers += 1;
+    scorers_.feature = &perceptron_;
+    scorers_.scoreWeights.push_back(1);
+    scoringConf_.numScorers += 1;
   }
 
-  core_.reset(new CoreHolder{coreConf_, runtime_, dicHolder_});
+  core_.reset(new CoreHolder{runtime_, dicHolder_});
 
   return Status::Ok();
 }
@@ -34,10 +34,7 @@ bool JumanppEnv::hasPerceptronModel() const {
   return false;
 }
 
-void JumanppEnv::setBeamSize(u32 size) {
-  coreConf_.beamSize = size;
-  core_->updateCoreConfig(coreConf_);
-}
+void JumanppEnv::setBeamSize(u32 size) { scoringConf_.beamSize = size; }
 
 Status JumanppEnv::initFeatures(const features::StaticFeatureFactory* sff) {
   return core_->initialize(sff);

@@ -35,10 +35,12 @@ class MappedFileFragment {
   size_t size() { return size_; }
   bool isClean();
   Status flush();
+  void unmap();
 
   friend class MappedFile;
+  friend class FullyMappedFile;
 
-  StringPiece asStringPiece();
+  StringPiece asStringPiece() const;
   util::MutableArraySlice<char> asMutableSlice() {
     return util::MutableArraySlice<char>{reinterpret_cast<char *>(address()),
                                          size()};
@@ -60,11 +62,27 @@ class MappedFile {
   MappedFile &operator=(MappedFile &&o) noexcept;
   Status open(const StringPiece &filename, MMapType type);
   Status map(MappedFileFragment *view, size_t offset, size_t size);
+  void close();
 
   size_t size() const { return size_; }
+  StringPiece name() const { return filename_; }
+
+  friend class FullyMappedFile;
 
   ~MappedFile();
 };
+
+class FullyMappedFile {
+  MappedFile file_;
+  MappedFileFragment fragment_;
+
+ public:
+  Status open(StringPiece filename, MMapType type = MMapType::ReadOnly);
+  void close();
+
+  StringPiece contents() const { return fragment_.asStringPiece(); }
+};
+
 }  // namespace util
 }  // namespace jumanpp
 

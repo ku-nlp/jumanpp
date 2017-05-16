@@ -43,7 +43,7 @@ class PrimFeatureTestEnv {
   util::FlatMap<StringPiece, i32> a2idx;
 
   std::unique_ptr<HashedFeaturePerceptron> hfp;
-  ScoreConfig sconf;
+  ScorerDef sconf;
   AnalysisPath top1;
 
  public:

@@ -24,6 +24,7 @@ class AnalysisInput {
  public:
   AnalysisInput(size_t maxSize = 8 * 1024) : max_size_{maxSize} {
     raw_input_.reserve(maxSize);
+    codepoints_.reserve(256);
   }
 
   Status reset(StringPiece data);

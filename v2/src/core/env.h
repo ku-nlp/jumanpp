@@ -13,7 +13,7 @@ namespace jumanpp {
 namespace core {
 
 class JumanppEnv {
-  CoreConfig coreConf_{1, 0};
+  ScoringConfig scoringConf_{1, 0};
   model::FilesystemModel modelFile_;
   model::ModelInfo modelInfo_;
   dic::DictionaryBuilder dicBldr_;
@@ -24,7 +24,7 @@ class JumanppEnv {
   analysis::AnalyzerConfig analyzerConfig_;
 
   analysis::HashedFeaturePerceptron perceptron_;
-  analysis::ScoreConfig scoreConfig_;
+  analysis::ScorerDef scorers_;
 
  public:
   Status loadModel(StringPiece filename);
@@ -43,7 +43,8 @@ class JumanppEnv {
                                     << ") does not have was not trained";
     }
     result->reset(new analysis::Analyzer());
-    return (*result)->initialize(coreHolder(), analyzerConfig_, &scoreConfig_);
+    return (*result)->initialize(coreHolder(), analyzerConfig_, scoringConf_,
+                                 &scorers_);
   }
 };
 

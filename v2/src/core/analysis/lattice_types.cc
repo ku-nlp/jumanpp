@@ -3,7 +3,6 @@
 //
 
 #include "lattice_types.h"
-#include "lattice_plugin.h"
 
 namespace jumanpp {
 namespace core {
@@ -16,9 +15,6 @@ Lattice::Lattice(util::memory::ManagedAllocatorCore *alloc,
 Status Lattice::makeBoundary(const LatticeBoundaryConfig &lbc,
                              LatticeBoundary **ptr) {
   auto bnd = alloc->make<LatticeBoundary>(alloc, lconf, lbc);
-  if (plugin != nullptr) {
-    bnd->installPlugin(plugin->clone(alloc));
-  }
   JPP_RETURN_IF_ERROR(bnd->initialize());
   this->boundaries.push_back(bnd);
   *ptr = bnd;
@@ -29,8 +25,6 @@ void Lattice::reset() {
   boundaries.clear();
   boundaries.shrink_to_fit();
 }
-
-void Lattice::installPlugin(LatticePlugin *plugin) { this->plugin = plugin; }
 
 void Lattice::hintSize(u32 size) { boundaries.reserve(size); }
 
@@ -48,13 +42,6 @@ Status LatticeBoundary::initialize() {
   JPP_RETURN_IF_ERROR(right.initialize());
   JPP_RETURN_IF_ERROR(connections.initialize());
   return Status::Ok();
-}
-
-void LatticeBoundary::installPlugin(LatticePlugin *plugin) {
-  plugin->install(&right);
-  right.localPlugin = plugin;
-  plugin->install(&connections);
-  connections.localPlugin = plugin;
 }
 
 Status LatticeBoundary::newConnection(LatticeBoundaryConnection **result) {
@@ -80,12 +67,7 @@ LatticeBoundaryConnection::LatticeBoundaryConnection(
     : StructOfArraysFactory(o),
       lconf{o.lconf},
       lbconf{o.lbconf},
-      scores{this, o.scores.requiredSize()} {
-  if (o.localPlugin != nullptr) {
-    localPlugin = o.localPlugin->clone(acore_);
-    localPlugin->install(this);
-  }
-}
+      scores{this, o.scores.requiredSize()} {}
 
 void LatticeBoundaryConnection::importBeamScore(
     i32 scorer, i32 beam, util::ArraySlice<Score> scores) {

@@ -23,6 +23,7 @@ class AnalyzerImpl {
   util::memory::Manager memMgr_;
   std::unique_ptr<util::memory::ManagedAllocatorCore> alloc_;
   AnalysisInput input_;
+  LatticeConfig latticeConfig_;
   Lattice lattice_;
   LatticeBuilder latticeBldr_;
   ExtraNodesContext xtra_;
@@ -34,11 +35,12 @@ class AnalyzerImpl {
  public:
   AnalyzerImpl(const AnalyzerImpl&) = delete;
   AnalyzerImpl(AnalyzerImpl&&) = delete;
-  AnalyzerImpl(const CoreHolder* core, const AnalyzerConfig& cfg);
+  AnalyzerImpl(const CoreHolder* core, const ScoringConfig& sconf,
+               const AnalyzerConfig& cfg);
 
   const OutputManager& output() const { return outputManager_; }
 
-  Status initScorers(const ScoreConfig& cfg);
+  Status initScorers(const ScorerDef& cfg);
 
   void reset() {
     lattice_.reset();
@@ -64,7 +66,7 @@ class AnalyzerImpl {
   Status prepareNodeSeeds();
   Status buildLattice();
   void bootstrapAnalysis();
-  Status computeScores(const ScoreConfig* sconf);
+  Status computeScores(const ScorerDef* sconf);
 
   Lattice* lattice() { return &lattice_; }
   LatticeBuilder* latticeBldr() { return &latticeBldr_; }

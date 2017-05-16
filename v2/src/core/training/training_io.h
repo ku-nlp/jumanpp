@@ -68,6 +68,7 @@ enum class DataReaderMode { SimpleCsv, DoubleCsv };
 class TrainingDataReader {
   DataReaderMode mode_;
   util::CsvReader csv_;
+  util::CsvReader csv2_;
   bool finished_;
   std::vector<util::FlatMap<StringPiece, i32>> fields_;
   std::vector<chars::InputCodepoint> codepts_;
@@ -94,6 +95,8 @@ class TrainingDataReader {
                          FullyAnnotatedExample* result);
 
   i64 lineNumber() const { return csv_.lineNumber(); }
+
+  void reset();
 };
 
 }  // namespace training

@@ -236,6 +236,7 @@ struct DictionaryBuilderStorage {
     for (auto& i : importers) {
       BuiltField fld;
       fld.name = i.descriptor->name;
+      fld.emptyValue = i.descriptor->emptyString;
       if (i.descriptor->stringStorage != -1) {
         fld.stringContent = builtStrings[i.descriptor->stringStorage];
       }
@@ -278,10 +279,13 @@ struct DictionaryBuilderStorage {
       for (int i = 0; i < data.size(); ++i) {
         auto refIdx = i % refSize;
         auto& ref = refs[refIdx];
-        auto ss = importers[ref.dicFieldIdx].descriptor->stringStorage;
+        auto descr = importers[ref.dicFieldIdx].descriptor;
+        auto ss = descr->stringStorage;
         if (ss != -1) {
           auto obj = data[i];
-          storage[ss].increaseFieldValueCount(obj);
+          if (descr->emptyString != obj) {
+            storage[ss].increaseFieldValueCount(obj);
+          }
         }
       }
     }
@@ -337,6 +341,7 @@ template <typename Arch>
 void Serialize(Arch& a, BuiltField& o) {
   a& o.uniqueValues;
   a& o.name;
+  a& o.emptyValue;
 }
 
 template <typename Arch>

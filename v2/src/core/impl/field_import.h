@@ -11,6 +11,7 @@
 #include "util/coded_io.h"
 #include "util/csv_reader.h"
 #include "util/flatmap.h"
+#include "util/logging.hpp"
 #include "util/status.hpp"
 
 namespace jumanpp {

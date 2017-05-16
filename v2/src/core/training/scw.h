@@ -35,7 +35,7 @@ class SoftConfidenceWeighted {
   double psi;
 
   analysis::HashedFeaturePerceptron perceptron;
-  analysis::ScoreConfig sconf;
+  analysis::ScorerDef sconf;
 
   void updateMatrix(float beta, util::ArraySlice<ScoredFeature> features);
 
@@ -56,7 +56,7 @@ class SoftConfidenceWeighted {
   SoftConfidenceWeighted(const TrainingConfig& conf);
   Status validate() const;
   void update(float loss, util::ArraySlice<ScoredFeature> features);
-  const analysis::ScoreConfig* scoreConfig() const { return &sconf; }
+  const analysis::ScorerDef* scorers() const { return &sconf; }
   void save(model::ModelInfo* model);
   ~SoftConfidenceWeighted();
 };

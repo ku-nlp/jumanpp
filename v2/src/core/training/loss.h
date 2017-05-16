@@ -119,7 +119,7 @@ class LossCalculator {
 
   Status resolveGold();
 
-  void computeGoldScores(const analysis::ScoreConfig* scores);
+  void computeGoldScores(const analysis::ScorerDef* scores);
 
   bool findWorstTopNode(i32 goldPos, ComparisonStep* step);
 

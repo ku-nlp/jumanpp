@@ -38,6 +38,7 @@ struct TrainingConfig {
   u32 featureNumberExponent;
   ScwConfig scw;
   u32 randomSeed = 0xdeadbeef;
+  i32 beamSize = 1;
 
   u32 numFeatures() const {
     JPP_DCHECK_LT(featureNumberExponent, 31);

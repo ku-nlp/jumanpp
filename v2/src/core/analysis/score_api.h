@@ -42,7 +42,7 @@ class ScorerFactory : public ScorerBase {
   virtual Status makeInstance(std::unique_ptr<ScoreComputer>* result) = 0;
 };
 
-struct ScoreConfig {
+struct ScorerDef {
   FeatureScorer* feature;
   std::vector<ScorerFactory*> others;
   std::vector<Score> scoreWeights;

@@ -56,7 +56,7 @@ void ScoreProcessor::computeNgramFeatures(
 
 void ScoreProcessor::updateBeams(i32 boundary, i32 endPos, LatticeBoundary *bnd,
                                  LatticeBoundaryConnection *bndconn,
-                                 const ScoreConfig *sc) {
+                                 const ScorerDef *sc) {
   auto beam = bnd->starts()->beamData();
   u16 bnd16 = (u16)boundary;
   u16 end16 = (u16)endPos;

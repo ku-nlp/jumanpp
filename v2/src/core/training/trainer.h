@@ -41,7 +41,7 @@ class Trainer {
 
   Status prepare();
 
-  Status compute(const analysis::ScoreConfig* sconf);
+  Status compute(const analysis::ScorerDef* sconf);
 
   void computeTrainingLoss();
 
@@ -67,12 +67,17 @@ class OwningTrainer {
 
  public:
   OwningTrainer(const TrainerFullConfig& conf)
-      : analyzer_{&conf.core, conf.analyzerConfig},
+      : analyzer_{&conf.core, ScoringConfig{conf.trainingConfig.beamSize, 1},
+                  conf.analyzerConfig},
         trainer_{&analyzer_, &conf.trainingSpec, conf.trainingConfig} {}
 
   void reset() {
     wasPrepared = false;
     trainer_.reset();
+  }
+
+  Status initAnalyzer(const analysis::ScorerDef* sconf) {
+    return analyzer_.initScorers(*sconf);
   }
 
   Status readExample(TrainingDataReader* rdr) {
@@ -88,7 +93,7 @@ class OwningTrainer {
     return trainer_.prepare();
   }
 
-  Status compute(const analysis::ScoreConfig* sconf) {
+  Status compute(const analysis::ScorerDef* sconf) {
     JPP_RETURN_IF_ERROR(trainer_.compute(sconf));
     trainer_.computeTrainingLoss();
     return Status::Ok();
@@ -108,21 +113,28 @@ class BatchedTrainer {
   i32 current_;
 
  public:
-  void initialize(const TrainerFullConfig& tfc, i32 numTrainers) {
+  Status initialize(const TrainerFullConfig& tfc,
+                    const analysis::ScorerDef* sconf, i32 numTrainers) {
     trainers_.clear();
     trainers_.reserve(numTrainers);
     for (int i = 0; i < numTrainers; ++i) {
-      trainers_.emplace_back(new OwningTrainer{tfc});
+      auto trainer = new OwningTrainer{tfc};
+      JPP_RETURN_IF_ERROR(trainer->initAnalyzer(sconf));
+      trainers_.emplace_back(trainer);
     }
+    return Status::Ok();
   }
 
   Status readBatch(TrainingDataReader* rdr) {
     current_ = 0;
     int trIdx = 0;
-    for (; trIdx < trainers_.size() && !rdr->finished(); ++trIdx) {
+    for (; trIdx < trainers_.size(); ++trIdx) {
       auto& tr = trainers_[trIdx];
       tr->reset();
       JPP_RETURN_IF_ERROR(tr->readExample(rdr));
+      if (rdr->finished()) {
+        break;
+      }
     }
     current_ = trIdx;
     return Status::Ok();

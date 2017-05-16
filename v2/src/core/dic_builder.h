@@ -22,6 +22,7 @@ struct BuiltField {
   StringPiece fieldContent;
   spec::ColumnType colType;
   i32 uniqueValues;
+  StringPiece emptyValue;
 };
 
 struct BuiltDictionary {

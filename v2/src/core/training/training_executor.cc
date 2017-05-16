@@ -3,13 +3,27 @@
 //
 
 #include "training_executor.h"
+#include "util/logging.hpp"
 
 namespace jumanpp {
 namespace core {
 namespace training {
 
 TrainingExecutionResult TrainingExecutorThread::waitForTrainer() {
-  switch (state_.load()) {
+  auto state = state_.load();
+  u64 count = 0;
+  while (state == ExecutorThreadState::HaveInput) {
+    // ok, the computation did not start yet, let it do so
+    std::this_thread::yield();
+    state = state_.load();
+    ++count;
+
+    if (count > 100000) {
+      Status status = Status::InvalidState() << "waiting for trainer forever";
+      return {nullptr, status};
+    }
+  }
+  switch (state) {
     case ExecutorThreadState::RunningComputation: {
       // when the lock is acquired
       // it means that the run function has moved to the next iteration
@@ -27,7 +41,9 @@ TrainingExecutionResult TrainingExecutorThread::waitForTrainer() {
     }
     default: {
       // otherwise we have an invalid state
-      return {nullptr, Status::InvalidState()};
+      Status status = Status::InvalidState() << "thread was not initialized: "
+                                             << static_cast<int>(state);
+      return {nullptr, status};
     }
   }
 }
@@ -41,8 +57,7 @@ void TrainingExecutorThread::publishTrainer(OwningTrainer *trainer) {
   input_ready_.notify_all();
 }
 
-TrainingExecutorThread::TrainingExecutorThread(
-    const analysis::ScoreConfig *conf)
+TrainingExecutorThread::TrainingExecutorThread(const analysis::ScorerDef *conf)
     : scoreConf_{conf},
       processStatus_{Status::Ok()},
       thread_{TrainingExecutorThread::runMain, this} {}
@@ -76,7 +91,7 @@ void TrainingExecutorThread::run() {
   }
 }
 
-void TrainingExecutor::initialize(const analysis::ScoreConfig *sconf,
+void TrainingExecutor::initialize(const analysis::ScorerDef *sconf,
                                   u32 nthreads) {
   threads_.clear();
   for (u32 i = 0; i < nthreads; ++i) {
@@ -101,14 +116,28 @@ bool TrainingExecutor::runNext(OwningTrainer *next,
   auto &thread = threads_[headIdx];
   thread->publishTrainer(next);
   head_ += 1;
+  LOG_TRACE() << "added example #" << next->line() << " to thr=" << headIdx
+              << " head=" << head_ << ", tail=" << tail_
+              << " status=" << status;
   return status;
+}
+
+i64 safeLine(const TrainingExecutionResult &res) {
+  i64 val = -1;
+  if (res.trainer != nullptr) {
+    val = res.trainer->line();
+  }
+  return val;
 }
 
 TrainingExecutionResult TrainingExecutor::waitOne() {
   u32 lastId = tail_ % capacity();
   auto &thread = threads_[lastId];
   tail_ += 1;
-  return thread->waitForTrainer();
+  auto result = thread->waitForTrainer();
+  LOG_TRACE() << "got example #" << safeLine(result) << " from thr=" << lastId
+              << " tail=" << tail_;
+  return result;
 }
 
 }  // namespace training

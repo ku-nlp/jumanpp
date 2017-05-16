@@ -30,9 +30,11 @@ class TrainerEnv : public GoldExampleEnv {
                                    &trainer.example()));
   }
 
-  std::unique_ptr<testing::TestAnalyzer> newAnalyzer(const ScoreConfig* sconf) {
-    std::unique_ptr<testing::TestAnalyzer> ptr{
-        new testing::TestAnalyzer{env.core.get(), env.aconf}};
+  std::unique_ptr<testing::TestAnalyzer> newAnalyzer(const ScorerDef* sconf) {
+    std::unique_ptr<testing::TestAnalyzer> ptr{new testing::TestAnalyzer{
+        env.core.get(),
+        {this->env.beamSize, (i32)sconf->scoreWeights.size()},
+        env.aconf}};
     ptr->initScorers(*sconf);
     return ptr;
   }
@@ -46,7 +48,7 @@ TEST_CASE("trainer can compute score for a simple sentence") {
   SoftConfidenceWeighted scw{TrainerEnv::testConf()};
   CHECK(env.trainer.example().numNodes() == 3);
   CHECK(env.trainer.prepare());
-  CHECK(env.trainer.compute(scw.scoreConfig()));
+  CHECK(env.trainer.compute(scw.scorers()));
   env.trainer.computeTrainingLoss();
   CHECK(env.trainer.lossValue() > 0);
 }
@@ -61,12 +63,12 @@ TEST_CASE(
   CHECK(env.trainer.example().numNodes() == 3);
   CHECK(env.trainer.prepare());
   auto mem1 = env.anaImpl()->usedMemory();
-  CHECK(env.trainer.compute(scw.scoreConfig()));
+  CHECK(env.trainer.compute(scw.scorers()));
   env.trainer.computeTrainingLoss();
   auto mem2 = env.anaImpl()->usedMemory();
   CHECK(env.trainer.lossValue() > 0);
   scw.update(env.trainer.lossValue(), env.trainer.featureDiff());
-  CHECK(env.trainer.compute(scw.scoreConfig()));
+  CHECK(env.trainer.compute(scw.scorers()));
   env.trainer.computeTrainingLoss();
   auto mem3 = env.anaImpl()->usedMemory();
   CHECK(env.trainer.lossValue() == 0);
@@ -82,11 +84,11 @@ TEST_CASE("trainer can compute score for sentence with full unks") {
   SoftConfidenceWeighted scw{TrainerEnv::testConf()};
   CHECK(env.trainer.example().numNodes() == 3);
   CHECK(env.trainer.prepare());
-  CHECK(env.trainer.compute(scw.scoreConfig()));
+  CHECK(env.trainer.compute(scw.scorers()));
   env.trainer.computeTrainingLoss();
   CHECK(env.trainer.lossValue() > 0);
   scw.update(env.trainer.lossValue(), env.trainer.featureDiff());
-  CHECK(env.trainer.compute(scw.scoreConfig()));
+  CHECK(env.trainer.compute(scw.scorers()));
   env.trainer.computeTrainingLoss();
   CHECK(env.trainer.lossValue() == 0);
 }
@@ -99,11 +101,11 @@ TEST_CASE("trainer can compute score for sentence with part unks") {
   SoftConfidenceWeighted scw{TrainerEnv::testConf()};
   CHECK(env.trainer.example().numNodes() == 3);
   CHECK(env.trainer.prepare());
-  CHECK(env.trainer.compute(scw.scoreConfig()));
+  CHECK(env.trainer.compute(scw.scorers()));
   env.trainer.computeTrainingLoss();
   CHECK(env.trainer.lossValue() > 0);
   scw.update(env.trainer.lossValue(), env.trainer.featureDiff());
-  CHECK(env.trainer.compute(scw.scoreConfig()));
+  CHECK(env.trainer.compute(scw.scorers()));
   env.trainer.computeTrainingLoss();
   CHECK(env.trainer.lossValue() == 0);
   CHECK(env.top1Node(0) == ExampleData("モモ", "N", "5"));
@@ -117,16 +119,16 @@ TEST_CASE("trainer can compute score for sentence with other POS unks") {
   SoftConfidenceWeighted scw{TrainerEnv::testConf()};
   CHECK(env.trainer.example().numNodes() == 3);
   CHECK(env.trainer.prepare());
-  CHECK(env.trainer.compute(scw.scoreConfig()));
+  CHECK(env.trainer.compute(scw.scorers()));
   env.trainer.computeTrainingLoss();
   CHECK(env.trainer.lossValue() > 0);
   scw.update(env.trainer.lossValue(), env.trainer.featureDiff());
-  CHECK(env.trainer.compute(scw.scoreConfig()));
+  CHECK(env.trainer.compute(scw.scorers()));
   env.trainer.computeTrainingLoss();
   CHECK(env.trainer.lossValue() == 0);
 
-  auto ana2 = env.newAnalyzer(scw.scoreConfig());
-  REQUIRE_OK(ana2->fullAnalyze("モモももも", scw.scoreConfig()));
+  auto ana2 = env.newAnalyzer(scw.scorers());
+  REQUIRE_OK(ana2->fullAnalyze("モモももも", scw.scorers()));
   AnalyzerMethods am{ana2.get()};
   CHECK(am.top1Node(0) == ExampleData("モモ", "N", "5"));
   CHECK(am.top1Node(1) == ExampleData("も", "PRT", "1"));

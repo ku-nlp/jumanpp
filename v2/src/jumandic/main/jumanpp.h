@@ -25,7 +25,7 @@ class JumanppExec {
   core::dic::DictionaryBuilder dicbldr;
   core::RuntimeInfo runtimeInfo;
   core::dic::DictionaryHolder dicHolder;
-  core::CoreConfig coreConf{
+  core::ScoringConfig coreConf{
       5,  // beamSize
       1,  // numScorers
   };
@@ -33,7 +33,7 @@ class JumanppExec {
   // loaded model up to here
 
   std::vector<float> perceptronWeights;
-  core::analysis::ScoreConfig scorers;
+  core::analysis::ScorerDef scorers;
 
   // use default values
   core::analysis::AnalyzerConfig analyzerConfig;
@@ -77,16 +77,16 @@ class JumanppExec {
     JPP_RETURN_IF_ERROR(initRnn());
     JPP_RETURN_IF_ERROR(dicbldr.restoreDictionary(modelInfo, &runtimeInfo));
     JPP_RETURN_IF_ERROR(dicHolder.load(dicbldr.result()));
-    coreHolder.reset(new core::CoreHolder{coreConf, runtimeInfo, dicHolder});
+    // coreHolder.reset(new core::CoreHolder{coreConf, runtimeInfo, dicHolder});
     // inject static features here
     JPP_RETURN_IF_ERROR(coreHolder->initialize(nullptr));
     JPP_RETURN_IF_ERROR(initPerceptron());
     scorers.feature =
         new core::analysis::HashedFeaturePerceptron(perceptronWeights);
-    JPP_RETURN_IF_ERROR(
-        analyzer.initialize(coreHolder.get(), analyzerConfig, &scorers));
+    /*JPP_RETURN_IF_ERROR(
+        analyzer.initialize(coreHolder.get(), analyzerConfig, &scorers));*/
     JPP_RETURN_IF_ERROR(format.initialize(analyzer.output()));
-    return Status::Ok();
+    return Status::NotImplemented();
   }
 
   Status analyze(StringPiece data) {

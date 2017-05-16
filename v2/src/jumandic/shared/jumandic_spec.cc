@@ -39,11 +39,11 @@ void SpecFactory::fillSpec(core::spec::dsl::ModelSpecBuilder& bldr) {
   auto& surface = bldr.field(1, "surface").strings().trieIndex();
   auto& pos = bldr.field(5, "pos").strings().emptyValue("*");
   auto& subpos = bldr.field(6, "subpos").strings().emptyValue("*");
-  auto& conjtype = bldr.field(7, "conjtype").strings().emptyValue("*");
-  auto& conjform = bldr.field(8, "conjform").strings().emptyValue("*");
+  auto& conjform = bldr.field(7, "conjform").strings().emptyValue("*");
+  auto& conjtype = bldr.field(8, "conjtype").strings().emptyValue("*");
   auto& baseform = bldr.field(9, "baseform").strings().stringStorage(surface);
   auto& reading = bldr.field(10, "reading").strings().stringStorage(surface);
-  /*auto& canonic = */ bldr.field(11, "canonic").strings();
+  /*auto& canonic = */ bldr.field(11, "canonic").strings().emptyValue("*");
   auto& features = bldr.field(12, "features").stringLists().emptyValue("NIL");
 
   auto& auxWord = bldr.feature("auxWord")
@@ -69,6 +69,15 @@ void SpecFactory::fillSpec(core::spec::dsl::ModelSpecBuilder& bldr) {
       .outputTo({surface, baseform, reading});
   bldr.unk("kanji", 3)
       .chunking(chars::CharacterClass::FAMILY_KANJI)
+      .notPrefixOfDicFeature(notPrefix)
+      .outputTo({surface, baseform, reading});
+  bldr.unk("hiragana", 4)
+      .chunking(chars::CharacterClass::HIRAGANA)
+      .notPrefixOfDicFeature(notPrefix)
+      .outputTo({surface, baseform, reading})
+      .lowPriority();
+  bldr.unk("alphabet", 5)
+      .chunking(chars::CharacterClass::FAMILY_ALPH)
       .notPrefixOfDicFeature(notPrefix)
       .outputTo({surface, baseform, reading});
 
@@ -145,6 +154,15 @@ void SpecFactory::fillSpec(core::spec::dsl::ModelSpecBuilder& bldr) {
   bldr.trigram({pos, subpos, conjform}, {pos, subpos, conjform},
                {pos, subpos, conjform});
   bldr.trigram({lexicalized}, {lexicalized}, {lexicalized});
+
+  bldr.train()
+      .field(surface, 1.0f)
+      .field(reading, 0.01f)
+      .field(baseform, 0.5f)
+      .field(pos, 1.0f)
+      .field(subpos, 1.0f)
+      .field(conjtype, 0.5f)
+      .field(conjform, 0.5f);
 }
 
 }  // namespace jumandic

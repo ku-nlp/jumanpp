@@ -100,6 +100,11 @@ Status MappedFile::map(MappedFileFragment *view, size_t offset, size_t size) {
 
   auto endoffset = offset + size;
 
+  if (!view->isClean()) {
+    return Status::InvalidState()
+           << "fragment for the file " << filename_ << " is already mapped";
+  }
+
   switch (type_) {
     case MMapType::ReadOnly:
       if (endoffset > size_) {
@@ -144,12 +149,26 @@ Status MappedFile::map(MappedFileFragment *view, size_t offset, size_t size) {
   return Status::Ok();
 }
 
+void MappedFile::close() {
+  if (fd_ != 0) {
+    ::close(fd_);
+    fd_ = 0;
+    filename_.clear();
+    size_ = 0;
+  }
+}
+
 MappedFileFragment::MappedFileFragment() noexcept : address_{MAP_FAILED} {}
 
 MappedFileFragment::~MappedFileFragment() {
   if (!isClean()) {
-    ::munmap(address_, size_);
+    this->unmap();
   }
+}
+
+void MappedFileFragment::unmap() {
+  ::munmap(address_, size_);
+  address_ = MAP_FAILED;
 }
 
 bool MappedFileFragment::isClean() { return address_ == MAP_FAILED; }
@@ -163,7 +182,7 @@ Status MappedFileFragment::flush() {
   return Status::Ok();
 }
 
-StringPiece MappedFileFragment::asStringPiece() {
+StringPiece MappedFileFragment::asStringPiece() const {
   StringPiece::pointer_t asChar =
       reinterpret_cast<StringPiece::pointer_t>(address_);
   return StringPiece(asChar, size_);
@@ -181,5 +200,24 @@ MappedFileFragment &MappedFileFragment::operator=(
   o.address_ = MAP_FAILED;
   return *this;
 }
+
+Status FullyMappedFile::open(StringPiece filename, MMapType type) {
+  if (!fragment_.isClean()) {
+    if (file_.name() == filename) {
+      // opening the same file
+      return Status::Ok();
+    }
+    this->close();
+  }
+  JPP_RETURN_IF_ERROR(file_.open(filename, type));
+  JPP_RETURN_IF_ERROR(file_.map(&fragment_, 0, file_.size()));
+  return Status::Ok();
+}
+
+void FullyMappedFile::close() {
+  fragment_.unmap();
+  file_.close();
+}
+
 }  // namespace util
 }  // namespace jumanpp

@@ -99,8 +99,9 @@ class GoldExampleEnv {
       }
     });
     env.importDic(dic);
-    ScoreConfig scoreConfig{};
-    REQUIRE_OK(env.analyzer->initScorers(scoreConfig));
+    ScorerDef scorers{};
+    scorers.scoreWeights.push_back(1.0f);
+    REQUIRE_OK(env.analyzer->initScorers(scorers));
     am.initialize(env.analyzer.get());
   }
 

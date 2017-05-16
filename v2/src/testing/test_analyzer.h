@@ -8,6 +8,7 @@
 #include "core/analysis/analyzer_impl.h"
 #include "core/core.h"
 #include "core/dic_builder.h"
+#include "core/env.h"
 #include "core/impl/model_io.h"
 #include "core/runtime_info.h"
 #include "core/spec/spec_dsl.h"
@@ -24,12 +25,13 @@ class TestAnalyzer : public core::analysis::AnalyzerImpl {
   friend class TestEnv;
 
  public:
-  TestAnalyzer(const CoreHolder* core, const AnalyzerConfig& cfg)
-      : AnalyzerImpl(core, cfg) {}
+  TestAnalyzer(const CoreHolder* core, const ScoringConfig& sconf,
+               const AnalyzerConfig& cfg)
+      : AnalyzerImpl(core, sconf, cfg) {}
 
   LatticeBuilder& latticeBuilder() { return latticeBldr_; }
 
-  Status fullAnalyze(StringPiece input, const ScoreConfig* sconf) {
+  Status fullAnalyze(StringPiece input, const ScorerDef* sconf) {
     JPP_RETURN_IF_ERROR(this->resetForInput(input));
     JPP_RETURN_IF_ERROR(this->prepareNodeSeeds());
     JPP_RETURN_IF_ERROR(this->buildLattice());
@@ -83,20 +85,22 @@ class TestEnv {
     }
   }
 
+  void loadEnv(JumanppEnv* env) { REQUIRE_OK(env->loadModel(tmpFile.name())); }
+
   void importDic(StringPiece data, StringPiece name = StringPiece{"test"}) {
     saveDic(data, name);
     REQUIRE_OK(fsModel.open(tmpFile.name()));
     REQUIRE_OK(fsModel.load(&actualInfo));
     REQUIRE_OK(dicBuilder.restoreDictionary(actualInfo, &actualRuntime));
     REQUIRE_OK(dic.load(dicBuilder.result()));
-    CoreConfig coreConf{beamSize, 1};
-    core.reset(new CoreHolder(coreConf, actualRuntime, dic));
+    core.reset(new CoreHolder(actualRuntime, dic));
     REQUIRE_OK(core->initialize(nullptr));
     REQUIRE(core->features().primitive != nullptr);
     REQUIRE(core->features().compute != nullptr);
     REQUIRE(core->features().pattern != nullptr);
     REQUIRE(core->features().ngram != nullptr);
-    analyzer.reset(new TestAnalyzer(core.get(), aconf));
+    ScoringConfig scoreConf{beamSize, 1};
+    analyzer.reset(new TestAnalyzer(core.get(), scoreConf, aconf));
   }
 };
 

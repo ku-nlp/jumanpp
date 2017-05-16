@@ -66,7 +66,7 @@ void Trainer::computeTrainingLoss() {
   loss_.computeFeatureDiff(config_.numFeatures() - 1);
 }
 
-Status Trainer::compute(const analysis::ScoreConfig *sconf) {
+Status Trainer::compute(const analysis::ScorerDef *sconf) {
   loss_.computeGoldScores(sconf);
   JPP_RETURN_IF_ERROR(analyzer->computeScores(sconf));
   JPP_RETURN_IF_ERROR(loss_.resolveTop1());

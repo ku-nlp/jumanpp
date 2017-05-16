@@ -31,7 +31,7 @@ enum class ExecutorThreadState {
 };
 
 class TrainingExecutorThread {
-  const analysis::ScoreConfig* scoreConf_;
+  const analysis::ScorerDef* scoreConf_;
   Status processStatus_;
   std::thread thread_;
   std::mutex mutex_;
@@ -45,7 +45,7 @@ class TrainingExecutorThread {
   static void runMain(TrainingExecutorThread* ctx) { ctx->run(); }
 
  public:
-  explicit TrainingExecutorThread(const analysis::ScoreConfig* conf);
+  explicit TrainingExecutorThread(const analysis::ScorerDef* conf);
   void publishTrainer(OwningTrainer* trainer);
   TrainingExecutionResult waitForTrainer();
   ~TrainingExecutorThread();
@@ -57,7 +57,7 @@ class TrainingExecutor {
   u32 tail_;
 
  public:
-  void initialize(const analysis::ScoreConfig* sconf, u32 nthreads);
+  void initialize(const analysis::ScorerDef* sconf, u32 nthreads);
 
   u32 capacity() const { return (u32)threads_.size(); }
 

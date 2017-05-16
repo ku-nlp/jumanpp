@@ -11,9 +11,13 @@ namespace jumanpp {
 namespace util {
 namespace logging {
 
-constexpr static auto localLogPath = "src/util/logging.hpp";
-constexpr static auto fullLogPath = __FILE__;
-constexpr static auto prefixLength = sizeof(fullLogPath) - sizeof(localLogPath);
+template <size_t S1, size_t S2>
+constexpr size_t computeLength(const char (&v1)[S1], const char (&v2)[S2]) {
+  return S2 - S1;
+};
+
+static constexpr size_t prefixLength =
+    computeLength("src/util/logging.hpp", __FILE__);
 
 WriteInDestructorLoggerImpl::~WriteInDestructorLoggerImpl() {
   if (level_ <= CurrentLogLevel) {
@@ -29,7 +33,7 @@ WriteInDestructorLoggerImpl::~WriteInDestructorLoggerImpl() {
                     tm.tm_sec, (int)milli_val);
       std::cerr << buffer;
     }
-    std::cerr << data_.str() << "\n";
+    std::cerr << data_.str() << std::endl;
   }
 }
 
@@ -41,6 +45,9 @@ WriteInDestructorLoggerImpl::WriteInDestructorLoggerImpl(const char *file,
   }
 
   switch (lvl) {
+    case Level::Trace:
+      data_ << "T ";
+      break;
     case Level::Debug:
       data_ << "D ";
       break;
@@ -55,11 +62,12 @@ WriteInDestructorLoggerImpl::WriteInDestructorLoggerImpl(const char *file,
       break;
     default:;
   }
-  data_ << (file + prefixLength) << ":" << line << " ";
+  auto shifted = file + prefixLength;
+  data_ << shifted << ":" << line << " ";
 }
 
 // Enable all logging by default
-/*thread_local*/ Level CurrentLogLevel = Level::Debug;
+/*thread_local*/ Level CurrentLogLevel = Level::Trace;
 }  // namespace logging
 }  // namespace util
 }  // namespace jumanpp

@@ -95,7 +95,7 @@ class ScoreProcessor {
   void copyFeatureScores(LatticeBoundaryConnection* bndconn);
 
   void updateBeams(i32 boundary, i32 endPos, LatticeBoundary* bnd,
-                   LatticeBoundaryConnection* bndconn, const ScoreConfig* sc);
+                   LatticeBoundaryConnection* bndconn, const ScorerDef* sc);
 
   void resolveBeamAt(i32 boundary, i32 position);
 };

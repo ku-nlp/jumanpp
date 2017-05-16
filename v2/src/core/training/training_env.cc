@@ -24,7 +24,7 @@ Status TrainingEnv::trainOneEpoch() {
       auto firstTrainer = trainers_.trainer(0)->line();
       auto lastTrainer = firstTrainer + trainers_.activeTrainers();
       LOG_DEBUG() << "batch [" << firstTrainer << "-" << lastTrainer << "]|"
-                  << batchIter << ": " << normLoss;
+                  << batchIter << ": " << normLoss << "|" << batchLoss_;
       if (normLoss < args_.batchLossEpsilon) {
         break;
       }
@@ -75,13 +75,9 @@ Status TrainingEnv::handleProcessedTrainer(
 }
 
 Status TrainingEnv::loadInput(StringPiece fileName) {
-  if (currentFilename_ != fileName) {
-    JPP_RETURN_IF_ERROR(currentFile_.open(fileName, util::MMapType::ReadOnly));
-    JPP_RETURN_IF_ERROR(
-        currentFile_.map(&currentFragment_, 0, currentFile_.size()));
-  }
+  JPP_RETURN_IF_ERROR(currentFile_.open(fileName));
 
-  auto data = currentFragment_.asStringPiece();
+  auto data = currentFile_.contents();
 
   batchLoss_ = 0;
   totalLoss_ = 0;
@@ -115,14 +111,20 @@ Status TrainingEnv::initialize() {
   JPP_RETURN_IF_ERROR(dataReader_.initialize(env_->spec().training, *pHolder));
   core::training::TrainerFullConfig conf{
       aconf_, *pHolder, env_->spec().training, args_.trainingConfig};
-  trainers_.initialize(conf, args_.batchSize);
-  executor_.initialize(scw_.scoreConfig(), args_.numThreads);
+  auto sconf = scw_.scorers();
+  trainers_.initialize(conf, sconf, args_.batchSize);
+  executor_.initialize(sconf, args_.numThreads);
   return Status::Ok();
 }
 
-std::unique_ptr<analysis::Analyzer> TrainingEnv::makeAnalyzer() const {
+std::unique_ptr<analysis::Analyzer> TrainingEnv::makeAnalyzer(
+    i32 beamSize) const {
+  if (beamSize == -1) {
+    beamSize = args_.trainingConfig.beamSize;
+  }
+  ScoringConfig sconf{beamSize, 1};
   auto ptr = std::unique_ptr<analysis::Analyzer>(new analysis::Analyzer{});
-  if (!ptr->initialize(env_->coreHolder(), aconf_, scw_.scoreConfig())) {
+  if (!ptr->initialize(env_->coreHolder(), aconf_, sconf, scw_.scorers())) {
     ptr.reset();
   }
   return ptr;

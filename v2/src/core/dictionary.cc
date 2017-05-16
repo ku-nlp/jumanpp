@@ -129,10 +129,20 @@ class RuntimeInfoCompiler {
     return spec_.dictionary.columns[fld].stringStorage;
   }
 
+  bool isEmpty(StringPiece sp, i32 fldNo) const {
+    auto& fld = spec_.dictionary.columns[fldNo];
+    return fld.emptyString == sp;
+  }
+
   Status copyOneField(i32 field, const std::vector<std::string>& strs,
                       std::vector<i32>* result) {
     auto& strmap = word2id_[strings(field)];
     for (auto& s : strs) {
+      if (isEmpty(s, field)) {
+        result->push_back(0);
+        continue;
+      }
+
       auto res = strmap.find(s);
       if (res == strmap.end()) {
         return Status::InvalidState()
@@ -149,9 +159,15 @@ class RuntimeInfoCompiler {
                    std::vector<i32>* result) {
     for (int i = 0; i < data.size(); ++i) {
       auto fldIdx = fields.at(i % fields.size());
+      auto& s = data[i];
+
+      if (isEmpty(s, fldIdx)) {
+        result->push_back(0);
+        continue;
+      }
+
       auto sidx = strings(fldIdx);
       auto& strmap = word2id_[sidx];
-      auto& s = data[i];
       auto res = strmap.find(s);
       if (res == strmap.end()) {
         return Status::InvalidState()
@@ -321,9 +337,12 @@ Status fillEntriesHolder(const BuiltDictionary& dic, EntriesHolder* result) {
 Status FieldsHolder::load(const BuiltDictionary& dic) {
   for (i32 index = 0; index < dic.fieldData.size(); ++index) {
     auto& f = dic.fieldData[index];
-    DictionaryField df{index, f.name, f.colType,
+    DictionaryField df{index,
+                       f.name,
+                       f.colType,
                        impl::IntStorageReader{f.fieldContent},
-                       impl::StringStorageReader{f.stringContent}};
+                       impl::StringStorageReader{f.stringContent},
+                       f.emptyValue};
     fields_.push_back(df);
   }
   return Status::Ok();

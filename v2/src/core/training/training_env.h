@@ -17,7 +17,6 @@ class JumanppEnv;
 namespace training {
 
 struct TrainingArguments {
-  u32 beamSize = 5;
   u32 batchSize = 1;
   u32 numThreads = 1;
   u32 batchMaxIterations = 1;
@@ -39,8 +38,7 @@ class TrainingEnv {
   TrainingExecutor executor_;
 
   StringPiece currentFilename_;
-  util::MappedFile currentFile_;
-  util::MappedFileFragment currentFragment_;
+  util::FullyMappedFile currentFile_;
 
   float batchLoss_;
   float totalLoss_;
@@ -67,7 +65,9 @@ class TrainingEnv {
 
   Status trainOneEpoch();
 
-  std::unique_ptr<analysis::Analyzer> makeAnalyzer() const;
+  OwningTrainer* trainer(i32 idx) { return trainers_.trainer(idx); }
+
+  std::unique_ptr<analysis::Analyzer> makeAnalyzer(i32 beamSize = -1) const;
 };
 
 }  // namespace training

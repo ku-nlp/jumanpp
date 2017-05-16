@@ -4,7 +4,7 @@ set(core_srcs darts_trie.cc dictionary.cc impl/field_import.cc dic_builder.cc
         analysis/unk_nodes_creator.cc analysis/extra_nodes.cc analysis/dic_reader.cc analysis/output.cc
         core.cc analysis/analyzer.cc analysis/analyzer_impl.cc impl/feature_impl_compute.cc
         spec/spec_types.cc spec/spec_serialization.cc impl/model_io.cc analysis/unk_nodes.cc features_api.cc
-        analysis/lattice_plugin.cc analysis/perceptron.cc analysis/score_processor.cc analysis/analysis_result.cc
+        analysis/perceptron.cc analysis/score_processor.cc analysis/analysis_result.cc
         env.cc)
 
 set(core_train_srcs
@@ -20,7 +20,7 @@ set(core_hdrs darts.h darts_trie.h dictionary.h impl/field_import.h impl/field_r
         analysis/analyzer_impl.h features_api.h impl/feature_impl_types.h impl/feature_impl_compute.h
         impl/feature_impl_combine.h spec/spec_serialization.h runtime_info.h analysis/unk_maker_types.h
         impl/model_format.h impl/model_io.h impl/model_format_ser.h impl/runtime_ser.h spec/spec_ser.h
-        analysis/unk_nodes.h analysis/lattice_plugin.h analysis/score_api.h analysis/perceptron.h
+        analysis/unk_nodes.h analysis/score_api.h analysis/perceptron.h
         analysis/score_processor.h analysis/analysis_result.h analysis/rnn_scorer.cc analysis/rnn_scorer.h
         training/training_io.h training/loss.h training/gold_example.h training/trainer.h training/scw.h
         impl/perceptron_io.h env.h)
@@ -37,7 +37,7 @@ set(analysis_test_srcs
         test/test_analyzer_env.h
 
         analysis/dictionary_node_creator_test.cc analysis/lattice_types_test.cc
-        analysis/unk_nodes_creator_test.cc analysis/lattice_builder_test.cc analysis/lattice_plugin_test.cc
+        analysis/unk_nodes_creator_test.cc analysis/lattice_builder_test.cc
         analysis/perceptron_test.cc analysis/score_processor_test.cc analysis/analyzer_impl_test.cc
         analysis/lattice_compactor_test.cc)
 

@@ -14,13 +14,12 @@
 namespace jumanpp {
 namespace core {
 
-struct CoreConfig {
+struct ScoringConfig {
   i32 beamSize;
   i32 numScorers;
 };
 
 class CoreHolder {
-  CoreConfig cfg_;
   const RuntimeInfo& runtime_;
   const dic::DictionaryHolder& dic_;
   analysis::UnkMakers unkMakers_;
@@ -28,18 +27,17 @@ class CoreHolder {
   analysis::LatticeConfig latticeCfg_;
 
  public:
-  CoreHolder(const CoreConfig& conf, const RuntimeInfo& runtime,
-             const dic::DictionaryHolder& dic);
+  CoreHolder(const RuntimeInfo& runtime, const dic::DictionaryHolder& dic);
 
   Status initialize(const features::StaticFeatureFactory* sff);
 
-  void updateCoreConfig(const CoreConfig& conf) {
-    cfg_ = conf;
-    latticeCfg_.beamSize = (u32)conf.beamSize;
-    latticeCfg_.scoreCnt = (u32)conf.numScorers;
+  analysis::LatticeConfig latticeConfig(const ScoringConfig& core) const {
+    analysis::LatticeConfig copy = latticeCfg_;
+    copy.beamSize = (u32)core.beamSize;
+    copy.scoreCnt = (u32)core.numScorers;
+    return copy;
   }
 
-  const analysis::LatticeConfig& latticeConfig() const { return latticeCfg_; }
   const dic::DictionaryHolder& dic() const { return dic_; }
   const RuntimeInfo& runtime() const { return runtime_; }
   const analysis::UnkMakers& unkMakers() const { return unkMakers_; }

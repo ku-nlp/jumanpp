@@ -14,8 +14,6 @@ namespace jumanpp {
 namespace core {
 namespace analysis {
 
-class LatticePlugin;
-
 class LatticeLeftBoundary final : public util::memory::StructOfArrays {
   util::memory::SizedArrayField<LatticeNodePtr> endingNodes;
 
@@ -38,19 +36,12 @@ class LatticeRightBoundary final : public util::memory::StructOfArrays {
   util::memory::SizedArrayField<u64, 64> featurePatterns;
   util::memory::SizedArrayField<ConnectionBeamElement, 64> beam;
 
-  LatticePlugin* localPlugin = nullptr;
-
   friend class LatticeBoundary;
 
  public:
   LatticeRightBoundary(util::memory::ManagedAllocatorCore* alloc,
                        const LatticeConfig& lc,
                        const LatticeBoundaryConfig& lbc);
-
-  template <typename Plugin>
-  Plugin* plugin() {
-    return dynamic_cast<Plugin*>(localPlugin);
-  }
 
   util::Sliceable<EntryPtr> entryPtrData() { return entryPtrs; }
   util::Sliceable<i32> entryData() { return entryDataStorage; }
@@ -64,7 +55,6 @@ class LatticeBoundaryConnection final
   const LatticeConfig& lconf;
   const LatticeBoundaryConfig& lbconf;
   util::memory::SizedArrayField<Score> scores;
-  LatticePlugin* localPlugin = nullptr;
 
   friend class LatticeBoundary;
 
@@ -79,11 +69,6 @@ class LatticeBoundaryConnection final
 
   void importBeamScore(i32 scorer, i32 beam, util::ArraySlice<Score> scores);
   util::Sliceable<Score> entryScores(i32 beam);
-
-  template <typename Plugin>
-  Plugin* plugin() {
-    return dynamic_cast<Plugin*>(localPlugin);
-  }
 };
 
 class LatticeBoundary {
@@ -94,7 +79,6 @@ class LatticeBoundary {
   u32 currentEnding_;
 
   Status initialize();
-  void installPlugin(LatticePlugin* plugin);
 
  public:
   LatticeBoundary(util::memory::ManagedAllocatorCore* alloc,
@@ -125,7 +109,6 @@ class Lattice {
   util::memory::ManagedVector<LatticeBoundary*> boundaries;
   LatticeConfig lconf;
   util::memory::ManagedAllocatorCore* alloc;
-  LatticePlugin* plugin = nullptr;
 
  public:
   Lattice(const Lattice&) = delete;
@@ -135,7 +118,6 @@ class Lattice {
   LatticeBoundary* boundary(u32 idx) { return boundaries.at(idx); }
   const LatticeBoundary* boundary(u32 idx) const { return boundaries.at(idx); }
   void hintSize(u32 size);
-  void installPlugin(LatticePlugin* plugin);
   void reset();
   const LatticeConfig& config() { return lconf; }
 };

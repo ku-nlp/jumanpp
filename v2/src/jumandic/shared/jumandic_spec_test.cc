@@ -13,5 +13,5 @@ TEST_CASE("jumandic spec is valid") {
   CHECK(spec.dictionary.columns.size() == 9);
   CHECK(spec.dictionary.indexColumn == 0);
   CHECK(spec.features.final.size() == 56);
-  CHECK(spec.unkCreators.size() == 3);
+  CHECK(spec.unkCreators.size() == 5);
 }

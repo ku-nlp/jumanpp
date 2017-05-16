@@ -24,12 +24,12 @@ struct AnalyzerConfig {
  */
 class AnalyzerImpl;
 
-struct ScoreConfig;
+struct ScorerDef;
 
 class Analyzer {
   std::unique_ptr<AnalyzerImpl> pimpl_;
   AnalyzerImpl* ptr_;
-  const ScoreConfig* scorer_;
+  const ScorerDef* scorer_;
 
  public:
   Analyzer();
@@ -37,12 +37,12 @@ class Analyzer {
   Analyzer(Analyzer&&) = delete;
 
   Status initialize(const CoreHolder* core, const AnalyzerConfig& cfg,
-                    const ScoreConfig* scorer);
-  Status initialize(AnalyzerImpl* impl, const ScoreConfig* scorer);
+                    const ScoringConfig& sconf, const ScorerDef* scorer);
+  Status initialize(AnalyzerImpl* impl, const ScorerDef* scorer);
   Status analyze(StringPiece input);
   const OutputManager& output() const;
 
-  const ScoreConfig* scorer() const { return scorer_; }
+  const ScorerDef* scorer() const { return scorer_; }
   AnalyzerImpl* impl() const { return ptr_; }
   ~Analyzer();
 };

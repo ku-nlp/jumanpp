@@ -268,6 +268,7 @@ Status LatticeCompactor::initialize(ExtraNodesContext *ctx,
                                     const RuntimeInfo &spec) {
   xtra = ctx;
 
+  features.clear();
   for (auto &f : spec.features.primitive) {
     if (f.kind == spec::PrimitiveFeatureKind::Copy) {
       features.push_back(f.references[0]);

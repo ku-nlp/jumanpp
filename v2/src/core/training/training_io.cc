@@ -15,6 +15,9 @@ Status TrainingDataReader::initialize(const spec::TrainingSpec &spec,
     core::dic::impl::StringStorageTraversal everything{dicFld.strings.data()};
     StringPiece data;
     util::FlatMap<StringPiece, i32> str2int;
+    if (dicFld.emptyValue.size() != 0) {
+      str2int[dicFld.emptyValue] = 0;
+    }
     while (everything.next(&data)) {
       str2int[data] = everything.position();
     }
@@ -48,6 +51,7 @@ Status TrainingDataReader::initCsv(StringPiece data) {
 
   mode_ = DataReaderMode::SimpleCsv;
   csv_ = util::CsvReader();
+  finished_ = false;
   return csv_.initFromMemory(data);
 }
 
@@ -61,6 +65,8 @@ Status TrainingDataReader::initDoubleCsv(StringPiece data, char tokenSep,
   mode_ = DataReaderMode::DoubleCsv;
   doubleFldSep_ = fieldSep;
   csv_ = util::CsvReader{tokenSep};
+  csv2_ = util::CsvReader{fieldSep};
+  finished_ = false;
   return csv_.initFromMemory(data);
 }
 
@@ -84,19 +90,18 @@ Status TrainingDataReader::readFullExampleDblCsv(
     return Status::Ok();
   }
 
-  util::CsvReader csvrdr2{doubleFldSep_};
   auto numwords = csv_.numFields();
   result->data_.reserve(numwords * fields_.size());
   result->lengths_.reserve(numwords);
   for (int i = 0; i < numwords; ++i) {
     auto content = csv_.field(i);
-    JPP_RETURN_IF_ERROR(csvrdr2.initFromMemory(content));
-    if (!csvrdr2.nextLine()) {
+    JPP_RETURN_IF_ERROR(csv2_.initFromMemory(content));
+    if (!csv2_.nextLine()) {
       return Status::InvalidParameter()
              << "failed to read word #" << i << " from the line #"
              << csv_.lineNumber();
     }
-    JPP_RETURN_IF_ERROR(readSingleExampleFragment(csvrdr2, xtra, result));
+    JPP_RETURN_IF_ERROR(readSingleExampleFragment(csv2_, xtra, result));
   }
 
   return Status::Ok();

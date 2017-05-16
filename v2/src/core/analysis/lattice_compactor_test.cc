@@ -35,7 +35,8 @@ class LatticeCompactorTestEnv {
     REQUIRE_OK(tenv.analyzer->output().stringField("a", &flda));
     REQUIRE_OK(tenv.analyzer->output().stringField("b", &fldb));
     REQUIRE_OK(tenv.analyzer->output().stringField("c", &fldc));
-    ScoreConfig scfg{};
+    ScorerDef scfg{};
+    scfg.scoreWeights.push_back(1.0f);
     REQUIRE_OK(tenv.analyzer->initScorers(scfg));
   }
 
