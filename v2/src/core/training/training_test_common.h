@@ -5,8 +5,16 @@
 #ifndef JUMANPP_TRAINING_TEST_COMMON_H
 #define JUMANPP_TRAINING_TEST_COMMON_H
 
+#include <array>
 #include <ostream>
+#include "core/analysis/analysis_result.h"
 #include "testing/test_analyzer.h"
+
+namespace jumanpp {
+namespace core {
+namespace training {}
+}  // namespace core
+}  // namespace jumanpp
 
 using namespace jumanpp;
 using namespace jumanpp::core::training;
@@ -80,7 +88,7 @@ class GoldExampleEnv {
 
  public:
   GoldExampleEnv(StringPiece dic, bool katakanaUnks = false) {
-    env.beamSize = 2;
+    env.beamSize = 3;
     env.spec([katakanaUnks](core::spec::dsl::ModelSpecBuilder& bldr) {
       auto& a = bldr.field(1, "a").strings().trieIndex();
       auto& b = bldr.field(2, "b").strings();

@@ -5,7 +5,7 @@ set(core_srcs darts_trie.cc dictionary.cc impl/field_import.cc dic_builder.cc
         core.cc analysis/analyzer.cc analysis/analyzer_impl.cc impl/feature_impl_compute.cc
         spec/spec_types.cc spec/spec_serialization.cc impl/model_io.cc analysis/unk_nodes.cc features_api.cc
         analysis/perceptron.cc analysis/score_processor.cc analysis/analysis_result.cc
-        env.cc)
+        env.cc impl/graphviz_format.cc)
 
 set(core_train_srcs
         training/training_io.cc training/loss.cc training/gold_example.cc training/trainer.cc training/scw.cc
@@ -23,11 +23,11 @@ set(core_hdrs darts.h darts_trie.h dictionary.h impl/field_import.h impl/field_r
         analysis/unk_nodes.h analysis/score_api.h analysis/perceptron.h
         analysis/score_processor.h analysis/analysis_result.h analysis/rnn_scorer.cc analysis/rnn_scorer.h
         training/training_io.h training/loss.h training/gold_example.h training/trainer.h training/scw.h
-        impl/perceptron_io.h env.h)
+        impl/perceptron_io.h env.h impl/graphviz_format.h)
 
 set(core_test_srcs darts_trie_test.cc dictionary_test.cc impl/field_import_test.cc
         impl/field_reader_test.cc impl/feature_impl_prim_test.cc impl/feature_impl_compute_test.cc
-        impl/feature_impl_combine_test.cc impl/feature_test.cc runtime_info_test.cc)
+        impl/feature_impl_combine_test.cc impl/feature_test.cc runtime_info_test.cc impl/graphviz_format_test.cc)
 
 set(core_train_test_srcs training/gold_example_test.cc training/trainer_test.cc)
 
@@ -51,7 +51,7 @@ jpp_test_executable(jpp_core_train_tests ${core_train_test_srcs})
 
 target_link_libraries(jpp_core jpp_util jpp_rnn)
 target_link_libraries(jpp_core_train jpp_core)
-target_link_libraries(jpp_core_tests jpp_core)
+target_link_libraries(jpp_core_tests jpp_core jpp_core_train)
 target_link_libraries(jpp_core_analysis_tests jpp_core)
 target_link_libraries(jpp_core_spec_tests jpp_core)
 target_link_libraries(jpp_core_train_tests jpp_core_train)

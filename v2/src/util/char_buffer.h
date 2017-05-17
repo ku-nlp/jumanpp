@@ -53,6 +53,31 @@ class CharBuffer {
   }
 
  public:
+  CharBuffer() noexcept = default;
+
+  CharBuffer(const CharBuffer& c) = delete;
+
+  CharBuffer(CharBuffer&& c) noexcept
+      : storage_{std::move(c.storage_)},
+        current_{c.current_},
+        position_{c.position_},
+        npage{c.npage} {
+    c.position_ = page_size;
+    c.current_ = nullptr;
+    c.npage = -1;
+  }
+
+  CharBuffer& operator=(CharBuffer&& c) noexcept {
+    storage_ = std::move(c.storage_);
+    position_ = c.position_;
+    current_ = c.current_;
+    npage = c.npage;
+    c.position_ = page_size;
+    c.current_ = nullptr;
+    c.npage = -1;
+    return *this;
+  }
+
   ~CharBuffer() {
     for (auto p : storage_) {
       delete p;

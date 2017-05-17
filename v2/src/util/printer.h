@@ -68,6 +68,11 @@ class Printer {
     return *this;
   }
 
+  template <typename T>
+  void inline rawOutput(const T& o) {
+    data_ << o;
+  }
+
   void reset() { buf_.reset(); }
 
   StringPiece result() const { return buf_.contents(); }

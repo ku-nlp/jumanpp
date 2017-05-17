@@ -37,6 +37,10 @@ struct alignas(alignof(u32)) LatticeNodePtr {
   u16 position;
 };
 
+inline bool operator==(const LatticeNodePtr& p1, const LatticeNodePtr& p2) {
+  return p1.boundary == p2.boundary && p1.position == p2.position;
+}
+
 struct LatticeConfig {
   u32 entrySize;
   u32 numPrimitiveFeatures;

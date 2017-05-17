@@ -74,6 +74,19 @@ class AnalysisPath {
 
   void reset() { currentChunk_ = -1; }
 
+  bool contains(LatticeNodePtr step0, LatticeNodePtr step1) const {
+    for (auto& el : elems_) {
+      if (el.boundary == step1.boundary && el.right == step1.position) {
+        auto p2 = el.previous;
+        if (p2->boundary == step0.boundary && p2->right == step0.position) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
   void moveToBoundary(i32 pos) {
     JPP_DCHECK_IN(pos, 0, offsets_.size());
     currentChunk_ = pos;
