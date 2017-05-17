@@ -202,11 +202,13 @@ Status GraphVizFormat::renderNodes(detail::RenderOutput *out,
   }
 
   out->lit("// EOS node").line();
-  out->lit("node_").lit(nbnd).lit("_0 [shape=plaintext, label=<<table><tr><td>EOS</td></tr>").line(1);
+  out->lit("node_")
+      .lit(nbnd)
+      .lit("_0 [shape=plaintext, label=<<table><tr><td>EOS</td></tr>")
+      .line(1);
   ctx.changeCurrent({(u16)nbnd, 0});
   config_.footer->render(out, &ctx);
   out->line(-1).lit("</table>>];").line();
-
 
   return Status::Ok();
 }

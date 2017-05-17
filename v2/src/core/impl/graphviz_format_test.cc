@@ -11,7 +11,8 @@ using namespace jumanpp::core;
 using namespace jumanpp::core::format;
 
 TEST_CASE("graphviz has working builder") {
-  GoldExampleEnv env{"a,a,a\nb,b,b\nc,c,c\nba,ba,ba\nab,an,ab\nca,fa,da\nb,z,z\n"};
+  GoldExampleEnv env{
+      "a,a,a\nb,b,b\nc,c,c\nba,ba,ba\nab,an,ab\nca,fa,da\nb,z,z\n"};
   GraphVizBuilder bldr;
   bldr.row({"b", "c"}, {{"color", "green"}});
   bldr.row({"a"});
