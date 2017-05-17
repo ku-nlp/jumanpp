@@ -57,7 +57,7 @@ Status parseArgs(int argc, const char** argv, t::TrainingArguments* args) {
     std::exit(1);
   }
 
-  args->beamSize = beamSize.Get();
+  args->trainingConfig.beamSize = beamSize.Get();
   args->batchSize = batchSize.Get();
   args->numThreads = numThreads.Get();
   args->modelFilename = modelFile.Get();
@@ -90,7 +90,7 @@ int main(int argc, const char** argv) {
     LOG_ERROR() << "failed to read model from disk: " << s.message;
     return 1;
   }
-  env.setBeamSize(args.beamSize);
+  env.setBeamSize(args.trainingConfig.beamSize);
 
   t::TrainingEnv exec{args, &env};
   s = exec.initialize();
