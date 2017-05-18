@@ -245,8 +245,7 @@ Status GraphVizFormat::renderEdges(detail::RenderOutput *out,
             .lit(":w");
         out->lit(" [");
         out->lit("label=").q(beamObj.totalScore);
-        if (top1_.contains({prev->boundary, prev->right},
-                           {beamObj.ptr.boundary, beamObj.ptr.right})) {
+        if (top1_.contains(*prev, beamObj.ptr)) {
           out->lit(",color=red");
         }
         out->lit("];").line();

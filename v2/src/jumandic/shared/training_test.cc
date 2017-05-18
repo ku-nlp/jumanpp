@@ -2,6 +2,8 @@
 // Created by Arseny Tolmachev on 2017/05/10.
 //
 
+#include <fstream>
+#include "core/impl/graphviz_format.h"
 #include "core/training/training_env.h"
 #include "jumandic/shared/juman_format.h"
 #include "jumandic/shared/jumandic_spec.h"
@@ -20,7 +22,7 @@ class JumandicTrainingTestEnv {
 
   JumandicTrainingTestEnv(StringPiece dicName) {
     trainArgs.trainingConfig.beamSize = 3;
-    trainArgs.batchSize = 2;
+    trainArgs.batchSize = 4;
     trainArgs.numThreads = 1;
     testEnv.spec([](core::spec::dsl::ModelSpecBuilder &sb) {
       jumandic::SpecFactory::fillSpec(sb);
@@ -49,6 +51,34 @@ class JumandicTrainingTestEnv {
       REQUIRE_OK(trainEnv.value().initFeatures(nullptr));
     }
   }
+
+  void dumpTrainers(StringPiece baseDir) {
+    auto bldr = core::format::GraphVizBuilder{};
+    bldr.row({"reading", "baseform"});
+    bldr.row({"canonic", "surface"});
+    bldr.row({"pos", "subpos"});
+    bldr.row({"conjtype", "conjform"});
+    core::format::GraphVizFormat fmt;
+    REQUIRE_OK(bldr.build(&fmt, trainArgs.trainingConfig.beamSize));
+
+    char buffer[256];
+    auto &te = trainEnv.value();
+    for (int i = 0; i < te.numTrainers(); ++i) {
+      std::snprintf(buffer, 255, "%s/%04d.dot", baseDir.char_begin(), i);
+      std::ofstream out{buffer};
+      auto train = te.trainer(i);
+      auto pana = train->anaImpl();
+      REQUIRE_OK(fmt.initialize(pana->output()));
+      fmt.reset();
+      auto gnodes = train->trainer()->goldenPath().nodes();
+      for (auto &node : gnodes) {
+        fmt.markGold(node);
+      }
+      auto lat = pana->lattice();
+      REQUIRE_OK(fmt.render(lat));
+      out << fmt.result();
+    }
+  }
 };
 
 TEST_CASE("jumanpp can correctly read stuff") {
@@ -57,21 +87,17 @@ TEST_CASE("jumanpp can correctly read stuff") {
   REQUIRE_OK(env.trainEnv.value().loadInput("jumandic/train_mini_01.txt"));
   REQUIRE_OK(env.trainEnv.value().readOneBatch());
   REQUIRE_OK(env.trainEnv.value().trainOneBatch());
+  // env.dumpTrainers("/tmp/dots/1");
+  REQUIRE_OK(env.trainEnv.value().loadInput("jumandic/train_mini_01.txt"));
+  REQUIRE_OK(env.trainEnv.value().readOneBatch());
+  REQUIRE_OK(env.trainEnv.value().trainOneBatch());
+  // env.dumpTrainers("/tmp/dots/2");
   REQUIRE_OK(env.trainEnv.value().trainOneBatch());
   CHECK(env.trainEnv.value().batchLoss() == Approx(0.0f));
 }
 
 TEST_CASE("jumanpp can learn with minidic") {
   JumandicTrainingTestEnv env{"jumandic/jumanpp_minimal.mdic"};
-  env.singleEpochFrom("jumandic/train_mini_01.txt");
-  env.singleEpochFrom("jumandic/train_mini_01.txt");
-  env.singleEpochFrom("jumandic/train_mini_01.txt");
-  env.singleEpochFrom("jumandic/train_mini_01.txt");
-  env.singleEpochFrom("jumandic/train_mini_01.txt");
-  env.singleEpochFrom("jumandic/train_mini_01.txt");
-  env.singleEpochFrom("jumandic/train_mini_01.txt");
-  env.singleEpochFrom("jumandic/train_mini_01.txt");
-  env.singleEpochFrom("jumandic/train_mini_01.txt");
   env.singleEpochFrom("jumandic/train_mini_01.txt");
   env.singleEpochFrom("jumandic/train_mini_01.txt");
   env.singleEpochFrom("jumandic/train_mini_01.txt");

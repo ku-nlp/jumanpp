@@ -74,13 +74,10 @@ class AnalysisPath {
 
   void reset() { currentChunk_ = -1; }
 
-  bool contains(LatticeNodePtr step0, LatticeNodePtr step1) const {
+  bool contains(ConnectionPtr step0, ConnectionPtr step1) const {
     for (auto& el : elems_) {
-      if (el.boundary == step1.boundary && el.right == step1.position) {
-        auto p2 = el.previous;
-        if (p2->boundary == step0.boundary && p2->right == step0.position) {
-          return true;
-        }
+      if (el == step1 && *el.previous == step0) {
+        return true;
       }
     }
 

@@ -61,6 +61,13 @@ class FullyAnnotatedExample {
   }
 
   i32 numNodes() const { return static_cast<i32>(lengths_.size()); }
+
+  void reset() {
+    surface_.clear();
+    strings_.clear();
+    data_.clear();
+    lengths_.clear();
+  }
 };
 
 enum class DataReaderMode { SimpleCsv, DoubleCsv };

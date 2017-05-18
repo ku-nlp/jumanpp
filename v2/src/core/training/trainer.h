@@ -32,6 +32,7 @@ class Trainer {
         config_{trconf} {}
 
   void reset() {
+    example_.reset();
     analyzer->reset();
     loss_.goldPath().reset();
     adapter_.reset();
@@ -50,6 +51,8 @@ class Trainer {
   util::ArraySlice<ScoredFeature> featureDiff() const {
     return loss_.featureDiff();
   }
+
+  const GoldenPath& goldenPath() { return loss_.goldPath(); }
 };
 
 struct TrainerFullConfig {
@@ -66,7 +69,7 @@ class OwningTrainer {
   i64 lineNo_ = -1;
 
  public:
-  OwningTrainer(const TrainerFullConfig& conf)
+  explicit OwningTrainer(const TrainerFullConfig& conf)
       : analyzer_{&conf.core, ScoringConfig{conf.trainingConfig.beamSize, 1},
                   conf.analyzerConfig},
         trainer_{&analyzer_, &conf.trainingSpec, conf.trainingConfig} {}
@@ -106,6 +109,10 @@ class OwningTrainer {
   util::ArraySlice<ScoredFeature> featureDiff() const {
     return trainer_.featureDiff();
   }
+
+  analysis::AnalyzerImpl* anaImpl() { return &analyzer_; }
+
+  Trainer* trainer() { return &trainer_; }
 };
 
 class BatchedTrainer {
@@ -140,7 +147,10 @@ class BatchedTrainer {
     return Status::Ok();
   }
 
-  OwningTrainer* trainer(i32 idx) const { return trainers_[idx].get(); }
+  OwningTrainer* trainer(i32 idx) const {
+    JPP_DCHECK_IN(idx, 0, activeTrainers());
+    return trainers_[idx].get();
+  }
 
   i32 activeTrainers() const { return current_; }
 };

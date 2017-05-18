@@ -67,6 +67,7 @@ class TrainingEnv {
 
   Status trainOneEpoch();
 
+  i32 numTrainers() const { return trainers_.activeTrainers(); }
   OwningTrainer* trainer(i32 idx) { return trainers_.trainer(idx); }
 
   std::unique_ptr<analysis::Analyzer> makeAnalyzer(i32 beamSize = -1) const;

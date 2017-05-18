@@ -14,6 +14,9 @@ Status TrainingEnv::trainOneEpoch() {
   float lossSum = 0;
   while (!dataReader_.finished()) {
     JPP_RETURN_IF_ERROR(readOneBatch());
+    if (trainers_.activeTrainers() <= 0) {
+      break;
+    }
     float lastLoss = -100000000.f;
     for (u32 batchIter = 0; batchIter < args_.batchMaxIterations; ++batchIter) {
       JPP_RETURN_IF_ERROR(trainOneBatch());
