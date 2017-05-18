@@ -10,11 +10,13 @@
 using namespace jumanpp::core;
 using namespace jumanpp::core::format;
 
+using Attr = detail::Attribute;
+
 TEST_CASE("graphviz has working builder") {
   GoldExampleEnv env{
       "a,a,a\nb,b,b\nc,c,c\nba,ba,ba\nab,an,ab\nca,fa,da\nb,z,z\n"};
   GraphVizBuilder bldr;
-  bldr.row({"b", "c"}, {{"color", "green"}});
+  bldr.row({"b", "c"}, {Attr{"color", "green"}});
   bldr.row({"a"});
   GraphVizFormat fmt;
   REQUIRE_OK(bldr.build(&fmt));
