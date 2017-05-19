@@ -79,7 +79,7 @@ class FullyMappedFile {
  public:
   Status open(StringPiece filename, MMapType type = MMapType::ReadOnly);
   void close();
-
+  StringPiece filename() const { return file_.name(); }
   StringPiece contents() const { return fragment_.asStringPiece(); }
 };
 
