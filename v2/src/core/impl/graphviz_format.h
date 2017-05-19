@@ -95,6 +95,8 @@ class Renderable {
 struct Attribute {
   StringPiece key;
   StringPiece value;
+
+  constexpr Attribute(const StringPiece &key, const StringPiece &value) : key(key), value(value) {}
 };
 
 class RenderCell : public Renderable {
