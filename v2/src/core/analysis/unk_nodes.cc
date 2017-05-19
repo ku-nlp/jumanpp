@@ -82,6 +82,14 @@ class UnkMakerFactory {
               new SingleUnkMaker{entries, x.charClass, std::move(cfg)});
           break;
         }
+        case spec::UnkMakerType::Onomatopoeia: {
+          UnkNodeConfig cfg{rdr.readEntry(EntryPtr{x.patternPtr})};
+          util::copy_insert(x.output, cfg.replaceWithSurface);
+          handlePrefixIndex(x, &cfg);
+          stage->emplace_back(
+              new OnomatopoeiaUnkMaker{entries, x.charClass, std::move(cfg)});
+          break;
+        }
         default:
           return Status::NotImplemented()
                  << x.name << ": unk is not implemented";

@@ -270,6 +270,12 @@ class UnkProcBuilder : public DslOpBase {
     return *this;
   }
 
+  UnkProcBuilder& onomatopoeia(chars::CharacterClass charClass) {
+    type_ = UnkMakerType::Onomatopoeia;
+    charClass_ = charClass;
+    return *this;
+  }
+
   UnkProcBuilder& notPrefixOfDicFeature(FeatureRef ref) {
     UnkProcFeature upf{UnkFeatureType::NotPrefixOfDicWord, ref};
     surfaceFeatures_.emplace_back(upf);
