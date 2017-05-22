@@ -50,7 +50,7 @@ jpp_test_executable(jpp_core_spec_tests ${spec_test_srcs})
 jpp_test_executable(jpp_core_train_tests ${core_train_test_srcs})
 
 target_link_libraries(jpp_core jpp_util jpp_rnn)
-target_link_libraries(jpp_core_train jpp_core)
+target_link_libraries(jpp_core_train jpp_core ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(jpp_core_tests jpp_core jpp_core_train)
 target_link_libraries(jpp_core_analysis_tests jpp_core)
 target_link_libraries(jpp_core_spec_tests jpp_core)

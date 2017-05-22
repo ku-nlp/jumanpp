@@ -19,6 +19,8 @@ include_directories("${CMAKE_SOURCE_DIR}/libs")
 option(JPP_TEST_REPORT_JUNIT OFF)
 enable_testing()
 
+find_package(Threads)
+
 add_subdirectory(libs)
 add_subdirectory(src)
 add_subdirectory(v2)
