@@ -81,7 +81,7 @@ void SpecFactory::fillSpec(core::spec::dsl::ModelSpecBuilder& bldr) {
       .notPrefixOfDicFeature(notPrefix)
       .outputTo({surface, baseform, reading});
   bldr.unk("digits", 6)
-      .chunking(chars::CharacterClass::FIGURE_DIGIT)
+      .chunking(chars::CharacterClass::FAMILY_DIGITS)
       .outputTo({surface, baseform, reading});
 
   bldr.unigram({surface});
