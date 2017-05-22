@@ -92,7 +92,7 @@ void TrainingExecutorThread::run() {
 }
 
 Status TrainingExecutor::initialize(const analysis::ScorerDef *sconf,
-                                  u32 nthreads) {
+                                    u32 nthreads) {
   threads_.clear();
   try {
     for (u32 i = 0; i < nthreads; ++i) {
@@ -100,8 +100,10 @@ Status TrainingExecutor::initialize(const analysis::ScorerDef *sconf,
     }
     head_ = 0;
     tail_ = 0;
-  } catch (std::system_error& e) {
-    return Status::InvalidState() << "failed to initialize executor: " << e.code() << " msg: " << e.what();
+  } catch (std::system_error &e) {
+    return Status::InvalidState()
+           << "failed to initialize executor: " << e.code()
+           << " msg: " << e.what();
   }
   return Status::Ok();
 }
