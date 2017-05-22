@@ -23,6 +23,7 @@ struct ExampleNode {
 };
 
 class FullyAnnotatedExample {
+  std::string comment_;
   std::string surface_;
   std::vector<StringPiece> strings_;
   std::vector<i32> data_;
@@ -62,7 +63,10 @@ class FullyAnnotatedExample {
 
   i32 numNodes() const { return static_cast<i32>(lengths_.size()); }
 
+  StringPiece comment() const { return comment_; }
+
   void reset() {
+    comment_.clear();
     surface_.clear();
     strings_.clear();
     data_.clear();

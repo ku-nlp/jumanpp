@@ -95,6 +95,19 @@ Status TrainingDataReader::readFullExampleDblCsv(
   result->lengths_.reserve(numwords);
   for (int i = 0; i < numwords; ++i) {
     auto content = csv_.field(i);
+
+    if (content == "#") {
+      for (int j = i + 1; j < numwords; ++j) {
+        auto commentPart = csv_.field(j);
+        result->comment_.append(commentPart.char_begin(),
+                                commentPart.char_end());
+        if (j != numwords - 1) {
+          result->comment_.push_back(csv_.separator());
+        }
+      }
+      break;
+    }
+
     JPP_RETURN_IF_ERROR(csv2_.initFromMemory(content));
     if (!csv2_.nextLine()) {
       return Status::InvalidParameter()

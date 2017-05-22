@@ -76,6 +76,14 @@ TEST_CASE(
   CHECK(mem1 == mem3);
 }
 
+TEST_CASE("trainer can parse an example with comment") {
+  StringPiece dic = "もも,N,0\nも,PRT,1\n";
+  StringPiece ex = "もも_N_0 も_PRT_1 もも_N_0 # help me\n";
+  TrainerEnv env{dic};
+  env.parseMrph(ex);
+  CHECK(env.trainer.example().comment() == "help me");
+}
+
 TEST_CASE("trainer can compute score for sentence with full unks") {
   StringPiece dic = "UNK,N,10\nもも,N,0\nも,PRT,1\nモ,PRT,2";
   StringPiece ex = "モモ_N_10 も_PRT_1 もも_N_0\n";

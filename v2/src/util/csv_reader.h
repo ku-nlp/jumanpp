@@ -82,6 +82,8 @@ class CsvReader {
   i32 numFields() const;
   StringPiece field(i32 idx) const;
   i64 lineNumber() const { return line_number_; }
+
+  char separator() const { return separator_; }
 };
 }  // namespace util
 }  // namespace jumanpp
