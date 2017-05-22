@@ -80,6 +80,9 @@ void SpecFactory::fillSpec(core::spec::dsl::ModelSpecBuilder& bldr) {
       .chunking(chars::CharacterClass::FAMILY_ALPH)
       .notPrefixOfDicFeature(notPrefix)
       .outputTo({surface, baseform, reading});
+  bldr.unk("digits", 6)
+      .chunking(chars::CharacterClass::FIGURE_DIGIT)
+      .outputTo({surface, baseform, reading});
 
   bldr.unigram({surface});
   bldr.unigram({auxWord});

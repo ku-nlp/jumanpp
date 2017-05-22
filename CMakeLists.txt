@@ -20,6 +20,5 @@ option(JPP_TEST_REPORT_JUNIT OFF)
 enable_testing()
 
 add_subdirectory(libs)
-
 add_subdirectory(src)
 add_subdirectory(v2)

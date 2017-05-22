@@ -75,6 +75,25 @@ Status parseArgs(int argc, const char** argv, t::TrainingArguments* args) {
   return Status::Ok();
 }
 
+void doTrain(core::training::TrainingEnv& env,
+             const t::TrainingArguments& args) {
+  float lastLoss = 0.0f;
+  for (int nepoch = 0; nepoch < args.maxEpochs; ++nepoch) {
+    env.resetInput();
+    Status s = env.trainOneEpoch();
+    if (!s) {
+      LOG_ERROR() << "failed to train: " << s.message;
+      exit(1);
+    }
+
+    LOG_INFO() << "EPOCH #" << nepoch << " finished, loss=" << env.epochLoss();
+
+    if (std::abs(lastLoss - env.epochLoss()) < args.batchLossEpsilon) {
+      return;
+    }
+  }
+}
+
 int main(int argc, const char** argv) {
   t::TrainingArguments args{};
   Status s = parseArgs(argc, argv, &args);
@@ -97,6 +116,31 @@ int main(int argc, const char** argv) {
 
   if (!s) {
     LOG_ERROR() << "failed to initialize training process: " << s.message;
+    return 1;
+  }
+
+  s = exec.loadInput(args.corpusFilename);
+  if (!s) {
+    LOG_ERROR() << "failed to open corpus filename: " << s.message;
+    return 1;
+  }
+
+  doTrain(exec, args);
+
+  auto model = env.modelInfoCopy();
+  exec.exportScwParams(&model);
+
+  core::model::ModelSaver saver;
+  s = saver.open(args.outputFilename);
+  if (!s) {
+    LOG_ERROR() << "failed to open file [" << args.outputFilename
+                << "] for saving model: " << s.message;
+    return 1;
+  }
+
+  s = saver.save(model);
+  if (!s) {
+    LOG_ERROR() << "failed to save model: " << s.message;
   }
 
   return 0;

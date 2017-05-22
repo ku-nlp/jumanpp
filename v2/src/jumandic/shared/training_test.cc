@@ -87,11 +87,11 @@ TEST_CASE("jumanpp can correctly read stuff") {
   REQUIRE_OK(env.trainEnv.value().loadInput("jumandic/train_mini_01.txt"));
   REQUIRE_OK(env.trainEnv.value().readOneBatch());
   REQUIRE_OK(env.trainEnv.value().trainOneBatch());
-  //env.dumpTrainers("/tmp/dots/1");
+  // env.dumpTrainers("/tmp/dots/1");
   REQUIRE_OK(env.trainEnv.value().loadInput("jumandic/train_mini_01.txt"));
   REQUIRE_OK(env.trainEnv.value().readOneBatch());
   REQUIRE_OK(env.trainEnv.value().trainOneBatch());
-  //env.dumpTrainers("/tmp/dots/2");
+  // env.dumpTrainers("/tmp/dots/2");
   REQUIRE_OK(env.trainEnv.value().trainOneBatch());
   CHECK(env.trainEnv.value().batchLoss() == Approx(0.0f));
 }

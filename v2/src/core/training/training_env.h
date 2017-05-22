@@ -56,6 +56,7 @@ class TrainingEnv {
   Status loadInputData(StringPiece data);
 
   Status loadInput(StringPiece fileName);
+  void resetInput();
 
   Status readOneBatch() { return trainers_.readBatch(&dataReader_); }
 
@@ -64,6 +65,7 @@ class TrainingEnv {
   Status trainOneBatch();
 
   float batchLoss() const { return batchLoss_; }
+  float epochLoss() const { return totalLoss_; }
 
   Status trainOneEpoch();
 
@@ -71,6 +73,8 @@ class TrainingEnv {
   OwningTrainer* trainer(i32 idx) { return trainers_.trainer(idx); }
 
   std::unique_ptr<analysis::Analyzer> makeAnalyzer(i32 beamSize = -1) const;
+
+  void exportScwParams(model::ModelInfo* pInfo);
 };
 
 }  // namespace training

@@ -11,27 +11,28 @@ namespace core {
 namespace training {
 
 Status TrainingEnv::trainOneEpoch() {
-  float lossSum = 0;
+  float lastLoss = 0.f;
+  float lossSum = 0.0f;
   while (!dataReader_.finished()) {
     JPP_RETURN_IF_ERROR(readOneBatch());
     if (trainers_.activeTrainers() <= 0) {
       break;
     }
-    float lastLoss = -100000000.f;
+
     for (u32 batchIter = 0; batchIter < args_.batchMaxIterations; ++batchIter) {
       JPP_RETURN_IF_ERROR(trainOneBatch());
-      lossSum += batchLoss_;
-
       auto normLoss =
           std::abs(lastLoss - batchLoss_) / trainers_.activeTrainers();
+      lastLoss = batchLoss_;
       auto firstTrainer = trainers_.trainer(0)->line();
-      auto lastTrainer = firstTrainer + trainers_.activeTrainers();
+      auto lastTrainer = firstTrainer + trainers_.activeTrainers() - 1;
       LOG_DEBUG() << "batch [" << firstTrainer << "-" << lastTrainer << "]|"
                   << batchIter << ": " << normLoss << "|" << batchLoss_;
       if (normLoss < args_.batchLossEpsilon) {
         break;
       }
     }
+    lossSum += lastLoss;
   }
   totalLoss_ = lossSum;
   return Status::Ok();
@@ -88,6 +89,10 @@ Status TrainingEnv::loadInput(StringPiece fileName) {
   return loadInputData(data);
 }
 
+void TrainingEnv::resetInput() {
+  dataReader_.resetInput(currentFile_.contents());
+}
+
 Status TrainingEnv::loadInputData(StringPiece data) {
   auto format = this->args_.trainingConfig.inputFormat;
   if (format == InputFormat::Csv) {
@@ -131,6 +136,10 @@ std::unique_ptr<analysis::Analyzer> TrainingEnv::makeAnalyzer(
     ptr.reset();
   }
   return ptr;
+}
+
+void TrainingEnv::exportScwParams(model::ModelInfo *pInfo) {
+  scw_.exportModel(pInfo);
 }
 
 }  // namespace training

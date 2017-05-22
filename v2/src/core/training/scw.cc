@@ -123,7 +123,7 @@ struct ScwData {
   util::CodedBuffer cbuf;
 };
 
-void SoftConfidenceWeighted::save(model::ModelInfo* model) {
+void SoftConfidenceWeighted::exportModel(model::ModelInfo *model) {
   data_.reset(new ScwData);
   util::serialization::Saver svr{&data_->cbuf};
   PerceptronInfo pi;

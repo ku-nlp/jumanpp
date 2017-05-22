@@ -103,7 +103,7 @@ class TrainingDataReader {
 
   i64 lineNumber() const { return csv_.lineNumber(); }
 
-  void reset();
+  void resetInput(StringPiece data) { csv_.initFromMemory(data); }
 };
 
 }  // namespace training

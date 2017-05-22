@@ -46,6 +46,8 @@ class JumanppEnv {
     return (*result)->initialize(coreHolder(), analyzerConfig_, scoringConf_,
                                  &scorers_);
   }
+
+  model::ModelInfo modelInfoCopy() const { return modelInfo_; }
 };
 
 }  // namespace core

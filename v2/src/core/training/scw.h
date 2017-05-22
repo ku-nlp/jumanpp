@@ -57,7 +57,7 @@ class SoftConfidenceWeighted {
   Status validate() const;
   void update(float loss, util::ArraySlice<ScoredFeature> features);
   const analysis::ScorerDef* scorers() const { return &sconf; }
-  void save(model::ModelInfo* model);
+  void exportModel(model::ModelInfo *model);
   ~SoftConfidenceWeighted();
 };
 
