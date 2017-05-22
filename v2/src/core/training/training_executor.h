@@ -57,7 +57,7 @@ class TrainingExecutor {
   u32 tail_;
 
  public:
-  void initialize(const analysis::ScorerDef* sconf, u32 nthreads);
+  Status initialize(const analysis::ScorerDef* sconf, u32 nthreads);
 
   u32 capacity() const { return (u32)threads_.size(); }
 

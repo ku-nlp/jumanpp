@@ -111,7 +111,7 @@ Status TrainingEnv::initFeatures(
   return env_->initFeatures(sff);
 }
 
-Status TrainingEnv::initialize() {
+Status TrainingEnv::initOther() {
   auto pHolder = env_->coreHolder();
   if (pHolder == nullptr) {
     return Status::InvalidState() << "core holder was not constructed yet";
@@ -120,8 +120,8 @@ Status TrainingEnv::initialize() {
   core::training::TrainerFullConfig conf{
       aconf_, *pHolder, env_->spec().training, args_.trainingConfig};
   auto sconf = scw_.scorers();
-  trainers_.initialize(conf, sconf, args_.batchSize);
-  executor_.initialize(sconf, args_.numThreads);
+  JPP_RETURN_IF_ERROR(trainers_.initialize(conf, sconf, args_.batchSize));
+  JPP_RETURN_IF_ERROR(executor_.initialize(sconf, args_.numThreads));
   return Status::Ok();
 }
 

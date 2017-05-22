@@ -62,16 +62,18 @@ class StaticFeatureFactory : public FeatureApply {
 struct FeatureHolder {
   std::unique_ptr<features::PrimitiveFeatureApply> primitiveDynamic;
   std::unique_ptr<features::PrimitiveFeatureApply> primitiveStatic;
-  features::PrimitiveFeatureApply* primitive;
+  features::PrimitiveFeatureApply* primitive = nullptr;
   std::unique_ptr<features::ComputeFeatureApply> computeDynamic;
   std::unique_ptr<features::ComputeFeatureApply> computeStatic;
-  features::ComputeFeatureApply* compute;
+  features::ComputeFeatureApply* compute = nullptr;
   std::unique_ptr<features::PatternFeatureApply> patternDynamic;
   std::unique_ptr<features::PatternFeatureApply> patternStatic;
-  features::PatternFeatureApply* pattern;
+  features::PatternFeatureApply* pattern = nullptr;
   std::unique_ptr<features::NgramFeatureApply> ngramDynamic;
   std::unique_ptr<features::NgramFeatureApply> ngramStatic;
-  features::NgramFeatureApply* ngram;
+  features::NgramFeatureApply* ngram = nullptr;
+
+  Status validate() const;
 };
 
 Status makeFeatures(const CoreHolder& core, const StaticFeatureFactory* sff,

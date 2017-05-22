@@ -40,6 +40,8 @@ AnalyzerImpl::AnalyzerImpl(const CoreHolder* core, const ScoringConfig& sconf,
       compactor_{core->dic().entries()} {}
 
 Status AnalyzerImpl::initScorers(const ScorerDef& cfg) {
+  JPP_RETURN_IF_ERROR(core_->features().validate());
+
   if (cfg.scoreWeights.size() != latticeConfig_.scoreCnt) {
     return Status::InvalidState() << "AnalyzerImpl: number of scorers was "
                                      "different from number of score "

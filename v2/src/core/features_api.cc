@@ -79,6 +79,25 @@ Status makeFeatures(const CoreHolder &info, const StaticFeatureFactory *sff,
   return Status::Ok();
 }
 
+Status FeatureHolder::validate() const {
+  if (primitive == nullptr) {
+    return Status::InvalidState() << "Features: primitive was null";
+  }
+
+  if (compute == nullptr) {
+    return Status::InvalidState() << "Features: compute was null";
+  }
+
+  if (pattern == nullptr) {
+    return Status::InvalidState() << "Features: pattern was null";
+  }
+
+  if (ngram == nullptr) {
+    return Status::InvalidState() << "Features: ngram was null";
+  }
+
+  return Status::Ok();
+}
 }  // namespace features
 }  // namespace core
 }  // namespace jumanpp

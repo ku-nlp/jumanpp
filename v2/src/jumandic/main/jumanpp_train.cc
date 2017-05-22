@@ -112,7 +112,15 @@ int main(int argc, const char** argv) {
   env.setBeamSize(args.trainingConfig.beamSize);
 
   t::TrainingEnv exec{args, &env};
-  s = exec.initialize();
+
+  s = exec.initFeatures(nullptr);
+
+  if (!s) {
+    LOG_ERROR() << "failed to initialize features: " << s.message;
+    return 1;
+  }
+
+  s = exec.initOther();
 
   if (!s) {
     LOG_ERROR() << "failed to initialize training process: " << s.message;

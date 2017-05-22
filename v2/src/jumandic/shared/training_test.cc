@@ -47,8 +47,8 @@ class JumandicTrainingTestEnv {
   void initialize() {
     if (!trainEnv.isInitialized()) {
       trainEnv.initialize(trainArgs, &jppEnv);
-      REQUIRE_OK(trainEnv.value().initialize());
       REQUIRE_OK(trainEnv.value().initFeatures(nullptr));
+      REQUIRE_OK(trainEnv.value().initOther());
     }
   }
 

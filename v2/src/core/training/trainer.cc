@@ -22,6 +22,7 @@ Status Trainer::prepare() {
   }
 
   if (adapter_.ensureNodes(example_, &loss_.goldPath())) {
+    addedGoldNodes_ = true;
     // ok, we have created at least one more node
     // that should have fixed any connectability errors
     latBldr->sortSeeds();

@@ -22,6 +22,7 @@ class Trainer {
   LossCalculator loss_;
   TrainingConfig config_;
   float currentLoss_;
+  bool addedGoldNodes_;
 
  public:
   Trainer(analysis::AnalyzerImpl* analyzer, const spec::TrainingSpec* spec,
@@ -36,6 +37,7 @@ class Trainer {
     analyzer->reset();
     loss_.goldPath().reset();
     adapter_.reset();
+    addedGoldNodes_ = false;
   }
 
   FullyAnnotatedExample& example() { return example_; }
@@ -53,6 +55,8 @@ class Trainer {
   }
 
   const GoldenPath& goldenPath() { return loss_.goldPath(); }
+
+  bool wasGoldAdded() const { return addedGoldNodes_; }
 };
 
 struct TrainerFullConfig {

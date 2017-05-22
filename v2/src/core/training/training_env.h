@@ -49,7 +49,7 @@ class TrainingEnv {
     aconf_.pageSize = 256 * 1024;
   }
 
-  Status initialize();
+  Status initOther();
 
   Status initFeatures(const core::features::StaticFeatureFactory* sff);
 
