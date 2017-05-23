@@ -13,7 +13,7 @@ namespace util {
 
 template <typename T>
 struct VOutImpl {
-  const util::ArraySlice<i32> wrapped;
+  util::ArraySlice<T> wrapped;
 };
 
 template <typename T>
@@ -33,7 +33,9 @@ std::ostream& operator<<(std::ostream& os, const VOutImpl<T>& v) {
 
 template <typename C>
 util::VOutImpl<typename C::value_type> VOut(const C& slice) {
-  return util::VOutImpl<typename C::value_type>{slice};
+  using T = typename C::value_type;
+  util::ArraySlice<T> aslice{slice};
+  return util::VOutImpl<T>{aslice};
 }
 
 }  // namespace jumanpp

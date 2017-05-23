@@ -213,10 +213,14 @@ Status AnalyzerImpl::buildLattice() {
       fc.applyComputeFeatures(bnd);
       fc.applyPatternFeatures(bnd);
     }
+
+    JPP_DCHECK_EQ(bnd->starts()->arraySize(),
+                  latticeBldr_.infoAt(boundary).startCount);
   }
 
   JPP_RETURN_IF_ERROR(latticeBldr_.makeEos(&lcc, &lattice_));
   JPP_RETURN_IF_ERROR(latticeBldr_.fillEnds(&lattice_));
+  JPP_DCHECK_EQ(totalBnds + 3, lattice_.createdBoundaryCount());
 
   return Status::Ok();
 }

@@ -156,8 +156,12 @@ void TrainingEnv::warnOnNonMatchingFeatures(const spec::TrainingSpec& spec) {
   auto usedFeatures = lcm.usedFeatures();
 
   for (auto& x : spec.fields) {
-    fields.push_back(x.fieldIdx);
+    if (x.weight != 0) {
+      fields.push_back(x.fieldIdx);
+    }
   }
+
+  util::sort(fields);
 
   std::set_difference(usedFeatures.begin(), usedFeatures.end(), fields.begin(),
                       fields.end(), std::back_inserter(diff1));

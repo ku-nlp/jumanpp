@@ -160,7 +160,7 @@ void SpecFactory::fillSpec(core::spec::dsl::ModelSpecBuilder& bldr) {
 
   bldr.train()
       .field(surface, 1.0f)
-      .field(reading, 0.01f)
+      .field(reading, 0)  // reading is ignored
       .field(baseform, 0.5f)
       .field(pos, 1.0f)
       .field(subpos, 1.0f)

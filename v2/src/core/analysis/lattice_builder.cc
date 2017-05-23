@@ -6,6 +6,9 @@
 #include "util/array_slice_util.h"
 #include "util/hashing.h"
 
+#include "util/debug_output.h"
+#include "util/logging.hpp"
+
 namespace jumanpp {
 namespace core {
 namespace analysis {
@@ -137,6 +140,9 @@ Status LatticeBuilder::fillEnds(Lattice *l) {
 void LatticeBuilder::compactBoundary(i32 boundary,
                                      LatticeCompactor *compactor) {
   auto &bndInfo = boundaries_[boundary];
+  if (bndInfo.startCount < 2) {
+    return;
+  }
   util::MutableArraySlice<LatticeNodeSeed> seeds{
       &seeds_, bndInfo.firstNodeOffset, (u32)bndInfo.startCount};
   compactor->computeHashes(seeds);
@@ -212,6 +218,18 @@ class ValueChecker {
   }
 };
 
+std::ostream &operator<<(std::ostream &os,
+                         const core::analysis::LatticeNodeSeed &seed) {
+  os << '{' << seed.codepointStart << "->" << seed.codepointEnd << ":"
+     << seed.entryPtr.rawValue() << '}';
+  return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const core::EntryPtr &eptr) {
+  os << '@' << eptr.rawValue();
+  return os;
+}
+
 bool LatticeCompactor::compact(
     util::MutableArraySlice<LatticeNodeSeed> *seeds) {
   processed.clear_no_resize();
@@ -230,10 +248,16 @@ bool LatticeCompactor::compact(
         continue;
       }
       if (hashes[i] == hashes[j] && valueChecker.valuesEqual(entryData, i, j)) {
+//        LOG_TRACE() << "COMPACT SAME=" << VOut(entryData.row(j))
+//                    << " SEED=" << seeds->at(j) << " IDX=" << j;
         group.push_back(j);
         processed.insert(j);
       }
     }
+
+//    LOG_TRACE() << "COMPACT BASE=" << VOut(entryData.row(i))
+//                << " SEED=" << seeds->at(i) << " COMPACT=" << !group.empty()
+//                << " IDX=" << i;
 
     if (!group.empty()) {
       auto node = xtra->makeAlias();
@@ -256,7 +280,10 @@ bool LatticeCompactor::compact(
   group.clear();
   util::copy_insert(processed, group);
   util::sort(group);
+//  LOG_TRACE() << "PRECOMPACT" << VOut(*seeds) << " REMOVE=" << VOut(group)
+//              << " SIZE=" << seeds->size();
   util::compact(*seeds, group);
+//  LOG_TRACE() << "POSTCOMPACT" << VOut(*seeds);
 
   return true;
 }

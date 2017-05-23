@@ -135,7 +135,7 @@ int TrainingExampleAdapter::findNodeInBoundary(
       if (latticeItem < 0) {
         refItem = contentHash;
       } else {
-        refItem = node.data[j];
+        refItem = node.data.at(fldInfo.number);
       }
       if (latticeItem != refItem) {
         goto nextItem;
@@ -146,6 +146,32 @@ int TrainingExampleAdapter::findNodeInBoundary(
   }
 
   return -1;
+}
+
+Status TrainingExampleAdapter::repointPathPointers(
+    const FullyAnnotatedExample &ex, GoldenPath *path) {
+  for (int i = 0; i < ex.numNodes(); ++i) {
+    auto exNode = ex.nodeAt(i);
+    auto ptr = path->nodes().at(i);
+    auto bnd = lattice->boundary(ptr.boundary);
+    JPP_DCHECK_EQ(bnd->localNodeCount(),
+                  latticeBuilder->infoAt(ptr.boundary - 2).startCount);
+    int idxOf = findNodeInBoundary(bnd, exNode, ptr);
+    if (idxOf == -1) {
+      LOG_TRACE() << "NODE=" << VOut(exNode.data);
+
+      auto sts = bnd->starts();
+      for (int j = 0; j < sts->arraySize(); ++j) {
+        auto entr = sts->entryData().row(j);
+        LOG_TRACE() << "LATTICE[" << j << "]=" << VOut(entr);
+      }
+
+      return Status::InvalidState()
+             << "could not find gold node in boundary #" << ptr.boundary;
+    }
+    path->fixBoundaryPos(i, idxOf);
+  }
+  return Status::Ok();
 }
 
 }  // namespace training

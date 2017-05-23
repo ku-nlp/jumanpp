@@ -107,21 +107,7 @@ class TrainingExampleAdapter {
    * Equivalent node compression could have invalidated our pointers, so
    * recheck them.
    */
-  Status repointPathPointers(const FullyAnnotatedExample &ex,
-                             GoldenPath *path) {
-    for (int i = 0; i < ex.numNodes(); ++i) {
-      auto exNode = ex.nodeAt(i);
-      auto ptr = path->nodes().at(i);
-      auto bnd = lattice->boundary(ptr.boundary);
-      int idxOf = findNodeInBoundary(bnd, exNode, ptr);
-      if (idxOf == -1) {
-        return Status::InvalidState()
-               << "could not find gold node in boundary #" << ptr.boundary;
-      }
-      path->fixBoundaryPos(i, idxOf);
-    }
-    return Status::Ok();
-  }
+  Status repointPathPointers(const FullyAnnotatedExample &ex, GoldenPath *path);
 };
 
 }  // namespace training
