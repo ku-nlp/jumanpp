@@ -120,7 +120,8 @@ void Serialize(Arch &a, FeaturesSpec &o) {
 
 template <typename Arch>
 void Serialize(Arch &a, TrainingField &o) {
-  a &o.index;
+  a &o.number;
+  a &o.fieldIdx;
   a &o.weight;
 }
 

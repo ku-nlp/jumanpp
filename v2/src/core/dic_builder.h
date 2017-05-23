@@ -17,12 +17,16 @@ namespace core {
 namespace dic {
 
 struct BuiltField {
+  // SERIALIZED
+  i32 uniqueValues;
   StringPiece name;
+  StringPiece emptyValue;
+  spec::ColumnType colType;
+
+  // FILLED IN
+  i32 stringStorageIdx;
   StringPiece stringContent;
   StringPiece fieldContent;
-  spec::ColumnType colType;
-  i32 uniqueValues;
-  StringPiece emptyValue;
 };
 
 struct BuiltDictionary {

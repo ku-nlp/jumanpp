@@ -104,7 +104,7 @@ TEST_CASE(
   REQUIRE_OK(tdr.readFullExample(anaImpl->extraNodesContext(), &exobj));
   CHECK(exobj.numNodes() == 3);
   TrainingExampleAdapter adapter{&spec.training, anaImpl};
-  anaImpl->setNewInput(exobj.surface());
+  REQUIRE_OK(anaImpl->setNewInput(exobj.surface()));
   REQUIRE_FALSE(anaImpl->prepareNodeSeeds());
   CHECK_OK(env.anaImpl()->latticeBldr()->prepare());
   GoldenPath gpath;

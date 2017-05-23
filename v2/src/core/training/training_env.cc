@@ -4,6 +4,7 @@
 
 #include "training_env.h"
 #include "core/env.h"
+#include "util/debug_output.h"
 #include "util/logging.hpp"
 
 namespace jumanpp {
@@ -61,7 +62,7 @@ Status TrainingEnv::trainOneBatch() {
 }
 
 Status TrainingEnv::handleProcessedTrainer(
-    core::training::TrainingExecutionResult result, float *curLoss) {
+    core::training::TrainingExecutionResult result, float* curLoss) {
   auto processed = result.trainer;
   if (!result.processStatus) {
     i64 lineNo = -1;
@@ -107,7 +108,7 @@ Status TrainingEnv::loadInputData(StringPiece data) {
 }
 
 Status TrainingEnv::initFeatures(
-    const core::features::StaticFeatureFactory *sff) {
+    const core::features::StaticFeatureFactory* sff) {
   return env_->initFeatures(sff);
 }
 
@@ -116,9 +117,12 @@ Status TrainingEnv::initOther() {
   if (pHolder == nullptr) {
     return Status::InvalidState() << "core holder was not constructed yet";
   }
-  JPP_RETURN_IF_ERROR(dataReader_.initialize(env_->spec().training, *pHolder));
-  core::training::TrainerFullConfig conf{
-      aconf_, *pHolder, env_->spec().training, args_.trainingConfig};
+  auto& trainingSpec = env_->spec().training;  // make a copy here
+  warnOnNonMatchingFeatures(trainingSpec);
+
+  JPP_RETURN_IF_ERROR(dataReader_.initialize(trainingSpec, *pHolder));
+  core::training::TrainerFullConfig conf{aconf_, *pHolder, trainingSpec,
+                                         args_.trainingConfig};
   auto sconf = scw_.scorers();
   JPP_RETURN_IF_ERROR(trainers_.initialize(conf, sconf, args_.batchSize));
   JPP_RETURN_IF_ERROR(executor_.initialize(sconf, args_.numThreads));
@@ -138,8 +142,33 @@ std::unique_ptr<analysis::Analyzer> TrainingEnv::makeAnalyzer(
   return ptr;
 }
 
-void TrainingEnv::exportScwParams(model::ModelInfo *pInfo) {
+void TrainingEnv::exportScwParams(model::ModelInfo* pInfo) {
   scw_.exportModel(pInfo);
+}
+
+void TrainingEnv::warnOnNonMatchingFeatures(const spec::TrainingSpec& spec) {
+  analysis::LatticeCompactor lcm{env_->coreHolder()->dic().entries()};
+  lcm.initialize(nullptr, env_->coreHolder()->runtime());
+  std::vector<i32> fields;
+  std::vector<i32> diff1;
+  std::vector<i32> diff2;
+
+  auto usedFeatures = lcm.usedFeatures();
+
+  for (auto& x : spec.fields) {
+    fields.push_back(x.fieldIdx);
+  }
+
+  std::set_difference(usedFeatures.begin(), usedFeatures.end(), fields.begin(),
+                      fields.end(), std::back_inserter(diff1));
+  std::set_difference(fields.begin(), fields.end(), usedFeatures.begin(),
+                      usedFeatures.end(), std::back_inserter(diff2));
+
+  if (diff1.size() != 0 || diff2.size() != 0) {
+    LOG_WARN() << "fields that are used for features are not equal to gold "
+                  "fields: features="
+               << VOut(diff1) << " gold=" << VOut(diff2);
+  }
 }
 
 }  // namespace training

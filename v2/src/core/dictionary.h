@@ -24,6 +24,7 @@ struct DictionaryField {
   impl::IntStorageReader postions;
   impl::StringStorageReader strings;
   StringPiece emptyValue;
+  i32 stringStorageIdx;
 };
 
 class FieldsHolder {

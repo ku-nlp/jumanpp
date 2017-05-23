@@ -85,6 +85,8 @@ class LatticeCompactor {
   void computeHashes(util::ArraySlice<LatticeNodeSeed> seeds);
   bool compact(util::MutableArraySlice<LatticeNodeSeed>* seeds);
   i32 numDeleted() const { return processed.size(); }
+
+  util::ArraySlice<i32> usedFeatures() const { return features; }
 };
 
 class LatticeBuilder {

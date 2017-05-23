@@ -8,22 +8,46 @@ namespace jumanpp {
 namespace core {
 namespace training {
 
+Status readStr2IdMap(const dic::DictionaryField &fld,
+                     util::FlatMap<StringPiece, i32> *map) {
+  auto &s2i = *map;
+
+  if (fld.columnType != spec::ColumnType::String) {
+    return Status::InvalidParameter()
+           << "training data reader allows only string-typed fields, field "
+           << fld.name << " was not";
+  }
+
+  if (fld.emptyValue.size() != 0) {
+    s2i[fld.emptyValue] = 0;
+  }
+
+  core::dic::impl::StringStorageTraversal everything{fld.strings.data()};
+  StringPiece data;
+
+  while (everything.next(&data)) {
+    s2i[data] = everything.position();
+  }
+
+  return Status::Ok();
+}
+
 Status TrainingDataReader::initialize(const spec::TrainingSpec &spec,
                                       const CoreHolder &core) {
-  for (auto &tf : spec.fields) {
-    auto &dicFld = core.dic().fields().at(tf.index);
-    core::dic::impl::StringStorageTraversal everything{dicFld.strings.data()};
-    StringPiece data;
-    util::FlatMap<StringPiece, i32> str2int;
-    if (dicFld.emptyValue.size() != 0) {
-      str2int[dicFld.emptyValue] = 0;
+  storages_.resize(spec.fields.size());
+  for (i32 i = 0; i < spec.fields.size(); ++i) {
+    auto &tf = spec.fields[i];
+    auto &dicFld = core.dic().fields().at(tf.fieldIdx);
+    auto &str2int = storages_[dicFld.stringStorageIdx];
+
+    if (str2int.size() == 0) {
+      // string storage was not read yet
+      JPP_RETURN_IF_ERROR(readStr2IdMap(dicFld, &str2int));
     }
-    while (everything.next(&data)) {
-      str2int[data] = everything.position();
-    }
-    fields_.push_back(std::move(str2int));
+
+    fields_.push_back({&str2int, tf.fieldIdx, i});
   }
-  surfaceField_ = spec.fields[spec.surfaceIdx].index;
+  surfaceFieldIdx_ = spec.fields[spec.surfaceIdx].number;
   return Status::Ok();
 }
 
@@ -124,7 +148,7 @@ Status TrainingDataReader::readSingleExampleFragment(
     const util::CsvReader &csv, analysis::ExtraNodesContext *xtra,
     FullyAnnotatedExample *result) {
   codepts_.clear();
-  auto surfFld = csv.field(surfaceField_);
+  auto surfFld = csv.field(surfaceFieldIdx_);
 
   JPP_RETURN_IF_ERROR(chars::preprocessRawData(surfFld, &codepts_));
   result->lengths_.push_back(codepts_.size());
@@ -136,8 +160,9 @@ Status TrainingDataReader::readSingleExampleFragment(
   }
   result->surface_.append(surfFld.char_begin(), surfFld.char_end());
   for (int i = 0; i < fields_.size(); ++i) {
-    auto &map = fields_[i];
-    auto fld = csv.field(i);
+    auto &fldInfo = fields_[i];
+    auto &map = *fldInfo.str2int;
+    auto fld = csv.field(fldInfo.exampleFieldIdx);
     auto it = map.find(fld);
     if (it == map.end()) {
       auto interned = xtra->intern(fld);

@@ -292,7 +292,7 @@ class FlatMap {
     auto t = rep_.FindOrInsert(k);
     auto& v = t.b->val(t.index);
     if (!t.found) {
-      v = f();
+      new (&v) Val{std::forward<decltype(f())>(f())};
     }
     return v;
   }

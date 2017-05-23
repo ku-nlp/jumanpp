@@ -237,6 +237,7 @@ struct DictionaryBuilderStorage {
       BuiltField fld;
       fld.name = i.descriptor->name;
       fld.emptyValue = i.descriptor->emptyString;
+      fld.stringStorageIdx = i.descriptor->stringStorage;
       if (i.descriptor->stringStorage != -1) {
         fld.stringContent = builtStrings[i.descriptor->stringStorage];
       }
@@ -342,6 +343,7 @@ void Serialize(Arch& a, BuiltField& o) {
   a& o.uniqueValues;
   a& o.name;
   a& o.emptyValue;
+  a& o.colType;
 }
 
 template <typename Arch>
@@ -466,7 +468,11 @@ Status DictionaryBuilder::fixupDictionary(const model::ModelPart& dicInfo) {
       return Status::InvalidParameter()
              << "column name check failed, probably the model is corrupted";
     }
-    f.colType = fd.columnType;
+    if (f.colType != fd.columnType) {
+      return Status::InvalidParameter()
+             << "column type check for column " << f.name << " failed";
+    }
+    f.stringStorageIdx = fd.stringStorage;
     if (fd.stringStorage != -1) {
       f.stringContent = storage_->builtStrings[fd.stringStorage];
     }

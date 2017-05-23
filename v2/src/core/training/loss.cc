@@ -51,7 +51,7 @@ bool LossCalculator::findWorstTopNode(i32 goldPos, ComparisonStep* step) {
     float mismatchWeight = 0;
 
     for (auto& sf : specFlds) {
-      if (topData[sf.index] != goldData[sf.index]) {
+      if (topData[sf.fieldIdx] != goldData[sf.fieldIdx]) {
         numMismatches += 1;
         mismatchWeight += sf.weight;
       }

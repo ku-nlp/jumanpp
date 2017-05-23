@@ -9,6 +9,8 @@
 //
 
 #include "core/analysis/unk_nodes_creator.h"
+#include "util/debug_output.h"
+#include "util/logging.hpp"
 
 namespace jumanpp {
 namespace core {
@@ -20,14 +22,18 @@ bool TrainingExampleAdapter::matchUnkNodeData(const analysis::ExtraNode *pNode,
   auto &ndata = node.data;
   util::ArraySlice<i32> latNodeData{pNode->content, (u32)entries.entrySize()};
   for (int i = 0; i < ndata.size(); ++i) {
-    auto latticeIdx = spec->fields[i].index;
+    auto &trainFld = spec->fields[i];
+    if (trainFld.weight == 0) {
+      continue;
+    }
+    auto latticeIdx = trainFld.fieldIdx;
     auto latVal = latNodeData.at(latticeIdx);
     if (latVal < 0) {
       if (latVal != surfaceHash) {
         return false;
       }
     } else {
-      if (latVal != ndata[i]) {
+      if (latVal != ndata.at(trainFld.number)) {
         return false;
       }
     }
@@ -37,10 +43,15 @@ bool TrainingExampleAdapter::matchUnkNodeData(const analysis::ExtraNode *pNode,
 
 bool TrainingExampleAdapter::matchDicNodeData(const ExampleNode &node) {
   auto &ndata = node.data;
+
   for (int i = 0; i < ndata.size(); ++i) {
-    auto latticeIdx = spec->fields[i].index;
+    auto &trainFld = spec->fields[i];
+    if (trainFld.weight == 0) {
+      continue;
+    }
+    auto latticeIdx = trainFld.fieldIdx;
     JPP_DCHECK_IN(latticeIdx, 0, entryBuffer.size());
-    if (ndata[i] != entryBuffer[latticeIdx]) {
+    if (ndata.at(trainFld.number) != entryBuffer[latticeIdx]) {
       return false;
     }
   }
@@ -52,7 +63,7 @@ int TrainingExampleAdapter::nodeSeedExists(const ExampleNode &node) {
   auto nfo = latticeBuilder->infoAt(node.position);
   util::ArraySlice<analysis::LatticeNodeSeed> subset{seeds, nfo.firstNodeOffset,
                                                      (u32)nfo.startCount};
-  auto surfaceIdx = spec->fields[spec->surfaceIdx].index;
+  auto surfaceIdx = spec->fields[spec->surfaceIdx].number;
   EntryPtr surface{node.data.at(surfaceIdx)};
 
   if (surface.isSpecial()) {
@@ -74,6 +85,8 @@ int TrainingExampleAdapter::nodeSeedExists(const ExampleNode &node) {
       auto &seed = subset[i];
       if (seed.entryPtr.isDic()) {
         loadDicSeedData(seed);
+        // LOG_TRACE() << "comparing gold=" << VOut(node.data) << " entry=" <<
+        // VOut(entryBuffer) << " at " << node.position;
         if (matchDicNodeData(node)) {
           return i;
         }
@@ -89,7 +102,7 @@ EntryPtr TrainingExampleAdapter::makeUnkTrainingNode(const ExampleNode &node) {
   auto contHash = analysis::hashUnkString(node.surface);
   for (int i = 0; i < node.data.size(); ++i) {
     auto nodeVal = node.data[i];
-    auto idx = spec->fields[i].index;
+    auto idx = spec->fields[i].fieldIdx;
     if (nodeVal >= 0) {
       nodeData.at(idx) = nodeVal;
     } else {
@@ -112,7 +125,11 @@ int TrainingExampleAdapter::findNodeInBoundary(
   for (int i = start; i >= 0; --i) {
     auto data = pBoundary->starts()->entryData().row(i);
     for (int j = 0; j < exdata.size(); ++j) {
-      auto idx = exdata[j].index;
+      auto &fldInfo = exdata[j];
+      if (fldInfo.weight == 0) {
+        continue;
+      }
+      auto idx = fldInfo.fieldIdx;
       auto latticeItem = data[idx];
       i32 refItem = 0;
       if (latticeItem < 0) {

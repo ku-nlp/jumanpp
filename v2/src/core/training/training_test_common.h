@@ -37,10 +37,11 @@ struct ExampleData {
   }
 };
 
+template <size_t N>
 class AnalyzerMethods {
  protected:
   AnalysisPath path;
-  std::array<i32, 3> nodeData;
+  std::array<i32, N> nodeData;
   NodeWalker walker;
   StringField fa;
   StringField fb;
@@ -84,7 +85,7 @@ class AnalyzerMethods {
 class GoldExampleEnv {
  protected:
   testing::TestEnv env;
-  AnalyzerMethods am;
+  AnalyzerMethods<3> am;
 
  public:
   GoldExampleEnv(StringPiece dic, bool katakanaUnks = false) {

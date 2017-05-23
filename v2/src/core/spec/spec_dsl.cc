@@ -546,7 +546,7 @@ Status ModelSpecBuilder::createTrainSpec(AnalysisSpec* spec) const {
         if (fld.isTrieKey) {
           spec->training.surfaceIdx = i;
         }
-        spec->training.fields.push_back({fld.index, f.second});
+        spec->training.fields.push_back({i, fld.index, f.second});
       }
     }
   }

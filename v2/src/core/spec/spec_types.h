@@ -125,7 +125,8 @@ struct FeaturesSpec {
 };
 
 struct TrainingField {
-  i32 index;
+  i32 number;
+  i32 fieldIdx;
   float weight;
 };
 

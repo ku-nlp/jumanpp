@@ -76,14 +76,21 @@ class FullyAnnotatedExample {
 
 enum class DataReaderMode { SimpleCsv, DoubleCsv };
 
+struct TrainingExampleField {
+  util::FlatMap<StringPiece, i32>* str2int;
+  i32 dicFieldIdx;
+  i32 exampleFieldIdx;
+};
+
 class TrainingDataReader {
   DataReaderMode mode_;
   util::CsvReader csv_;
   util::CsvReader csv2_;
   bool finished_;
-  std::vector<util::FlatMap<StringPiece, i32>> fields_;
+  std::vector<util::FlatMap<StringPiece, i32>> storages_;
+  std::vector<TrainingExampleField> fields_;
   std::vector<chars::InputCodepoint> codepts_;
-  i32 surfaceField_;
+  i32 surfaceFieldIdx_;
   char doubleFldSep_;
 
   Status readSingleExampleFragment(const util::CsvReader& csv,

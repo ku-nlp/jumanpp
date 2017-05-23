@@ -342,7 +342,8 @@ Status FieldsHolder::load(const BuiltDictionary& dic) {
                        f.colType,
                        impl::IntStorageReader{f.fieldContent},
                        impl::StringStorageReader{f.stringContent},
-                       f.emptyValue};
+                       f.emptyValue,
+                       f.stringStorageIdx};
     fields_.push_back(df);
   }
   return Status::Ok();
