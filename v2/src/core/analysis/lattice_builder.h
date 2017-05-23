@@ -32,7 +32,8 @@ struct LatticeNodeSeed {
         codepointEnd(codepointEnd) {}
 };
 
-inline bool operator==(const LatticeNodeSeed& a1, const LatticeNodeSeed& a2) noexcept {
+inline bool operator==(const LatticeNodeSeed& a1,
+                       const LatticeNodeSeed& a2) noexcept {
   return a1.entryPtr == a2.entryPtr && a1.codepointStart == a2.codepointStart &&
          a1.codepointEnd == a2.codepointEnd;
 }

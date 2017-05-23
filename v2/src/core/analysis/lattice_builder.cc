@@ -248,16 +248,17 @@ bool LatticeCompactor::compact(
         continue;
       }
       if (hashes[i] == hashes[j] && valueChecker.valuesEqual(entryData, i, j)) {
-//        LOG_TRACE() << "COMPACT SAME=" << VOut(entryData.row(j))
-//                    << " SEED=" << seeds->at(j) << " IDX=" << j;
+        //        LOG_TRACE() << "COMPACT SAME=" << VOut(entryData.row(j))
+        //                    << " SEED=" << seeds->at(j) << " IDX=" << j;
         group.push_back(j);
         processed.insert(j);
       }
     }
 
-//    LOG_TRACE() << "COMPACT BASE=" << VOut(entryData.row(i))
-//                << " SEED=" << seeds->at(i) << " COMPACT=" << !group.empty()
-//                << " IDX=" << i;
+    //    LOG_TRACE() << "COMPACT BASE=" << VOut(entryData.row(i))
+    //                << " SEED=" << seeds->at(i) << " COMPACT=" <<
+    //                !group.empty()
+    //                << " IDX=" << i;
 
     if (!group.empty()) {
       auto node = xtra->makeAlias();
@@ -280,10 +281,10 @@ bool LatticeCompactor::compact(
   group.clear();
   util::copy_insert(processed, group);
   util::sort(group);
-//  LOG_TRACE() << "PRECOMPACT" << VOut(*seeds) << " REMOVE=" << VOut(group)
-//              << " SIZE=" << seeds->size();
+  //  LOG_TRACE() << "PRECOMPACT" << VOut(*seeds) << " REMOVE=" << VOut(group)
+  //              << " SIZE=" << seeds->size();
   util::compact(*seeds, group);
-//  LOG_TRACE() << "POSTCOMPACT" << VOut(*seeds);
+  //  LOG_TRACE() << "POSTCOMPACT" << VOut(*seeds);
 
   return true;
 }
