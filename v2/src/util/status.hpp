@@ -7,6 +7,7 @@
 
 #include <sstream>
 #include <string>
+#include <utility>
 
 #include "common.hpp"
 
@@ -43,17 +44,16 @@ class StatusConstructor {
 
 class Status {
  public:
- public:
   StatusCode code;
   std::string message;
 
  public:
-  Status(StatusCode code_) : code(code_) {}
+  explicit Status(StatusCode code_) : code(code_) {}
 
-  Status(StatusCode code_, std::string message_)
+  Status(StatusCode code_, const std::string &message_)
       : code(code_), message(message_) {}
 
-  Status(const StatusConstructor &ctr)
+  /*implicit*/ Status(const StatusConstructor &ctr)
       : code{ctr.code()}, message{ctr.message()} {}
 
   bool isOk() const noexcept { return code == StatusCode::Ok; }
