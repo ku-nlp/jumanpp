@@ -14,11 +14,12 @@ TrainingExecutionResult TrainingExecutorThread::waitForTrainer() {
   u64 count = 0;
   while (state == ExecutorThreadState::HaveInput) {
     // ok, the computation did not start yet, let it do so
-    std::this_thread::yield();
+    auto msec = std::chrono::nanoseconds(10);
+    std::this_thread::sleep_for(msec);
     state = state_.load();
     ++count;
 
-    if (count > 100000) {
+    if (count > 10000) {
       Status status = Status::InvalidState() << "waiting for trainer forever";
       return {nullptr, status};
     }
