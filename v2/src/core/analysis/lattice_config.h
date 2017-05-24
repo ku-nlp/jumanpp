@@ -16,6 +16,15 @@ class LatticePlugin;
 using LatticePosition = u16;
 using Score = float;
 
+struct alignas(alignof(u32)) LatticeNodePtr {
+  u16 boundary;
+  u16 position;
+};
+
+inline bool operator==(const LatticeNodePtr& p1, const LatticeNodePtr& p2) {
+  return p1.boundary == p2.boundary && p1.position == p2.position;
+}
+
 struct alignas(alignof(u64)) ConnectionPtr {
   // boundary where the connection was created
   u16 boundary;
@@ -30,21 +39,16 @@ struct alignas(alignof(u64)) ConnectionPtr {
 
   // pointer to the previous entry
   const ConnectionPtr* previous;
+
+  LatticeNodePtr latticeNodePtr() const {
+    return LatticeNodePtr{boundary, right};
+  }
 };
 
 inline bool operator==(const ConnectionPtr& p1, const ConnectionPtr& p2) {
   return p1.boundary == p2.boundary && p1.left == p2.left &&
          p1.right == p2.right && p1.beam == p2.beam &&
          p1.previous == p2.previous;
-}
-
-struct alignas(alignof(u32)) LatticeNodePtr {
-  u16 boundary;
-  u16 position;
-};
-
-inline bool operator==(const LatticeNodePtr& p1, const LatticeNodePtr& p2) {
-  return p1.boundary == p2.boundary && p1.position == p2.position;
 }
 
 struct LatticeConfig {
