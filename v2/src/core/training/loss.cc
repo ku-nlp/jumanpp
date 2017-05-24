@@ -85,15 +85,17 @@ Status LossCalculator::computeComparison() {
   auto goldPtrs = gold.nodes();
   auto totalGold = goldPtrs.size();
   auto lattice = analyzer->lattice();
+  u16 eosPos = static_cast<u16>(lattice->createdBoundaryCount() - 1);
   while (hasNextTop || curGold < totalGold) {
-    auto curTopBnd = top1.currentBoundary();
+
     analysis::LatticeNodePtr curGoldPtr;
     if (curGold < totalGold) {
       curGoldPtr = goldPtrs[curGold];
     } else {
-      u16 eosPos = static_cast<u16>(lattice->createdBoundaryCount() - 1);
       curGoldPtr = {eosPos, 0};
     }
+
+    i32 curTopBnd = hasNextTop ? top1.currentBoundary() : eosPos;
 
     if (curGoldPtr.boundary == curTopBnd) {
       // case when boundaries match
@@ -161,7 +163,6 @@ Status LossCalculator::computeComparison() {
     }
   }
 
-  auto eosPos = lattice->createdBoundaryCount() - 1;
   auto eosBnd = lattice->boundary(eosPos);
   auto eosBeam = eosBnd->starts()->beamData();
   JPP_DCHECK_EQ(eosBeam.numRows(), 1);
