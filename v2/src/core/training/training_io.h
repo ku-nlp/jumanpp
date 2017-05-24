@@ -114,7 +114,10 @@ class TrainingDataReader {
 
   i64 lineNumber() const { return csv_.lineNumber(); }
 
-  void resetInput(StringPiece data) { csv_.initFromMemory(data); }
+  void resetInput(StringPiece data) {
+    csv_.initFromMemory(data);
+    finished_ = false;
+  }
 };
 
 }  // namespace training

@@ -92,6 +92,8 @@ Status TrainingEnv::loadInput(StringPiece fileName) {
 
 void TrainingEnv::resetInput() {
   dataReader_.resetInput(currentFile_.contents());
+  batchLoss_ = 0;
+  totalLoss_ = 0;
 }
 
 Status TrainingEnv::loadInputData(StringPiece data) {

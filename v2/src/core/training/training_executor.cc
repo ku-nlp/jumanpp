@@ -124,9 +124,9 @@ bool TrainingExecutor::runNext(OwningTrainer *next,
   auto &thread = threads_[headIdx];
   thread->publishTrainer(next);
   head_ += 1;
-  LOG_TRACE() << "added example #" << next->line() << " to thr=" << headIdx
-              << " head=" << head_ << ", tail=" << tail_
-              << " status=" << status;
+  //  LOG_TRACE() << "added example #" << next->line() << " to thr=" << headIdx
+  //              << " head=" << head_ << ", tail=" << tail_
+  //              << " status=" << status;
   return status;
 }
 
@@ -143,8 +143,9 @@ TrainingExecutionResult TrainingExecutor::waitOne() {
   auto &thread = threads_[lastId];
   tail_ += 1;
   auto result = thread->waitForTrainer();
-  LOG_TRACE() << "got example #" << safeLine(result) << " from thr=" << lastId
-              << " tail=" << tail_;
+  //  LOG_TRACE() << "got example #" << safeLine(result) << " from thr=" <<
+  //  lastId
+  //              << " tail=" << tail_;
   return result;
 }
 
