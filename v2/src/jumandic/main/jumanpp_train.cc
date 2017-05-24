@@ -49,6 +49,15 @@ Status parseArgs(int argc, const char** argv, t::TrainingArguments* args) {
       trainingParams, "BATCH", "Batch Size, 1 default", {"batch"}, 1};
   args::ValueFlag<u32> numThreads{
       trainingParams, "THREADS", "# of threads, 1 default", {"threads"}, 1};
+  args::ValueFlag<u32> maxBatchIters{trainingParams,
+                                     "BATCH_ITERS",
+                                     "max # of batch iterations",
+                                     {"max-batch-iters"},
+                                     1};
+  args::ValueFlag<u32> maxEpochs{
+      trainingParams, "EPOCHS", "max # of epochs", {"max-epochs"}, 1};
+  args::ValueFlag<float> epsilon{
+      trainingParams, "EPSILON", "stopping epsilon", {"epsilon"}, 1e-3f};
 
   try {
     parser.ParseCLI(argc, argv);
@@ -66,6 +75,9 @@ Status parseArgs(int argc, const char** argv, t::TrainingArguments* args) {
   auto sizeExp = paramSizeExponent.Get();
   args->trainingConfig.featureNumberExponent = sizeExp;
   args->trainingConfig.randomSeed = randomSeed.Get();
+  args->batchMaxIterations = maxBatchIters.Get();
+  args->maxEpochs = maxEpochs.Get();
+  args->batchLossEpsilon = epsilon.Get();
 
   if (sizeExp > 31) {
     return Status::InvalidState() << "size exponent was too large: " << sizeExp

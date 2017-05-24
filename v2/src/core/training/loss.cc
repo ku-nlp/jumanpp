@@ -87,7 +87,6 @@ Status LossCalculator::computeComparison() {
   auto lattice = analyzer->lattice();
   u16 eosPos = static_cast<u16>(lattice->createdBoundaryCount() - 1);
   while (hasNextTop || curGold < totalGold) {
-
     analysis::LatticeNodePtr curGoldPtr;
     if (curGold < totalGold) {
       curGoldPtr = goldPtrs[curGold];

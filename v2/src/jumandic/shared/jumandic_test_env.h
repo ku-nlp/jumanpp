@@ -16,7 +16,7 @@
 using namespace jumanpp;
 
 class JumandicTrainingTestEnv {
-public:
+ public:
   testing::TestEnv testEnv;
   core::JumanppEnv jppEnv;
   util::Lazy<core::training::TrainingEnv> trainEnv;
@@ -84,4 +84,4 @@ public:
   }
 };
 
-#endif //JUMANPP_JUMANDIC_TEST_ENV_H
+#endif  // JUMANPP_JUMANDIC_TEST_ENV_H
