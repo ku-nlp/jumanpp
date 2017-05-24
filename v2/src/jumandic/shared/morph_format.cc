@@ -15,6 +15,7 @@ Status MorphFormat::initialize(const core::analysis::OutputManager& om) {
 
 Status MorphFormat::format(const core::analysis::Analyzer& analyzer,
                            StringPiece comment) {
+  printer_.reset();
   JPP_RETURN_IF_ERROR(analysisResult_.reset(analyzer));
   JPP_RETURN_IF_ERROR(analysisResult_.fillTop1(&top1_));
 

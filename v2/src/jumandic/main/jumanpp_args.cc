@@ -13,7 +13,9 @@ bool parseArgs(int argc, char* argv[], JumanppConf* result) {
   args::ArgumentParser parser{"Juman++ v2"};
 
   args::Group outputType{parser, "Output type"};
-  args::Flag juman{outputType, "juman", "Juman", {'j', "juman"}};
+  args::Flag juman{
+      outputType, "juman", "Juman style (default)", {'j', "juman"}};
+  args::Flag morph{outputType, "morph", "Morph style", {'M', "morph"}};
 
   args::Group modelParams{parser, "Model parameters"};
   args::ValueFlag<std::string> modelFile{
@@ -45,6 +47,9 @@ bool parseArgs(int argc, char* argv[], JumanppConf* result) {
   result->outputType = OutputType::Juman;
   if (juman) {
     result->outputType = OutputType::Juman;
+  }
+  if (morph) {
+    result->outputType = OutputType::Morph;
   }
 
   result->inputFile = input.Get();

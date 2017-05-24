@@ -2,7 +2,7 @@ set(jumandic_headers shared/jumandic_spec.h shared/juman_format.h main/jumanpp.h
         shared/jumandic_env.h shared/morph_format.h)
 set(jumandic_sources shared/jumandic_spec.cc shared/jumandic_spec_lexdata.cc shared/juman_format.cc
         shared/jumandic_env.cc shared/jumandic_test_env.h shared/morph_format.cc)
-set(jumandic_tests shared/jumandic_spec_test.cc shared/mini_dic_test.cc main/jumanpp_test.cc shared/training_test.cc)
+set(jumandic_tests shared/jumandic_spec_test.cc shared/mini_dic_test.cc shared/training_test.cc)
 
 set(bug_test_sources tests/bug_950111-003_test.cc)
 

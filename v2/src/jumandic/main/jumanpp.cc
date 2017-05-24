@@ -38,9 +38,16 @@ int main(int argc, char** argv) {
   }
 
   std::string input;
+  std::string comment;
   while (*inputSrc) {
     std::getline(*inputSrc, input);
-    Status st = exec.analyze(input);
+    if (input.size() > 2 && input[0] == '#' && input[1] == ' ') {
+      comment.clear();
+      comment.append(input.begin() + 2, input.end());
+      input.clear();
+      std::getline(*inputSrc, input);
+    }
+    Status st = exec.analyze(input, comment);
     if (!st) {
       std::cerr << "error when analyzing sentence [ " << input
                 << "] :" << st.message << "\n";

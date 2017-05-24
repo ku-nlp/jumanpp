@@ -8,12 +8,17 @@ namespace jumanpp {
 namespace jumandic {
 namespace output {
 
-Status JumanFormat::format(const core::analysis::Analyzer& analysis) {
+Status JumanFormat::format(const core::analysis::Analyzer& analysis,
+                           StringPiece comment) {
   printer.reset();
   JPP_RETURN_IF_ERROR(analysisResult.reset(analysis));
   JPP_RETURN_IF_ERROR(analysisResult.fillTop1(&top1));
 
   auto& outMgr = analysis.output();
+
+  if (comment.size() > 0) {
+    printer << "# " << comment << '\n';
+  }
 
   while (top1.nextBoundary()) {
     if (top1.remainingNodesInChunk() <= 0) {

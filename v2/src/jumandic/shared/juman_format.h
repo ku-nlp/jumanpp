@@ -42,7 +42,15 @@ struct JumandicFields {
   }
 };
 
-class JumanFormat {
+class OutputFormat {
+ public:
+  virtual ~OutputFormat() = default;
+  virtual Status format(const core::analysis::Analyzer& analyzer,
+                        StringPiece comment) = 0;
+  virtual StringPiece result() const = 0;
+};
+
+class JumanFormat : public OutputFormat {
   JumandicFields flds;
   util::io::Printer printer;
   core::analysis::AnalysisResult analysisResult;
@@ -59,7 +67,7 @@ class JumanFormat {
 
   bool formatOne(const core::analysis::OutputManager& om,
                  const core::analysis::ConnectionPtr& ptr, bool first);
-  Status format(const core::analysis::Analyzer& analysis);
+  Status format(const core::analysis::Analyzer& analysis, StringPiece comment);
   StringPiece result() const { return printer.result(); }
 };
 

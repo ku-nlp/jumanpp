@@ -37,14 +37,13 @@ class JumanppEnv {
   const spec::AnalysisSpec& spec() const { return dicBldr_.spec(); }
   bool hasPerceptronModel() const;
 
-  Status makeAnalyzer(std::unique_ptr<analysis::Analyzer>* result) const {
+  Status makeAnalyzer(analysis::Analyzer* result) const {
     if (!hasPerceptronModel()) {
       return Status::InvalidState() << "loaded model (" << modelFile_.name()
                                     << ") does not have was not trained";
     }
-    result->reset(new analysis::Analyzer());
-    return (*result)->initialize(coreHolder(), analyzerConfig_, scoringConf_,
-                                 &scorers_);
+    return result->initialize(coreHolder(), analyzerConfig_, scoringConf_,
+                              &scorers_);
   }
 
   model::ModelInfo modelInfoCopy() const { return modelInfo_; }
