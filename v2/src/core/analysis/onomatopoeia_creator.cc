@@ -22,22 +22,22 @@ bool OnomatopoeiaUnkMaker::spawnNodes(const AnalysisInput& input,
     LatticePosition nextstep = i;
     TraverseStatus status;
     auto pattern = FindOnomatopoeia(codepoints, i);
-    for (LatticePosition len = 2; len * 2 <= MaxOnomatopoeiaLength; ++len) {
-      if ((pattern & Pattern(1 << len)) != Pattern::None) {
-        for (; nextstep < i + len * 2; ++nextstep) {
+    for (LatticePosition halfLen = 2; halfLen * 2 <= MaxOnomatopoeiaLength; ++halfLen) {
+      if ((pattern & HalfLenToPattern(halfLen)) != Pattern::None) {
+        for (; nextstep < i + halfLen * 2; ++nextstep) {
           status = trav.step(codepoints[nextstep].bytes);
         }
         switch (status) {
           case TraverseStatus::NoNode: {
             LatticePosition start = i;
-            LatticePosition end = i + len * LatticePosition(2);
+            LatticePosition end = i + halfLen * LatticePosition(2);
             auto ptr = ctx->makePtr(input.surface(start, end), info_, true);
             lattice->appendSeed(ptr, start, end);
             break;
           }
           case TraverseStatus::NoLeaf: {
             LatticePosition start = i;
-            LatticePosition end = i + len * LatticePosition(2);
+            LatticePosition end = i + halfLen * LatticePosition(2);
             auto ptr = ctx->makePtr(input.surface(start, end), info_, false);
             lattice->appendSeed(ptr, start, end);
             break;
@@ -63,10 +63,10 @@ OnomatopoeiaUnkMaker::Pattern OnomatopoeiaUnkMaker::FindOnomatopoeia(
   }
 
   Pattern pattern = Pattern::None;
-  for (LatticePosition len = 2; len * 2 <= MaxOnomatopoeiaLength &&
-                                start + len * 2 - 1 < codepoints.size();
-       ++len) {
-    auto& cp2 = codepoints[start + len];
+  for (LatticePosition halfLen = 2; halfLen * 2 <= MaxOnomatopoeiaLength &&
+                                start + halfLen * 2 - 1 < codepoints.size();
+       ++halfLen) {
+    auto& cp2 = codepoints[start + halfLen];
     if (!cp2.hasClass(cp1Class)) {
       // No more onomatopoeia starting with cp1.
       return pattern;
@@ -78,15 +78,15 @@ OnomatopoeiaUnkMaker::Pattern OnomatopoeiaUnkMaker::FindOnomatopoeia(
 
     bool isOnomatopoeia = true;
     LatticePosition p = 1;
-    for (; p < len; ++p) {
+    for (; p < halfLen; ++p) {
       if (codepoints[start + p].codepoint !=
-          codepoints[start + len + p].codepoint) {
+          codepoints[start + halfLen + p].codepoint) {
         isOnomatopoeia = false;
         break;
       }
     }
     if (isOnomatopoeia) {
-      pattern = pattern | Pattern(1 << len) & Pattern::All;
+      pattern = pattern | HalfLenToPattern(halfLen);
     }
   }
   return pattern;

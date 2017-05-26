@@ -33,6 +33,10 @@ enum class OnomatopoeicPattern : u16 {
   All = ABAB | ABCABC | ABCDABCD
 };
 
+inline OnomatopoeicPattern HalfLenToPattern(u16 halflen) {
+  return OnomatopoeicPattern(1 << halflen) & OnomatopoeicPattern::All;
+}
+
 class OnomatopoeiaUnkMaker : public UnkMaker {
   dic::DictionaryEntries entries_;
   chars::CharacterClass charClass_;
