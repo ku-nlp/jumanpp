@@ -15,21 +15,21 @@ enum class OnomatopoeicPattern : u16;
 
 inline OnomatopoeicPattern operator&(const OnomatopoeicPattern& l,
                                      const OnomatopoeicPattern& r) {
-  return static_cast<OnomatopoeicPattern>(
-      static_cast<u16>(l) & static_cast<u16>(r)
-  );
+  return static_cast<OnomatopoeicPattern>(static_cast<u16>(l) &
+                                          static_cast<u16>(r));
 }
 
 inline OnomatopoeicPattern operator|(const OnomatopoeicPattern& l,
                                      const OnomatopoeicPattern& r) {
-  return static_cast<OnomatopoeicPattern>(
-      static_cast<u16>(l) | static_cast<u16>(r)
-  );
+  return static_cast<OnomatopoeicPattern>(static_cast<u16>(l) |
+                                          static_cast<u16>(r));
 }
 
 enum class OnomatopoeicPattern : u16 {
   None = 0,
-  ABAB = 1 << 2, ABCABC = 1 << 3, ABCDABCD = 1 << 4,
+  ABAB = 1 << 2,
+  ABCABC = 1 << 3,
+  ABCDABCD = 1 << 4,
   All = ABAB | ABCABC | ABCDABCD
 };
 
@@ -50,7 +50,7 @@ class OnomatopoeiaUnkMaker : public UnkMaker {
   bool spawnNodes(const AnalysisInput& input, UnkNodesContext* ctx,
                   LatticeBuilder* lattice) const override;
 
-  Pattern FindOnomatopoeia(const CodepointStorage & codepoints,
+  Pattern FindOnomatopoeia(const CodepointStorage& codepoints,
                            LatticePosition start) const;
 };
 
@@ -58,4 +58,4 @@ class OnomatopoeiaUnkMaker : public UnkMaker {
 }  // namespace core
 }  // namespace jumanpp
 
-#endif //JUMANPP_ONOMATOPOEIA_CREATOR_H
+#endif  // JUMANPP_ONOMATOPOEIA_CREATOR_H

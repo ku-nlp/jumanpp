@@ -8,9 +8,9 @@ namespace jumanpp {
 namespace core {
 namespace analysis {
 
-OnomatopoeiaUnkMaker::OnomatopoeiaUnkMaker(const dic::DictionaryEntries& entries_,
-                                           chars::CharacterClass charClass_,
-                                           UnkNodeConfig&& info_)
+OnomatopoeiaUnkMaker::OnomatopoeiaUnkMaker(
+    const dic::DictionaryEntries& entries_, chars::CharacterClass charClass_,
+    UnkNodeConfig&& info_)
     : entries_(entries_), charClass_(charClass_), info_(info_) {}
 
 bool OnomatopoeiaUnkMaker::spawnNodes(const AnalysisInput& input,
@@ -24,7 +24,7 @@ bool OnomatopoeiaUnkMaker::spawnNodes(const AnalysisInput& input,
     auto pattern = FindOnomatopoeia(codepoints, i);
     for (LatticePosition len = 2; len * 2 <= MaxOnomatopoeiaLength; ++len) {
       if ((pattern & Pattern(1 << len)) != Pattern::None) {
-        for (;nextstep < i + len * 2; ++nextstep) {
+        for (; nextstep < i + len * 2; ++nextstep) {
           status = trav.step(codepoints[nextstep].bytes);
         }
         switch (status) {
@@ -52,20 +52,21 @@ bool OnomatopoeiaUnkMaker::spawnNodes(const AnalysisInput& input,
 }
 
 OnomatopoeiaUnkMaker::Pattern OnomatopoeiaUnkMaker::FindOnomatopoeia(
-    const CodepointStorage & codepoints, LatticePosition start) const {
+    const CodepointStorage& codepoints, LatticePosition start) const {
   auto& cp1 = codepoints[start];
   if (!cp1.hasClass(charClass_)) {
     return Pattern::None;
   }
   auto cp1Class = cp1.charClass;
-  if (!codepoints[start+1].hasClass(cp1Class)) {
+  if (!codepoints[start + 1].hasClass(cp1Class)) {
     return Pattern::None;
   }
 
   Pattern pattern = Pattern::None;
   for (LatticePosition len = 2; len * 2 <= MaxOnomatopoeiaLength &&
-       start + len * 2 - 1 < codepoints.size(); ++len) {
-    auto& cp2 = codepoints[start+len];
+                                start + len * 2 - 1 < codepoints.size();
+       ++len) {
+    auto& cp2 = codepoints[start + len];
     if (!cp2.hasClass(cp1Class)) {
       // No more onomatopoeia starting with cp1.
       return pattern;
@@ -78,7 +79,8 @@ OnomatopoeiaUnkMaker::Pattern OnomatopoeiaUnkMaker::FindOnomatopoeia(
     bool isOnomatopoeia = true;
     LatticePosition p = 1;
     for (; p < len; ++p) {
-      if (codepoints[start+p].codepoint != codepoints[start+len+p].codepoint) {
+      if (codepoints[start + p].codepoint !=
+          codepoints[start + len + p].codepoint) {
         isOnomatopoeia = false;
         break;
       }
