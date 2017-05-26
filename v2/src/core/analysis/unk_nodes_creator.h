@@ -69,19 +69,6 @@ class SingleUnkMaker : public UnkMaker {
                   LatticeBuilder* lattice) const override;
 };
 
-class OnomatopoeiaUnkMaker : public UnkMaker {
-  dic::DictionaryEntries entries_;
-  chars::CharacterClass charClass_;
-  UnkNodeConfig info_;
-
- public:
-  OnomatopoeiaUnkMaker(const dic::DictionaryEntries& entries_,
-                       chars::CharacterClass charClass_, UnkNodeConfig&& info_);
-
-  bool spawnNodes(const AnalysisInput& input, UnkNodesContext* ctx,
-                  LatticeBuilder* lattice) const override;
-};
-
 }  // namespace analysis
 }  // namespace core
 }  // namespace jumanpp

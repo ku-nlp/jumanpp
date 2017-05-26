@@ -6,6 +6,7 @@
 #include "core/core.h"
 #include "dic_reader.h"
 #include "unk_nodes_creator.h"
+#include "onomatopoeia_creator.h"
 #include "util/stl_util.h"
 
 namespace jumanpp {
