@@ -59,6 +59,57 @@ struct ConstDeclaration {
   }
 };
 
+class ResultAssign {
+  i32 resultIdx_;
+  std::vector<std::string> pieces_;
+  std::stringstream ss_;
+public:
+  explicit ResultAssign(i32 resultIdx_) : resultIdx_(resultIdx_) {}
+
+  ResultAssign& addHashConstant(u64 value) {
+    ss_.str("");
+    ss_ << value << "ULL";
+    pieces_.push_back(ss_.str());
+    return *this;
+  }
+
+  ResultAssign& addHashIndexed(StringPiece var, size_t idx) {
+    ss_.str("");
+    ss_ << var << '[' << idx << ']';
+    pieces_.push_back(ss_.str());
+    return *this;
+  }
+
+  void render(io::Printer& p) const {
+    PrintSemicolon x{p};
+    p << "result.at(" << resultIdx_ << ") = " <<
+          "jumanpp::util::hashing::hashCtSeq"
+      << '(';
+    for (int i = 0; i < pieces_.size(); ++i) {
+      p << pieces_[i];
+      if (i != pieces_.size() - 1) {
+        p << ", ";
+      }
+    }
+    p << ')';
+  }
+};
+
+class MethodBody {
+  std::vector<ResultAssign> assigns_;
+public:
+  ResultAssign& resultInto(i32 index) {
+    assigns_.emplace_back(index);
+    return assigns_.back();
+  }
+
+  void render(io::Printer& p) {
+    for (auto &a: assigns_) {
+      a.render(p);
+    }
+  }
+};
+
 struct GeneratedClass {
   std::string name;
   std::string base;

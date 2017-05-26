@@ -52,11 +52,11 @@ class NgramFeatureApply : public FeatureApply {
 
 class StaticFeatureFactory : public FeatureApply {
  public:
-  virtual u64 runtimeHash() const = 0;
-  virtual PrimitiveFeatureApply* primitive() const = 0;
-  virtual ComputeFeatureApply* compute() const = 0;
-  virtual PatternFeatureApply* pattern() const = 0;
-  virtual NgramFeatureApply* ngram() const = 0;
+  virtual u64 runtimeHash() const { return 0; }
+  virtual PrimitiveFeatureApply* primitive() const { return nullptr; }
+  virtual ComputeFeatureApply* compute() const { return nullptr; }
+  virtual PatternFeatureApply* pattern() const { return nullptr; }
+  virtual NgramFeatureApply* ngram() const { return nullptr; }
 };
 
 struct FeatureHolder {

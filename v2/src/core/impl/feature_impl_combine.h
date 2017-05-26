@@ -10,6 +10,7 @@
 #include "core/impl/feature_impl_types.h"
 #include "core/impl/feature_types.h"
 #include "util/hashing.h"
+#include "util/codegen.h"
 
 namespace jumanpp {
 namespace core {
@@ -37,6 +38,7 @@ class DynamicPatternFeatureImpl {
 
 template <int N>
 class NgramFeatureImpl {
+public:
   i32 index;
   std::array<i32, N> storage;
 
@@ -129,6 +131,8 @@ class DynamicNgramFeature : public FeatureApply {
                      const util::ArraySlice<u64> &t2,
                      const util::ArraySlice<u64> &t1,
                      const util::ArraySlice<u64> &t0) const noexcept = 0;
+
+  virtual Status emitCode(util::codegen::MethodBody* cls) const = 0;
 };
 
 template <size_t N>
@@ -144,6 +148,38 @@ class NgramFeatureDynamicAdapter : public DynamicNgramFeature {
                      const util::ArraySlice<u64> &t1,
                      const util::ArraySlice<u64> &t0) const noexcept override {
     impl.apply(result, t2, t1, t0);
+  }
+
+  virtual Status emitCode(util::codegen::MethodBody* cls) const override {
+    u64 hashSeed = 0;
+    switch (N) {
+      case 1:
+        hashSeed = UnigramSeed;
+        break;
+      case 2:
+        hashSeed = BigramSeed;
+        break;
+      case 3:
+        hashSeed = TrigramSeed;
+        break;
+      default:
+        return Status::InvalidParameter() << "NGram Feature Codegen: " << N << " is incorrect order of N-gram";
+    }
+
+    auto &bldr = cls->resultInto(impl.index)
+        .addHashConstant(hashSeed)
+        .addHashConstant(impl.index);
+    if (N >= 1) {
+      bldr.addHashIndexed("t0", impl.storage[0]);
+    }
+    if (N >= 2) {
+      bldr.addHashIndexed("t1", impl.storage[1]);
+    }
+    if (N >= 3) {
+      bldr.addHashIndexed("t2", impl.storage[2]);
+    }
+
+    return Status::Ok();
   }
 };
 
@@ -195,6 +231,13 @@ class NgramDynamicFeatureApply
     for (auto &c : children) {
       c->apply(result, t2, t1, t0);
     }
+  }
+
+  Status emitCode(util::codegen::MethodBody* cls) const {
+    for (auto& c: children) {
+      JPP_RETURN_IF_ERROR(c->emitCode(cls));
+    }
+    return Status::Ok();
   }
 };
 

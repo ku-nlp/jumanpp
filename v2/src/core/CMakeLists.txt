@@ -5,7 +5,7 @@ set(core_srcs darts_trie.cc dictionary.cc impl/field_import.cc dic_builder.cc
         core.cc analysis/analyzer.cc analysis/analyzer_impl.cc impl/feature_impl_compute.cc
         spec/spec_types.cc spec/spec_serialization.cc impl/model_io.cc analysis/unk_nodes.cc features_api.cc
         analysis/perceptron.cc analysis/score_processor.cc analysis/analysis_result.cc
-        env.cc impl/graphviz_format.cc)
+        env.cc impl/graphviz_format.cc impl/feature_codegen.cc impl/feature_codegen.h)
 
 set(core_train_srcs
         training/training_io.cc training/loss.cc training/gold_example.cc training/trainer.cc training/scw.cc
@@ -55,3 +55,5 @@ target_link_libraries(jpp_core_tests jpp_core jpp_core_train)
 target_link_libraries(jpp_core_analysis_tests jpp_core)
 target_link_libraries(jpp_core_spec_tests jpp_core)
 target_link_libraries(jpp_core_train_tests jpp_core_train)
+
+add_subdirectory(impl/codegen_test)
