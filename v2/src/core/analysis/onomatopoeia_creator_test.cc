@@ -118,7 +118,8 @@ TEST_CASE("onomatopoeia including hankaku dakuten and handakuten are valid") {
   CHECK(env.contains("ﾎｹﾞﾎｹﾞ", 0, "l1"));
   CHECK(env.contains("ｹﾞﾎｹﾞﾎ", 1, "l1"));
   CHECK(env.contains("ﾎﾟﾖﾎﾟﾖ", 6, "l1"));
-  // "ｼﾞｮﾊﾞｼﾞｮﾊﾞ" is more than 8 characters because "ﾞ" is counted as 1 character.
+  // "ｼﾞｮﾊﾞｼﾞｮﾊﾞ" is more than 8 characters because "ﾞ" is counted as 1
+  // character.
   CHECK_FALSE(env.contains("ｼﾞｮﾊﾞｼﾞｮﾊﾞ", 12, "l1"));
   CHECK(env.numNodeSeeds() == 3);
 }

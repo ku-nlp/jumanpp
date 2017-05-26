@@ -22,7 +22,8 @@ bool OnomatopoeiaUnkMaker::spawnNodes(const AnalysisInput& input,
     LatticePosition nextstep = i;
     TraverseStatus status;
     auto pattern = FindOnomatopoeia(codepoints, i);
-    for (LatticePosition halfLen = 2; halfLen * 2 <= MaxOnomatopoeiaLength; ++halfLen) {
+    for (LatticePosition halfLen = 2; halfLen * 2 <= MaxOnomatopoeiaLength;
+         ++halfLen) {
       if ((pattern & HalfLenToPattern(halfLen)) != Pattern::None) {
         for (; nextstep < i + halfLen * 2; ++nextstep) {
           status = trav.step(codepoints[nextstep].bytes);
@@ -64,7 +65,7 @@ OnomatopoeiaUnkMaker::Pattern OnomatopoeiaUnkMaker::FindOnomatopoeia(
 
   Pattern pattern = Pattern::None;
   for (LatticePosition halfLen = 2; halfLen * 2 <= MaxOnomatopoeiaLength &&
-                                start + halfLen * 2 - 1 < codepoints.size();
+                                    start + halfLen * 2 - 1 < codepoints.size();
        ++halfLen) {
     auto& cp2 = codepoints[start + halfLen];
     if (!cp2.hasClass(cp1Class)) {
