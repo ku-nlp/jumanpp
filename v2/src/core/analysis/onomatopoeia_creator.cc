@@ -20,7 +20,7 @@ bool OnomatopoeiaUnkMaker::spawnNodes(const AnalysisInput& input,
   for (LatticePosition i = 0; i < codepoints.size(); ++i) {
     auto trav = entries_.traversal();
     LatticePosition nextstep = i;
-    jumanpp::core::TraverseStatus status;
+    TraverseStatus status;
     auto pattern = FindOnomatopoeia(codepoints, i);
     for (LatticePosition len = 2; len * 2 <= MaxOnomatopoeiaLength; ++len) {
       if ((pattern & Pattern(1 << len)) != Pattern::None) {
