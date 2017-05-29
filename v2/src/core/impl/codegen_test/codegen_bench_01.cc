@@ -10,6 +10,7 @@
 #include "core/impl/feature_impl_combine.h"
 #include "cg_1_spec.h"
 #include "core/core.h"
+#include "util/seahash.h"
 
 namespace jumanpp_generated {
 class Op1_Bench1: public jumanpp::core::features::StaticFeatureFactory {
@@ -19,86 +20,7 @@ class Op1_Bench1: public jumanpp::core::features::StaticFeatureFactory {
 
 
 using u64 = jumanpp::u64;
-
-
-static constexpr u64 SeaHashSeed0 = 0x16f11fe89b0d677cULL;
-static constexpr u64 SeaHashSeed1 = 0xb480a793d8e6c86cULL;
-
-struct SeaHashState {
-  u64 s0 = SeaHashSeed0;
-  u64 s1 = SeaHashSeed1;
-
-  static SeaHashState withSeed(u64 seed) {
-    return SeaHashState {
-      SeaHashSeed0 ^ diffuse(seed),
-      SeaHashSeed1 ^ diffuse(seed)
-    };
-  }
-
-  JPP_ALWAYS_INLINE static u64 diffuse(u64 v) {
-    v *= 0x6eed0e9da4d94a4fULL;
-    auto a = v >> 32;
-    auto b = static_cast<unsigned char>(v >> 60);
-    v ^= a >> b;
-    v *= 0x6eed0e9da4d94a4fULL;
-    return v;
-  }
-
-  JPP_ALWAYS_INLINE SeaHashState mix(u64 v1, u64 v2) const noexcept {
-    return SeaHashState {
-        diffuse(s0 ^ v1),
-        diffuse(s1 ^ v2)
-    };
-  }
-
-  JPP_ALWAYS_INLINE SeaHashState mix(u64 v0) {
-    return SeaHashState {
-        s1,
-        diffuse(v0 ^ s0)
-    };
-  }
-
-  JPP_ALWAYS_INLINE u64 finish() const noexcept {
-    return diffuse(s0 ^ s1);
-  }
-};
-
-
-JPP_ALWAYS_INLINE inline SeaHashState seaHashSeqImpl(SeaHashState h) { return h; }
-
-JPP_ALWAYS_INLINE inline SeaHashState seaHashSeqImpl(SeaHashState h, u64 one) { return h.mix(one); }
-
-template <typename... Args>
-JPP_ALWAYS_INLINE inline SeaHashState seaHashSeqImpl(SeaHashState h, u64 one, u64 two, Args... args) {
-  return seaHashSeqImpl(h.mix(one, two), args...);
-}
-
-template <>
-JPP_ALWAYS_INLINE inline SeaHashState seaHashSeqImpl(SeaHashState h, u64 one, u64 two) {
-  return h.mix(one, two);
-}
-
-/**
- * Hash sequence with compile-time passed parameters.
- *
- * Implementation uses C++11 vararg templates.
- * @param seed seed value for hash calcuation
- * @param args values for hash calculation
- * @return hash value
- */
-template <typename... Args>
-JPP_ALWAYS_INLINE inline u64 seaHashSeq(Args... args) {
-  return seaHashSeqImpl(SeaHashState{}, sizeof...(args), static_cast<u64>(args)...)
-      .finish();
-}
-
-
-template <typename... Args>
-JPP_ALWAYS_INLINE inline u64 seaHashSeq2(Args... args) {
-  return seaHashSeqImpl(SeaHashState{}, static_cast<u64>(args)...,
-                        sizeof...(args))
-      .finish();
-}
+using namespace jumanpp::util::hashing;
 
 
 namespace jumanpp_generated {
