@@ -344,10 +344,6 @@ BENCHMARK("args first", [](benchpress::context* ctx) {
   }
 })
 
-BENCHMARK("args first + seahash", [](benchpress::context* ctx) {
-  seaHash1(ctx);
-})
-
 void seaHash1(benchpress::context *ctx) {
   BenchInput inp;  
   jumanpp_generated::NgramFeatureStaticApply_Op1_Bench1_SH b1;
@@ -360,6 +356,10 @@ void seaHash1(benchpress::context *ctx) {
     benchpress::clobber();
   }
 }
+
+BENCHMARK("args first + seahash", [](benchpress::context* ctx) {
+  seaHash1(ctx);
+})
 
 BENCHMARK("args first + seahash2", [](benchpress::context* ctx) {
   BenchInput inp;  
