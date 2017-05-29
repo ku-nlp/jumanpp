@@ -242,7 +242,7 @@ public:
         if (d_num_iterations <= 0) {
             return 0;
         }
-        return 1000 * d_duration.count() / d_num_iterations;
+        return d_duration.count() / d_num_iterations;
     }
 
     double get_mb_per_s() const {
