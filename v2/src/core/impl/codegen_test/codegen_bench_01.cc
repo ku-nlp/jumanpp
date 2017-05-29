@@ -64,8 +64,6 @@ struct SeaHashState {
 };
 
 
-void seaHash1(benchpress::context *ctx);
-
 JPP_ALWAYS_INLINE inline SeaHashState seaHashSeqImpl(SeaHashState h) { return h; }
 
 JPP_ALWAYS_INLINE inline SeaHashState seaHashSeqImpl(SeaHashState h, u64 one) { return h.mix(one); }
@@ -269,6 +267,20 @@ public:
 } //anon namespace
 } //jumanpp_generated namespace
 
+namespace jumanpp_generated {
+namespace {
+class NgramFeatureStaticApply_Baseline final : public jumanpp::core::features::impl::NgramFeatureApplyImpl< NgramFeatureStaticApply_Baseline > {
+public:
+  inline void apply(jumanpp::util::MutableArraySlice<jumanpp::u32> result,
+                    const jumanpp::util::ArraySlice<jumanpp::u64> &t2,
+                    const jumanpp::util::ArraySlice<jumanpp::u64> &t1,
+                    const jumanpp::util::ArraySlice<jumanpp::u64> &t0) const noexcept {
+    benchpress::clobber();
+  } // void apply
+}; // class NgramFeatureStaticApply_Op1
+} //anon namespace
+} //jumanpp_generated namespace
+
 using namespace jumanpp;
 
 template <typename T>
@@ -416,12 +428,15 @@ BENCHMARK("dynamic", [](benchpress::context* ctx) {
   doWork2(ctx);
 })
 
-BENCHMARK("baseline", [](benchpress::context* ctx) {
-  BenchInput inp;  
-    benchpress::clobber();
+BENCHMARK("noop", [](benchpress::context* ctx) {
+  BenchInput inp;
+  jumanpp_generated::NgramFeatureStaticApply_Baseline b1;
+  auto nfa = benchRef(b1);
+  benchpress::clobber();
     ctx->reset_timer();
   for (size_t i = 0; i < ctx->num_iterations(); ++i) {
-    auto jfd = inp.features();    
-    benchpress::escape(&jfd);
+    auto jfd = inp.features();
+    nfa->applyBatch(&jfd);
+    benchpress::clobber();
   }
 })
