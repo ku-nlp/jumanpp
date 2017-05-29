@@ -359,30 +359,30 @@ class ModelSpecBuilder : public DslOpBase {
     return *ptr;
   }
 
-  void unigram(const std::initializer_list<FeatureRef>& f1) {
+  void unigram(const std::initializer_list<FeatureRef>& t0) {
     auto cmb = alloc_->make<FeatureCombinator>(alloc_.get());
     auto& data = cmb->data;
-    data.emplace_back(f1, alloc_.get());
+    data.emplace_back(t0, alloc_.get());
     combinators_.emplace_back(cmb);
   }
 
-  void bigram(const std::initializer_list<FeatureRef>& f1,
-              const std::initializer_list<FeatureRef>& f2) {
+  void bigram(const std::initializer_list<FeatureRef>& t1,
+              const std::initializer_list<FeatureRef>& t0) {
     auto cmb = alloc_->make<FeatureCombinator>(alloc_.get());
     auto& data = cmb->data;
-    data.emplace_back(f1, alloc_.get());
-    data.emplace_back(f2, alloc_.get());
+    data.emplace_back(t0, alloc_.get());
+    data.emplace_back(t1, alloc_.get());
     combinators_.emplace_back(cmb);
   }
 
-  void trigram(const std::initializer_list<FeatureRef>& f1,
-               const std::initializer_list<FeatureRef>& f2,
-               const std::initializer_list<FeatureRef>& f3) {
+  void trigram(const std::initializer_list<FeatureRef>& t2,
+               const std::initializer_list<FeatureRef>& t1,
+               const std::initializer_list<FeatureRef>& t0) {
     auto cmb = alloc_->make<FeatureCombinator>(alloc_.get());
     auto& data = cmb->data;
-    data.emplace_back(f1, alloc_.get());
-    data.emplace_back(f2, alloc_.get());
-    data.emplace_back(f3, alloc_.get());
+    data.emplace_back(t0, alloc_.get());
+    data.emplace_back(t1, alloc_.get());
+    data.emplace_back(t2, alloc_.get());
     combinators_.emplace_back(cmb);
   }
 
