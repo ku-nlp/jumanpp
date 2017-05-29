@@ -5,8 +5,8 @@
 #ifndef JUMANPP_FEATURE_CODEGEN_H
 #define JUMANPP_FEATURE_CODEGEN_H
 
-#include "util/codegen.h"
 #include "core/features_api.h"
+#include "util/codegen.h"
 
 namespace jumanpp {
 namespace core {
@@ -21,16 +21,18 @@ struct FeatureCodegenConfig {
 
 class StaticFeatureCodegen {
   FeatureCodegenConfig config_;
-public:
-  explicit StaticFeatureCodegen(const FeatureCodegenConfig &config);
-  Status writeSource(const std::string& filename, const FeatureHolder& features);
+
+ public:
+  explicit StaticFeatureCodegen(const FeatureCodegenConfig& config);
+  Status writeSource(const std::string& filename,
+                     const FeatureHolder& features);
   Status writeHeader(const std::string& filename);
   Status generateAndWrite(const FeatureHolder& features);
 };
 
-} // codegen
-} // features
-} // core
-} // jumanpp
+}  // namespace codegen
+}  // namespace features
+}  // namespace core
+}  // namespace jumanpp
 
-#endif //JUMANPP_FEATURE_CODEGEN_H
+#endif  // JUMANPP_FEATURE_CODEGEN_H

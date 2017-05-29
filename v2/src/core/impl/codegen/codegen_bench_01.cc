@@ -5,90 +5,133 @@
 #define BENCHPRESS_CONFIG_MAIN
 #include "benchpress/benchpress.hpp"
 
-#include "core/features_api.h"
-#include "util/hashing.h"
-#include "core/impl/feature_impl_combine.h"
 #include "cg_1_spec.h"
 #include "core/core.h"
+#include "core/features_api.h"
+#include "core/impl/feature_impl_combine.h"
+#include "util/hashing.h"
 #include "util/seahash.h"
 
 namespace jumanpp_generated {
-class Op1_Bench1: public jumanpp::core::features::StaticFeatureFactory {
-  jumanpp::core::features::NgramFeatureApply* ngram() const override;
+class Op1_Bench1 : public jumanpp::core::features::StaticFeatureFactory {
+  jumanpp::core::features::NgramFeatureApply *ngram() const override;
 };
-} //namespace jumanpp_generated
-
+}  // namespace jumanpp_generated
 
 using u64 = jumanpp::u64;
 using namespace jumanpp::util::hashing;
 
-
 namespace jumanpp_generated {
 namespace {
-class NgramFeatureStaticApply_Op1_Bench1 final : public jumanpp::core::features::impl::NgramFeatureApplyImpl< NgramFeatureStaticApply_Op1_Bench1 > {
-public:
+class NgramFeatureStaticApply_Op1_Bench1 final
+    : public jumanpp::core::features::impl::NgramFeatureApplyImpl<
+          NgramFeatureStaticApply_Op1_Bench1> {
+ public:
   inline void apply(jumanpp::util::MutableArraySlice<jumanpp::u32> result,
                     const jumanpp::util::ArraySlice<jumanpp::u64> &t2,
                     const jumanpp::util::ArraySlice<jumanpp::u64> &t1,
-                    const jumanpp::util::ArraySlice<jumanpp::u64> &t0) const noexcept {
-    result.at(0) = jumanpp::util::hashing::hashCtSeq(5575843856927ULL, 0ULL, t0[0]);
-    result.at(1) = jumanpp::util::hashing::hashCtSeq(5575843856927ULL, 1ULL, t0[1]);
-    result.at(2) = jumanpp::util::hashing::hashCtSeq(5575843856927ULL, 2ULL, t0[2]);
-    result.at(3) = jumanpp::util::hashing::hashCtSeq(5575843856927ULL, 3ULL, t0[3]);
-    result.at(4) = jumanpp::util::hashing::hashCtSeq(5575843856927ULL, 4ULL, t0[4]);
-    result.at(5) = jumanpp::util::hashing::hashCtSeq(5575843856927ULL, 5ULL, t0[5]);
-    result.at(6) = jumanpp::util::hashing::hashCtSeq(5575843856927ULL, 6ULL, t0[6]);
-    result.at(7) = jumanpp::util::hashing::hashCtSeq(5575843856927ULL, 7ULL, t0[7]);
-    result.at(8) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 8ULL, t0[1], t1[0]);
-    result.at(9) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 9ULL, t0[8], t1[0]);
-    result.at(10) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 10ULL, t0[9], t1[0]);
-    result.at(11) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 11ULL, t0[10], t1[0]);
-    result.at(12) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 12ULL, t0[11], t1[0]);
-    result.at(13) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 13ULL, t0[0], t1[8]);
-    result.at(14) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 14ULL, t0[8], t1[8]);
-    result.at(15) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 15ULL, t0[9], t1[8]);
-    result.at(16) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 16ULL, t0[10], t1[8]);
-    result.at(17) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 17ULL, t0[11], t1[8]);
-    result.at(18) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 18ULL, t0[0], t1[9]);
-    result.at(19) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 19ULL, t0[8], t1[9]);
-    result.at(20) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 20ULL, t0[9], t1[9]);
-    result.at(21) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 21ULL, t0[10], t1[9]);
-    result.at(22) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 22ULL, t0[11], t1[9]);
-    result.at(23) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 23ULL, t0[0], t1[10]);
-    result.at(24) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 24ULL, t0[8], t1[10]);
-    result.at(25) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 25ULL, t0[9], t1[10]);
-    result.at(26) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 26ULL, t0[10], t1[10]);
-    result.at(27) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 27ULL, t0[11], t1[10]);
-    result.at(28) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 28ULL, t0[0], t1[11]);
-    result.at(29) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 29ULL, t0[8], t1[11]);
-    result.at(30) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 30ULL, t0[9], t1[11]);
-    result.at(31) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 31ULL, t0[10], t1[11]);
-    result.at(32) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 32ULL, t0[11], t1[11]);
-    result.at(33) = jumanpp::util::hashing::hashCtSeq(89213361200927ULL, 33ULL, t0[8], t1[8], t2[8]);
-    result.at(34) = jumanpp::util::hashing::hashCtSeq(89213361200927ULL, 34ULL, t0[8], t1[1], t2[8]);
-    result.at(35) = jumanpp::util::hashing::hashCtSeq(89213361200927ULL, 35ULL, t0[8], t1[0], t2[0]);
-    result.at(36) = jumanpp::util::hashing::hashCtSeq(89213361200927ULL, 36ULL, t0[8], t1[1], t2[1]);
-    result.at(37) = jumanpp::util::hashing::hashCtSeq(89213361200927ULL, 37ULL, t0[8], t1[1], t2[12]);
-    result.at(38) = jumanpp::util::hashing::hashCtSeq(89213361200927ULL, 38ULL, t0[8], t1[13], t2[12]);
-    result.at(39) = jumanpp::util::hashing::hashCtSeq(89213361200927ULL, 39ULL, t0[14], t1[15], t2[12]);
+                    const jumanpp::util::ArraySlice<jumanpp::u64> &t0) const
+      noexcept {
+    result.at(0) =
+        jumanpp::util::hashing::hashCtSeq(5575843856927ULL, 0ULL, t0[0]);
+    result.at(1) =
+        jumanpp::util::hashing::hashCtSeq(5575843856927ULL, 1ULL, t0[1]);
+    result.at(2) =
+        jumanpp::util::hashing::hashCtSeq(5575843856927ULL, 2ULL, t0[2]);
+    result.at(3) =
+        jumanpp::util::hashing::hashCtSeq(5575843856927ULL, 3ULL, t0[3]);
+    result.at(4) =
+        jumanpp::util::hashing::hashCtSeq(5575843856927ULL, 4ULL, t0[4]);
+    result.at(5) =
+        jumanpp::util::hashing::hashCtSeq(5575843856927ULL, 5ULL, t0[5]);
+    result.at(6) =
+        jumanpp::util::hashing::hashCtSeq(5575843856927ULL, 6ULL, t0[6]);
+    result.at(7) =
+        jumanpp::util::hashing::hashCtSeq(5575843856927ULL, 7ULL, t0[7]);
+    result.at(8) =
+        jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 8ULL, t0[1], t1[0]);
+    result.at(9) =
+        jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 9ULL, t0[8], t1[0]);
+    result.at(10) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 10ULL,
+                                                      t0[9], t1[0]);
+    result.at(11) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 11ULL,
+                                                      t0[10], t1[0]);
+    result.at(12) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 12ULL,
+                                                      t0[11], t1[0]);
+    result.at(13) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 13ULL,
+                                                      t0[0], t1[8]);
+    result.at(14) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 14ULL,
+                                                      t0[8], t1[8]);
+    result.at(15) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 15ULL,
+                                                      t0[9], t1[8]);
+    result.at(16) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 16ULL,
+                                                      t0[10], t1[8]);
+    result.at(17) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 17ULL,
+                                                      t0[11], t1[8]);
+    result.at(18) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 18ULL,
+                                                      t0[0], t1[9]);
+    result.at(19) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 19ULL,
+                                                      t0[8], t1[9]);
+    result.at(20) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 20ULL,
+                                                      t0[9], t1[9]);
+    result.at(21) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 21ULL,
+                                                      t0[10], t1[9]);
+    result.at(22) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 22ULL,
+                                                      t0[11], t1[9]);
+    result.at(23) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 23ULL,
+                                                      t0[0], t1[10]);
+    result.at(24) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 24ULL,
+                                                      t0[8], t1[10]);
+    result.at(25) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 25ULL,
+                                                      t0[9], t1[10]);
+    result.at(26) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 26ULL,
+                                                      t0[10], t1[10]);
+    result.at(27) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 27ULL,
+                                                      t0[11], t1[10]);
+    result.at(28) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 28ULL,
+                                                      t0[0], t1[11]);
+    result.at(29) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 29ULL,
+                                                      t0[8], t1[11]);
+    result.at(30) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 30ULL,
+                                                      t0[9], t1[11]);
+    result.at(31) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 31ULL,
+                                                      t0[10], t1[11]);
+    result.at(32) = jumanpp::util::hashing::hashCtSeq(5575847461935ULL, 32ULL,
+                                                      t0[11], t1[11]);
+    result.at(33) = jumanpp::util::hashing::hashCtSeq(89213361200927ULL, 33ULL,
+                                                      t0[8], t1[8], t2[8]);
+    result.at(34) = jumanpp::util::hashing::hashCtSeq(89213361200927ULL, 34ULL,
+                                                      t0[8], t1[1], t2[8]);
+    result.at(35) = jumanpp::util::hashing::hashCtSeq(89213361200927ULL, 35ULL,
+                                                      t0[8], t1[0], t2[0]);
+    result.at(36) = jumanpp::util::hashing::hashCtSeq(89213361200927ULL, 36ULL,
+                                                      t0[8], t1[1], t2[1]);
+    result.at(37) = jumanpp::util::hashing::hashCtSeq(89213361200927ULL, 37ULL,
+                                                      t0[8], t1[1], t2[12]);
+    result.at(38) = jumanpp::util::hashing::hashCtSeq(89213361200927ULL, 38ULL,
+                                                      t0[8], t1[13], t2[12]);
+    result.at(39) = jumanpp::util::hashing::hashCtSeq(89213361200927ULL, 39ULL,
+                                                      t0[14], t1[15], t2[12]);
 
-  } // void apply
-}; // class NgramFeatureStaticApply_Op1
-} //anon namespace
-jumanpp::core::features::NgramFeatureApply* Op1_Bench1::ngram() const {
+  }  // void apply
+};   // class NgramFeatureStaticApply_Op1
+}  // namespace
+jumanpp::core::features::NgramFeatureApply *Op1_Bench1::ngram() const {
   return new NgramFeatureStaticApply_Op1_Bench1{};
 }
-} //jumanpp_generated namespace
-
+}  // namespace jumanpp_generated
 
 namespace jumanpp_generated {
 namespace {
-class NgramFeatureStaticApply_Op1_Bench1_SH final : public jumanpp::core::features::impl::NgramFeatureApplyImpl< NgramFeatureStaticApply_Op1_Bench1_SH > {
-public:
+class NgramFeatureStaticApply_Op1_Bench1_SH final
+    : public jumanpp::core::features::impl::NgramFeatureApplyImpl<
+          NgramFeatureStaticApply_Op1_Bench1_SH> {
+ public:
   inline void apply(jumanpp::util::MutableArraySlice<jumanpp::u32> result,
                     const jumanpp::util::ArraySlice<jumanpp::u64> &t2,
                     const jumanpp::util::ArraySlice<jumanpp::u64> &t1,
-                    const jumanpp::util::ArraySlice<jumanpp::u64> &t0) const noexcept {
+                    const jumanpp::util::ArraySlice<jumanpp::u64> &t0) const
+      noexcept {
     result.at(0) = seaHashSeq(5575843856927ULL, 0ULL, t0[0]);
     result.at(1) = seaHashSeq(5575843856927ULL, 1ULL, t0[1]);
     result.at(2) = seaHashSeq(5575843856927ULL, 2ULL, t0[2]);
@@ -128,21 +171,25 @@ public:
     result.at(36) = seaHashSeq(89213361200927ULL, 36ULL, t0[8], t1[1], t2[1]);
     result.at(37) = seaHashSeq(89213361200927ULL, 37ULL, t0[8], t1[1], t2[12]);
     result.at(38) = seaHashSeq(89213361200927ULL, 38ULL, t0[8], t1[13], t2[12]);
-    result.at(39) = seaHashSeq(89213361200927ULL, 39ULL, t0[14], t1[15], t2[12]);
+    result.at(39) =
+        seaHashSeq(89213361200927ULL, 39ULL, t0[14], t1[15], t2[12]);
 
-  } // void apply
-}; // class NgramFeatureStaticApply_Op1
-} //anon namespace
-} //jumanpp_generated namespace
+  }  // void apply
+};   // class NgramFeatureStaticApply_Op1
+}  // namespace
+}  // namespace jumanpp_generated
 
 namespace jumanpp_generated {
 namespace {
-class NgramFeatureStaticApply_Op1_Bench1_SH2 final : public jumanpp::core::features::impl::NgramFeatureApplyImpl< NgramFeatureStaticApply_Op1_Bench1_SH2 > {
-public:
+class NgramFeatureStaticApply_Op1_Bench1_SH2 final
+    : public jumanpp::core::features::impl::NgramFeatureApplyImpl<
+          NgramFeatureStaticApply_Op1_Bench1_SH2> {
+ public:
   inline void apply(jumanpp::util::MutableArraySlice<jumanpp::u32> result,
                     const jumanpp::util::ArraySlice<jumanpp::u64> &t2,
                     const jumanpp::util::ArraySlice<jumanpp::u64> &t1,
-                    const jumanpp::util::ArraySlice<jumanpp::u64> &t0) const noexcept {
+                    const jumanpp::util::ArraySlice<jumanpp::u64> &t0) const
+      noexcept {
     result.at(0) = seaHashSeq2(t0[0], 5575843856927ULL, 0ULL);
     result.at(1) = seaHashSeq2(t0[1], 5575843856927ULL, 1ULL);
     result.at(2) = seaHashSeq2(t0[2], 5575843856927ULL, 2ULL);
@@ -181,38 +228,43 @@ public:
     result.at(35) = seaHashSeq2(t0[8], t1[0], t2[0], 89213361200927ULL, 35ULL);
     result.at(36) = seaHashSeq2(t0[8], t1[1], t2[1], 89213361200927ULL, 36ULL);
     result.at(37) = seaHashSeq2(t0[8], t1[1], t2[12], 89213361200927ULL, 37ULL);
-    result.at(38) = seaHashSeq2(t0[8], t1[13], t2[12], 89213361200927ULL, 38ULL);
-    result.at(39) = seaHashSeq2(t0[14], t1[15], t2[12], 89213361200927ULL, 39ULL);
+    result.at(38) =
+        seaHashSeq2(t0[8], t1[13], t2[12], 89213361200927ULL, 38ULL);
+    result.at(39) =
+        seaHashSeq2(t0[14], t1[15], t2[12], 89213361200927ULL, 39ULL);
 
-  } // void apply
-}; // class NgramFeatureStaticApply_Op1
-} //anon namespace
-} //jumanpp_generated namespace
+  }  // void apply
+};   // class NgramFeatureStaticApply_Op1
+}  // namespace
+}  // namespace jumanpp_generated
 
 namespace jumanpp_generated {
 namespace {
-class NgramFeatureStaticApply_Baseline final : public jumanpp::core::features::impl::NgramFeatureApplyImpl< NgramFeatureStaticApply_Baseline > {
-public:
+class NgramFeatureStaticApply_Baseline final
+    : public jumanpp::core::features::impl::NgramFeatureApplyImpl<
+          NgramFeatureStaticApply_Baseline> {
+ public:
   inline void apply(jumanpp::util::MutableArraySlice<jumanpp::u32> result,
                     const jumanpp::util::ArraySlice<jumanpp::u64> &t2,
                     const jumanpp::util::ArraySlice<jumanpp::u64> &t1,
-                    const jumanpp::util::ArraySlice<jumanpp::u64> &t0) const noexcept {
+                    const jumanpp::util::ArraySlice<jumanpp::u64> &t0) const
+      noexcept {
     benchpress::clobber();
-  } // void apply
-}; // class NgramFeatureStaticApply_Op1
-} //anon namespace
-} //jumanpp_generated namespace
+  }  // void apply
+};   // class NgramFeatureStaticApply_Op1
+}  // namespace
+}  // namespace jumanpp_generated
 
 using namespace jumanpp;
 
 template <typename T>
-util::Sliceable<T> slice(std::vector<T>* slc, size_t rows) {
+util::Sliceable<T> slice(std::vector<T> *slc, size_t rows) {
   util::MutableArraySlice<T> mas{slc};
   return util::Sliceable<T>{mas, slc->size() / rows, rows};
 }
 
 template <typename T, size_t N>
-util::Sliceable<T> slice(std::array<T, N>* slc, size_t rows) {
+util::Sliceable<T> slice(std::array<T, N> *slc, size_t rows) {
   util::MutableArraySlice<T> mas{slc->data(), N};
   return util::Sliceable<T>{mas, slc->size() / rows, rows};
 }
@@ -234,31 +286,28 @@ struct BenchInput {
     std::fill(t2.begin(), t2.end(), 3);
   }
 
-  __attribute__((noinline)) jumanpp::core::features::impl::NgramFeatureData features() {
+  __attribute__((noinline)) jumanpp::core::features::impl::NgramFeatureData
+  features() {
     auto resSl = slice(&result, NumExamples);
     auto t0SL = slice(&t0, NumExamples);
     util::MutableArraySlice<u64> t1s{&t1};
     util::MutableArraySlice<u64> t2s{&t2};
-    return {
-        resSl,
-        t2s,
-        t1s,
-        t0SL
-    };
+    return {resSl, t2s, t1s, t0SL};
   }
 };
 
-template<typename T>
-__attribute__((noinline)) jumanpp::core::features::NgramFeatureApply* benchRef(T& ref) {
+template <typename T>
+__attribute__((noinline)) jumanpp::core::features::NgramFeatureApply *benchRef(
+    T &ref) {
   return &ref;
 }
 
-BENCHMARK("args first", [](benchpress::context* ctx) {
+BENCHMARK("args first", [](benchpress::context *ctx) {
   BenchInput inp;
-  jumanpp_generated::NgramFeatureStaticApply_Op1_Bench1 b1;  
+  jumanpp_generated::NgramFeatureStaticApply_Op1_Bench1 b1;
   auto nfa = benchRef(b1);
-    benchpress::clobber();
-    ctx->reset_timer();
+  benchpress::clobber();
+  ctx->reset_timer();
   for (size_t i = 0; i < ctx->num_iterations(); ++i) {
     auto jfd = inp.features();
     nfa->applyBatch(&jfd);
@@ -267,7 +316,7 @@ BENCHMARK("args first", [](benchpress::context* ctx) {
 })
 
 void seaHash1(benchpress::context *ctx) {
-  BenchInput inp;  
+  BenchInput inp;
   jumanpp_generated::NgramFeatureStaticApply_Op1_Bench1_SH b1;
   auto nfa = benchRef(b1);
   benchpress::clobber();
@@ -279,12 +328,11 @@ void seaHash1(benchpress::context *ctx) {
   }
 }
 
-BENCHMARK("args first + seahash", [](benchpress::context* ctx) {
-  seaHash1(ctx);
-})
+BENCHMARK("args first + seahash",
+          [](benchpress::context *ctx) { seaHash1(ctx); })
 
-BENCHMARK("args first + seahash2", [](benchpress::context* ctx) {
-  BenchInput inp;  
+BENCHMARK("args first + seahash2", [](benchpress::context *ctx) {
+  BenchInput inp;
   jumanpp_generated::NgramFeatureStaticApply_Op1_Bench1_SH2 b1;
   auto nfa = benchRef(b1);
   benchpress::clobber();
@@ -296,8 +344,7 @@ BENCHMARK("args first + seahash2", [](benchpress::context* ctx) {
   }
 })
 
-
-void doWork2(benchpress::context* ctx) {
+void doWork2(benchpress::context *ctx) {
   jumanpp::core::spec::dsl::ModelSpecBuilder bldr;
   jumanpp::codegentest::CgOneSpecFactory::fillSpec(bldr);
 
@@ -335,7 +382,7 @@ void doWork2(benchpress::context* ctx) {
     throw std::exception();
   }
 
-  BenchInput inp;  
+  BenchInput inp;
   auto nfa = benchRef(*fh.ngram);
   benchpress::clobber();
   ctx->reset_timer();
@@ -346,16 +393,14 @@ void doWork2(benchpress::context* ctx) {
   }
 }
 
-BENCHMARK("dynamic", [](benchpress::context* ctx) {
-  doWork2(ctx);
-})
+BENCHMARK("dynamic", [](benchpress::context *ctx) { doWork2(ctx); })
 
-BENCHMARK("noop", [](benchpress::context* ctx) {
+BENCHMARK("noop", [](benchpress::context *ctx) {
   BenchInput inp;
   jumanpp_generated::NgramFeatureStaticApply_Baseline b1;
   auto nfa = benchRef(b1);
   benchpress::clobber();
-    ctx->reset_timer();
+  ctx->reset_timer();
   for (size_t i = 0; i < ctx->num_iterations(); ++i) {
     auto jfd = inp.features();
     nfa->applyBatch(&jfd);

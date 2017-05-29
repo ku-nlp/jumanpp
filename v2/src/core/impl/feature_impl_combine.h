@@ -9,9 +9,9 @@
 #include "core/features_api.h"
 #include "core/impl/feature_impl_types.h"
 #include "core/impl/feature_types.h"
+#include "util/codegen.h"
 #include "util/hashing.h"
 #include "util/seahash.h"
-#include "util/codegen.h"
 
 namespace jumanpp {
 namespace core {
@@ -39,7 +39,7 @@ class DynamicPatternFeatureImpl {
 
 template <int N>
 class NgramFeatureImpl {
-public:
+ public:
   i32 index;
   std::array<i32, N> storage;
 
@@ -133,7 +133,7 @@ class DynamicNgramFeature : public FeatureApply {
                      const util::ArraySlice<u64> &t1,
                      const util::ArraySlice<u64> &t0) const noexcept = 0;
 
-  virtual Status emitCode(util::codegen::MethodBody* cls) const = 0;
+  virtual Status emitCode(util::codegen::MethodBody *cls) const = 0;
 };
 
 template <size_t N>
@@ -151,7 +151,7 @@ class NgramFeatureDynamicAdapter : public DynamicNgramFeature {
     impl.apply(result, t2, t1, t0);
   }
 
-  virtual Status emitCode(util::codegen::MethodBody* cls) const override {
+  virtual Status emitCode(util::codegen::MethodBody *cls) const override {
     u64 hashSeed = 0;
     switch (N) {
       case 1:
@@ -164,12 +164,13 @@ class NgramFeatureDynamicAdapter : public DynamicNgramFeature {
         hashSeed = TrigramSeed;
         break;
       default:
-        return Status::InvalidParameter() << "NGram Feature Codegen: " << N << " is incorrect order of N-gram";
+        return Status::InvalidParameter() << "NGram Feature Codegen: " << N
+                                          << " is incorrect order of N-gram";
     }
 
     auto &bldr = cls->resultInto(impl.index)
-        .addHashConstant(hashSeed)
-        .addHashConstant(impl.index);
+                     .addHashConstant(hashSeed)
+                     .addHashConstant(impl.index);
     if (N >= 1) {
       bldr.addHashIndexed("t0", impl.storage[0]);
     }
@@ -234,8 +235,8 @@ class NgramDynamicFeatureApply
     }
   }
 
-  Status emitCode(util::codegen::MethodBody* cls) const {
-    for (auto& c: children) {
+  Status emitCode(util::codegen::MethodBody *cls) const {
+    for (auto &c : children) {
       JPP_RETURN_IF_ERROR(c->emitCode(cls));
     }
     return Status::Ok();

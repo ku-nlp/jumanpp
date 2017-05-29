@@ -3,12 +3,12 @@
 //
 
 #include <iostream>
-#include "core/spec/spec_dsl.h"
-#include "core/impl/feature_codegen.h"
+#include "cg_1_spec.h"
+#include "core/core.h"
 #include "core/dic_builder.h"
 #include "core/dictionary.h"
-#include "core/core.h"
-#include "cg_1_spec.h"
+#include "core/impl/feature_codegen.h"
+#include "core/spec/spec_dsl.h"
 
 namespace cg = jumanpp::core::features::codegen;
 
@@ -63,7 +63,8 @@ int main(int argc, char** argv) {
 
   s = sfc.generateAndWrite(fh);
   if (!s) {
-    std::cerr << "failed to create static files for " << conf.filename << ": " << s.message;
+    std::cerr << "failed to create static files for " << conf.filename << ": "
+              << s.message;
     return 1;
   }
 

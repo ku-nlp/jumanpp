@@ -3,10 +3,10 @@
 //
 
 #include <array>
-#include "testing/test_analyzer.h"
-#include "core/impl/feature_impl_combine.h"
 #include "cg_2_spec.h"
 #include "cgtest02.h"
+#include "core/impl/feature_impl_combine.h"
+#include "testing/test_analyzer.h"
 
 using namespace jumanpp::testing;
 using namespace jumanpp::core::spec::dsl;
@@ -29,7 +29,7 @@ struct BenchInput {
   std::array<u64, NumFeatures> t2;
 
   BenchInput() {
-    for (int f = 0 ; f < NumFeatures; ++f) {
+    for (int f = 0; f < NumFeatures; ++f) {
       for (int ex = 0; ex < NumExamples; ++ex) {
         t0.at(f + ex * NumFeatures) = 10000 + 1000 * f + ex * 2;
       }
@@ -43,12 +43,7 @@ struct BenchInput {
     auto t0SL = slice(&t0, NumExamples);
     util::MutableArraySlice<u64> t1s{&t1};
     util::MutableArraySlice<u64> t2s{&t2};
-    return {
-        resSl,
-        t2s,
-        t1s,
-        t0SL
-    };
+    return {resSl, t2s, t1s, t0SL};
   }
 };
 

@@ -20,7 +20,7 @@ TEST_CASE("pattern feature compiles") {
   CHECK(data[2] == 0);
 }
 
-//TODO: fixme
+// TODO: fixme
 TEST_CASE("ngram features can be compiled", "[.]") {
   constexpr NgramFeatureImpl<1> uni{0, 1};
   constexpr NgramFeatureImpl<2> bi{1, 1, 2};

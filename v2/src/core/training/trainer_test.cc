@@ -3,10 +3,10 @@
 //
 
 #include "trainer.h"
+#include <fstream>
+#include "core/impl/graphviz_format.h"
 #include "scw.h"
 #include "training_test_common.h"
-#include "core/impl/graphviz_format.h"
-#include <fstream>
 
 using namespace jumanpp::core::training;
 
@@ -55,7 +55,7 @@ class TrainerEnv : public GoldExampleEnv {
     REQUIRE_OK(fmt.initialize(pana->output()));
     fmt.reset();
     auto gnodes = trainer.goldenPath().nodes();
-    for (auto &node : gnodes) {
+    for (auto& node : gnodes) {
       fmt.markGold(node);
     }
     auto lat = pana->lattice();
@@ -74,7 +74,7 @@ TEST_CASE("trainer can compute score for a simple sentence") {
   CHECK(env.trainer.prepare());
   CHECK(env.trainer.compute(scw.scorers()));
   env.trainer.computeTrainingLoss();
-  //env.dumpTrainers("/tmp/dots", 0);
+  // env.dumpTrainers("/tmp/dots", 0);
   CHECK(env.trainer.lossValue() > 0);
 }
 

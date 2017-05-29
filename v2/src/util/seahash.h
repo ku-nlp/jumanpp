@@ -22,10 +22,8 @@ struct SeaHashState {
   u64 s1 = SeaHashSeed1;
 
   static SeaHashState withSeed(u64 seed) {
-    return SeaHashState {
-        SeaHashSeed0 ^ diffuse(seed),
-        SeaHashSeed1 ^ diffuse(seed)
-    };
+    return SeaHashState{SeaHashSeed0 ^ diffuse(seed),
+                        SeaHashSeed1 ^ diffuse(seed)};
   }
 
   JPP_ALWAYS_INLINE inline static u64 diffuse(u64 v) {
@@ -38,17 +36,11 @@ struct SeaHashState {
   }
 
   JPP_ALWAYS_INLINE inline SeaHashState mix(u64 v1, u64 v2) const noexcept {
-    return SeaHashState {
-        diffuse(s0 ^ v1),
-        diffuse(s1 ^ v2)
-    };
+    return SeaHashState{diffuse(s0 ^ v1), diffuse(s1 ^ v2)};
   }
 
   JPP_ALWAYS_INLINE inline SeaHashState mix(u64 v0) {
-    return SeaHashState {
-        s1,
-        diffuse(v0 ^ s0)
-    };
+    return SeaHashState{s1, diffuse(v0 ^ s0)};
   }
 
   JPP_ALWAYS_INLINE inline u64 finish() const noexcept {
@@ -57,20 +49,26 @@ struct SeaHashState {
 };
 
 namespace detail {
-JPP_ALWAYS_INLINE inline SeaHashState seaHashSeqImpl(SeaHashState h) { return h; }
+JPP_ALWAYS_INLINE inline SeaHashState seaHashSeqImpl(SeaHashState h) {
+  return h;
+}
 
-JPP_ALWAYS_INLINE inline SeaHashState seaHashSeqImpl(SeaHashState h, u64 one) { return h.mix(one); }
+JPP_ALWAYS_INLINE inline SeaHashState seaHashSeqImpl(SeaHashState h, u64 one) {
+  return h.mix(one);
+}
 
 template <typename... Args>
-JPP_ALWAYS_INLINE inline SeaHashState seaHashSeqImpl(SeaHashState h, u64 one, u64 two, Args... args) {
+JPP_ALWAYS_INLINE inline SeaHashState seaHashSeqImpl(SeaHashState h, u64 one,
+                                                     u64 two, Args... args) {
   return seaHashSeqImpl(h.mix(one, two), args...);
 }
 
 template <>
-JPP_ALWAYS_INLINE inline SeaHashState seaHashSeqImpl(SeaHashState h, u64 one, u64 two) {
+JPP_ALWAYS_INLINE inline SeaHashState seaHashSeqImpl(SeaHashState h, u64 one,
+                                                     u64 two) {
   return h.mix(one, two);
 }
-} // detail
+}  // namespace detail
 
 /**
  * Hash sequence with compile-time passed parameters.
@@ -83,20 +81,21 @@ JPP_ALWAYS_INLINE inline SeaHashState seaHashSeqImpl(SeaHashState h, u64 one, u6
  */
 template <typename... Args>
 JPP_ALWAYS_INLINE inline u64 seaHashSeq(Args... args) {
-  return detail::seaHashSeqImpl(SeaHashState{}, sizeof...(args), static_cast<u64>(args)...)
+  return detail::seaHashSeqImpl(SeaHashState{}, sizeof...(args),
+                                static_cast<u64>(args)...)
       .finish();
 }
 
-//This version pushes tuple size as a last argument.
+// This version pushes tuple size as a last argument.
 template <typename... Args>
 JPP_ALWAYS_INLINE inline u64 seaHashSeq2(Args... args) {
   return detail::seaHashSeqImpl(SeaHashState{}, static_cast<u64>(args)...,
-                        sizeof...(args))
+                                sizeof...(args))
       .finish();
 }
 
-} // hashing
-} // util
-} // jumanpp
+}  // namespace hashing
+}  // namespace util
+}  // namespace jumanpp
 
-#endif //JUMANPP_SEAHASH_H
+#endif  // JUMANPP_SEAHASH_H

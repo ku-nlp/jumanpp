@@ -11,7 +11,7 @@ namespace jumanpp {
 namespace codegentest {
 
 class CgOneSpecFactory {
-public:
+ public:
   static void fillSpec(core::spec::dsl::ModelSpecBuilder& msb) {
     auto& f1 = msb.field(1, "f1").strings().trieIndex();
     auto& f2 = msb.field(2, "f2").strings();
@@ -25,41 +25,40 @@ public:
     msb.unigram({f2});
     msb.unigram({f3});
     msb.unigram({f4});
-    msb.unigram({f5,f6});
-    msb.unigram({f1,f4,f5});
-    msb.unigram({f1,f4,f6});
-    msb.unigram({f1,f4,f7});
+    msb.unigram({f5, f6});
+    msb.unigram({f1, f4, f5});
+    msb.unigram({f1, f4, f6});
+    msb.unigram({f1, f4, f7});
 
     msb.bigram({f1}, {f2});
-    msb.bigram({f1}, {f1, f2});    
-    msb.bigram({f1}, {f1, f2, f3});    
-    msb.bigram({f1}, {f1, f2, f3, f4});    
+    msb.bigram({f1}, {f1, f2});
+    msb.bigram({f1}, {f1, f2, f3});
+    msb.bigram({f1}, {f1, f2, f3, f4});
     msb.bigram({f1}, {f1, f2, f3, f4, f5});
 
-  msb.bigram({f1, f2}, {f1});
-  msb.bigram({f1, f2}, {f1, f2});
-  msb.bigram({f1, f2}, {f1, f2, f3});
-  msb.bigram({f1, f2}, {f1, f2, f3, f4});
-  msb.bigram({f1, f2}, {f1, f2, f3, f4, f5});
+    msb.bigram({f1, f2}, {f1});
+    msb.bigram({f1, f2}, {f1, f2});
+    msb.bigram({f1, f2}, {f1, f2, f3});
+    msb.bigram({f1, f2}, {f1, f2, f3, f4});
+    msb.bigram({f1, f2}, {f1, f2, f3, f4, f5});
 
-      msb.bigram({f1, f2, f3}, {f1});
-      msb.bigram({f1, f2, f3}, {f1, f2});
-      msb.bigram({f1, f2, f3}, {f1, f2, f3});
-      msb.bigram({f1, f2, f3}, {f1, f2, f3, f4});
-      msb.bigram({f1, f2, f3}, {f1, f2, f3, f4, f5});
+    msb.bigram({f1, f2, f3}, {f1});
+    msb.bigram({f1, f2, f3}, {f1, f2});
+    msb.bigram({f1, f2, f3}, {f1, f2, f3});
+    msb.bigram({f1, f2, f3}, {f1, f2, f3, f4});
+    msb.bigram({f1, f2, f3}, {f1, f2, f3, f4, f5});
 
-      msb.bigram({f1, f2, f3, f4}, {f1});
-      msb.bigram({f1, f2, f3, f4}, {f1, f2});
-      msb.bigram({f1, f2, f3, f4}, {f1, f2, f3});
-      msb.bigram({f1, f2, f3, f4}, {f1, f2, f3, f4});
-      msb.bigram({f1, f2, f3, f4}, {f1, f2, f3, f4, f5});
+    msb.bigram({f1, f2, f3, f4}, {f1});
+    msb.bigram({f1, f2, f3, f4}, {f1, f2});
+    msb.bigram({f1, f2, f3, f4}, {f1, f2, f3});
+    msb.bigram({f1, f2, f3, f4}, {f1, f2, f3, f4});
+    msb.bigram({f1, f2, f3, f4}, {f1, f2, f3, f4, f5});
 
-      msb.bigram({f1, f2, f3, f4, f5}, {f1});
-      msb.bigram({f1, f2, f3, f4, f5}, {f1, f2});
-      msb.bigram({f1, f2, f3, f4, f5}, {f1, f2, f3});
-      msb.bigram({f1, f2, f3, f4, f5}, {f1, f2, f3, f4});
-      msb.bigram({f1, f2, f3, f4, f5}, {f1, f2, f3, f4, f5});
-
+    msb.bigram({f1, f2, f3, f4, f5}, {f1});
+    msb.bigram({f1, f2, f3, f4, f5}, {f1, f2});
+    msb.bigram({f1, f2, f3, f4, f5}, {f1, f2, f3});
+    msb.bigram({f1, f2, f3, f4, f5}, {f1, f2, f3, f4});
+    msb.bigram({f1, f2, f3, f4, f5}, {f1, f2, f3, f4, f5});
 
     msb.trigram({f1, f2}, {f1, f2}, {f1, f2});
     msb.trigram({f1, f2}, {f2}, {f1, f2});
@@ -71,7 +70,7 @@ public:
   }
 };
 
-} // codegentest
-} // jumanpp
+}  // namespace codegentest
+}  // namespace jumanpp
 
-#endif //JUMANPP_CG_1_SPEC_H
+#endif  // JUMANPP_CG_1_SPEC_H

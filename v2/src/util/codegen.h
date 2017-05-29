@@ -63,7 +63,8 @@ class ResultAssign {
   i32 resultIdx_;
   std::vector<std::string> pieces_;
   std::stringstream ss_;
-public:
+
+ public:
   explicit ResultAssign(i32 resultIdx_) : resultIdx_(resultIdx_) {}
 
   ResultAssign& addHashConstant(u64 value) {
@@ -82,9 +83,8 @@ public:
 
   void render(io::Printer& p) const {
     PrintSemicolon x{p};
-    p << "result.at(" << resultIdx_ << ") = " <<
-          "jumanpp::util::hashing::hashCtSeq"
-      << '(';
+    p << "result.at(" << resultIdx_ << ") = "
+      << "jumanpp::util::hashing::hashCtSeq" << '(';
     for (int i = 0; i < pieces_.size(); ++i) {
       p << pieces_[i];
       if (i != pieces_.size() - 1) {
@@ -97,14 +97,15 @@ public:
 
 class MethodBody {
   std::vector<ResultAssign> assigns_;
-public:
+
+ public:
   ResultAssign& resultInto(i32 index) {
     assigns_.emplace_back(index);
     return assigns_.back();
   }
 
   void render(io::Printer& p) {
-    for (auto &a: assigns_) {
+    for (auto& a : assigns_) {
       a.render(p);
     }
   }

@@ -11,7 +11,7 @@ namespace jumanpp {
 namespace codegentest {
 
 class CgTwoSpecFactory {
-public:
+ public:
   static void fillSpec(core::spec::dsl::ModelSpecBuilder& msb) {
     auto& f1 = msb.field(1, "f1").strings().trieIndex();
     auto& f2 = msb.field(2, "f2").strings();
@@ -37,7 +37,7 @@ public:
   }
 };
 
-} // codegentest
-} // jumanpp
+}  // namespace codegentest
+}  // namespace jumanpp
 
-#endif //JUMANPP_CG_2_SPEC_H_H
+#endif  // JUMANPP_CG_2_SPEC_H_H
