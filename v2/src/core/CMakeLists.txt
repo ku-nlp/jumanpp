@@ -56,4 +56,4 @@ target_link_libraries(jpp_core_analysis_tests jpp_core)
 target_link_libraries(jpp_core_spec_tests jpp_core)
 target_link_libraries(jpp_core_train_tests jpp_core_train)
 
-add_subdirectory(impl/codegen_test)
+add_subdirectory(impl/codegen)

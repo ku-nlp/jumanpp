@@ -10,6 +10,7 @@
 #include "core/impl/feature_impl_types.h"
 #include "core/impl/feature_types.h"
 #include "util/hashing.h"
+#include "util/seahash.h"
 #include "util/codegen.h"
 
 namespace jumanpp {

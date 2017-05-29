@@ -5,6 +5,8 @@
 #include "trainer.h"
 #include "scw.h"
 #include "training_test_common.h"
+#include "core/impl/graphviz_format.h"
+#include <fstream>
 
 using namespace jumanpp::core::training;
 
@@ -38,18 +40,41 @@ class TrainerEnv : public GoldExampleEnv {
     ptr->initScorers(*sconf);
     return ptr;
   }
+
+  void dumpTrainers(StringPiece baseDir, int cnt = 0) {
+    auto bldr = core::format::GraphVizBuilder{};
+    bldr.row({"a", "b", "c"});
+    core::format::GraphVizFormat fmt;
+    REQUIRE_OK(bldr.build(&fmt, env.beamSize));
+
+    char buffer[256];
+
+    std::snprintf(buffer, 255, "%s/dump_%d.dot", baseDir.char_begin(), cnt);
+    std::ofstream out{buffer};
+    auto pana = env.analyzer.get();
+    REQUIRE_OK(fmt.initialize(pana->output()));
+    fmt.reset();
+    auto gnodes = trainer.goldenPath().nodes();
+    for (auto &node : gnodes) {
+      fmt.markGold(node);
+    }
+    auto lat = pana->lattice();
+    REQUIRE_OK(fmt.render(lat));
+    out << fmt.result();
+  }
 };
 
 TEST_CASE("trainer can compute score for a simple sentence") {
   StringPiece dic = "もも,N,0\nも,PRT,1\n";
-  StringPiece ex = "もも_N_0 も_PRT_1 もも_N_0\n";
+  StringPiece ex = "もも_N_0 もも_N_0 も_PRT_1 もも_N_0\n";
   TrainerEnv env{dic};
   env.parseMrph(ex);
   SoftConfidenceWeighted scw{TrainerEnv::testConf()};
-  CHECK(env.trainer.example().numNodes() == 3);
+  CHECK(env.trainer.example().numNodes() == 4);
   CHECK(env.trainer.prepare());
   CHECK(env.trainer.compute(scw.scorers()));
   env.trainer.computeTrainingLoss();
+  //env.dumpTrainers("/tmp/dots", 0);
   CHECK(env.trainer.lossValue() > 0);
 }
 

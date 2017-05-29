@@ -59,9 +59,8 @@ public:
       msb.bigram({f1, f2, f3, f4, f5}, {f1, f2, f3});
       msb.bigram({f1, f2, f3, f4, f5}, {f1, f2, f3, f4});
       msb.bigram({f1, f2, f3, f4, f5}, {f1, f2, f3, f4, f5});
-      
 
-      
+
     msb.trigram({f1, f2}, {f1, f2}, {f1, f2});
     msb.trigram({f1, f2}, {f2}, {f1, f2});
     msb.trigram({f1}, {f1}, {f1, f2});

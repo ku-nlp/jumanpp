@@ -17,6 +17,8 @@ execute_process(COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/dependencies.sh)
 include_directories("${CMAKE_SOURCE_DIR}/libs")
 
 option(JPP_TEST_REPORT_JUNIT OFF)
+option(ENABLE_BENCHMARKS OFF)
+
 enable_testing()
 
 find_package(Threads)

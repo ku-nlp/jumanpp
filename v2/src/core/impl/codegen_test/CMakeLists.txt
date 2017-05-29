@@ -1,5 +1,0 @@
-add_executable(codegen_tests_main_1 cg_1_main.cc)
-target_link_libraries(codegen_tests_main_1 jpp_core)
-
-add_executable(codegen_bench_01 codegen_bench_01.cc)
-target_link_libraries(codegen_bench_01 jpp_core)
