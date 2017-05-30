@@ -3,7 +3,34 @@
 A new morphological analyser that considers semantic plausibility of 
 word sequences by using a recurrent neural network language model (RNNLM).
 
-## Installation
+# Notice
+
+This is a branch for the Juman++ rewrite.
+The original version lives in the [master](https://github.com/ku-nlp/jumanpp/tree/master) branch.
+How to compile development version:
+
+### Requirements for v2
+
+- OS: Linux or MacOS X
+- Compiler: C++14 compatible (will downgrade to C++11 later)
+- CMake (v3.1 or later, will probably downgrade)
+- Boost C++ libraries (needed only for old Juman++)
+
+```bash
+$ ./autogen.sh # Legacy Juman++ is still in the source tree. 
+$ ./configure  # Need to create config.h for it.
+
+# Previous two lines need to be run on the first build only
+
+$ mkdir build-dir # CMake does not support in-source builds
+$ cd build-dir
+$ cmake .. # -DBOOST_ROOT=... if you have boost installed
+$ make
+
+```
+
+
+## Installation (legacy)
 ### Requirement
 - OS: Linux (tested on CentOS 6.7, Ubuntu 16.4) 
 - gcc (4.9 or later)
