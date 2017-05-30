@@ -10,13 +10,13 @@ namespace core {
 namespace training {
 
 TrainingExecutionResult TrainingExecutorThread::waitForTrainer() {
-  auto state = state_.load();
+  auto state = state_.load(std::memory_order_acquire);
   u64 count = 0;
   while (state == ExecutorThreadState::HaveInput) {
     // ok, the computation did not start yet, let it do so
     auto msec = std::chrono::nanoseconds(10);
     std::this_thread::sleep_for(msec);
-    state = state_.load();
+    state = state_.load(std::memory_order_acquire);
     ++count;
 
     if (count > 10000) {
@@ -50,12 +50,15 @@ TrainingExecutionResult TrainingExecutorThread::waitForTrainer() {
 }
 
 void TrainingExecutorThread::publishTrainer(OwningTrainer *trainer) {
+  while (state_.load(std::memory_order_relaxed) == ExecutorThreadState::Initialization) {
+    ; //do busy loop
+  }
   std::unique_lock<std::mutex> lck{mutex_};
   // this lock is needed to avoid situation
   // when run() is not waiting on the condition variable
   trainer_ = trainer;
   state_ = ExecutorThreadState::HaveInput;
-  input_ready_.notify_all();
+  input_ready_.notify_one();
 }
 
 TrainingExecutorThread::TrainingExecutorThread(const analysis::ScorerDef *conf)
@@ -71,14 +74,14 @@ TrainingExecutorThread::~TrainingExecutorThread() {
 
 void TrainingExecutorThread::run() {
   std::unique_lock<std::mutex> lck{mutex_};
-  while (true) {
-    input_ready_.wait(lck);
-    auto st = state_.load();
+  state_ = ExecutorThreadState::WaitingForInput;
+  while (true) {    
+    input_ready_.wait(lck);    
+    auto st = state_.exchange(ExecutorThreadState::RunningComputation);    
     if (st == ExecutorThreadState::Exiting) {
       return;
     }
     JPP_DCHECK_EQ(st, ExecutorThreadState::HaveInput);
-    state_ = ExecutorThreadState::RunningComputation;
     // read trainer field only once
     auto t = trainer_;
     processStatus_ = t->prepare();
@@ -112,7 +115,7 @@ Status TrainingExecutor::initialize(const analysis::ScorerDef *sconf,
 bool TrainingExecutor::runNext(OwningTrainer *next,
                                TrainingExecutionResult *result) {
   JPP_DCHECK_LE(available(), capacity());
-
+  
   bool status = false;
   if (available() == 0) {
     *result = waitOne();

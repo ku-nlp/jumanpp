@@ -23,6 +23,7 @@ struct TrainingExecutionResult {
 };
 
 enum class ExecutorThreadState {
+  Initialization,
   WaitingForInput,
   HaveInput,
   RunningComputation,
@@ -37,7 +38,7 @@ class TrainingExecutorThread {
   std::mutex mutex_;
   std::condition_variable input_ready_;
   OwningTrainer* trainer_;
-  std::atomic<ExecutorThreadState> state_{ExecutorThreadState::WaitingForInput};
+  std::atomic<ExecutorThreadState> state_{ExecutorThreadState::Initialization};
 
   void run();
 
