@@ -5,7 +5,7 @@
 #ifndef JUMANPP_FIELD_READER_H
 #define JUMANPP_FIELD_READER_H
 
-#include <util/coded_io.h>
+#include "util/coded_io.h"
 
 namespace jumanpp {
 namespace core {

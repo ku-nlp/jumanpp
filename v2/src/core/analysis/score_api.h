@@ -17,6 +17,7 @@ namespace core {
 namespace analysis {
 
 class Lattice;
+class ExtraNodesContext;
 
 class ScorerBase {
  public:
@@ -33,7 +34,7 @@ class FeatureScorer : public ScorerBase {
 class ScoreComputer {
  public:
   virtual ~ScoreComputer() = default;
-  virtual void preScore(Lattice* l) = 0;
+  virtual void preScore(Lattice* l, ExtraNodesContext* xtra) = 0;
   virtual bool scoreBoundary(i32 scorerIdx, Lattice* l, i32 boundary) = 0;
 };
 

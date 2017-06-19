@@ -7,6 +7,8 @@
 #include "core/analysis/score_processor.h"
 #include "lattice_types.h"
 #include "rnn/mikolov_rnn.h"
+#include "rnn_id_resolver.h"
+#include "util/lazy.h"
 #include "util/logging.hpp"
 #include "util/memory.hpp"
 #include "util/stl_util.h"
@@ -24,6 +26,22 @@ struct RnnHolderState {
   util::Sliceable<float> embeddings;
   util::Sliceable<float> nceEmbeddings;
   util::ArraySlice<float> maxentWeights;
+
+  RnnIdResolver resolver_;
+  RnnInferenceConfig config_;
+  float nceConstant_;
+
+  RnnHolderState(const MikolovRnnModelHeader& header,
+                 const util::ArraySlice<float>& matrix,
+                 const util::Sliceable<float>& embeddings,
+                 const util::Sliceable<float>& nceEmbeddings,
+                 const util::ArraySlice<float>& maxentWeights)
+      : header(header),
+        matrix(matrix),
+        embeddings(embeddings),
+        nceEmbeddings(nceEmbeddings),
+        maxentWeights(maxentWeights),
+        resolver_{} {}
 };
 
 RnnHolder::~RnnHolder() {}
@@ -32,9 +50,11 @@ RnnScorer::~RnnScorer() {}
 
 struct RnnScorerState {
   util::memory::Manager mgr;
-  std::shared_ptr<util::memory::ManagedAllocatorCore> alloc;
+  std::unique_ptr<util::memory::ManagedAllocatorCore> alloc;
   MikolovRnn mrnn;
   const RnnHolderState* rnnState;
+
+  RnnIdContainer container_;
 
   i32 maxRight;
   i32 beamSize;
@@ -48,7 +68,7 @@ struct RnnScorerState {
   util::MutableArraySlice<i32> contextIds;         // (MaxEntMax x beam)
 
   // the state, each rightSize
-  util::memory::ManagedVector<util::ArraySlice<i32>> entryRnnIds;
+
   // each: (rows=rightSize x beam) x (cols=embSize)
   util::memory::ManagedVector<util::Sliceable<float>> computedContexts;
 
@@ -58,28 +78,8 @@ struct RnnScorerState {
     return util::Sliceable<T>{sub, (u32)cols, (u32)rows};
   }
 
-  void fetchRnnIds(Lattice* l) {
-    // BOS
-    auto bos = alloc->allocateBuf<i32>(1);
-    bos[0] = 0;  // two BOS
-    entryRnnIds.push_back(bos);
-    entryRnnIds.push_back(bos);
-
-    // TODO actualy fetch ids instead of comping up with some
-    std::default_random_engine engine{0xbeef};
-    std::uniform_int_distribution<i32> ints{0, (i32)rnnState->header.vocabSize};
-    auto bcnt = l->createdBoundaryCount();
-    for (int i = 2; i < bcnt - 1; ++i) {
-      auto cnt = l->boundary(i)->localNodeCount();
-      auto buf = alloc->allocateBuf<i32>(cnt);
-      for (int j = 0; j < cnt; ++j) {
-        buf.at(j) = ints(engine);
-      }
-      entryRnnIds.push_back(buf);
-    }
-
-    // and EOS
-    entryRnnIds.push_back(bos);
+  Status fetchRnnIds(Lattice* l, ExtraNodesContext* xtra) {
+    return rnnState->resolver_.resolveIds(&container_, l, xtra);
   }
 
   void handleBosNodes(Lattice* l) {
@@ -90,7 +90,7 @@ struct RnnScorerState {
     computedContexts.push_back(buf);
   }
 
-  void initForLattice(Lattice* l) {
+  Status initForLattice(Lattice* l, ExtraNodesContext* xtra) {
     auto bcnt = l->createdBoundaryCount();
     beamSize = l->config().beamSize;
     auto embSize = rnnState->header.layerSize;
@@ -108,19 +108,17 @@ struct RnnScorerState {
       computedContexts.push_back(buf);
     }
 
-    entryRnnIds.reserve(bcnt);
     computedContexts.reserve(bcnt);
     scoreBuffer = alloc->allocateBuf<float>(maxRight * beamSize, 64);
     contextScratch = alloc->allocateBuf<float>(embSize * beamSize, 64);
     rightEmbScratch = alloc->allocateBuf<float>(embSize * maxRight, 64);
     contextIds = alloc->allocateBuf<i32>(maxEntMax * beamSize);
 
-    fetchRnnIds(l);
+    return fetchRnnIds(l, xtra);
   }
 
   void reset() {
-    entryRnnIds.clear();
-    entryRnnIds.shrink_to_fit();
+    container_.reset();
     computedContexts.clear();
     computedContexts.shrink_to_fit();
     mgr.reset();
@@ -128,7 +126,7 @@ struct RnnScorerState {
   }
 
   util::Sliceable<float> gatherNceEmbeds(i32 boundary) {
-    auto& idxes = entryRnnIds[boundary];
+    auto idxes = container_.atBoundary(boundary).ids();
     auto embSize = rnnState->header.layerSize;
     auto storage = subset(rightEmbScratch, idxes.size(), embSize);
 
@@ -136,6 +134,9 @@ struct RnnScorerState {
 
     for (int i = 0; i < idxes.size(); ++i) {
       auto wordId = idxes.at(i);
+      if (wordId < 0) {  // use EOS/BOS markers instead of full unks
+        wordId = 0;
+      }
       auto result = storage.row(i);
       util::copy_buffer(nceData.row(wordId), result);
     }
@@ -165,8 +166,9 @@ struct RnnScorerState {
       auto perBeamElems = result.row(i);
 
       const ConnectionPtr* ptr = &beamElem.ptr;
+      auto idxes = container_.atBoundary(ptr->boundary).ids();
       for (int j = 0; j < ctxSize; ++j) {
-        perBeamElems.at(j) = entryRnnIds[ptr->boundary].at(ptr->right);
+        perBeamElems.at(j) = idxes.at(ptr->right);
         ptr = ptr->previous;
       }
     }
@@ -197,8 +199,12 @@ struct RnnScorerState {
   util::ArraySlice<float> embeddingFor(Lattice* l, i32 boundary, i32 leftIdx) {
     auto bnd = l->boundary(boundary);
     auto nodePtr = bnd->ends()->nodePtrs().at(leftIdx);
-    auto embIdx = entryRnnIds[nodePtr.boundary].at(nodePtr.position);
-    return rnnState->embeddings.row(embIdx);
+    auto embIdx = container_.atBoundary(boundary).ids().at(nodePtr.position);
+    if (embIdx >= 0) {
+      return rnnState->embeddings.row(embIdx);
+    } else {
+      return rnnState->embeddings.row(0);
+    }
   }
 
   util::Sliceable<float> contextOutput(LatticeNodePtr ptr, i32 actualBeamSize) {
@@ -245,23 +251,47 @@ struct RnnScorerState {
 
     auto scores = scoreOutput(bnd->localNodeCount(), actualBeamSize);
     auto ctxVectors = gatherContext(actualBeamSize, beamData);
-    StepData args{gatherContextIds(actualBeamSize, beamData, boundary),
-                  entryRnnIds[boundary],
-                  ctxVectors,
-                  embeddingFor(l, boundary, leftIdx),
-                  nceData,
-                  contextOutput(nodePtr, actualBeamSize),
-                  scores};
-    mrnn.apply(&args);
-    JPP_DCHECK(noNans(args.scores));
-    JPP_DCHECK(noNans(args.beamContext));
+    auto idsAtBoundary = container_.atBoundary(boundary);
+
+    auto updatedCtx = contextOutput(nodePtr, actualBeamSize);
+
+    ContextStepData csd{updatedCtx, embeddingFor(l, boundary, leftIdx),
+                        ctxVectors};
+    mrnn.calcNewContext(csd);
+    JPP_DCHECK(noNans(csd.beamContext));
+
+    auto entryData = idsAtBoundary.ids();
+
+    InferStepData isd{gatherContextIds(actualBeamSize, beamData, boundary),
+                      entryData, updatedCtx, nceData, scores};
+
+    for (i32 spanNum = 0; spanNum < idsAtBoundary.numSpans(); ++spanNum) {
+      auto spanInfo = idsAtBoundary.span(spanNum);
+      if (spanInfo.normal) {
+        // a span of normal nodes
+        mrnn.calcScoresOn(isd, spanInfo.start, spanInfo.length);
+      } else {
+        // UNK node
+        // UNK node spans are guaranteed to have one element
+
+        // Linear cost dependent on length of the item
+        // apply it over the whole beam
+        for (int i = 0; i < actualBeamSize; ++i) {
+          scores.row(i).at(spanInfo.start) =
+              rnnState->config_.unkConstantTerm +
+              spanInfo.length * rnnState->config_.unkLengthPenalty;
+        }
+      }
+    }
+
+    JPP_DCHECK(noNans(scores));
     fillScoreData(bnd, leftIdx, scorerIdx, scores);
   }
 
   RnnScorerState()
       : mgr{1024 * 1024},
         alloc{mgr.core()},
-        entryRnnIds{alloc.get()},
+        container_{alloc.get()},
         computedContexts{alloc.get()} {}
 
   Status init(const RnnHolder& holder) {
@@ -271,7 +301,9 @@ struct RnnScorerState {
   }
 };
 
-Status RnnHolder::init(const MikolovModelReader& model) {
+Status RnnHolder::init(const jumanpp::rnn::mikolov::MikolovModelReader& model,
+                       const core::dic::DictionaryHolder& dic,
+                       StringPiece field) {
   auto& hdr = model.header();
 
   auto nceEmbs = model.nceEmbeddings();
@@ -287,6 +319,7 @@ Status RnnHolder::init(const MikolovModelReader& model) {
 
   impl_.reset(new RnnHolderState{hdr, model.rnnMatrix(), embSlice, nceembSlice,
                                  model.maxentWeights()});
+  JPP_RETURN_IF_ERROR(impl_->resolver_.loadFromDic(dic, field, model.words()));
   return Status::Ok();
 }
 
@@ -303,9 +336,9 @@ Status RnnHolder::makeInstance(std::unique_ptr<ScoreComputer>* result) {
 
 RnnHolder::RnnHolder() {}
 
-void RnnScorer::preScore(Lattice* l) {
+void RnnScorer::preScore(Lattice* l, ExtraNodesContext* xtra) {
   state_->reset();
-  state_->initForLattice(l);
+  state_->initForLattice(l, xtra);
 }
 
 bool RnnScorer::scoreBoundary(i32 scorerIdx, Lattice* l, i32 boundary) {

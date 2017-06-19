@@ -50,8 +50,9 @@ TrainingExecutionResult TrainingExecutorThread::waitForTrainer() {
 }
 
 void TrainingExecutorThread::publishTrainer(OwningTrainer *trainer) {
-  while (state_.load(std::memory_order_relaxed) == ExecutorThreadState::Initialization) {
-    ; //do busy loop
+  while (state_.load(std::memory_order_relaxed) ==
+         ExecutorThreadState::Initialization) {
+    ;  // do busy loop
   }
   std::unique_lock<std::mutex> lck{mutex_};
   // this lock is needed to avoid situation
@@ -75,9 +76,9 @@ TrainingExecutorThread::~TrainingExecutorThread() {
 void TrainingExecutorThread::run() {
   std::unique_lock<std::mutex> lck{mutex_};
   state_ = ExecutorThreadState::WaitingForInput;
-  while (true) {    
-    input_ready_.wait(lck);    
-    auto st = state_.exchange(ExecutorThreadState::RunningComputation);    
+  while (true) {
+    input_ready_.wait(lck);
+    auto st = state_.exchange(ExecutorThreadState::RunningComputation);
     if (st == ExecutorThreadState::Exiting) {
       return;
     }
@@ -115,7 +116,7 @@ Status TrainingExecutor::initialize(const analysis::ScorerDef *sconf,
 bool TrainingExecutor::runNext(OwningTrainer *next,
                                TrainingExecutionResult *result) {
   JPP_DCHECK_LE(available(), capacity());
-  
+
   bool status = false;
   if (available() == 0) {
     *result = waitOne();

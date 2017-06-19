@@ -252,7 +252,7 @@ void AnalyzerImpl::bootstrapAnalysis() {
   bos1Ref = ConnectionBeamElement{{1, 0, 0, 0, &bosRef.ptr}, 0};
 
   for (auto& s : scorers_) {
-    s->preScore(&lattice_);
+    s->preScore(&lattice_, &xtra_);
   }
 }
 

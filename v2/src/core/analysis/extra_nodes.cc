@@ -48,6 +48,18 @@ ExtraNode *ExtraNodesContext::allocateExtra() {
   return ptr;
 }
 
+StringPiece ExtraNodesContext::unkString(i32 i) const {
+  JPP_DCHECK_LT(i, 0);
+  for (auto &node : extraNodes_) {  // linear search for the time being
+    if (node->header.type == ExtraNodeType::Unknown) {
+      if (node->header.unk.contentHash == i) {
+        return node->header.unk.surface;
+      }
+    }
+  }
+  return StringPiece();
+}
+
 }  // namespace analysis
 }  // namespace core
 }  // namespace jumanpp

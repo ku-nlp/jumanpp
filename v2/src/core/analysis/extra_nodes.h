@@ -129,6 +129,8 @@ class ExtraNodesContext {
     }
     return it->first;
   }
+
+  StringPiece unkString(i32 i) const;
 };
 
 }  // namespace analysis

@@ -136,12 +136,17 @@ class MikolovRnnImpl {
   MikolovRnnImpl(const MikolovRnn &rnn) : rnn(rnn) {}
 
   void computeNewContext(StepData *data) {
-    i32 beamSize = (i32)data->context.numRows();
+    computeNewContext(ContextStepData{*data});
+  }
+
+  void computeNewContext(const ContextStepData &data) {
     auto esize = rnn.header.layerSize;
-    auto oldCtx = impl::asMatrix(data->context, esize, beamSize);
     auto nnWeight = impl::asMatrix(rnn.weights, esize, esize);
-    auto myEmb = impl::asMatrix(data->leftEmbedding, esize, 1);
-    auto result = impl::asMatrix(data->beamContext, esize, beamSize);
+
+    auto beamSize = data.context.numRows();
+    auto oldCtx = impl::asMatrix(data.context, esize, beamSize);
+    auto myEmb = impl::asMatrix(data.leftEmbedding, esize, 1);
+    auto result = impl::asMatrix(data.beamContext, esize, beamSize);
 
     result.noalias() = nnWeight.transpose() * oldCtx;
     result.colwise() += myEmb.col(0);
@@ -158,6 +163,20 @@ class MikolovRnnImpl {
     result.noalias() = embeddings.transpose() * context;
   }
 
+  void computeContextScores(const InferStepData &data, i32 start, i32 length) {
+    i32 beamSize = (i32)data.beamContext.numRows();
+    i32 numEntries = (i32)data.scores.rowSize();
+    auto esize = rnn.header.layerSize;
+    auto context = impl::asMatrix(data.beamContext, esize, beamSize);
+    auto embeddings = impl::asMatrix(data.rightEmbeddings, esize, numEntries);
+    auto result = impl::asMatrix(data.scores, numEntries, beamSize);
+
+    auto embedSlice = embeddings.middleCols(start, length);
+    auto resultSlice = result.middleRows(start, length);
+
+    resultSlice.noalias() = embedSlice.transpose() * context;
+  }
+
   void computeMaxentScores(StepData *data) {
     MikolovIndexCalculator calc{rnn.header.maxentSize, rnn.header.vocabSize};
     auto contexts = data->contextIds;
@@ -170,11 +189,39 @@ class MikolovRnnImpl {
     }
   }
 
+  void computeMaxentScores(const InferStepData &data, u32 start, u32 length) {
+    MikolovIndexCalculator calc{rnn.header.maxentSize, rnn.header.vocabSize};
+    auto contexts = data.contextIds;
+    auto words = data.rightIds;
+    auto scorePack = data.scores;
+    util::ArraySlice<i32> wordSlice{words, start, length};
+    for (int beam = 0; beam < contexts.numRows(); ++beam) {
+      auto ctx = contexts.row(beam);
+      auto scores = scorePack.row(beam);
+      util::MutableArraySlice<float> scoreSlice{scores, start, length};
+      calc.addScores(ctx, wordSlice, rnn.maxentWeights, scoreSlice);
+    }
+  }
+
   void initScores(StepData *data) {
     i32 beamSize = (i32)data->context.numRows();
     i32 numEntries = (i32)data->scores.rowSize();
     auto result = impl::asMatrix(data->scores, numEntries, beamSize);
     result.array() -= rnn.header.nceLnz;
+  }
+
+  void initScores(const InferStepData &data, u32 start, u32 length) {
+    i32 beamSize = (i32)data.beamContext.numRows();
+    i32 numEntries = (i32)data.scores.rowSize();
+    auto result = impl::asMatrix(data.scores, numEntries, beamSize);
+    auto resultSlice = result.middleRows(start, length);
+    resultSlice.array() -= rnn.header.nceLnz;
+  }
+
+  void inferScores(const InferStepData &data, i32 from, i32 length) {
+    computeContextScores(data, from, length);
+    computeMaxentScores(data, from, length);
+    initScores(data, from, length);
   }
 
   // original formula

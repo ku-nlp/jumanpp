@@ -52,6 +52,58 @@ struct StepData {
   util::Sliceable<float> scores;       // rightSize x beam
 };
 
+struct ContextStepData {
+  // INPUT: context vectors for each element in the beam
+  util::Sliceable<float> context;
+  // OUTPUT: updated context vectors for the beam
+  util::Sliceable<float> beamContext;
+  // INPUT: an embedding of the current word
+  util::ArraySlice<float> leftEmbedding;
+
+  explicit ContextStepData(const StepData& sd)
+      : context{sd.context},
+        beamContext{sd.beamContext},
+        leftEmbedding{sd.leftEmbedding} {}
+
+  ContextStepData(const util::Sliceable<float>& beamContext,
+                  const util::ArraySlice<float>& leftEmbedding,
+                  const util::Sliceable<float>& context)
+      : context(context),
+        beamContext(beamContext),
+        leftEmbedding(leftEmbedding) {}
+};
+
+struct InferStepData {
+  // MaxEnt part
+  util::Sliceable<i32> contextIds;  // (HMM ctx size - 1) x beam
+  util::ArraySlice<i32> rightIds;   // rightSize
+
+  // RNN part
+  util::Sliceable<float> beamContext;      // size x beam
+  util::Sliceable<float> rightEmbeddings;  // size x rightSize
+
+  // Output
+  util::Sliceable<float> scores;  // rightSize x beam
+
+  InferStepData(const util::Sliceable<i32>& contextIds,
+                const util::ArraySlice<i32>& rightIds,
+                const util::Sliceable<float>& beamContext,
+                const util::Sliceable<float>& rightEmbeddings,
+                const util::Sliceable<float>& scores)
+      : contextIds(contextIds),
+        rightIds(rightIds),
+        beamContext(beamContext),
+        rightEmbeddings(rightEmbeddings),
+        scores(scores) {}
+
+  InferStepData slice(i32 from, i32 length) {
+    util::ArraySlice<i32> rightIdSlice{rightIds, (u32)from, (u32)length};
+    return InferStepData{contextIds, rightIdSlice, beamContext,
+                         rightEmbeddings.rows(from, from + length),
+                         scores.rows(from, from + length)};
+  }
+};
+
 Status readHeader(StringPiece data, MikolovRnnModelHeader* header);
 
 struct MikolovModelReaderData;
@@ -84,6 +136,8 @@ class MikolovRnn {
               const util::ArraySlice<float>& weights,
               const util::ArraySlice<float>& maxentW);
   void apply(StepData* data);
+  void calcNewContext(const ContextStepData& csd);
+  void calcScoresOn(const InferStepData& isd, i32 from, i32 count);
 };
 
 }  // namespace mikolov
