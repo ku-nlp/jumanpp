@@ -922,7 +922,7 @@ bool Sentence::lookup_partial() { //{{{
                     // 長さの上限を設定し未定義語を生成する
                     r_node = make_unk_pseudo_node_list_from_some_positions(
                         sentence_c_str, pos, previous_pos,
-                        next_delimiter_pos - pos);
+                        utf8_chars((unsigned char *)(sentence_c_str + pos), next_delimiter_pos - pos));
 
                     if (param->passive_unknown) {
                         Node *result_node = NULL;
