@@ -853,7 +853,8 @@ bool Sentence::lookup_partial() { //{{{
                         break;
                     }
                 }
-                // std::cerr << sec_length << std::endl;
+                // std::cerr << "pos: "<< pos << " sec_length: "<< sec_length <<
+                // std::endl;
                 if (sec_length == 0) { //対応するdelimiter がない
                     // delimiter が連続していて，除去出来なかった場合
                     // 境界を超えたノードが生成されている場合
@@ -863,50 +864,54 @@ bool Sentence::lookup_partial() { //{{{
                     continue;
                 }
 
-                // 長さのみを指定して辞書引き　
-                std::vector<std::string> spec{"", "", "", "", "", ""};
-                CharLattice cl_part;
-                auto c_sec_str = sec_string.c_str();
-                cl_part.parse(c_sec_str);
-                unsigned int specified_length = 0;
                 // defaultでは、delimiter間は一単語にする
                 // partial_only_delimiter指定時には、delimiter間を自動で切る
-                if (!param->partial_only_delimiter)
-                    specified_length = strlen(c_sec_str);
-                r_node = lookup_and_make_special_pseudo_nodes_lattice(
-                    cl_part, c_sec_str, specified_length, spec);
+                if (param->partial_only_delimiter) {
+                    r_node =
+                        lookup_and_make_special_pseudo_nodes_lattice_with_max_length(
+                            cl, sentence_c_str, char_num, pos, 0, NULL,
+                            sec_length);
+                } else {
+                    // 長さのみを指定して辞書引き　
+                    std::vector<std::string> spec{"", "", "", "", "", ""};
+                    auto c_sec_str = sec_string.c_str();
+                    CharLattice cl_part;
+                    cl_part.parse(c_sec_str);
+                    r_node = lookup_and_make_special_pseudo_nodes_lattice(
+                        cl_part, c_sec_str, sec_length, spec);
 
-                // 未定義語も辞書と重複しないものは作る
-                // std::vector<unsigned long> pos_candidate=
-                // {dic->posid2pos.get_id("名詞"),
-                // dic->posid2pos.get_id("動詞"),
-                // dic->posid2pos.get_id("接頭辞"),
-                // dic->posid2pos.get_id("接尾辞")};
-                auto unk_node =
-                    dic->make_unk_pseudo_node_list_some_pos_by_dic_check(
-                        c_sec_str, strlen(c_sec_str), Dic::MORPH_DUMMY_POS,
-                        &(param->unk_pos), r_node);
+                    // 未定義語も辞書と重複しないものは作る
+                    // std::vector<unsigned long> pos_candidate=
+                    // {dic->posid2pos.get_id("名詞"),
+                    // dic->posid2pos.get_id("動詞"),
+                    // dic->posid2pos.get_id("接頭辞"),
+                    // dic->posid2pos.get_id("接尾辞")};
+                    auto unk_node =
+                        dic->make_unk_pseudo_node_list_some_pos_by_dic_check(
+                            c_sec_str, strlen(c_sec_str), Dic::MORPH_DUMMY_POS,
+                            &(param->unk_pos), r_node);
 
-                if (unk_node != nullptr) { // マージする
-                    if (r_node == nullptr)
-                        r_node = unk_node;
-                    // 辞書にある場合は用いない
-                    //                    else{//r_node に unk_node
-                    //                    のノードを連結
-                    //                        auto r_node_tmp = r_node;
-                    //                        while(r_node_tmp->bnext){
-                    //                            r_node_tmp =
-                    //                            r_node_tmp->bnext;
-                    //                        }
-                    //                        auto unk_node_tmp = unk_node;
-                    //                        while(unk_node_tmp){
-                    //                            r_node_tmp->bnext =
-                    //                            unk_node_tmp;
-                    //                            r_node_tmp = unk_node_tmp;
-                    //                            unk_node_tmp =
-                    //                            unk_node_tmp->bnext;
-                    //                        }
-                    //                    }
+                    if (unk_node != nullptr) { // マージする
+                        if (r_node == nullptr)
+                            r_node = unk_node;
+                        // 辞書にある場合は用いない
+                        //                    else{//r_node に unk_node
+                        //                    のノードを連結
+                        //                        auto r_node_tmp = r_node;
+                        //                        while(r_node_tmp->bnext){
+                        //                            r_node_tmp =
+                        //                            r_node_tmp->bnext;
+                        //                        }
+                        //                        auto unk_node_tmp = unk_node;
+                        //                        while(unk_node_tmp){
+                        //                            r_node_tmp->bnext =
+                        //                            unk_node_tmp;
+                        //                            r_node_tmp = unk_node_tmp;
+                        //                            unk_node_tmp =
+                        //                            unk_node_tmp->bnext;
+                        //                        }
+                        //                    }
+                    }
                 }
 
                 //                std::cerr << "r_node" << std::endl;
