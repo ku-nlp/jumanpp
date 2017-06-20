@@ -96,6 +96,8 @@ void option_proc(cmdline::parser &option, std::string model_path, int argc,
     // 解析方式の指定オプション
     option.add<unsigned int>("beam", 'B', "set beam width", false, 5);
     option.add("partial", 0, "receive partially annotated text");
+    option.add("partial_only_delimiter", 0,
+               "use only delimiter information of partial annotation");
     option.add("static", 0, "static loading for RNNLM. (It may be faster than "
                             "default when you process large texts)");
     option.add("static_mdl", 0, "static loading for model file.");
@@ -302,6 +304,9 @@ int main(int argc, char **argv) { //{{{
 
     // 部分アノテーション用デリミタ
     param.delimiter = "\t";
+    // デリミタ情報のみを用いる (デリミタ間は自動でsegment)
+    if (option.exist("partial_only_delimiter"))
+        param.partial_only_delimiter = true;
 
 #ifdef USE_DEV_OPTION
     if (option.exist("rnnasfeature") && option.exist("rnnlm") &&
@@ -369,7 +374,7 @@ int main(int argc, char **argv) { //{{{
     Morph::Node::set_param(&param);
 
     RNNLM::CRnnLM *p_rnnlm;
-    if (param.rnnlm){ 
+    if (param.rnnlm) {
         if (option.exist("static"))
             p_rnnlm = new RNNLM::CRnnLM_stat();
         else
@@ -465,7 +470,8 @@ int main(int argc, char **argv) { //{{{
             }
 #endif
 
-            if (option.exist("partial")) {
+            if (option.exist("partial") ||
+                option.exist("partial_only_delimiter")) {
                 tagger.partial_annotation_analyze(buffer);
             } else {
                 tagger.new_sentence_analyze(buffer);

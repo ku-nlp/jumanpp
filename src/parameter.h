@@ -25,6 +25,7 @@ class Parameter {
     bool no_posmatch = true;
     bool use_rnnlm_as_feature = false; // dev
     bool use_dynamic_loading = true;
+    bool partial_only_delimiter = false;
     double rweight;
     double lweight;
     unsigned int unk_max_length;

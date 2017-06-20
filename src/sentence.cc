@@ -841,7 +841,8 @@ bool Sentence::lookup_partial() { //{{{
                 // どの区間に属するか決定する
                 for (unsigned int d_pos = 0; d_pos < delimiter_position.size();
                      d_pos++) {
-                    if (delimiter_position[d_pos] == pos) {
+                    if (pos >= delimiter_position[d_pos] &&
+                        pos < delimiter_position[d_pos + 1]) {
                         next_delimiter_pos =
                             delimiter_position[d_pos + 1]; //最後のdelimiter
                         //がここに来ることは無いので,
@@ -867,8 +868,13 @@ bool Sentence::lookup_partial() { //{{{
                 CharLattice cl_part;
                 auto c_sec_str = sec_string.c_str();
                 cl_part.parse(c_sec_str);
+                unsigned int specified_length = 0;
+                // defaultでは、delimiter間は一単語にする
+                // partial_only_delimiter指定時には、delimiter間を自動で切る
+                if (!param->partial_only_delimiter)
+                    specified_length = strlen(c_sec_str);
                 r_node = lookup_and_make_special_pseudo_nodes_lattice(
-                    cl_part, c_sec_str, strlen(c_sec_str), spec);
+                    cl_part, c_sec_str, specified_length, spec);
 
                 // 未定義語も辞書と重複しないものは作る
                 // std::vector<unsigned long> pos_candidate=
@@ -922,7 +928,8 @@ bool Sentence::lookup_partial() { //{{{
                     // 長さの上限を設定し未定義語を生成する
                     r_node = make_unk_pseudo_node_list_from_some_positions(
                         sentence_c_str, pos, previous_pos,
-                        utf8_chars((unsigned char *)(sentence_c_str + pos), next_delimiter_pos - pos));
+                        utf8_chars((unsigned char *)(sentence_c_str + pos),
+                                   next_delimiter_pos - pos));
 
                     if (param->passive_unknown) {
                         Node *result_node = NULL;
