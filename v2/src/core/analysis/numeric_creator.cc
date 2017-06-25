@@ -87,7 +87,8 @@ size_t NumericUnkMaker::checkInterfix(const CodepointStorage &codepoints,
         bool matchFlag = true;
         // The pattern matches the codepoints.
         for (u16 index = 0; index < itemp.size(); ++index) {
-          if (codepoints[start + pos + index].codepoint != itemp[index].codepoint) {
+          if (codepoints[start + pos + index].codepoint !=
+              itemp[index].codepoint) {
             matchFlag = false;
             break;
           }
@@ -114,7 +115,8 @@ size_t NumericUnkMaker::checkSuffix(const CodepointStorage &codepoints,
         // The pattern matches the codepoints.
         bool matchFlag = true;
         for (u16 index = 0; index < itemp.size(); ++index) {
-          if (codepoints[start + pos + index].codepoint != itemp[index].codepoint) {
+          if (codepoints[start + pos + index].codepoint !=
+              itemp[index].codepoint) {
             matchFlag = false;
             break;
           }
@@ -140,7 +142,8 @@ size_t NumericUnkMaker::checkPrefix(const CodepointStorage &codepoints,
       bool matchFlag = false;
       // The pattern matches the codepoints.
       for (u16 index = 0; index < itemp.size(); ++index) {
-        if (codepoints[start + pos + index].codepoint != itemp[index].codepoint) {
+        if (codepoints[start + pos + index].codepoint !=
+            itemp[index].codepoint) {
           matchFlag = false;
           break;
         }
