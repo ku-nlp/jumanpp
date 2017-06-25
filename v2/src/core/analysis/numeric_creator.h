@@ -23,17 +23,6 @@ inline NumericPattern operator|(const NumericPattern &l,
   return static_cast<NumericPattern>(static_cast<u16>(l) | static_cast<u16>(r));
 }
 
-enum class NumericPattern : u16 {
-  None = 0,
-  Normal = 1 << 2,          // 123456
-  CammaSeparated = 1 << 3,  // 123,456,789
-  Fraction = 1 << 4,        // 3分の1
-  WithUnit = 1 << 5,        // 3キロ
-  Several = 1 << 6,         // 数十, 十数，
-
-  All = Normal | CammaSeparated | Fraction | WithUnit;
-};
-
 class NumericUnkMaker : public UnkMaker {
   dic::DictionaryEntries entries_;
   // A charcter class of Numbers (not include exceptions)
@@ -49,21 +38,39 @@ class NumericUnkMaker : public UnkMaker {
       chars::CharacterClass::FIGURE_DIGIT;
 
   // Exceptional Classes
-  static const chars::CharacterClass CammaClass = chars::CharacterClass::COMMA;
-  static const chars::CharacterClass PeriodClass =
-      chars::CharacterClass::PERIOD | chars::CharacterClass::MIDDLE_DOT;
+  static const chars::CharacterClass CommaClass = chars::CharacterClass::COMMA;
+  static const chars::CharacterClass PeriodClass = chars::CharacterClass::FAMILY_NUM_PERIOD;
 
   // Exceptional Patterns
-  static const std::vector<std::string> prefixPatternsDef = {"数", "何", "幾"};
-  static const std::vector<std::string> interfixPatternsDef = {"ぶんの",
-                                                               "分の"};
-  static const std::vector<std::string> suffixPatternsDef = {
+  const std::vector<std::string> prefixPatternsDef {"数", "何", "幾"};
+  const std::vector<std::string> interfixPatternsDef {"ぶんの", "分の"};
+  const std::vector<std::string> suffixPatternsDef {
       "キロ", "メガ", "ギガ", "テラ", "ミリ"};
   std::vector<CodepointStorage> prefixPatterns;
   std::vector<CodepointStorage> interfixPatterns;
   std::vector<CodepointStorage> suffixPatterns;
 
   static const size_t MaxNumericLength = 64;  //必要？
+
+  size_t checkPrefix(const CodepointStorage &codepoints,
+                                      LatticePosition start,
+                                      LatticePosition pos) const;
+  size_t checkInterfix(const CodepointStorage &codepoints,
+                                      LatticePosition start,
+                                      LatticePosition pos) const;
+  size_t checkSuffix(const CodepointStorage &codepoints,
+                                      LatticePosition start,
+                                      LatticePosition pos) const;
+  size_t checkComma(const CodepointStorage &codepoints,
+                                      LatticePosition start,
+                                      LatticePosition pos) const;
+  size_t checkPeriod(const CodepointStorage &codepoints,
+                                      LatticePosition start,
+                                      LatticePosition pos) const;
+  size_t checkExceptionalCharsInFigure(
+    const CodepointStorage &codepoints, LatticePosition start,
+    LatticePosition pos) const;
+
 
  public:
   NumericUnkMaker(const dic::DictionaryEntries &entries_,
@@ -72,7 +79,7 @@ class NumericUnkMaker : public UnkMaker {
   bool spawnNodes(const AnalysisInput &input, UnkNodesContext *ctx,
                   LatticeBuilder *lattice) const override;
 
-  Pattern FindNumber(const CodepointStorage &codepoints,
+  size_t FindLongestNumber(const CodepointStorage &codepoints,
                      LatticePosition start) const;
 
   size_t check_exceptional_chars_in_figure(const CodepointStorage &codepoints,

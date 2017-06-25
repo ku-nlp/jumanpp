@@ -48,20 +48,20 @@ bool NumericUnkMaker::spawnNodes(const AnalysisInput &input,
       switch (status) {
         case TraverseStatus::NoNode: {  // 同一表層のノード無し prefix でもない
           LatticePosition start = i;
-          LatticePosition end = i + halfLen * LatticePosition(2);
+          LatticePosition end = i + length;
           auto ptr = ctx->makePtr(input.surface(start, end), info_, true);
           lattice->appendSeed(ptr, start, end);
         }
         case TraverseStatus::NoLeaf: {  // 先端
           LatticePosition start = i;
-          LatticePosition end = i + halfLen * LatticePosition(2);
+          LatticePosition end = i + length;
           auto ptr = ctx->makePtr(input.surface(start, end), info_, false);
           lattice->appendSeed(ptr, start, end);
         }
         case TraverseStatus::Ok:
           // オノマトペはともかく，数詞は必ずつくるのでここで作る必要がある．
           LatticePosition start = i;
-          LatticePosition end = i + halfLen * LatticePosition(2);
+          LatticePosition end = i + length;
           auto ptr = ctx->makePtr(input.surface(start, end), info_, false);
           lattice->appendSeed(ptr, start, end);
       }
@@ -87,12 +87,12 @@ size_t NumericUnkMaker::checkInterfix(const CodepointStorage &codepoints,
         bool matchFlag = true;
         // The pattern matches the codepoints.
         for (u16 index = 0; index < itemp.size(); ++index) {
-          if (codepoints[start + pos + index] != itemp[index]) {
-            match_flag = false;
+          if (codepoints[start + pos + index].codepoint != itemp[index].codepoint) {
+            matchFlag = false;
             break;
           }
         }
-        if (match_flag) return itemp.size();
+        if (matchFlag) return itemp.size();
       }
     }
   }
@@ -114,12 +114,12 @@ size_t NumericUnkMaker::checkSuffix(const CodepointStorage &codepoints,
         // The pattern matches the codepoints.
         bool matchFlag = true;
         for (u16 index = 0; index < itemp.size(); ++index) {
-          if (codepoints[start + pos + index] != itemp[index]) {
-            match_flag = false;
+          if (codepoints[start + pos + index].codepoint != itemp[index].codepoint) {
+            matchFlag = false;
             break;
           }
         }
-        if (match_flag) return itemp.size();
+        if (matchFlag) return itemp.size();
       }
     }
   }
@@ -134,18 +134,18 @@ size_t NumericUnkMaker::checkPrefix(const CodepointStorage &codepoints,
 
   for (auto itemp : prefixPatterns) {
     if (  // A digit follows prefix.
-        codepoints[start + pos + itemp.size()].hasClass(DigitClass)
+        codepoints[start + pos + itemp.size()].hasClass(DigitClass) &&
         // The length of rest codepoints is longer than the pattern length
         restLength > itemp.size()) {
       bool matchFlag = false;
       // The pattern matches the codepoints.
       for (u16 index = 0; index < itemp.size(); ++index) {
-        if (codepoints[start + pos + index] != itemp[index]) {
-          match_flag = false;
+        if (codepoints[start + pos + index].codepoint != itemp[index].codepoint) {
+          matchFlag = false;
           break;
         }
       }
-      if (match_flag) return itemp.size();
+      if (matchFlag) return itemp.size();
     }
   }
   return 0;
@@ -169,16 +169,16 @@ size_t NumericUnkMaker::checkComma(const CodepointStorage &codepoints,
                                    LatticePosition pos) const {
   // check exists of comma separated number beggining at pos.
   u16 numContinuedFigure = 0;
-  u16 posCamma = (start + pos);
+  u16 posComma = (start + pos);
   static const u16 commaInterval = 3;
 
-  if (!codepoints[posCamma].hasClass(CammaClass)) return 0;
+  if (!codepoints[posComma].hasClass(CommaClass)) return 0;
 
   for (numContinuedFigure = 0;
        numContinuedFigure <= commaInterval + 1 &&
-       posCamma + numContinuedFigure < codepoints.size();
+       posComma + numContinuedFigure < codepoints.size();
        ++numContinuedFigure) {
-    if (not codepoints[posCamma + numContinuedFigure].hasClass(FigureClass)) {
+    if (not codepoints[posComma + numContinuedFigure].hasClass(FigureClass)) {
       break;
     }
   }
@@ -193,10 +193,10 @@ size_t NumericUnkMaker::checkPeriod(const CodepointStorage &codepoints,
                                     LatticePosition pos) const {
   // check exists of comma separated number beggining at pos.
   unsigned int numContinuedFigure = 0;
-  unsigned int posCamma = (start + pos);
+  unsigned int posComma = (start + pos);
   static const u16 commaInterval = 3;
 
-  if (!codepoints[posCamma].hasClass(PeriodClass)) return 0;
+  if (!codepoints[posComma].hasClass(PeriodClass)) return 0;
 
   if (numContinuedFigure == 3)
     return 1;
