@@ -175,19 +175,16 @@ size_t NumericUnkMaker::checkComma(const CodepointStorage &codepoints,
                                    LatticePosition start,
                                    LatticePosition pos) const {
   // check exists of comma separated number beggining at pos.
-  unsigned int numContinuedFigure = 0;
-  unsigned int posCamma = (start + pos);
+  u16 numContinuedFigure = 0;
+  u16 posCamma = (start + pos);
   static const u16 commaInterval = 3;
 
   if (!codepoints[posCamma].hasClass(CammaClass))
     return 0;
 
-  for (u16 i = 0; i <= commaInterval + 1 &&
-                      posCamma + numContinuedFigure < codepoints.size();
-       ++i) {
-    if (codepoints[posCamma + numContinuedFigure].hasClass(FigureClass)) {
-      ++numContinuedFigure;
-    } else {
+  for (numContinuedFigure = 0; numContinuedFigure <= commaInterval + 1 &&
+                      posCamma + numContinuedFigure < codepoints.size();++numContinuedFigure) {
+    if (not codepoints[posCamma + numContinuedFigure].hasClass(FigureClass)) {
       break;
     }
   }
@@ -217,23 +214,9 @@ size_t NumericUnkMaker::checkPeriod(const CodepointStorage &codepoints,
 size_t NumericUnkMaker::FindLongestNumber(const CodepointStorage &codepoints,
                                           LatticePosition start) const {
 
-  // charClass_ = Number, camma, specialpattern
-  // FIGURE = 0x00000008,
-  // MIDDLE_DOT = 0x00000020,  // ・
-  // COMMA = 0x00000040,       //　，
-  // KANJI_FIGURE = 0x00000800,  // KANJI+FIGURE にするべき？
-  // FIGURE_EXCEPTION = 0x00040000,  // 数，何
-  // FIGURE_DIGIT = 0x00080000,      // 十，百，千，万，億
-
-  // 最初の文字は FIGURE, KANJI_FIGURE, FIGURE_DIGIT, FIGURE_EXCEPTION
-  auto &cp1 = codepoints[start];
-  // cp1の文字種をチェック
-  if (!cp1.hasClass(charClass_)) {
-    return 0;
-  }
-
   size_t longestNumberLength = 0;
-  for (LatticePosition pos = 0;
+  LatticePosition pos = 0;
+  for (pos = 0;
        pos <= MaxNumericLength && start + pos < codepoints.size(); ++pos) {
     auto &cp = codepoints[start + pos];
     if (!cp.hasClass(charClass_)) {
@@ -249,7 +232,7 @@ size_t NumericUnkMaker::FindLongestNumber(const CodepointStorage &codepoints,
     }
   }
 
-  return 0;
+  return pos;
 }
 
 } // namespace analysis
