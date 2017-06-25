@@ -25,11 +25,11 @@ inline NumericPattern operator|(const NumericPattern &l,
 
 enum class NumericPattern : u16 {
   None = 0,
-  Normal = 1 << 2,         // 123456
-  CammaSeparated = 1 << 3, // 123,456,789
-  Fraction = 1 << 4,       // 3分の1
-  WithUnit = 1 << 5,       // 3キロ
-  Several = 1 << 6,        // 数十, 十数，
+  Normal = 1 << 2,          // 123456
+  CammaSeparated = 1 << 3,  // 123,456,789
+  Fraction = 1 << 4,        // 3分の1
+  WithUnit = 1 << 5,        // 3キロ
+  Several = 1 << 6,         // 数十, 十数，
 
   All = Normal | CammaSeparated | Fraction | WithUnit;
 };
@@ -63,9 +63,9 @@ class NumericUnkMaker : public UnkMaker {
   std::vector<CodepointStorage> interfixPatterns;
   std::vector<CodepointStorage> suffixPatterns;
 
-  static const size_t MaxNumericLength = 64; //必要？
+  static const size_t MaxNumericLength = 64;  //必要？
 
-public:
+ public:
   NumericUnkMaker(const dic::DictionaryEntries &entries_,
                   chars::CharacterClass charClass_, UnkNodeConfig &&info_);
 
@@ -79,8 +79,8 @@ public:
                                            LatticePosition start) const;
 };
 
-} // namespace analysis
-} // namespace core
-} // namespace jumanpp
+}  // namespace analysis
+}  // namespace core
+}  // namespace jumanpp
 
-#endif // JUMANPP_NUMERIC_CREATOR_H
+#endif  // JUMANPP_NUMERIC_CREATOR_H

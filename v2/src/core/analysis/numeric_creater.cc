@@ -39,31 +39,31 @@ bool NumericUnkMaker::spawnNodes(const AnalysisInput &input,
     LatticePosition nextstep = i;
     TraverseStatus status;
 
-    auto length = FindLongestNumber(codepoints, i); // 長さを直接返す
+    auto length = FindLongestNumber(codepoints, i);  // 長さを直接返す
     if (length > 0) {
       for (; nextstep < i + length; ++nextstep) {
         status = trav.step(codepoints[nextstep].bytes);
       }
 
       switch (status) {
-      case TraverseStatus::NoNode: { // 同一表層のノード無し prefix でもない
-        LatticePosition start = i;
-        LatticePosition end = i + halfLen * LatticePosition(2);
-        auto ptr = ctx->makePtr(input.surface(start, end), info_, true);
-        lattice->appendSeed(ptr, start, end);
-      }
-      case TraverseStatus::NoLeaf: { // 先端
-        LatticePosition start = i;
-        LatticePosition end = i + halfLen * LatticePosition(2);
-        auto ptr = ctx->makePtr(input.surface(start, end), info_, false);
-        lattice->appendSeed(ptr, start, end);
-      }
-      case TraverseStatus::Ok:
-        // オノマトペはともかく，数詞は必ずつくるのでここで作る必要がある．
-        LatticePosition start = i;
-        LatticePosition end = i + halfLen * LatticePosition(2);
-        auto ptr = ctx->makePtr(input.surface(start, end), info_, false);
-        lattice->appendSeed(ptr, start, end);
+        case TraverseStatus::NoNode: {  // 同一表層のノード無し prefix でもない
+          LatticePosition start = i;
+          LatticePosition end = i + halfLen * LatticePosition(2);
+          auto ptr = ctx->makePtr(input.surface(start, end), info_, true);
+          lattice->appendSeed(ptr, start, end);
+        }
+        case TraverseStatus::NoLeaf: {  // 先端
+          LatticePosition start = i;
+          LatticePosition end = i + halfLen * LatticePosition(2);
+          auto ptr = ctx->makePtr(input.surface(start, end), info_, false);
+          lattice->appendSeed(ptr, start, end);
+        }
+        case TraverseStatus::Ok:
+          // オノマトペはともかく，数詞は必ずつくるのでここで作る必要がある．
+          LatticePosition start = i;
+          LatticePosition end = i + halfLen * LatticePosition(2);
+          auto ptr = ctx->makePtr(input.surface(start, end), info_, false);
+          lattice->appendSeed(ptr, start, end);
       }
     }
   }
@@ -76,9 +76,9 @@ size_t NumericUnkMaker::checkInterfix(const CodepointStorage &codepoints,
   // In other words, check conditions for fractions ("５分の１" or "数ぶんの１")
   auto restLength = codepoints.size() - (start + pos);
 
-  if (pos > 0) { // 先頭ではない
+  if (pos > 0) {  // 先頭ではない
     for (auto itemp : interfixPatterns) {
-      if ( // Interfix follows a number.
+      if (  // Interfix follows a number.
           codepoints[start + pos - 1].hasClass(charClass_) &&
           // The length of rest codepoints is longer than the pattern length
           restLength > itemp.size() &&
@@ -92,8 +92,7 @@ size_t NumericUnkMaker::checkInterfix(const CodepointStorage &codepoints,
             break;
           }
         }
-        if (match_flag)
-          return itemp.size();
+        if (match_flag) return itemp.size();
       }
     }
   }
@@ -108,7 +107,7 @@ size_t NumericUnkMaker::checkSuffix(const CodepointStorage &codepoints,
 
   if (pos > 0) {
     for (auto itemp : suffixPatterns) {
-      if ( // Suffix follows a number.
+      if (  // Suffix follows a number.
           codepoints[start + pos - 1].hasClass(charClass_) &&
           // The pattern length does not exceed that of rest codepoints.
           restLength >= itemp.size()) {
@@ -120,8 +119,7 @@ size_t NumericUnkMaker::checkSuffix(const CodepointStorage &codepoints,
             break;
           }
         }
-        if (match_flag)
-          return itemp.size();
+        if (match_flag) return itemp.size();
       }
     }
   }
@@ -135,7 +133,7 @@ size_t NumericUnkMaker::checkPrefix(const CodepointStorage &codepoints,
   auto restLength = codepoints.size() - (start + pos);
 
   for (auto itemp : prefixPatterns) {
-    if ( // A digit follows prefix.
+    if (  // A digit follows prefix.
         codepoints[start + pos + itemp.size()].hasClass(DigitClass)
         // The length of rest codepoints is longer than the pattern length
         restLength > itemp.size()) {
@@ -147,8 +145,7 @@ size_t NumericUnkMaker::checkPrefix(const CodepointStorage &codepoints,
           break;
         }
       }
-      if (match_flag)
-        return itemp.size();
+      if (match_flag) return itemp.size();
     }
   }
   return 0;
@@ -158,16 +155,12 @@ size_t NumericUnkMaker::checkExceptionalCharsInFigure(
     const CodepointStorage &codepoints, LatticePosition start,
     LatticePosition pos) const {
   size_t charLength = 0;
-  if ((charLength = checkPrefix(codepoints, start, pos)) > 0)
-    return charLength;
+  if ((charLength = checkPrefix(codepoints, start, pos)) > 0) return charLength;
   if ((charLength = checkInterfix(codepoints, start, pos)) > 0)
     return charLength;
-  if ((charLength = checkSuffix(codepoints, start, pos)) > 0)
-    return charLength;
-  if ((charLength = checkComma(codepoints, start, pos)) > 0)
-    return charLength;
-  if ((charLength = checkPeriod(codepoints, start, pos)) > 0)
-    return charLength;
+  if ((charLength = checkSuffix(codepoints, start, pos)) > 0) return charLength;
+  if ((charLength = checkComma(codepoints, start, pos)) > 0) return charLength;
+  if ((charLength = checkPeriod(codepoints, start, pos)) > 0) return charLength;
   return 0;
 }
 
@@ -179,11 +172,12 @@ size_t NumericUnkMaker::checkComma(const CodepointStorage &codepoints,
   u16 posCamma = (start + pos);
   static const u16 commaInterval = 3;
 
-  if (!codepoints[posCamma].hasClass(CammaClass))
-    return 0;
+  if (!codepoints[posCamma].hasClass(CammaClass)) return 0;
 
-  for (numContinuedFigure = 0; numContinuedFigure <= commaInterval + 1 &&
-                      posCamma + numContinuedFigure < codepoints.size();++numContinuedFigure) {
+  for (numContinuedFigure = 0;
+       numContinuedFigure <= commaInterval + 1 &&
+       posCamma + numContinuedFigure < codepoints.size();
+       ++numContinuedFigure) {
     if (not codepoints[posCamma + numContinuedFigure].hasClass(FigureClass)) {
       break;
     }
@@ -202,8 +196,7 @@ size_t NumericUnkMaker::checkPeriod(const CodepointStorage &codepoints,
   unsigned int posCamma = (start + pos);
   static const u16 commaInterval = 3;
 
-  if (!codepoints[posCamma].hasClass(PeriodClass))
-    return 0;
+  if (!codepoints[posCamma].hasClass(PeriodClass)) return 0;
 
   if (numContinuedFigure == 3)
     return 1;
@@ -213,11 +206,10 @@ size_t NumericUnkMaker::checkPeriod(const CodepointStorage &codepoints,
 
 size_t NumericUnkMaker::FindLongestNumber(const CodepointStorage &codepoints,
                                           LatticePosition start) const {
-
   size_t longestNumberLength = 0;
   LatticePosition pos = 0;
-  for (pos = 0;
-       pos <= MaxNumericLength && start + pos < codepoints.size(); ++pos) {
+  for (pos = 0; pos <= MaxNumericLength && start + pos < codepoints.size();
+       ++pos) {
     auto &cp = codepoints[start + pos];
     if (!cp.hasClass(charClass_)) {
       size_t charLength = 0;
@@ -235,6 +227,6 @@ size_t NumericUnkMaker::FindLongestNumber(const CodepointStorage &codepoints,
   return pos;
 }
 
-} // namespace analysis
-} // namespace core
-} // namespace jumanpp
+}  // namespace analysis
+}  // namespace core
+}  // namespace jumanpp
