@@ -39,38 +39,33 @@ class NumericUnkMaker : public UnkMaker {
 
   // Exceptional Classes
   static const chars::CharacterClass CommaClass = chars::CharacterClass::COMMA;
-  static const chars::CharacterClass PeriodClass = chars::CharacterClass::FAMILY_NUM_PERIOD;
+  static const chars::CharacterClass PeriodClass =
+      chars::CharacterClass::FAMILY_NUM_PERIOD;
 
   // Exceptional Patterns
-  const std::vector<std::string> prefixPatternsDef {"数", "何", "幾"};
-  const std::vector<std::string> interfixPatternsDef {"ぶんの", "分の"};
-  const std::vector<std::string> suffixPatternsDef {
-      "キロ", "メガ", "ギガ", "テラ", "ミリ"};
+  const std::vector<std::string> prefixPatternsDef{"数", "何", "幾"};
+  const std::vector<std::string> interfixPatternsDef{"ぶんの", "分の"};
+  const std::vector<std::string> suffixPatternsDef{"キロ", "メガ", "ギガ",
+                                                   "テラ", "ミリ"};
   std::vector<CodepointStorage> prefixPatterns;
   std::vector<CodepointStorage> interfixPatterns;
   std::vector<CodepointStorage> suffixPatterns;
 
   static const size_t MaxNumericLength = 64;  //必要？
 
-  size_t checkPrefix(const CodepointStorage &codepoints,
-                                      LatticePosition start,
-                                      LatticePosition pos) const;
+  size_t checkPrefix(const CodepointStorage &codepoints, LatticePosition start,
+                     LatticePosition pos) const;
   size_t checkInterfix(const CodepointStorage &codepoints,
-                                      LatticePosition start,
-                                      LatticePosition pos) const;
-  size_t checkSuffix(const CodepointStorage &codepoints,
-                                      LatticePosition start,
-                                      LatticePosition pos) const;
-  size_t checkComma(const CodepointStorage &codepoints,
-                                      LatticePosition start,
-                                      LatticePosition pos) const;
-  size_t checkPeriod(const CodepointStorage &codepoints,
-                                      LatticePosition start,
-                                      LatticePosition pos) const;
-  size_t checkExceptionalCharsInFigure(
-    const CodepointStorage &codepoints, LatticePosition start,
-    LatticePosition pos) const;
-
+                       LatticePosition start, LatticePosition pos) const;
+  size_t checkSuffix(const CodepointStorage &codepoints, LatticePosition start,
+                     LatticePosition pos) const;
+  size_t checkComma(const CodepointStorage &codepoints, LatticePosition start,
+                    LatticePosition pos) const;
+  size_t checkPeriod(const CodepointStorage &codepoints, LatticePosition start,
+                     LatticePosition pos) const;
+  size_t checkExceptionalCharsInFigure(const CodepointStorage &codepoints,
+                                       LatticePosition start,
+                                       LatticePosition pos) const;
 
  public:
   NumericUnkMaker(const dic::DictionaryEntries &entries_,
@@ -80,7 +75,7 @@ class NumericUnkMaker : public UnkMaker {
                   LatticeBuilder *lattice) const override;
 
   size_t FindLongestNumber(const CodepointStorage &codepoints,
-                     LatticePosition start) const;
+                           LatticePosition start) const;
 
   size_t check_exceptional_chars_in_figure(const CodepointStorage &codepoints,
                                            LatticePosition start) const;
