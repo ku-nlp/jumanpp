@@ -85,6 +85,16 @@ struct EqSmt {
     }
     return true;
   }
+
+  bool hasNan() const noexcept {
+    auto s1 = obj.size();
+    for (size_t i = 0; i < s1; ++i) {
+      if (std::isnan(obj.data()[i])) {
+        return true;
+      }
+    }
+    return false;
+  }
 };
 
 template <typename C, typename Cmp>
@@ -140,6 +150,8 @@ TEST_CASE("rnn executor gets same scores in parts and in a whole") {
 
   rnn.rnn.apply(&stepData);
 
+  CHECK_FALSE(eqf(cstep.curContext).hasNan());
+  CHECK_FALSE(eqf(isd.scores).hasNan());
   CHECK(eqf(stepData.beamContext) == cstep.curContext);
   CHECK(eqf(stepData.scores) == isd.scores);
 }
