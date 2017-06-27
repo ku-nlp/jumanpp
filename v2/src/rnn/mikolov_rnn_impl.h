@@ -143,10 +143,10 @@ class MikolovRnnImpl {
     auto esize = rnn.header.layerSize;
     auto nnWeight = impl::asMatrix(rnn.weights, esize, esize);
 
-    auto beamSize = data.context.numRows();
-    auto oldCtx = impl::asMatrix(data.context, esize, beamSize);
+    auto beamSize = data.prevContext.numRows();
+    auto oldCtx = impl::asMatrix(data.prevContext, esize, beamSize);
     auto myEmb = impl::asMatrix(data.leftEmbedding, esize, 1);
-    auto result = impl::asMatrix(data.beamContext, esize, beamSize);
+    auto result = impl::asMatrix(data.curContext, esize, beamSize);
 
     result.noalias() = nnWeight.transpose() * oldCtx;
     result.colwise() += myEmb.col(0);

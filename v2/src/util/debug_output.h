@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include "util/array_slice.h"
+#include "util/sliceable_array.h"
 
 namespace jumanpp {
 namespace util {
@@ -26,6 +27,22 @@ std::ostream& operator<<(std::ostream& os, const VOutImpl<T>& v) {
     }
   }
   os << ']';
+  return os;
+}
+
+template <typename T>
+std::ostream& operator<<(std::ostream& os, const Sliceable<T>& s) {
+  os << "\n[";
+
+  for (size_t i = 0; i < s.numRows(); ++i) {
+    auto row = s.row(i);
+    for (size_t j = 0; j < s.rowSize(); ++j) {
+      os << row.at(j) << " ";
+    }
+    os << "\n ";
+  }
+
+  os << "]";
   return os;
 }
 

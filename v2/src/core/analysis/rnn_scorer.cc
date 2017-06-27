@@ -258,7 +258,7 @@ struct RnnScorerState {
     ContextStepData csd{updatedCtx, embeddingFor(l, boundary, leftIdx),
                         ctxVectors};
     mrnn.calcNewContext(csd);
-    JPP_DCHECK(noNans(csd.beamContext));
+    JPP_DCHECK(noNans(csd.curContext));
 
     auto entryData = idsAtBoundary.ids();
 

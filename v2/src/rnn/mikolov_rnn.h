@@ -54,22 +54,22 @@ struct StepData {
 
 struct ContextStepData {
   // INPUT: context vectors for each element in the beam
-  util::Sliceable<float> context;
+  util::Sliceable<float> prevContext;
   // OUTPUT: updated context vectors for the beam
-  util::Sliceable<float> beamContext;
+  util::Sliceable<float> curContext;
   // INPUT: an embedding of the current word
   util::ArraySlice<float> leftEmbedding;
 
   explicit ContextStepData(const StepData& sd)
-      : context{sd.context},
-        beamContext{sd.beamContext},
+      : prevContext{sd.context},
+        curContext{sd.beamContext},
         leftEmbedding{sd.leftEmbedding} {}
 
-  ContextStepData(const util::Sliceable<float>& beamContext,
+  ContextStepData(const util::Sliceable<float>& outCtx,
                   const util::ArraySlice<float>& leftEmbedding,
-                  const util::Sliceable<float>& context)
-      : context(context),
-        beamContext(beamContext),
+                  const util::Sliceable<float>& prevCxt)
+      : prevContext(prevCxt),
+        curContext(outCtx),
         leftEmbedding(leftEmbedding) {}
 };
 
