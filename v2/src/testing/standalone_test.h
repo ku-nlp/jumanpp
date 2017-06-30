@@ -40,7 +40,10 @@ class OkStatusMatcher
     return status.isOk();
   }
 
-  virtual std::string toStringUncached() const override { return ""; }
+protected:
+  std::string describe() const override {
+    return "Status == Ok";
+  }
 };
 
 class TempFile {
