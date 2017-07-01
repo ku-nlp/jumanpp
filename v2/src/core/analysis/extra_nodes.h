@@ -74,6 +74,7 @@ class ExtraNodesContext {
   util::MutableArraySlice<i32> aliasBuffer(ExtraNode* node, size_t numNodes);
 
   const ExtraNode* node(EntryPtr ptr) const {
+    JPP_DCHECK(!ptr.isDic());
     if (ptr.isDic()) {
       return nullptr;
     }

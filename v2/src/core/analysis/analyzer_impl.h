@@ -83,6 +83,10 @@ class AnalyzerImpl {
     auto remaining = alloc_->remaining();
     return allocated - remaining;
   }
+
+  util::memory::ManagedAllocatorCore* alloc() const {
+    return alloc_.get();
+  }
 };
 
 }  // namespace analysis

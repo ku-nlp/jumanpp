@@ -80,6 +80,9 @@ class PrimitiveFeatureContext {
   }
 
   i32 providedFeature(EntryPtr entryPtr, u32 index) const {
+    if (!entryPtr.isSpecial()) {
+      return 0;
+    }
     auto node = extraCtx->node(entryPtr);
     if (node == nullptr ||
         node->header.type != analysis::ExtraNodeType::Unknown) {

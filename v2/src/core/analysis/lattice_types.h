@@ -92,6 +92,10 @@ class LatticeBoundary {
     return left.endingNodes.data().size() == currentEnding_;
   }
 
+  bool isActive() const {
+    return config.beginNodes != 0 && config.endNodes != 0;
+  }
+
   LatticeLeftBoundary* ends() { return &left; }
   LatticeRightBoundary* starts() { return &right; }
   u32 localNodeCount() const { return config.beginNodes; }

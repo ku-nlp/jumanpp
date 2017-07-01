@@ -207,8 +207,8 @@ Status AnalyzerImpl::buildLattice() {
     latticeBldr_.compactBoundary(boundary, &compactor_);
     JPP_RETURN_IF_ERROR(
         latticeBldr_.constructSingleBoundary(&lattice_, &bnd, boundary));
+    fc.importEntryData(bnd);
     if (latticeBldr_.isAccessible(boundary)) {
-      fc.importEntryData(bnd);
       fc.applyPrimitiveFeatures(bnd);
       fc.applyComputeFeatures(bnd);
       fc.applyPatternFeatures(bnd);

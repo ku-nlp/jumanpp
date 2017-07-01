@@ -110,6 +110,62 @@ class RnnIdResolver {
                 const ExtraNodesContext* xtra) const;
 };
 
+class RnnIdAdder {
+  RnnIdContainer* cont_;
+  int boundary_;
+  int start_;
+  int segment_start_;
+  int previous_ = 0;
+
+public:
+  RnnIdAdder(RnnIdContainer* cont, i32 boundary)
+      : cont_{cont},
+        boundary_{boundary},
+        start_{(i32)cont->ids_.size()},
+        segment_start_{start_} {
+    IdOffset offset{(u32)cont_->spans_.size(), (u32)cont_->ids_.size()};
+    cont_->offsets_.push_back(offset);
+  }
+
+  void push_unk(int length) {
+    int myStart = segment_start_ - start_;
+    RnnNodeSpan span{boundary_, myStart, length, false};
+    cont_->spans_.push_back(span);
+    segment_start_ = (int)cont_->ids_.size();
+  }
+
+  void maybe_push_span(bool onAdd) {
+    if (previous_ == -1) {
+      return;
+    }
+    int end = static_cast<int>(cont_->ids_.size());
+    int myStart = segment_start_ - start_;
+    auto myEnd = end - segment_start_;
+    RnnNodeSpan span{boundary_, myStart, myEnd, true};
+    if (onAdd && span.length == 0) {
+      return;
+    }
+    cont_->spans_.push_back(span);
+    segment_start_ = end;
+  }
+
+  void add(i32 id, i32 length) {
+    if (id == -1) {
+      maybe_push_span(true);
+      cont_->ids_.push_back(id);
+      push_unk(length);
+      previous_ = -1;
+      return;
+    }
+    cont_->ids_.push_back(id);
+    if (previous_ == -1) {
+      previous_ = id;
+    }
+  }
+
+  void finish() { maybe_push_span(false); }
+};
+
 }  // namespace rnn
 }  // namespace analysis
 }  // namespace core

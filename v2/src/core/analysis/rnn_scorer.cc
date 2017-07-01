@@ -166,10 +166,11 @@ struct RnnScorerState {
       auto perBeamElems = result.row(i);
 
       const ConnectionPtr* ptr = &beamElem.ptr;
-      auto idxes = container_.atBoundary(ptr->boundary).ids();
       for (int j = 0; j < ctxSize; ++j) {
+        auto idxes = container_.atBoundary(ptr->boundary).ids();
         perBeamElems.at(j) = idxes.at(ptr->right);
         ptr = ptr->previous;
+        JPP_DCHECK(ptr != nullptr);
       }
     }
     return result;
@@ -199,7 +200,8 @@ struct RnnScorerState {
   util::ArraySlice<float> embeddingFor(Lattice* l, i32 boundary, i32 leftIdx) {
     auto bnd = l->boundary(boundary);
     auto nodePtr = bnd->ends()->nodePtrs().at(leftIdx);
-    auto embIdx = container_.atBoundary(boundary).ids().at(nodePtr.position);
+    auto embedIds = container_.atBoundary(nodePtr.boundary).ids();
+    auto embIdx = embedIds.at(nodePtr.position);
     if (embIdx >= 0) {
       return rnnState->embeddings.row(embIdx);
     } else {
@@ -348,7 +350,10 @@ bool RnnScorer::scoreBoundary(i32 scorerIdx, Lattice* l, i32 boundary) {
   auto rbuf = s.gatherNceEmbeds(boundary);
 
   for (int leftNodeIdx = 0; leftNodeIdx < endCnt; ++leftNodeIdx) {
-    s.computeScores(l, boundary, leftNodeIdx, scorerIdx, rbuf);
+    auto left = lb->ends()->nodePtrs().at(leftNodeIdx);
+    if (l->boundary(left.boundary)->isActive()) {
+      s.computeScores(l, boundary, leftNodeIdx, scorerIdx, rbuf);
+    }
   }
 
   return true;

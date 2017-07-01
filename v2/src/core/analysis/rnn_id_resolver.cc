@@ -43,53 +43,6 @@ Status RnnIdResolver::loadFromDic(const dic::DictionaryHolder& dic,
   return Status::Ok();
 }
 
-class RnnIdAdder {
-  RnnIdContainer* cont_;
-  int boundary_;
-  int start_;
-  int segment_start_;
-  int previous_ = 0;
-
- public:
-  RnnIdAdder(RnnIdContainer* cont, i32 boundary)
-      : cont_{cont},
-        boundary_{boundary},
-        start_{(i32)cont->ids_.size()},
-        segment_start_{start_} {
-    IdOffset offset{(u32)cont_->spans_.size(), (u32)cont_->ids_.size()};
-    cont_->offsets_.push_back(offset);
-  }
-
-  void push_unk(int length) {
-    RnnNodeSpan span{boundary_, segment_start_, length, false};
-    cont_->spans_.push_back(span);
-    segment_start_ = (int)cont_->ids_.size();
-  }
-
-  void maybe_push_span() {
-    if (previous_ == -1) {
-      return;
-    }
-    int end = static_cast<int>(cont_->ids_.size());
-    RnnNodeSpan span{boundary_, segment_start_, end - segment_start_, true};
-    cont_->spans_.push_back(span);
-    segment_start_ = end;
-  }
-
-  void add(i32 id, i32 length) {
-    cont_->ids_.push_back(id);
-    if (id == -1) {
-      maybe_push_span();
-      push_unk(length);
-      previous_ = -1;
-    } else if (previous_ == -1) {
-      previous_ = id;
-    }
-  }
-
-  void finish() { maybe_push_span(); }
-};
-
 Status RnnIdResolver::resolveIds(RnnIdContainer* ids, Lattice* lat,
                                  const ExtraNodesContext* xtra) const {
   ids->reset();
@@ -108,11 +61,13 @@ Status RnnIdResolver::resolveIds(RnnIdContainer* ids, Lattice* lat,
     auto starts = bnd->starts();
     auto entries = starts->entryData();
     RnnIdAdder adder{ids, i};
-    for (int j = 0; j < entries.numRows(); ++j) {
-      auto myEntry = entries.at(targetIdx_);
-      auto rnnId = resolveId(myEntry, bnd, j, xtra);
-      adder.add(rnnId, 1);  // TODO: length
-    }
+    //if (bnd->isActive()) {
+      for (int j = 0; j < entries.numRows(); ++j) {
+        auto myEntry = entries.row(j).at(targetIdx_);
+        auto rnnId = resolveId(myEntry, bnd, j, xtra);
+        adder.add(rnnId, 1);  // TODO: length
+      }
+    //}
     adder.finish();
   }
 
