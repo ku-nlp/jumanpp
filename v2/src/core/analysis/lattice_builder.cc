@@ -79,9 +79,11 @@ Status LatticeBuilder::constructSingleBoundary(Lattice *lattice,
   JPP_RETURN_IF_ERROR(lattice->makeBoundary(lbc, &boundary));
   util::ArraySlice<LatticeNodeSeed> seeds{seeds_, bndInfo.firstNodeOffset,
                                           (u32)bndInfo.startCount};
-  auto entryData = boundary->starts()->entryPtrData();
+  auto entryData = boundary->starts()->nodeInfo();
   for (int i = 0; i < entryData.size(); ++i) {
-    entryData[i] = seeds[i].entryPtr;
+    auto codepts =
+        static_cast<i32>(seeds[i].codepointEnd - seeds[i].codepointStart);
+    entryData[i] = NodeInfo{seeds[i].entryPtr, codepts};
   }
 
   connectible[boundaryIdx] = lbc.beginNodes != 0 && lbc.endNodes != 0;
@@ -165,14 +167,14 @@ const BoundaryInfo &LatticeBuilder::infoAt(i32 boundary) const {
 
 void LatticeConstructionContext::addBos(LatticeBoundary *lb) {
   JPP_DCHECK_EQ(lb->localNodeCount(), 1);
-  lb->starts()->entryPtrData()[0] = EntryPtr::BOS();
+  lb->starts()->nodeInfo()[0] = NodeInfo{EntryPtr::BOS(), 0};
   auto features = lb->starts()->patternFeatureData();
   util::fill(features, EntryPtr::BOS().rawValue());
 }
 
 void LatticeConstructionContext::addEos(LatticeBoundary *lb) {
   JPP_DCHECK_EQ(lb->localNodeCount(), 1);
-  lb->starts()->entryPtrData()[0] = EntryPtr::EOS();
+  lb->starts()->nodeInfo()[0] = NodeInfo{EntryPtr::EOS(), 0};
   auto features = lb->starts()->patternFeatureData();
   util::fill(features, EntryPtr::EOS().rawValue());
 }

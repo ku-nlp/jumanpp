@@ -83,7 +83,8 @@ TEST_CASE("compactor works") {
   auto& output = env.output();
   auto walker = output.nodeWalker();
   CHECK(output.locate(
-      env.lattice()->boundary(3)->starts()->entryPtrData().at(1), &walker));
+      env.lattice()->boundary(3)->starts()->nodeInfo().at(1).entryPtr(),
+      &walker));
   CHECK(walker.remaining() == 2);
   CHECK(walker.next());
   CHECK(env.fldc[walker] == "x");

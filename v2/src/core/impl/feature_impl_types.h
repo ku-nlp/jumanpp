@@ -111,13 +111,13 @@ class PrimitiveFeatureContext {
 class ComputeFeatureContext {};
 
 class PrimitiveFeatureData {
-  util::ArraySlice<EntryPtr> entries_;
+  util::ArraySlice<NodeInfo> entries_;
   util::Sliceable<i32> entryData_;
   mutable util::Sliceable<u64> features_;
   i32 index_ = -1;
 
  public:
-  PrimitiveFeatureData(const util::ArraySlice<EntryPtr>& entries_,
+  PrimitiveFeatureData(const util::ArraySlice<NodeInfo>& entries_,
                        const util::Sliceable<i32>& entryData_,
                        const util::Sliceable<u64>& features_)
       : entries_(entries_), entryData_(entryData_), features_(features_) {}
@@ -127,7 +127,9 @@ class PrimitiveFeatureData {
     return index_ < entries_.size();
   }
 
-  EntryPtr entry() const { return entries_[index_]; }
+  EntryPtr entry() const { return entries_[index_].entryPtr(); }
+
+  i32 numCodepts() const { return entries_[index_].numCodepoints(); }
 
   util::ArraySlice<i32> entryData() const { return entryData_.row(index_); }
 

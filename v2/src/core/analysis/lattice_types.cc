@@ -88,7 +88,7 @@ LatticeRightBoundary::LatticeRightBoundary(
     util::memory::ManagedAllocatorCore *alloc, const LatticeConfig &lc,
     const LatticeBoundaryConfig &lbc)
     : StructOfArrays(alloc, lbc.beginNodes),
-      entryPtrs{this, 1},
+      nodeInfo_{this, 1},
       entryDataStorage{this, lc.entrySize},
       primitiveFeatures{this, lc.numPrimitiveFeatures},
       featurePatterns{this, lc.numFeaturePatterns},

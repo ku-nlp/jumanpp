@@ -53,6 +53,20 @@ class EntryPtr {
   inline bool operator!=(const EntryPtr& o) const { return value_ != o.value_; }
 };
 
+class NodeInfo {
+  EntryPtr entry_;
+  i32 codepoints_;
+
+ public:
+  NodeInfo() : entry_{EntryPtr::EOS()}, codepoints_{0} {}
+  NodeInfo(const EntryPtr& entry_, i32 codepoints_)
+      : entry_(entry_), codepoints_(codepoints_) {}
+
+  EntryPtr entryPtr() const { return entry_; }
+
+  i32 numCodepoints() const { return codepoints_; }
+};
+
 }  // namespace core
 }  // namespace jumanpp
 

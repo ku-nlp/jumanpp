@@ -30,7 +30,7 @@ class LatticeLeftBoundary final : public util::memory::StructOfArrays {
 };
 
 class LatticeRightBoundary final : public util::memory::StructOfArrays {
-  util::memory::SizedArrayField<EntryPtr> entryPtrs;
+  util::memory::SizedArrayField<NodeInfo> nodeInfo_;
   util::memory::SizedArrayField<i32, 64> entryDataStorage;
   util::memory::SizedArrayField<u64, 64> primitiveFeatures;
   util::memory::SizedArrayField<u64, 64> featurePatterns;
@@ -43,7 +43,7 @@ class LatticeRightBoundary final : public util::memory::StructOfArrays {
                        const LatticeConfig& lc,
                        const LatticeBoundaryConfig& lbc);
 
-  util::Sliceable<EntryPtr> entryPtrData() { return entryPtrs; }
+  util::Sliceable<NodeInfo> nodeInfo() { return nodeInfo_; }
   util::Sliceable<i32> entryData() { return entryDataStorage; }
   util::Sliceable<u64> primitiveFeatureData() { return primitiveFeatures; }
   util::Sliceable<u64> patternFeatureData() { return featurePatterns; }
@@ -85,7 +85,7 @@ class LatticeBoundary {
                   const LatticeConfig& lc, const LatticeBoundaryConfig& lbc);
 
   EntryPtr entry(u32 position) const {
-    return right.entryPtrs.data().at(position);
+    return right.nodeInfo_.data().at(position).entryPtr();
   }
 
   bool endingsFilled() const {
@@ -119,7 +119,10 @@ class Lattice {
   Lattice(util::memory::ManagedAllocatorCore* alloc, const LatticeConfig& lc);
   u32 createdBoundaryCount() const { return (u32)boundaries.size(); }
   Status makeBoundary(const LatticeBoundaryConfig& lbc, LatticeBoundary** ptr);
-  LatticeBoundary* boundary(u32 idx) { return boundaries.at(idx); }
+  LatticeBoundary* boundary(u32 idx) {
+    JPP_DCHECK_IN(idx, 0, boundaries.size());
+    return boundaries[idx];
+  }
   const LatticeBoundary* boundary(u32 idx) const { return boundaries.at(idx); }
   void hintSize(u32 size);
   void reset();

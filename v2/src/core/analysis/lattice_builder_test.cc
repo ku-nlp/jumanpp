@@ -15,6 +15,7 @@ class LatticeBldrTestEnv {
   TestEnv tenv;
   StringField flda;
   StringField fldb;
+  ScorerDef scorerDef;
 
  public:
   LatticeBldrTestEnv(StringPiece csvData) {
@@ -29,16 +30,23 @@ class LatticeBldrTestEnv {
     tenv.importDic(csvData);
     REQUIRE_OK(tenv.analyzer->output().stringField("a", &flda));
     REQUIRE_OK(tenv.analyzer->output().stringField("b", &fldb));
+    scorerDef.scoreWeights.push_back(1.0f);
+    tenv.analyzer->initScorers(scorerDef);
   }
 
-  void analyze(StringPiece str) {
+  void analyze(StringPiece str, bool doBuild) {
     CAPTURE(str);
-    CHECK_OK(tenv.analyzer->resetForInput(str));
-    CHECK_OK(tenv.analyzer->makeNodeSeedsFromDic());
-    CHECK_OK(tenv.analyzer->makeUnkNodes1());
+    REQUIRE_OK(tenv.analyzer->resetForInput(str));
+    Status s = tenv.analyzer->prepareNodeSeeds();
+    if (doBuild) {
+      REQUIRE_OK(s);
+      REQUIRE_OK(tenv.analyzer->buildLattice());
+    }
   }
 
   bool isConnected() { return tenv.analyzer->checkLatticeConnectivity(); }
+
+  Lattice* lat() { return tenv.analyzer.get()->lattice(); }
 
   void printAll() {
     auto& output = tenv.analyzer->output();
@@ -64,8 +72,15 @@ class LatticeBldrTestEnv {
 
 TEST_CASE("connected lattice") {
   LatticeBldrTestEnv env{"KANA,0\nすもも,1\nもも,2\nも,3\nうち,4\nの,5"};
-  env.analyze("すもももももももものうち");
+  env.analyze("すもももももももものうち", true);
   CHECK(env.isConnected());
-  env.analyze("すもももすいかももものうち");
+  auto codepts =
+      env.lat()->boundary(2)->starts()->nodeInfo().at(0).numCodepoints();
+  CHECK(codepts == 3);
+}
+
+TEST_CASE("disconnected lattice") {
+  LatticeBldrTestEnv env{"KANA,0\nすもも,1\nもも,2\nも,3\nうち,4\nの,5"};
+  env.analyze("すもももすいかももものうち", false);
   CHECK_FALSE(env.isConnected());
 }

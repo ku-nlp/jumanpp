@@ -38,7 +38,7 @@ Status AnalysisPath::fillIn(Lattice *l) {
     return Status::InvalidState() << "last boundary had more than one node!";
   }
 
-  if (lastStart->entryPtrData().at(0) != EntryPtr::EOS()) {
+  if (lastStart->nodeInfo().at(0).entryPtr() != EntryPtr::EOS()) {
     return Status::InvalidState() << "last node was not EOS";
   }
 

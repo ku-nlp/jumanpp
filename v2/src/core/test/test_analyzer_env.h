@@ -114,14 +114,14 @@ class PrimFeatureTestEnv {
     EntryPtr x = EntryPtr::EOS();
     i32 pos = 0;
     i32 i = 0;
-    for (auto& eptr : starts->entryPtrData()) {
-      REQUIRE(output.locate(eptr, &walker));
+    for (auto& ninfo : starts->nodeInfo()) {
+      REQUIRE(output.locate(ninfo.entryPtr(), &walker));
       auto cont = flda[walker];
       if (cont == surface) {
         if (x != EntryPtr::EOS()) {
           FAIL("found second node with surface " << surface);
         }
-        x = eptr;
+        x = ninfo.entryPtr();
         pos = i;
       }
       ++i;
@@ -151,15 +151,15 @@ class PrimFeatureTestEnv {
     EntryPtr x = EntryPtr::EOS();
     i32 pos = 0;
     i32 i = 0;
-    for (auto& eptr : starts->entryPtrData()) {
-      REQUIRE(output.locate(eptr, &walker));
+    for (auto& ninfo : starts->nodeInfo()) {
+      REQUIRE(output.locate(ninfo.entryPtr(), &walker));
       auto cont = flda[walker];
       auto nodefb = fldb[walker];
       if (cont == af && bf == nodefb) {
         if (x != EntryPtr::EOS()) {
           FAIL("found second node with surface " << af);
         }
-        x = eptr;
+        x = ninfo.entryPtr();
         pos = i;
       }
       ++i;
@@ -218,7 +218,7 @@ class PrimFeatureTestEnv {
     util::copy_insert(starts->entryData().row(pos), n.entries);
     util::copy_insert(starts->primitiveFeatureData(), n.primitve);
     util::copy_insert(starts->patternFeatureData(), n.pattern);
-    n.eptr = starts->entryPtrData().at(pos);
+    n.eptr = starts->nodeInfo().at(pos).entryPtr();
 
     auto o = tenv.analyzer->output();
     auto w = o.nodeWalker();

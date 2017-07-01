@@ -84,8 +84,8 @@ i32 RnnIdResolver::resolveId(i32 entry, LatticeBoundary* lb, int position,
   if (entry < 0) {
     // We have an OOV
     // But it can be present in RNN model
-    auto eptr = lb->starts()->entryPtrData().at(position);
-    auto node = xtra->node(eptr);
+    auto nodeInfo = lb->starts()->nodeInfo().at(position);
+    auto node = xtra->node(nodeInfo.entryPtr());
     if (node->header.type == ExtraNodeType::Unknown) {
       StringPiece sp = node->header.unk.surface;
       if (sp.size() != 0) {

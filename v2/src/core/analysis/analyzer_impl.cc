@@ -116,7 +116,8 @@ class InNodeFeatureComputer {
         features_{features},
         pfc_{xtra, dic.fields()} {}
 
-  bool importOneEntry(EntryPtr ptr, util::MutableArraySlice<i32> result) {
+  bool importOneEntry(NodeInfo nfo, util::MutableArraySlice<i32> result) {
+    auto ptr = nfo.entryPtr();
     if (ptr.isSpecial()) {
       auto node = xtra_.node(ptr);
       if (node->header.type == ExtraNodeType::Unknown) {
@@ -141,7 +142,7 @@ class InNodeFeatureComputer {
   }
 
   Status importEntryData(LatticeBoundary* lb) {
-    auto ptrs = lb->starts()->entryPtrData();
+    auto ptrs = lb->starts()->nodeInfo();
     auto entries = lb->starts()->entryData();
     for (int i = 0; i < ptrs.size(); ++i) {
       if (!importOneEntry(ptrs[i], entries.row(i))) {
@@ -154,7 +155,7 @@ class InNodeFeatureComputer {
 
   void applyPrimitiveFeatures(LatticeBoundary* lb) {
     auto nodes = lb->starts();
-    auto ptrs = nodes->entryPtrData();
+    auto ptrs = nodes->nodeInfo();
     auto entries = nodes->entryData();
     auto primFeature = nodes->primitiveFeatureData();
     features::impl::PrimitiveFeatureData pfd{ptrs.data(), entries, primFeature};
@@ -163,7 +164,7 @@ class InNodeFeatureComputer {
 
   void applyComputeFeatures(LatticeBoundary* lb) {
     auto nodes = lb->starts();
-    auto ptrs = nodes->entryPtrData();
+    auto ptrs = nodes->nodeInfo();
     auto entries = nodes->entryData();
     auto primFeature = nodes->primitiveFeatureData();
     features::impl::PrimitiveFeatureData pfd{ptrs.data(), entries, primFeature};
