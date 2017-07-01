@@ -66,7 +66,7 @@ template <typename C, typename Cmp>
 struct EqSmt {
   const C& obj;
 
-  explicit EqSmt(const C &obj) : obj(obj) {}
+  explicit EqSmt(const C& obj) : obj(obj) {}
 
   template <typename C1>
   bool operator==(const C1& o) const noexcept {
@@ -108,7 +108,6 @@ EqSmt<util::Sliceable<T>, Cmp> eqf(const util::Sliceable<T>& obj) {
   return EqSmt<util::Sliceable<T>, Cmp>{obj};
 }
 
-
 TEST_CASE("rnn executor gets same scores in parts and in a whole") {
   SimpleRnn rnn;
 
@@ -116,23 +115,22 @@ TEST_CASE("rnn executor gets same scores in parts and in a whole") {
   int curItems = 6;
 
   rm::ContextStepData cstep{
-      rnn.const2d<float>(beamSize, rnn.header.layerSize, std::numeric_limits<float>::signaling_NaN()),
+      rnn.const2d<float>(beamSize, rnn.header.layerSize,
+                         std::numeric_limits<float>::signaling_NaN()),
       rnn.rand2d<float>(1, rnn.header.layerSize, -0.1f, 0.1f).row(0),
-      rnn.const2d<float>(beamSize, rnn.header.layerSize, 0.1f)
-  };
+      rnn.const2d<float>(beamSize, rnn.header.layerSize, 0.1f)};
 
   rnn.rnn.calcNewContext(cstep);
 
   auto isdCtxIds = rnn.alloc->allocate2d<i32>(2, beamSize);
-  util::copy_buffer(il({1,2,3,4,5,6}), isdCtxIds);
+  util::copy_buffer(il({1, 2, 3, 4, 5, 6}), isdCtxIds);
   auto isdItems = rnn.alloc->allocateBuf<i32>(curItems);
-  util::copy_buffer(il({7,8,9,10,11,12}), isdItems);
+  util::copy_buffer(il({7, 8, 9, 10, 11, 12}), isdItems);
   rm::InferStepData isd{
-      isdCtxIds,
-      isdItems,
-      cstep.curContext,
+      isdCtxIds, isdItems, cstep.curContext,
       rnn.rand2d<float>(curItems, rnn.header.layerSize, -0.1f, 0.f),
-      rnn.const2d<float>(beamSize, curItems, std::numeric_limits<float>::signaling_NaN())};
+      rnn.const2d<float>(beamSize, curItems,
+                         std::numeric_limits<float>::signaling_NaN())};
 
   rnn.rnn.calcScoresOn(isd, 0, 2);
   rnn.rnn.calcScoresOn(isd, 4, 2);
@@ -144,9 +142,10 @@ TEST_CASE("rnn executor gets same scores in parts and in a whole") {
       cstep.prevContext,
       cstep.leftEmbedding,
       isd.rightEmbeddings,
-      rnn.const2d<float>(beamSize, rnn.header.layerSize, std::numeric_limits<float>::signaling_NaN()),
-      rnn.const2d<float>(beamSize, curItems, std::numeric_limits<float>::signaling_NaN())
-  };
+      rnn.const2d<float>(beamSize, rnn.header.layerSize,
+                         std::numeric_limits<float>::signaling_NaN()),
+      rnn.const2d<float>(beamSize, curItems,
+                         std::numeric_limits<float>::signaling_NaN())};
 
   rnn.rnn.apply(&stepData);
 

@@ -2,14 +2,14 @@
 // Created by Arseny Tolmachev on 2017/06/29.
 //
 
-#include "testing/test_analyzer.h"
-#include "rnn_id_resolver.h"
 #include "rnn_scorer.h"
-#include "core/env.h"
-#include "util/lazy.h"
-#include "rnn/mikolov_rnn.h"
-#include "core/impl/graphviz_format.h"
 #include <fstream>
+#include "core/env.h"
+#include "core/impl/graphviz_format.h"
+#include "rnn/mikolov_rnn.h"
+#include "rnn_id_resolver.h"
+#include "testing/test_analyzer.h"
+#include "util/lazy.h"
 
 using namespace jumanpp;
 namespace a = jumanpp::core::analysis;
@@ -39,9 +39,7 @@ struct RnnScorerEnv {
     anaImpl.initialize(jppEnv.coreHolder(), scoreCfg, anaCfg);
   }
 
-  core::analysis::AnalyzerImpl& ana() {
-      return anaImpl.value();
-  }
+  core::analysis::AnalyzerImpl& ana() { return anaImpl.value(); }
 
   void dumpTrainers(StringPiece baseDir) {
     auto bldr = core::format::GraphVizBuilder{};
@@ -51,70 +49,73 @@ struct RnnScorerEnv {
 
     char buffer[256];
 
-      std::snprintf(buffer, 255, "%s/dump.dot", baseDir.char_begin());
-      std::ofstream out{buffer};
-      auto pana = &anaImpl.value();
-      REQUIRE_OK(fmt.initialize(pana->output()));
-      fmt.reset();
-      auto lat = pana->lattice();
-      REQUIRE_OK(fmt.render(lat));
-      out << fmt.result();
+    std::snprintf(buffer, 255, "%s/dump.dot", baseDir.char_begin());
+    std::ofstream out{buffer};
+    auto pana = &anaImpl.value();
+    REQUIRE_OK(fmt.initialize(pana->output()));
+    fmt.reset();
+    auto lat = pana->lattice();
+    REQUIRE_OK(fmt.render(lat));
+    out << fmt.result();
   }
 };
 
-void checkItems(a::rnn::RnnIdContainer& c, int boundary, int count, int numSpans = 1) {
-    CAPTURE(boundary);
-    CAPTURE(count);
-    CAPTURE(numSpans);
-    auto abnd = c.atBoundary(boundary);
-    CHECK(abnd.numSpans() == numSpans);
-    CHECK(abnd.ids().size() == count);
+void checkItems(a::rnn::RnnIdContainer& c, int boundary, int count,
+                int numSpans = 1) {
+  CAPTURE(boundary);
+  CAPTURE(count);
+  CAPTURE(numSpans);
+  auto abnd = c.atBoundary(boundary);
+  CHECK(abnd.numSpans() == numSpans);
+  CHECK(abnd.ids().size() == count);
 }
 
 TEST_CASE("RnnIdResolver correctly resolves present ids") {
   RnnScorerEnv env{"a,1\nb,2\nc,3"};
-    auto& ana = env.ana();
-    ana.resetForInput("bac");
-    REQUIRE_OK(ana.prepareNodeSeeds());
-    REQUIRE_OK(ana.buildLattice());
-    a::rnn::RnnIdResolver idres{};
-    jumanpp::rnn::mikolov::MikolovModelReader mrr;
-    REQUIRE_OK(mrr.open("rnn/testlm"));
-    REQUIRE_OK(mrr.parse());
-    REQUIRE_OK(idres.loadFromDic(env.jppEnv.coreHolder()->dic(), "a", mrr.words()));
-    a::rnn::RnnIdContainer ctr{ana.alloc()};
-    REQUIRE_OK(idres.resolveIds(&ctr, ana.lattice(), ana.extraNodesContext()));
-    checkItems(ctr, 0, 1);
-    checkItems(ctr, 1, 1);
-    checkItems(ctr, 2, 1);
-    checkItems(ctr, 3, 1);
-    CHECK(ctr.atBoundary(3).ids().at(0) == 6);
-    checkItems(ctr, 4, 1);
-    checkItems(ctr, 5, 1);
+  auto& ana = env.ana();
+  ana.resetForInput("bac");
+  REQUIRE_OK(ana.prepareNodeSeeds());
+  REQUIRE_OK(ana.buildLattice());
+  a::rnn::RnnIdResolver idres{};
+  jumanpp::rnn::mikolov::MikolovModelReader mrr;
+  REQUIRE_OK(mrr.open("rnn/testlm"));
+  REQUIRE_OK(mrr.parse());
+  REQUIRE_OK(
+      idres.loadFromDic(env.jppEnv.coreHolder()->dic(), "a", mrr.words()));
+  a::rnn::RnnIdContainer ctr{ana.alloc()};
+  REQUIRE_OK(idres.resolveIds(&ctr, ana.lattice(), ana.extraNodesContext()));
+  checkItems(ctr, 0, 1);
+  checkItems(ctr, 1, 1);
+  checkItems(ctr, 2, 1);
+  checkItems(ctr, 3, 1);
+  CHECK(ctr.atBoundary(3).ids().at(0) == 6);
+  checkItems(ctr, 4, 1);
+  checkItems(ctr, 5, 1);
 }
 
 TEST_CASE("RnnIdResolver correctly resolves absent ids") {
-    RnnScorerEnv env{"acga,1\nb,2\nc,3"};
-    auto& ana = env.ana();
-    ana.resetForInput("bacga");
-    REQUIRE_OK(ana.prepareNodeSeeds());
-    REQUIRE_OK(ana.buildLattice());
-    a::rnn::RnnIdResolver idres{};
-    jumanpp::rnn::mikolov::MikolovModelReader mrr;
-    REQUIRE_OK(mrr.open("rnn/testlm"));
-    REQUIRE_OK(mrr.parse());
-    REQUIRE_OK(idres.loadFromDic(env.jppEnv.coreHolder()->dic(), "a", mrr.words()));
-    a::rnn::RnnIdContainer ctr{ana.alloc()};
-    REQUIRE_OK(idres.resolveIds(&ctr, ana.lattice(), ana.extraNodesContext()));
-    checkItems(ctr, 0, 1);
-    checkItems(ctr, 1, 1);
-    checkItems(ctr, 2, 1);
-    checkItems(ctr, 3, 1);
-    CHECK(ctr.atBoundary(3).ids().at(0) == -1);
-    checkItems(ctr, 4, 1);
-    checkItems(ctr, 5, 0);
-    checkItems(ctr, 6, 0);
-    checkItems(ctr, 7, 1);
+  RnnScorerEnv env{"acga,1\nb,2\nc,3"};
+  auto& ana = env.ana();
+  ana.resetForInput("bacga");
+  REQUIRE_OK(ana.prepareNodeSeeds());
+  REQUIRE_OK(ana.buildLattice());
+  a::rnn::RnnIdResolver idres{};
+  jumanpp::rnn::mikolov::MikolovModelReader mrr;
+  REQUIRE_OK(mrr.open("rnn/testlm"));
+  REQUIRE_OK(mrr.parse());
+  REQUIRE_OK(
+      idres.loadFromDic(env.jppEnv.coreHolder()->dic(), "a", mrr.words()));
+  a::rnn::RnnIdContainer ctr{ana.alloc()};
+  REQUIRE_OK(idres.resolveIds(&ctr, ana.lattice(), ana.extraNodesContext()));
+  checkItems(ctr, 0, 1);
+  checkItems(ctr, 1, 1);
+  checkItems(ctr, 2, 1);
+  checkItems(ctr, 3, 1);
+  CHECK(ctr.atBoundary(3).ids().at(0) == -1);
+  checkItems(ctr, 4, 1);
+  checkItems(ctr, 5, 0);
+  checkItems(ctr, 6, 0);
+  checkItems(ctr, 7, 1);
 }
 
 TEST_CASE("RNN computes scores") {
@@ -138,11 +139,14 @@ TEST_CASE("RNN computes scores") {
   ana.bootstrapAnalysis();
   REQUIRE_OK(ana.computeScores(&scorerDef));
   CHECK(ana.lattice()->createdBoundaryCount() == 6);
-  CHECK(!std::isnan(ana.lattice()->boundary(5)->starts()->beamData().at(0).totalScore));
+  CHECK(!std::isnan(
+      ana.lattice()->boundary(5)->starts()->beamData().at(0).totalScore));
 }
 
 TEST_CASE("RNN computes scores with unks") {
-  RnnScorerEnv env{"newsan,12\nn,14\newsan,13\nnew,1\nnews,2\nsan,3\na,4\nan,5\napple,6\news,7\nne,20\npple,8\nwsa,9\np,10\nle,11\n"};
+  RnnScorerEnv env{
+      "newsan,12\nn,14\newsan,13\nnew,1\nnews,2\nsan,3\na,4\nan,5\napple,"
+      "6\news,7\nne,20\npple,8\nwsa,9\np,10\nle,11\n"};
   auto& ana = env.ana();
   jumanpp::rnn::mikolov::MikolovModelReader mrr;
   REQUIRE_OK(mrr.open("rnn/testlm"));
@@ -162,75 +166,76 @@ TEST_CASE("RNN computes scores with unks") {
   ana.bootstrapAnalysis();
   REQUIRE_OK(ana.computeScores(&scorerDef));
   CHECK(ana.lattice()->createdBoundaryCount() == 14);
-  CHECK(!std::isnan(ana.lattice()->boundary(13)->starts()->beamData().at(0).totalScore));
-  //env.dumpTrainers("/tmp/jpp");
+  CHECK(!std::isnan(
+      ana.lattice()->boundary(13)->starts()->beamData().at(0).totalScore));
+  // env.dumpTrainers("/tmp/jpp");
 }
 
 TEST_CASE("RnnIdAdder correctly handles unks") {
-    util::memory::Manager mgr{4096};
-    auto alloc = mgr.core();
-    a::rnn::RnnIdContainer ctr{alloc.get()};
-    a::rnn::RnnIdAdder adder2{&ctr, 1};
-    adder2.add(-1, 2);
-    adder2.finish();
-    a::rnn::RnnIdAdder guard{&ctr, 2};
-    checkItems(ctr, 0, 1);
+  util::memory::Manager mgr{4096};
+  auto alloc = mgr.core();
+  a::rnn::RnnIdContainer ctr{alloc.get()};
+  a::rnn::RnnIdAdder adder2{&ctr, 1};
+  adder2.add(-1, 2);
+  adder2.finish();
+  a::rnn::RnnIdAdder guard{&ctr, 2};
+  checkItems(ctr, 0, 1);
 }
 
 TEST_CASE("RnnIdAdder correctly handles unks in end") {
-    util::memory::Manager mgr{4096};
-    auto alloc = mgr.core();
-    a::rnn::RnnIdContainer ctr{alloc.get()};
-    a::rnn::RnnIdAdder adder2{&ctr, 1};
-    adder2.add(1, 2);
-    adder2.add(-1, 2);
-    adder2.finish();
-    a::rnn::RnnIdAdder guard{&ctr, 2};
-    checkItems(ctr, 0, 2, 2);
-    CHECK(ctr.atBoundary(0).span(0).normal);
-    CHECK(ctr.atBoundary(0).span(0).length == 1);
-    CHECK(ctr.atBoundary(0).span(0).start == 0);
-    CHECK(ctr.atBoundary(0).ids().at(0) == 1);
-    CHECK(ctr.atBoundary(0).ids().at(1) == -1);
+  util::memory::Manager mgr{4096};
+  auto alloc = mgr.core();
+  a::rnn::RnnIdContainer ctr{alloc.get()};
+  a::rnn::RnnIdAdder adder2{&ctr, 1};
+  adder2.add(1, 2);
+  adder2.add(-1, 2);
+  adder2.finish();
+  a::rnn::RnnIdAdder guard{&ctr, 2};
+  checkItems(ctr, 0, 2, 2);
+  CHECK(ctr.atBoundary(0).span(0).normal);
+  CHECK(ctr.atBoundary(0).span(0).length == 1);
+  CHECK(ctr.atBoundary(0).span(0).start == 0);
+  CHECK(ctr.atBoundary(0).ids().at(0) == 1);
+  CHECK(ctr.atBoundary(0).ids().at(1) == -1);
 }
 
 TEST_CASE("RnnIdAdder correctly handles unks in start") {
-    util::memory::Manager mgr{4096};
-    auto alloc = mgr.core();
-    a::rnn::RnnIdContainer ctr{alloc.get()};
-    a::rnn::RnnIdAdder adder2{&ctr, 1};
-    adder2.add(-1, 2);
-    adder2.add(1, 2);
-    adder2.finish();
-    a::rnn::RnnIdAdder guard{&ctr, 2};
-    checkItems(ctr, 0, 2, 2);
-    CHECK(ctr.atBoundary(0).span(1).normal);
-    CHECK(ctr.atBoundary(0).span(1).length == 1);
-    CHECK(ctr.atBoundary(0).span(1).start == 1);
-    CHECK(ctr.atBoundary(0).ids().at(0) == -1);
-    CHECK(ctr.atBoundary(0).ids().at(1) == 1);
+  util::memory::Manager mgr{4096};
+  auto alloc = mgr.core();
+  a::rnn::RnnIdContainer ctr{alloc.get()};
+  a::rnn::RnnIdAdder adder2{&ctr, 1};
+  adder2.add(-1, 2);
+  adder2.add(1, 2);
+  adder2.finish();
+  a::rnn::RnnIdAdder guard{&ctr, 2};
+  checkItems(ctr, 0, 2, 2);
+  CHECK(ctr.atBoundary(0).span(1).normal);
+  CHECK(ctr.atBoundary(0).span(1).length == 1);
+  CHECK(ctr.atBoundary(0).span(1).start == 1);
+  CHECK(ctr.atBoundary(0).ids().at(0) == -1);
+  CHECK(ctr.atBoundary(0).ids().at(1) == 1);
 }
 
 TEST_CASE("RnnIdAdder correctly handles unks in middle") {
-    util::memory::Manager mgr{4096};
-    auto alloc = mgr.core();
-    a::rnn::RnnIdContainer ctr{alloc.get()};
-    a::rnn::RnnIdAdder adder2{&ctr, 1};
-    adder2.add(1, 2);
-    adder2.add(-1, 2);
-    adder2.add(1, 2);
-    adder2.finish();
-    a::rnn::RnnIdAdder guard{&ctr, 2};
-    checkItems(ctr, 0, 3, 3);
-    CHECK(ctr.atBoundary(0).span(0).normal);
-    CHECK_FALSE(ctr.atBoundary(0).span(1).normal);
-    CHECK(ctr.atBoundary(0).span(2).normal);
-    CHECK(ctr.atBoundary(0).span(0).length == 1);
-    CHECK(ctr.atBoundary(0).span(2).length == 1);
-    CHECK(ctr.atBoundary(0).span(0).start == 0);
-    CHECK(ctr.atBoundary(0).ids().at(0) == 1);
-    CHECK(ctr.atBoundary(0).ids().at(1) == -1);
-    CHECK(ctr.atBoundary(0).ids().at(2) == 1);
+  util::memory::Manager mgr{4096};
+  auto alloc = mgr.core();
+  a::rnn::RnnIdContainer ctr{alloc.get()};
+  a::rnn::RnnIdAdder adder2{&ctr, 1};
+  adder2.add(1, 2);
+  adder2.add(-1, 2);
+  adder2.add(1, 2);
+  adder2.finish();
+  a::rnn::RnnIdAdder guard{&ctr, 2};
+  checkItems(ctr, 0, 3, 3);
+  CHECK(ctr.atBoundary(0).span(0).normal);
+  CHECK_FALSE(ctr.atBoundary(0).span(1).normal);
+  CHECK(ctr.atBoundary(0).span(2).normal);
+  CHECK(ctr.atBoundary(0).span(0).length == 1);
+  CHECK(ctr.atBoundary(0).span(2).length == 1);
+  CHECK(ctr.atBoundary(0).span(0).start == 0);
+  CHECK(ctr.atBoundary(0).ids().at(0) == 1);
+  CHECK(ctr.atBoundary(0).ids().at(1) == -1);
+  CHECK(ctr.atBoundary(0).ids().at(2) == 1);
 }
 
 TEST_CASE("RnnIdAdder correctly handles unks (2) in middle") {

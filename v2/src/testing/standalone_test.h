@@ -40,10 +40,8 @@ class OkStatusMatcher
     return status.isOk();
   }
 
-protected:
-  std::string describe() const override {
-    return "Status == Ok";
-  }
+ protected:
+  std::string describe() const override { return "Status == Ok"; }
 };
 
 class TempFile {

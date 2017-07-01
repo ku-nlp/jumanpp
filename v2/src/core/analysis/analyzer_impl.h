@@ -84,9 +84,7 @@ class AnalyzerImpl {
     return allocated - remaining;
   }
 
-  util::memory::ManagedAllocatorCore* alloc() const {
-    return alloc_.get();
-  }
+  util::memory::ManagedAllocatorCore* alloc() const { return alloc_.get(); }
 };
 
 }  // namespace analysis

@@ -117,7 +117,7 @@ class RnnIdAdder {
   int segment_start_;
   int previous_ = 0;
 
-public:
+ public:
   RnnIdAdder(RnnIdContainer* cont, i32 boundary)
       : cont_{cont},
         boundary_{boundary},
