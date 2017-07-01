@@ -54,7 +54,14 @@ class EntryPtr {
 };
 
 class NodeInfo {
+  /**
+   * Entry pointer
+   */
   EntryPtr entry_;
+
+  /**
+   * Surface length in codepoints
+   */
   i32 codepoints_;
 
  public:

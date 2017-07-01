@@ -120,6 +120,14 @@ TEST_CASE("preprocessRawData works with Emojis", "[characters]") {
   CHECK(result[1].hasClass(CharacterClass::SYMBOL));
 }
 
+TEST_CASE("compute correct length", "[characters]") {
+  CHECK(numCodepoints("test") == 4);
+  CHECK(numCodepoints("🍣🍺") == 2);
+  CHECK(numCodepoints("漢字") == 2);
+  CHECK(numCodepoints("ｲｳｴｵ") == 4);
+  CHECK(numCodepoints("привет") == 6);
+}
+
 TEST_CASE("preprocessRawData collectly treats UTF8 sequence あ",
           "[characters]") {
   CHECK(checkByteSequence({0xe3, 0x81, 0x82}));

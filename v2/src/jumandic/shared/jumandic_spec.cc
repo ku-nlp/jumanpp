@@ -50,7 +50,7 @@ void SpecFactory::fillSpec(core::spec::dsl::ModelSpecBuilder& bldr) {
                       .matchAnyRowOfCsv("助詞\n助動詞\n判定詞", {pos})
                       .ifTrue({surface, pos, subpos})
                       .ifFalse({pos});
-  auto& surfaceLength = bldr.feature("surfaceLength").length(surface);
+  auto& surfaceLength = bldr.feature("surfaceLength").numCodepoints(surface);
   auto& isDevoiced = bldr.feature("isDevoiced").matchValue(features, "濁音化");
   auto& nominalize = bldr.feature("nominalize").matchValue(features, "名詞化");
   auto& notPrefix = bldr.feature("notPrefix").placeholder();

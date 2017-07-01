@@ -245,6 +245,13 @@ Status ModelSpecBuilder::createRemainingPrimitiveFeatures(
       f->handled = true;
       pfd.kind = PrimitiveFeatureKind::Length;
       pfd.references.push_back(index);
+    } else if (type == FeatureType::CodepointSize) {
+      i32 index = 0;
+      JPP_RETURN_IF_ERROR(
+          findOnlyFieldForFeature(fields, f->name(), f->fields_, &index));
+      f->handled = true;
+      pfd.kind = PrimitiveFeatureKind::CodepointSize;
+      pfd.references.push_back(index);
     } else if (type == FeatureType::MatchValue) {
       if (f->fields_.size() == 1) {
         i32 index = 0;
@@ -616,6 +623,11 @@ Status FeatureBuilder::validate() const {
            << "feature " << name_ << " was initialized more than one time";
   }
   if (type_ == FeatureType::Length && fields_.size() != 1) {
+    return Status::InvalidState()
+           << "feature " << name_ << " can contain only one field reference";
+  }
+
+  if (type_ == FeatureType::CodepointSize && fields_.size() != 1) {
     return Status::InvalidState()
            << "feature " << name_ << " can contain only one field reference";
   }

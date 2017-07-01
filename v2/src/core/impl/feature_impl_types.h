@@ -91,17 +91,21 @@ class PrimitiveFeatureContext {
     return extraCtx->placeholderData(entryPtr, index);
   }
 
-  i32 lengthOf(EntryPtr eptr, i32 fieldNum, i32 fieldPtr,
-               LengthFieldSource field) {
+  i32 lengthOf(NodeInfo nodeInfo, i32 fieldNum, i32 fieldPtr,
+               LengthFieldSource field, bool useBytes) {
     if (fieldPtr < 0) {
-      return extraCtx->lengthOf(eptr);
+      return extraCtx->lengthOf(nodeInfo.entryPtr());
     }
     auto fld = fields.at(fieldNum);
     switch (field) {
       case LengthFieldSource::Positions:
         return fld.postions.lengthOf(fieldPtr);
       case LengthFieldSource::Strings:
-        return fld.strings.lengthOf(fieldPtr);
+        if (useBytes) {
+          return fld.strings.lengthOf(fieldPtr);
+        } else {
+          return fld.strings.numCodepoints(fieldPtr);
+        }
       default:
         return -1;
     }
@@ -127,9 +131,7 @@ class PrimitiveFeatureData {
     return index_ < entries_.size();
   }
 
-  EntryPtr entry() const { return entries_[index_].entryPtr(); }
-
-  i32 numCodepts() const { return entries_[index_].numCodepoints(); }
+  NodeInfo nodeInfo() const { return entries_[index_]; }
 
   util::ArraySlice<i32> entryData() const { return entryData_.row(index_); }
 

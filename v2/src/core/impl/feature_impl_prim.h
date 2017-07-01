@@ -31,7 +31,7 @@ class PrimitiveFeatureImpl : public FeatureImplBase {
   virtual Status initialize(FeatureConstructionContext* ctx,
                             const PrimitiveFeature& f) = 0;
 
-  virtual void apply(PrimitiveFeatureContext* ctx, EntryPtr entryPtr,
+  virtual void apply(PrimitiveFeatureContext* ctx, NodeInfo entryPtr,
                      const util::ArraySlice<i32>& entry,
                      util::MutableArraySlice<u64>* features) const noexcept = 0;
 };
@@ -46,7 +46,7 @@ class DynamicPrimitiveFeature : public PrimitiveFeatureImpl {
     return impl.initialize(ctx, f);
   }
 
-  virtual void apply(PrimitiveFeatureContext* ctx, EntryPtr entryPtr,
+  virtual void apply(PrimitiveFeatureContext* ctx, NodeInfo entryPtr,
                      const util::ArraySlice<i32>& entry,
                      util::MutableArraySlice<u64>* features) const
       noexcept override {
@@ -65,7 +65,7 @@ class CopyPrimFeatureImpl {
 
   Status initialize(FeatureConstructionContext* ctx, const PrimitiveFeature& f);
 
-  inline void apply(PrimitiveFeatureContext* ctx, EntryPtr entryPtr,
+  inline void apply(PrimitiveFeatureContext* ctx, NodeInfo nodeInfo,
                     const util::ArraySlice<i32>& entry,
                     util::MutableArraySlice<u64>* features) const noexcept {
     features->at(featureIdx) = (u32)entry.at(fieldIdx);
@@ -83,10 +83,11 @@ class ProvidedPrimFeatureImpl {
 
   Status initialize(FeatureConstructionContext* ctx, const PrimitiveFeature& f);
 
-  inline void apply(PrimitiveFeatureContext* ctx, EntryPtr entryPtr,
+  inline void apply(PrimitiveFeatureContext* ctx, NodeInfo nodeInfo,
                     const util::ArraySlice<i32>& entry,
                     util::MutableArraySlice<u64>* features) const noexcept {
-    features->at(featureIdx) = (u32)ctx->providedFeature(entryPtr, providedIdx);
+    features->at(featureIdx) =
+        (u32)ctx->providedFeature(nodeInfo.entryPtr(), providedIdx);
   }
 };
 
@@ -103,11 +104,34 @@ class LengthPrimFeatureImpl {
 
   Status initialize(FeatureConstructionContext* ctx, const PrimitiveFeature& f);
 
-  inline void apply(PrimitiveFeatureContext* ctx, EntryPtr entryPtr,
+  inline void apply(PrimitiveFeatureContext* ctx, NodeInfo nodeInfo,
                     const util::ArraySlice<i32>& entry,
                     util::MutableArraySlice<u64>* features) const noexcept {
     auto fldPtr = entry[fieldIdx];
-    auto length = ctx->lengthOf(entryPtr, fieldIdx, fldPtr, field);
+    auto length = ctx->lengthOf(nodeInfo, fieldIdx, fldPtr, field, true);
+    JPP_DCHECK_NE(length, -1);
+    features->at(featureIdx) = (u32)length;
+  }
+};
+
+class CodepointLengthPrimFeatureImpl {
+  u32 fieldIdx;
+  u32 featureIdx;
+  LengthFieldSource field = LengthFieldSource::Invalid;
+
+ public:
+  CodepointLengthPrimFeatureImpl() {}
+  constexpr CodepointLengthPrimFeatureImpl(u32 fieldIdx, u32 featureIdx,
+                                           LengthFieldSource fld)
+      : fieldIdx{fieldIdx}, featureIdx{featureIdx}, field{fld} {}
+
+  Status initialize(FeatureConstructionContext* ctx, const PrimitiveFeature& f);
+
+  inline void apply(PrimitiveFeatureContext* ctx, NodeInfo nodeInfo,
+                    const util::ArraySlice<i32>& entry,
+                    util::MutableArraySlice<u64>* features) const noexcept {
+    auto fldPtr = entry[fieldIdx];
+    auto length = ctx->lengthOf(nodeInfo, fieldIdx, fldPtr, field, false);
     JPP_DCHECK_NE(length, -1);
     features->at(featureIdx) = (u32)length;
   }
@@ -127,7 +151,7 @@ class MatchDicPrimFeatureImpl {
 
   Status initialize(FeatureConstructionContext* ctx, const PrimitiveFeature& f);
 
-  inline void apply(PrimitiveFeatureContext* ctx, EntryPtr entryPtr,
+  inline void apply(PrimitiveFeatureContext* ctx, NodeInfo nodeInfo,
                     const util::ArraySlice<i32>& entry,
                     util::MutableArraySlice<u64>* features) const noexcept {
     auto elem = entry.at(fieldIdx);
@@ -153,7 +177,7 @@ class MatchAnyDicPrimFeatureImpl {
 
   Status initialize(FeatureConstructionContext* ctx, const PrimitiveFeature& f);
 
-  inline void apply(PrimitiveFeatureContext* ctx, EntryPtr entryPtr,
+  inline void apply(PrimitiveFeatureContext* ctx, NodeInfo nodeInfo,
                     const util::ArraySlice<i32>& entry,
                     util::MutableArraySlice<u64>* features) const noexcept {
     auto elem = entry.at(fieldIdx);
@@ -179,7 +203,7 @@ class PrimitiveFeatureApplyImpl : public PrimitiveFeatureApply {
     const Child& cld = static_cast<const Child&>(*this);
     while (data->next()) {
       auto slice = data->featureData();
-      cld.apply(ctx, data->entry(), data->entryData(), &slice);
+      cld.apply(ctx, data->nodeInfo(), data->entryData(), &slice);
     }
   }
 };
@@ -192,7 +216,7 @@ class PrimitiveFeaturesDynamicApply final
   Status initialize(FeatureConstructionContext* ctx,
                     util::ArraySlice<PrimitiveFeature> featureData);
 
-  void apply(PrimitiveFeatureContext* ctx, EntryPtr entryPtr,
+  void apply(PrimitiveFeatureContext* ctx, NodeInfo nodeInfo,
              const util::ArraySlice<i32>& entry,
              util::MutableArraySlice<u64>* features) const noexcept;
 };

@@ -142,6 +142,7 @@ enum class FeatureType {
   MatchValue,
   MatchCsv,
   Length,
+  CodepointSize,
   Placeholder
 };
 
@@ -172,6 +173,12 @@ class FeatureBuilder : DslOpBase {
 
   FeatureBuilder& placeholder() {
     changeType(FeatureType::Placeholder);
+    return *this;
+  }
+
+  FeatureBuilder& numCodepoints(FieldBuilder& field) {
+    fields_.push_back(field.name());
+    changeType(FeatureType::CodepointSize);
     return *this;
   }
 

@@ -5,6 +5,7 @@
 #ifndef JUMANPP_FIELD_READER_H
 #define JUMANPP_FIELD_READER_H
 
+#include "util/characters.h"
 #include "util/coded_io.h"
 
 namespace jumanpp {
@@ -32,6 +33,17 @@ class StringStorageReader {
     i32 value = -1;
     parser.readInt(&value);
     return value;
+  }
+
+  i32 numCodepoints(i32 ptr) {
+    JPP_DCHECK_IN(ptr, 0, data_.size());
+    auto start = data_.from(ptr);
+    util::CodedBufferParser parser{start};
+    StringPiece result;
+    if (parser.readStringPiece(&result)) {
+      return chars::numCodepoints(result);
+    }
+    { return -1; }
   }
 };
 

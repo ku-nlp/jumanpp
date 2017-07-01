@@ -81,7 +81,8 @@ enum class PrimitiveFeatureKind {
   MatchDic,
   MatchAnyDic,
   Provided,
-  Length
+  Length,
+  CodepointSize
 };
 
 struct PrimitiveFeatureDescriptor {

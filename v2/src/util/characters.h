@@ -95,6 +95,8 @@ CharacterClass getCodeType(char32_t code) noexcept;
 Status preprocessRawData(StringPiece utf8data,
                          std::vector<InputCodepoint> *result);
 
+i32 numCodepoints(StringPiece utf8);
+
 }  // namespace chars
 }  // namespace jumanpp
 

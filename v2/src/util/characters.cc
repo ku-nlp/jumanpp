@@ -282,5 +282,30 @@ Status preprocessRawData(StringPiece utf8data,
   return Status::Ok();
 }
 
+i32 numCodepoints(StringPiece utf8) {
+  auto itr = utf8.begin();
+  auto end = utf8.end();
+
+  i32 count = 0;
+
+  while (itr < end) {
+    if (*itr > 0x00ef) { /* 4 bytes */
+      itr += 4;
+    } else if (*itr > 0xdf) { /* 3 bytes */
+      itr += 3;
+    } else if (*itr > 0x7f) { /* 2 bytes */
+      itr += 2;
+    } else { /* 1 byte */
+      itr += 1;
+    }
+    count += 1;
+  }
+
+  if (itr != end) {
+    return -1;
+  }
+  return count;
+}
+
 }  // namespace chars
 }  // namespace jumanpp

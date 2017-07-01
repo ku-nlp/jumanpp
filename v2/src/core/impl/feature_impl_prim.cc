@@ -69,6 +69,27 @@ Status LengthPrimFeatureImpl::initialize(FeatureConstructionContext *ctx,
   return Status::Ok();
 }
 
+Status CodepointLengthPrimFeatureImpl::initialize(
+    FeatureConstructionContext *ctx, const PrimitiveFeature &f) {
+  if (f.kind != PrimitiveFeatureKind::CodepointSize) {
+    return Status::InvalidParameter()
+           << f.name << ": type was not CodepointSize";
+  }
+
+  featureIdx = static_cast<u32>(f.index);
+
+  if (f.references.size() != 1) {
+    return Status::InvalidParameter()
+           << f.name << ": number of parameters must be 1";
+  }
+
+  fieldIdx = static_cast<u32>(f.references.at(0));
+
+  JPP_RETURN_IF_ERROR(ctx->setLengthField(fieldIdx, &field));
+
+  return Status::Ok();
+}
+
 Status MatchDicPrimFeatureImpl::initialize(FeatureConstructionContext *ctx,
                                            const PrimitiveFeature &f) {
   if (f.kind != PrimitiveFeatureKind::MatchDic) {
@@ -165,6 +186,11 @@ Status PrimitiveFeaturesDynamicApply::initialize(
         break;
       case PrimitiveFeatureKind::Length:
         feature.reset(new DynamicPrimitiveFeature<LengthPrimFeatureImpl>{});
+        break;
+      case PrimitiveFeatureKind::CodepointSize:
+        feature.reset(
+            new DynamicPrimitiveFeature<CodepointLengthPrimFeatureImpl>{});
+        break;
     }
     JPP_RETURN_IF_ERROR(feature->initialize(ctx, f));
     features_.emplace_back(std::move(feature));
@@ -173,7 +199,7 @@ Status PrimitiveFeaturesDynamicApply::initialize(
 }
 
 void PrimitiveFeaturesDynamicApply::apply(
-    PrimitiveFeatureContext *ctx, EntryPtr entryPtr,
+    PrimitiveFeatureContext *ctx, NodeInfo entryPtr,
     const util::ArraySlice<i32> &entry,
     util::MutableArraySlice<u64> *features) const noexcept {
   for (auto &f : features_) {

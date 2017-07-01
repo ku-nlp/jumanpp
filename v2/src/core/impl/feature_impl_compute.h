@@ -123,7 +123,7 @@ class MatchTupleComputeFeatureImpl {
     }
   }
 
-  inline void apply(ComputeFeatureContext* ctx, EntryPtr entryPtr,
+  inline void apply(ComputeFeatureContext* ctx, NodeInfo nodeInfo,
                     const util::ArraySlice<i32>& entry,
                     util::MutableArraySlice<u64>* features) const noexcept {
     if (matches(entry)) {
@@ -144,7 +144,7 @@ class ComputeFeatureApplyImpl : public ComputeFeatureApply {
     const Child& cld = static_cast<const Child&>(*this);
     while (data->next()) {
       auto slice = data->featureData();
-      cld.apply(ctx, data->entry(), data->entryData(), &slice);
+      cld.apply(ctx, data->nodeInfo(), data->entryData(), &slice);
     }
   }
 };
@@ -159,11 +159,11 @@ class ComputeFeatureDynamicApply final
                           cf.falseBranch);
   }
 
-  void apply(ComputeFeatureContext* ctx, EntryPtr entryPtr,
+  void apply(ComputeFeatureContext* ctx, NodeInfo nodeInfo,
              const util::ArraySlice<i32>& entry,
              util::MutableArraySlice<u64>* features) const noexcept {
     for (auto& f : this->features) {
-      f.apply(ctx, entryPtr, entry, features);
+      f.apply(ctx, nodeInfo, entry, features);
     }
   }
 };
