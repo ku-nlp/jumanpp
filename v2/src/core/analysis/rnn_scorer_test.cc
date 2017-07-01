@@ -168,7 +168,7 @@ TEST_CASE("RNN computes scores with unks") {
   CHECK(ana.lattice()->createdBoundaryCount() == 14);
   CHECK(!std::isnan(
       ana.lattice()->boundary(13)->starts()->beamData().at(0).totalScore));
-  // env.dumpTrainers("/tmp/jpp");
+  //env.dumpTrainers("/tmp/jpp");
 }
 
 TEST_CASE("RnnIdAdder correctly handles unks") {

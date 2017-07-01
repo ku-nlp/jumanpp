@@ -61,13 +61,12 @@ Status RnnIdResolver::resolveIds(RnnIdContainer* ids, Lattice* lat,
     auto starts = bnd->starts();
     auto entries = starts->entryData();
     RnnIdAdder adder{ids, i};
-    // if (bnd->isActive()) {
     for (int j = 0; j < entries.numRows(); ++j) {
       auto myEntry = entries.row(j).at(targetIdx_);
       auto rnnId = resolveId(myEntry, bnd, j, xtra);
-      adder.add(rnnId, 1);  // TODO: length
+      auto surfaceLength = starts->nodeInfo().at(j).numCodepoints();
+      adder.add(rnnId, surfaceLength);
     }
-    //}
     adder.finish();
   }
 
