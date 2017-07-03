@@ -145,8 +145,8 @@ TEST_CASE("RNN computes scores") {
 
 TEST_CASE("RNN computes scores with unks") {
   RnnScorerEnv env{
-      "newsan,12\nn,14\newsan,13\nnew,1\nnews,2\nsan,3\na,4\nan,5\napple,"
-      "6\news,7\nne,20\npple,8\nwsa,9\np,10\nle,11\n"};
+      "newsan,12\nn,14\newsan,13\nnew,1\nnews,2\nsan,3\na,4\nan,5\n"
+      "apple,6\news,7\nne,20\npple,8\nwsa,9\np,10\nle,11\n"};
   auto& ana = env.ana();
   jumanpp::rnn::mikolov::MikolovModelReader mrr;
   REQUIRE_OK(mrr.open("rnn/testlm"));

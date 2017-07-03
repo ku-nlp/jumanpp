@@ -43,7 +43,7 @@ class StringStorageReader {
     if (parser.readStringPiece(&result)) {
       return chars::numCodepoints(result);
     }
-    { return -1; }
+    return -1;
   }
 };
 
