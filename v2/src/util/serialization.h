@@ -109,6 +109,23 @@ struct SerializeImpl<i32> {
 };
 
 template <>
+struct SerializeImpl<u32> {
+  static inline void DoSerializeSave(u32 &o, Saver *s, util::CodedBuffer &buf) {
+    buf.writeVarint(o);
+  }
+
+  static inline bool DoSerializeLoad(u32 &o, Loader *s,
+                                     util::CodedBufferParser &p) {
+    u32 v;
+    auto ret = p.readInt(&v);
+    if (ret) {
+      o = v;
+    }
+    return ret;
+  }
+};
+
+template <>
 struct SerializeImpl<std::string> {
   static inline void DoSerializeSave(std::string &o, Saver *s,
                                      util::CodedBuffer &buf) {

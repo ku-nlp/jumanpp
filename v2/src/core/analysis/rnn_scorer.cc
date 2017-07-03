@@ -12,6 +12,8 @@
 #include "util/logging.hpp"
 #include "util/memory.hpp"
 #include "util/stl_util.h"
+#include "core/analysis/rnn_serialization.h"
+#include "util/array_slice_util.h"
 
 namespace jumanpp {
 namespace core {
@@ -19,6 +21,12 @@ namespace analysis {
 namespace rnn {
 
 using namespace jumanpp::rnn::mikolov;
+
+struct RnnSerializedState {
+  util::CodedBuffer header;
+  util::CodedBuffer idsInts;
+  util::CodedBuffer idsStrings;
+};
 
 struct RnnHolderState {
   MikolovRnnModelHeader header;
@@ -30,6 +38,8 @@ struct RnnHolderState {
   RnnIdResolver resolver_;
   RnnInferenceConfig config_;
   float nceConstant_;
+
+  std::unique_ptr<RnnSerializedState> serializedState_;
 
   RnnHolderState(const MikolovRnnModelHeader& header,
                  const util::ArraySlice<float>& matrix,
@@ -337,6 +347,41 @@ Status RnnHolder::makeInstance(std::unique_ptr<ScoreComputer>* result) {
 }
 
 RnnHolder::RnnHolder() {}
+
+Status RnnHolder::makeInfo(model::ModelInfo *result) {
+  auto& state = *this->impl_;
+  RnnSerializedData serData {
+      state.header,
+      state.config_,
+      state.resolver_.targetIdx()
+  };
+
+  state.serializedState_.reset(new RnnSerializedState);
+  auto &savedState = *state.serializedState_;
+
+  util::serialization::Saver headerSaver{&savedState.header};
+  headerSaver.save(serData);
+
+  state.resolver_.serializeMaps(&savedState.idsInts, &savedState.idsStrings);
+  auto matrix = util::asStringPiece(state.matrix);
+  auto embeddings = util::asStringPiece(state.embeddings);
+  auto nceEmbeddings = util::asStringPiece(state.nceEmbeddings);
+  auto maxentWeights = util::asStringPiece(state.maxentWeights);
+
+  model::ModelPart rnnPart;
+  rnnPart.kind = model::ModelPartKind::Rnn;
+  rnnPart.data.push_back(savedState.header.contents());
+  rnnPart.data.push_back(savedState.idsInts.contents());
+  rnnPart.data.push_back(savedState.idsStrings.contents());
+  rnnPart.data.push_back(matrix);
+  rnnPart.data.push_back(embeddings);
+  rnnPart.data.push_back(nceEmbeddings);
+  rnnPart.data.push_back(maxentWeights);
+
+  result->parts.push_back(std::move(rnnPart));
+
+  return Status::Ok();
+}
 
 void RnnScorer::preScore(Lattice* l, ExtraNodesContext* xtra) {
   state_->reset();

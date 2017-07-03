@@ -106,8 +106,15 @@ class RnnIdResolver {
   Status resolveIds(RnnIdContainer* ids, Lattice* lat,
                     const ExtraNodesContext* xtra) const;
 
+  void serializeMaps(util::CodedBuffer* intBuffer, util::CodedBuffer* stringBuffer) const;
+  Status loadFromBuffers(StringPiece intBuffer, StringPiece stringBuffer);
+
   i32 resolveId(i32 entry, LatticeBoundary* lb, int position,
                 const ExtraNodesContext* xtra) const;
+
+  u32 targetIdx() const { return targetIdx_; }
+  size_t numInts() const { return intMap_.size(); }
+  size_t numStrings() const { return strMap_.size(); }
 };
 
 class RnnIdAdder {

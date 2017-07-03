@@ -6,6 +6,7 @@
 #define JUMANPP_ARRAY_SLICE_UTIL_H
 
 #include "array_slice.h"
+#include "string_piece.h"
 
 namespace jumanpp {
 namespace util {
@@ -37,6 +38,15 @@ void compact(C1& data, const C2& toErase) {
     ++copyTarget;
   }
 };
+
+template <typename C>
+StringPiece asStringPiece(const C& c) {
+  using value = typename C::value_type;
+  auto start = reinterpret_cast<const char*>(&c[0]);
+  auto byte_size = c.size() * sizeof(value);
+  auto end = start + byte_size;
+  return StringPiece {start, end};
+}
 
 }  // namespace util
 }  // namespace jumanpp

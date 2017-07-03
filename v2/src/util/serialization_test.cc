@@ -3,6 +3,7 @@
 //
 
 #include "util/serialization.h"
+#include "util/serialization_flatmap.h"
 #include "testing/standalone_test.h"
 
 using namespace jumanpp;
@@ -72,4 +73,20 @@ TEST_CASE("serialization works with floats") {
   CHECK(check(-1.0f) == -1.0f);
   auto inf = std::numeric_limits<float>::infinity();
   CHECK(check(inf) == inf);
+}
+
+TEST_CASE("serialization works with a flatmap") {
+  util::FlatMap<StringPiece, i32> map1;
+  map1["a"] = 1;
+  map1["b"] = 2;
+  map1["c"] = 3;
+  Saver s;
+  s.save(map1);
+  util::FlatMap<StringPiece, i32> map2;
+  Loader l{s.result()};
+  CHECK(l.load(&map2));
+  CHECK(map1.size() == map2.size());
+  CHECK(map1["a"] == map2["a"]);  
+  CHECK(map1["b"] == map2["b"]);
+  CHECK(map1["c"] == map2["c"]);
 }

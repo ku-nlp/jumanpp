@@ -25,7 +25,7 @@ set(core_hdrs darts.h darts_trie.h dictionary.h impl/field_import.h impl/field_r
         analysis/score_processor.h analysis/analysis_result.h analysis/rnn_scorer.cc analysis/rnn_scorer.h
         training/training_io.h training/loss.h training/gold_example.h training/trainer.h training/scw.h
         impl/perceptron_io.h env.h impl/graphviz_format.h analysis/onomatopoeia_creator.h impl/feature_codegen.h
-        analysis/rnn_id_resolver.h)
+        analysis/rnn_id_resolver.h analysis/rnn_serialization.h)
 
 set(core_test_srcs darts_trie_test.cc dictionary_test.cc impl/field_import_test.cc
         impl/field_reader_test.cc impl/feature_impl_prim_test.cc impl/feature_impl_compute_test.cc

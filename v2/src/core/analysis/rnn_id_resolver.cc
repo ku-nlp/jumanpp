@@ -3,6 +3,8 @@
 //
 
 #include "rnn_id_resolver.h"
+#include "util/serialization.h"
+#include "util/serialization_flatmap.h"
 
 namespace jumanpp {
 namespace core {
@@ -106,6 +108,27 @@ i32 RnnIdResolver::resolveId(i32 entry, LatticeBoundary* lb, int position,
     // is not present in RNN model.
   }
   return -1;
+}
+
+void RnnIdResolver::serializeMaps(util::CodedBuffer *intBuffer, util::CodedBuffer *stringBuffer) const {
+  util::serialization::Saver intSaver{intBuffer};
+  intSaver.save(intMap_);
+  util::serialization::Saver stringSaver{stringBuffer};
+  stringSaver.save(strMap_);
+}
+
+Status RnnIdResolver::loadFromBuffers(StringPiece intBuffer, StringPiece stringBuffer) {
+  util::serialization::Loader intLdr{intBuffer};
+  if (!intLdr.load(&intMap_)) {
+    return Status::InvalidState() << "RnnIdResolver: failed to load int map";
+  }
+
+  util::serialization::Loader stringLdr{stringBuffer};
+  if (!stringLdr.load(&strMap_)) {
+    return Status::InvalidState() << "RnnIdResolver: failed to load string map";
+  }
+
+  return Status::Ok();
 }
 
 }  // namespace rnn
