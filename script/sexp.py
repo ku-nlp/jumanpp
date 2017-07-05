@@ -1,12 +1,14 @@
-#!/bin/python3
+#!/usr/bin/env python3
 #coding:utf-8
 
 import re
 
+re_word = re.compile(r'^("(?:[^"\\]+|\\.)*")')
+re_symbol = re.compile(r'^([^\s"()]+)')
+
 class SParser(object):
     def __init__(self):
-        self.re_word = re.compile(r'^("(?:[^"\\]+|\\.)*")')
-        self.re_symbol = re.compile(r'^([^\s"()]+)')
+        return
     
     def parse(self, input_text):
         """
@@ -73,7 +75,7 @@ class SParser(object):
                 offsets.insert(0,0)
             elif string.startswith('"'):
                 while True:
-                    match = self.re_word.search(string)
+                    match = re_word.search(string)
                     if match:
                         offsets[0] -=1
                         stack.append(match.group(1))
@@ -84,8 +86,8 @@ class SParser(object):
                             string += next(text_itr)
                         except StopIteration:
                             raise Exception("Syntax error: end of target during string.")
-            elif self.re_symbol.search(string):
-                match = self.re_symbol.search(string)
+            elif re_symbol.search(string):
+                match = re_symbol.search(string)
                 offsets[0] -= 1
                 stack.append(match.group(1))
                 string = string[len(match.group(1)):]
@@ -104,6 +106,8 @@ class SParser(object):
             else:
                 raise Exception("Syntax error: unknown syntax element.")
         return stack
+
+__all__ = ["SParser"]
 
 if __name__ == "__main__":
     import doctest
