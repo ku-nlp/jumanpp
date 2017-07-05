@@ -3,8 +3,8 @@
 //
 
 #include "util/serialization.h"
-#include "util/serialization_flatmap.h"
 #include "testing/standalone_test.h"
+#include "util/serialization_flatmap.h"
 
 using namespace jumanpp;
 using namespace jumanpp::util::serialization;
@@ -86,7 +86,7 @@ TEST_CASE("serialization works with a flatmap") {
   Loader l{s.result()};
   CHECK(l.load(&map2));
   CHECK(map1.size() == map2.size());
-  CHECK(map1["a"] == map2["a"]);  
+  CHECK(map1["a"] == map2["a"]);
   CHECK(map1["b"] == map2["b"]);
   CHECK(map1["c"] == map2["c"]);
 }

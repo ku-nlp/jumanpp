@@ -5,13 +5,12 @@
 #ifndef JUMANPP_SERIALIZATION_FLATMAP_H
 #define JUMANPP_SERIALIZATION_FLATMAP_H
 
-#include "serialization.h"
 #include "flatmap.h"
+#include "serialization.h"
 
 namespace jumanpp {
 namespace util {
 namespace serialization {
-
 
 template <typename K, typename V, typename H, typename E>
 struct SerializeImpl<FlatMap<K, V, H, E>> {
@@ -22,9 +21,9 @@ struct SerializeImpl<FlatMap<K, V, H, E>> {
     u64 size = o.size();
     buf.writeVarint(size);
     for (auto &child : o) {
-      //need this for making type system happy
-      //we do not modify values
-      K& keyref = const_cast<K&>(child.first);
+      // need this for making type system happy
+      // we do not modify values
+      K &keyref = const_cast<K &>(child.first);
       SerializeImpl<K>::DoSerializeSave(keyref, s, buf);
       SerializeImpl<V>::DoSerializeSave(child.second, s, buf);
     }
@@ -50,5 +49,4 @@ struct SerializeImpl<FlatMap<K, V, H, E>> {
 }  // namespace util
 }  // namespace jumanpp
 
-
-#endif //JUMANPP_SERIALIZATION_FLATMAP_H
+#endif  // JUMANPP_SERIALIZATION_FLATMAP_H

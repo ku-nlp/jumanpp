@@ -4,16 +4,16 @@
 
 #include "rnn_scorer.h"
 #include <random>
+#include "core/analysis/rnn_serialization.h"
 #include "core/analysis/score_processor.h"
 #include "lattice_types.h"
 #include "rnn/mikolov_rnn.h"
 #include "rnn_id_resolver.h"
+#include "util/array_slice_util.h"
 #include "util/lazy.h"
 #include "util/logging.hpp"
 #include "util/memory.hpp"
 #include "util/stl_util.h"
-#include "core/analysis/rnn_serialization.h"
-#include "util/array_slice_util.h"
 
 namespace jumanpp {
 namespace core {
@@ -335,10 +335,6 @@ Status RnnHolder::init(const jumanpp::rnn::mikolov::MikolovModelReader& model,
   return Status::Ok();
 }
 
-Status RnnHolder::load(const model::ModelInfo& model) {
-  return Status::NotImplemented();
-}
-
 Status RnnHolder::makeInstance(std::unique_ptr<ScoreComputer>* result) {
   std::unique_ptr<RnnScorer> ptr{new RnnScorer};
   JPP_RETURN_IF_ERROR(ptr->init(*this));
@@ -348,16 +344,13 @@ Status RnnHolder::makeInstance(std::unique_ptr<ScoreComputer>* result) {
 
 RnnHolder::RnnHolder() {}
 
-Status RnnHolder::makeInfo(model::ModelInfo *result) {
+Status RnnHolder::makeInfo(model::ModelInfo* result) {
   auto& state = *this->impl_;
-  RnnSerializedData serData {
-      state.header,
-      state.config_,
-      state.resolver_.targetIdx()
-  };
+  RnnSerializedData serData{state.header, state.config_,
+                            state.resolver_.targetIdx()};
 
   state.serializedState_.reset(new RnnSerializedState);
-  auto &savedState = *state.serializedState_;
+  auto& savedState = *state.serializedState_;
 
   util::serialization::Saver headerSaver{&savedState.header};
   headerSaver.save(serData);
@@ -379,6 +372,86 @@ Status RnnHolder::makeInfo(model::ModelInfo *result) {
   rnnPart.data.push_back(maxentWeights);
 
   result->parts.push_back(std::move(rnnPart));
+
+  return Status::Ok();
+}
+
+template <typename T>
+Status toArraySlice(util::ArraySlice<T>* result, StringPiece data,
+                    size_t expectedSize) {
+  size_t byte_size = data.size();
+  size_t numElems = byte_size / sizeof(T);
+  if (numElems != expectedSize) {
+    return Status::InvalidParameter()
+           << "failed to load model part: expected size " << expectedSize
+           << " found " << numElems;
+  }
+  *result =
+      util::ArraySlice<T>{reinterpret_cast<const T*>(data.begin()), numElems};
+  return Status::Ok();
+}
+
+template <typename T>
+Status toSliceable(util::Sliceable<T>* result, StringPiece data,
+                   size_t expectedRows, size_t expectedCols) {
+  size_t byte_size = data.size();
+  size_t numElems = byte_size / sizeof(T);
+  size_t expectedSize = expectedRows * expectedCols;
+  if (numElems != expectedSize) {
+    return Status::InvalidParameter()
+           << "failed to load model part: expected size " << expectedSize
+           << " found " << numElems;
+  }
+  util::MutableArraySlice<T> slice{
+      const_cast<T*>(reinterpret_cast<const T*>(data.begin())), numElems};
+  *result = util::Sliceable<T>{slice, expectedCols, expectedRows};
+  return Status::Ok();
+}
+
+Status RnnHolder::load(const model::ModelInfo& model) {
+  auto iter = std::find_if(model.parts.begin(), model.parts.end(),
+                           [](const model::ModelPart& mp) {
+                             return mp.kind == model::ModelPartKind::Rnn;
+                           });
+  if (iter == model.parts.end()) {
+    return Status::InvalidParameter() << "saved model did not contain rnn";
+  }
+
+  const model::ModelPart& rnnPart = *iter;
+
+  if (rnnPart.data.size() != 7) {
+    return Status::InvalidParameter()
+           << "saved rnn model had " << rnnPart.data.size()
+           << " parts, expected 7";
+  }
+
+  util::serialization::Loader hdrLoader{rnnPart.data[0]};
+  RnnSerializedData headerData;
+  if (!hdrLoader.load(&headerData)) {
+    return Status::InvalidParameter() << "Rnn Model: failed to load header";
+  }
+
+  util::ArraySlice<float> matrix;
+  util::Sliceable<float> embeddings;
+  util::Sliceable<float> nceEmbeddings;
+  util::ArraySlice<float> maxentWeights;
+  auto& header = headerData.modelHeader;
+  JPP_RETURN_IF_ERROR(toArraySlice<float>(&matrix, rnnPart.data[3],
+                                          header.layerSize * header.layerSize));
+  JPP_RETURN_IF_ERROR(toSliceable<float>(&embeddings, rnnPart.data[4],
+                                         header.layerSize, header.vocabSize));
+  JPP_RETURN_IF_ERROR(toSliceable<float>(&nceEmbeddings, rnnPart.data[5],
+                                         header.layerSize, header.vocabSize));
+  JPP_RETURN_IF_ERROR(
+      toArraySlice<float>(&maxentWeights, rnnPart.data[6], header.maxentSize));
+
+  impl_.reset(new RnnHolderState{header, matrix, embeddings, nceEmbeddings,
+                                 maxentWeights});
+
+  impl_->config_ = headerData.config;
+
+  JPP_RETURN_IF_ERROR(impl_->resolver_.loadFromBuffers(
+      rnnPart.data[1], rnnPart.data[2], headerData.targetIdx_));
 
   return Status::Ok();
 }

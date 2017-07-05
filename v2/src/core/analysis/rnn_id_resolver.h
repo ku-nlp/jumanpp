@@ -106,8 +106,10 @@ class RnnIdResolver {
   Status resolveIds(RnnIdContainer* ids, Lattice* lat,
                     const ExtraNodesContext* xtra) const;
 
-  void serializeMaps(util::CodedBuffer* intBuffer, util::CodedBuffer* stringBuffer) const;
-  Status loadFromBuffers(StringPiece intBuffer, StringPiece stringBuffer);
+  void serializeMaps(util::CodedBuffer* intBuffer,
+                     util::CodedBuffer* stringBuffer) const;
+  Status loadFromBuffers(StringPiece intBuffer, StringPiece stringBuffer,
+                         u32 targetIdx);
 
   i32 resolveId(i32 entry, LatticeBoundary* lb, int position,
                 const ExtraNodesContext* xtra) const;

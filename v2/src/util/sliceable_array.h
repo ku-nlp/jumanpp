@@ -21,6 +21,8 @@ class Sliceable {
   using size_type = typename util::MutableArraySlice<T>::size_type;
   using value_type = typename util::MutableArraySlice<T>::value_type;
 
+  constexpr Sliceable() : data_{}, rowSize_{0}, numRows_{0} {}
+
   constexpr Sliceable(const MutableArraySlice<T>& data_, size_t rowSize_,
                       size_t numRows_)
       : data_(data_), rowSize_(rowSize_), numRows_{numRows_} {

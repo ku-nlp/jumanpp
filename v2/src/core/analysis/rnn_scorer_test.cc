@@ -168,7 +168,71 @@ TEST_CASE("RNN computes scores with unks") {
   CHECK(ana.lattice()->createdBoundaryCount() == 14);
   CHECK(!std::isnan(
       ana.lattice()->boundary(13)->starts()->beamData().at(0).totalScore));
-  //env.dumpTrainers("/tmp/jpp");
+  // env.dumpTrainers("/tmp/jpp");
+}
+
+TEST_CASE("RNN holder serializes and deserializes and has the same score") {
+  RnnScorerEnv env{
+      "newsan,12\nn,14\newsan,13\nnew,1\nnews,2\nsan,3\na,4\nan,5\n"
+          "apple,6\news,7\nne,20\npple,8\nwsa,9\np,10\nle,11\n"};
+  auto& ana = env.ana();
+  jumanpp::rnn::mikolov::MikolovModelReader mrr;
+  REQUIRE_OK(mrr.open("rnn/testlm"));
+  REQUIRE_OK(mrr.parse());
+  a::rnn::RnnHolder rnnHolder;
+  REQUIRE_OK(rnnHolder.init(mrr, env.jppEnv.coreHolder()->dic(), "a"));
+
+  core::model::ModelInfo modelInfo{};
+  REQUIRE_OK(rnnHolder.makeInfo(&modelInfo));
+  a::rnn::RnnHolder rnnHolder2;
+  REQUIRE_OK(rnnHolder2.load(modelInfo));
+
+  a::ScorerDef scorerDef1{};
+  scorerDef1.scoreWeights.push_back(1.0f);
+  scorerDef1.scoreWeights.push_back(1.0f);
+  scorerDef1.feature = &env.perceptron;
+  scorerDef1.others.push_back(&rnnHolder);
+  a::AnalyzerImpl impl1{env.jppEnv.coreHolder(), env.scoreCfg, env.anaCfg};
+  REQUIRE_OK(impl1.initScorers(scorerDef1));
+
+  a::ScorerDef scorerDef2{};
+  scorerDef2.scoreWeights.push_back(1.0f);
+  scorerDef2.scoreWeights.push_back(1.0f);
+  scorerDef2.feature = &env.perceptron;
+  scorerDef2.others.push_back(&rnnHolder);
+  a::AnalyzerImpl impl2{env.jppEnv.coreHolder(), env.scoreCfg, env.anaCfg};
+  REQUIRE_OK(impl2.initScorers(scorerDef1));
+
+  impl1.resetForInput("newsanapple");
+  REQUIRE_OK(impl1.prepareNodeSeeds());
+  REQUIRE_OK(impl1.buildLattice());
+  impl1.bootstrapAnalysis();
+  REQUIRE_OK(impl1.computeScores(&scorerDef1));
+
+  impl2.resetForInput("newsanapple");
+  REQUIRE_OK(impl2.prepareNodeSeeds());
+  REQUIRE_OK(impl2.buildLattice());
+  impl2.bootstrapAnalysis();
+  REQUIRE_OK(impl2.computeScores(&scorerDef1));
+  CHECK(impl1.lattice()->boundary(13)->starts()->beamData().at(0).totalScore ==
+            impl2.lattice()->boundary(13)->starts()->beamData().at(0).totalScore);
+}
+
+TEST_CASE("RNN holder serializes and deserializes") {
+  RnnScorerEnv env{
+      "newsan,12\nn,14\newsan,13\nnew,1\nnews,2\nsan,3\na,4\nan,5\n"
+          "apple,6\news,7\nne,20\npple,8\nwsa,9\np,10\nle,11\n"};
+  auto& ana = env.ana();
+  jumanpp::rnn::mikolov::MikolovModelReader mrr;
+  REQUIRE_OK(mrr.open("rnn/testlm"));
+  REQUIRE_OK(mrr.parse());
+  a::rnn::RnnHolder rnnHolder;
+  REQUIRE_OK(rnnHolder.init(mrr, env.jppEnv.coreHolder()->dic(), "a"));
+
+  core::model::ModelInfo modelInfo{};
+  REQUIRE_OK(rnnHolder.makeInfo(&modelInfo));
+  a::rnn::RnnHolder rnnHolder2;
+  REQUIRE_OK(rnnHolder2.load(modelInfo));
 }
 
 TEST_CASE("RnnIdAdder correctly handles unks") {

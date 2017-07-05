@@ -110,14 +110,16 @@ i32 RnnIdResolver::resolveId(i32 entry, LatticeBoundary* lb, int position,
   return -1;
 }
 
-void RnnIdResolver::serializeMaps(util::CodedBuffer *intBuffer, util::CodedBuffer *stringBuffer) const {
+void RnnIdResolver::serializeMaps(util::CodedBuffer* intBuffer,
+                                  util::CodedBuffer* stringBuffer) const {
   util::serialization::Saver intSaver{intBuffer};
   intSaver.save(intMap_);
   util::serialization::Saver stringSaver{stringBuffer};
   stringSaver.save(strMap_);
 }
 
-Status RnnIdResolver::loadFromBuffers(StringPiece intBuffer, StringPiece stringBuffer) {
+Status RnnIdResolver::loadFromBuffers(StringPiece intBuffer,
+                                      StringPiece stringBuffer, u32 targetIdx) {
   util::serialization::Loader intLdr{intBuffer};
   if (!intLdr.load(&intMap_)) {
     return Status::InvalidState() << "RnnIdResolver: failed to load int map";
@@ -127,6 +129,8 @@ Status RnnIdResolver::loadFromBuffers(StringPiece intBuffer, StringPiece stringB
   if (!stringLdr.load(&strMap_)) {
     return Status::InvalidState() << "RnnIdResolver: failed to load string map";
   }
+
+  targetIdx_ = targetIdx;
 
   return Status::Ok();
 }

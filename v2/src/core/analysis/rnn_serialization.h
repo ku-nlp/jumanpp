@@ -5,8 +5,8 @@
 #ifndef JUMANPP_RNN_SERIALIZATION_H
 #define JUMANPP_RNN_SERIALIZATION_H
 
-#include "util/serialization.h"
 #include "rnn_scorer.h"
+#include "util/serialization.h"
 
 namespace jumanpp {
 namespace core {
@@ -21,19 +21,20 @@ struct RnnSerializedData {
 
 template <typename Arch>
 void Serialize(Arch& a, RnnSerializedData& data) {
-  a & data.modelHeader.layerSize;
-  a & data.modelHeader.maxentOrder;
-  a & data.modelHeader.maxentSize;
-  a & data.modelHeader.vocabSize;
-  a & data.modelHeader.nceLnz;
-  a & data.config.unkConstantTerm;
-  a & data.config.unkLengthPenalty;
-  a & data.config.nceBias;
+  a& data.modelHeader.layerSize;
+  a& data.modelHeader.maxentOrder;
+  a& data.modelHeader.maxentSize;
+  a& data.modelHeader.vocabSize;
+  a& data.modelHeader.nceLnz;
+  a& data.config.unkConstantTerm;
+  a& data.config.unkLengthPenalty;
+  a& data.config.nceBias;
+  a& data.targetIdx_;
 }
 
-} // rnn
-} // analysis
-} // core
-} // jumanpp
+}  // namespace rnn
+}  // namespace analysis
+}  // namespace core
+}  // namespace jumanpp
 
-#endif //JUMANPP_RNN_SERIALIZATION_H
+#endif  // JUMANPP_RNN_SERIALIZATION_H

@@ -45,7 +45,7 @@ StringPiece asStringPiece(const C& c) {
   auto start = reinterpret_cast<const char*>(&c[0]);
   auto byte_size = c.size() * sizeof(value);
   auto end = start + byte_size;
-  return StringPiece {start, end};
+  return StringPiece{start, end};
 }
 
 }  // namespace util
