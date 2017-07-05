@@ -105,7 +105,7 @@ class StorageAssigner {
     if (stringName.size() == 0) {
       return newStr();
     } else {
-      return state_.getOr(stringName, newStr);
+      return state_.findOrInsert(stringName, newStr);
     }
   }
 

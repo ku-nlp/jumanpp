@@ -145,6 +145,7 @@ class OutputManager {
   NodeWalker nodeWalker() const;
   Status stringField(StringPiece name, StringField* result) const;
   Status stringListField(StringPiece name, StringListField* result) const;
+  const dic::DictionaryHolder& dic() const { return *holder_; }
 };
 
 }  // namespace analysis

@@ -5,16 +5,11 @@
 #ifndef JUMANPP_JUMANDIC_IDS_H
 #define JUMANPP_JUMANDIC_IDS_H
 
-#include "util/string_piece.h"
 #include "util/common.hpp"
+#include "util/string_piece.h"
 
 namespace jumanpp {
 namespace jumandic {
-
-struct CompositeId {
-  i32 id1;
-  i32 id2;
-};
 
 struct JumandicTuple {
   StringPiece part1;
@@ -28,7 +23,7 @@ extern const u32 posInfoCount;
 extern const JumandicTuple conjInfo[];
 extern const u32 conjInfoCount;
 
-} // jumandic
-} // jumanpp
+}  // namespace jumandic
+}  // namespace jumanpp
 
-#endif //JUMANPP_JUMANDIC_IDS_H
+#endif  // JUMANPP_JUMANDIC_IDS_H

@@ -56,13 +56,22 @@ bool JumanFormat::formatOne(const core::analysis::OutputManager& om,
     if (!first) {
       printer << "@ ";
     }
+
+    JumandicPosId rawId{fieldBuffer[2], fieldBuffer[3],
+                        fieldBuffer[5],  // conjForm and conjType are reversed
+                        fieldBuffer[4]};
+
+    auto newId = idResolver.dicToJuman(rawId);
+
     printer << flds.surface[walker] << " ";
     printer << flds.baseform[walker] << " ";
     printer << flds.reading[walker] << " ";
-    printer << ifEmpty(flds.pos[walker], "*") << " " << 0 << " ";
-    printer << ifEmpty(flds.subpos[walker], "*") << " " << 0 << " ";
-    printer << ifEmpty(flds.conjType[walker], "*") << " " << 0 << " ";
-    printer << ifEmpty(flds.conjForm[walker], "*") << " " << 0 << " ";
+    printer << ifEmpty(flds.pos[walker], "*") << " " << newId.pos << " ";
+    printer << ifEmpty(flds.subpos[walker], "*") << " " << newId.subpos << " ";
+    printer << ifEmpty(flds.conjType[walker], "*") << " " << newId.conjType
+            << " ";
+    printer << ifEmpty(flds.conjForm[walker], "*") << " " << newId.conjForm
+            << " ";
     auto res = flds.features[walker];
     auto canonic = flds.canonicForm[walker];
     if (res.isEmpty()) {

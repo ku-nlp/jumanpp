@@ -174,7 +174,7 @@ TEST_CASE("RNN computes scores with unks") {
 TEST_CASE("RNN holder serializes and deserializes and has the same score") {
   RnnScorerEnv env{
       "newsan,12\nn,14\newsan,13\nnew,1\nnews,2\nsan,3\na,4\nan,5\n"
-          "apple,6\news,7\nne,20\npple,8\nwsa,9\np,10\nle,11\n"};
+      "apple,6\news,7\nne,20\npple,8\nwsa,9\np,10\nle,11\n"};
   auto& ana = env.ana();
   jumanpp::rnn::mikolov::MikolovModelReader mrr;
   REQUIRE_OK(mrr.open("rnn/testlm"));
@@ -215,13 +215,13 @@ TEST_CASE("RNN holder serializes and deserializes and has the same score") {
   impl2.bootstrapAnalysis();
   REQUIRE_OK(impl2.computeScores(&scorerDef1));
   CHECK(impl1.lattice()->boundary(13)->starts()->beamData().at(0).totalScore ==
-            impl2.lattice()->boundary(13)->starts()->beamData().at(0).totalScore);
+        impl2.lattice()->boundary(13)->starts()->beamData().at(0).totalScore);
 }
 
 TEST_CASE("RNN holder serializes and deserializes") {
   RnnScorerEnv env{
       "newsan,12\nn,14\newsan,13\nnew,1\nnews,2\nsan,3\na,4\nan,5\n"
-          "apple,6\news,7\nne,20\npple,8\nwsa,9\np,10\nle,11\n"};
+      "apple,6\news,7\nne,20\npple,8\nwsa,9\np,10\nle,11\n"};
   auto& ana = env.ana();
   jumanpp::rnn::mikolov::MikolovModelReader mrr;
   REQUIRE_OK(mrr.open("rnn/testlm"));

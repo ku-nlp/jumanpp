@@ -288,11 +288,11 @@ class FlatMap {
   void prefetch_value(const Key& key) const { rep_.Prefetch(key); }
 
   template <typename Fn>
-  Val& getOr(const Key& k, Fn f) {
+  Val& findOrInsert(const Key& k, Fn f) {
     auto t = rep_.FindOrInsert(k);
     auto& v = t.b->val(t.index);
     if (!t.found) {
-      new (&v) Val{std::forward<decltype(f())>(f())};
+      new (&v) Val{f()};
     }
     return v;
   }

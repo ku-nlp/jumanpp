@@ -11,6 +11,7 @@
 #include "core/analysis/analyzer.h"
 #include "core/analysis/output.h"
 #include "jumandic/shared/jumandic_spec.h"
+#include "jumandic_id_resolver.h"
 #include "util/printer.h"
 
 namespace jumanpp {
@@ -57,11 +58,13 @@ class JumanFormat : public OutputFormat {
   core::analysis::AnalysisPath top1;
   std::array<i32, JumandicNumFields> fieldBuffer;
   core::analysis::NodeWalker walker{&fieldBuffer};
+  JumandicIdResolver idResolver;
 
  public:
   JumanFormat() {}
 
   Status initialize(const core::analysis::OutputManager& om) {
+    JPP_RETURN_IF_ERROR(idResolver.initialize(om.dic()));
     return flds.initialize(om);
   }
 
