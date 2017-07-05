@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  JumanppExec exec{conf};
+  jumandic::JumanppExec exec{conf};
   Status s = exec.init();
   if (!s.isOk()) {
     std::cerr << "failed to load model from disk: " << s.message;

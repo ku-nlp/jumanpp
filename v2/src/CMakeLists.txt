@@ -9,7 +9,7 @@ set(JPP_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
 function(jpp_feature_codegen)
     set(options )
-    set(oneValueArgs BASE CLASS SPEC_INCLUDE SPEC_NAME)
+    set(oneValueArgs BASE CLASS SPEC_INCLUDE SPEC_NAME DIC_FILE)
     set(multiValueArgs DEPEND LINK)
     cmake_parse_arguments(CG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -25,15 +25,16 @@ function(jpp_feature_codegen)
     set(CG_OUT_SRC ${CG_OUT_DIR}/${CG_BASE}.cc)
     set(CG_OUT_HDR ${CG_OUT_DIR}/${CG_BASE}.h)
     file(MAKE_DIRECTORY ${CG_OUT_DIR})
-        message("
-        COMMAND ${CG_EXEC} ${CG_BASE} ${CG_CLASS} ${CG_OUT_DIR}
-            DEPENDS ${CG_EXEC} ${CG_DEPEND}
-            OUTPUT ${CG_OUT_SRC} ${CG_OUT_HDR}
-            LIBS ${CG_LINK}
-        ")
+    message("
+    Static feature generation:
+        COMMAND ${CG_EXEC} ${CG_BASE} ${CG_CLASS} ${CG_OUT_DIR} ${CG_DIC_FILE}
+        DEPENDS ${CG_EXEC} ${CG_DEPEND}
+        OUTPUT ${CG_OUT_SRC} ${CG_OUT_HDR}
+        LIBS ${CG_LINK}
+    ")
     add_custom_command(
             COMMAND ${CG_EXEC}
-            ARGS ${CG_BASE} ${CG_CLASS} ${CG_OUT_DIR}
+            ARGS ${CG_BASE} ${CG_CLASS} ${CG_OUT_DIR} ${CG_DIC_FILE}
             DEPENDS ${CG_EXEC} ${CG_DEPEND}
             OUTPUT ${CG_OUT_SRC} ${CG_OUT_HDR}
     )

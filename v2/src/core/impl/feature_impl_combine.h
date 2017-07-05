@@ -65,7 +65,7 @@ inline void NgramFeatureImpl<1>::apply(util::MutableArraySlice<u32> result,
     noexcept {
   auto p0 = storage[0];
   auto v0 = t0.at(p0);
-  result.at(index) = (u32)util::hashing::hashCtSeq(UnigramSeed, index, v0);
+  result.at(index) = (u32)util::hashing::seaHashSeq(UnigramSeed, index, v0);
 };
 
 template <>
@@ -78,7 +78,7 @@ inline void NgramFeatureImpl<2>::apply(util::MutableArraySlice<u32> result,
   auto v0 = t0.at(p0);
   auto p1 = storage[1];
   auto v1 = t1.at(p1);
-  result.at(index) = (u32)util::hashing::hashCtSeq(BigramSeed, index, v0, v1);
+  result.at(index) = (u32)util::hashing::seaHashSeq(BigramSeed, index, v0, v1);
 };
 
 template <>
@@ -94,7 +94,7 @@ inline void NgramFeatureImpl<3>::apply(util::MutableArraySlice<u32> result,
   auto p2 = storage[2];
   auto v2 = t2.at(p2);
   result.at(index) =
-      (u32)util::hashing::hashCtSeq(TrigramSeed, index, v0, v1, v2);
+      (u32)util::hashing::seaHashSeq(TrigramSeed, index, v0, v1, v2);
 };
 
 template <typename Child>

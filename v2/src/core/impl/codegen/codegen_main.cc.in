@@ -8,13 +8,14 @@
 #include "core/dic_builder.h"
 #include "core/dictionary.h"
 #include "core/core.h"
+#include "util/csv_reader.h"
 #include "${CG_SPEC_INCLUDE}"
 
 namespace cg = jumanpp::core::features::codegen;
 
 int main(int argc, char** argv) {
-  if (argc != 4) {
-    std::cerr << "Number of arguments (" << argc - 1 << ") was not 3\n";
+  if (argc != 4 && argc != 5) {
+    std::cerr << "Number of arguments (" << argc - 1 << ") was not 3 or 4\n";
     return 1;
   }
 
@@ -35,7 +36,19 @@ int main(int argc, char** argv) {
 
   jumanpp::core::dic::DictionaryBuilder dbld;
   s = dbld.importSpec(&spec);
-  s = dbld.importCsv("none", "");
+  if (argc == 5) {
+    jumanpp::StringPiece inputFile{argv[4]};
+    jumanpp::util::FullyMappedFile fmf;
+    s = fmf.open(inputFile);
+    if (!s) {
+      std::cerr << "failed to open raw dictionary file: " << inputFile << "\n";
+      return 1;
+    }
+    s = dbld.importCsv(inputFile, fmf.contents());
+  } else {
+    s = dbld.importCsv("none", "");
+  }
+
   if (!s) {
     std::cerr << "failed to import empty dic: " << s.message;
     return 1;

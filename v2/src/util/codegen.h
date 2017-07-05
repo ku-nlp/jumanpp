@@ -84,7 +84,7 @@ class ResultAssign {
   void render(io::Printer& p) const {
     PrintSemicolon x{p};
     p << "result.at(" << resultIdx_ << ") = "
-      << "jumanpp::util::hashing::hashCtSeq" << '(';
+      << "jumanpp::util::hashing::seaHashSeq" << '(';
     for (int i = 0; i < pieces_.size(); ++i) {
       p << pieces_[i];
       if (i != pieces_.size() - 1) {

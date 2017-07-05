@@ -28,9 +28,7 @@ TEST_CASE("at least some scores can be computed") {
   CHECK_FALSE(top.nextBoundary());
 }
 
-// TODO fixme
-TEST_CASE("at least some scores can be computed with multiple paths",
-          "[!mayfail]") {
+TEST_CASE("at least some scores can be computed with multiple paths") {
   StringPiece dic = "XXX,z,KANA\na,b,\nb,c,\naf,b,\nfb,c,\nf,a,\n";
   PrimFeatureTestEnv env{
       dic, [](dsl::ModelSpecBuilder& specBldr, FeatureSet& fs) {}, 2};
@@ -56,4 +54,5 @@ TEST_CASE("at least some scores can be computed with multiple paths",
   CHECK(n3.f2 == "c");
   CHECK_FALSE(top.nextNode(&el));
   CHECK_FALSE(top.nextBoundary());
+  //env.dumpTrainers("/tmp/jpp", 5);
 }

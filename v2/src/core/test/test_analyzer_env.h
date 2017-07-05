@@ -7,7 +7,9 @@
 
 #include "core/analysis/analysis_result.h"
 #include "core/analysis/perceptron.h"
+#include "core/impl/graphviz_format.h"
 #include "testing/test_analyzer.h"
+#include <fstream>
 
 namespace tests {
 
@@ -77,7 +79,7 @@ class PrimFeatureTestEnv {
     }
 
     sconf.scoreWeights.push_back(1.0f);
-    static float defaultWeights[] = {0.1f, -0.1f, 0.05f, -0.2f};
+    static float defaultWeights[] = {0.101f, 0.102f, 0.103f, 0.104f};
     hfp.reset(new HashedFeaturePerceptron{defaultWeights});
     sconf.feature = hfp.get();
     REQUIRE_OK(tenv.analyzer->initScorers(sconf));
@@ -226,6 +228,24 @@ class PrimFeatureTestEnv {
     n.f1 = flda[w].str();
     n.f2 = fldb[w].str();
     return n;
+  }
+
+  void dumpTrainers(StringPiece baseDir, int cnt = 0) {
+    auto bldr = core::format::GraphVizBuilder{};
+    bldr.row({"a", "b"});
+    core::format::GraphVizFormat fmt;
+    REQUIRE_OK(bldr.build(&fmt, tenv.beamSize));
+
+    char buffer[256];
+
+    std::snprintf(buffer, 255, "%s/dump_%d.dot", baseDir.char_begin(), cnt);
+    std::ofstream out{buffer};
+    auto pana = tenv.analyzer.get();
+    REQUIRE_OK(fmt.initialize(pana->output()));
+    fmt.reset();
+    auto lat = pana->lattice();
+    REQUIRE_OK(fmt.render(lat));
+    out << fmt.result();
   }
 
   ~PrimFeatureTestEnv() {

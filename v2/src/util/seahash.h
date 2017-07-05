@@ -6,6 +6,7 @@
 #define JUMANPP_SEAHASH_H
 
 #include "common.hpp"
+#include "types.hpp"
 
 namespace jumanpp {
 namespace util {
@@ -92,6 +93,21 @@ JPP_ALWAYS_INLINE inline u64 seaHashSeq2(Args... args) {
   return detail::seaHashSeqImpl(SeaHashState{}, static_cast<u64>(args)...,
                                 sizeof...(args))
       .finish();
+}
+
+template <typename Seq, typename Idx>
+inline u64 seaHashIndexedSeq(u64 seed, const Seq& seq, const Idx& idx) {
+  auto numIndices = idx.size();
+  SeaHashState state{numIndices};
+  state = state.mix(seed);
+  auto steps2 = numIndices / 2;
+  for (int i = 0; i < steps2; ++i) {
+    state = state.mix(seq[idx[i]], seq[idx[i + 1]]);
+  }
+  if ((numIndices & 0x1) != 0) {
+    state = state.mix(seq[idx[numIndices - 1]]);
+  }
+  return state.finish();
 }
 
 }  // namespace hashing

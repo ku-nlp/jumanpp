@@ -99,7 +99,7 @@ Status StaticFeatureCodegen::writeSource(const std::string& filename,
                                          const FeatureHolder& features) {
   util::io::Printer p;
 
-  p << "#include \"util/hashing.h\"\n";
+  p << "#include \"util/seahash.h\"\n";
   p << "#include \"core/impl/feature_impl_combine.h\"\n";
   p << "#include \"" << config_.filename << ".h\"\n\n";
   p << "namespace jumanpp_generated {\n";
