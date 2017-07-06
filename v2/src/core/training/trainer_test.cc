@@ -146,7 +146,8 @@ TEST_CASE("trainer can compute score for sentence with part unks") {
 
 TEST_CASE("trainer can compute score for sentence with other POS unks") {
   StringPiece dic = "UNK,N,5\nもも,N,0\nも,PRT,1\nモ,WTF,2\n寝る,V,3";
-  StringPiece ex = "モモ_V_10 も_PRT_1 モモ_N_5 も_PRT_1 モモ_V_10 も_PRT_1 もも_N_0\n";
+  StringPiece ex =
+      "モモ_V_10 も_PRT_1 モモ_N_5 も_PRT_1 モモ_V_10 も_PRT_1 もも_N_0\n";
   TrainerEnv env{dic, true};  // use unks
   env.parseMrph(ex);
   SoftConfidenceWeighted scw{TrainerEnv::testConf()};

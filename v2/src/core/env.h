@@ -7,6 +7,7 @@
 
 #include "core/analysis/analyzer.h"
 #include "core/analysis/perceptron.h"
+#include "core/analysis/rnn_scorer.h"
 #include "core/impl/model_io.h"
 
 namespace jumanpp {
@@ -24,6 +25,7 @@ class JumanppEnv {
   analysis::AnalyzerConfig analyzerConfig_;
 
   analysis::HashedFeaturePerceptron perceptron_;
+  analysis::rnn::RnnHolder rnnHolder_;
   analysis::ScorerDef scorers_;
 
  public:
@@ -36,6 +38,7 @@ class JumanppEnv {
   const RuntimeInfo& runtimeInfo() const { return runtime_; }
   const spec::AnalysisSpec& spec() const { return dicBldr_.spec(); }
   bool hasPerceptronModel() const;
+  bool hasRnnModel() const;
 
   Status makeAnalyzer(analysis::Analyzer* result) const {
     if (!hasPerceptronModel()) {

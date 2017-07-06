@@ -20,6 +20,13 @@ Status JumanppEnv::loadModel(StringPiece filename) {
     scoringConf_.numScorers += 1;
   }
 
+  if (hasRnnModel()) {
+    JPP_RETURN_IF_ERROR(rnnHolder_.load(modelInfo_));
+    scorers_.others.push_back(&rnnHolder_);
+    scorers_.scoreWeights.push_back(1);
+    scoringConf_.numScorers += 1;
+  }
+
   core_.reset(new CoreHolder{runtime_, dicHolder_});
 
   return Status::Ok();
@@ -38,6 +45,14 @@ void JumanppEnv::setBeamSize(u32 size) { scoringConf_.beamSize = size; }
 
 Status JumanppEnv::initFeatures(const features::StaticFeatureFactory* sff) {
   return core_->initialize(sff);
+}
+
+bool JumanppEnv::hasRnnModel() const {
+  auto it = std::find_if(modelInfo_.parts.begin(), modelInfo_.parts.end(),
+                         [](const model::ModelPart& p) {
+                           return p.kind == model::ModelPartKind::Rnn;
+                         });
+  return it != modelInfo_.parts.end();
 }
 
 }  // namespace core

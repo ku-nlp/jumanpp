@@ -5,11 +5,11 @@
 #ifndef JUMANPP_TEST_ANALYZER_ENV_H
 #define JUMANPP_TEST_ANALYZER_ENV_H
 
+#include <fstream>
 #include "core/analysis/analysis_result.h"
 #include "core/analysis/perceptron.h"
 #include "core/impl/graphviz_format.h"
 #include "testing/test_analyzer.h"
-#include <fstream>
 
 namespace tests {
 

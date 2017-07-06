@@ -19,7 +19,7 @@ namespace jumanpp {
 namespace jumandic {
 
 class JumanppExec {
-protected:
+ protected:
   jumandic::JumanppConf conf;
   core::JumanppEnv env;
   core::analysis::Analyzer analyzer;
@@ -32,7 +32,7 @@ protected:
   rnn::mikolov::MikolovModelReader mikolovModel;
   core::analysis::rnn::RnnHolder rnnHolder;
 
-public:
+ public:
   JumanppExec(const jumandic::JumanppConf& conf) : conf{conf} {}
 
   virtual Status initPerceptron() {
@@ -90,7 +90,6 @@ public:
 
   virtual ~JumanppExec() = default;
 };
-
 
 }  // namespace jumandic
 }  // namespace jumanpp

@@ -7,8 +7,6 @@
 
 #include "jumandic/shared/jumandic_env.h"
 
-namespace jumanpp {
-
-}  // namespace jumanpp
+namespace jumanpp {}  // namespace jumanpp
 
 #endif  // JUMANPP_JUMANPP_H

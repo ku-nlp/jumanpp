@@ -54,5 +54,5 @@ TEST_CASE("at least some scores can be computed with multiple paths") {
   CHECK(n3.f2 == "c");
   CHECK_FALSE(top.nextNode(&el));
   CHECK_FALSE(top.nextBoundary());
-  //env.dumpTrainers("/tmp/jpp", 5);
+  // env.dumpTrainers("/tmp/jpp", 5);
 }
