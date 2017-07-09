@@ -36,6 +36,8 @@ class NumericUnkMaker : public UnkMaker {
       chars::CharacterClass::FIGURE;
   static const chars::CharacterClass DigitClass =
       chars::CharacterClass::FIGURE_DIGIT;
+  static const chars::CharacterClass ExceptionClass =
+      chars::CharacterClass::FAMILY_EXCEPTION;
 
   // Exceptional Classes
   static const chars::CharacterClass CommaClass = chars::CharacterClass::COMMA;
