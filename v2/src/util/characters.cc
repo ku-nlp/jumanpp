@@ -244,7 +244,7 @@ CharacterClass getCodeType(char32_t input) noexcept {
              code == 0x5E7E ||  //幾
              false) {
     if (code == 0x6570 || code == 0x4F55 || code == 0x5E7E) /* 数，何，幾 */
-      return CharacterClass::KANJI_FIGURE | CharacterClass::FIGURE_EXCEPTION;
+      return CharacterClass::FIGURE_EXCEPTION;
     else
       /* DIGITs */
       return CharacterClass::KANJI_FIGURE | CharacterClass::FIGURE_DIGIT;

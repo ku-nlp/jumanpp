@@ -276,6 +276,12 @@ class UnkProcBuilder : public DslOpBase {
     return *this;
   }
 
+  UnkProcBuilder& numeric(chars::CharacterClass charClass) {
+    type_ = UnkMakerType::Numeric;
+    charClass_ = charClass;
+    return *this;
+  }
+
   UnkProcBuilder& notPrefixOfDicFeature(FeatureRef ref) {
     UnkProcFeature upf{UnkFeatureType::NotPrefixOfDicWord, ref};
     surfaceFeatures_.emplace_back(upf);
