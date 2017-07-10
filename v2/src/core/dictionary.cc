@@ -36,7 +36,7 @@ class RuntimeInfoCompiler {
     util::FlatSet<std::pair<i32, i32>, PairHash> usedStrings;
 
     for (auto& x : spec_.features.primitive) {
-      if (x.matchData.size() > 0) {
+      if (!x.matchData.empty()) {
         for (auto fld : x.references) {
           auto si = strings(fld);
           if (si == -1) {
@@ -49,7 +49,7 @@ class RuntimeInfoCompiler {
     }
 
     for (auto& x : spec_.features.computation) {
-      if (x.matchData.size() > 0) {
+      if (!x.matchData.empty()) {
         for (auto& ref : x.matchReference) {
           auto fld = ref.dicFieldIdx;
           auto si = strings(fld);
@@ -78,7 +78,7 @@ class RuntimeInfoCompiler {
     for (auto& x : spec_.unkCreators) {  // raw line number is 1-based
       patterns.push_back(x.patternRow - 1);
     }
-    if (patterns.size() == 0) {
+    if (patterns.empty()) {
       return Status::Ok();
     }
 
@@ -111,7 +111,7 @@ class RuntimeInfoCompiler {
 
   Status buildIdx(i32 storage, i32 field) {
     auto& data = word2id_[storage];
-    if (data.size() > 0) {
+    if (!data.empty()) {
       return Status::Ok();
     }
 
@@ -228,7 +228,7 @@ class RuntimeInfoCompiler {
             pf.references.push_back(i);
           }
         }
-        if (pf.references.size() == 0) {
+        if (pf.references.empty()) {
           return Status::InvalidState() << "placeholder feature " << pfd.name
                                         << " could not be processed";
         }
@@ -236,8 +236,8 @@ class RuntimeInfoCompiler {
         std::copy(pfd.references.begin(), pfd.references.end(),
                   std::back_inserter(pf.references));
       }
-      if (pfd.references.size() == 0) {
-        if (pfd.matchData.size() != 0) {
+      if (pfd.references.empty()) {
+        if (!pfd.matchData.empty()) {
           return Status::InvalidParameter()
                  << pfd.name
                  << ": field had data, but did not have any references";
@@ -250,7 +250,7 @@ class RuntimeInfoCompiler {
                  pfd.matchData.size() % pfd.references.size() == 0) {
         JPP_RETURN_IF_ERROR(
             copyTable(pfd.references, pfd.matchData, &pf.matchData));
-      } else if (pfd.matchData.size() != 0) {
+      } else if (!pfd.matchData.empty()) {
         return Status::InvalidParameter()
                << pfd.name
                << ": field had data, but could not combine it with dictionary";
