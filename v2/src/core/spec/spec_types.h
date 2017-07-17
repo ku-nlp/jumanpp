@@ -37,7 +37,14 @@ struct DictionarySpec {
   i32 numStringStorage = -1;
 };
 
-enum class UnkMakerType { Invalid, Single, Chunking, Onomatopoeia, Numeric, Prolonging };
+enum class UnkMakerType {
+  Invalid,
+  Single,
+  Chunking,
+  Onomatopoeia,
+  Numeric,
+  Prolonging
+};
 
 enum class FieldExpressionKind {
   Invalid,
