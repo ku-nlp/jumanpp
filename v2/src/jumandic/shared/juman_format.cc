@@ -64,8 +64,8 @@ bool JumanFormat::formatOne(const core::analysis::OutputManager& om,
     auto newId = idResolver.dicToJuman(rawId);
 
     printer << flds.surface[walker] << " ";
-    printer << flds.baseform[walker] << " ";
     printer << flds.reading[walker] << " ";
+    printer << flds.baseform[walker] << " ";
     printer << ifEmpty(flds.pos[walker], "*") << " " << newId.pos << " ";
     printer << ifEmpty(flds.subpos[walker], "*") << " " << newId.subpos << " ";
     printer << ifEmpty(flds.conjType[walker], "*") << " " << newId.conjType
