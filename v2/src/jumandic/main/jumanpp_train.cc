@@ -5,6 +5,7 @@
 #include "jumanpp_train.h"
 #include "args.h"
 #include "core/training/training_env.h"
+#include "jpp_rnn_args.h"
 #include "jumandic/shared/jumandic_env.h"
 #include "util/logging.hpp"
 
@@ -12,44 +13,6 @@
 
 using namespace jumanpp;
 namespace t = jumanpp::core::training;
-
-class RnnArgs {
-  const core::analysis::rnn::RnnInferenceConfig defaultConf{};
-  args::Group rnnGrp{"RNN parameters"};
-  args::ValueFlag<float> nceBias{
-      rnnGrp,
-      "VALUE",
-      "RNN NCE bias, default: " + std::to_string(defaultConf.nceBias),
-      {"rnn-nce-bias"},
-      defaultConf.nceBias};
-
-  args::ValueFlag<float> unkConstantTerm{
-      rnnGrp,
-      "VALUE",
-      "RNN UNK constant penalty, default: " +
-          std::to_string(defaultConf.unkConstantTerm),
-      {"rnn-unk-constant"},
-      defaultConf.unkConstantTerm};
-
-  args::ValueFlag<float> unkLengthPenalty{
-      rnnGrp,
-      "VALUE",
-      "RNN UNK length penalty, default: " +
-          std::to_string(defaultConf.unkLengthPenalty),
-      {"rnn-unk-length"},
-      defaultConf.unkLengthPenalty};
-
- public:
-  explicit RnnArgs(args::ArgumentParser& parser) { parser.Add(rnnGrp); }
-
-  core::analysis::rnn::RnnInferenceConfig config() {
-    auto copy = defaultConf;
-    copy.nceBias = nceBias.Get();
-    copy.unkConstantTerm = unkConstantTerm.Get();
-    copy.unkLengthPenalty = unkLengthPenalty.Get();
-    return copy;
-  }
-};
 
 Status parseArgs(int argc, const char** argv, t::TrainingArguments* args) {
   args::ArgumentParser parser{"Juman++ Training"};
@@ -100,9 +63,9 @@ Status parseArgs(int argc, const char** argv, t::TrainingArguments* args) {
                                      {"max-batch-iters"},
                                      1};
   args::ValueFlag<u32> maxEpochs{
-      trainingParams, "EPOCHS", "max # of epochs", {"max-epochs"}, 1};
+      trainingParams, "EPOCHS", "max # of epochs (1)", {"max-epochs"}, 1};
   args::ValueFlag<float> epsilon{
-      trainingParams, "EPSILON", "stopping epsilon", {"epsilon"}, 1e-3f};
+      trainingParams, "EPSILON", "stopping epsilon (1e-3)", {"epsilon"}, 1e-3f};
 
   RnnArgs rnnArgs{parser};
 
@@ -222,6 +185,14 @@ int doEmbedRnn(t::TrainingArguments& args, core::JumanppEnv& env) {
   Status s = rnnReader.open(args.rnnModelFilename);
   if (!s) {
     LOG_ERROR() << "failed to open rnn file: " << args.rnnModelFilename << "\n"
+                << s.message;
+    return 1;
+  }
+
+  s = rnnReader.parse();
+  if (!s) {
+    LOG_ERROR() << "failed to parse rnn model from file: "
+                << args.rnnModelFilename << "\n"
                 << s.message;
     return 1;
   }

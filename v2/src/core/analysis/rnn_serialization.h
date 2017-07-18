@@ -29,6 +29,8 @@ void Serialize(Arch& a, RnnSerializedData& data) {
   a& data.config.unkConstantTerm;
   a& data.config.unkLengthPenalty;
   a& data.config.nceBias;
+  a& data.config.perceptronWeight;
+  a& data.config.rnnWeight;
   a& data.targetIdx_;
 }
 

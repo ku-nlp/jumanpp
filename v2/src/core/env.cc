@@ -25,6 +25,7 @@ Status JumanppEnv::loadModel(StringPiece filename) {
     scorers_.others.push_back(&rnnHolder_);
     scorers_.scoreWeights.push_back(1);
     scoringConf_.numScorers += 1;
+    setRnnHolder(&rnnHolder_);
   }
 
   core_.reset(new CoreHolder{runtime_, dicHolder_});
@@ -53,6 +54,33 @@ bool JumanppEnv::hasRnnModel() const {
                            return p.kind == model::ModelPartKind::Rnn;
                          });
   return it != modelInfo_.parts.end();
+}
+
+void JumanppEnv::setRnnHolder(analysis::rnn::RnnHolder* holder) {
+  if (!hasRnnModel()) {
+    if (scorers_.others.empty()) {
+      scorers_.others.push_back(holder);
+      scorers_.scoreWeights.push_back(1.0f);
+    }
+    scoringConf_.numScorers += 1;
+  }
+  scorers_.others[0] = holder;
+  if (scorers_.scoreWeights.size() == 2) {
+    auto& conf = holder->config();
+    scorers_.scoreWeights[0] = conf.perceptronWeight;
+    scorers_.scoreWeights[1] = conf.rnnWeight;
+  }
+}
+
+void JumanppEnv::setRnnConfig(
+    const analysis::rnn::RnnInferenceConfig& rnnConf) {
+  if (hasRnnModel()) {
+    rnnHolder_.setConfig(rnnConf);
+  }
+  if (scorers_.scoreWeights.size() == 2) {
+    scorers_.scoreWeights[0] = rnnConf.perceptronWeight;
+    scorers_.scoreWeights[1] = rnnConf.rnnWeight;
+  }
 }
 
 }  // namespace core

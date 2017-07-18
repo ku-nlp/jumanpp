@@ -462,17 +462,26 @@ Status RnnHolder::load(const model::ModelInfo& model) {
 
 void RnnHolder::setConfig(const RnnInferenceConfig& conf) {
   RnnInferenceConfig deflt{};
+  auto& mycfg = impl_->config_;
   if (conf.nceBias != deflt.nceBias) {
-    impl_->config_.nceBias = conf.nceBias;
+    mycfg.nceBias = conf.nceBias;
   }
   if (conf.unkConstantTerm != deflt.unkConstantTerm) {
-    impl_->config_.unkConstantTerm = conf.unkConstantTerm;
+    mycfg.unkConstantTerm = conf.unkConstantTerm;
   }
   if (conf.unkLengthPenalty != deflt.unkLengthPenalty) {
-    impl_->config_.unkLengthPenalty = conf.unkLengthPenalty;
+    mycfg.unkLengthPenalty = conf.unkLengthPenalty;
   }
-  impl_->nceConstant_ = impl_->header.nceLnz + impl_->config_.unkLengthPenalty;
+  if (conf.perceptronWeight != deflt.perceptronWeight) {
+    mycfg.perceptronWeight = conf.perceptronWeight;
+  }
+  if (conf.rnnWeight != deflt.rnnWeight) {
+    mycfg.rnnWeight = conf.rnnWeight;
+  }
+  impl_->nceConstant_ = impl_->header.nceLnz + mycfg.unkLengthPenalty;
 }
+
+const RnnInferenceConfig& RnnHolder::config() const { return impl_->config_; }
 
 void RnnScorer::preScore(Lattice* l, ExtraNodesContext* xtra) {
   state_->reset();

@@ -5,6 +5,7 @@
 #include "jumanpp_args.h"
 #include <iostream>
 #include "args.h"
+#include "jpp_rnn_args.h"
 
 namespace jumanpp {
 namespace jumandic {
@@ -25,6 +26,8 @@ bool parseArgs(int argc, char* argv[], JumanppConf* result) {
 
   args::Positional<std::string> input{parser, "input",
                                       "Input filename (- for stdin)", "-"};
+
+  RnnArgs rnnArgs{parser};
 
   if (result == nullptr) {
     std::cerr << parser;
@@ -60,6 +63,7 @@ bool parseArgs(int argc, char* argv[], JumanppConf* result) {
   }
   result->modelFile = modelFile.Get();
   result->rnnModelFile = rnnModelFile.Get();
+  result->rnnConfig = rnnArgs.config();
 
   return true;
 }

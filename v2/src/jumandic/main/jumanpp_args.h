@@ -6,6 +6,7 @@
 #define JUMANPP_JUMANPP_ARGS_H
 
 #include <string>
+#include "core/analysis/rnn_scorer.h"
 
 namespace jumanpp {
 namespace jumandic {
@@ -17,6 +18,7 @@ struct JumanppConf {
   OutputType outputType = OutputType::Juman;
   std::string inputFile = "-";
   std::string rnnModelFile;
+  core::analysis::rnn::RnnInferenceConfig rnnConfig{};
 };
 
 bool parseArgs(int argc, char* argv[], JumanppConf* result);

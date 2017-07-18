@@ -38,7 +38,10 @@ class JumanppEnv {
   const RuntimeInfo& runtimeInfo() const { return runtime_; }
   const spec::AnalysisSpec& spec() const { return dicBldr_.spec(); }
   bool hasPerceptronModel() const;
+
   bool hasRnnModel() const;
+  void setRnnConfig(const analysis::rnn::RnnInferenceConfig& rnnConf);
+  void setRnnHolder(analysis::rnn::RnnHolder* holder);
 
   Status makeAnalyzer(analysis::Analyzer* result) const {
     if (!hasPerceptronModel()) {
