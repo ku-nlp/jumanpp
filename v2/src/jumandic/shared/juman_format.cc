@@ -57,9 +57,9 @@ bool JumanFormat::formatOne(const core::analysis::OutputManager& om,
       printer << "@ ";
     }
 
-    JumandicPosId rawId{fieldBuffer[2], fieldBuffer[3],
-                        fieldBuffer[5],  // conjForm and conjType are reversed
-                        fieldBuffer[4]};
+    JumandicPosId rawId{fieldBuffer[1], fieldBuffer[2],
+                        fieldBuffer[4],  // conjForm and conjType are reversed
+                        fieldBuffer[3]};
 
     auto newId = idResolver.dicToJuman(rawId);
 
