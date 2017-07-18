@@ -203,25 +203,25 @@ class MikolovRnnImpl {
     }
   }
 
-  void initScores(StepData *data) {
+  void applyNceConstant(StepData *data) {
     i32 beamSize = (i32)data->context.numRows();
     i32 numEntries = (i32)data->scores.rowSize();
     auto result = impl::asMatrix(data->scores, numEntries, beamSize);
-    result.array() -= rnn.header.nceLnz;
+    result.array() -= rnn.rnnNceConstant;
   }
 
-  void initScores(const InferStepData &data, u32 start, u32 length) {
+  void applyNceConstant(const InferStepData &data, u32 start, u32 length) {
     i32 beamSize = (i32)data.beamContext.numRows();
     i32 numEntries = (i32)data.scores.rowSize();
     auto result = impl::asMatrix(data.scores, numEntries, beamSize);
     auto resultSlice = result.middleRows(start, length);
-    resultSlice.array() -= rnn.header.nceLnz;
+    resultSlice.array() -= rnn.rnnNceConstant;
   }
 
   void inferScores(const InferStepData &data, i32 from, i32 length) {
     computeContextScores(data, from, length);
     computeMaxentScores(data, from, length);
-    initScores(data, from, length);
+    applyNceConstant(data, from, length);
   }
 
   // original formula
@@ -234,7 +234,7 @@ class MikolovRnnImpl {
     computeNewContext(data);
     computeContextScores(data);
     computeMaxentScores(data);
-    initScores(data);
+    applyNceConstant(data);
   }
 };
 

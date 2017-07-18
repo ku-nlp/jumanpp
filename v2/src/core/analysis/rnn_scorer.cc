@@ -308,8 +308,10 @@ struct RnnScorerState {
 
   Status init(const RnnHolder& holder) {
     rnnState = holder.impl_.get();
-    return mrnn.init(rnnState->header, rnnState->matrix,
-                     rnnState->maxentWeights);
+    auto status =
+        mrnn.init(rnnState->header, rnnState->matrix, rnnState->maxentWeights);
+    mrnn.setNceConstant(holder.impl_->nceConstant_);
+    return status;
   }
 };
 
@@ -453,11 +455,23 @@ Status RnnHolder::load(const model::ModelInfo& model) {
   JPP_RETURN_IF_ERROR(impl_->resolver_.loadFromBuffers(
       rnnPart.data[1], rnnPart.data[2], headerData.targetIdx_));
 
+  setConfig({});
+
   return Status::Ok();
 }
 
 void RnnHolder::setConfig(const RnnInferenceConfig& conf) {
-  impl_->config_ = conf;
+  RnnInferenceConfig deflt{};
+  if (conf.nceBias != deflt.nceBias) {
+    impl_->config_.nceBias = conf.nceBias;
+  }
+  if (conf.unkConstantTerm != deflt.unkConstantTerm) {
+    impl_->config_.unkConstantTerm = conf.unkConstantTerm;
+  }
+  if (conf.unkLengthPenalty != deflt.unkLengthPenalty) {
+    impl_->config_.unkLengthPenalty = conf.unkLengthPenalty;
+  }
+  impl_->nceConstant_ = impl_->header.nceLnz + impl_->config_.unkLengthPenalty;
 }
 
 void RnnScorer::preScore(Lattice* l, ExtraNodesContext* xtra) {

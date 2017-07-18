@@ -82,6 +82,7 @@ Status MikolovRnn::init(const MikolovRnnModelHeader& header,
   this->weights = weights;
   this->maxentWeights = maxentW;
   this->header = header;
+  this->rnnNceConstant = header.nceLnz;
   return Status::Ok();
 }
 

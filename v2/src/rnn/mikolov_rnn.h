@@ -128,6 +128,7 @@ class MikolovRnn {
   MikolovRnnModelHeader header;
   util::ArraySlice<float> weights;
   util::ArraySlice<float> maxentWeights;
+  float rnnNceConstant;
 
   friend class MikolovRnnImpl;
 
@@ -135,6 +136,7 @@ class MikolovRnn {
   Status init(const MikolovRnnModelHeader& header,
               const util::ArraySlice<float>& weights,
               const util::ArraySlice<float>& maxentW);
+  void setNceConstant(float value) { rnnNceConstant = value; }
   void apply(StepData* data);
   void calcNewContext(const ContextStepData& csd);
   void calcScoresOn(const InferStepData& isd, i32 from, i32 count);
