@@ -31,6 +31,11 @@ Status parseArgs(int argc, const char** argv, t::TrainingArguments* args) {
       "Filename of corpus that will be used for training",
       {"corpus"}};
 
+  args::ValueFlag<std::string> rnnFile{ioGroup,
+                                       "rnnModel",
+                                       "Filename of fasterrnn trained model",
+                                       {"rnn-model"}};
+
   args::Group trainingParams{parser, "Training parameters"};
   args::ValueFlag<u32> paramSizeExponent{
       trainingParams,
@@ -72,6 +77,7 @@ Status parseArgs(int argc, const char** argv, t::TrainingArguments* args) {
   args->modelFilename = modelFile.Get();
   args->outputFilename = modelOutput.Get();
   args->corpusFilename = corpusFile.Get();
+  args->rnnModelFilename = rnnFile.Get();
   auto sizeExp = paramSizeExponent.Get();
   args->trainingConfig.featureNumberExponent = sizeExp;
   args->trainingConfig.randomSeed = randomSeed.Get();
@@ -90,6 +96,9 @@ Status parseArgs(int argc, const char** argv, t::TrainingArguments* args) {
 void doTrain(core::training::TrainingEnv& env,
              const t::TrainingArguments& args) {
   float lastLoss = 0.0f;
+
+  LOG_INFO() << "Starting SCW model training...";
+
   for (int nepoch = 0; nepoch < args.maxEpochs; ++nepoch) {
     env.resetInput();
     Status s = env.trainOneEpoch();
@@ -106,26 +115,30 @@ void doTrain(core::training::TrainingEnv& env,
   }
 }
 
-int main(int argc, const char** argv) {
-  t::TrainingArguments args{};
-  Status s = parseArgs(argc, argv, &args);
+int saveModel(const core::training::TrainingArguments& args,
+              const core::model::ModelInfo& model) {
+  core::model::ModelSaver saver;
+  Status s = saver.open(args.outputFilename);
   if (!s) {
-    LOG_ERROR() << "failed to parse arguments: " << s.message;
+    LOG_ERROR() << "failed to open file [" << args.outputFilename
+                << "] for saving model: " << s.message;
     return 1;
   }
 
-  core::JumanppEnv env;
-
-  s = env.loadModel(args.modelFilename);
+  s = saver.save(model);
   if (!s) {
-    LOG_ERROR() << "failed to read model from disk: " << s.message;
-    return 1;
+    LOG_ERROR() << "failed to save model: " << s.message;
   }
+
+  return 0;
+}
+
+int doTrainJpp(t::TrainingArguments& args, core::JumanppEnv& env) {
   env.setBeamSize(args.trainingConfig.beamSize);
 
   t::TrainingEnv exec{args, &env};
 
-  s = exec.initFeatures(nullptr);
+  Status s = exec.initFeatures(nullptr);
 
   if (!s) {
     LOG_ERROR() << "failed to initialize features: " << s.message;
@@ -150,18 +163,57 @@ int main(int argc, const char** argv) {
   auto model = env.modelInfoCopy();
   exec.exportScwParams(&model);
 
-  core::model::ModelSaver saver;
-  s = saver.open(args.outputFilename);
+  return saveModel(args, model);
+}
+
+int doEmbedRnn(t::TrainingArguments& args, core::JumanppEnv& env) {
+  LOG_INFO() << "embedding the rnn into the model file";
+
+  rnn::mikolov::MikolovModelReader rnnReader;
+  Status s = rnnReader.open(args.rnnModelFilename);
   if (!s) {
-    LOG_ERROR() << "failed to open file [" << args.outputFilename
-                << "] for saving model: " << s.message;
+    LOG_ERROR() << "failed to open rnn file: " << args.rnnModelFilename << "\n"
+                << s.message;
     return 1;
   }
 
-  s = saver.save(model);
+  core::analysis::rnn::RnnHolder rnnHolder;
+  s = rnnHolder.init(rnnReader, env.coreHolder()->dic(), "surface");
   if (!s) {
-    LOG_ERROR() << "failed to save model: " << s.message;
+    LOG_ERROR() << "failed to initialize rnn: " << s.message;
+    return 1;
   }
 
-  return 0;
+  auto info = env.modelInfoCopy();
+
+  s = rnnHolder.makeInfo(&info);
+  if (!s) {
+    LOG_ERROR() << "failed to add rnn info to the model: " << s.message;
+    return 1;
+  }
+
+  return saveModel(args, info);
+}
+
+int main(int argc, const char** argv) {
+  t::TrainingArguments args{};
+  Status s = parseArgs(argc, argv, &args);
+  if (!s) {
+    LOG_ERROR() << "failed to parse arguments: " << s.message;
+    return 1;
+  }
+
+  core::JumanppEnv env;
+
+  s = env.loadModel(args.modelFilename);
+  if (!s) {
+    LOG_ERROR() << "failed to read model from disk: " << s.message;
+    return 1;
+  }
+
+  if (args.rnnModelFilename.empty()) {
+    return doTrainJpp(args, env);
+  }
+
+  return doEmbedRnn(args, env);
 }

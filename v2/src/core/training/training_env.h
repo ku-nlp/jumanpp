@@ -25,6 +25,7 @@ struct TrainingArguments {
   std::string modelFilename;
   std::string outputFilename;
   std::string corpusFilename;
+  std::string rnnModelFilename;
   TrainingConfig trainingConfig;
 };
 
