@@ -5,6 +5,7 @@
 #ifndef JUMANPP_TRAINING_ENV_H
 #define JUMANPP_TRAINING_ENV_H
 
+#include "core/analysis/rnn_scorer.h"
 #include "core/training/scw.h"
 #include "core/training/trainer.h"
 #include "core/training/training_executor.h"
@@ -27,6 +28,7 @@ struct TrainingArguments {
   std::string corpusFilename;
   std::string rnnModelFilename;
   TrainingConfig trainingConfig;
+  core::analysis::rnn::RnnInferenceConfig rnnConfig;
 };
 
 class TrainingEnv {

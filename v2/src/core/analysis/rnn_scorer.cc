@@ -456,6 +456,10 @@ Status RnnHolder::load(const model::ModelInfo& model) {
   return Status::Ok();
 }
 
+void RnnHolder::setConfig(const RnnInferenceConfig& conf) {
+  impl_->config_ = conf;
+}
+
 void RnnScorer::preScore(Lattice* l, ExtraNodesContext* xtra) {
   state_->reset();
   state_->initForLattice(l, xtra);

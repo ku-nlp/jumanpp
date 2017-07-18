@@ -13,28 +13,68 @@
 using namespace jumanpp;
 namespace t = jumanpp::core::training;
 
+class RnnArgs {
+  const core::analysis::rnn::RnnInferenceConfig defaultConf{};
+  args::Group rnnGrp{"RNN parameters"};
+  args::ValueFlag<float> nceBias{
+      rnnGrp,
+      "VALUE",
+      "RNN NCE bias, default: " + std::to_string(defaultConf.nceBias),
+      {"rnn-nce-bias"},
+      defaultConf.nceBias};
+
+  args::ValueFlag<float> unkConstantTerm{
+      rnnGrp,
+      "VALUE",
+      "RNN UNK constant penalty, default: " +
+          std::to_string(defaultConf.unkConstantTerm),
+      {"rnn-unk-constant"},
+      defaultConf.unkConstantTerm};
+
+  args::ValueFlag<float> unkLengthPenalty{
+      rnnGrp,
+      "VALUE",
+      "RNN UNK length penalty, default: " +
+          std::to_string(defaultConf.unkLengthPenalty),
+      {"rnn-unk-length"},
+      defaultConf.unkLengthPenalty};
+
+ public:
+  explicit RnnArgs(args::ArgumentParser& parser) { parser.Add(rnnGrp); }
+
+  core::analysis::rnn::RnnInferenceConfig config() {
+    auto copy = defaultConf;
+    copy.nceBias = nceBias.Get();
+    copy.unkConstantTerm = unkConstantTerm.Get();
+    copy.unkLengthPenalty = unkLengthPenalty.Get();
+    return copy;
+  }
+};
+
 Status parseArgs(int argc, const char** argv, t::TrainingArguments* args) {
   args::ArgumentParser parser{"Juman++ Training"};
 
   args::Group ioGroup{parser, "Input/Output"};
   args::ValueFlag<std::string> modelFile{ioGroup,
-                                         "modelInFile",
+                                         "FILENAME",
                                          "Filename of preprocessed dictionary",
                                          {"model-input"}};
   args::ValueFlag<std::string> modelOutput{ioGroup,
-                                           "modelOutFile",
+                                           "FILENAME",
                                            "Model will be written to this file",
                                            {"model-output"}};
   args::ValueFlag<std::string> corpusFile{
       ioGroup,
-      "corpus",
+      "FILENAME",
       "Filename of corpus that will be used for training",
       {"corpus"}};
 
-  args::ValueFlag<std::string> rnnFile{ioGroup,
-                                       "rnnModel",
-                                       "Filename of fasterrnn trained model",
-                                       {"rnn-model"}};
+  args::ValueFlag<std::string> rnnFile{
+      ioGroup,
+      "FILENAME",
+      "Filename of fasterrnn trained model. It will be embedded inside the "
+      "Juman++ model. RNN parameters will be embedded as well.",
+      {"rnn-model"}};
 
   args::Group trainingParams{parser, "Training parameters"};
   args::ValueFlag<u32> paramSizeExponent{
@@ -64,6 +104,8 @@ Status parseArgs(int argc, const char** argv, t::TrainingArguments* args) {
   args::ValueFlag<float> epsilon{
       trainingParams, "EPSILON", "stopping epsilon", {"epsilon"}, 1e-3f};
 
+  RnnArgs rnnArgs{parser};
+
   try {
     parser.ParseCLI(argc, argv);
   } catch (args::ParseError& e) {
@@ -84,10 +126,17 @@ Status parseArgs(int argc, const char** argv, t::TrainingArguments* args) {
   args->batchMaxIterations = maxBatchIters.Get();
   args->maxEpochs = maxEpochs.Get();
   args->batchLossEpsilon = epsilon.Get();
+  args->rnnConfig = rnnArgs.config();
 
   if (sizeExp > 31) {
     return Status::InvalidState() << "size exponent was too large: " << sizeExp
                                   << ", maximum allowed is 31";
+  }
+
+  if (args->modelFilename.empty()) {
+    std::cout << "Model filename was not specified\n";
+    std::cout << parser;
+    std::exit(1);
   }
 
   return Status::Ok();
@@ -183,6 +232,8 @@ int doEmbedRnn(t::TrainingArguments& args, core::JumanppEnv& env) {
     LOG_ERROR() << "failed to initialize rnn: " << s.message;
     return 1;
   }
+
+  rnnHolder.setConfig(args.rnnConfig);
 
   auto info = env.modelInfoCopy();
 

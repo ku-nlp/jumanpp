@@ -33,6 +33,7 @@ class RnnHolder : public ScorerFactory {
   ~RnnHolder() override;
   Status init(const jumanpp::rnn::mikolov::MikolovModelReader& model,
               const core::dic::DictionaryHolder& dic, StringPiece field);
+  void setConfig(const RnnInferenceConfig& conf);
   Status load(const model::ModelInfo& model) override;
   Status makeInfo(model::ModelInfo* result);
   Status makeInstance(std::unique_ptr<ScoreComputer>* result) override;
