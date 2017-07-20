@@ -31,6 +31,8 @@ void Serialize(Arch& a, RnnSerializedData& data) {
   a& data.config.nceBias;
   a& data.config.perceptronWeight;
   a& data.config.rnnWeight;
+  a& data.config.unkSymbol;
+  a& data.config.unkId;
   a& data.targetIdx_;
 }
 

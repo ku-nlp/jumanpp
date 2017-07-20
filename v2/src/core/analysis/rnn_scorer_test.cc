@@ -80,8 +80,8 @@ TEST_CASE("RnnIdResolver correctly resolves present ids") {
   jumanpp::rnn::mikolov::MikolovModelReader mrr;
   REQUIRE_OK(mrr.open("rnn/testlm"));
   REQUIRE_OK(mrr.parse());
-  REQUIRE_OK(
-      idres.loadFromDic(env.jppEnv.coreHolder()->dic(), "a", mrr.words()));
+  REQUIRE_OK(idres.loadFromDic(env.jppEnv.coreHolder()->dic(), "a", mrr.words(),
+                               "<unk>"));
   a::rnn::RnnIdContainer ctr{ana.alloc()};
   REQUIRE_OK(idres.resolveIds(&ctr, ana.lattice(), ana.extraNodesContext()));
   checkItems(ctr, 0, 1);
@@ -103,8 +103,9 @@ TEST_CASE("RnnIdResolver correctly resolves absent ids") {
   jumanpp::rnn::mikolov::MikolovModelReader mrr;
   REQUIRE_OK(mrr.open("rnn/testlm"));
   REQUIRE_OK(mrr.parse());
-  REQUIRE_OK(
-      idres.loadFromDic(env.jppEnv.coreHolder()->dic(), "a", mrr.words()));
+  REQUIRE_OK(idres.loadFromDic(env.jppEnv.coreHolder()->dic(), "a", mrr.words(),
+                               "<unk>"));
+  CHECK(idres.unkId() == 2);
   a::rnn::RnnIdContainer ctr{ana.alloc()};
   REQUIRE_OK(idres.resolveIds(&ctr, ana.lattice(), ana.extraNodesContext()));
   checkItems(ctr, 0, 1);

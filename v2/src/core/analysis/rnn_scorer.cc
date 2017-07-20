@@ -144,8 +144,8 @@ struct RnnScorerState {
 
     for (int i = 0; i < idxes.size(); ++i) {
       auto wordId = idxes.at(i);
-      if (wordId < 0) {  // use EOS/BOS markers instead of full unks
-        wordId = 0;
+      if (wordId < 0) {  // we have an unk
+        wordId = rnnState->config_.unkId;
       }
       auto result = storage.row(i);
       util::copy_buffer(nceData.row(wordId), result);
@@ -215,7 +215,7 @@ struct RnnScorerState {
     if (embIdx >= 0) {
       return rnnState->embeddings.row(embIdx);
     } else {
-      return rnnState->embeddings.row(0);
+      return rnnState->embeddings.row(rnnState->config_.unkId);
     }
   }
 
@@ -333,7 +333,9 @@ Status RnnHolder::init(const jumanpp::rnn::mikolov::MikolovModelReader& model,
 
   impl_.reset(new RnnHolderState{hdr, model.rnnMatrix(), embSlice, nceembSlice,
                                  model.maxentWeights()});
-  JPP_RETURN_IF_ERROR(impl_->resolver_.loadFromDic(dic, field, model.words()));
+  JPP_RETURN_IF_ERROR(impl_->resolver_.loadFromDic(dic, field, model.words(),
+                                                   impl_->config_.unkSymbol));
+  impl_->config_.unkId = impl_->resolver_.unkId();
   return Status::Ok();
 }
 
@@ -453,7 +455,8 @@ Status RnnHolder::load(const model::ModelInfo& model) {
   impl_->config_ = headerData.config;
 
   JPP_RETURN_IF_ERROR(impl_->resolver_.loadFromBuffers(
-      rnnPart.data[1], rnnPart.data[2], headerData.targetIdx_));
+      rnnPart.data[1], rnnPart.data[2], headerData.targetIdx_,
+      headerData.config.unkId));
 
   setConfig({});
 
@@ -477,6 +480,12 @@ void RnnHolder::setConfig(const RnnInferenceConfig& conf) {
   }
   if (conf.rnnWeight != deflt.rnnWeight) {
     mycfg.rnnWeight = conf.rnnWeight;
+  }
+  if (!conf.unkSymbol.empty()) {
+    mycfg.unkSymbol = conf.unkSymbol;
+  }
+  if (conf.unkId != deflt.unkId) {
+    mycfg.unkId = conf.unkId;
   }
   impl_->nceConstant_ = impl_->header.nceLnz + mycfg.unkLengthPenalty;
 }

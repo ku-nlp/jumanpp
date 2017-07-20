@@ -97,24 +97,27 @@ class RnnIdResolver {
   u32 targetIdx_;
   util::FlatMap<i32, u32> intMap_;
   util::FlatMap<StringPiece, u32> strMap_;
+  u32 unkId_ = 0;
 
  public:
   RnnIdResolver() {}
 
   Status loadFromDic(const dic::DictionaryHolder& dic, StringPiece colName,
-                     util::ArraySlice<StringPiece> rnnDic);
+                     util::ArraySlice<StringPiece> rnnDic,
+                     StringPiece unkToken);
   Status resolveIds(RnnIdContainer* ids, Lattice* lat,
                     const ExtraNodesContext* xtra) const;
 
   void serializeMaps(util::CodedBuffer* intBuffer,
                      util::CodedBuffer* stringBuffer) const;
   Status loadFromBuffers(StringPiece intBuffer, StringPiece stringBuffer,
-                         u32 targetIdx);
+                         u32 targetIdx, u32 unkId);
 
   i32 resolveId(i32 entry, LatticeBoundary* lb, int position,
                 const ExtraNodesContext* xtra) const;
 
   u32 targetIdx() const { return targetIdx_; }
+  u32 unkId() const { return unkId_; }
   size_t numInts() const { return intMap_.size(); }
   size_t numStrings() const { return strMap_.size(); }
 };

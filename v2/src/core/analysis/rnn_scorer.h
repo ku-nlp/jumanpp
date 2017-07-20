@@ -24,6 +24,8 @@ struct RnnInferenceConfig {
   float unkLengthPenalty = -0.5f;
   float perceptronWeight = 1.0f;
   float rnnWeight = 1.0f;
+  std::string unkSymbol;
+  u32 unkId = 0;
 
   bool operator==(const RnnInferenceConfig& other) const {
     return nceBias == other.nceBias &&

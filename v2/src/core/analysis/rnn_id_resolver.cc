@@ -13,7 +13,8 @@ namespace rnn {
 
 Status RnnIdResolver::loadFromDic(const dic::DictionaryHolder& dic,
                                   StringPiece colName,
-                                  util::ArraySlice<StringPiece> rnnDic) {
+                                  util::ArraySlice<StringPiece> rnnDic,
+                                  StringPiece unkToken) {
   auto fld = dic.fieldByName(colName);
   targetIdx_ = fld->index;
   if (fld->columnType != spec::ColumnType::String) {
@@ -32,6 +33,10 @@ Status RnnIdResolver::loadFromDic(const dic::DictionaryHolder& dic,
   for (u32 i = 0; i < rnnDic.size(); ++i) {
     auto s = rnnDic[i];
     if (s.size() < 1) {
+      continue;
+    }
+    if (s == unkToken) {
+      unkId_ = i;
       continue;
     }
     auto it = str2int.find(s);
@@ -119,7 +124,8 @@ void RnnIdResolver::serializeMaps(util::CodedBuffer* intBuffer,
 }
 
 Status RnnIdResolver::loadFromBuffers(StringPiece intBuffer,
-                                      StringPiece stringBuffer, u32 targetIdx) {
+                                      StringPiece stringBuffer, u32 targetIdx,
+                                      u32 unkId) {
   util::serialization::Loader intLdr{intBuffer};
   if (!intLdr.load(&intMap_)) {
     return Status::InvalidState() << "RnnIdResolver: failed to load int map";
@@ -131,6 +137,7 @@ Status RnnIdResolver::loadFromBuffers(StringPiece intBuffer,
   }
 
   targetIdx_ = targetIdx;
+  unkId_ = unkId;
 
   return Status::Ok();
 }

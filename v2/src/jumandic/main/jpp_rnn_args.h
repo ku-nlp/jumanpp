@@ -50,6 +50,13 @@ class RnnArgs {
       {"feature-weight-rnn"},
       defaultConf.rnnWeight};
 
+  args::ValueFlag<std::string> rnnUnk{
+      rnnGrp,
+      "UNK_TOKEN",
+      "RNN token for UNK symbols, default: JPP_UNK",
+      {"rnn-unk"},
+      "JPP_UNK"};
+
  public:
   explicit RnnArgs(args::ArgumentParser& parser) { parser.Add(rnnGrp); }
 
@@ -60,6 +67,7 @@ class RnnArgs {
     copy.unkLengthPenalty = unkLengthPenalty.Get();
     copy.perceptronWeight = perceptronWeight.Get();
     copy.rnnWeight = rnnWeight.Get();
+    copy.unkSymbol = rnnUnk.Get();
     return copy;
   }
 };
