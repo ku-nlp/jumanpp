@@ -19,6 +19,8 @@ struct JumanppConf {
   std::string inputFile = "-";
   std::string rnnModelFile;
   core::analysis::rnn::RnnInferenceConfig rnnConfig{};
+  std::string graphvizDir;
+  i32 beamSize = 5;
 };
 
 bool parseArgs(int argc, char* argv[], JumanppConf* result);

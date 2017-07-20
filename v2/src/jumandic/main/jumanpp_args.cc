@@ -22,6 +22,12 @@ bool parseArgs(int argc, char* argv[], JumanppConf* result) {
                        "subset",
                        "Subset of dictionary, useful for tests",
                        {"dic-subset"}};
+  args::ValueFlag<std::string> graphvis{
+      outputType,
+      "DIRECTORY",
+      "Directory for GraphViz .dot files output",
+      {"graphviz-dir"}
+  };
 
   args::Group modelParams{parser, "Model parameters"};
   args::ValueFlag<std::string> modelFile{
@@ -80,6 +86,7 @@ bool parseArgs(int argc, char* argv[], JumanppConf* result) {
   result->modelFile = modelFile.Get();
   result->rnnModelFile = rnnModelFile.Get();
   result->rnnConfig = rnnArgs.config();
+  result->graphvizDir = graphvis.Get();
 
   return true;
 }

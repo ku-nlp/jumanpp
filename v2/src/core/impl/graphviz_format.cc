@@ -151,10 +151,12 @@ Status GraphVizFormat::render(analysis::Lattice *lat) {
   out.lit("digraph {").line(1);
   out.lit("rankdir = \"LR\";").line();
 
-  out.lit("// nodes").line();
-  JPP_RETURN_IF_ERROR(renderNodes(&out, lat));
-  out.line().lit("// edges").line();
-  JPP_RETURN_IF_ERROR(renderEdges(&out, lat));
+  if (top1_.numBoundaries() > 0) {
+    out.lit("// nodes").line();
+    JPP_RETURN_IF_ERROR(renderNodes(&out, lat));
+    out.line().lit("// edges").line();
+    JPP_RETURN_IF_ERROR(renderEdges(&out, lat));
+  }
 
   out.line(-1).lit("}").line(0);
 

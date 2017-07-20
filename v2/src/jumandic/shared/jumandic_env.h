@@ -33,12 +33,10 @@ class JumanppExec {
 
   u64 numAnalyzed_ = 0;
 
+  Status writeGraphviz();
+
  public:
   JumanppExec(const jumandic::JumanppConf& conf) : conf{conf} {}
-
-  virtual Status initPerceptron() { return Status::Ok(); }
-
-  virtual Status initRnn() { return Status::Ok(); }
 
   virtual Status initOutput();
 
@@ -47,6 +45,9 @@ class JumanppExec {
   Status analyze(StringPiece data, StringPiece comment = EMPTY_SP) {
     JPP_RETURN_IF_ERROR(analyzer.analyze(data));
     JPP_RETURN_IF_ERROR(format->format(analyzer, comment))
+    if (conf.graphvizDir.size() > 0) {
+      writeGraphviz();
+    }
     numAnalyzed_ += 1;
     return Status::Ok();
   }
