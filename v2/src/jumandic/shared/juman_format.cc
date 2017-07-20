@@ -39,14 +39,6 @@ Status JumanFormat::format(const core::analysis::Analyzer& analysis,
   return Status::Ok();
 }
 
-inline const StringPiece& ifEmpty(const StringPiece& s1,
-                                  const StringPiece& s2) {
-  if (s1.size() > 0) {
-    return s1;
-  }
-  return s2;
-}
-
 bool JumanFormat::formatOne(const core::analysis::OutputManager& om,
                             const core::analysis::ConnectionPtr& ptr,
                             bool first) {
@@ -74,7 +66,7 @@ bool JumanFormat::formatOne(const core::analysis::OutputManager& om,
             << " ";
     auto res = flds.features[walker];
     auto canonic = flds.canonicForm[walker];
-    if (res.isEmpty()) {
+    if (res.hasNext()) {
       if (canonic.size() == 0) {
         printer << "NIL";
       } else {
@@ -84,14 +76,14 @@ bool JumanFormat::formatOne(const core::analysis::OutputManager& om,
       printer << '"';
       if (canonic.size() > 0) {
         printer << "代表表記:" << canonic;
-        if (!res.isEmpty()) {
+        if (!res.hasNext()) {
           printer << " ";
         }
       }
       StringPiece data;
       while (res.next(&data)) {
         printer << data;
-        if (!res.isEmpty()) {
+        if (!res.hasNext()) {
           printer << " ";
         }
       }

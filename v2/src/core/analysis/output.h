@@ -101,7 +101,7 @@ class StringListIterator {
     return false;
   }
 
-  bool isEmpty() const { return elements_.remaining() == 0; }
+  bool hasNext() const { return elements_.remaining() == 0; }
 };
 
 class StringListField {

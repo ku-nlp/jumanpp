@@ -3,6 +3,7 @@
 //
 
 #include "jumanpp_args.h"
+#include <sys/ioctl.h>
 #include <iostream>
 #include "args.h"
 #include "jpp_rnn_args.h"
@@ -17,6 +18,10 @@ bool parseArgs(int argc, char* argv[], JumanppConf* result) {
   args::Flag juman{
       outputType, "juman", "Juman style (default)", {'j', "juman"}};
   args::Flag morph{outputType, "morph", "Morph style", {'M', "morph"}};
+  args::Flag dicSubset{outputType,
+                       "subset",
+                       "Subset of dictionary, useful for tests",
+                       {"dic-subset"}};
 
   args::Group modelParams{parser, "Model parameters"};
   args::ValueFlag<std::string> modelFile{
@@ -26,6 +31,14 @@ bool parseArgs(int argc, char* argv[], JumanppConf* result) {
 
   args::Positional<std::string> input{parser, "input",
                                       "Input filename (- for stdin)", "-"};
+
+#if 1
+  winsize winsz{0};
+  if (ioctl(0, TIOCGWINSZ, &winsz) == 0) {
+    parser.helpParams.width = std::max<unsigned>(80, winsz.ws_col);
+    parser.helpParams.helpindent = std::max<unsigned>(40, winsz.ws_col / 2);
+  }
+#endif
 
   RnnArgs rnnArgs{parser};
 
@@ -53,6 +66,9 @@ bool parseArgs(int argc, char* argv[], JumanppConf* result) {
   }
   if (morph) {
     result->outputType = OutputType::Morph;
+  }
+  if (dicSubset) {
+    result->outputType = OutputType::DicSubset;
   }
 
   result->inputFile = input.Get();

@@ -74,6 +74,14 @@ class JumanFormat : public OutputFormat {
   StringPiece result() const { return printer.result(); }
 };
 
+inline const StringPiece& ifEmpty(const StringPiece& s1,
+                                  const StringPiece& s2) {
+  if (s1.size() > 0) {
+    return s1;
+  }
+  return s2;
+}
+
 }  // namespace output
 }  // namespace jumandic
 }  // namespace jumanpp

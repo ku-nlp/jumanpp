@@ -3,6 +3,7 @@
 //
 
 #include "morph_format.h"
+#include "util/logging.hpp"
 
 namespace jumanpp {
 namespace jumandic {
@@ -36,18 +37,22 @@ Status MorphFormat::format(const core::analysis::Analyzer& analyzer,
              << " " << cptr.right;
     }
 
+    if (!walker.next()) {
+      return Status::InvalidState() << "could not walk on the node";
+    }
+
     if (fmrp_) {
       printer_ << f.surface[walker] << '_';
       printer_ << f.reading[walker] << '_';
       printer_ << f.baseform[walker] << '_';
       printer_ << f.pos[walker] << '_';
-      printer_ << f.subpos[walker] << '_';
-      printer_ << f.conjType[walker] << '_';
-      printer_ << f.conjForm[walker];
+      printer_ << ifEmpty(f.subpos[walker], "*") << '_';
+      printer_ << ifEmpty(f.conjType[walker], "*") << '_';
+      printer_ << ifEmpty(f.conjForm[walker], "*");
     } else {
       printer_ << f.baseform[walker] << '_';
       printer_ << f.pos[walker] << ':';
-      printer_ << f.subpos[walker];
+      printer_ << ifEmpty(f.subpos[walker], "*");
     }
 
     printer_ << ' ';

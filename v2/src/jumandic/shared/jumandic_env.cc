@@ -4,6 +4,8 @@
 
 #include "jumandic_env.h"
 #include "jpp_jumandic_cg.h"
+#include "jumandic/shared/morph_format.h"
+#include "jumandic/shared/subset_format.h"
 
 namespace jumanpp {
 namespace jumandic {
@@ -28,6 +30,29 @@ Status JumanppExec::init() {
   JPP_RETURN_IF_ERROR(env.initFeatures(&features));
   JPP_RETURN_IF_ERROR(env.makeAnalyzer(&analyzer));
   JPP_RETURN_IF_ERROR(initOutput());
+  return Status::Ok();
+}
+
+Status JumanppExec::initOutput() {
+  switch (conf.outputType) {
+    case jumandic::OutputType::Juman: {
+      auto jfmt = new jumandic::output::JumanFormat;
+      format.reset(jfmt);
+      JPP_RETURN_IF_ERROR(jfmt->initialize(analyzer.output()));
+      break;
+    }
+    case jumandic::OutputType::Morph: {
+      auto mfmt = new jumandic::output::MorphFormat(false);
+      format.reset(mfmt);
+      JPP_RETURN_IF_ERROR(mfmt->initialize(analyzer.output()));
+      break;
+    }
+    case OutputType::DicSubset:
+      auto mfmt = new jumandic::output::SubsetFormat{};
+      format.reset(mfmt);
+      JPP_RETURN_IF_ERROR(mfmt->initialize(analyzer.output()));
+      break;
+  }
   return Status::Ok();
 }
 }  // namespace jumandic

@@ -11,7 +11,7 @@
 namespace jumanpp {
 namespace jumandic {
 
-enum class OutputType { Juman, Morph };
+enum class OutputType { Juman, Morph, DicSubset };
 
 struct JumanppConf {
   std::string modelFile;
