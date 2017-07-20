@@ -3,11 +3,11 @@
 //
 
 #include "jumandic_env.h"
+#include "core/analysis/analyzer_impl.h"
+#include "core/impl/graphviz_format.h"
 #include "jpp_jumandic_cg.h"
 #include "jumandic/shared/morph_format.h"
 #include "jumandic/shared/subset_format.h"
-#include "core/impl/graphviz_format.h"
-#include "core/analysis/analyzer_impl.h"
 
 #include <fstream>
 
@@ -62,7 +62,7 @@ Status JumanppExec::initOutput() {
 }
 
 Status JumanppExec::writeGraphviz() {
-    core::format::GraphVizBuilder gb;
+  core::format::GraphVizBuilder gb;
   gb.row({"canonic"});
   gb.row({"surface"});
   gb.row({"pos", "subpos"});
@@ -74,14 +74,14 @@ Status JumanppExec::writeGraphviz() {
 
   char filename[512];
   filename[0] = 0;
-  snprintf(filename, 510, "%s/%08lld.dot", conf.graphvizDir.c_str(), numAnalyzed_);
+  snprintf(filename, 510, "%s/%08lld.dot", conf.graphvizDir.c_str(),
+           numAnalyzed_);
   std::ofstream of{filename};
   if (of) {
     of << fmt.result() << "\n";
   }
   return Status::Ok();
 }
-
 
 }  // namespace jumandic
 }  // namespace jumanpp

@@ -26,8 +26,7 @@ bool parseArgs(int argc, char* argv[], JumanppConf* result) {
       outputType,
       "DIRECTORY",
       "Directory for GraphViz .dot files output",
-      {"graphviz-dir"}
-  };
+      {"graphviz-dir"}};
 
   args::Group modelParams{parser, "Model parameters"};
   args::ValueFlag<std::string> modelFile{
