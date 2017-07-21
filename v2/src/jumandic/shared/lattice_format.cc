@@ -54,7 +54,6 @@ void LatticeFormatInfo::publishResult(std::vector<LatticeInfoView>* view) {
 
 Status LatticeFormat::format(const core::analysis::Analyzer& analyzer,
                              StringPiece comment) {
-
   printer.reset();
   auto lat = analyzer.impl()->lattice();
   if (lat->createdBoundaryCount() == 3) {
@@ -98,24 +97,24 @@ Status LatticeFormat::format(const core::analysis::Analyzer& analyzer,
 
     auto& weights = analyzer.scorer()->scoreWeights;
 
-    auto ptrit =
-        std::max_element(n.nodeInfo().ptrs.begin(), n.nodeInfo().ptrs.end(),
-                         [lat, &weights](const core::analysis::ConnectionPtr& p1,
-                                         const core::analysis::ConnectionPtr& p2) {
-                           auto b1 = lat->boundary(p1.boundary);
-                           auto c1 = b1->connection(p1.left);
-                           auto s1 = c1->entryScores(p1.beam).row(p1.right);
-                           auto b2 = lat->boundary(p2.boundary);
-                           auto c2 = b2->connection(p2.left);
-                           auto s2 = c2->entryScores(p2.beam).row(p2.right);
+    auto ptrit = std::max_element(
+        n.nodeInfo().ptrs.begin(), n.nodeInfo().ptrs.end(),
+        [lat, &weights](const core::analysis::ConnectionPtr& p1,
+                        const core::analysis::ConnectionPtr& p2) {
+          auto b1 = lat->boundary(p1.boundary);
+          auto c1 = b1->connection(p1.left);
+          auto s1 = c1->entryScores(p1.beam).row(p1.right);
+          auto b2 = lat->boundary(p2.boundary);
+          auto c2 = b2->connection(p2.left);
+          auto s2 = c2->entryScores(p2.beam).row(p2.right);
 
-                           float total1 = 0, total2 = 0;
-                           for (int i = 0; i < weights.size(); ++i) {
-                             total1 += s1[i] * weights[i];
-                             total2 += s2[i] * weights[i];
-                           }
-                           return total1 > total2;
-                         });
+          float total1 = 0, total2 = 0;
+          for (int i = 0; i < weights.size(); ++i) {
+            total1 += s1[i] * weights[i];
+            total2 += s2[i] * weights[i];
+          }
+          return total1 > total2;
+        });
 
     auto& cptr = *ptrit;
     auto bnd = lat->boundary(cptr.boundary);
@@ -159,7 +158,6 @@ Status LatticeFormat::format(const core::analysis::Analyzer& analyzer,
         printer << feature << '|';
       }
 
-
       auto conn = bnd->connection(cptr.left);
       auto scores = conn->entryScores(cptr.beam).row(cptr.right);
 
@@ -167,7 +165,7 @@ Status LatticeFormat::format(const core::analysis::Analyzer& analyzer,
       float totalScore = scores[0] * weights[0];
 
       printer << "特徴量スコア:" << totalScore << '|';
-      if (weights.size() == 2) { //have RNN
+      if (weights.size() == 2) {  // have RNN
         float rnnScore = scores[1] * weights[1];
         printer << "言語モデルスコア:" << rnnScore << '|';
         totalScore += rnnScore;
