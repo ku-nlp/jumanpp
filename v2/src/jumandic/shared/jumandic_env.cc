@@ -6,6 +6,7 @@
 #include "core/analysis/analyzer_impl.h"
 #include "core/impl/graphviz_format.h"
 #include "jpp_jumandic_cg.h"
+#include "jumandic/shared/lattice_format.h"
 #include "jumandic/shared/morph_format.h"
 #include "jumandic/shared/subset_format.h"
 
@@ -52,11 +53,18 @@ Status JumanppExec::initOutput() {
       JPP_RETURN_IF_ERROR(mfmt->initialize(analyzer.output()));
       break;
     }
-    case OutputType::DicSubset:
+    case OutputType::DicSubset: {
       auto mfmt = new jumandic::output::SubsetFormat{};
       format.reset(mfmt);
       JPP_RETURN_IF_ERROR(mfmt->initialize(analyzer.output()));
       break;
+    }
+    case OutputType::Lattice: {
+      auto mfmt = new jumandic::output::LatticeFormat{conf.beamOutput};
+      format.reset(mfmt);
+      JPP_RETURN_IF_ERROR(mfmt->initialize(analyzer.output()));
+      break;
+    }
   }
   return Status::Ok();
 }

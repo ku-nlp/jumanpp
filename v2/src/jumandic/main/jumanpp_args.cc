@@ -14,6 +14,9 @@ namespace jumandic {
 bool parseArgs(int argc, char* argv[], JumanppConf* result) {
   args::ArgumentParser parser{"Juman++ v2"};
 
+  args::Positional<std::string> input{parser, "input",
+                                      "Input filename (- for stdin)", "-"};
+
   args::Group outputType{parser, "Output type"};
   args::Flag juman{
       outputType, "juman", "Juman style (default)", {'j', "juman"}};
@@ -22,6 +25,10 @@ bool parseArgs(int argc, char* argv[], JumanppConf* result) {
                        "subset",
                        "Subset of dictionary, useful for tests",
                        {"dic-subset"}};
+  args::ValueFlag<i32> lattice{outputType,
+                               "N",
+                               "Lattice style (N-best)",
+                               {'L', 's', "lattice", "specifics"}};
   args::ValueFlag<std::string> graphvis{
       outputType,
       "DIRECTORY",
@@ -34,8 +41,9 @@ bool parseArgs(int argc, char* argv[], JumanppConf* result) {
   args::ValueFlag<std::string> rnnModelFile{
       modelParams, "rnn model", "RNN model filename", {"rnn-model"}};
 
-  args::Positional<std::string> input{parser, "input",
-                                      "Input filename (- for stdin)", "-"};
+  args::Group analysisParams{parser, "Analysis parameters"};
+  args::ValueFlag<i32> beamSize{
+      analysisParams, "N", "Beam size (5 default)", {"beam"}, 5};
 
 #if 1
   winsize winsz{0};
@@ -75,6 +83,10 @@ bool parseArgs(int argc, char* argv[], JumanppConf* result) {
   if (dicSubset) {
     result->outputType = OutputType::DicSubset;
   }
+  if (lattice) {
+    result->outputType = OutputType::Lattice;
+    result->beamOutput = lattice.Get();
+  }
 
   result->inputFile = input.Get();
 
@@ -86,6 +98,7 @@ bool parseArgs(int argc, char* argv[], JumanppConf* result) {
   result->rnnModelFile = rnnModelFile.Get();
   result->rnnConfig = rnnArgs.config();
   result->graphvizDir = graphvis.Get();
+  result->beamSize = std::max(beamSize.Get(), result->beamOutput);
 
   return true;
 }

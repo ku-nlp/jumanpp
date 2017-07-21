@@ -5,6 +5,7 @@
 #ifndef JUMANPP_LATTICE_CONFIG_H
 #define JUMANPP_LATTICE_CONFIG_H
 
+#include <functional>
 #include "util/types.hpp"
 
 namespace jumanpp {
@@ -76,5 +77,43 @@ class Lattice;
 }  // namespace analysis
 }  // namespace core
 }  // namespace jumanpp
+
+namespace std {
+
+template <>
+struct hash<jumanpp::core::analysis::LatticeNodePtr> {
+  using argument_type = jumanpp::core::analysis::LatticeNodePtr;
+  using result_type = size_t;
+  size_t operator()(jumanpp::core::analysis::LatticeNodePtr ptr) const {
+    using jumanpp::u64;
+    using jumanpp::u8;
+    u64 result = 0;
+    result += static_cast<u64>(ptr.boundary) * 0xda12'1512'fa23'245cULL;
+    result += static_cast<u64>(ptr.position) * 0x1251'2321'5191'fa99ULL;
+    u8 shift = static_cast<u8>(result >> 59);
+    return static_cast<size_t>(result ^ (result >> shift));
+  }
+};
+
+template <>
+struct hash<jumanpp::core::analysis::ConnectionPtr> {
+  using argument_type = jumanpp::core::analysis::ConnectionPtr;
+  using result_type = size_t;
+  result_type operator()(
+      jumanpp::core::analysis::ConnectionPtr const& ptr) const {
+    using jumanpp::u64;
+    using jumanpp::u8;
+    u64 result = 0;
+    result += static_cast<u64>(ptr.boundary) * 0xda12'1818'fa23'245cULL;
+    result += static_cast<u64>(ptr.left) * 0x1251'2512'5191'fa99ULL;
+    result += static_cast<u64>(ptr.right) * 0x7612'51fa'6122'9887ULL;
+    result += static_cast<u64>(ptr.beam) * 0x9212'2321'af22'246fULL;
+    result += reinterpret_cast<u64>(ptr.previous) * 0x4512'1221'5555'4121ULL;
+    u8 shift = static_cast<u8>(result >> 59);
+    return static_cast<size_t>(result ^ (result >> shift));
+  }
+};
+
+}  // namespace std
 
 #endif  // JUMANPP_LATTICE_CONFIG_H

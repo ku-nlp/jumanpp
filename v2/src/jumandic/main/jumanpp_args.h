@@ -11,7 +11,7 @@
 namespace jumanpp {
 namespace jumandic {
 
-enum class OutputType { Juman, Morph, DicSubset };
+enum class OutputType { Juman, Morph, DicSubset, Lattice };
 
 struct JumanppConf {
   std::string modelFile;
@@ -21,6 +21,7 @@ struct JumanppConf {
   core::analysis::rnn::RnnInferenceConfig rnnConfig{};
   std::string graphvizDir;
   i32 beamSize = 5;
+  i32 beamOutput = 1;
 };
 
 bool parseArgs(int argc, char* argv[], JumanppConf* result);

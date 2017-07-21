@@ -24,6 +24,10 @@ Status MorphFormat::format(const core::analysis::Analyzer& analyzer,
 
   auto& om = analyzer.output();
 
+  if (comment.size() > 0) {
+    printer_ << "# " << comment;
+  }
+
   while (top1_.nextBoundary()) {
     core::analysis::ConnectionPtr cptr;
     if (!top1_.nextNode(&cptr)) {
@@ -58,9 +62,7 @@ Status MorphFormat::format(const core::analysis::Analyzer& analyzer,
     printer_ << ' ';
   }
 
-  if (comment.size() > 0) {
-    printer_ << "# " << comment;
-  }
+  printer_ << '\n';
   return Status::Ok();
 }
 
