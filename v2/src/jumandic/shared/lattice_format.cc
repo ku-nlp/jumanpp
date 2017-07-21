@@ -215,7 +215,7 @@ StringPiece LatticeFormat::prevIdFor(core::analysis::LatticeNodePtr ptr) const {
   auto it = prevIds.find(ptr);
   JPP_DCHECK_NE(it, prevIds.end());
   if (it == prevIds.end()) {
-    return "?";
+    return StringPiece{"?"};
   }
   return it->second;
 }
