@@ -40,12 +40,18 @@ bool NumericUnkMaker::spawnNodes(const AnalysisInput &input,
     LatticePosition nextstep = i;
     TraverseStatus status;
 
-    auto length = FindLongestNumber(codepoints, i);  // 長さを直接返す
-//    std::cerr << "legnth:" << length << " " << input.surface(i, i+length) <<  "from " << input.surface(i, codepoints.size())  << std::endl;
+    auto length = FindLongestNumber(codepoints, i); // returns character length
+    bool nonode = false;
     if (length > 0) {
       for (; nextstep < i + length; ++nextstep) {
         status = trav.step(codepoints[nextstep].bytes);
+        if(status == TraverseStatus::NoNode){
+          nonode = true;  
+        }
       }
+
+      if(nonode)
+          status = TraverseStatus::NoNode;
 
       switch (status) {
         case TraverseStatus::NoNode: {  // 同一表層のノード無し prefix でもない
@@ -53,7 +59,6 @@ bool NumericUnkMaker::spawnNodes(const AnalysisInput &input,
           LatticePosition end = i + length;
           auto ptr = ctx->makePtr(input.surface(start, end), info_, true);
           lattice->appendSeed(ptr, start, end);
-//          std::cerr << "NoNode" << "start "<< start << ", end" << end << ":" << input.surface(start, end) << std::endl;
           break;
         }
         case TraverseStatus::NoLeaf: {  // 先端
@@ -61,16 +66,13 @@ bool NumericUnkMaker::spawnNodes(const AnalysisInput &input,
           LatticePosition end = i + length;
           auto ptr = ctx->makePtr(input.surface(start, end), info_, false);
           lattice->appendSeed(ptr, start, end);
-//          std::cerr << "NoLeaf"<< "start"<< start << ", end" << end << std::endl;
           break;
         }
         case TraverseStatus::Ok:
-          // オノマトペはともかく，数詞は必ずつくるのでここで作る必要がある．
           LatticePosition start = i;
           LatticePosition end = i + length;
           auto ptr = ctx->makePtr(input.surface(start, end), info_, false);
           lattice->appendSeed(ptr, start, end);
-//          std::cerr << "Ok" << "start"<< start << ", end" << end << std::endl;
       }
     }
   }
@@ -83,9 +85,8 @@ size_t NumericUnkMaker::checkInterfix(const CodepointStorage &codepoints,
   // In other words, check conditions for fractions ("５分の１" or "数ぶんの１")
   auto restLength = codepoints.size() - (start + pos);
 
-  if (pos > 0) {  // 先頭ではない
+  if (pos > 0) {  
     for (auto itemp : interfixPatterns) {
-//        std::cerr << "itemp.size() "<< itemp.size()<< std::endl;
 
       if (  // Interfix follows a number.
           codepoints[start + pos - 1].hasClass(charClass_) &&
@@ -96,7 +97,6 @@ size_t NumericUnkMaker::checkInterfix(const CodepointStorage &codepoints,
         bool matchFlag = true;
         // The pattern matches the codepoints.
         for (u16 index = 0; index < itemp.size(); ++index) {
-//            std::cerr << "index" << index<<std::endl;
           if (codepoints[start + pos + index].codepoint !=
               itemp[index].codepoint) {
             matchFlag = false;
@@ -118,7 +118,6 @@ size_t NumericUnkMaker::checkSuffix(const CodepointStorage &codepoints,
 
   if (pos > 0) {
     for (auto itemp : suffixPatterns) {
-//        std::cerr << itemp.size() << std::endl;
       if (  // Suffix follows a number.
           codepoints[start + pos - 1].hasClass(ExceptionClass) &&
           // The pattern length does not exceed that of rest codepoints.
@@ -126,7 +125,6 @@ size_t NumericUnkMaker::checkSuffix(const CodepointStorage &codepoints,
         // The pattern matches the codepoints.
         bool matchFlag = true;
         for (u16 index = 0; index < itemp.size(); ++index) {
-//            std::cerr << "index" << index << std::endl;
           if (codepoints[start + pos + index].codepoint !=
               itemp[index].codepoint) {
             matchFlag = false;
@@ -148,14 +146,12 @@ size_t NumericUnkMaker::checkPrefix(const CodepointStorage &codepoints,
   for (auto itemp : prefixPatterns) {
     u16 suffixLength = 0;
     suffixLength = checkSuffix(codepoints, start, pos + itemp.size() );
-//    std::cerr << "start" << start << ", pos "<< pos << "next:" << pos + itemp.size() << "suffixLength" << suffixLength<< std::endl;
 
     if (// The length of rest codepoints is longer than the pattern length
         start + pos + itemp.size() < codepoints.size() &&
         // A digit follows prefix.
         (codepoints[start + pos + itemp.size()].hasClass(DigitClass) || suffixLength >0)
           ) {
-      std::cerr << "prefix condition ok" << "itemp.size()= "<< itemp.size() << "suffixLength" << suffixLength  << std::endl;
       bool matchFlag = true;
       // The pattern matches the codepoints.
       for (u16 index = 0; index < itemp.size(); ++index) {
@@ -211,7 +207,6 @@ size_t NumericUnkMaker::checkComma(const CodepointStorage &codepoints,
       break;
     }
   }
-//   std::cerr << "numContinuedFigure:" << numContinuedFigure << std::endl;
   if (numContinuedFigure == 3)
     return 1;
   else
@@ -240,7 +235,6 @@ size_t NumericUnkMaker::FindLongestNumber(const CodepointStorage &codepoints,
   for (pos = 0; pos <= MaxNumericLength && start + pos < codepoints.size();
        ++pos) {
     auto &cp = codepoints[start + pos];
-//    std::cerr << "pos" << pos << std::endl;
     if (!cp.hasClass(charClass_)) {
       size_t charLength = 0;
 
@@ -248,9 +242,6 @@ size_t NumericUnkMaker::FindLongestNumber(const CodepointStorage &codepoints,
       if ((charLength = checkExceptionalCharsInFigure(codepoints, start, pos)) >
           0) {
         pos += charLength -1; // pos is inclemented by for statement
-        if (! (start + pos < codepoints.size())){
-            std::cerr << "over: "<< charLength <<", " << start + pos  << ", "<< codepoints.size() << std::endl;
-        }
       } else {
         return pos;
       }
