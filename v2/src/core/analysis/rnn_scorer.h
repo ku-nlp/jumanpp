@@ -21,7 +21,7 @@ struct RnnHolderState;
 struct RnnInferenceConfig {
   float nceBias = 0;
   float unkConstantTerm = -6.0f;
-  float unkLengthPenalty = -0.5f;
+  float unkLengthPenalty = -1.5f;
   float perceptronWeight = 1.0f;
   float rnnWeight = 1.0f;
   std::string unkSymbol;
@@ -48,7 +48,7 @@ class RnnHolder : public ScorerFactory {
  public:
   RnnHolder();
   ~RnnHolder() override;
-  Status init(const jumanpp::rnn::mikolov::MikolovModelReader& model,
+  Status init(const RnnInferenceConfig& conf, const jumanpp::rnn::mikolov::MikolovModelReader& model,
               const core::dic::DictionaryHolder& dic, StringPiece field);
   void setConfig(const RnnInferenceConfig& conf);
   const RnnInferenceConfig& config() const;

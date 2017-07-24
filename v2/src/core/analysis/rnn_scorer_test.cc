@@ -131,7 +131,7 @@ TEST_CASE("RNN computes scores") {
   scorerDef.scoreWeights.push_back(1.0f);
   a::rnn::RnnHolder rnnHolder;
   scorerDef.feature = &env.perceptron;
-  REQUIRE_OK(rnnHolder.init(mrr, env.jppEnv.coreHolder()->dic(), "a"));
+  REQUIRE_OK(rnnHolder.init({}, mrr, env.jppEnv.coreHolder()->dic(), "a"));
   scorerDef.others.push_back(&rnnHolder);
   REQUIRE_OK(ana.initScorers(scorerDef));
   ana.resetForInput("bac");
@@ -158,7 +158,7 @@ TEST_CASE("RNN computes scores with unks") {
   scorerDef.scoreWeights.push_back(1.0f);
   a::rnn::RnnHolder rnnHolder;
   scorerDef.feature = &env.perceptron;
-  REQUIRE_OK(rnnHolder.init(mrr, env.jppEnv.coreHolder()->dic(), "a"));
+  REQUIRE_OK(rnnHolder.init({}, mrr, env.jppEnv.coreHolder()->dic(), "a"));
   scorerDef.others.push_back(&rnnHolder);
   REQUIRE_OK(ana.initScorers(scorerDef));
   ana.resetForInput("newsanapple");
@@ -181,7 +181,7 @@ TEST_CASE("RNN holder serializes and deserializes and has the same score") {
   REQUIRE_OK(mrr.open("rnn/testlm"));
   REQUIRE_OK(mrr.parse());
   a::rnn::RnnHolder rnnHolder;
-  REQUIRE_OK(rnnHolder.init(mrr, env.jppEnv.coreHolder()->dic(), "a"));
+  REQUIRE_OK(rnnHolder.init({}, mrr, env.jppEnv.coreHolder()->dic(), "a"));
 
   core::model::ModelInfo modelInfo{};
   REQUIRE_OK(rnnHolder.makeInfo(&modelInfo));
@@ -228,7 +228,7 @@ TEST_CASE("RNN holder serializes and deserializes") {
   REQUIRE_OK(mrr.open("rnn/testlm"));
   REQUIRE_OK(mrr.parse());
   a::rnn::RnnHolder rnnHolder;
-  REQUIRE_OK(rnnHolder.init(mrr, env.jppEnv.coreHolder()->dic(), "a"));
+  REQUIRE_OK(rnnHolder.init({}, mrr, env.jppEnv.coreHolder()->dic(), "a"));
 
   core::model::ModelInfo modelInfo{};
   REQUIRE_OK(rnnHolder.makeInfo(&modelInfo));

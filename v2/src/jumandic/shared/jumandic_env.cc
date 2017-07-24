@@ -28,7 +28,7 @@ Status JumanppExec::init() {
     JPP_RETURN_IF_ERROR(mikolovModel.open(conf.rnnModelFile));
     JPP_RETURN_IF_ERROR(mikolovModel.parse());
     JPP_RETURN_IF_ERROR(
-        rnnHolder.init(mikolovModel, env.coreHolder()->dic(), "surface"));
+        rnnHolder.init(conf.rnnConfig, mikolovModel, env.coreHolder()->dic(), "surface"));
     env.setRnnHolder(&rnnHolder);
   }
 

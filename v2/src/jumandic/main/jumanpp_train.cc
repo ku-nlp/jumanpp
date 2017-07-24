@@ -198,13 +198,11 @@ int doEmbedRnn(t::TrainingArguments& args, core::JumanppEnv& env) {
   }
 
   core::analysis::rnn::RnnHolder rnnHolder;
-  s = rnnHolder.init(rnnReader, env.coreHolder()->dic(), "surface");
+  s = rnnHolder.init(args.rnnConfig, rnnReader, env.coreHolder()->dic(), "surface");
   if (!s) {
     LOG_ERROR() << "failed to initialize rnn: " << s.message;
     return 1;
   }
-
-  rnnHolder.setConfig(args.rnnConfig);
 
   auto info = env.modelInfoCopy();
 

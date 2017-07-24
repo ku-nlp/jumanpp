@@ -315,7 +315,9 @@ struct RnnScorerState {
   }
 };
 
-Status RnnHolder::init(const jumanpp::rnn::mikolov::MikolovModelReader& model,
+Status RnnHolder::init(
+    const RnnInferenceConfig& conf,
+    const jumanpp::rnn::mikolov::MikolovModelReader& model,
                        const core::dic::DictionaryHolder& dic,
                        StringPiece field) {
   auto& hdr = model.header();
@@ -333,6 +335,7 @@ Status RnnHolder::init(const jumanpp::rnn::mikolov::MikolovModelReader& model,
 
   impl_.reset(new RnnHolderState{hdr, model.rnnMatrix(), embSlice, nceembSlice,
                                  model.maxentWeights()});
+  setConfig(conf);
   JPP_RETURN_IF_ERROR(impl_->resolver_.loadFromDic(dic, field, model.words(),
                                                    impl_->config_.unkSymbol));
   impl_->config_.unkId = impl_->resolver_.unkId();
@@ -487,7 +490,7 @@ void RnnHolder::setConfig(const RnnInferenceConfig& conf) {
   if (conf.unkId != deflt.unkId) {
     mycfg.unkId = conf.unkId;
   }
-  impl_->nceConstant_ = impl_->header.nceLnz + mycfg.unkLengthPenalty;
+  impl_->nceConstant_ = impl_->header.nceLnz + mycfg.nceBias;
 }
 
 const RnnInferenceConfig& RnnHolder::config() const { return impl_->config_; }
