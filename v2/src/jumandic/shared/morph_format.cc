@@ -50,7 +50,7 @@ Status MorphFormat::format(const core::analysis::Analyzer& analyzer,
       printer_ << ifEmpty(f.conjType[walker], "*") << '_';
       printer_ << ifEmpty(f.conjForm[walker], "*");
     } else {
-      printer_ << f.baseform[walker] << '_';
+      printer_ << f.surface[walker] << '_';
       printer_ << f.pos[walker] << ':';
       printer_ << ifEmpty(f.subpos[walker], "*");
     }
