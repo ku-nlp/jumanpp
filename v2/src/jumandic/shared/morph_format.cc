@@ -25,7 +25,7 @@ Status MorphFormat::format(const core::analysis::Analyzer& analyzer,
   auto& om = analyzer.output();
 
   if (comment.size() > 0) {
-    printer_ << "# " << comment;
+    printer_ << "# " << comment << '\n';
   }
 
   while (top1_.nextBoundary()) {
