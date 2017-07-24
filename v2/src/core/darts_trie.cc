@@ -103,9 +103,8 @@ Status DoubleArray::loadFromFile(StringPiece filename, size_t offset,
 DoubleArray::~DoubleArray() {}
 DoubleArray::DoubleArray() {}
 
-TraverseStatus DoubleArrayTraversal::step(StringPiece data) {
-  key_pos_ = 0;
-  auto status = base_->traverse(data.begin(), node_pos_, key_pos_, data.size());
+TraverseStatus DoubleArrayTraversal::step(StringPiece data, size_t& pos) {
+  auto status = base_->traverse(data.begin(), pos, key_pos_, data.size());
 
   switch (status) {
     case -1:
@@ -116,6 +115,10 @@ TraverseStatus DoubleArrayTraversal::step(StringPiece data) {
       value_ = status;
       return TraverseStatus::Ok;
   }
+}
+
+TraverseStatus DoubleArrayTraversal::step(StringPiece data) {
+  return step(data, node_pos_);
 }
 
 }  // namespace core
