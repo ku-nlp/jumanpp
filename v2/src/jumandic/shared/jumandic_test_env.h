@@ -23,8 +23,8 @@ class JumandicTrainingTestEnv {
   jumandic::output::JumandicFields fields;
   core::training::TrainingArguments trainArgs;
 
-  JumandicTrainingTestEnv(StringPiece dicName) {
-    trainArgs.trainingConfig.beamSize = 3;
+  JumandicTrainingTestEnv(StringPiece dicName, i32 beamSize = 3) {
+    trainArgs.trainingConfig.beamSize = beamSize;
     trainArgs.batchSize = 5;
     trainArgs.numThreads = 1;
     testEnv.spec([](core::spec::dsl::ModelSpecBuilder &sb) {

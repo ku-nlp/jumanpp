@@ -84,3 +84,9 @@ TEST_CASE("disconnected lattice") {
   env.analyze("すもももすいかももものうち", false);
   CHECK_FALSE(env.isConnected());
 }
+
+TEST_CASE("disconnected lattice with overlapping tokens") {
+  LatticeBldrTestEnv env{"KANA,0\nみあげ,1\nげる,2\nあげ,3\n"};
+  env.analyze("みあげる", false);
+  CHECK_FALSE(env.isConnected());
+}

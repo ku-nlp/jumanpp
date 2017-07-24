@@ -133,6 +133,7 @@ Status LatticeBuilder::fillEnds(Lattice *l) {
     JPP_DCHECK_IN(offset, 0, binfo.startCount);
     u16 endOffset = (u16)offset;
     LatticeNodePtr nodePtr{bndPtr, endOffset};
+    JPP_DCHECK_EQ(l->boundary(bndPtr)->starts()->nodeInfo().at(offset).entryPtr(), seed.entryPtr);
     bnd->addEnd(nodePtr);
   }
 

@@ -7,6 +7,7 @@
 #include <util/status.hpp>
 #include "analyzer.h"
 #include "analyzer_impl.h"
+#include "util/logging.hpp"
 
 namespace jumanpp {
 namespace core {
@@ -43,6 +44,7 @@ Status AnalysisPath::fillIn(Lattice *l) {
   }
 
   const ConnectionPtr *topPtr = &lastStart->beamData().at(0).ptr;
+  i32 myBeam = 0;
 
   // 0 and 1 are BOS
   offsets_.push_back(0);
@@ -51,9 +53,9 @@ Status AnalysisPath::fillIn(Lattice *l) {
     auto starts = bnd->starts();
     auto beamAtBnd = starts->beamData().row(topPtr->right);
 
-    auto topItem = beamAtBnd.at(0);
+    auto topItem = beamAtBnd.at(myBeam);
     elems_.push_back(*topItem.ptr.previous);
-    for (i32 id = 1; id < beamAtBnd.size(); ++id) {
+    for (i32 id = myBeam + 1; id < beamAtBnd.size(); ++id) {
       auto nextItem = beamAtBnd.at(id);
       JPP_DCHECK_LE(nextItem.totalScore, topItem.totalScore);
       if (nextItem.totalScore < topItem.totalScore) {
@@ -62,6 +64,7 @@ Status AnalysisPath::fillIn(Lattice *l) {
       elems_.push_back(*nextItem.ptr.previous);
     }
     offsets_.push_back((u32)elems_.size());
+    myBeam = topPtr->beam;
     topPtr = topPtr->previous;
   }
 
