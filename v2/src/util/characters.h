@@ -59,15 +59,57 @@ enum class CharacterClass : i32 {
   FAMILY_ALPH = ALPH,
   FAMILY_KANJI = KANJI | KANJI_FIGURE,
   FAMILY_KANA = KATAKANA | HIRAGANA | HANKAKU_KANA | LOWER_CASE,
+  FAMILY_DOUBLE = KATAKANA | HIRAGANA | HANKAKU_KANA | LOWER_CASE | KANJI | CHOON ,
   FAMILY_BRACKET = BRACKET,
   FAMILY_DIGITS = FIGURE | KANJI_FIGURE | FIGURE_DIGIT,
   FAMILY_OTHERS = 0x00000000,
 };
 
+inline char32_t constexpr getCodepoint(const StringPiece::iterator &input_itr,
+                 const StringPiece::iterator input_itr_end) noexcept {
+  char32_t u = 0;
+  const u8 *itr = static_cast<const u8 *>(input_itr);
+  const u8 *itr_end = static_cast<const u8 *>(input_itr_end);
+
+  if (*itr > 0x00ef) { /* 4 bytes */
+    JPP_RET_CHECK(itr_end - itr >= 4);
+    JPP_RET_CHECK(((*itr & ~0x7) ^ 0xf0) == 0);
+    u = (*(itr++) & 0x07) << 18;
+    JPP_RET_CHECK(((*itr & ~0x3f) ^ 0x80) == 0);
+    u |= (*(itr++) & 0x3f) << 12;
+    JPP_RET_CHECK(((*itr & ~0x3f) ^ 0x80) == 0);
+    u |= (*(itr++) & 0x3f) << 6;
+    JPP_RET_CHECK(((*itr & ~0x3f) ^ 0x80) == 0);
+    u |= (*(itr++) & 0x3f);
+  } else if (*itr > 0xdf) { /* 3 bytes */
+    JPP_RET_CHECK(itr_end - itr >= 3);
+    JPP_RET_CHECK(((*itr & ~0xf) ^ 0xe0) == 0);
+    u = (*(itr++) & 0x0f) << 12;
+    JPP_RET_CHECK(((*itr & ~0x3f) ^ 0x80) == 0);
+    u |= (*(itr++) & 0x3f) << 6;
+    JPP_RET_CHECK(((*itr & ~0x3f) ^ 0x80) == 0);
+    u |= *(itr++) & 0x3f;
+  } else if (*itr > 0x7f) { /* 2 bytes */
+    JPP_RET_CHECK(itr_end - itr >= 2);
+    JPP_RET_CHECK(((*itr & ~0x1f) ^ 0xc0) == 0);
+    u = (*(itr++) & 0x1f) << 6;
+    JPP_RET_CHECK(((*itr & ~0x3f) ^ 0x80) == 0);
+    u |= *(itr++) & 0x3f;
+  } else { /* 1 byte */
+    JPP_RET_CHECK(itr_end - itr >= 1);
+    JPP_RET_CHECK((*itr & ~0x7f) == 0);
+    u = *(itr++) & 0x7f;
+  }
+  return u;
+}
+
+
 inline bool IsCompatibleCharClass(CharacterClass realCharClass,
                                   CharacterClass familyOrTarget) noexcept {
   return (realCharClass & familyOrTarget) != CharacterClass::FAMILY_OTHERS;
 }
+
+CharacterClass getCodeType(char32_t code) noexcept;
 
 struct InputCodepoint {
   /**
@@ -85,12 +127,17 @@ struct InputCodepoint {
   inline bool hasClass(CharacterClass queryClass) const noexcept {
     return IsCompatibleCharClass(charClass, queryClass);
   }
+  
+  JPP_ALWAYS_INLINE constexpr InputCodepoint(const char32_t cp, const CharacterClass& cc, const StringPiece& b) noexcept
+    :codepoint(cp), charClass{cc}, bytes(b){}
+  
+  JPP_ALWAYS_INLINE InputCodepoint(StringPiece sp) noexcept
+    :codepoint(getCodepoint(sp.begin(), sp.end())), charClass{getCodeType(codepoint)}, bytes(sp){}
 };
 
 bool toCodepoint(StringPiece::pointer_t &itr, StringPiece::pointer_t itr_end,
                  char32_t *result) noexcept;
 
-CharacterClass getCodeType(char32_t code) noexcept;
 
 Status preprocessRawData(StringPiece utf8data,
                          std::vector<InputCodepoint> *result);
