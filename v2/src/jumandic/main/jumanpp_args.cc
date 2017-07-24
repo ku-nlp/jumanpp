@@ -21,6 +21,8 @@ bool parseArgs(int argc, char* argv[], JumanppConf* result) {
   args::Flag juman{
       outputType, "juman", "Juman style (default)", {'j', "juman"}};
   args::Flag morph{outputType, "morph", "Morph style", {'M', "morph"}};
+  args::Flag fullMorph{
+      outputType, "full-morph", "Full-morph style", {'F', "full-morph"}};
   args::Flag dicSubset{outputType,
                        "subset",
                        "Subset of dictionary, useful for tests",
@@ -79,6 +81,9 @@ bool parseArgs(int argc, char* argv[], JumanppConf* result) {
   }
   if (morph) {
     result->outputType = OutputType::Morph;
+  }
+  if (fullMorph) {
+    result->outputType = OutputType::FullMorph;
   }
   if (dicSubset) {
     result->outputType = OutputType::DicSubset;

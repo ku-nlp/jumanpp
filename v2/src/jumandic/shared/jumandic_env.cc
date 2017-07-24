@@ -53,6 +53,12 @@ Status JumanppExec::initOutput() {
       JPP_RETURN_IF_ERROR(mfmt->initialize(analyzer.output()));
       break;
     }
+    case jumandic::OutputType::FullMorph: {
+      auto mfmt = new jumandic::output::MorphFormat(true);
+      format.reset(mfmt);
+      JPP_RETURN_IF_ERROR(mfmt->initialize(analyzer.output()));
+      break;
+    }
     case OutputType::DicSubset: {
       auto mfmt = new jumandic::output::SubsetFormat{};
       format.reset(mfmt);
