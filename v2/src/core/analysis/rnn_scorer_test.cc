@@ -200,9 +200,9 @@ TEST_CASE("RNN holder serializes and deserializes and has the same score") {
   scorerDef2.scoreWeights.push_back(1.0f);
   scorerDef2.scoreWeights.push_back(1.0f);
   scorerDef2.feature = &env.perceptron;
-  scorerDef2.others.push_back(&rnnHolder);
+  scorerDef2.others.push_back(&rnnHolder2);
   a::AnalyzerImpl impl2{env.jppEnv.coreHolder(), env.scoreCfg, env.anaCfg};
-  REQUIRE_OK(impl2.initScorers(scorerDef1));
+  REQUIRE_OK(impl2.initScorers(scorerDef2));
 
   impl1.resetForInput("newsanapple");
   REQUIRE_OK(impl1.prepareNodeSeeds());
@@ -215,6 +215,7 @@ TEST_CASE("RNN holder serializes and deserializes and has the same score") {
   REQUIRE_OK(impl2.buildLattice());
   impl2.bootstrapAnalysis();
   REQUIRE_OK(impl2.computeScores(&scorerDef1));
+
   CHECK(impl1.lattice()->boundary(13)->starts()->beamData().at(0).totalScore ==
         impl2.lattice()->boundary(13)->starts()->beamData().at(0).totalScore);
 }

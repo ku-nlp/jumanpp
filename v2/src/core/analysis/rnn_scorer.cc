@@ -446,9 +446,9 @@ Status RnnHolder::load(const model::ModelInfo& model) {
   JPP_RETURN_IF_ERROR(toArraySlice<float>(&matrix, rnnPart.data[3],
                                           header.layerSize * header.layerSize));
   JPP_RETURN_IF_ERROR(toSliceable<float>(&embeddings, rnnPart.data[4],
-                                         header.layerSize, header.vocabSize));
+                                         header.vocabSize, header.layerSize));
   JPP_RETURN_IF_ERROR(toSliceable<float>(&nceEmbeddings, rnnPart.data[5],
-                                         header.layerSize, header.vocabSize));
+                                         header.vocabSize, header.layerSize));
   JPP_RETURN_IF_ERROR(
       toArraySlice<float>(&maxentWeights, rnnPart.data[6], header.maxentSize));
 
