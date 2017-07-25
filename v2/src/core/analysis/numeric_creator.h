@@ -29,9 +29,11 @@ class NumericUnkMaker : public UnkMaker {
   chars::CharacterClass charClass_;
   UnkNodeConfig info_;
 
+ public:
   using Pattern = NumericPattern;
   using CodepointStorage = std::vector<jumanpp::chars::InputCodepoint>;
 
+ private:
   static const chars::CharacterClass FigureClass =
       chars::CharacterClass::FIGURE;
   static const chars::CharacterClass DigitClass =
@@ -43,15 +45,6 @@ class NumericUnkMaker : public UnkMaker {
   static const chars::CharacterClass CommaClass = chars::CharacterClass::COMMA;
   static const chars::CharacterClass PeriodClass =
       chars::CharacterClass::FAMILY_NUM_PERIOD;
-
-  // Exceptional Patterns
-  const std::vector<std::string> prefixPatternsDef{"数", "何", "幾"};
-  const std::vector<std::string> interfixPatternsDef{"ぶんの", "分の"};
-  const std::vector<std::string> suffixPatternsDef{"キロ", "メガ", "ギガ",
-                                                   "テラ", "ミリ"};
-  std::vector<CodepointStorage> prefixPatterns;
-  std::vector<CodepointStorage> interfixPatterns;
-  std::vector<CodepointStorage> suffixPatterns;
 
   static const size_t MaxNumericLength = 64;  //必要？
 

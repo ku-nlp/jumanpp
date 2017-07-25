@@ -9,25 +9,48 @@ namespace jumanpp {
 namespace core {
 namespace analysis {
 
+namespace {
+
+struct NumericData {
+  using Pattern = NumericUnkMaker::Pattern;
+  using CodepointStorage = NumericUnkMaker::CodepointStorage;
+
+  template <typename... T>
+  static std::vector<const CodepointStorage> codeptsFor(T... vals) {
+    std::vector<const CodepointStorage> result;
+    std::initializer_list<StringPiece> params = {StringPiece{vals}...};
+    for (auto &elem : params) {
+      CodepointStorage pattern;
+      preprocessRawData(elem, &pattern);
+      result.emplace_back(std::move(pattern));
+    }
+    return result;
+  }
+
+  using S = StringPiece;
+
+  // Exceptional Patterns
+  const std::vector<const CodepointStorage> prefixPatterns =
+      codeptsFor(S{"数"}, S{"何"}, S{"幾"});
+  const std::vector<const CodepointStorage> interfixPatterns =
+      codeptsFor("ぶんの", "分の");
+  const std::vector<const CodepointStorage> suffixPatterns =
+      codeptsFor("キロ", "メガ", "ギガ", "テラ", "ミリ");
+
+  NumericData() noexcept {}
+};
+
+const NumericData &NUMERICS() {
+  static NumericData singleton_;
+  return singleton_;
+}
+
+}  // namespace
+
 NumericUnkMaker::NumericUnkMaker(const dic::DictionaryEntries &entries_,
                                  chars::CharacterClass charClass_,
                                  UnkNodeConfig &&info_)
     : entries_(entries_), charClass_(charClass_), info_(info_) {
-  for (std::string defPattern : prefixPatternsDef) {
-    CodepointStorage pattern;
-    preprocessRawData(defPattern, &pattern);
-    prefixPatterns.emplace_back(pattern);
-  }
-  for (std::string defPattern : interfixPatternsDef) {
-    CodepointStorage pattern;
-    preprocessRawData(defPattern, &pattern);
-    interfixPatterns.emplace_back(pattern);
-  }
-  for (std::string defPattern : suffixPatternsDef) {
-    CodepointStorage pattern;
-    preprocessRawData(defPattern, &pattern);
-    suffixPatterns.emplace_back(pattern);
-  }
 }
 
 bool NumericUnkMaker::spawnNodes(const AnalysisInput &input,
@@ -85,8 +108,8 @@ size_t NumericUnkMaker::checkInterfix(const CodepointStorage &codepoints,
   // In other words, check conditions for fractions ("５分の１" or "数ぶんの１")
   auto restLength = codepoints.size() - (start + pos);
 
-  if (pos > 0) {  
-    for (auto itemp : interfixPatterns) {
+  if (pos > 0) {  // 先頭ではない
+    for (auto& itemp : NUMERICS().interfixPatterns) {
 
       if (  // Interfix follows a number.
           codepoints[start + pos - 1].hasClass(charClass_) &&
@@ -117,9 +140,10 @@ size_t NumericUnkMaker::checkSuffix(const CodepointStorage &codepoints,
   auto restLength = codepoints.size() - (start + pos);
 
   if (pos > 0) {
-    for (auto itemp : suffixPatterns) {
+    for (auto& itemp : NUMERICS().suffixPatterns) {
+      auto isException = codepoints[start + pos - 1].hasClass(ExceptionClass);
       if (  // Suffix follows a number.
-          codepoints[start + pos - 1].hasClass(ExceptionClass) &&
+          isException &&
           // The pattern length does not exceed that of rest codepoints.
           restLength >= itemp.size()) {
         // The pattern matches the codepoints.
@@ -143,7 +167,7 @@ size_t NumericUnkMaker::checkPrefix(const CodepointStorage &codepoints,
                                     LatticePosition pos) const {
   // In other words, check conditions for units ("数十", "数ミリ", )
 
-  for (auto itemp : prefixPatterns) {
+  for (auto &itemp : NUMERICS().prefixPatterns) {
     u16 suffixLength = 0;
     suffixLength = checkSuffix(codepoints, start, pos + itemp.size() );
 
