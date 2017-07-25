@@ -2,6 +2,7 @@
 // Created by Arseny Tolmachev on 2017/03/27.
 //
 
+#include <random>
 #include "trainer.h"
 
 namespace jumanpp {
@@ -75,6 +76,31 @@ Status Trainer::compute(const analysis::ScorerDef *sconf) {
   return Status::Ok();
 }
 
+Status BatchedTrainer::readBatch(TrainingDataReader *rdr) {
+  current_ = 0;
+  int trIdx = 0;
+  for (; trIdx < trainers_.size(); ++trIdx) {
+    auto& tr = trainers_[trIdx];
+    tr->reset();
+    JPP_RETURN_IF_ERROR(tr->readExample(rdr));
+    if (rdr->finished()) {
+      break;
+    }
+  }
+  current_ = trIdx;
+  indices_.clear();
+  indices_.reserve(current_);
+
+  for (int i = 0; i < current_; ++i) {
+    indices_.push_back(i);
+  }
+
+  std::minstd_rand rng{seed_ * (static_cast<u32>(numRead_) * 31 + 5)};
+  std::shuffle(indices_.begin(), indices_.end(), rng);
+  numRead_ += 1;
+
+  return Status::Ok();
+}
 }  // namespace training
 }  // namespace core
 }  // namespace jumanpp

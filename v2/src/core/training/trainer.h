@@ -121,7 +121,10 @@ class OwningTrainer {
 
 class BatchedTrainer {
   std::vector<std::unique_ptr<OwningTrainer>> trainers_;
+  std::vector<i32> indices_;
   i32 current_;
+  u32 seed_ = 0xdeadbeef;
+  i32 numRead_ = 0;
 
  public:
   Status initialize(const TrainerFullConfig& tfc,
@@ -133,27 +136,18 @@ class BatchedTrainer {
       JPP_RETURN_IF_ERROR(trainer->initAnalyzer(sconf));
       trainers_.emplace_back(trainer);
     }
+    seed_ = tfc.trainingConfig.randomSeed;
     return Status::Ok();
   }
 
-  Status readBatch(TrainingDataReader* rdr) {
-    current_ = 0;
-    int trIdx = 0;
-    for (; trIdx < trainers_.size(); ++trIdx) {
-      auto& tr = trainers_[trIdx];
-      tr->reset();
-      JPP_RETURN_IF_ERROR(tr->readExample(rdr));
-      if (rdr->finished()) {
-        break;
-      }
-    }
-    current_ = trIdx;
-    return Status::Ok();
-  }
+  Status readBatch(TrainingDataReader* rdr);
 
   OwningTrainer* trainer(i32 idx) const {
+    JPP_DCHECK_EQ(activeTrainers(), indices_.size());
     JPP_DCHECK_IN(idx, 0, activeTrainers());
-    return trainers_[idx].get();
+    auto idx2 = indices_[idx];
+    JPP_DCHECK_IN(idx2, 0, activeTrainers());
+    return trainers_[idx2].get();
   }
 
   i32 activeTrainers() const { return current_; }
