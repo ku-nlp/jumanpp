@@ -144,7 +144,7 @@ class LossCalculator {
       if (util::contains({ComparitionClass::Both, ComparitionClass::GoldOnly},
                          cmp.cmpClass)) {
         if (!cmp.goldInBeam) {
-          return i;
+          return std::min(i + 2, sz - 1);
         }
       }
     }
@@ -165,7 +165,7 @@ class LossCalculator {
         }
       }
     }
-    return val;
+    return std::min(val + 2, sz - 1);
   }
 
   void computeNgrams(std::vector<u32>* result, i32 boundary, i32 position);
