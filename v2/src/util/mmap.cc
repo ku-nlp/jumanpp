@@ -10,6 +10,7 @@
 #include <unistd.h>
 
 #include "mmap.h"
+#include "logging.hpp"
 
 namespace jumanpp {
 
@@ -82,7 +83,7 @@ Status MappedFile::open(const StringPiece &filename, MMapType type) {
   // use mode 0644 for file creation
   int fd = ::open(filename_.c_str(), file_mode, 0644);
 
-  if (fd == 0) {
+  if (fd == -1) {
     return Status::InvalidState() << "mmap could not open file: " << filename
                                   << " error code = " << strerror(errno);
   }
