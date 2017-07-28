@@ -2,8 +2,8 @@
 // Created by Arseny Tolmachev on 2017/03/27.
 //
 
-#include <random>
 #include "trainer.h"
+#include <random>
 
 namespace jumanpp {
 namespace core {
@@ -80,7 +80,7 @@ Status BatchedTrainer::readBatch(TrainingDataReader *rdr) {
   current_ = 0;
   int trIdx = 0;
   for (; trIdx < trainers_.size(); ++trIdx) {
-    auto& tr = trainers_[trIdx];
+    auto &tr = trainers_[trIdx];
     tr->reset();
     JPP_RETURN_IF_ERROR(tr->readExample(rdr));
     if (rdr->finished()) {
