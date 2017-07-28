@@ -51,6 +51,19 @@ Status parseArgs(int argc, const char** argv, t::TrainingArguments* args) {
                                   "RNG seed, 0xdeadbeef default",
                                   {"seed"},
                                   0xdeadbeefU};
+  std::unordered_map<std::string, t::TrainingMode> tmodes{
+      {"full", t::TrainingMode::Full},
+      {"falloff", t::TrainingMode::FalloffBeam},
+      {"violation", t::TrainingMode::MaxViolation}};
+
+  args::MapFlag<std::string, t::TrainingMode> trainMode{
+      trainingParams,    "MODE", "Training mode",
+      {"training-mode"}, tmodes, t::TrainingMode::Full};
+  t::ScwConfig scwCfg;
+  args::ValueFlag<float> scwC{
+      trainingParams, "VALUE", "SCW C parameter", {"scw-c"}, scwCfg.C};
+  args::ValueFlag<float> scwPhi{
+      trainingParams, "VALUE", "SCW phi parameter", {"scw-phi"}, scwCfg.phi};
   args::ValueFlag<u32> beamSize{
       trainingParams, "BEAM", "Beam size, 5 default", {"beam"}, 5};
   args::ValueFlag<u32> batchSize{
@@ -86,6 +99,9 @@ Status parseArgs(int argc, const char** argv, t::TrainingArguments* args) {
   auto sizeExp = paramSizeExponent.Get();
   args->trainingConfig.featureNumberExponent = sizeExp;
   args->trainingConfig.randomSeed = randomSeed.Get();
+  args->trainingConfig.mode = trainMode.Get();
+  args->trainingConfig.scw.C = scwC.Get();
+  args->trainingConfig.scw.phi = scwPhi.Get();
   args->batchMaxIterations = maxBatchIters.Get();
   args->maxEpochs = maxEpochs.Get();
   args->batchLossEpsilon = epsilon.Get();
@@ -198,7 +214,8 @@ int doEmbedRnn(t::TrainingArguments& args, core::JumanppEnv& env) {
   }
 
   core::analysis::rnn::RnnHolder rnnHolder;
-  s = rnnHolder.init(args.rnnConfig, rnnReader, env.coreHolder()->dic(), "surface");
+  s = rnnHolder.init(args.rnnConfig, rnnReader, env.coreHolder()->dic(),
+                     "surface");
   if (!s) {
     LOG_ERROR() << "failed to initialize rnn: " << s.message;
     return 1;
