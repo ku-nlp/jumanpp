@@ -58,6 +58,7 @@ class SoftConfidenceWeighted {
   void update(float loss, util::ArraySlice<ScoredFeature> features);
   const analysis::ScorerDef* scorers() const { return &sconf; }
   void exportModel(model::ModelInfo* model);
+  void dumpModel(StringPiece directory, StringPiece prefix, i32 number);
   ~SoftConfidenceWeighted();
 };
 

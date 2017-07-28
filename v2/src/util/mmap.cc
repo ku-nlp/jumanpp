@@ -9,8 +9,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "mmap.h"
 #include "logging.hpp"
+#include "mmap.h"
 
 namespace jumanpp {
 

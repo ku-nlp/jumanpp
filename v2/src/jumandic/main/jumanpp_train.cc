@@ -39,6 +39,15 @@ Status parseArgs(int argc, const char** argv, t::TrainingArguments* args) {
       "Juman++ model. RNN parameters will be embedded as well.",
       {"rnn-model"}};
 
+  args::ValueFlag<std::string> scwDumpDir{
+      ioGroup, "DIRECTORY", "Directory to dump SCW into", {"scw-dump-dir"}};
+
+  args::ValueFlag<std::string> scwDumpPrefix{ioGroup,
+                                             "STRING",
+                                             "Filename prefix for duming a SCW",
+                                             {"scw-dump-prefix"},
+                                             "scwdump"};
+
   args::Group trainingParams{parser, "Training parameters"};
   args::ValueFlag<u32> paramSizeExponent{
       trainingParams,
@@ -106,6 +115,8 @@ Status parseArgs(int argc, const char** argv, t::TrainingArguments* args) {
   args->maxEpochs = maxEpochs.Get();
   args->batchLossEpsilon = epsilon.Get();
   args->rnnConfig = rnnArgs.config();
+  args->scwDumpDirectory = scwDumpDir.Get();
+  args->scwDumpPrefix = scwDumpPrefix.Get();
 
   if (sizeExp > 31) {
     return Status::InvalidState() << "size exponent was too large: " << sizeExp
@@ -136,6 +147,10 @@ void doTrain(core::training::TrainingEnv& env,
     }
 
     LOG_INFO() << "EPOCH #" << nepoch << " finished, loss=" << env.epochLoss();
+
+    if (!args.scwDumpDirectory.empty()) {
+      env.dumpScw(args.scwDumpDirectory, args.scwDumpPrefix, nepoch);
+    }
 
     if (std::abs(lastLoss - env.epochLoss()) < args.batchLossEpsilon) {
       return;

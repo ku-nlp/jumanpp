@@ -27,6 +27,8 @@ struct TrainingArguments {
   std::string outputFilename;
   std::string corpusFilename;
   std::string rnnModelFilename;
+  std::string scwDumpDirectory;
+  std::string scwDumpPrefix;
   TrainingConfig trainingConfig;
   core::analysis::rnn::RnnInferenceConfig rnnConfig;
 };
@@ -80,6 +82,10 @@ class TrainingEnv {
   std::unique_ptr<analysis::Analyzer> makeAnalyzer(i32 beamSize = -1) const;
 
   void exportScwParams(model::ModelInfo* pInfo);
+
+  void dumpScw(StringPiece dir, StringPiece prefix, i32 epoch) {
+    scw_.dumpModel(dir, prefix, epoch);
+  }
 };
 
 }  // namespace training

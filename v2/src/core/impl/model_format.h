@@ -12,7 +12,7 @@ namespace jumanpp {
 namespace core {
 namespace model {
 
-enum class ModelPartKind { Dictionary, Perceprton, Rnn };
+enum class ModelPartKind { Dictionary, Perceprton, Rnn, ScwDump };
 
 struct ModelPart {
   ModelPartKind kind;

@@ -5,8 +5,10 @@
 #include "scw.h"
 #include <cmath>
 #include <random>
+#include "core/impl/model_io.h"
 #include "core/impl/perceptron_io.h"
 #include "util/coded_io.h"
+#include "util/logging.hpp"
 #include "util/serialization.h"
 
 namespace jumanpp {
@@ -147,6 +149,69 @@ void SoftConfidenceWeighted::exportModel(model::ModelInfo* model) {
 }
 
 SoftConfidenceWeighted::~SoftConfidenceWeighted() {}
+
+struct ScwDumpInfo {
+  u32 featureExponent;
+  float C;
+  float phi;
+};
+
+template <typename Arch>
+void Serialize(Arch& a, ScwDumpInfo& sdi) {
+  a& sdi.featureExponent;
+  a& sdi.C;
+  a& sdi.phi;
+}
+
+void SoftConfidenceWeighted::dumpModel(StringPiece directory,
+                                       StringPiece prefix, i32 number) {
+  char filename[512];
+  i32 retval =
+      std::snprintf(filename, 510, "%s/%s.%06d.mdldump",
+                    directory.str().c_str(), prefix.str().c_str(), number);
+  if (retval <= 0) return;
+
+  model::ModelInfo mnfo{};
+  mnfo.specHash = 0;
+  mnfo.runtimeHash = 0;
+  ScwDumpInfo dumpInfo{featureExponent_, static_cast<float>(C),
+                       static_cast<float>(phi)};
+  util::serialization::Saver svr{};
+  svr.save(dumpInfo);
+
+  model::ModelPart part;
+  part.kind = model::ModelPartKind::ScwDump;
+  part.data.push_back(svr.result());
+
+  auto weightsPtr = reinterpret_cast<const char*>(usableWeights.data());
+  StringPiece weightsMemory{weightsPtr,
+                            weightsPtr + usableWeights.size() * sizeof(float)};
+
+  auto diagonalPtr = reinterpret_cast<const char*>(matrixDiagonal.data());
+  StringPiece diagMemory{diagonalPtr,
+                         diagonalPtr + matrixDiagonal.size() * sizeof(float)};
+
+  part.data.push_back(weightsMemory);
+  part.data.push_back(diagMemory);
+
+  mnfo.parts.push_back(part);
+
+  model::ModelSaver modelSvr;
+  auto fname = StringPiece{filename, filename + retval};
+  Status s1 = modelSvr.open(fname);
+
+  if (!s1) {
+    LOG_WARN() << "failed to dump SCW to file: " << fname
+               << " open filed: " << s1.message;
+    return;
+  }
+
+  Status s2 = modelSvr.save(mnfo);
+  if (!s2) {
+    LOG_WARN() << "failed to dump SCW to file: " << fname
+               << " save failed: " << s2.message;
+  }
+}
 
 }  // namespace training
 }  // namespace core
