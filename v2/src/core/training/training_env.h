@@ -45,8 +45,8 @@ class TrainingEnv {
   StringPiece currentFilename_;
   util::FullyMappedFile currentFile_;
 
-  float batchLoss_;
-  float totalLoss_;
+  double batchLoss_;
+  double totalLoss_;
 
  public:
   TrainingEnv(const TrainingArguments& args, JumanppEnv* env)
@@ -67,12 +67,12 @@ class TrainingEnv {
 
   Status readOneBatch() { return trainers_.readBatch(&dataReader_); }
 
-  Status handleProcessedTrainer(TrainingExecutionResult result, float* curLoss);
+  Status handleProcessedTrainer(TrainingExecutionResult result, double* curLoss);
 
   Status trainOneBatch();
 
-  float batchLoss() const { return batchLoss_; }
-  float epochLoss() const { return totalLoss_; }
+  double batchLoss() const { return batchLoss_; }
+  double epochLoss() const { return totalLoss_; }
 
   Status trainOneEpoch();
 
