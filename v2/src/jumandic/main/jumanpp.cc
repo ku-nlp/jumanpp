@@ -39,8 +39,7 @@ int main(int argc, char** argv) {
 
   std::string input;
   std::string comment;
-  while (*inputSrc) {
-    std::getline(*inputSrc, input);
+  while (std::getline(*inputSrc, input)) {
     if (input.size() > 2 && input[0] == '#' && input[1] == ' ') {
       comment.clear();
       comment.append(input.begin() + 2, input.end());
