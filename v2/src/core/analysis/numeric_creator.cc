@@ -77,25 +77,27 @@ bool NumericUnkMaker::spawnNodes(const AnalysisInput &input,
           status = TraverseStatus::NoNode;
 
       switch (status) {
-        case TraverseStatus::NoNode: {  // 同一表層のノード無し prefix でもない
+        case TraverseStatus::NoNode: { 
           LatticePosition start = i;
           LatticePosition end = i + length;
           auto ptr = ctx->makePtr(input.surface(start, end), info_, true);
           lattice->appendSeed(ptr, start, end);
           break;
         }
-        case TraverseStatus::NoLeaf: {  // 先端
+        case TraverseStatus::NoLeaf: {
           LatticePosition start = i;
           LatticePosition end = i + length;
           auto ptr = ctx->makePtr(input.surface(start, end), info_, false);
           lattice->appendSeed(ptr, start, end);
           break;
         }
-        case TraverseStatus::Ok:
+        case TraverseStatus::Ok:{
           LatticePosition start = i;
           LatticePosition end = i + length;
           auto ptr = ctx->makePtr(input.surface(start, end), info_, false);
           lattice->appendSeed(ptr, start, end);
+          break;
+        }
       }
     }
   }
@@ -196,15 +198,12 @@ size_t NumericUnkMaker::checkExceptionalCharsInFigure(
     LatticePosition pos) const {
   size_t charLength = 0;
   if ((charLength = checkPrefix(codepoints, start, pos)) > 0){
-      std::cerr << "Prefix charLength" << charLength << std::endl;
       return charLength;
   }
   if ((charLength = checkInterfix(codepoints, start, pos)) > 0){
-      std::cerr << "Interfix charLength" << charLength << std::endl;
     return charLength;
   }
   if ((charLength = checkSuffix(codepoints, start, pos)) > 0) {
-      std::cerr << "Suffix charLength" << charLength << std::endl;
       return charLength;
   }
   if ((charLength = checkComma(codepoints, start, pos)) > 0) return charLength;
@@ -253,7 +252,7 @@ size_t NumericUnkMaker::checkPeriod(const CodepointStorage &codepoints,
   return 0;
 }
 
-size_t NumericUnkMaker::FindLongestNumber(const CodepointStorage &codepoints,
+LatticePosition NumericUnkMaker::FindLongestNumber(const CodepointStorage &codepoints,
                                           LatticePosition start) const {
   LatticePosition pos = 0;
   for (pos = 0; pos <= MaxNumericLength && start + pos < codepoints.size();

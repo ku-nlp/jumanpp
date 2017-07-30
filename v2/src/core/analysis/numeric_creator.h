@@ -69,11 +69,9 @@ class NumericUnkMaker : public UnkMaker {
   bool spawnNodes(const AnalysisInput &input, UnkNodesContext *ctx,
                   LatticeBuilder *lattice) const override;
 
-  size_t FindLongestNumber(const CodepointStorage &codepoints,
+  LatticePosition FindLongestNumber(const CodepointStorage &codepoints,
                            LatticePosition start) const;
 
-  size_t check_exceptional_chars_in_figure(const CodepointStorage &codepoints,
-                                           LatticePosition start) const;
 };
 
 }  // namespace analysis
