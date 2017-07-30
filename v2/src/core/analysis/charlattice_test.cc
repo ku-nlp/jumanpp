@@ -1,5 +1,5 @@
 //
-// Created by Hajime Morita on 2017/02/23.
+// Created by Hajime Morita on 2017/07/21.
 //
 
 #include "dictionary_node_creator.h"
@@ -153,11 +153,54 @@ TEST_CASE("charlattice works with choon insertion and postfix") {
   CHECK(env.numNodeSeeds() == 3);
 }
 
+TEST_CASE("Kanji accepts choon only if next character is Hiragana.") {
+  CharLatticeTestEnv env{"x,l2\n走る,l2\n蹴,l2\n"};
+  env.analyze("走ーる蹴ー");
+  CHECK(env.exists("走ーる", 0));
+  CHECK(env.exists("蹴", 3));
+  CHECK(! env.exists("蹴ー", 3));
+  CHECK(env.numNodeSeeds() == 2);
+}
+
 TEST_CASE("charlattice works with youon") {
   CharLatticeTestEnv env{"x,l1\nせが,l2\n"};
+  env.analyze("せがぁぁ");
+  CHECK(env.exists("せがぁ", 0));
+  CHECK(env.exists("せがぁぁ", 0));
+  CHECK(env.numNodeSeeds() == 3);
+}
+
+TEST_CASE("charlattice works with youon and hatsuon") {
+  CharLatticeTestEnv env{"x,l1\nせが,l2\n"};
+  env.analyze("せがぁぁっ");
+  CHECK(env.exists("せが", 0));
+  CHECK(env.exists("せがぁ", 0));
+  CHECK(env.exists("せがぁぁ", 0));
+  CHECK(env.exists("せがぁぁっ", 0));
+  CHECK(env.numNodeSeeds() == 4);
+}
+
+TEST_CASE("charlattice works with youon and choon") {
+  CharLatticeTestEnv env{"x,l1\nせが,l2\n"};
+  env.analyze("せがぁぁーー");
+  CHECK(env.exists("せが", 0));
+  CHECK(env.exists("せがぁぁー", 0));
+  CHECK(env.exists("せがぁぁーー", 0));
+  CHECK(env.numNodeSeeds() == 5);
+}
+
+TEST_CASE("charlattice substitutes choon to vowel") {
+  CharLatticeTestEnv env{"x,l1\nせがあ,l2\n"};
+  env.analyze("せがー");
+  CHECK(env.exists("せがー", 0));
+  CHECK(env.numNodeSeeds() == 1);
+}
+
+TEST_CASE("charlattice substitutes small vowel to vowel") {
+  CharLatticeTestEnv env{"x,l1\nせがあ,l2\n"};
   env.analyze("せがぁ");
   CHECK(env.exists("せがぁ", 0));
-  CHECK(env.numNodeSeeds() == 2);
+  CHECK(env.numNodeSeeds() == 1);
 }
 
 TEST_CASE("charlattice do not makes a node with irrelevant youon") {
@@ -166,4 +209,28 @@ TEST_CASE("charlattice do not makes a node with irrelevant youon") {
   CHECK(! env.exists("せがぃ", 0));
   CHECK(env.numNodeSeeds() == 1);
 }
+
+TEST_CASE("charlattice do not makes a node with only hatsuon") {
+  CharLatticeTestEnv env{"x,l1\nせが,l2\n"};
+  env.analyze("せがっ");
+  CHECK(! env.exists("せがっ", 0));
+  CHECK(env.numNodeSeeds() == 1);
+}
+
+TEST_CASE("charlattice do not makes a node including hatsuon inside") {
+  CharLatticeTestEnv env{"x,l1\nせが,l2\n"};
+  env.analyze("せーっが");
+  CHECK(! env.exists("せーっが", 0));
+  CHECK(env.numNodeSeeds() == 0);
+}
+
+TEST_CASE("charlattice makes a node with choon and hatsuon") {
+  CharLatticeTestEnv env{"x,l1\nせが,l2\n"};
+  env.analyze("せがーっ");
+  CHECK(env.exists("せが", 0));
+  CHECK(env.exists("せがー", 0));
+  CHECK(env.exists("せがーっ", 0));
+  CHECK(env.numNodeSeeds() == 3);
+}
+
 
