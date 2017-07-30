@@ -60,57 +60,42 @@ class CharNode {
     Codepoint cp;
     OptCharLattice type = OptCharLattice::OPT_INVALID;
 
-    std::vector<size_t> da_node_pos; 
-    std::vector<OptCharLattice> node_type;
+    std::vector<size_t> daNodePos; 
+    std::vector<OptCharLattice> nodeType;
 
   public:
-    CharNode(const Codepoint &cp_in, const OptCharLattice init_type) noexcept:
-        cp(cp_in){
-        type = init_type;
+    CharNode(const Codepoint &cpIn, const OptCharLattice initType) noexcept:
+        cp(cpIn){
+        type = initType;
     };
 }; 
 
 class CharLattice { 
   private:
     bool constructed = false;
-    static bool initialized;
+//    static bool initialized;
     const dic::DictionaryEntries& entries;
-    std::vector<std::vector<CharNode>> node_list;
+    std::vector<std::vector<CharNode>> nodeList;
 
   public:
-    typedef std::pair<EntryPtr, OptCharLattice> da_trie_result;
+    typedef std::pair<EntryPtr, OptCharLattice> DaTrieResult;
     typedef std::tuple<EntryPtr, OptCharLattice, LatticePosition, LatticePosition> CLResult;
     int MostDistantPosition;
 
-    int parse(const std::vector<Codepoint>& codepoints); 
-    std::vector<da_trie_result> da_search_one_step(int left_position, int right_position);
-    std::vector<CharLattice::CLResult> da_search_from_position(size_t position); 
+    int Parse(const std::vector<Codepoint>& codepoints); 
+    std::vector<DaTrieResult> OneStep(int left_position, int right_position);
+    std::vector<CharLattice::CLResult> Search(size_t position); 
 
     CharLattice(const dic::DictionaryEntries& entries_) : 
         entries(entries_), 
         CharRootNodeList{CharNode(Codepoint(StringPiece((const u8*)"<root>", 6)), OptCharLattice::OPT_INVALID)} {
         // RootNode
-        CharRootNodeList.back().da_node_pos.push_back(0);
-        CharRootNodeList.back().node_type.push_back(OptCharLattice::OPT_INVALID); 
-
-        if (!initialized){
-            initialized = true;
-
-            for(auto& p:lower2upper_def){
-                lower2upper.insert(std::make_pair(p.first, toCodepoint(p.second)));
-            }
-            for(auto& p:prolonged_map_def){
-                prolonged_map.insert(std::make_pair(p.first, toCodepoint(p.second)));
-            }
-        }
+        CharRootNodeList.back().daNodePos.push_back(0);
+        CharRootNodeList.back().nodeType.push_back(OptCharLattice::OPT_INVALID); 
     };
 
   public: 
     std::vector<CharNode> CharRootNodeList;
-    const static util::FlatMap<char32_t, const char*> lower2upper_def;
-    static util::FlatMap<char32_t, Codepoint> lower2upper;
-    const static util::FlatMap<char32_t, const char*> prolonged_map_def;
-    static util::FlatMap<char32_t, Codepoint> prolonged_map;
 }; 
 
 } // charlattice
