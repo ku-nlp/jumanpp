@@ -2,14 +2,14 @@
 // Created by Hajime Morita on 2017/07/21.
 //
 
-#include "dictionary_node_creator.h"
-#include "normalized_node_creator.h"
 #include "core/dic_builder.h"
 #include "core/dictionary.h"
 #include "core/spec/spec_dsl.h"
+#include "dictionary_node_creator.h"
+#include "normalized_node_creator.h"
 #include "testing/test_analyzer.h"
-#include "util/string_piece.h"
 #include "util/logging.hpp"
+#include "util/string_piece.h"
 
 using namespace jumanpp::core::analysis;
 using namespace jumanpp::core::spec;
@@ -25,25 +25,24 @@ class CharLatticeTestEnv {
   StringField fld1, fld2;
 
   DictionaryEntries dic{tenv.dic.entries()};
+
  public:
   CharLatticeTestEnv(StringPiece csvData) {
     tenv.spec([](dsl::ModelSpecBuilder& specBldr) {
       auto& a = specBldr.field(1, "f1").strings().trieIndex();
       specBldr.field(2, "f2").strings();
-      specBldr.unk("normalize", 1)
-          .normalize() 
-          .outputTo({a});
+      specBldr.unk("normalize", 1).normalize().outputTo({a});
     });
     CHECK(tenv.saveLoad.unkCreators.size() == 1);
     tenv.importDic(csvData);
     REQUIRE_OK(tenv.analyzer->output().stringField("f1", &fld1));
     REQUIRE_OK(tenv.analyzer->output().stringField("f2", &fld2));
   }
-  
+
   size_t numNodeSeeds() const {
     return tenv.analyzer->latticeBuilder().seeds().size();
   }
-  
+
   void printAll() {
     auto& output = tenv.analyzer->output();
     auto walker = output.nodeWalker();
@@ -52,7 +51,8 @@ class CharLatticeTestEnv {
     for (auto& seed : seeds) {
       CHECK(output.locate(seed.entryPtr, &walker));
       while (walker.next()) {
-        WARN("NODE(" << seed.codepointStart << ","<< seed.codepointEnd << "):" << fld1[walker] << "||" << fld2[walker]);
+        WARN("NODE(" << seed.codepointStart << "," << seed.codepointEnd
+                     << "):" << fld1[walker] << "||" << fld2[walker]);
       }
     }
   }
@@ -87,7 +87,7 @@ class CharLatticeTestEnv {
     }
     return false;
   }
-  
+
   bool contains(StringPiece str, i32 start, StringPiece strb) {
     CAPTURE(str);
     CAPTURE(start);
@@ -158,7 +158,7 @@ TEST_CASE("Kanji accepts choon only if next character is Hiragana.") {
   env.analyze("走ーる蹴ー");
   CHECK(env.exists("走ーる", 0));
   CHECK(env.exists("蹴", 3));
-  CHECK(! env.exists("蹴ー", 3));
+  CHECK(!env.exists("蹴ー", 3));
   CHECK(env.numNodeSeeds() == 2);
 }
 
@@ -206,21 +206,21 @@ TEST_CASE("charlattice substitutes small vowel to vowel") {
 TEST_CASE("charlattice do not makes a node with irrelevant youon") {
   CharLatticeTestEnv env{"x,l1\nせが,l2\n"};
   env.analyze("せがぃ");
-  CHECK(! env.exists("せがぃ", 0));
+  CHECK(!env.exists("せがぃ", 0));
   CHECK(env.numNodeSeeds() == 1);
 }
 
 TEST_CASE("charlattice do not makes a node with only hatsuon") {
   CharLatticeTestEnv env{"x,l1\nせが,l2\n"};
   env.analyze("せがっ");
-  CHECK(! env.exists("せがっ", 0));
+  CHECK(!env.exists("せがっ", 0));
   CHECK(env.numNodeSeeds() == 1);
 }
 
 TEST_CASE("charlattice do not makes a node including hatsuon inside") {
   CharLatticeTestEnv env{"x,l1\nせが,l2\n"};
   env.analyze("せーっが");
-  CHECK(! env.exists("せーっが", 0));
+  CHECK(!env.exists("せーっが", 0));
   CHECK(env.numNodeSeeds() == 0);
 }
 
@@ -232,5 +232,3 @@ TEST_CASE("charlattice makes a node with choon and hatsuon") {
   CHECK(env.exists("せがーっ", 0));
   CHECK(env.numNodeSeeds() == 3);
 }
-
-

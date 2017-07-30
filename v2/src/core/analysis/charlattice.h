@@ -2,14 +2,14 @@
 #ifndef CHARLATTICE_H
 #define CHARLATTICE_H
 
-#include "util/status.hpp"
-#include <util/flatset.h>
 #include <util/flatmap.h>
+#include <util/flatset.h>
+#include "util/status.hpp"
 
-#include "util/logging.hpp"
+#include "core/analysis/analysis_input.h"
 #include "core/analysis/lattice_builder.h"
 #include "core/dic_entries.h"
-#include "core/analysis/analysis_input.h"
+#include "util/logging.hpp"
 
 namespace jumanpp {
 namespace core {
@@ -26,7 +26,8 @@ enum class OptCharLattice : u32 {
   OPT_PROLONG_DEL_LAST = 0x00000020,
 
   OPT_PROLONG_REPLACED = OPT_NORMALIZE | OPT_PROLONG_REPLACE,
-  OPT_NORMALIZED = OPT_NORMALIZE | OPT_PROLONG_DEL | OPT_PROLONG_REPLACE | OPT_PROLONG_DEL_LAST
+  OPT_NORMALIZED = OPT_NORMALIZE | OPT_PROLONG_DEL | OPT_PROLONG_REPLACE |
+                   OPT_PROLONG_DEL_LAST
 };
 
 inline OptCharLattice operator|(OptCharLattice c1, OptCharLattice c2) noexcept {
@@ -50,57 +51,60 @@ inline OptCharLattice operator&(OptCharLattice c1, OptCharLattice c2) noexcept {
 using Codepoint = jumanpp::chars::InputCodepoint;
 using CharacterClass = jumanpp::chars::CharacterClass;
 
-inline Codepoint toCodepoint(const char* str){
-    auto cp = Codepoint(StringPiece((const u8*)str,3));
-    return Codepoint(StringPiece((const u8*)(str),3));
+inline Codepoint toCodepoint(const char* str) {
+  auto cp = Codepoint(StringPiece((const u8*)str, 3));
+  return Codepoint(StringPiece((const u8*)(str), 3));
 }
 
 class CharNode {
-  public:
-    Codepoint cp;
-    OptCharLattice type = OptCharLattice::OPT_INVALID;
+ public:
+  Codepoint cp;
+  OptCharLattice type = OptCharLattice::OPT_INVALID;
 
-    std::vector<size_t> daNodePos; 
-    std::vector<OptCharLattice> nodeType;
+  std::vector<size_t> daNodePos;
+  std::vector<OptCharLattice> nodeType;
 
-  public:
-    CharNode(const Codepoint &cpIn, const OptCharLattice initType) noexcept:
-        cp(cpIn){
-        type = initType;
-    };
-}; 
+ public:
+  CharNode(const Codepoint& cpIn, const OptCharLattice initType) noexcept
+      : cp(cpIn) {
+    type = initType;
+  };
+};
 
-class CharLattice { 
-  private:
-    bool constructed = false;
-//    static bool initialized;
-    const dic::DictionaryEntries& entries;
-    std::vector<std::vector<CharNode>> nodeList;
+class CharLattice {
+ private:
+  bool constructed = false;
+  //    static bool initialized;
+  const dic::DictionaryEntries& entries;
+  std::vector<std::vector<CharNode>> nodeList;
 
-  public:
-    typedef std::pair<EntryPtr, OptCharLattice> DaTrieResult;
-    typedef std::tuple<EntryPtr, OptCharLattice, LatticePosition, LatticePosition> CLResult;
-    int MostDistantPosition;
+ public:
+  typedef std::pair<EntryPtr, OptCharLattice> DaTrieResult;
+  typedef std::tuple<EntryPtr, OptCharLattice, LatticePosition, LatticePosition>
+      CLResult;
+  int MostDistantPosition;
 
-    int Parse(const std::vector<Codepoint>& codepoints); 
-    std::vector<DaTrieResult> OneStep(int left_position, int right_position);
-    std::vector<CharLattice::CLResult> Search(size_t position); 
+  int Parse(const std::vector<Codepoint>& codepoints);
+  std::vector<DaTrieResult> OneStep(int left_position, int right_position);
+  std::vector<CharLattice::CLResult> Search(size_t position);
 
-    CharLattice(const dic::DictionaryEntries& entries_) : 
-        entries(entries_), 
-        CharRootNodeList{CharNode(Codepoint(StringPiece((const u8*)"<root>", 6)), OptCharLattice::OPT_INVALID)} {
-        // RootNode
-        CharRootNodeList.back().daNodePos.push_back(0);
-        CharRootNodeList.back().nodeType.push_back(OptCharLattice::OPT_INVALID); 
-    };
+  CharLattice(const dic::DictionaryEntries& entries_)
+      : entries(entries_),
+        CharRootNodeList{
+            CharNode(Codepoint(StringPiece((const u8*)"<root>", 6)),
+                     OptCharLattice::OPT_INVALID)} {
+    // RootNode
+    CharRootNodeList.back().daNodePos.push_back(0);
+    CharRootNodeList.back().nodeType.push_back(OptCharLattice::OPT_INVALID);
+  };
 
-  public: 
-    std::vector<CharNode> CharRootNodeList;
-}; 
+ public:
+  std::vector<CharNode> CharRootNodeList;
+};
 
-} // charlattice
-} // analysis
-} // core
-} // jumanpp
+}  // namespace charlattice
+}  // namespace analysis
+}  // namespace core
+}  // namespace jumanpp
 
 #endif
