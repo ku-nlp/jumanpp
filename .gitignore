@@ -115,3 +115,6 @@ GPATH
 GRTAGS
 GTAGS
 VERSION
+
+# Python
+__pycache__/
