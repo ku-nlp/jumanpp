@@ -1,7 +1,8 @@
 //
 // Created by morita on 2017/07/07.
 //
-#include "onomatopoeia_creator.h"
+
+
 #include "testing/test_analyzer.h"
 
 using namespace jumanpp::core::analysis;

@@ -3,7 +3,7 @@
 //
 
 #include "numeric_creator.h"
-#include <iostream>
+#include "lattice_config.h"
 
 namespace jumanpp {
 namespace core {
@@ -60,7 +60,7 @@ bool NumericUnkMaker::spawnNodes(const AnalysisInput &input,
   for (LatticePosition i = 0; i < codepoints.size(); ++i) {
     auto trav = entries_.traversal();
     LatticePosition nextstep = i;
-    TraverseStatus status;
+    TraverseStatus status = TraverseStatus::NoNode;
 
     auto length = FindLongestNumber(codepoints, i);  // returns character length
     bool nonode = false;
@@ -166,7 +166,7 @@ size_t NumericUnkMaker::checkPrefix(const CodepointStorage &codepoints,
 
   for (auto &itemp : NUMERICS().prefixPatterns) {
     u16 suffixLength = 0;
-    suffixLength = checkSuffix(codepoints, start, pos + itemp.size());
+    suffixLength = static_cast<u16>(checkSuffix(codepoints, start, pos + itemp.size()));
 
     if (  // The length of rest codepoints is longer than the pattern length
         start + pos + itemp.size() < codepoints.size() &&
@@ -193,15 +193,12 @@ size_t NumericUnkMaker::checkExceptionalCharsInFigure(
     LatticePosition pos) const {
   size_t charLength = 0;
   if ((charLength = checkPrefix(codepoints, start, pos)) > 0) {
-    std::cerr << "Prefix charLength" << charLength << std::endl;
     return charLength;
   }
   if ((charLength = checkInterfix(codepoints, start, pos)) > 0) {
-    std::cerr << "Interfix charLength" << charLength << std::endl;
     return charLength;
   }
   if ((charLength = checkSuffix(codepoints, start, pos)) > 0) {
-    std::cerr << "Suffix charLength" << charLength << std::endl;
     return charLength;
   }
   if ((charLength = checkComma(codepoints, start, pos)) > 0) return charLength;
@@ -230,15 +227,15 @@ size_t NumericUnkMaker::checkComma(const CodepointStorage &codepoints,
   }
   if (numContinuedFigure == 3)
     return 1;
-  else
-    return 0;
+
+  return 0;
 }
 
 size_t NumericUnkMaker::checkPeriod(const CodepointStorage &codepoints,
                                     LatticePosition start,
                                     LatticePosition pos) const {
   // check exists of comma separated number beggining at pos.
-  unsigned int posPeriod = (start + pos);
+  auto posPeriod = (start + pos);
 
   if (pos == 0) return 0;
   if (!codepoints[posPeriod].hasClass(PeriodClass)) return 0;
@@ -249,7 +246,7 @@ size_t NumericUnkMaker::checkPeriod(const CodepointStorage &codepoints,
   return 0;
 }
 
-size_t NumericUnkMaker::FindLongestNumber(const CodepointStorage &codepoints,
+LatticePosition NumericUnkMaker::FindLongestNumber(const CodepointStorage &codepoints,
                                           LatticePosition start) const {
   LatticePosition pos = 0;
   for (pos = 0; pos <= MaxNumericLength && start + pos < codepoints.size();
