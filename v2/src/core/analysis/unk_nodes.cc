@@ -5,6 +5,7 @@
 #include "unk_nodes.h"
 #include "core/core.h"
 #include "dic_reader.h"
+#include "numeric_creator.h"
 #include "onomatopoeia_creator.h"
 #include "unk_nodes_creator.h"
 #include "util/stl_util.h"
@@ -89,6 +90,14 @@ class UnkMakerFactory {
           handlePrefixIndex(x, &cfg);
           stage->emplace_back(
               new OnomatopoeiaUnkMaker{entries, x.charClass, std::move(cfg)});
+          break;
+        }
+        case spec::UnkMakerType::Numeric: {
+          UnkNodeConfig cfg{rdr.readEntry(EntryPtr{x.patternPtr})};
+          util::copy_insert(x.output, cfg.replaceWithSurface);
+          handlePrefixIndex(x, &cfg);
+          stage->emplace_back(
+              new NumericUnkMaker{entries, x.charClass, std::move(cfg)});
           break;
         }
         default:
