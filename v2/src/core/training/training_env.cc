@@ -12,8 +12,8 @@ namespace core {
 namespace training {
 
 Status TrainingEnv::trainOneEpoch() {
-  float lastLoss = 0.f;
-  float lossSum = 0.0f;
+  double lastLoss = 0.f;
+  double lossSum = 0.0f;
   while (!dataReader_.finished()) {
     JPP_RETURN_IF_ERROR(readOneBatch());
     if (trainers_.activeTrainers() <= 0) {
@@ -40,7 +40,7 @@ Status TrainingEnv::trainOneEpoch() {
 }
 
 Status TrainingEnv::trainOneBatch() {
-  float curLoss = 0;
+  double curLoss = 0;
 
   core::training::TrainingExecutionResult result{nullptr,
                                                  Status::NotImplemented()};
@@ -62,7 +62,7 @@ Status TrainingEnv::trainOneBatch() {
 }
 
 Status TrainingEnv::handleProcessedTrainer(
-    core::training::TrainingExecutionResult result, float* curLoss) {
+    core::training::TrainingExecutionResult result, double* curLoss) {
   auto processed = result.trainer;
   if (!result.processStatus) {
     i64 lineNo = -1;

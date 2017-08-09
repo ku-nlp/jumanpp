@@ -27,6 +27,8 @@ struct TrainingArguments {
   std::string outputFilename;
   std::string corpusFilename;
   std::string rnnModelFilename;
+  std::string scwDumpDirectory;
+  std::string scwDumpPrefix;
   TrainingConfig trainingConfig;
   core::analysis::rnn::RnnInferenceConfig rnnConfig;
 };
@@ -43,8 +45,8 @@ class TrainingEnv {
   StringPiece currentFilename_;
   util::FullyMappedFile currentFile_;
 
-  float batchLoss_;
-  float totalLoss_;
+  double batchLoss_;
+  double totalLoss_;
 
  public:
   TrainingEnv(const TrainingArguments& args, JumanppEnv* env)
@@ -65,12 +67,12 @@ class TrainingEnv {
 
   Status readOneBatch() { return trainers_.readBatch(&dataReader_); }
 
-  Status handleProcessedTrainer(TrainingExecutionResult result, float* curLoss);
+  Status handleProcessedTrainer(TrainingExecutionResult result, double* curLoss);
 
   Status trainOneBatch();
 
-  float batchLoss() const { return batchLoss_; }
-  float epochLoss() const { return totalLoss_; }
+  double batchLoss() const { return batchLoss_; }
+  double epochLoss() const { return totalLoss_; }
 
   Status trainOneEpoch();
 
@@ -80,6 +82,10 @@ class TrainingEnv {
   std::unique_ptr<analysis::Analyzer> makeAnalyzer(i32 beamSize = -1) const;
 
   void exportScwParams(model::ModelInfo* pInfo);
+
+  void dumpScw(StringPiece dir, StringPiece prefix, i32 epoch) {
+    scw_.dumpModel(dir, prefix, epoch);
+  }
 };
 
 }  // namespace training

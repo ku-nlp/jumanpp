@@ -39,6 +39,15 @@ Status parseArgs(int argc, const char** argv, t::TrainingArguments* args) {
       "Juman++ model. RNN parameters will be embedded as well.",
       {"rnn-model"}};
 
+  args::ValueFlag<std::string> scwDumpDir{
+      ioGroup, "DIRECTORY", "Directory to dump SCW into", {"scw-dump-dir"}};
+
+  args::ValueFlag<std::string> scwDumpPrefix{ioGroup,
+                                             "STRING",
+                                             "Filename prefix for duming a SCW",
+                                             {"scw-dump-prefix"},
+                                             "scwdump"};
+
   args::Group trainingParams{parser, "Training parameters"};
   args::ValueFlag<u32> paramSizeExponent{
       trainingParams,
@@ -51,6 +60,19 @@ Status parseArgs(int argc, const char** argv, t::TrainingArguments* args) {
                                   "RNG seed, 0xdeadbeef default",
                                   {"seed"},
                                   0xdeadbeefU};
+  std::unordered_map<std::string, t::TrainingMode> tmodes{
+      {"full", t::TrainingMode::Full},
+      {"falloff", t::TrainingMode::FalloffBeam},
+      {"violation", t::TrainingMode::MaxViolation}};
+
+  args::MapFlag<std::string, t::TrainingMode> trainMode{
+      trainingParams,    "MODE", "Training mode",
+      {"training-mode"}, tmodes, t::TrainingMode::Full};
+  t::ScwConfig scwCfg;
+  args::ValueFlag<float> scwC{
+      trainingParams, "VALUE", "SCW C parameter", {"scw-c"}, scwCfg.C};
+  args::ValueFlag<float> scwPhi{
+      trainingParams, "VALUE", "SCW phi parameter", {"scw-phi"}, scwCfg.phi};
   args::ValueFlag<u32> beamSize{
       trainingParams, "BEAM", "Beam size, 5 default", {"beam"}, 5};
   args::ValueFlag<u32> batchSize{
@@ -86,10 +108,15 @@ Status parseArgs(int argc, const char** argv, t::TrainingArguments* args) {
   auto sizeExp = paramSizeExponent.Get();
   args->trainingConfig.featureNumberExponent = sizeExp;
   args->trainingConfig.randomSeed = randomSeed.Get();
+  args->trainingConfig.mode = trainMode.Get();
+  args->trainingConfig.scw.C = scwC.Get();
+  args->trainingConfig.scw.phi = scwPhi.Get();
   args->batchMaxIterations = maxBatchIters.Get();
   args->maxEpochs = maxEpochs.Get();
   args->batchLossEpsilon = epsilon.Get();
   args->rnnConfig = rnnArgs.config();
+  args->scwDumpDirectory = scwDumpDir.Get();
+  args->scwDumpPrefix = scwDumpPrefix.Get();
 
   if (sizeExp > 31) {
     return Status::InvalidState() << "size exponent was too large: " << sizeExp
@@ -120,6 +147,10 @@ void doTrain(core::training::TrainingEnv& env,
     }
 
     LOG_INFO() << "EPOCH #" << nepoch << " finished, loss=" << env.epochLoss();
+
+    if (!args.scwDumpDirectory.empty()) {
+      env.dumpScw(args.scwDumpDirectory, args.scwDumpPrefix, nepoch);
+    }
 
     if (std::abs(lastLoss - env.epochLoss()) < args.batchLossEpsilon) {
       return;
@@ -198,7 +229,8 @@ int doEmbedRnn(t::TrainingArguments& args, core::JumanppEnv& env) {
   }
 
   core::analysis::rnn::RnnHolder rnnHolder;
-  s = rnnHolder.init(args.rnnConfig, rnnReader, env.coreHolder()->dic(), "surface");
+  s = rnnHolder.init(args.rnnConfig, rnnReader, env.coreHolder()->dic(),
+                     "surface");
   if (!s) {
     LOG_ERROR() << "failed to initialize rnn: " << s.message;
     return 1;

@@ -315,9 +315,8 @@ struct RnnScorerState {
   }
 };
 
-Status RnnHolder::init(
-    const RnnInferenceConfig& conf,
-    const jumanpp::rnn::mikolov::MikolovModelReader& model,
+Status RnnHolder::init(const RnnInferenceConfig& conf,
+                       const jumanpp::rnn::mikolov::MikolovModelReader& model,
                        const core::dic::DictionaryHolder& dic,
                        StringPiece field) {
   auto& hdr = model.header();
