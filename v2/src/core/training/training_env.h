@@ -67,7 +67,8 @@ class TrainingEnv {
 
   Status readOneBatch() { return trainers_.readBatch(&dataReader_); }
 
-  Status handleProcessedTrainer(TrainingExecutionResult result, double* curLoss);
+  Status handleProcessedTrainer(TrainingExecutionResult result,
+                                double* curLoss);
 
   Status trainOneBatch();
 

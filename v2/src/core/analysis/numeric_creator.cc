@@ -50,8 +50,7 @@ const NumericData &NUMERICS() {
 NumericUnkMaker::NumericUnkMaker(const dic::DictionaryEntries &entries_,
                                  chars::CharacterClass charClass_,
                                  UnkNodeConfig &&info_)
-    : entries_(entries_), charClass_(charClass_), info_(info_) {
-}
+    : entries_(entries_), charClass_(charClass_), info_(info_) {}
 
 bool NumericUnkMaker::spawnNodes(const AnalysisInput &input,
                                  UnkNodesContext *ctx,
@@ -63,18 +62,17 @@ bool NumericUnkMaker::spawnNodes(const AnalysisInput &input,
     LatticePosition nextstep = i;
     TraverseStatus status;
 
-    auto length = FindLongestNumber(codepoints, i); // returns character length
+    auto length = FindLongestNumber(codepoints, i);  // returns character length
     bool nonode = false;
     if (length > 0) {
       for (; nextstep < i + length; ++nextstep) {
         status = trav.step(codepoints[nextstep].bytes);
-        if(status == TraverseStatus::NoNode){
-          nonode = true;  
+        if (status == TraverseStatus::NoNode) {
+          nonode = true;
         }
       }
 
-      if(nonode)
-          status = TraverseStatus::NoNode;
+      if (nonode) status = TraverseStatus::NoNode;
 
       switch (status) {
         case TraverseStatus::NoNode: {  // 同一表層のノード無し prefix でもない
@@ -109,8 +107,7 @@ size_t NumericUnkMaker::checkInterfix(const CodepointStorage &codepoints,
   auto restLength = codepoints.size() - (start + pos);
 
   if (pos > 0) {  // 先頭ではない
-    for (auto& itemp : NUMERICS().interfixPatterns) {
-
+    for (auto &itemp : NUMERICS().interfixPatterns) {
       if (  // Interfix follows a number.
           codepoints[start + pos - 1].hasClass(charClass_) &&
           // The length of rest codepoints is longer than the pattern length
@@ -140,7 +137,7 @@ size_t NumericUnkMaker::checkSuffix(const CodepointStorage &codepoints,
   auto restLength = codepoints.size() - (start + pos);
 
   if (pos > 0) {
-    for (auto& itemp : NUMERICS().suffixPatterns) {
+    for (auto &itemp : NUMERICS().suffixPatterns) {
       auto isException = codepoints[start + pos - 1].hasClass(ExceptionClass);
       if (  // Suffix follows a number.
           isException &&
@@ -169,13 +166,13 @@ size_t NumericUnkMaker::checkPrefix(const CodepointStorage &codepoints,
 
   for (auto &itemp : NUMERICS().prefixPatterns) {
     u16 suffixLength = 0;
-    suffixLength = checkSuffix(codepoints, start, pos + itemp.size() );
+    suffixLength = checkSuffix(codepoints, start, pos + itemp.size());
 
-    if (// The length of rest codepoints is longer than the pattern length
+    if (  // The length of rest codepoints is longer than the pattern length
         start + pos + itemp.size() < codepoints.size() &&
         // A digit follows prefix.
-        (codepoints[start + pos + itemp.size()].hasClass(DigitClass) || suffixLength >0)
-          ) {
+        (codepoints[start + pos + itemp.size()].hasClass(DigitClass) ||
+         suffixLength > 0)) {
       bool matchFlag = true;
       // The pattern matches the codepoints.
       for (u16 index = 0; index < itemp.size(); ++index) {
@@ -185,7 +182,7 @@ size_t NumericUnkMaker::checkPrefix(const CodepointStorage &codepoints,
           break;
         }
       }
-      if (matchFlag) return itemp.size()+suffixLength;
+      if (matchFlag) return itemp.size() + suffixLength;
     }
   }
   return 0;
@@ -195,17 +192,17 @@ size_t NumericUnkMaker::checkExceptionalCharsInFigure(
     const CodepointStorage &codepoints, LatticePosition start,
     LatticePosition pos) const {
   size_t charLength = 0;
-  if ((charLength = checkPrefix(codepoints, start, pos)) > 0){
-      std::cerr << "Prefix charLength" << charLength << std::endl;
-      return charLength;
+  if ((charLength = checkPrefix(codepoints, start, pos)) > 0) {
+    std::cerr << "Prefix charLength" << charLength << std::endl;
+    return charLength;
   }
-  if ((charLength = checkInterfix(codepoints, start, pos)) > 0){
-      std::cerr << "Interfix charLength" << charLength << std::endl;
+  if ((charLength = checkInterfix(codepoints, start, pos)) > 0) {
+    std::cerr << "Interfix charLength" << charLength << std::endl;
     return charLength;
   }
   if ((charLength = checkSuffix(codepoints, start, pos)) > 0) {
-      std::cerr << "Suffix charLength" << charLength << std::endl;
-      return charLength;
+    std::cerr << "Suffix charLength" << charLength << std::endl;
+    return charLength;
   }
   if ((charLength = checkComma(codepoints, start, pos)) > 0) return charLength;
   if ((charLength = checkPeriod(codepoints, start, pos)) > 0) return charLength;
@@ -227,7 +224,7 @@ size_t NumericUnkMaker::checkComma(const CodepointStorage &codepoints,
        numContinuedFigure <= commaInterval + 1 &&
        posComma + 1 + numContinuedFigure < codepoints.size();
        ++numContinuedFigure) {
-    if (! codepoints[posComma + 1 + numContinuedFigure].hasClass(FigureClass)) {
+    if (!codepoints[posComma + 1 + numContinuedFigure].hasClass(FigureClass)) {
       break;
     }
   }
@@ -244,12 +241,11 @@ size_t NumericUnkMaker::checkPeriod(const CodepointStorage &codepoints,
   unsigned int posPeriod = (start + pos);
 
   if (pos == 0) return 0;
-  if (!codepoints[posPeriod].hasClass(PeriodClass)) 
-      return 0;
-  if (!codepoints[posPeriod - 1].hasClass(charClass_)) 
-      return 0;
-  if (pos + 1 < codepoints.size() && codepoints[posPeriod + 1].hasClass(charClass_))
-      return 1;
+  if (!codepoints[posPeriod].hasClass(PeriodClass)) return 0;
+  if (!codepoints[posPeriod - 1].hasClass(charClass_)) return 0;
+  if (pos + 1 < codepoints.size() &&
+      codepoints[posPeriod + 1].hasClass(charClass_))
+    return 1;
   return 0;
 }
 
@@ -265,7 +261,7 @@ size_t NumericUnkMaker::FindLongestNumber(const CodepointStorage &codepoints,
       // Check Exception
       if ((charLength = checkExceptionalCharsInFigure(codepoints, start, pos)) >
           0) {
-        pos += charLength -1; // pos is inclemented by for statement
+        pos += charLength - 1;  // pos is inclemented by for statement
       } else {
         return pos;
       }
