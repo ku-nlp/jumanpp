@@ -100,41 +100,8 @@ const util::FlatSet<char32_t> brackets{
 
 bool toCodepoint(StringPiece::iterator &input_itr,
                  StringPiece::iterator itr_end2, char32_t *result) noexcept {
-  char32_t u;
-  const u8 *itr = reinterpret_cast<const u8 *>(input_itr);
-  const u8 *itr_end = reinterpret_cast<const u8 *>(itr_end2);
-
-  if (*itr > 0x00ef) { /* 4 bytes */
-    JPP_RET_CHECK(itr_end - itr >= 4);
-    JPP_RET_CHECK(((*itr & ~0x7) ^ 0xf0) == 0);
-    u = (*(itr++) & 0x07) << 18;
-    JPP_RET_CHECK(((*itr & ~0x3f) ^ 0x80) == 0);
-    u |= (*(itr++) & 0x3f) << 12;
-    JPP_RET_CHECK(((*itr & ~0x3f) ^ 0x80) == 0);
-    u |= (*(itr++) & 0x3f) << 6;
-    JPP_RET_CHECK(((*itr & ~0x3f) ^ 0x80) == 0);
-    u |= (*(itr++) & 0x3f);
-  } else if (*itr > 0xdf) { /* 3 bytes */
-    JPP_RET_CHECK(itr_end - itr >= 3);
-    JPP_RET_CHECK(((*itr & ~0xf) ^ 0xe0) == 0);
-    u = (*(itr++) & 0x0f) << 12;
-    JPP_RET_CHECK(((*itr & ~0x3f) ^ 0x80) == 0);
-    u |= (*(itr++) & 0x3f) << 6;
-    JPP_RET_CHECK(((*itr & ~0x3f) ^ 0x80) == 0);
-    u |= *(itr++) & 0x3f;
-  } else if (*itr > 0x7f) { /* 2 bytes */
-    JPP_RET_CHECK(itr_end - itr >= 2);
-    JPP_RET_CHECK(((*itr & ~0x1f) ^ 0xc0) == 0);
-    u = (*(itr++) & 0x1f) << 6;
-    JPP_RET_CHECK(((*itr & ~0x3f) ^ 0x80) == 0);
-    u |= *(itr++) & 0x3f;
-  } else { /* 1 byte */
-    JPP_RET_CHECK(itr_end - itr >= 1);
-    JPP_RET_CHECK((*itr & ~0x7f) == 0);
-    u = *(itr++) & 0x7f;
-  }
-  *result = u;
-  input_itr = reinterpret_cast<StringPiece::pointer_t>(itr);
+  *result = getCodepoint(input_itr, itr_end2);
+  // input_itr = reinterpret_cast<StringPiece::pointer_t>(itr);
   return true;
 }
 
