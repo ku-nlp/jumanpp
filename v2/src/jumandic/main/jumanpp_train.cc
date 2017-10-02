@@ -168,10 +168,12 @@ int saveModel(const core::training::TrainingArguments& args,
     return 1;
   }
 
+  LOG_INFO() << "Writing the model to file: " << args.outputFilename;
   s = saver.save(model);
   if (!s) {
     LOG_ERROR() << "failed to save model: " << s.message;
   }
+  LOG_INFO() << "Model saved successfully";
 
   return 0;
 }
