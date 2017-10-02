@@ -84,6 +84,9 @@ Status ModelSaver::save(const ModelInfo& info) {
   begin += cb.position();
   std::memcpy(begin, p1.data(), p1.size());
 
+  JPP_RETURN_IF_ERROR(frag.flush());
+  frag.unmap();
+
   return Status::Ok();
 }
 
