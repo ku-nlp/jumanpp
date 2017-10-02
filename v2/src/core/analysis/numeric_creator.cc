@@ -16,8 +16,8 @@ struct NumericData {
   using CodepointStorage = NumericUnkMaker::CodepointStorage;
 
   template <typename... T>
-  static std::vector<const CodepointStorage> codeptsFor(T... vals) {
-    std::vector<const CodepointStorage> result;
+  static std::vector<CodepointStorage> codeptsFor(T... vals) {
+    std::vector<CodepointStorage> result;
     std::initializer_list<StringPiece> params = {StringPiece{vals}...};
     for (auto &elem : params) {
       CodepointStorage pattern;
@@ -30,11 +30,11 @@ struct NumericData {
   using S = StringPiece;
 
   // Exceptional Patterns
-  const std::vector<const CodepointStorage> prefixPatterns =
-      codeptsFor(S{"数"}, S{"何"}, S{"幾"});
-  const std::vector<const CodepointStorage> interfixPatterns =
+  const std::vector<CodepointStorage> prefixPatterns =
+      codeptsFor("数", "何", "幾");
+  const std::vector<CodepointStorage> interfixPatterns =
       codeptsFor("ぶんの", "分の");
-  const std::vector<const CodepointStorage> suffixPatterns =
+  const std::vector<CodepointStorage> suffixPatterns =
       codeptsFor("キロ", "メガ", "ギガ", "テラ", "ミリ");
 
   NumericData() noexcept {}
