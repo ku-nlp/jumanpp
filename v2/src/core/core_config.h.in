@@ -1,0 +1,16 @@
+#pragma once
+#ifndef __JUMANPP_CORE_CONFIG_H__
+#define __JUMANPP_CORE_CONFIG_H__
+
+#include <util/string_piece.h>
+
+namespace jumanpp {
+namespace core {
+
+constexpr StringPiece JPP_VERSION_STRING = "@JUMANPP_FULL_VERSION@";
+constexpr size_t JPP_MAX_DIC_FIELDS = @JPP_MAX_DIC_FIELDS@;
+
+}
+}
+
+#endif //__JUMANPP_CORE_CONFIG_H__

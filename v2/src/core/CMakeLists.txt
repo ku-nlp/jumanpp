@@ -1,3 +1,9 @@
+configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/core_config.h.in
+        ${CMAKE_CURRENT_BINARY_DIR}/core_config.h
+
+)
+
 set(core_srcs darts_trie.cc dictionary.cc impl/field_import.cc dic_builder.cc
         analysis/dictionary_node_creator.cc analysis/lattice_types.cc
         analysis/lattice_builder.cc analysis/analysis_input.cc spec/spec_dsl.cc impl/feature_impl_prim.cc
@@ -13,7 +19,9 @@ set(core_train_srcs
         training/training_types.h training/training_test_common.h training/training_executor.cc
         training/training_executor.h training/training_env.cc training/training_env.h)
 
-set(core_hdrs darts.h darts_trie.h dictionary.h impl/field_import.h impl/field_reader.h dic_entries.h
+set(core_hdrs
+        ${CMAKE_CURRENT_BINARY_DIR}/core_config.h
+        darts.h darts_trie.h dictionary.h impl/field_import.h impl/field_reader.h dic_entries.h
         dic_builder.h spec/spec_grammar.h spec/spec_dsl.h analysis/analysis_input.h analysis/lattice_builder.h
         analysis/dictionary_node_creator.h spec/spec_types.h analysis/lattice_types.h analysis/extra_nodes.h
         impl/feature_types.h impl/feature_impl_prim.h core_types.h analysis/unk_nodes_creator.h
@@ -46,6 +54,8 @@ set(analysis_test_srcs
 
 add_library(jpp_core ${core_srcs} ${core_hdrs} ${libs3p_pegtl_headers})
 add_library(jpp_core_train ${core_train_srcs} ${core_hdrs})
+
+target_include_directories(jpp_core PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 
 jpp_test_executable(jpp_core_tests ${core_test_srcs} ${core_hdrs})
 jpp_test_executable(jpp_core_analysis_tests ${analysis_test_srcs} ../testing/test_analyzer.h)
