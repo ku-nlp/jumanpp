@@ -70,7 +70,7 @@ class NumericUnkMaker : public UnkMaker {
                   LatticeBuilder *lattice) const override;
 
   LatticePosition FindLongestNumber(const CodepointStorage &codepoints,
-                           LatticePosition start) const;
+                                    LatticePosition start) const;
 };
 
 }  // namespace analysis

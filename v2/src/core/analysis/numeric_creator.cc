@@ -166,7 +166,8 @@ size_t NumericUnkMaker::checkPrefix(const CodepointStorage &codepoints,
 
   for (auto &itemp : NUMERICS().prefixPatterns) {
     u16 suffixLength = 0;
-    suffixLength = static_cast<u16>(checkSuffix(codepoints, start, pos + itemp.size()));
+    suffixLength =
+        static_cast<u16>(checkSuffix(codepoints, start, pos + itemp.size()));
 
     if (  // The length of rest codepoints is longer than the pattern length
         start + pos + itemp.size() < codepoints.size() &&
@@ -225,8 +226,7 @@ size_t NumericUnkMaker::checkComma(const CodepointStorage &codepoints,
       break;
     }
   }
-  if (numContinuedFigure == 3)
-    return 1;
+  if (numContinuedFigure == 3) return 1;
 
   return 0;
 }
@@ -246,8 +246,8 @@ size_t NumericUnkMaker::checkPeriod(const CodepointStorage &codepoints,
   return 0;
 }
 
-LatticePosition NumericUnkMaker::FindLongestNumber(const CodepointStorage &codepoints,
-                                          LatticePosition start) const {
+LatticePosition NumericUnkMaker::FindLongestNumber(
+    const CodepointStorage &codepoints, LatticePosition start) const {
   LatticePosition pos = 0;
   for (pos = 0; pos <= MaxNumericLength && start + pos < codepoints.size();
        ++pos) {

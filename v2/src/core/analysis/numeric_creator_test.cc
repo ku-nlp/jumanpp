@@ -2,7 +2,6 @@
 // Created by morita on 2017/07/07.
 //
 
-
 #include "testing/test_analyzer.h"
 
 using namespace jumanpp::core::analysis;
