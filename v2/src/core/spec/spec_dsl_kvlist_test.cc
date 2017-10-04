@@ -301,6 +301,25 @@ TEST_CASE("can build a small dic with kvlist") {
   CHECK(n1.f3[0].value == "2");
 }
 
+TEST_CASE("can build a small dic with kvlist with multiple elems") {
+  StringPiece data = "z,z,\na,x,0 3\nb,y,0:2 1:2 3:7 6:0\n";
+  KVListTestEnv env{data, [](ModelSpecBuilder& b, Features f) {}};
+  env.analyze("aba");
+  auto n0 = env.uniqueNode("a", 0);
+  CHECK(n0.f3.size() == 2);
+  CHECK(n0.f3[0].key == "0");
+  CHECK(n0.f3[1].key == "3");
+  CHECK_FALSE(n0.f3[0].hasValue);
+  auto n1 = env.uniqueNode("b", 1);
+  CHECK(n1.f3.size() == 4);
+  CHECK(n1.f3[0].key == "0");
+  CHECK(n1.f3[0].hasValue);
+  CHECK(n1.f3[0].value == "2");
+  CHECK(n1.f3[1].key == "3");
+  CHECK(n1.f3[1].hasValue);
+  CHECK(n1.f3[1].value == "7");
+}
+
 TEST_CASE("identical kvlists have identical pointers") {
   StringPiece data = "z,z,\na,x,0:2\nb,y,0:1\nc,z,0:2\n";
   KVListTestEnv env{data, [](ModelSpecBuilder& b, Features f) {}};

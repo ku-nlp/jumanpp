@@ -184,7 +184,7 @@ i32 StringKeyValueListFieldImporter::fieldPointer(const util::CsvReader& csv) {
 
   std::sort(values_.begin(), values_.end(),
             [](const std::pair<i32, i32>& p1, const std::pair<i32, i32>& p2) {
-              return p1.second < p2.second;
+              return p1.first < p2.first;
             });
 
   JPP_DCHECK_GT(values_.size(), 0);
@@ -219,6 +219,7 @@ i32 StringKeyValueListFieldImporter::fieldPointer(const util::CsvReader& csv) {
     buffer_->writeStringDataWithoutLengthPrefix(serialized);
     auto savedString = buffer_->contents().slice(ptr, ptr + serialized.size());
     positionCache_.insert(savedString, ptr);
+    JPP_DCHECK(positionCache_.tryFind(serialized, &ptr));
   }
 
   return ptr;

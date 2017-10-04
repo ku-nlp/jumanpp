@@ -40,9 +40,9 @@ class LruCache {
 
     auto it2 = map2_.find(key);
     if (it2 != map2_.end()) {
+      *result = it2->second;
       map1_.insert(std::make_pair(key, it2->second));
       maybe_swap();
-      *result = it2->second;
       return true;
     }
     return false;

@@ -55,6 +55,29 @@ util::VOutImpl<typename C::value_type> VOut(const C& slice) {
   return util::VOutImpl<T>{aslice};
 }
 
+struct HexString {
+  StringPiece data;
+  HexString(StringPiece o): data{o} {}
+};
+
+inline std::ostream& operator<<(std::ostream& os, const HexString& hs) {
+  const char chars[] = "0123456789abcdef";
+
+  StringPiece sp = hs.data;
+  size_t len = sp.size();
+  os << '[';
+  for (int i = 0; i < len; ++i) {
+    u8 item = static_cast<u8>(sp.data()[i]);
+    os << chars[(item >> 4) & 0xf];
+    os << chars[item & 0xf];
+    if (i != len - 1) {
+      os << ' ';
+    }
+  }
+  os << ']';
+  return os;
+}
+
 }  // namespace jumanpp
 
 #endif  // JUMANPP_DEBUG_OUTPUT_H
