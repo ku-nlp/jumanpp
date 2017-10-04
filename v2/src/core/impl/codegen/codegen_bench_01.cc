@@ -351,7 +351,7 @@ void doWork2(benchpress::context *ctx) {
   jumanpp::core::spec::AnalysisSpec spec;
   auto s = bldr.build(&spec);
   if (!s) {
-    std::cerr << "failed to build spec: " << s.message;
+    std::cerr << "failed to build spec: " << s;
     throw std::exception();
   }
 
@@ -359,13 +359,13 @@ void doWork2(benchpress::context *ctx) {
   s = dbld.importSpec(&spec);
   s = dbld.importCsv("none", "");
   if (!s) {
-    std::cerr << "failed to import empty dic: " << s.message;
+    std::cerr << "failed to import empty dic: " << s;
     throw std::exception();
   }
 
   jumanpp::core::dic::DictionaryHolder dh;
   if (!(s = dh.load(dbld.result()))) {
-    std::cerr << "failed to build dicholder " << s.message;
+    std::cerr << "failed to build dicholder " << s;
     throw std::exception();
   }
 
