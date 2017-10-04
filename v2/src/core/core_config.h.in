@@ -7,7 +7,7 @@
 namespace jumanpp {
 namespace core {
 
-constexpr StringPiece JPP_VERSION_STRING = "@JUMANPP_FULL_VERSION@";
+constexpr const StringPiece JPP_VERSION_STRING { "@JUMANPP_FULL_VERSION@" };
 constexpr size_t JPP_MAX_DIC_FIELDS = @JPP_MAX_DIC_FIELDS@;
 
 }

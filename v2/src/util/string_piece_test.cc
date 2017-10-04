@@ -11,13 +11,14 @@ using jumanpp::u8;
 TEST_CASE("stringpiece can be constructed", "[string_piece]") {
   CHECK(StringPiece(std::string("test")) == "test");
   CHECK(StringPiece("test") == "test");
-  CHECK(StringPiece(std::vector<u8>{'t', 'e', 's', 't'}) == "test");
+  CHECK(StringPiece(std::vector<char>{'t', 'e', 's', 't'}) == "test");
   CHECK_FALSE(StringPiece(std::string("test2")) == "test");
   CHECK_FALSE(StringPiece(std::string("test")) == "test2");
   CHECK_FALSE(StringPiece("test2") == "test");
   CHECK_FALSE(StringPiece("test") == "test2");
-  CHECK_FALSE(StringPiece(std::vector<u8>{'t', 'e', 's', 't', '2'}) == "test");
-  CHECK_FALSE(StringPiece(std::vector<u8>{'t', 'e', 's', 't'}) == "test2");
+  CHECK_FALSE(StringPiece(std::vector<char>{'t', 'e', 's', 't', '2'}) ==
+              "test");
+  CHECK_FALSE(StringPiece(std::vector<char>{'t', 'e', 's', 't'}) == "test2");
 
   // implicit construction of StringPiece here
   CHECK(StringPiece("test") == std::string("test"));
@@ -40,4 +41,14 @@ TEST_CASE("stringpiece has working std::hash and std::equal_to impls") {
   CHECK(equalFn("test", "test"));
   CHECK(equalFn("test5", "test5"));
   CHECK_FALSE(equalFn("test5", "test3"));
+}
+
+TEST_CASE("StringPiece can be constexpr") {
+  constexpr StringPiece sp{"test"};
+  CHECK(sp == "test");
+}
+
+TEST_CASE("StringPiece constructs from CString") {
+  auto sp = StringPiece::fromCString("test");
+  CHECK(sp == "test");
 }

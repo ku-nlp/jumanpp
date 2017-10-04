@@ -18,6 +18,12 @@ bool operator==(const StringPiece &l, const StringPiece &r) {
   return std::strncmp(l.char_begin(), r.char_begin(), l.size()) == 0;
 }
 
-StringPiece::StringPiece(StringPiece::char_ptr ptr) noexcept
-    : StringPiece(ptr, ptr + std::strlen(ptr)) {}
+//
+// StringPiece::StringPiece<void>(StringPiece::char_ptr ptr) noexcept
+//    : StringPiece(ptr, ptr + std::strlen(ptr)) {}
+
+StringPiece StringPiece::fromCString(const char *data) {
+  return StringPiece{data, data + std::strlen(data)};
+}
+
 }  // namespace jumanpp

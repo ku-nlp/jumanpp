@@ -14,12 +14,11 @@
 namespace jumanpp {
 
 class StringPiece {
- private:
-  using char_t = const char;
-  using char_ptr = char_t*;
-
  public:
-  using value_type = const u8;
+  using byte_t = const u8;
+  using byte_ptr = byte_t*;
+
+  using value_type = const char;
   using pointer_t = const value_type*;
   using iterator = pointer_t;
 
@@ -31,22 +30,26 @@ class StringPiece {
   JPP_ALWAYS_INLINE constexpr StringPiece() noexcept
       : begin_{nullptr}, end_{nullptr} {}
 
-  JPP_ALWAYS_INLINE constexpr StringPiece(iterator begin, iterator end) noexcept
+  JPP_ALWAYS_INLINE constexpr StringPiece(pointer_t begin,
+                                          pointer_t end) noexcept
       : begin_{begin}, end_{end} {}
 
   JPP_ALWAYS_INLINE constexpr StringPiece(pointer_t begin,
                                           size_t length) noexcept
       : begin_{begin}, end_{begin + length} {}
 
-  template <typename = std::enable_if<!std::is_same<char_t, value_type>::value>>
-  JPP_ALWAYS_INLINE StringPiece(char_ptr begin, char_ptr end) noexcept
+  JPP_ALWAYS_INLINE StringPiece(byte_ptr begin, byte_ptr end) noexcept
       : begin_{reinterpret_cast<pointer_t>(begin)},
         end_{reinterpret_cast<pointer_t>(end)} {};
+
+  JPP_ALWAYS_INLINE StringPiece(byte_ptr begin, size_t length) noexcept
+      : StringPiece(begin, begin + length) {}
 
   JPP_ALWAYS_INLINE StringPiece(const std::string& str) noexcept
       : StringPiece(str.data(), str.data() + str.size()) {}
 
-  explicit StringPiece(char_ptr ptr) noexcept;
+  //  template <typename = void>
+  //  explicit StringPiece(char_ptr ptr) noexcept;
 
   JPP_ALWAYS_INLINE constexpr StringPiece(const StringPiece& other) noexcept =
       default;
@@ -63,7 +66,7 @@ class StringPiece {
   template <size_t array_size>
   JPP_ALWAYS_INLINE constexpr StringPiece(
       const char (&array)[array_size]) noexcept
-      : StringPiece(array, array + array_size) {
+      : begin_{array}, end_{array + array_size} {
     if (*(end_ - 1) == 0) {
       --end_;
     }
@@ -121,15 +124,23 @@ class StringPiece {
     return StringPiece{begin(), std::min(begin() + num, end())};
   }
 
-  template <typename = std::enable_if<!std::is_same<char_t, value_type>::value>>
-  JPP_ALWAYS_INLINE constexpr char_ptr char_begin() const noexcept {
-    return reinterpret_cast<char_ptr>(begin_);
+  JPP_ALWAYS_INLINE constexpr pointer_t char_begin() const noexcept {
+    return begin_;
   };
 
-  template <typename = std::enable_if<!std::is_same<char_t, value_type>::value>>
-  JPP_ALWAYS_INLINE constexpr char_ptr char_end() const noexcept {
-    return reinterpret_cast<char_ptr>(end_);
+  JPP_ALWAYS_INLINE constexpr pointer_t char_end() const noexcept {
+    return end_;
   };
+
+  JPP_ALWAYS_INLINE byte_ptr ubegin() const noexcept {
+    return reinterpret_cast<byte_ptr>(begin_);
+  }
+
+  JPP_ALWAYS_INLINE byte_ptr uend() const noexcept {
+    return reinterpret_cast<byte_ptr>(end_);
+  }
+
+  static StringPiece fromCString(const char* data);
 };
 
 static constexpr const StringPiece EMPTY_SP = StringPiece{};

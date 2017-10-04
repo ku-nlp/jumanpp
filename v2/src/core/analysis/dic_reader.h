@@ -17,24 +17,29 @@ namespace analysis {
 struct ExtraNode;
 
 class DictNode {
-  util::ArraySlice<i32> baseData;
+  util::ArraySlice<i32> baseData_;
 
  public:
-  DictNode(util::ArraySlice<i32> data) : baseData{data} {}
+  explicit DictNode(util::ArraySlice<i32> data) : baseData_{data} {}
   util::MutableArraySlice<i32> copyTo(ExtraNode* node) const;
-  util::ArraySlice<i32> data() const { return baseData; }
+  util::ArraySlice<i32> data() const { return baseData_; }
 };
 
 class OwningDictNode {
-  std::vector<i32> baseData;
+  std::vector<i32> baseData_;
 
  public:
-  OwningDictNode(util::ArraySlice<i32> data)
-      : baseData{data.begin(), data.end()} {}
-  OwningDictNode(const DictNode& node) : OwningDictNode(node.data()) {}
+  OwningDictNode(size_t size) : baseData_(size, 0) {}
+  explicit OwningDictNode(util::ArraySlice<i32> data)
+      : baseData_{data.begin(), data.end()} {}
+  explicit OwningDictNode(const DictNode& node) : OwningDictNode(node.data()) {}
   operator DictNode() const {
-    return DictNode{util::ArraySlice<i32>{baseData}};
+    return DictNode{util::ArraySlice<i32>{baseData_}};
   }
+
+  util::ArraySlice<i32> data() const { return baseData_; }
+  util::MutableArraySlice<i32> data() { return &baseData_; }
+  void resize(size_t size) { baseData_.resize(size); }
 };
 
 class DicReader {
@@ -45,7 +50,7 @@ class DicReader {
   DicReader(util::memory::ManagedAllocatorCore* alloc,
             const dic::DictionaryHolder& holder)
       : alloc_{alloc}, dic_{holder} {}
-  DictNode readEntry(EntryPtr ptr) const;
+  OwningDictNode readEntry(EntryPtr ptr) const;
 };
 
 }  // namespace analysis

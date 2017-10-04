@@ -15,9 +15,3 @@ TEST_CASE("arrayslice works with string") {
   ArraySlice<char> data{str};
   CHECK(data.length() == 5);  // 5 + zero
 }
-
-TEST_CASE("arrayslice works with stringpiece") {
-  jumanpp::StringPiece piece{"hello"};
-  ArraySlice<u8> data{piece};
-  CHECK(data.length() == 5);
-}

@@ -3,6 +3,7 @@
 //
 
 #include "unk_nodes_creator.h"
+#include "core_config.h"
 #include "util/murmur_hash.h"
 
 namespace jumanpp {
@@ -113,10 +114,34 @@ EntryPtr UnkNodesContext::makePtr(StringPiece surface,
   return node->ptr();
 }
 
+bool UnkNodesContext::dicPatternMatches(const UnkNodeConfig& conf,
+                                        dic::IndexedEntries entries) const {
+  auto data = conf.base.data();
+  i32 entryBufferRaw[JPP_MAX_DIC_FIELDS];
+  util::MutableArraySlice<i32> entryBuffer(entryBufferRaw, data.size());
+  const auto& copy = conf.replaceWithSurface;
+
+  while (entries.fillEntryData(&entryBuffer)) {
+    int copyIdx = 0;
+    for (int i = 0; i < data.size(); ++i) {
+      if (copyIdx < copy.size() && copy[copyIdx] == i) {
+        copyIdx += 1;
+        continue;
+      }
+      if (data.at(i) != entryBuffer.at(i)) {
+        break;
+      }
+    }
+    return true;
+  }
+
+  return false;
+}
+
 i32 hashUnkString(StringPiece sp) {
   constexpr u64 unkStringSeed = 0xa76210bfULL;
   u64 hash =
-      util::hashing::murmurhash3_memory(sp.begin(), sp.end(), unkStringSeed);
+      util::hashing::murmurhash3_memory(sp.ubegin(), sp.uend(), unkStringSeed);
   u32 trimmed = static_cast<u32>(hash);
   auto hashValue = static_cast<i32>(trimmed) | 0x8000'0000;
   return hashValue;

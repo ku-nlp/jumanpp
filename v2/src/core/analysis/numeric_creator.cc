@@ -92,8 +92,10 @@ bool NumericUnkMaker::spawnNodes(const AnalysisInput &input,
         case TraverseStatus::Ok:
           LatticePosition start = i;
           LatticePosition end = i + length;
-          auto ptr = ctx->makePtr(input.surface(start, end), info_, false);
-          lattice->appendSeed(ptr, start, end);
+          if (!ctx->dicPatternMatches(info_, trav.entries())) {
+            auto ptr = ctx->makePtr(input.surface(start, end), info_, false);
+            lattice->appendSeed(ptr, start, end);
+          }
       }
     }
   }

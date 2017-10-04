@@ -30,18 +30,18 @@ Status readHeader(StringPiece data, MikolovRnnModelHeader* header) {
   auto sv = packed->sizeVersion;
   auto vers = sv / VersionStepSize;
   if (vers != 6) {
-    return Status::InvalidParameter()
-           << "invalid rnn model version " << vers << " can handle only 6";
+    return JPPS_INVALID_PARAMETER << "invalid rnn model version " << vers
+                                  << " can handle only 6";
   }
 
   if (!packed->useNce) {
-    return Status::InvalidParameter()
+    return JPPS_INVALID_PARAMETER
            << "model was trained without nce, we support only nce models";
   }
 
-  auto piece = StringPiece{packed->layerType};
+  auto piece = StringPiece::fromCString(packed->layerType);
   if (piece != "sigmoid") {
-    return Status::InvalidParameter()
+    return JPPS_INVALID_PARAMETER
            << "only sigmoid activation is supported, model had " << piece;
   }
 

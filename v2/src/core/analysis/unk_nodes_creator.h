@@ -41,6 +41,16 @@ class UnkNodesContext {
 
   EntryPtr makePtr(StringPiece surface, const UnkNodeConfig& conf,
                    bool notPrefix);
+
+  /**
+   * Check if any entries in dictionary have non-fillable fields
+   * the same as UNK pattern inside nodeConfig.
+   * @param nodeConfig
+   * @param entries
+   * @return
+   */
+  bool dicPatternMatches(const UnkNodeConfig& nodeConfig,
+                         dic::IndexedEntries entries) const;
 };
 
 class ChunkingUnkMaker : public UnkMaker {

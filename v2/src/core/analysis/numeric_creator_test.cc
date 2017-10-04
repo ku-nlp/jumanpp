@@ -2,6 +2,7 @@
 // Created by morita on 2017/07/07.
 //
 
+#include <util/logging.hpp>
 #include "testing/test_analyzer.h"
 
 using namespace jumanpp::core::analysis;
@@ -42,7 +43,8 @@ class NumericTestEnv {
     return tenv.analyzer->latticeBuilder().seeds().size();
   }
 
-  bool contains(StringPiece str, i32 start, StringPiece strb) {
+  bool contains(StringPiece str, i32 start, StringPiece strb,
+                bool isUnk = true) {
     CAPTURE(str);
     CAPTURE(start);
     auto& output = tenv.analyzer->output();
@@ -53,7 +55,8 @@ class NumericTestEnv {
     chars::preprocessRawData(str, &cp);
     i32 end = start + cp.size();
     for (auto& seed : seeds) {
-      if (seed.codepointStart == start && seed.codepointEnd == end) {
+      if (seed.codepointStart == start && seed.codepointEnd == end &&
+          seed.entryPtr.isSpecial() == isUnk) {
         CHECK(output.locate(seed.entryPtr, &walker));
         while (walker.next()) {
           auto s1 = fld1[walker];
@@ -75,8 +78,9 @@ class NumericTestEnv {
     for (auto& seed : seeds) {
       CHECK(output.locate(seed.entryPtr, &walker));
       while (walker.next()) {
-        WARN("NODE (" << seed.codepointStart << ", " << seed.codepointEnd
-                      << "):" << fld1[walker] << "||" << fld2[walker]);
+        LOG_DEBUG() << "NODE (" << seed.codepointStart << ", "
+                    << seed.codepointEnd << "):" << fld1[walker] << "||"
+                    << fld2[walker];
       }
     }
   }
@@ -246,7 +250,7 @@ TEST_CASE("do not make numeric unk nodes starts with period") {
   CHECK(env.numNodeSeeds() == 1);
 }
 
-TEST_CASE("make camma separated numeric unk nodes") {
+TEST_CASE("make comma separated numeric unk nodes") {
   NumericTestEnv env{"x,l1\nほげ,l2\n"};
   env.analyze("４，１２３，１２３");
   CHECK(env.contains("４，１２３，１２３", 0, "l1"));
@@ -254,10 +258,18 @@ TEST_CASE("make camma separated numeric unk nodes") {
 }
 
 TEST_CASE(
-    "do not make camma separated numeric unk nodes that do not satisfy camma "
+    "do not make comma separated numeric unk nodes that do not satisfy comma "
     "separated number") {
   NumericTestEnv env{"x,l1\nほげ,l2\n"};
   env.analyze("４，１２４３");
   CHECK(!env.contains("４，１２４３", 0, "l1"));
   CHECK(env.numNodeSeeds() == 5);
+}
+
+TEST_CASE("don't emit number if one with the same tags exist in the dic") {
+  NumericTestEnv env{"x,l1\n５０,l1\n"};
+  env.analyze("５０");
+  CHECK(env.contains("５０", 0, "l1", false));
+  CHECK_FALSE(env.contains("５０", 0, "l1"));
+  CHECK(env.numNodeSeeds() == 2);
 }

@@ -30,7 +30,8 @@ struct CharStringLength {
 namespace impl {
 
 using DoubleArrayCore =
-    Darts::DoubleArrayImpl<u8, u8, i32, u32, CharStringLength>;
+    Darts::DoubleArrayImpl<StringPiece::value_type, StringPiece::byte_t, i32,
+                           u32, CharStringLength>;
 
 struct PieceWithValue {
   StringPiece key;

@@ -283,8 +283,8 @@ Status preprocessRawData(StringPiece utf8data,
 }
 
 i32 numCodepoints(StringPiece utf8) {
-  auto itr = utf8.begin();
-  auto end = utf8.end();
+  auto itr = utf8.ubegin();
+  auto end = utf8.uend();
 
   i32 count = 0;
 

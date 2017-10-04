@@ -76,7 +76,7 @@ class CodedBuffer {
     if (JPP_UNLIKELY(remaining() < vsize + impl::UInt64MaxSize)) {
       grow(vsize + impl::UInt64MaxSize);
     }
-    impl::writeRawBytes(value.begin(), value.end(), front_);
+    impl::writeRawBytes(value.ubegin(), value.uend(), front_);
     front_ += vsize;
   }
 
@@ -87,7 +87,7 @@ class CodedBuffer {
       grow(maxSize);
     }
     front_ = impl::writeVarint64ToArray(vsize, front_);
-    impl::writeRawBytes(value.begin(), value.end(), front_);
+    impl::writeRawBytes(value.ubegin(), value.uend(), front_);
     front_ += vsize;
   }
 
