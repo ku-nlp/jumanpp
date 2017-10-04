@@ -52,7 +52,8 @@ void SpecFactory::fillSpec(core::spec::dsl::ModelSpecBuilder& bldr) {
                       .ifFalse({pos});
   auto& surfaceLength = bldr.feature("surfaceLength").numCodepoints(surface);
   auto& isDevoiced = bldr.feature("isDevoiced").matchData(features, "濁音化D");
-  auto& nominalize = bldr.feature("nominalize").matchData(features, "連用形名詞化");
+  auto& nominalize =
+      bldr.feature("nominalize").matchData(features, "連用形名詞化");
   auto& notPrefix = bldr.feature("notPrefix").placeholder();
   auto& lexicalized =
       bldr.feature("lexicalized")

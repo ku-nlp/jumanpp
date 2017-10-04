@@ -57,7 +57,7 @@ util::VOutImpl<typename C::value_type> VOut(const C& slice) {
 
 struct HexString {
   StringPiece data;
-  HexString(StringPiece o): data{o} {}
+  HexString(StringPiece o) : data{o} {}
 };
 
 inline std::ostream& operator<<(std::ostream& os, const HexString& hs) {
