@@ -217,8 +217,10 @@ i32 StringKeyValueListFieldImporter::fieldPointer(const util::CsvReader& csv) {
   if (!positionCache_.tryFind(serialized, &ptr)) {
     ptr = static_cast<i32>(buffer_->position());
     buffer_->writeStringDataWithoutLengthPrefix(serialized);
-    auto savedString = buffer_->contents().slice(ptr, ptr + serialized.size());
-    positionCache_.insert(savedString, ptr);
+    if (!charBuf_.import(&serialized)) {
+      return -1;
+    }
+    positionCache_.insert(serialized, ptr);
     JPP_DCHECK(positionCache_.tryFind(serialized, &ptr));
   }
 

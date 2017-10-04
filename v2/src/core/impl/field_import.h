@@ -154,6 +154,7 @@ class StringKeyValueListFieldImporter : public StringFieldImporter {
   util::CodedBuffer* buffer_ = nullptr;
   util::CodedBuffer local_;
   std::vector<std::pair<i32, i32>> values_{};
+  util::CharBuffer<> charBuf_;
   util::LruCache<StringPiece, i32> positionCache_;
   std::string entrySeparator_;
   std::string kvSeparator_;
