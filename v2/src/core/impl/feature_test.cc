@@ -41,7 +41,7 @@ TEST_CASE("match string feature works") {
   StringPiece dic = "XXX,z,KANA\nカラ,b,\nb,c,\n";
   PrimFeatureTestEnv env{dic,
                          [](dsl::ModelSpecBuilder& specBldr, FeatureSet& fs) {
-                           specBldr.feature("mtch").matchValue(fs.b, "b");
+                           specBldr.feature("mtch").matchData(fs.b, "b");
                          }};
   REQUIRE(env.spec().features.primitive[3].name == "mtch");
   env.analyze("カラフ");
@@ -57,7 +57,7 @@ TEST_CASE("match list feature works") {
   StringPiece dic = "XXX,z,KANA\nカラ,b,\nb,c,\n";
   PrimFeatureTestEnv env{dic,
                          [](dsl::ModelSpecBuilder& specBldr, FeatureSet& fs) {
-                           specBldr.feature("mtch").matchValue(fs.c, "KANA");
+                           specBldr.feature("mtch").matchData(fs.c, "KANA");
                          }};
   REQUIRE(env.spec().features.primitive[3].name == "mtch");
   env.analyze("カラフ");
@@ -73,7 +73,7 @@ TEST_CASE("match list feature works with several entries") {
   StringPiece dic = "XXX,z,XANA DATA\nカラ,b,XAS KANA BAR\nラ,c,A B KANA\n";
   PrimFeatureTestEnv env{dic,
                          [](dsl::ModelSpecBuilder& specBldr, FeatureSet& fs) {
-                           specBldr.feature("mtch").matchValue(fs.c, "KANA");
+                           specBldr.feature("mtch").matchData(fs.c, "KANA");
                          }};
   REQUIRE(env.spec().features.primitive[3].name == "mtch");
   env.analyze("カラフ");

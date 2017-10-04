@@ -15,7 +15,7 @@ namespace jumanpp {
 namespace core {
 namespace spec {
 
-enum class ColumnType { String, Int, StringList, Error };
+enum class ColumnType { String, Int, StringList, StringKVList, Error };
 
 std::ostream& operator<<(std::ostream& o, ColumnType ct);
 
@@ -26,6 +26,8 @@ struct FieldDescriptor {
   bool isTrieKey = false;
   ColumnType columnType = ColumnType::Error;
   std::string emptyString;
+  std::string listSeparator;
+  std::string kvSeparator;
   i32 stringStorage = -1;
   i32 intStorage = -1;
 };
@@ -86,10 +88,11 @@ enum class PrimitiveFeatureKind {
   Invalid,
   Copy,
   MatchDic,
-  MatchAnyDic,
+  MatchListElem,
   Provided,
   Length,
-  CodepointSize
+  CodepointSize,
+  MatchKey
 };
 
 struct PrimitiveFeatureDescriptor {

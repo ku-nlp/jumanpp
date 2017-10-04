@@ -26,6 +26,6 @@ TEST_CASE("MatchDicPrimFeatureImpl compiles in both usage patterns") {
 
 TEST_CASE("MatchAnyDicPrimFeatureImpl compiles in both usage patterns") {
   static constexpr i32 array[] = {0, 1, 2};
-  constexpr MatchAnyDicPrimFeatureImpl f{0, 0, array};
-  DynamicPrimitiveFeature<MatchAnyDicPrimFeatureImpl> impl;
+  constexpr MatchListElemPrimFeatureImpl f{0, 0, array};
+  DynamicPrimitiveFeature<MatchListElemPrimFeatureImpl> impl;
 }

@@ -26,6 +26,8 @@ void Serialize(Arch &a, FieldDescriptor &fd) {
   a &fd.isTrieKey;
   a &fd.columnType;
   a &fd.emptyString;
+  a &fd.listSeparator;
+  a &fd.kvSeparator;
   a &fd.stringStorage;
   a &fd.intStorage;
 }

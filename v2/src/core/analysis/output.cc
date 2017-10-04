@@ -13,12 +13,12 @@ namespace analysis {
 Status OutputManager::stringField(StringPiece name, StringField *result) const {
   auto fld = holder_->fieldByName(name);
   if (fld == nullptr) {
-    return Status::InvalidParameter()
-           << "dictionary field with name " << name << " was not found";
+    return JPPS_INVALID_PARAMETER << "dictionary field with name " << name
+                                  << " was not found";
   }
   if (fld->columnType != spec::ColumnType::String) {
-    return Status::InvalidParameter()
-           << "field " << name << " was not string typed";
+    return JPPS_INVALID_PARAMETER << "field " << name
+                                  << " was not string typed";
   }
   result->initialize(fld->index, xtra_, fld->strings);
   return Status::Ok();
@@ -28,12 +28,24 @@ Status OutputManager::stringListField(StringPiece name,
                                       StringListField *result) const {
   auto fld = holder_->fieldByName(name);
   if (fld == nullptr) {
-    return Status::InvalidParameter()
-           << "dictionary field with name " << name << " was not found";
+    return JPPS_INVALID_PARAMETER << "dictionary field with name " << name
+                                  << " was not found";
   }
   if (fld->columnType != spec::ColumnType::StringList) {
-    return Status::InvalidParameter()
-           << "field " << name << " was not stringlist";
+    return JPPS_INVALID_PARAMETER << "field " << name << " was not stringlist";
+  }
+  result->initialize(fld->index, fld->postions, fld->strings);
+  return Status::Ok();
+}
+
+Status OutputManager::kvListField(StringPiece name, KVListField *result) const {
+  auto fld = holder_->fieldByName(name);
+  if (fld == nullptr) {
+    return JPPS_INVALID_PARAMETER << "dictionary field with name " << name
+                                  << " was not found";
+  }
+  if (fld->columnType != spec::ColumnType::StringKVList) {
+    return JPPS_INVALID_PARAMETER << "field " << name << " was not kvlist";
   }
   result->initialize(fld->index, fld->postions, fld->strings);
   return Status::Ok();
@@ -129,7 +141,7 @@ StringPiece StringField::operator[](const NodeWalker &node) const {
       return xtra_->node(node.eptr())->header.unk.surface;
     }
     StringPiece result;
-    if (reader_.readAt(value, &result)) {
+    if (reader_.value().readAt(value, &result)) {
       return result;
     }
     JPP_DCHECK_NOT("should fail in debug");
@@ -143,7 +155,7 @@ void StringField::initialize(i32 index, const ExtraNodesContext *xtra,
                              dic::impl::StringStorageReader reader) {
   index_ = index;
   xtra_ = xtra;
-  new (&reader_) dic::impl::StringStorageReader{reader};
+  reader_.initialize(reader);
 }
 
 i32 StringField::pointer(const NodeWalker &node) const {
@@ -160,15 +172,33 @@ StringListIterator StringListField::operator[](const NodeWalker &node) const {
   if (ptr == -1) {
     ptr = 0;
   }
-  return StringListIterator{strings_, ints_.listAt(ptr)};
+  return StringListIterator{strings_.value(), ints_.value().listAt(ptr)};
 }
 
 void StringListField::initialize(
     i32 index, const dic::impl::IntStorageReader &ints,
     const dic::impl::StringStorageReader &strings) {
   this->index_ = index;
-  this->ints_ = ints;
-  this->strings_ = strings;
+  this->ints_.initialize(ints);
+  this->strings_.initialize(strings);
+}
+
+KVListIterator KVListField::operator[](const NodeWalker &node) const {
+  i32 ptr = -1;
+  auto status = node.valueOf(index_, &ptr);
+  JPP_DCHECK(status);
+  JPP_DCHECK_NE(ptr, -1);
+  if (ptr == -1) {
+    ptr = 0;
+  }
+  return KVListIterator{strings_.value(), ints_.value().kvListAt(ptr)};
+}
+
+void KVListField::initialize(i32 index, const dic::impl::IntStorageReader &ints,
+                             const dic::impl::StringStorageReader &strings) {
+  this->index_ = index;
+  this->ints_.initialize(ints);
+  this->strings_.initialize(strings);
 }
 
 }  // namespace analysis

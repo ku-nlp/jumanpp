@@ -91,7 +91,7 @@ TEST_CASE("feature value match") {
   auto& f2 = spec.field(2, "f2").strings();
   auto& f3 = spec.field(3, "f3").strings();
   auto& ft1 = spec.feature("ft1")
-                  .matchValue(f1, "test")
+                  .matchData(f1, "test")
                   .ifTrue({f2.value(), f3.value()})
                   .ifFalse({f3.value()});
   VALID(ft1);
@@ -104,9 +104,9 @@ TEST_CASE("matching feature has only one branch") {
   auto& f2 = spec.field(2, "f2").strings();
   auto& f3 = spec.field(3, "f3").strings();
   auto& ft1 = spec.feature("ft1")
-                  .matchValue(f1, "test")
+                  .matchData(f1, "test")
                   .ifTrue({f2.value(), f3.value()});
-  auto& ft2 = spec.feature("ft1").matchValue(f1, "test").ifFalse({f3.value()});
+  auto& ft2 = spec.feature("ft1").matchData(f1, "test").ifFalse({f3.value()});
   NOT_VALID(ft1);
   NOT_VALID(ft2);
 }

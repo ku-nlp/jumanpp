@@ -106,6 +106,124 @@ Status StringStorage::makeStorage(util::CodedBuffer* result) {
 
   return Status::Ok();
 }
+
+void StringKeyValueListFieldImporter::injectFieldBuffer(
+    util::CodedBuffer* buffer) {
+  buffer_ = buffer;
+}
+
+bool StringKeyValueListFieldImporter::importFieldValue(
+    const util::CsvReader& csv) {
+  auto sp = csv.field(field_);
+  if (ignore_ == sp) {
+    return true;
+  }
+  auto sepSize = entrySeparator_.size();
+  auto kvsepSize = kvSeparator_.size();
+  while (sp.size() > 0) {
+    auto space = std::search(sp.begin(), sp.end(), entrySeparator_.begin(),
+                             entrySeparator_.end());
+    auto entry = StringPiece{sp.begin(), space};
+    auto sepIter = std::search(sp.begin(), space, kvSeparator_.begin(),
+                               kvSeparator_.end());
+    if (sepIter == space) {
+      storage_->increaseFieldValueCount(entry);
+    } else {
+      auto key = StringPiece{sp.begin(), sepIter};
+      auto value = StringPiece{sepIter + kvsepSize, space};
+      storage_->increaseFieldValueCount(key);
+      storage_->increaseFieldValueCount(value);
+    }
+    if (space == sp.end()) {
+      return true;
+    }
+    sp = StringPiece{space + sepSize, sp.end()};
+  }
+
+  return true;
+}
+
+i32 StringKeyValueListFieldImporter::fieldPointer(const util::CsvReader& csv) {
+  JPP_DCHECK_NE(buffer_, nullptr);
+  auto sp = csv.field(field_);
+
+  // check if the field is ignored
+  if (ignore_ == sp || sp.size() == 0) {
+    return 0;
+  }
+
+  values_.clear();
+  auto sepSize = entrySeparator_.size();
+  auto kvsepSize = kvSeparator_.size();
+
+  while (sp.size() > 0) {
+    auto space = std::search(sp.begin(), sp.end(), entrySeparator_.begin(),
+                             entrySeparator_.end());
+    auto sepIter = std::search(sp.begin(), space, kvSeparator_.begin(),
+                               kvSeparator_.end());
+
+    if (sepIter == space) {
+      auto entry = StringPiece{sp.begin(), space};
+      auto keyIdx = storage_->valueOf(entry);
+      JPP_DCHECK_NE(keyIdx, -1);
+      values_.emplace_back(keyIdx, -1);
+    } else {
+      auto key = StringPiece{sp.begin(), sepIter};
+      auto value = StringPiece{sepIter + kvsepSize, space};
+      auto keyIdx = storage_->valueOf(key);
+      auto valueIdx = storage_->valueOf(value);
+      JPP_DCHECK_NE(keyIdx, -1);
+      JPP_DCHECK_NE(valueIdx, -1);
+      values_.emplace_back(keyIdx, valueIdx);
+    }
+    if (space == sp.end()) {
+      break;
+    }
+    sp = StringPiece{space + sepSize, sp.end()};
+  }
+
+  std::sort(values_.begin(), values_.end(),
+            [](const std::pair<i32, i32>& p1, const std::pair<i32, i32>& p2) {
+              return p1.second < p2.second;
+            });
+
+  JPP_DCHECK_GT(values_.size(), 0);
+  auto first = values_[0];
+  i32 lastKey = first.first;
+
+  local_.reset();
+
+  local_.writeVarint(static_cast<u64>(values_.size()));
+
+  u32 keyFlag = first.second == -1 ? 0 : 1;
+  local_.writeVarint((static_cast<u64>(first.first) << 1) | keyFlag);
+  if (keyFlag == 1) {
+    local_.writeVarint(static_cast<u64>(first.second));
+  }
+
+  for (int i = 1; i < values_.size(); ++i) {
+    auto pair = values_[i];
+    keyFlag = pair.second == -1 ? 0 : 1;
+    u64 keyDiff = static_cast<u64>(pair.first - lastKey);
+    lastKey = pair.first;
+    local_.writeVarint((keyDiff << 1) | keyFlag);
+    if (keyFlag != 0) {
+      local_.writeVarint(static_cast<u64>(pair.second));
+    }
+  }
+
+  i32 ptr;
+  auto serialized = local_.contents();
+  if (!positionCache_.tryFind(serialized, &ptr)) {
+    ptr = static_cast<i32>(buffer_->position());
+    buffer_->writeStringDataWithoutLengthPrefix(serialized);
+    auto savedString = buffer_->contents().slice(ptr, ptr + serialized.size());
+    positionCache_.insert(savedString, ptr);
+  }
+
+  return ptr;
+}
+
 }  // namespace impl
 }  // namespace dic
 }  // namespace core

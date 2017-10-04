@@ -87,12 +87,13 @@ class StorageAssigner {
         fd->stringStorage = assignString(stringName);
         return Status::Ok();
       case ColumnType::StringList:
+      case ColumnType::StringKVList:
         fd->stringStorage = assignString(stringName);
         fd->intStorage = numInts_;
         numInts_ += 1;
         return Status::Ok();
       default:
-        return Status::NotImplemented()
+        return JPPS_NOT_IMPLEMENTED
                << fd->name
                << ": could not assing storage for field, unknown type "
                << fd->columnType;
@@ -208,8 +209,8 @@ Status findOnlyFieldForFeature(util::ArraySlice<FieldDescriptor> fields,
                                util::ArraySlice<StringPiece> references,
                                i32* result) {
   if (references.size() != 1) {
-    return Status::InvalidParameter()
-           << featureName << ": feature can have only one parameter";
+    return JPPS_INVALID_PARAMETER << featureName
+                                  << ": feature can have only one parameter";
   }
   auto fname = references[0];
   auto res = std::find_if(
@@ -217,9 +218,8 @@ Status findOnlyFieldForFeature(util::ArraySlice<FieldDescriptor> fields,
       [fname](const FieldDescriptor& fd) -> bool { return fname == fd.name; });
 
   if (res == fields.end()) {
-    return Status::InvalidState()
-           << "feature " << featureName << " was referring to unknown field "
-           << fname;
+    return JPPS_INVALID_STATE << "feature " << featureName
+                              << " was referring to unknown field " << fname;
   }
 
   *result = res->index;
@@ -265,9 +265,23 @@ Status ModelSpecBuilder::createRemainingPrimitiveFeatures(
         if (util::contains({ct::String, ct::Int}, res.columnType)) {
           pfd.kind = PrimitiveFeatureKind::MatchDic;
         } else if (ColumnType::StringList == res.columnType) {
-          pfd.kind = PrimitiveFeatureKind::MatchAnyDic;
+          pfd.kind = PrimitiveFeatureKind::MatchListElem;
+        } else if (ColumnType::StringKVList == res.columnType) {
+          for (auto& v : pfd.matchData) {
+            if (std::search(v.begin(), v.end(), res.kvSeparator.cbegin(),
+                            res.kvSeparator.cend()) != v.end()) {
+              return JPPS_NOT_IMPLEMENTED
+                     << "For a column " << res.name
+                     << " tried to build KVMatch feature: " << f->name()
+                     << " but the entry [" << v
+                     << "] contained the key-value separator ("
+                     << res.kvSeparator << ")"
+                     << " this is not supported yet";
+            }
+          }
+          pfd.kind = PrimitiveFeatureKind::MatchKey;
         } else {
-          return Status::NotImplemented()
+          return JPPS_NOT_IMPLEMENTED
                  << "building match feature: unupported column class "
                  << res.columnType << " for feature " << f->name();
         }
@@ -297,9 +311,9 @@ Status readMatchDataCsv(StringPiece csvdata, size_t columns,
   JPP_RETURN_IF_ERROR(csvr.initFromMemory(csvdata));
   while (csvr.nextLine()) {
     if (csvr.numFields() != columns) {
-      return Status::InvalidParameter()
-             << "on line " << csvr.lineNumber() << " of csv there were "
-             << csvr.numFields() << " columns, expected " << columns;
+      return JPPS_INVALID_PARAMETER << "on line " << csvr.lineNumber()
+                                    << " of csv there were " << csvr.numFields()
+                                    << " columns, expected " << columns;
     }
     for (i32 i = 0; i < columns; ++i) {
       result->push_back(csvr.field(i).str());
@@ -605,9 +619,11 @@ Status FieldBuilder::fill(FieldDescriptor* descriptor,
                           StorageAssigner* sa) const {
   descriptor->position = csvColumn_;
   descriptor->columnType = columnType_;
-  descriptor->emptyString = emptyValue_.str();
+  descriptor->emptyString = emptyValue_;
   descriptor->isTrieKey = trieIndex_;
   descriptor->name = name_.str();
+  descriptor->listSeparator = fieldSeparator_;
+  descriptor->kvSeparator = kvSeparator_;
   auto storName = stringStorage_.size() == 0 ? name() : stringStorage_;
   JPP_RETURN_IF_ERROR(sa->assign(descriptor, storName));
   return Status::Ok();

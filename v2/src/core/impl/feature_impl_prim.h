@@ -163,16 +163,16 @@ class MatchDicPrimFeatureImpl {
   }
 };
 
-class MatchAnyDicPrimFeatureImpl {
+class MatchListElemPrimFeatureImpl {
   u32 fieldIdx;
   u32 featureIdx;
   util::ArraySlice<i32> matchData;
 
  public:
-  MatchAnyDicPrimFeatureImpl() {}
+  MatchListElemPrimFeatureImpl() = default;
   template <size_t S>
-  constexpr MatchAnyDicPrimFeatureImpl(u32 fieldIdx, u32 featureIdx,
-                                       const i32 (&matchData)[S])
+  constexpr MatchListElemPrimFeatureImpl(u32 fieldIdx, u32 featureIdx,
+                                         const i32 (&matchData)[S])
       : fieldIdx{fieldIdx}, featureIdx{featureIdx}, matchData{matchData} {}
 
   Status initialize(FeatureConstructionContext* ctx, const PrimitiveFeature& f);
@@ -191,6 +191,30 @@ class MatchAnyDicPrimFeatureImpl {
       }
     }
     features->at(featureIdx) = (u32)result;
+  }
+};
+
+class MatchKeyPrimFeatureImpl {
+  u32 fieldIdx_;
+  u32 featureIdx_;
+  util::ArraySlice<i32> keys_;
+
+ public:
+  MatchKeyPrimFeatureImpl() = default;
+  Status initialize(FeatureConstructionContext* ctx, const PrimitiveFeature& f);
+  inline void apply(PrimitiveFeatureContext* ctx, NodeInfo nodeInfo,
+                    const util::ArraySlice<i32>& entry,
+                    util::MutableArraySlice<u64>* features) const noexcept {
+    auto elem = entry.at(fieldIdx_);
+    auto trav = ctx->kvTraversal(fieldIdx_, elem);
+    i32 result = 0;
+    while (trav.next()) {
+      if (contains(keys_, trav.key())) {
+        result = 1;
+        break;
+      }
+    }
+    features->at(featureIdx_) = (u32)result;
   }
 };
 

@@ -102,14 +102,14 @@ Status MappedFile::map(MappedFileFragment *view, size_t offset, size_t size) {
   auto endoffset = offset + size;
 
   if (!view->isClean()) {
-    return Status::InvalidState()
-           << "fragment for the file " << filename_ << " is already mapped";
+    return JPPS_INVALID_STATE << "fragment for the file " << filename_
+                              << " is already mapped";
   }
 
   switch (type_) {
     case MMapType::ReadOnly:
       if (endoffset > size_) {
-        return Status::InvalidParameter()
+        return JPPS_INVALID_PARAMETER
                << "offset=" << offset << " and size=" << size
                << " point after the end of file " << filename_
                << " of size=" << size_;
@@ -122,15 +122,15 @@ Status MappedFile::map(MappedFileFragment *view, size_t offset, size_t size) {
         off_t fileoffset = static_cast<off_t>(endoffset) - 1;
         auto retval = ::lseek(fd_, fileoffset, SEEK_SET);
         if (retval == -1) {
-          return Status::InvalidState()
-                 << "[seek] could not extend file " << filename_ << " to "
-                 << endoffset << "bytes";
+          return JPPS_INVALID_STATE << "[seek] could not extend file "
+                                    << filename_ << " to " << endoffset
+                                    << "bytes";
         }
         auto write_ret = write(fd_, ZERO, 1);
         if (write_ret == -1) {
-          return Status::InvalidState()
-                 << "[write] could not extend file " << filename_ << " to "
-                 << endoffset << "bytes";
+          return JPPS_INVALID_STATE << "[write] could not extend file "
+                                    << filename_ << " to " << endoffset
+                                    << "bytes";
         }
       }
       protection = PROT_READ | PROT_WRITE;
@@ -140,8 +140,8 @@ Status MappedFile::map(MappedFileFragment *view, size_t offset, size_t size) {
 
   void *addr = ::mmap(NULL, size, protection, flags, this->fd_, (off_t)offset);
   if (addr == MAP_FAILED) {
-    return Status::InvalidState()
-           << "mmap call failed: error code = " << strerror(errno);
+    return JPPS_INVALID_STATE << "mmap call failed: error code = "
+                              << strerror(errno);
   }
 
   view->address_ = addr;

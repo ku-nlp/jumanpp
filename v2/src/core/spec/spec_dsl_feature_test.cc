@@ -105,7 +105,7 @@ TEST_CASE("simple dsl with two fields and matcher") {
   ModelSpecBuilder bldr;
   auto& f1 = bldr.field(1, "f1").strings().trieIndex();
   auto& f2 = bldr.field(2, "f2").strings();
-  auto& ft1 = bldr.feature("ft1").matchValue(f1, "x");
+  auto& ft1 = bldr.feature("ft1").matchData(f1, "x");
   bldr.unigram({ft1});
   bldr.unigram({f1, f2});
   AnalysisSpec spec{};
@@ -126,7 +126,7 @@ TEST_CASE("simple dsl with two fields and list matcher") {
   ModelSpecBuilder bldr;
   auto& f1 = bldr.field(1, "f1").strings().trieIndex();
   auto& f2 = bldr.field(2, "f2").stringLists();
-  auto& ft1 = bldr.feature("ft1").matchValue(f2, "x");
+  auto& ft1 = bldr.feature("ft1").matchData(f2, "x");
   bldr.unigram({ft1});
   bldr.unigram({f1});
   AnalysisSpec spec{};
@@ -136,7 +136,7 @@ TEST_CASE("simple dsl with two fields and list matcher") {
   SeqEq(spec.features.primitive[0].references, {0});
   SeqEq(spec.features.primitive[1].references, {1});
   SeqEq(spec.features.primitive[1].matchData, {"x"});
-  CHECK(spec.features.primitive[1].kind == PrimitiveFeatureKind::MatchAnyDic);
+  CHECK(spec.features.primitive[1].kind == PrimitiveFeatureKind::MatchListElem);
 }
 
 TEST_CASE("simple dsl with two fields and length matcher") {

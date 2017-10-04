@@ -95,6 +95,46 @@ class IntListTraversal {
   i32 pointer() const noexcept { return parser_.position(); }
 };
 
+class KeyValueListTraversal {
+  i32 length_;
+  i32 position_ = 0;
+  util::CodedBufferParser parser_;
+
+  i32 lastKey_ = 0;
+
+  i32 key_ = 0;
+  i32 value_ = 0;
+  bool hasValue_ = false;
+
+ public:
+  KeyValueListTraversal(i32 length, const util::CodedBufferParser& parser)
+      : length_{length}, parser_{parser} {}
+
+  inline bool moveNext() noexcept {
+    JPP_RET_CHECK(hasNext());
+    u64 data;
+    JPP_RET_CHECK(parser_.readVarint64(&data));
+    position_ += 1;
+    key_ = lastKey_ + static_cast<i32>(data >> 1);
+    lastKey_ = key_;
+    hasValue_ = (data & 0x1) != 0;
+
+    // we've read the key and there is no value
+    if (!hasValue_) {
+      return true;
+    }
+
+    JPP_RET_CHECK(parser_.readVarint64(&data));
+    value_ = static_cast<i32>(data);
+    return true;
+  }
+
+  inline i32 key() const noexcept { return key_; }
+  inline i32 value() const noexcept { return value_; }
+  inline bool hasValue() const noexcept { return hasValue_; }
+  inline bool hasNext() const noexcept { return position_ < length_; }
+};
+
 class IntStorageReader {
   StringPiece data_;
 
@@ -123,6 +163,19 @@ class IntStorageReader {
     }
 
     return IntListTraversal{size, parser};
+  }
+
+  KeyValueListTraversal kvListAt(i32 ptr) const noexcept {
+    JPP_DCHECK_IN(ptr, 0, data_.size());
+    util::CodedBufferParser parser{data_.from(ptr)};
+    i32 size;
+    if (!parser.readInt(&size)) {
+      // empty traversal
+      parser.limit(0);
+      return KeyValueListTraversal{-1, parser};
+    }
+
+    return KeyValueListTraversal{size, parser};
   }
 
   i32 lengthOf(i32 ptr) {

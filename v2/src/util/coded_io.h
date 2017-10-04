@@ -71,6 +71,15 @@ class CodedBuffer {
     front_ += 4;
   }
 
+  void writeStringDataWithoutLengthPrefix(StringPiece value) {
+    auto vsize = value.size();
+    if (JPP_UNLIKELY(remaining() < vsize + impl::UInt64MaxSize)) {
+      grow(vsize + impl::UInt64MaxSize);
+    }
+    impl::writeRawBytes(value.begin(), value.end(), front_);
+    front_ += vsize;
+  }
+
   void writeString(StringPiece value) {
     auto vsize = value.size();
     size_t maxSize = vsize + impl::UInt64MaxSize;
@@ -95,9 +104,9 @@ class CodedBufferParser {
   const u8* begin_ = nullptr;
 
  public:
-  CodedBufferParser() {}
+  CodedBufferParser() = default;
 
-  CodedBufferParser(StringPiece data) { reset(data); }
+  explicit CodedBufferParser(StringPiece data) { reset(data); }
 
   void reset(StringPiece data) {
     position_ = reinterpret_cast<const u8*>(data.begin());
@@ -160,7 +169,7 @@ class CodedBufferParser {
     return static_cast<i32>(position_ - begin_);
   };
 
-  size_t limit(size_t cnt) {
+  size_t limit(size_t cnt) noexcept {
     size_t cur = remaining();
     end_ = std::min(end_, position_ + cnt);
     return cur;

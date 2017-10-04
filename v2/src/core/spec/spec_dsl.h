@@ -21,7 +21,7 @@ namespace dsl {
 
 class DslOpBase {
  public:
-  virtual ~DslOpBase() {}
+  virtual ~DslOpBase() = default;
   virtual Status validate() const = 0;
 };
 
@@ -62,8 +62,10 @@ class FieldBuilder : public DslOpBase {
   StringPiece name_;
   ColumnType columnType_ = ColumnType::Error;
   bool trieIndex_ = false;
-  StringPiece emptyValue_;
+  std::string emptyValue_;
   StringPiece stringStorage_;
+  std::string fieldSeparator_ = " ";
+  std::string kvSeparator_ = ":";
 
   FieldBuilder() {}
 
@@ -86,18 +88,33 @@ class FieldBuilder : public DslOpBase {
     return *this;
   }
 
+  FieldBuilder& kvLists() {
+    columnType_ = ColumnType::StringKVList;
+    return *this;
+  }
+
   FieldBuilder& trieIndex() {
     trieIndex_ = true;
     return *this;
   }
 
   FieldBuilder& emptyValue(StringPiece data) {
-    emptyValue_ = data;
+    emptyValue_ = data.str();
     return *this;
   }
 
   FieldBuilder& stringStorage(FieldReference ref) {
     stringStorage_ = ref.name();
+    return *this;
+  }
+
+  FieldBuilder& listSeparator(StringPiece sep) {
+    this->fieldSeparator_ = sep.str();
+    return *this;
+  }
+
+  FieldBuilder& kvSeparator(StringPiece sep) {
+    this->kvSeparator_ = sep.str();
     return *this;
   }
 
@@ -188,7 +205,7 @@ class FeatureBuilder : DslOpBase {
     return *this;
   }
 
-  FeatureBuilder& matchValue(FieldReference field, StringPiece value) {
+  FeatureBuilder& matchData(FieldReference field, StringPiece value) {
     fields_.push_back(field.name());
     matchData_ = value;
     changeType(FeatureType::MatchValue);
@@ -228,7 +245,7 @@ class FeatureRef {
   StringPiece name_;
 
  public:
-  FeatureRef() {}
+  FeatureRef() = default;
   FeatureRef(const FieldBuilder& fld) : name_{fld.name()} {}
   FeatureRef(const FeatureBuilder& ft) : name_{ft.name()} {}
   FeatureRef(const FeatureRef& o) = default;

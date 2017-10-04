@@ -59,6 +59,13 @@ struct ColumnImportContext {
             new impl::StringListFieldImporter{stor, colpos, emptyStr});
         break;
       }
+      case ColumnType::StringKVList: {
+        i32 stringIdx = descr->stringStorage;
+        auto stor = &storages[stringIdx];
+        importer.reset(new impl::StringKeyValueListFieldImporter{
+            stor, colpos, emptyStr, descr->listSeparator, descr->kvSeparator});
+        break;
+      }
       default:
         return Status::NotImplemented()
                << "importing field type=" << tp << " is not implemented";

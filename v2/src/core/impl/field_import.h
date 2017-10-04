@@ -12,6 +12,7 @@
 #include "util/csv_reader.h"
 #include "util/flatmap.h"
 #include "util/logging.hpp"
+#include "util/lru_cache.h"
 #include "util/status.hpp"
 
 namespace jumanpp {
@@ -145,6 +146,31 @@ class StringListFieldImporter : public StringFieldImporter {
   bool importFieldValue(const util::CsvReader& csv) override;
 
   virtual void injectFieldBuffer(util::CodedBuffer* buffer) override;
+
+  i32 fieldPointer(const util::CsvReader& csv) override;
+};
+
+class StringKeyValueListFieldImporter : public StringFieldImporter {
+  util::CodedBuffer* buffer_ = nullptr;
+  util::CodedBuffer local_;
+  std::vector<std::pair<i32, i32>> values_{};
+  util::LruCache<StringPiece, i32> positionCache_;
+  std::string entrySeparator_;
+  std::string kvSeparator_;
+
+ public:
+  StringKeyValueListFieldImporter(StringStorage* storage, i32 field,
+                                  StringPiece ignore,
+                                  StringPiece entrySeparator = StringPiece{" "},
+                                  StringPiece kvSeparator = StringPiece{":"})
+      : StringFieldImporter::StringFieldImporter(storage, field, ignore),
+        positionCache_{50000},
+        entrySeparator_{entrySeparator.str()},
+        kvSeparator_{kvSeparator.str()} {}
+
+  void injectFieldBuffer(util::CodedBuffer* buffer) override;
+
+  bool importFieldValue(const util::CsvReader& csv) override;
 
   i32 fieldPointer(const util::CsvReader& csv) override;
 };

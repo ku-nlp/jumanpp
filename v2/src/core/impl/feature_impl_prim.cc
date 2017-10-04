@@ -113,17 +113,19 @@ Status MatchDicPrimFeatureImpl::initialize(FeatureConstructionContext *ctx,
   return Status::Ok();
 }
 
-Status MatchAnyDicPrimFeatureImpl::initialize(FeatureConstructionContext *ctx,
-                                              const PrimitiveFeature &f) {
-  if (f.kind != PrimitiveFeatureKind::MatchAnyDic) {
-    return Status::InvalidParameter() << f.name << ": type was not MatchAnyDic";
+Status MatchListElemPrimFeatureImpl::initialize(FeatureConstructionContext *ctx,
+                                                const PrimitiveFeature &f) {
+  if (f.kind != PrimitiveFeatureKind::MatchListElem) {
+    return Status::InvalidParameter()
+           << f.name << ": type was not MatchListElem";
   }
 
   featureIdx = static_cast<u32>(f.index);
 
   if (f.references.size() != 1) {
     return Status::InvalidParameter()
-           << f.name << ": number of parameters must be 1";
+           << f.name << ": number of parameters must be 1, was "
+           << f.references.size();
   }
 
   fieldIdx = static_cast<u32>(f.references.at(0));
@@ -132,6 +134,30 @@ Status MatchAnyDicPrimFeatureImpl::initialize(FeatureConstructionContext *ctx,
       ctx->checkFieldType(fieldIdx, {spec::ColumnType::StringList}));
 
   matchData = f.matchData;
+
+  return Status::Ok();
+}
+
+Status MatchKeyPrimFeatureImpl::initialize(FeatureConstructionContext *ctx,
+                                           const PrimitiveFeature &f) {
+  if (f.kind != PrimitiveFeatureKind::MatchKey) {
+    return Status::InvalidParameter() << f.name << ": type was not MatchKey";
+  }
+
+  featureIdx_ = static_cast<u32>(f.index);
+
+  if (f.references.size() != 1) {
+    return JPPS_INVALID_PARAMETER << f.name
+                                  << ": number of parameters must be 1, was "
+                                  << f.references.size();
+  }
+
+  fieldIdx_ = static_cast<u32>(f.references[0]);
+
+  JPP_RETURN_IF_ERROR(
+      ctx->checkFieldType(fieldIdx_, {spec::ColumnType::StringKVList}));
+
+  keys_ = f.matchData;
 
   return Status::Ok();
 }
@@ -146,7 +172,7 @@ Status FeatureConstructionContext::checkFieldType(
     }
   }
 
-  auto status = Status::InvalidParameter();
+  auto status = JPPS_INVALID_PARAMETER;
   status << "dic field " << fld.name << " had type " << fld.columnType
          << " , allowed=[";
   for (auto tp : columnTypes) {
@@ -170,7 +196,7 @@ Status PrimitiveFeaturesDynamicApply::initialize(
     std::unique_ptr<PrimitiveFeatureImpl> feature;
     switch (f.kind) {
       case PrimitiveFeatureKind::Invalid:
-        return Status::InvalidParameter() << "uninitialized feature " << f.name;
+        return JPPS_INVALID_PARAMETER << "uninitialized feature " << f.name;
       case PrimitiveFeatureKind::Copy:
         feature.reset(new DynamicPrimitiveFeature<CopyPrimFeatureImpl>{});
         break;
@@ -180,9 +206,9 @@ Status PrimitiveFeaturesDynamicApply::initialize(
       case PrimitiveFeatureKind::MatchDic:
         feature.reset(new DynamicPrimitiveFeature<MatchDicPrimFeatureImpl>{});
         break;
-      case PrimitiveFeatureKind::MatchAnyDic:
+      case PrimitiveFeatureKind::MatchListElem:
         feature.reset(
-            new DynamicPrimitiveFeature<MatchAnyDicPrimFeatureImpl>{});
+            new DynamicPrimitiveFeature<MatchListElemPrimFeatureImpl>{});
         break;
       case PrimitiveFeatureKind::Length:
         feature.reset(new DynamicPrimitiveFeature<LengthPrimFeatureImpl>{});
@@ -191,8 +217,15 @@ Status PrimitiveFeaturesDynamicApply::initialize(
         feature.reset(
             new DynamicPrimitiveFeature<CodepointLengthPrimFeatureImpl>{});
         break;
+      case PrimitiveFeatureKind::MatchKey:
+        feature.reset(new DynamicPrimitiveFeature<MatchKeyPrimFeatureImpl>{});
+        break;
+      default:
+        return JPPS_NOT_IMPLEMENTED << "Could not create feature: " << f.name
+                                    << " its type was not supported";
     }
-    JPP_RETURN_IF_ERROR(feature->initialize(ctx, f));
+    JPP_RIE_MSG(feature->initialize(ctx, f),
+                "failed to initialize feature: " << f.name);
     features_.emplace_back(std::move(feature));
   }
   return Status::Ok();
@@ -206,7 +239,6 @@ void PrimitiveFeaturesDynamicApply::apply(
     f->apply(ctx, entryPtr, entry, features);
   }
 }
-
 }  // namespace impl
 }  // namespace features
 }  // namespace core

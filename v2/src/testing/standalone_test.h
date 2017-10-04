@@ -54,11 +54,16 @@ class TempFile {
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-#endif  // __clang__
+#elif defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
     std::tmpnam(buffer);
 #ifdef __clang__
 #pragma clang diagnostic pop
-#endif  // __clang__
+#elif defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
     filename_.assign(buffer);
   }
 

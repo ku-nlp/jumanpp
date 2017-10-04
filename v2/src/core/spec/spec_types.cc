@@ -17,6 +17,9 @@ std::ostream & ::jumanpp::core::spec::operator<<(
     case ColumnType::StringList:
       o << "StringList";
       break;
+    case ColumnType::StringKVList:
+      o << "StringKVList";
+      break;
     case ColumnType::Error:
       o << "Error";
       break;

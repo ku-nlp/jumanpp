@@ -26,8 +26,20 @@ class DicListTraversal {
   dic::impl::IntListTraversal trav_;
 
  public:
-  DicListTraversal(const dic::impl::IntListTraversal& trav) : trav_{trav} {}
+  explicit DicListTraversal(const dic::impl::IntListTraversal& trav)
+      : trav_{trav} {}
   bool next(i32* result) { return trav_.readOneCumulative(result); }
+};
+
+class KeyValueTraversal {
+  dic::impl::KeyValueListTraversal trav_;
+
+ public:
+  explicit KeyValueTraversal(
+      const dic::impl::KeyValueListTraversal& trav) noexcept
+      : trav_{trav} {}
+  bool next() noexcept { return trav_.moveNext(); }
+  i32 key() const noexcept { return trav_.key(); }
 };
 
 /**
@@ -77,6 +89,12 @@ class PrimitiveFeatureContext {
     auto& fld = fields.at(fieldIdx);
     auto trav = fld.postions.listAt(fieldPtr);
     return DicListTraversal{trav};
+  }
+
+  KeyValueTraversal kvTraversal(i32 fieldIdx, i32 fieldPtr) const {
+    auto& fld = fields.at(fieldIdx);
+    auto trav = fld.postions.kvListAt(fieldPtr);
+    return KeyValueTraversal{trav};
   }
 
   i32 providedFeature(EntryPtr entryPtr, u32 index) const {
