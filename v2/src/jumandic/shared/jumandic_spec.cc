@@ -44,21 +44,21 @@ void SpecFactory::fillSpec(core::spec::dsl::ModelSpecBuilder& bldr) {
   auto& baseform = bldr.field(9, "baseform").strings().stringStorage(surface);
   auto& reading = bldr.field(10, "reading").strings().stringStorage(surface);
   /*auto& canonic = */ bldr.field(11, "canonic").strings().emptyValue("*");
-  auto& features = bldr.field(12, "features").stringLists().emptyValue("NIL");
+  auto& features = bldr.field(12, "features").kvLists().emptyValue("NIL");
 
   auto& auxWord = bldr.feature("auxWord")
                       .matchAnyRowOfCsv("助詞\n助動詞\n判定詞", {pos})
                       .ifTrue({surface, pos, subpos})
                       .ifFalse({pos});
   auto& surfaceLength = bldr.feature("surfaceLength").numCodepoints(surface);
-  auto& isDevoiced = bldr.feature("isDevoiced").matchData(features, "濁音化");
-  auto& nominalize = bldr.feature("nominalize").matchData(features, "名詞化");
+  auto& isDevoiced = bldr.feature("isDevoiced").matchData(features, "濁音化D");
+  auto& nominalize = bldr.feature("nominalize").matchData(features, "連用形名詞化");
   auto& notPrefix = bldr.feature("notPrefix").placeholder();
   auto& lexicalized =
       bldr.feature("lexicalized")
           .matchAnyRowOfCsv(lexicalizedData, {baseform, pos, subpos, conjtype})
           .ifTrue({surface, pos, subpos, conjtype, conjform})
-          .ifFalse({pos});
+          .ifFalse({pos, subpos, conjtype});
 
   bldr.unk("symbols", 1)
       .single(chars::CharacterClass::FAMILY_SYMBOL)
@@ -98,6 +98,7 @@ void SpecFactory::fillSpec(core::spec::dsl::ModelSpecBuilder& bldr) {
   bldr.unigram({baseform, pos});
   bldr.unigram({baseform, pos, subpos});
   bldr.unigram({isDevoiced});
+  bldr.unigram({isDevoiced, pos, subpos});
   bldr.unigram({surfaceLength, notPrefix});
   bldr.unigram({baseform, notPrefix});
   bldr.unigram({pos, subpos, surfaceLength});
