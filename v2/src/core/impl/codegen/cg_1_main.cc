@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
   jumanpp::core::spec::AnalysisSpec spec;
   auto s = bldr.build(&spec);
   if (!s) {
-    std::cerr << "failed to build spec: " << s.message;
+    std::cerr << "failed to build spec: " << s;
     return 1;
   }
 
@@ -36,13 +36,13 @@ int main(int argc, char** argv) {
   s = dbld.importSpec(&spec);
   s = dbld.importCsv("none", "");
   if (!s) {
-    std::cerr << "failed to import empty dic: " << s.message;
+    std::cerr << "failed to import empty dic: " << s;
     return 1;
   }
 
   jumanpp::core::dic::DictionaryHolder dh;
   if (!(s = dh.load(dbld.result()))) {
-    std::cerr << "failed to build dicholder " << s.message;
+    std::cerr << "failed to build dicholder " << s;
     return 1;
   }
 
@@ -64,7 +64,7 @@ int main(int argc, char** argv) {
   s = sfc.generateAndWrite(fh);
   if (!s) {
     std::cerr << "failed to create static files for " << conf.filename << ": "
-              << s.message;
+              << s;
     return 1;
   }
 

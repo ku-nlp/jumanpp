@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
   jumandic::JumanppExec exec{conf};
   Status s = exec.init();
   if (!s.isOk()) {
-    std::cerr << "failed to load model from disk: " << s.message;
+    std::cerr << "failed to load model from disk: " << s;
     return 1;
   }
 
@@ -48,8 +48,8 @@ int main(int argc, char** argv) {
     }
     Status st = exec.analyze(input, comment);
     if (!st) {
-      std::cerr << "error when analyzing sentence [ " << input
-                << "] :" << st.message << "\n";
+      std::cerr << "error when analyzing sentence [ " << input << "] :" << st
+                << "\n";
       std::cout << "EOS\n";
     } else {
       std::cout << exec.output();

@@ -202,14 +202,14 @@ void SoftConfidenceWeighted::dumpModel(StringPiece directory,
 
   if (!s1) {
     LOG_WARN() << "failed to dump SCW to file: " << fname
-               << " open filed: " << s1.message;
+               << " open filed: " << s1;
     return;
   }
 
   Status s2 = modelSvr.save(mnfo);
   if (!s2) {
     LOG_WARN() << "failed to dump SCW to file: " << fname
-               << " save failed: " << s2.message;
+               << " save failed: " << s2;
   }
 }
 

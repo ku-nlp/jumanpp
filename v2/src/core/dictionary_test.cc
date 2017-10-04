@@ -237,6 +237,6 @@ TEST_CASE("small dictionary where one of lines is corrupted is not imported") {
   CHECK_OK(bldr.importSpec(&test.spec));
   auto status = bldr.importCsv("data", data);
   CHECK_FALSE(status);
-  CHECK(status.message.find("there were 1 columns") != std::string::npos);
-  CHECK(status.message.find("on line 2") != std::string::npos);
+  CHECK_THAT(status.message().str(), Catch::Contains("there were 1 columns"));
+  CHECK_THAT(status.message().str(), Catch::Contains("on line 2"));
 }

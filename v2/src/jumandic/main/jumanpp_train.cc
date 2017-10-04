@@ -142,7 +142,7 @@ void doTrain(core::training::TrainingEnv& env,
     env.resetInput();
     Status s = env.trainOneEpoch();
     if (!s) {
-      LOG_ERROR() << "failed to train: " << s.message;
+      LOG_ERROR() << "failed to train: " << s;
       exit(1);
     }
 
@@ -164,14 +164,14 @@ int saveModel(const core::training::TrainingArguments& args,
   Status s = saver.open(args.outputFilename);
   if (!s) {
     LOG_ERROR() << "failed to open file [" << args.outputFilename
-                << "] for saving model: " << s.message;
+                << "] for saving model: " << s;
     return 1;
   }
 
   LOG_INFO() << "Writing the model to file: " << args.outputFilename;
   s = saver.save(model);
   if (!s) {
-    LOG_ERROR() << "failed to save model: " << s.message;
+    LOG_ERROR() << "failed to save model: " << s;
   }
   LOG_INFO() << "Model saved successfully";
 
@@ -186,20 +186,20 @@ int doTrainJpp(t::TrainingArguments& args, core::JumanppEnv& env) {
   Status s = exec.initFeatures(nullptr);
 
   if (!s) {
-    LOG_ERROR() << "failed to initialize features: " << s.message;
+    LOG_ERROR() << "failed to initialize features: " << s;
     return 1;
   }
 
   s = exec.initOther();
 
   if (!s) {
-    LOG_ERROR() << "failed to initialize training process: " << s.message;
+    LOG_ERROR() << "failed to initialize training process: " << s;
     return 1;
   }
 
   s = exec.loadInput(args.corpusFilename);
   if (!s) {
-    LOG_ERROR() << "failed to open corpus filename: " << s.message;
+    LOG_ERROR() << "failed to open corpus filename: " << s;
     return 1;
   }
 
@@ -218,7 +218,7 @@ int doEmbedRnn(t::TrainingArguments& args, core::JumanppEnv& env) {
   Status s = rnnReader.open(args.rnnModelFilename);
   if (!s) {
     LOG_ERROR() << "failed to open rnn file: " << args.rnnModelFilename << "\n"
-                << s.message;
+                << s;
     return 1;
   }
 
@@ -226,7 +226,7 @@ int doEmbedRnn(t::TrainingArguments& args, core::JumanppEnv& env) {
   if (!s) {
     LOG_ERROR() << "failed to parse rnn model from file: "
                 << args.rnnModelFilename << "\n"
-                << s.message;
+                << s;
     return 1;
   }
 
@@ -234,7 +234,7 @@ int doEmbedRnn(t::TrainingArguments& args, core::JumanppEnv& env) {
   s = rnnHolder.init(args.rnnConfig, rnnReader, env.coreHolder()->dic(),
                      "surface");
   if (!s) {
-    LOG_ERROR() << "failed to initialize rnn: " << s.message;
+    LOG_ERROR() << "failed to initialize rnn: " << s;
     return 1;
   }
 
@@ -242,7 +242,7 @@ int doEmbedRnn(t::TrainingArguments& args, core::JumanppEnv& env) {
 
   s = rnnHolder.makeInfo(&info);
   if (!s) {
-    LOG_ERROR() << "failed to add rnn info to the model: " << s.message;
+    LOG_ERROR() << "failed to add rnn info to the model: " << s;
     return 1;
   }
 
@@ -253,7 +253,7 @@ int main(int argc, const char** argv) {
   t::TrainingArguments args{};
   Status s = parseArgs(argc, argv, &args);
   if (!s) {
-    LOG_ERROR() << "failed to parse arguments: " << s.message;
+    LOG_ERROR() << "failed to parse arguments: " << s;
     return 1;
   }
 
@@ -261,7 +261,7 @@ int main(int argc, const char** argv) {
 
   s = env.loadModel(args.modelFilename);
   if (!s) {
-    LOG_ERROR() << "failed to read model from disk: " << s.message;
+    LOG_ERROR() << "failed to read model from disk: " << s;
     return 1;
   }
 

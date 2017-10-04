@@ -48,7 +48,7 @@ Status TrainingEnv::trainOneBatch() {
   for (int i = 0; i < trainers_.activeTrainers(); ++i) {
     auto example = trainers_.trainer(i);
     if (executor_.runNext(example, &result)) {
-      JPP_RETURN_IF_ERROR(handleProcessedTrainer(result, &curLoss));
+      JPP_RETURN_IF_ERROR(handleProcessedTrainer(std::move(result), &curLoss));
     }
   }
 
@@ -69,9 +69,8 @@ Status TrainingEnv::handleProcessedTrainer(
     if (processed != nullptr) {
       lineNo = processed->line();
     }
-    return Status::InvalidState()
-           << "failed to process example on line #" << lineNo << ": "
-           << result.processStatus.message;
+    JPP_RIE_MSG(std::move(result.processStatus),
+                "failed to process example on line #" << lineNo);
   }
   auto loss = processed->loss();
   *curLoss += loss;

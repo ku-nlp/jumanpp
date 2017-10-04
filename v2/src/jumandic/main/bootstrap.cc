@@ -60,7 +60,7 @@ int main(int argc, char* argv[]) {
 
   Status s = importDictionary(filename, target);
   if (!s.isOk()) {
-    LOG_ERROR() << s.message;
+    LOG_ERROR() << s;
     return 1;
   }
   return 0;

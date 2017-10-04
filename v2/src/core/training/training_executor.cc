@@ -21,7 +21,7 @@ TrainingExecutionResult TrainingExecutorThread::waitForTrainer() {
 
     if (count > 10000) {
       Status status = Status::InvalidState() << "waiting for trainer forever";
-      return {nullptr, status};
+      return {nullptr, std::move(status)};
     }
   }
   switch (state) {
@@ -33,18 +33,18 @@ TrainingExecutionResult TrainingExecutorThread::waitForTrainer() {
       // If that is the case, our value should be ready.
       std::unique_lock<std::mutex> lck{mutex_};
       JPP_DCHECK_EQ(state_, ExecutorThreadState::ComputationFinished);
-      return {trainer_, processStatus_};
+      return {trainer_, std::move(processStatus_)};
     }
     case ExecutorThreadState::ComputationFinished: {
       // in this case the result is already ready, so just return it
       // no need for locks
-      return {trainer_, processStatus_};
+      return {trainer_, std::move(processStatus_)};
     }
     default: {
       // otherwise we have an invalid state
       Status status = Status::InvalidState() << "thread was not initialized: "
                                              << static_cast<int>(state);
-      return {nullptr, status};
+      return {nullptr, std::move(status)};
     }
   }
 }

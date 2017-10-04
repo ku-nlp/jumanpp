@@ -66,7 +66,7 @@ bool outputNgramFeatures(i::Printer& p, StringPiece name,
   auto status = all->emitCode(&mb);
   if (!status) {
     LOG_WARN() << "failed to generate ngramFeatures for " << name << ": "
-               << status.message;
+               << status;
     return false;
   }
 
