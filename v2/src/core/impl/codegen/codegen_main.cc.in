@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
   jumanpp::core::dic::DictionaryBuilder dbld;
   s = dbld.importSpec(&spec);
   if (argc == 5) {
-    jumanpp::StringPiece inputFile{argv[4]};
+    auto inputFile = jumanpp::StringPiece::fromCString(argv[4]);
     jumanpp::util::FullyMappedFile fmf;
     s = fmf.open(inputFile);
     if (!s) {

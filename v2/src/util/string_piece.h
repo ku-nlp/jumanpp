@@ -45,12 +45,6 @@ class StringPiece {
   JPP_ALWAYS_INLINE StringPiece(byte_ptr begin, size_t length) noexcept
       : StringPiece(begin, begin + length) {}
 
-  JPP_ALWAYS_INLINE StringPiece(const std::string& str) noexcept
-      : StringPiece(str.data(), str.data() + str.size()) {}
-
-  //  template <typename = void>
-  //  explicit StringPiece(char_ptr ptr) noexcept;
-
   JPP_ALWAYS_INLINE constexpr StringPiece(const StringPiece& other) noexcept =
       default;
 

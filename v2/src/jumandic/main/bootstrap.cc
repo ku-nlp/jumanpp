@@ -55,8 +55,8 @@ int main(int argc, char* argv[]) {
                    "target as third parameters";
   }
 
-  StringPiece filename{argv[1]};
-  StringPiece target{argv[2]};
+  auto filename = StringPiece::fromCString(argv[1]);
+  auto target = StringPiece::fromCString(argv[2]);
 
   Status s = importDictionary(filename, target);
   if (!s.isOk()) {

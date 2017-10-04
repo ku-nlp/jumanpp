@@ -31,11 +31,11 @@ struct NumericData {
 
   // Exceptional Patterns
   const std::vector<CodepointStorage> prefixPatterns =
-      codeptsFor("数", "何", "幾");
+      codeptsFor(S{"数"}, S{"何"}, S{"幾"});
   const std::vector<CodepointStorage> interfixPatterns =
-      codeptsFor("ぶんの", "分の");
+      codeptsFor(S{"ぶんの"}, S{"分の"});
   const std::vector<CodepointStorage> suffixPatterns =
-      codeptsFor("キロ", "メガ", "ギガ", "テラ", "ミリ");
+      codeptsFor(S{"キロ"}, S{"メガ"}, S{"ギガ"}, S{"テラ"}, S{"ミリ"});
 
   NumericData() noexcept {}
 };
