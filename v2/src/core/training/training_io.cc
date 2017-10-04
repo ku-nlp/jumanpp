@@ -134,11 +134,11 @@ Status TrainingDataReader::readFullExampleDblCsv(
 
     JPP_RETURN_IF_ERROR(csv2_.initFromMemory(content));
     if (!csv2_.nextLine()) {
-      return Status::InvalidParameter()
-             << "failed to read word #" << i << " from the line #"
-             << csv_.lineNumber();
+      return JPPS_INVALID_PARAMETER << "failed to read word #" << i
+                                    << " from the line #" << csv_.lineNumber();
     }
-    JPP_RETURN_IF_ERROR(readSingleExampleFragment(csv2_, xtra, result));
+    JPP_RIE_MSG(readSingleExampleFragment(csv2_, xtra, result),
+                "data=" << content);
   }
 
   return Status::Ok();
@@ -154,7 +154,7 @@ Status TrainingDataReader::readSingleExampleFragment(
   result->lengths_.push_back(codepts_.size());
 
   if (csv.numFields() < fields_.size()) {
-    return Status::InvalidParameter()
+    return JPPS_INVALID_PARAMETER
            << "a word from the line #" << csv_.lineNumber() << " had "
            << csv.numFields() << " fields, expected " << fields_.size();
   }
