@@ -27,7 +27,7 @@ struct JumandicFields {
   core::analysis::StringField baseform;
   core::analysis::StringField reading;
   core::analysis::StringField canonicForm;
-  core::analysis::StringListField features;
+  core::analysis::KVListField features;
 
   Status initialize(const core::analysis::OutputManager& om) {
     JPP_RETURN_IF_ERROR(om.stringField("surface", &surface));
@@ -38,7 +38,7 @@ struct JumandicFields {
     JPP_RETURN_IF_ERROR(om.stringField("baseform", &baseform));
     JPP_RETURN_IF_ERROR(om.stringField("reading", &reading));
     JPP_RETURN_IF_ERROR(om.stringField("canonic", &canonicForm));
-    JPP_RETURN_IF_ERROR(om.stringListField("features", &features));
+    JPP_RETURN_IF_ERROR(om.kvListField("features", &features));
     return Status::Ok();
   }
 };

@@ -80,9 +80,11 @@ bool JumanFormat::formatOne(const core::analysis::OutputManager& om,
           printer << " ";
         }
       }
-      StringPiece data;
-      while (res.next(&data)) {
-        printer << data;
+      while (res.next()) {
+        printer << res.key();
+        if (res.hasValue()) {
+          printer << ':' << res.value();
+        }
         if (!res.hasNext()) {
           printer << " ";
         }

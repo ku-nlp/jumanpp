@@ -78,36 +78,60 @@ util::io::Printer& printMaybeQuoted(util::io::Printer& printer,
 }
 
 util::io::Printer& printMaybeQuoteStringList(
-    util::io::Printer& printer, core::analysis::StringListIterator items) {
+    util::io::Printer& printer, core::analysis::KVListIterator items) {
   auto shouldQuote = false;
   auto itemsCopy = items;
-  StringPiece sp;
-  while (itemsCopy.next(&sp)) {
+  while (itemsCopy.next()) {
+    auto sp = itemsCopy.key();
     auto it = std::find_if(sp.begin(), sp.end(),
                            [](char c) { return c == '"' || c == ','; });
     if (it != sp.end()) {
       shouldQuote = true;
       break;
     }
+    if (!itemsCopy.hasValue()) {
+      continue;
+    }
+    sp = itemsCopy.value();
+    it = std::find_if(sp.begin(), sp.end(),
+                      [](char c) { return c == '"' || c == ','; });
+    if (it != sp.end()) {
+      shouldQuote = true;
+      break;
+    }
   }
+
+  auto printQuoted = [&](StringPiece sp) {
+    auto beg = sp.begin();
+    auto it = std::find(beg, sp.end(), '"');
+    while (it != sp.end()) {
+      printer << StringPiece{beg, it};
+      printer << '"';
+      beg = it;
+      it = std::find(it + 1, sp.end(), '"');
+    }
+    printer << StringPiece{beg, sp.end()};
+  };
 
   if (shouldQuote) {
     printer << '"';
-    while (items.next(&sp)) {
-      auto beg = sp.begin();
-      auto it = std::find(beg, sp.end(), '"');
-      while (it != sp.end()) {
-        printer << StringPiece{beg, it};
-        printer << '"';
-        beg = it;
-        it = std::find(it + 1, sp.end(), '"');
+    while (items.next()) {
+      printQuoted(items.key());
+      if (items.hasValue()) {
+        printer << ':';
+        printQuoted(items.value());
       }
-      printer << StringPiece{beg, sp.end()};
+      if (!items.hasNext()) {
+        printer << ' ';
+      }
     }
     printer << '"';
   } else {
-    while (items.next(&sp)) {
-      printer << sp;
+    while (items.next()) {
+      printer << items.key();
+      if (items.hasValue()) {
+        printer << ':' << items.value();
+      }
       if (!items.hasNext()) {
         printer << ' ';
       }

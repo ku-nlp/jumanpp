@@ -153,9 +153,12 @@ Status LatticeFormat::format(const core::analysis::Analyzer& analyzer,
               << '\t';
 
       auto features = f.features[walker];
-      StringPiece feature;
-      while (features.next(&feature)) {
-        printer << feature << '|';
+      while (features.next()) {
+        printer << features.key();
+        if (features.hasValue()) {
+          printer << ':' << features.value();
+        }
+        printer << '|';
       }
 
       auto conn = bnd->connection(cptr.left);
