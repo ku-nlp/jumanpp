@@ -179,7 +179,7 @@ TEST_CASE("two or more continuous suffixes are not accepted") {
   NumericTestEnv env{"x,l1\nほげ,l2\n"};
   env.analyze("４５６キロミリ");
   CHECK(env.contains("４５６キロ", 0, "l1"));
-  CHECK(!env.contains("４５６キロミリ", 0, "l1"));
+  CHECK_FALSE(env.contains("４５６キロミリ", 0, "l1"));
   CHECK(env.numNodeSeeds() == 3);
 }
 
@@ -272,4 +272,13 @@ TEST_CASE("don't emit number if one with the same tags exist in the dic") {
   CHECK(env.contains("５０", 0, "l1", false));
   CHECK_FALSE(env.contains("５０", 0, "l1"));
   CHECK(env.numNodeSeeds() == 2);
+}
+
+TEST_CASE("emit sequence of numbers when dic has different tagged entry") {
+  NumericTestEnv env{"x,l1\n五十,l2\n人,l3\n"};
+  env.analyze("五十人");
+  CHECK(env.contains("五十", 0, "l1", true));
+  CHECK(env.contains("十", 1, "l1", true));
+  CHECK(env.contains("五十", 0, "l2", false));
+  CHECK(env.numNodeSeeds() == 4);
 }

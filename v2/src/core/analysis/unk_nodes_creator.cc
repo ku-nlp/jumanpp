@@ -129,10 +129,11 @@ bool UnkNodesContext::dicPatternMatches(const UnkNodeConfig& conf,
         continue;
       }
       if (data.at(i) != entryBuffer.at(i)) {
-        break;
+        goto nextWord;
       }
     }
     return true;
+  nextWord:;
   }
 
   return false;
