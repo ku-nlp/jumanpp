@@ -9,7 +9,7 @@ set(jumandic_sources shared/juman_format.cc
 set(jumandic_tests shared/jumandic_spec_test.cc shared/mini_dic_test.cc shared/training_test.cc
         shared/mdic_format_test.cc)
 
-set(bug_test_sources tests/bug_950111-003_test.cc)
+set(bug_test_sources tests/bug_950111-003_test.cc tests/bug_28_lattice.cc)
 
 add_library(jpp_jumandic_spec shared/jumandic_spec.cc shared/jumandic_spec_lexdata.cc shared/jumandic_spec.h)
 target_link_libraries(jpp_jumandic_spec jpp_core)

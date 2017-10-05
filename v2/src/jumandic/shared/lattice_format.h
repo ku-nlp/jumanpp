@@ -16,17 +16,17 @@ using core::analysis::LatticeNodePtr;
 
 struct LatticeNodeInfo {
   util::InlinedVector<u16, 32> ranks;
+  util::InlinedVector<LatticeNodePtr, 32> prev;
   util::FlatSet<core::analysis::ConnectionPtr> ptrs;
+  i32 id;
 
-  void addElem(const core::analysis::ConnectionPtr& cptr, i32 rank) {
-    ranks.push_back(static_cast<u16>(rank));
-    ptrs.insert(cptr);
-  }
+  void addElem(const core::analysis::ConnectionPtr& cptr, i32 rank);
+  void fixPrevs();
 };
 
 class LatticeInfoView {
   LatticeNodePtr nodePtr_;
-  const LatticeNodeInfo* node_;
+  LatticeNodeInfo* node_;
 
   LatticeInfoView(const LatticeNodePtr& nodePtr_, LatticeNodeInfo* node_)
       : nodePtr_(nodePtr_), node_(node_) {}
@@ -34,6 +34,7 @@ class LatticeInfoView {
  public:
   const LatticeNodePtr& nodePtr() const { return nodePtr_; }
   const LatticeNodeInfo& nodeInfo() const { return *node_; }
+  void assignId(i32 id) { node_->id = id; }
 
   friend class LatticeFormatInfo;
 };
@@ -44,6 +45,7 @@ class LatticeFormatInfo {
  public:
   Status fillInfo(const core::analysis::Analyzer& an, i32 topN);
   void publishResult(std::vector<LatticeInfoView>* view);
+  i32 idOf(LatticeNodePtr ptr) const;
 };
 
 class LatticeFormat : public OutputFormat {
@@ -53,14 +55,9 @@ class LatticeFormat : public OutputFormat {
   core::analysis::NodeWalker walker{&fieldBuffer};
   JumandicIdResolver idResolver;
   LatticeFormatInfo latticeInfo;
-  util::FlatMap<core::analysis::LatticeNodePtr, std::string> prevIds;
-  i32 currentId;
 
   i32 topN;
   std::vector<LatticeInfoView> infoView;
-
-  i32 appendId(core::analysis::LatticeNodePtr cptr);
-  StringPiece prevIdFor(core::analysis::LatticeNodePtr ptr) const;
 
  public:
   LatticeFormat(i32 topN) : topN(topN) {}

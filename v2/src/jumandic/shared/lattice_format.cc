@@ -14,7 +14,7 @@ Status LatticeFormatInfo::fillInfo(const core::analysis::Analyzer& an,
   auto ai = an.impl();
   auto lat = ai->lattice();
 
-  info.clear();
+  info.clear_no_resize();
 
   if (lat->createdBoundaryCount() <= 3) {
     return Status::Ok();
@@ -42,6 +42,7 @@ void LatticeFormatInfo::publishResult(std::vector<LatticeInfoView>* view) {
   view->reserve(info.size());
   for (auto& pair : info) {
     view->push_back({pair.first, &pair.second});
+    pair.second.fixPrevs();
   }
   std::sort(view->begin(), view->end(),
             [](const LatticeInfoView& v1, const LatticeInfoView& v2) {
@@ -50,6 +51,19 @@ void LatticeFormatInfo::publishResult(std::vector<LatticeInfoView>* view) {
               }
               return v1.nodePtr().boundary < v2.nodePtr().boundary;
             });
+  i32 firstId = 1;
+  for (auto& v : *view) {
+    v.assignId(firstId);
+    ++firstId;
+  }
+}
+
+i32 LatticeFormatInfo::idOf(LatticeNodePtr ptr) const {
+  auto iter = info.find(ptr);
+  if (iter != info.end()) {
+    return iter->second.id;
+  }
+  return 0;
 }
 
 Status LatticeFormat::format(const core::analysis::Analyzer& analyzer,
@@ -65,9 +79,6 @@ Status LatticeFormat::format(const core::analysis::Analyzer& analyzer,
   JPP_RETURN_IF_ERROR(latticeInfo.fillInfo(analyzer, topN));
 
   latticeInfo.publishResult(&infoView);
-  prevIds.clear();
-  currentId = 0;
-  appendId({1, 0});  // append BOS2
 
   auto& om = analyzer.output();
 
@@ -123,8 +134,16 @@ Status LatticeFormat::format(const core::analysis::Analyzer& analyzer,
 
     while (walker.next()) {
       printer << "-\t";
-      printer << appendId(n.nodePtr()) << '\t';
-      printer << prevIdFor(cptr.previous->latticeNodePtr()) << '\t';
+      printer << n.nodeInfo().id << '\t';
+      auto& prevs = n.nodeInfo().prev;
+      for (int i = 0; i < prevs.size(); ++i) {
+        auto id = latticeInfo.idOf(prevs[i]);
+        printer << id;
+        if (i != prevs.size() - 1) {
+          printer << ';';
+        }
+      }
+      printer << '\t';
       auto position = cptr.boundary - 2;  // we have 2 BOS
       printer << position << '\t';
       printer << position + ninfo.numCodepoints() << '\t';
@@ -201,28 +220,26 @@ Status LatticeFormat::initialize(const core::analysis::OutputManager& om) {
   return Status::Ok();
 }
 
-i32 LatticeFormat::appendId(core::analysis::LatticeNodePtr cptr) {
-  auto curIds = currentId;
-  ++currentId;
-  auto& s = prevIds[cptr];
-  if (s.empty()) {
-    s = std::to_string(curIds);
-  } else {
-    s += ';';
-    s += std::to_string(curIds);
+void LatticeNodeInfo::addElem(const core::analysis::ConnectionPtr& cptr,
+                              i32 rank) {
+  ranks.push_back(static_cast<u16>(rank));
+  ptrs.insert(cptr);
+  auto prevptr = cptr.previous->latticeNodePtr();
+  if (std::find(prev.begin(), prev.end(), prevptr) == prev.end()) {
+    prev.push_back(prevptr);
   }
-  return curIds;
 }
 
-StringPiece LatticeFormat::prevIdFor(core::analysis::LatticeNodePtr ptr) const {
-  auto it = prevIds.find(ptr);
-  JPP_DCHECK_NE(it, prevIds.end());
-  if (it == prevIds.end()) {
-    return StringPiece{"?"};
+void LatticeNodeInfo::fixPrevs() {
+  if (prev.size() > 1) {
+    std::sort(prev.begin(), prev.end(),
+              [](const LatticeNodePtr& p1, const LatticeNodePtr& p2) {
+                if (p1.boundary == p2.boundary)
+                  return p1.position < p2.position;
+                return p1.boundary < p2.boundary;
+              });
   }
-  return it->second;
 }
-
 }  // namespace output
 }  // namespace jumandic
 }  // namespace jumanpp
