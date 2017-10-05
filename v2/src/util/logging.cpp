@@ -6,6 +6,7 @@
 #include <chrono>
 #include <ctime>
 #include <iostream>
+#include <mutex>
 
 namespace jumanpp {
 namespace util {
@@ -19,21 +20,14 @@ constexpr size_t computeLength(const char (&v1)[S1], const char (&v2)[S2]) {
 static constexpr size_t prefixLength =
     computeLength("src/util/logging.hpp", __FILE__);
 
+std::mutex log_mutex_;
+
 WriteInDestructorLoggerImpl::~WriteInDestructorLoggerImpl() {
   if (level_ <= CurrentLogLevel) {
-    auto time = std::chrono::system_clock::now();
-    auto timet = std::chrono::system_clock::to_time_t(time);
-    auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(
-        time.time_since_epoch());
-    auto milli_val = millis.count() % 1000;
-    std::tm tm = {0};
-    if (localtime_r(&timet, &tm) != nullptr) {
-      char buffer[256];
-      std::snprintf(buffer, 255, "%02d:%02d:%02d.%03d ", tm.tm_hour, tm.tm_min,
-                    tm.tm_sec, (int)milli_val);
-      std::cerr << buffer;
-    }
-    std::cerr << data_.str() << std::endl;
+    data_ << '\n';
+    auto str = data_.str();
+    std::lock_guard<std::mutex> guard{log_mutex_};
+    std::cerr.write(str.data(), str.size());
   }
 }
 
@@ -42,6 +36,19 @@ WriteInDestructorLoggerImpl::WriteInDestructorLoggerImpl(const char *file,
     : level_{lvl} {
   if (level_ > CurrentLogLevel) {
     return;
+  }
+
+  auto time = std::chrono::system_clock::now();
+  auto timet = std::chrono::system_clock::to_time_t(time);
+  auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(
+      time.time_since_epoch());
+  auto milli_val = millis.count() % 1000;
+  std::tm tm = {0};
+  if (localtime_r(&timet, &tm) != nullptr) {
+    char buffer[256];
+    std::snprintf(buffer, 255, "%02d:%02d:%02d.%03d ", tm.tm_hour, tm.tm_min,
+                  tm.tm_sec, (int)milli_val);
+    data_ << buffer;
   }
 
   switch (lvl) {

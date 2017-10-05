@@ -8,6 +8,7 @@
 #include "scw.h"
 #include "trainer.h"
 
+#include <util/bounded_queue.h>
 #include <atomic>
 #include <condition_variable>
 #include <mutex>
@@ -20,25 +21,17 @@ namespace training {
 struct TrainingExecutionResult {
   OwningTrainer* trainer;
   Status processStatus;
-};
 
-enum class ExecutorThreadState {
-  Initialization,
-  WaitingForInput,
-  HaveInput,
-  RunningComputation,
-  ComputationFinished,
-  Exiting
+  TrainingExecutionResult() : trainer{nullptr}, processStatus{Status::Ok()} {}
+  TrainingExecutionResult(OwningTrainer* tr, Status status)
+      : trainer{tr}, processStatus{std::move(status)} {}
 };
 
 class TrainingExecutorThread {
   const analysis::ScorerDef* scoreConf_;
-  Status processStatus_;
+  util::bounded_queue<OwningTrainer*>* trainers_;
+  util::bounded_queue<TrainingExecutionResult>* results_;
   std::thread thread_;
-  std::mutex mutex_;
-  std::condition_variable input_ready_;
-  OwningTrainer* trainer_;
-  std::atomic<ExecutorThreadState> state_{ExecutorThreadState::Initialization};
 
   void run();
 
@@ -46,31 +39,33 @@ class TrainingExecutorThread {
   static void runMain(TrainingExecutorThread* ctx) { ctx->run(); }
 
  public:
-  explicit TrainingExecutorThread(const analysis::ScorerDef* conf);
-  void publishTrainer(OwningTrainer* trainer);
-  TrainingExecutionResult waitForTrainer();
-  ~TrainingExecutorThread();
+  explicit TrainingExecutorThread(
+      const analysis::ScorerDef* conf,
+      util::bounded_queue<OwningTrainer*>* trainers,
+      util::bounded_queue<TrainingExecutionResult>* results);
+  void finish();
 };
 
 class TrainingExecutor {
   std::vector<std::unique_ptr<TrainingExecutorThread>> threads_;
-  u32 head_;
-  u32 tail_;
+  util::bounded_queue<OwningTrainer*> trainers_;
+  util::bounded_queue<TrainingExecutionResult> results_;
 
  public:
   Status initialize(const analysis::ScorerDef* sconf, u32 nthreads);
 
-  u32 capacity() const { return (u32)threads_.size(); }
+  bool submitNext(OwningTrainer* next) {
+    return trainers_.offer(std::move(next));
+  }
 
-  u32 used() const { return head_ - tail_; }
+  bool resultWithoutWait(TrainingExecutionResult* result) {
+    return results_.recieve(result);
+  }
 
-  u32 available() const { return capacity() - used(); }
-
-  bool nonProcessedExist() const { return head_ != tail_; }
-
-  bool runNext(OwningTrainer* next, TrainingExecutionResult* result);
+  size_t nowReady() const { return results_.size(); }
 
   TrainingExecutionResult waitOne();
+  ~TrainingExecutor();
 };
 
 }  // namespace training

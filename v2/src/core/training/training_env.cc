@@ -14,19 +14,19 @@ namespace training {
 Status TrainingEnv::trainOneEpoch() {
   double lastLoss = 0.f;
   double lossSum = 0.0f;
+  i32 firstTrainer = 0;
   while (!dataReader_.finished()) {
     JPP_RETURN_IF_ERROR(readOneBatch());
     if (trainers_.activeTrainers() <= 0) {
       break;
     }
+    auto lastTrainer = firstTrainer + trainers_.activeTrainers() - 1;
 
     for (u32 batchIter = 0; batchIter < args_.batchMaxIterations; ++batchIter) {
       JPP_RETURN_IF_ERROR(trainOneBatch());
       auto normLoss =
           std::abs(lastLoss - batchLoss_) / trainers_.activeTrainers();
       lastLoss = batchLoss_;
-      auto firstTrainer = trainers_.trainer(0)->line();
-      auto lastTrainer = firstTrainer + trainers_.activeTrainers() - 1;
       LOG_DEBUG() << "batch [" << firstTrainer << "-" << lastTrainer << "]|"
                   << batchIter << ": " << normLoss << "|" << batchLoss_;
       if (normLoss < args_.batchLossEpsilon) {
@@ -34,6 +34,7 @@ Status TrainingEnv::trainOneEpoch() {
       }
     }
     lossSum += lastLoss;
+    firstTrainer += trainers_.activeTrainers();
   }
   totalLoss_ = lossSum;
   return Status::Ok();
@@ -42,20 +43,22 @@ Status TrainingEnv::trainOneEpoch() {
 Status TrainingEnv::trainOneBatch() {
   double curLoss = 0;
 
-  core::training::TrainingExecutionResult result{nullptr,
-                                                 Status::NotImplemented()};
+  auto totalTrainers = trainers_.activeTrainers();
+  int submittedTrainers = 0;
 
-  for (int i = 0; i < trainers_.activeTrainers(); ++i) {
-    auto example = trainers_.trainer(i);
-    if (executor_.runNext(example, &result)) {
-      JPP_RETURN_IF_ERROR(handleProcessedTrainer(std::move(result), &curLoss));
+  for (int processedTrainers = 0; processedTrainers < totalTrainers;
+       ++processedTrainers) {
+    // step1: load trainer queue with trainers
+    while (submittedTrainers < totalTrainers &&
+           executor_.submitNext(trainers_.trainer(submittedTrainers))) {
+      submittedTrainers += 1;
     }
-  }
 
-  // handle currently processing elements
-  while (executor_.nonProcessedExist()) {
+    // step2: wait for ready trainers and process them
     JPP_RETURN_IF_ERROR(handleProcessedTrainer(executor_.waitOne(), &curLoss));
   }
+
+  JPP_DCHECK_EQ(executor_.nowReady(), 0);
 
   batchLoss_ = curLoss;
   return Status::Ok();
