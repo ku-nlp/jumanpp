@@ -6,6 +6,7 @@
 
 TEST_CASE("example id S-ID:950110271-003 works") {
   JumandicTrainingTestEnv env{"jumandic/bug950111-003.mdic"};
+  env.trainArgs.batchSize = 100;
   env.initialize();
   env.singleEpochFrom("jumandic/bug950111-003.in");
   env.singleEpochFrom("jumandic/bug950111-003.in");
