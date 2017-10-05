@@ -93,6 +93,7 @@ void SoftConfidenceWeighted::updateMatrix(
 
 SoftConfidenceWeighted::SoftConfidenceWeighted(const TrainingConfig& conf)
     : featureExponent_{conf.featureNumberExponent},
+      randomSeed_{conf.randomSeed},
       phi{conf.scw.phi},
       C{conf.scw.C},
       zeta{1 + phi * phi},
@@ -210,6 +211,16 @@ void SoftConfidenceWeighted::dumpModel(StringPiece directory,
   if (!s2) {
     LOG_WARN() << "failed to dump SCW to file: " << fname
                << " save failed: " << s2;
+  }
+}
+
+void SoftConfidenceWeighted::substractInitValues() {
+  double boundary = 1.01 / std::sqrt(usableWeights.size());
+
+  for (auto &weight : usableWeights) {
+    if (std::fabs(weight) < boundary) {
+      weight = 0;
+    }
   }
 }
 

@@ -36,6 +36,12 @@ Status TrainingEnv::trainOneEpoch() {
     lossSum += lastLoss;
     firstTrainer += trainers_.activeTrainers();
   }
+
+  if (firstEpoch_) {
+    scw_.substractInitValues();
+    firstEpoch_ = false;
+  }
+
   totalLoss_ = lossSum;
   return Status::Ok();
 }

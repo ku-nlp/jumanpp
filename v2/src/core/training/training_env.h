@@ -47,6 +47,7 @@ class TrainingEnv {
 
   double batchLoss_;
   double totalLoss_;
+  bool firstEpoch_ = true;
 
  public:
   TrainingEnv(const TrainingArguments& args, JumanppEnv* env)

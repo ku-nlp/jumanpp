@@ -25,6 +25,7 @@ struct ScwData;
 class SoftConfidenceWeighted {
   std::unique_ptr<ScwData> data_;
   u32 featureExponent_;
+  u32 randomSeed_;
 
   std::vector<float> usableWeights;
   std::vector<float> matrixDiagonal;
@@ -53,12 +54,13 @@ class SoftConfidenceWeighted {
                      util::ArraySlice<ScoredFeature> features);
 
  public:
-  SoftConfidenceWeighted(const TrainingConfig& conf);
+  explicit SoftConfidenceWeighted(const TrainingConfig& conf);
   Status validate() const;
   void update(float loss, util::ArraySlice<ScoredFeature> features);
   const analysis::ScorerDef* scorers() const { return &sconf; }
   void exportModel(model::ModelInfo* model);
   void dumpModel(StringPiece directory, StringPiece prefix, i32 number);
+  void substractInitValues();
   ~SoftConfidenceWeighted();
 };
 
