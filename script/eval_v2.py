@@ -84,15 +84,15 @@ def render_diff(diff, buffer):
         else:
             if not has_space:
                 buffer.write(" ")
-            buffer.write("[")
+            buffer.write("[ ")
             buffer.write(red)
             for sys in p.sys:
-                buffer.write(f" {sys[0]}_{sys[1]}:{sys[2]} ")
+                buffer.write(f"{sys[0]}_{sys[1]}:{sys[2]} ")
             buffer.write(reset)
-            buffer.write("/")
+            buffer.write("/ ")
             buffer.write(green)
             for gold in p.gold:
-                buffer.write(f" {gold[0]}_{gold[1]}:{gold[2]} ")
+                buffer.write(f"{gold[0]}_{gold[1]}:{gold[2]} ")
             buffer.write(reset)
             buffer.write("] ")
             has_space = True
@@ -183,7 +183,9 @@ def compute_diff(sysobj, goldobj, lineno):
                     else:
                         break
 
-            diff.append(DiffPart(DiffPart.DIFF0, sysparts[sysstart:sysidx], goldparts[goldstart:goldidx]))
+            sysappd = sysparts[sysstart:sysidx]
+            goldappd = goldparts[goldstart:goldidx]
+            diff.append(DiffPart(DiffPart.DIFF0, sysappd, goldappd))
 
     if sysidx < syslen:
         diff.append(DiffPart(DiffPart.DIFF0, sysparts[sysidx:], []))
@@ -200,18 +202,15 @@ def not_same(diff):
     return False
 
 
-def calculate_stats(sysin, goldin, args):
+def calculate_stats(syslines, goldlines, args):
     line = 1
     scores = ScoreInfo()
-
-    goldlines = goldin.readlines()
-    syslines = sysin.readlines()
 
     if len(goldlines) != len(syslines):
         print("System output and gold data have different number of sentences", file=stderr)
         exit(1)
 
-    for sysdata, golddata in zip(goldlines, syslines):
+    for golddata, sysdata in zip(goldlines, syslines):
         sysobj = parse_sentence(sysdata.strip(), line)
         goldobj = parse_sentence(golddata.strip(), line)
         diff = compute_diff(sysobj, goldobj, line)
@@ -254,7 +253,10 @@ def parse_sentence(line, lineno):
 def read_and_eval(opts):
     with open(opts.system, 'rt') as sysin:
         with open(opts.gold, 'rt') as goldin:
-            return calculate_stats(sysin, goldin, opts)
+            return calculate_stats(
+                syslines=sysin.readlines(),
+                goldlines=goldin.readlines(),
+                args=opts)
 
 parts_regex = re.compile(r'^([^_]+)_([^:]+):(.*)$')
 
