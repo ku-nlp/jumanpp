@@ -218,9 +218,6 @@ Status PartialExampleReader::initialize(TrainingIo* tio) {
   for (auto& x : tio->fields()) {
     fields_.insert(std::make_pair(x.name, &x));
   }
-  auto& sf = tio_->fields().at(tio->surfaceFieldIdx());
-  surfaceMap_ = sf.str2int;
-  surfaceFieldIdx_ = sf.dicFieldIdx;
 
   return Status::Ok();
 }
@@ -247,6 +244,10 @@ Status PartialExampleReader::readExample(PartialExample* result, bool* eof) {
     if (csv_.numFields() == 1) {
       auto data = csv_.field(0);
       if (data.empty()) {
+        auto& bnds = result->boundaries_;
+        if (!bnds.empty()) {
+          bnds.erase(bnds.end() - 1, bnds.end());
+        }
         return Status::Ok();
       }
       codepts_.clear();
@@ -274,17 +275,8 @@ Status PartialExampleReader::readExample(PartialExample* result, bool* eof) {
     nc.length = static_cast<i32>(codepts_.size());
     nc.boundary = boundary;
     boundary += nc.length;
-
-    JPP_DCHECK(surfaceMap_);
-    auto surfaceIdIter = surfaceMap_->find(surface);
-    i32 surfaceId;
-    if (surfaceIdIter == surfaceMap_->end()) {
-      surfaceId = analysis::hashUnkString(surface);
-    } else {
-      surfaceId = surfaceIdIter->second;
-    }
-
-    nc.tags.push_back(TagConstraint{surfaceFieldIdx_, surfaceId});
+    result->surface_.append(nc.surface);
+    result->boundaries_.push_back(boundary);
 
     for (int idx = 2; idx < csv_.numFields(); ++idx) {
       auto fldData = csv_.field(idx);

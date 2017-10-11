@@ -5,6 +5,7 @@
 #include "gold_example.h"
 #include "training_test_common.h"
 
+namespace {
 class GoldExample2Env {
  protected:
   testing::TestEnv env;
@@ -49,6 +50,7 @@ class GoldExample2Env {
 
   ExampleData top1Node(int idx) { return am.top1Node(idx); }
 };
+}  // namespace
 
 TEST_CASE("can read simple example with difficult conditions") {
   StringPiece dic = "X,X,Y,Z\nもも,1,a,A\nも,2,b,B\n";

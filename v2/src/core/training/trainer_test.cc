@@ -10,6 +10,7 @@
 
 using namespace jumanpp::core::training;
 
+namespace {
 class TrainerEnv : public GoldExampleEnv {
  public:
   static TrainingConfig testConf() {
@@ -64,6 +65,7 @@ class TrainerEnv : public GoldExampleEnv {
     out << fmt.result();
   }
 };
+}  // namespace
 
 TEST_CASE("trainer can compute score for a simple sentence") {
   StringPiece dic = "もも,N,0\nも,PRT,1\n";

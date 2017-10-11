@@ -128,10 +128,8 @@ class PartialExampleReader {
   TrainingIo* tio_;
   util::FlatMap<StringPiece, const TrainingExampleField*> fields_;
   util::FullyMappedFile file_;
-  util::CsvReader csv_;
+  util::CsvReader csv_{'\t', '\0'};
   std::vector<chars::InputCodepoint> codepts_;
-  const util::FlatMap<StringPiece, i32>* surfaceMap_;
-  i32 surfaceFieldIdx_;
 
  public:
   Status initialize(TrainingIo* tio);

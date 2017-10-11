@@ -42,7 +42,8 @@ set(core_test_srcs darts_trie_test.cc dictionary_test.cc impl/field_import_test.
         impl/feature_impl_combine_test.cc impl/feature_test.cc runtime_info_test.cc impl/graphviz_format_test.cc
         )
 
-set(core_train_test_srcs training/gold_example_test.cc training/gold_example2_test.cc training/trainer_test.cc)
+set(core_train_test_srcs training/gold_example_test.cc training/gold_example2_test.cc training/trainer_test.cc
+        training/partial_example_io_test.cc)
 
 set(spec_test_srcs spec/spec_grammar_test.cc spec/spec_dsl_test.cc spec/spec_dsl_feature_test.cc
         spec/spec_dsl_kvlist_test.cc)
