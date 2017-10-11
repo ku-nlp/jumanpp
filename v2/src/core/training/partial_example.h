@@ -72,6 +72,8 @@ class PartialTrainer {
   friend class TrainerBatch;
 
  public:
+  explicit PartialTrainer(analysis::AnalyzerImpl* ana) : analyzer_{ana} {}
+
   Status prepare();
   Status compute(const analysis::ScorerDef* sconf);
 
@@ -79,15 +81,21 @@ class PartialTrainer {
   util::ArraySlice<ScoredFeature> featureDiff() const { return features_; }
 
   void addBadNode(const analysis::ConnectionPtr* node, i32 boundary);
+  float addBadNode2(const analysis::ConnectionPtr* node, i32 boundary,
+                    i32 length, util::ArraySlice<TagConstraint> tagFilter);
 
   ExampleInfo exampleInfo() const { return example_.exampleInfo(); }
 
   const PartialExample& example() const { return example_; }
+  PartialExample& example() { return example_; }
+
+  void markGold(std::function<void(analysis::LatticeNodePtr)> callback,
+                analysis::Lattice* lattice) const;
 };
 
 class OwningPartialTrainer : public ITrainer {
   bool isPrepared_;
-  PartialTrainer trainer_;
+  util::Lazy<PartialTrainer> trainer_;
   util::Lazy<analysis::AnalyzerImpl> analyzer_;
 
   friend class TrainerBatch;
@@ -98,7 +106,7 @@ class OwningPartialTrainer : public ITrainer {
 
   Status prepare() override {
     if (!isPrepared_) {
-      auto s = trainer_.prepare();
+      auto s = trainer_.value().prepare();
       isPrepared_ = true;
       return s;
     }
@@ -106,16 +114,18 @@ class OwningPartialTrainer : public ITrainer {
   }
 
   Status compute(const analysis::ScorerDef* sconf) override {
-    return trainer_.compute(sconf);
+    return trainer_.value().compute(sconf);
   }
 
-  float loss() const override { return trainer_.loss(); }
+  float loss() const override { return trainer_.value().loss(); }
 
   util::ArraySlice<ScoredFeature> featureDiff() const override {
-    return trainer_.featureDiff();
+    return trainer_.value().featureDiff();
   }
 
-  ExampleInfo exampleInfo() const override { return trainer_.exampleInfo(); }
+  ExampleInfo exampleInfo() const override {
+    return trainer_.value().exampleInfo();
+  }
 
   const analysis::OutputManager& outputMgr() const override;
   void markGold(

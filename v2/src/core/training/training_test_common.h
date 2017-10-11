@@ -74,7 +74,7 @@ class AnalyzerMethods {
 
   ExampleData top1Node(int idx) {
     REQUIRE_OK(path.fillIn(analyzer->lattice()));
-    path.moveToBoundary(idx);
+    path.moveToChunk(idx);
     REQUIRE(path.totalNodesInChunk() == 1);
     ConnectionPtr ptr;
     REQUIRE(path.nextNode(&ptr));

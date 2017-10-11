@@ -70,7 +70,9 @@ class AnalysisPath {
 
   i32 curNode() const { return currentNode_; }
 
-  i32 numBoundaries() { return static_cast<i32>(offsets_.size()) - 1; }
+  i32 numBoundaries() const { return static_cast<i32>(offsets_.size()) - 1; }
+
+  i32 totalNodes() const { return static_cast<i32>(elems_.size()); }
 
   void reset() { currentChunk_ = -1; }
 
@@ -84,10 +86,23 @@ class AnalysisPath {
     return false;
   }
 
-  void moveToBoundary(i32 pos) {
+  void moveToChunk(i32 pos) {
     JPP_DCHECK_IN(pos, 0, offsets_.size());
     currentChunk_ = pos;
     currentNode_ = -1;
+  }
+
+  bool moveToBoundary(i32 boundary) {
+    while (nextBoundary()) {
+      auto bnd = currentBoundary();
+      if (bnd == boundary) {
+        return true;
+      } else if (bnd > boundary) {
+        currentChunk_ -= 1;
+        return false;
+      }
+    }
+    return false;
   }
 
   Status fillIn(Lattice* l);

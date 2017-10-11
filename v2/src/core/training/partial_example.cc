@@ -12,6 +12,7 @@ namespace training {
 
 Status PartialTrainer::prepare() {
   JPP_RETURN_IF_ERROR(analyzer_->resetForInput(example_.surface()));
+  JPP_RETURN_IF_ERROR(analyzer_->prepareNodeSeeds());
   JPP_RETURN_IF_ERROR(analyzer_->buildLattice());
   analyzer_->bootstrapAnalysis();
   return Status::Ok();
@@ -21,6 +22,7 @@ Status PartialTrainer::compute(const analysis::ScorerDef* sconf) {
   JPP_RETURN_IF_ERROR(analyzer_->computeScores(sconf));
   JPP_RETURN_IF_ERROR(top1_.fillIn(analyzer_->lattice()));
   features_.clear();
+  loss_ = 0;
   handleBoundaryConstraints();
   handleTagConstraints();
   finalizeFeatures();
@@ -31,32 +33,39 @@ void PartialTrainer::handleBoundaryConstraints() {
   auto l = analyzer_->lattice();
   auto eos = l->boundary(l->createdBoundaryCount() - 1);
   auto top1 = eos->starts()->beamData().at(0);
-  auto me = top1.ptr.previous;
-  auto prev = me->previous;
+  auto nodeEnd = top1.ptr.previous;
+  auto nodeStart = nodeEnd->previous;
   auto bnditer = std::crbegin(example_.boundaries());
   auto end = std::crend(example_.boundaries());
-  while (prev->boundary > 1 && bnditer != end) {
-    if (prev->boundary == *bnditer) {
+  while (nodeStart->boundary > 1 && bnditer != end) {
+    auto bndary = *bnditer;
+    if (nodeStart->boundary == bndary) {
       // Boundaries match, GOOD!
       ++bnditer;
-    } else if (prev->boundary < *bnditer && me->boundary > *bnditer) {
+      nodeEnd = nodeStart;
+      nodeStart = nodeEnd->previous;
+    } else if (nodeStart->boundary < bndary && bndary < nodeEnd->boundary) {
       // BAD: boundary constraint is violated
-      addBadNode(prev, *bnditer);
+      addBadNode(nodeStart, bndary);
+      loss_ += 1.0f / top1_.totalNodes();
       ++bnditer;
+    } else if (bndary >= nodeEnd->boundary) {
+      // boundary is after node, move it
+      ++bnditer;
+    } else {
+      // boundary is before node, move node
+      nodeEnd = nodeStart;
+      nodeStart = nodeEnd->previous;
     }
-
-    JPP_DCHECK_GT(me->boundary, *bnditer);
-
-    me = prev;
-    prev = me->previous;
   }
 }
 
 void PartialTrainer::handleTagConstraints() {
   auto l = analyzer_->lattice();
+  top1_.reset();
+  float nodeRatio = 1.0f / top1_.totalNodes();
   for (auto& nodeConstraint : example_.nodes()) {
-    top1_.moveToBoundary(nodeConstraint.boundary);
-    if (top1_.remainingNodesInChunk() < 1) {
+    if (!top1_.moveToBoundary(nodeConstraint.boundary)) {
       // There was nothing here
       // Will be handled by boundary constraints
       continue;
@@ -67,16 +76,20 @@ void PartialTrainer::handleTagConstraints() {
       auto& info = bnd->starts()->nodeInfo().at(ptr.right);
       if (info.numCodepoints() != nodeConstraint.length) {
         // Length is incorrect
-        // Will be handled by boundary constraints
+        loss_ +=
+            nodeRatio * addBadNode2(&ptr, ptr.boundary, nodeConstraint.length,
+                                    nodeConstraint.tags);
         continue;
       }
 
-      auto entryData = bnd->starts()->entryData().row(ptr.boundary);
+      auto entryData = bnd->starts()->entryData().row(ptr.right);
 
       for (auto& tag : nodeConstraint.tags) {
         if (entryData[tag.field] != tag.value) {
           // We have bad node here!
-          addBadNode(&ptr, ptr.boundary);
+          loss_ +=
+              nodeRatio * addBadNode2(&ptr, ptr.boundary, nodeConstraint.length,
+                                      nodeConstraint.tags);
           break;
         }
       }
@@ -106,7 +119,7 @@ void PartialTrainer::finalizeFeatures() {
       }
     }
   }
-  features_.resize(prev + 1);
+  features_.erase(features_.begin() + prev + 1, features_.end());
 }
 
 void PartialTrainer::addBadNode(const analysis::ConnectionPtr* node,
@@ -116,6 +129,8 @@ void PartialTrainer::addBadNode(const analysis::ConnectionPtr* node,
   auto endingNodes = goodBnd->ends()->nodePtrs();
   float score =
       1.0f / (endingNodes.size() * goodBnd->starts()->beamData().rowSize());
+
+  i32 count = 0;
 
   NgramExampleFeatureCalculator nfc{l, analyzer_->core().features()};
 
@@ -143,6 +158,7 @@ void PartialTrainer::addBadNode(const analysis::ConnectionPtr* node,
                            t0.latticeNodePtr()};
 
       nfc.calculateNgramFeatures(ptrs, buffer);
+      count += 1;
 
       for (auto f : buffer) {
         features_.push_back(ScoredFeature{f, score});
@@ -157,28 +173,119 @@ void PartialTrainer::addBadNode(const analysis::ConnectionPtr* node,
     NgramFeatureRef ref{t2->latticeNodePtr(), t1->latticeNodePtr(),
                         t0->latticeNodePtr()};
     nfc.calculateNgramFeatures(ref, buffer);
+    auto negFeature = -count * score;
     for (auto f : buffer) {  // add negative features
-      features_.push_back(ScoredFeature{f, -1.0f});
+      features_.push_back(ScoredFeature{f, negFeature});
     }
   }
 }
 
-Status OwningPartialTrainer::initialize(const TrainerFullConfig& cfg,
-                                        const analysis::ScorerDef& scorerDef) {
-  analyzer_.initialize(&cfg.core, ScoringConfig{1, cfg.trainingConfig.beamSize},
-                       cfg.analyzerConfig);
-  JPP_RETURN_IF_ERROR(analyzer_.value().initScorers(scorerDef));
-  return Status::Ok();
+float PartialTrainer::addBadNode2(const analysis::ConnectionPtr* node,
+                                  i32 boundary, i32 length,
+                                  util::ArraySlice<TagConstraint> tagFilter) {
+  auto l = analyzer_->lattice();
+  auto goodBnd = l->boundary(boundary);
+  auto bndNodes = goodBnd->starts();
+
+  auto checkTags = [&](int pos) {
+    auto entries = bndNodes->entryData().row(pos);
+    for (auto& tag : tagFilter) {
+      if (entries.at(tag.field) != tag.value) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  i32 count = 0;
+  i32 nodes = 0;
+
+  // LOOP1: count good nodes
+  for (int i = 0; i < bndNodes->arraySize(); ++i) {
+    if (bndNodes->nodeInfo().at(i).numCodepoints() != length) {
+      continue;
+    }
+
+    if (!checkTags(i)) {
+      continue;
+    }
+
+    auto beam = bndNodes->beamData().row(i);
+    for (auto& beamEl : beam) {
+      if (analysis::EntryBeam::isFake(beamEl)) {
+        continue;
+      }
+      if (beamEl.ptr == *node) {
+        continue;
+      }
+      count += 1;
+    }
+    nodes += 1;
+  }
+
+  if (count == 0) {
+    // do anything if there are no good nodes
+    return 0;
+  }
+
+  float score = 1.0f / count;
+
+  NgramExampleFeatureCalculator nfc{l, analyzer_->core().features()};
+
+  featureBuf_.resize(analyzer_->core().runtime().features.ngrams.size());
+  util::MutableArraySlice<u32> buffer{&featureBuf_};
+
+  // PASS2: compute positive features
+  for (int i = 0; i < bndNodes->arraySize(); ++i) {
+    if (bndNodes->nodeInfo().at(i).numCodepoints() != length) {
+      continue;
+    }
+
+    if (!checkTags(i)) {
+      continue;
+    }
+
+    auto beam = bndNodes->beamData().row(i);
+    for (auto& beamEl : beam) {
+      if (analysis::EntryBeam::isFake(beamEl)) {
+        continue;
+      }
+      if (beamEl.ptr == *node) {
+        continue;
+      }
+      auto t0 = beamEl.ptr;
+      auto t1 = t0.previous;
+      auto t2 = t1->previous;
+
+      NgramFeatureRef ptrs{t2->latticeNodePtr(), t1->latticeNodePtr(),
+                           t0.latticeNodePtr()};
+
+      nfc.calculateNgramFeatures(ptrs, buffer);
+      for (auto f : buffer) {
+        features_.push_back(ScoredFeature{f, score});
+      }
+    }
+  }
+
+  {
+    auto t0 = node;
+    auto t1 = t0->previous;
+    auto t2 = t1->previous;
+    NgramFeatureRef ref{t2->latticeNodePtr(), t1->latticeNodePtr(),
+                        t0->latticeNodePtr()};
+    nfc.calculateNgramFeatures(ref, buffer);
+    for (auto f : buffer) {  // add negative features
+      features_.push_back(ScoredFeature{f, -1});
+    }
+  }
+
+  return static_cast<float>(nodes) / bndNodes->arraySize();
 }
 
-const analysis::OutputManager& OwningPartialTrainer::outputMgr() const {
-  return analyzer_.value().output();
-}
-
-void OwningPartialTrainer::markGold(
-    std::function<void(analysis::LatticeNodePtr)> callback) const {
-  auto& ex = trainer_.example();
-  auto l = lattice();
+void PartialTrainer::markGold(
+    std::function<void(analysis::LatticeNodePtr)> callback,
+    analysis::Lattice* l) const {
+  auto& ex = example_;
   for (auto bnd : ex.boundaries()) {
     if (std::find_if(ex.nodes().begin(), ex.nodes().end(),
                      [bnd](const NodeConstraint& n) {
@@ -207,6 +314,24 @@ void OwningPartialTrainer::markGold(
       }
     }
   }
+}
+
+Status OwningPartialTrainer::initialize(const TrainerFullConfig& cfg,
+                                        const analysis::ScorerDef& scorerDef) {
+  analyzer_.initialize(&cfg.core, ScoringConfig{1, cfg.trainingConfig.beamSize},
+                       cfg.analyzerConfig);
+  JPP_RETURN_IF_ERROR(analyzer_.value().initScorers(scorerDef));
+  trainer_.initialize(&analyzer_.value());
+  return Status::Ok();
+}
+
+const analysis::OutputManager& OwningPartialTrainer::outputMgr() const {
+  return analyzer_.value().output();
+}
+
+void OwningPartialTrainer::markGold(
+    std::function<void(analysis::LatticeNodePtr)> callback) const {
+  trainer_.value().markGold(callback, lattice());
 }
 
 analysis::Lattice* OwningPartialTrainer::lattice() const {
