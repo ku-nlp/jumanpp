@@ -7,7 +7,7 @@
 
 #include "core/analysis/analysis_result.h"
 #include "core/analysis/analyzer_impl.h"
-#include "training_io.h"
+#include "full_example.h"
 
 namespace jumanpp {
 namespace core {

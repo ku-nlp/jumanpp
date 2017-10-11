@@ -69,6 +69,7 @@ class AnalyzerImpl {
   Status computeScores(const ScorerDef* sconf);
 
   Lattice* lattice() { return &lattice_; }
+  const Lattice* lattice() const { return &lattice_; }
   LatticeBuilder* latticeBldr() { return &latticeBldr_; }
   ExtraNodesContext* extraNodesContext() { return &xtra_; }
   const dic::DictionaryHolder& dic() const { return core_->dic(); }

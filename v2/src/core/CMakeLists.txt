@@ -15,9 +15,12 @@ set(core_srcs darts_trie.cc dictionary.cc impl/field_import.cc dic_builder.cc
         analysis/rnn_id_resolver.cc analysis/numeric_creator.cc)
 
 set(core_train_srcs
+        training/training_io.h training/loss.h training/gold_example.h training/trainer.h training/scw.h
         training/training_io.cc training/loss.cc training/gold_example.cc training/trainer.cc training/scw.cc
         training/training_types.h training/training_test_common.h training/training_executor.cc
-        training/training_executor.h training/training_env.cc training/training_env.h)
+        training/training_executor.h training/training_env.cc training/training_env.h
+        training/trainer_base.h training/partial_example.h training/partial_example.cc
+        training/full_example.h training/full_example.cc)
 
 set(core_hdrs
         ${CMAKE_CURRENT_BINARY_DIR}/core_config.h
@@ -31,7 +34,6 @@ set(core_hdrs
         impl/model_format.h impl/model_io.h impl/model_format_ser.h impl/runtime_ser.h spec/spec_ser.h
         analysis/unk_nodes.h analysis/score_api.h analysis/perceptron.h
         analysis/score_processor.h analysis/analysis_result.h analysis/rnn_scorer.cc analysis/rnn_scorer.h
-        training/training_io.h training/loss.h training/gold_example.h training/trainer.h training/scw.h
         impl/perceptron_io.h env.h impl/graphviz_format.h analysis/onomatopoeia_creator.h impl/feature_codegen.h
         analysis/rnn_id_resolver.h analysis/rnn_serialization.h analysis/numeric_creator.h  )
 

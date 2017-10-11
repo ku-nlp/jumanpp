@@ -92,12 +92,12 @@ void SoftConfidenceWeighted::updateMatrix(
 }
 
 SoftConfidenceWeighted::SoftConfidenceWeighted(const TrainingConfig& conf)
-    : featureExponent_{conf.featureNumberExponent},
-      randomSeed_{conf.randomSeed},
-      phi{conf.scw.phi},
+    : phi{conf.scw.phi},
       C{conf.scw.C},
       zeta{1 + phi * phi},
-      psi{1 + phi * phi / 2} {
+      psi{1 + phi * phi / 2},
+      featureExponent_{conf.featureNumberExponent},
+      randomSeed_{conf.randomSeed} {
   usableWeights.reserve(conf.numFeatures());
   matrixDiagonal.resize(conf.numFeatures(), 1.0);
 
@@ -149,7 +149,7 @@ void SoftConfidenceWeighted::exportModel(model::ModelInfo* model) {
   model->parts.push_back(std::move(part));
 }
 
-SoftConfidenceWeighted::~SoftConfidenceWeighted() {}
+SoftConfidenceWeighted::~SoftConfidenceWeighted() = default;
 
 struct ScwDumpInfo {
   u32 featureExponent;
@@ -217,7 +217,7 @@ void SoftConfidenceWeighted::dumpModel(StringPiece directory,
 void SoftConfidenceWeighted::substractInitValues() {
   double boundary = 1.01 / std::sqrt(usableWeights.size());
 
-  for (auto &weight : usableWeights) {
+  for (auto& weight : usableWeights) {
     if (std::fabs(weight) < boundary) {
       weight = 0;
     }

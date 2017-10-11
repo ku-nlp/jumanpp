@@ -70,14 +70,11 @@ class JumandicTrainingTestEnv {
       std::snprintf(buffer, 255, "%s/%04d.dot", baseDir.char_begin(), i);
       std::ofstream out{buffer};
       auto train = te.trainer(i);
-      auto pana = train->anaImpl();
-      REQUIRE_OK(fmt.initialize(pana->output()));
+      REQUIRE_OK(fmt.initialize(train->outputMgr()));
       fmt.reset();
-      auto gnodes = train->trainer()->goldenPath().nodes();
-      for (auto &node : gnodes) {
-        fmt.markGold(node);
-      }
-      auto lat = pana->lattice();
+      train->markGold(
+          [&](core::analysis::LatticeNodePtr lnp) { fmt.markGold(lnp); });
+      auto lat = train->lattice();
       REQUIRE_OK(fmt.render(lat));
       out << fmt.result();
     }

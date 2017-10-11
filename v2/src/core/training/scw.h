@@ -23,20 +23,20 @@ struct ScwData;
  * http://icml.cc/2012/papers/86.pdf
  */
 class SoftConfidenceWeighted {
-  std::unique_ptr<ScwData> data_;
-  u32 featureExponent_;
-  u32 randomSeed_;
-
-  std::vector<float> usableWeights;
-  std::vector<float> matrixDiagonal;
-
   double phi;
   double C;
   double zeta;
   double psi;
 
+  std::vector<float> usableWeights;
+  std::vector<float> matrixDiagonal;
+
+  u32 featureExponent_;
+  u32 randomSeed_;
+
   analysis::HashedFeaturePerceptron perceptron;
   analysis::ScorerDef sconf;
+  std::unique_ptr<ScwData> data_;
 
   void updateMatrix(float beta, util::ArraySlice<ScoredFeature> features);
 

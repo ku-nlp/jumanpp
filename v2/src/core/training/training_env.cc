@@ -15,17 +15,18 @@ Status TrainingEnv::trainOneEpoch() {
   double lastLoss = 0.f;
   double lossSum = 0.0f;
   i32 firstTrainer = 0;
-  while (!dataReader_.finished()) {
+  while (!fullReader_.finished()) {
     JPP_RETURN_IF_ERROR(readOneBatch());
-    if (trainers_.activeTrainers() <= 0) {
+    prepareTrainers();
+    if (trainers_.totalTrainers() <= 0) {
       break;
     }
-    auto lastTrainer = firstTrainer + trainers_.activeTrainers() - 1;
+    auto lastTrainer = firstTrainer + trainers_.totalTrainers() - 1;
 
     for (u32 batchIter = 0; batchIter < args_.batchMaxIterations; ++batchIter) {
       JPP_RETURN_IF_ERROR(trainOneBatch());
       auto normLoss =
-          std::abs(lastLoss - batchLoss_) / trainers_.activeTrainers();
+          std::abs(lastLoss - batchLoss_) / trainers_.totalTrainers();
       lastLoss = batchLoss_;
       LOG_DEBUG() << "batch [" << firstTrainer << "-" << lastTrainer << "]|"
                   << batchIter << ": " << normLoss << "|" << batchLoss_;
@@ -34,7 +35,7 @@ Status TrainingEnv::trainOneEpoch() {
       }
     }
     lossSum += lastLoss;
-    firstTrainer += trainers_.activeTrainers();
+    firstTrainer += trainers_.totalTrainers();
   }
 
   if (firstEpoch_) {
@@ -49,7 +50,7 @@ Status TrainingEnv::trainOneEpoch() {
 Status TrainingEnv::trainOneBatch() {
   double curLoss = 0;
 
-  auto totalTrainers = trainers_.activeTrainers();
+  auto totalTrainers = trainers_.totalTrainers();
   int submittedTrainers = 0;
 
   for (int processedTrainers = 0; processedTrainers < totalTrainers;
@@ -76,7 +77,7 @@ Status TrainingEnv::handleProcessedTrainer(
   if (!result.processStatus) {
     i64 lineNo = -1;
     if (processed != nullptr) {
-      lineNo = processed->line();
+      lineNo = result.trainer->exampleInfo().line;
     }
     JPP_RIE_MSG(std::move(result.processStatus),
                 "failed to process example on line #" << lineNo);
@@ -95,11 +96,13 @@ Status TrainingEnv::loadInput(StringPiece fileName) {
   batchLoss_ = 0;
   totalLoss_ = 0;
 
-  return loadInputData(data);
+  JPP_RETURN_IF_ERROR(loadInputData(data));
+  fullReader_.setFilename(fileName);
+  return Status::Ok();
 }
 
 void TrainingEnv::resetInput() {
-  dataReader_.resetInput(currentFile_.contents());
+  fullReader_.resetInput(currentFile_.contents());
   batchLoss_ = 0;
   totalLoss_ = 0;
 }
@@ -107,12 +110,13 @@ void TrainingEnv::resetInput() {
 Status TrainingEnv::loadInputData(StringPiece data) {
   auto format = this->args_.trainingConfig.inputFormat;
   if (format == InputFormat::Csv) {
-    this->dataReader_.initCsv(data);
+    this->fullReader_.initCsv(data);
   } else if (format == InputFormat::Morph) {
-    this->dataReader_.initDoubleCsv(data);
+    this->fullReader_.initDoubleCsv(data);
   } else {
     return Status::InvalidState() << "unsupported input format";
   }
+  fullReader_.setFilename("<memory>");
 
   return Status::Ok();
 }
@@ -130,7 +134,8 @@ Status TrainingEnv::initOther() {
   auto& trainingSpec = env_->spec().training;  // make a copy here
   warnOnNonMatchingFeatures(trainingSpec);
 
-  JPP_RETURN_IF_ERROR(dataReader_.initialize(trainingSpec, *pHolder));
+  JPP_RETURN_IF_ERROR(trainingIo_.initialize(trainingSpec, *pHolder));
+  fullReader_.setTrainingIo(&trainingIo_);
   core::training::TrainerFullConfig conf{aconf_, *pHolder, trainingSpec,
                                          args_.trainingConfig};
   auto sconf = scw_.scorers();

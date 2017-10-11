@@ -149,7 +149,7 @@ class StringListFieldImporter : public StringFieldImporter {
 
   i32 fieldPointer(const util::CsvReader& csv) override;
 
-  Status makeStorage(util::CodedBuffer *result) override;
+  Status makeStorage(util::CodedBuffer* result) override;
 };
 
 class StringKeyValueListFieldImporter : public StringFieldImporter {
@@ -177,7 +177,7 @@ class StringKeyValueListFieldImporter : public StringFieldImporter {
 
   i32 fieldPointer(const util::CsvReader& csv) override;
 
-  Status makeStorage(util::CodedBuffer *result) override;
+  Status makeStorage(util::CodedBuffer* result) override;
 };
 
 template <typename C>

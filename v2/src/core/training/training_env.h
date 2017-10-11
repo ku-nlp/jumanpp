@@ -37,8 +37,9 @@ class TrainingEnv {
   const TrainingArguments& args_;
   core::JumanppEnv* env_;
   core::analysis::AnalyzerConfig aconf_;
-  TrainingDataReader dataReader_;
-  BatchedTrainer trainers_;
+  TrainingIo trainingIo_;
+  FullExampleReader fullReader_;
+  TrainerBatch trainers_;
   SoftConfidenceWeighted scw_;
   TrainingExecutor executor_;
 
@@ -66,7 +67,9 @@ class TrainingEnv {
   Status loadInput(StringPiece fileName);
   void resetInput();
 
-  Status readOneBatch() { return trainers_.readBatch(&dataReader_); }
+  Status readOneBatch() { return trainers_.readFullBatch(&fullReader_); }
+
+  void prepareTrainers() { trainers_.shuffleData(!firstEpoch_); }
 
   Status handleProcessedTrainer(TrainingExecutionResult result,
                                 double* curLoss);
@@ -78,8 +81,8 @@ class TrainingEnv {
 
   Status trainOneEpoch();
 
-  i32 numTrainers() const { return trainers_.activeTrainers(); }
-  OwningTrainer* trainer(i32 idx) { return trainers_.trainer(idx); }
+  i32 numTrainers() const { return trainers_.totalTrainers(); }
+  ITrainer* trainer(i32 idx) { return trainers_.trainer(idx); }
 
   std::unique_ptr<analysis::Analyzer> makeAnalyzer(i32 beamSize = -1) const;
 

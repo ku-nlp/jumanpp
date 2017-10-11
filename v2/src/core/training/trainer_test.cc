@@ -17,13 +17,14 @@ class TrainerEnv : public GoldExampleEnv {
     tc.featureNumberExponent = 12;
     return tc;
   }
-
-  core::training::TrainingDataReader rdr;
+  core::training::TrainingIo tio;
+  core::training::FullExampleReader rdr;
   Trainer trainer;
   TrainerEnv(StringPiece s, bool kataUnks = false)
       : GoldExampleEnv(s, kataUnks),
         trainer{anaImpl(), &env.saveLoad.training, testConf()} {
-    rdr.initialize(env.saveLoad.training, core());
+    REQUIRE_OK(tio.initialize(env.saveLoad.training, core()));
+    rdr.setTrainingIo(&tio);
   }
 
   void parseMrph(StringPiece data) {

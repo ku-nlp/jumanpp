@@ -36,11 +36,11 @@ Status AnalysisPath::fillIn(Lattice *l) {
   auto lastStart = lastOne->starts();
 
   if (lastStart->arraySize() != 1) {
-    return Status::InvalidState() << "last boundary had more than one node!";
+    return JPPS_INVALID_STATE << "last boundary had more than one node!";
   }
 
   if (lastStart->nodeInfo().at(0).entryPtr() != EntryPtr::EOS()) {
-    return Status::InvalidState() << "last node was not EOS";
+    return JPPS_INVALID_STATE << "last node was not EOS";
   }
 
   const ConnectionPtr *topPtr = &lastStart->beamData().at(0).ptr;

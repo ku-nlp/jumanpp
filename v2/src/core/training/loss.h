@@ -8,6 +8,7 @@
 #include "core/analysis/analysis_result.h"
 #include "core/analysis/analyzer_impl.h"
 #include "core/training/gold_example.h"
+#include "core/training/trainer_base.h"
 #include "training_io.h"
 
 namespace jumanpp {
@@ -39,11 +40,6 @@ class NgramExampleFeatureCalculator {
 
   void calculateNgramFeatures(const NgramFeatureRef& ptrs,
                               util::MutableArraySlice<u32> result);
-};
-
-struct ScoredFeature {
-  u32 feature;
-  float score;
 };
 
 enum class ComparitionClass { Both, TopOnly, GoldOnly };
@@ -176,6 +172,7 @@ class LossCalculator {
   util::ArraySlice<ScoredFeature> featureDiff() const { return scored; }
 
   GoldenPath& goldPath() { return gold; }
+  const GoldenPath& goldPath() const { return gold; }
 };
 
 }  // namespace training

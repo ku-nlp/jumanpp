@@ -6,10 +6,11 @@
 #define JUMANPP_TRAINER_H
 
 #include "core/analysis/perceptron.h"
-#include "gold_example.h"
-#include "loss.h"
-#include "training_io.h"
-#include "training_types.h"
+#include "core/training/gold_example.h"
+#include "core/training/loss.h"
+#include "core/training/partial_example.h"
+#include "core/training/training_io.h"
+#include "core/training/training_types.h"
 
 namespace jumanpp {
 namespace core {
@@ -41,6 +42,7 @@ class Trainer {
   }
 
   FullyAnnotatedExample& example() { return example_; }
+  const FullyAnnotatedExample& example() const { return example_; }
 
   Status prepare();
 
@@ -54,26 +56,19 @@ class Trainer {
     return loss_.featureDiff();
   }
 
-  const GoldenPath& goldenPath() { return loss_.goldPath(); }
+  GoldenPath& goldenPath() { return loss_.goldPath(); }
+  const GoldenPath& goldenPath() const { return loss_.goldPath(); }
 
   bool wasGoldAdded() const { return addedGoldNodes_; }
 };
 
-struct TrainerFullConfig {
-  const analysis::AnalyzerConfig& analyzerConfig;
-  const CoreHolder& core;
-  const spec::TrainingSpec& trainingSpec;
-  const TrainingConfig& trainingConfig;
-};
-
-class OwningTrainer {
+class OwningFullTrainer final : public ITrainer {
   analysis::AnalyzerImpl analyzer_;
   Trainer trainer_;
   bool wasPrepared = false;
-  i64 lineNo_ = -1;
 
  public:
-  explicit OwningTrainer(const TrainerFullConfig& conf)
+  explicit OwningFullTrainer(const TrainerFullConfig& conf)
       : analyzer_{&conf.core, ScoringConfig{conf.trainingConfig.beamSize, 1},
                   conf.analyzerConfig},
         trainer_{&analyzer_, &conf.trainingSpec, conf.trainingConfig} {}
@@ -87,70 +82,77 @@ class OwningTrainer {
     return analyzer_.initScorers(*sconf);
   }
 
-  Status readExample(TrainingDataReader* rdr) {
+  Status readExample(FullExampleReader* rdr) {
     Status s = rdr->readFullExample(analyzer_.extraNodesContext(),
                                     &trainer_.example());
-    lineNo_ = rdr->lineNumber();
+    trainer_.example().setInfo(rdr->filename(), rdr->lineNumber());
     return s;
   }
 
-  Status prepare() {
+  Status prepare() override {
     if (wasPrepared) return Status::Ok();
     wasPrepared = true;
     return trainer_.prepare();
   }
 
-  Status compute(const analysis::ScorerDef* sconf) {
+  Status compute(const analysis::ScorerDef* sconf) override {
     JPP_RETURN_IF_ERROR(trainer_.compute(sconf));
     trainer_.computeTrainingLoss();
     return Status::Ok();
   }
 
-  float loss() const { return trainer_.lossValue(); }
+  float loss() const override { return trainer_.lossValue(); }
 
-  i64 line() const { return lineNo_; }
+  ExampleInfo exampleInfo() const override {
+    return trainer_.example().exampleInfo();
+  }
 
-  util::ArraySlice<ScoredFeature> featureDiff() const {
+  util::ArraySlice<ScoredFeature> featureDiff() const override {
     return trainer_.featureDiff();
   }
 
-  analysis::AnalyzerImpl* anaImpl() { return &analyzer_; }
+  const analysis::OutputManager& outputMgr() const override {
+    return analyzer_.output();
+  }
 
-  Trainer* trainer() { return &trainer_; }
+  void markGold(
+      std::function<void(analysis::LatticeNodePtr)> callback) const override {
+    for (auto& ex : trainer_.goldenPath().nodes()) {
+      callback(ex);
+    }
+  }
+
+  analysis::Lattice* lattice() const override {
+    return const_cast<analysis::AnalyzerImpl&>(analyzer_).lattice();
+  }
 };
 
-class BatchedTrainer {
-  std::vector<std::unique_ptr<OwningTrainer>> trainers_;
+class TrainerBatch {
+  const TrainerFullConfig* config_;
+  const analysis::ScorerDef* scorerDef_;
+  std::vector<std::unique_ptr<OwningFullTrainer>> trainers_;
+  std::vector<std::unique_ptr<OwningPartialTrainer>> partialTrainerts_;
   std::vector<i32> indices_;
   i32 current_;
+  i32 totalTrainers_;
   u32 seed_ = 0xdeadbeef;
-  i32 numRead_ = 0;
+  i32 numShuffles_ = 0;
 
  public:
   Status initialize(const TrainerFullConfig& tfc,
-                    const analysis::ScorerDef* sconf, i32 numTrainers) {
-    trainers_.clear();
-    trainers_.reserve(numTrainers);
-    for (int i = 0; i < numTrainers; ++i) {
-      auto trainer = new OwningTrainer{tfc};
-      JPP_RETURN_IF_ERROR(trainer->initAnalyzer(sconf));
-      trainers_.emplace_back(trainer);
-    }
-    seed_ = tfc.trainingConfig.randomSeed;
-    return Status::Ok();
-  }
+                    const analysis::ScorerDef* sconf, i32 numTrainers);
 
-  Status readBatch(TrainingDataReader* rdr);
+  Status readFullBatch(FullExampleReader* rdr);
+  Status readPartialExamples(PartialExampleReader* reader);
 
-  OwningTrainer* trainer(i32 idx) const {
-    JPP_DCHECK_EQ(activeTrainers(), indices_.size());
-    JPP_DCHECK_IN(idx, 0, activeTrainers());
-    auto idx2 = indices_[idx];
-    JPP_DCHECK_IN(idx2, 0, activeTrainers());
-    return trainers_[idx2].get();
-  }
+  void cleanParital() { partialTrainerts_.clear(); }
 
-  i32 activeTrainers() const { return current_; }
+  void shuffleData(bool usePartial);
+
+  ITrainer* trainer(i32 idx) const;
+
+  i32 activeFullTrainers() const { return current_; }
+  i32 totalTrainers() const { return totalTrainers_; }
 };
 
 }  // namespace training

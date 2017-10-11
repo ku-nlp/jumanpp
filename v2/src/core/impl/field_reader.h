@@ -17,7 +17,7 @@ class StringStorageReader {
   StringPiece data_;
 
  public:
-  StringStorageReader(const StringPiece& obj) noexcept : data_{obj} {}
+  explicit StringStorageReader(const StringPiece& obj) noexcept : data_{obj} {}
 
   StringPiece data() const noexcept { return data_; }
 
@@ -107,7 +107,8 @@ class KeyValueListTraversal {
   bool hasValue_ = false;
 
  public:
-  KeyValueListTraversal(i32 length, const util::CodedBufferParser& parser)
+  KeyValueListTraversal(i32 length,
+                        const util::CodedBufferParser& parser) noexcept
       : length_{length}, parser_{parser} {}
 
   inline bool moveNext() noexcept {
@@ -139,8 +140,8 @@ class IntStorageReader {
   StringPiece data_;
 
  public:
-  IntStorageReader() {}
-  IntStorageReader(const StringPiece& obj) : data_{obj} {}
+  IntStorageReader() noexcept = default;
+  explicit IntStorageReader(const StringPiece& obj) noexcept : data_{obj} {}
 
   IntListTraversal raw() const { return rawWithLimit(0, data_.size()); }
 
@@ -192,7 +193,8 @@ class StringStorageTraversal {
   i32 position_ = 0;
 
  public:
-  StringStorageTraversal(const StringPiece& data) : parser_{data} {}
+  explicit StringStorageTraversal(const StringPiece& data) noexcept
+      : parser_{data} {}
 
   bool hasNext() const noexcept { return parser_.remaining() != 0; }
 

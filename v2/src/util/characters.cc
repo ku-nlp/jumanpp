@@ -274,7 +274,7 @@ Status preprocessRawData(StringPiece utf8data,
     char32_t unicode;
     auto begin = itr;
     bool ret = toCodepoint(itr, utf8data.end(), &unicode);
-    if (!ret) return Status::InvalidState() << "Invalid UTF8 sequence";
+    if (!ret) return JPPS_INVALID_PARAMETER << "Invalid UTF8 sequence";
 
     CharacterClass cc = getCodeType(unicode);
     result->emplace_back(InputCodepoint{unicode, cc, StringPiece(begin, itr)});

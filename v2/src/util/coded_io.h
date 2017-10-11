@@ -106,12 +106,12 @@ class CodedBufferParser {
  public:
   CodedBufferParser() = default;
 
-  explicit CodedBufferParser(StringPiece data) { reset(data); }
+  explicit CodedBufferParser(StringPiece data) noexcept { reset(data); }
 
-  void reset(StringPiece data) {
-    position_ = reinterpret_cast<const u8*>(data.begin());
+  void reset(StringPiece data) noexcept {
+    position_ = data.ubegin();
     begin_ = position_;
-    end_ = reinterpret_cast<const u8*>(data.end());
+    end_ = data.uend();
   }
 
   bool readVarint64Slowpath(u64* pInt) noexcept;

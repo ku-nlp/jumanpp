@@ -76,7 +76,24 @@ Status Trainer::compute(const analysis::ScorerDef *sconf) {
   return Status::Ok();
 }
 
-Status BatchedTrainer::readBatch(TrainingDataReader *rdr) {
+Status TrainerBatch::initialize(const TrainerFullConfig &tfc,
+                                const analysis::ScorerDef *sconf,
+                                i32 numTrainers) {
+  trainers_.clear();
+  trainers_.reserve(numTrainers);
+  for (int i = 0; i < numTrainers; ++i) {
+    auto trainer =
+        std::unique_ptr<OwningFullTrainer>(new OwningFullTrainer{tfc});
+    JPP_RETURN_IF_ERROR(trainer->initAnalyzer(sconf));
+    trainers_.emplace_back(std::move(trainer));
+  }
+  seed_ = tfc.trainingConfig.randomSeed;
+  config_ = &tfc;
+  scorerDef_ = sconf;
+  return Status::Ok();
+}
+
+Status TrainerBatch::readFullBatch(FullExampleReader *rdr) {
   current_ = 0;
   int trIdx = 0;
   for (; trIdx < trainers_.size(); ++trIdx) {
@@ -89,18 +106,66 @@ Status BatchedTrainer::readBatch(TrainingDataReader *rdr) {
   }
   current_ = trIdx;
   indices_.clear();
-  indices_.reserve(current_);
-
-  for (int i = 0; i < current_; ++i) {
-    indices_.push_back(i);
-  }
-
-  std::minstd_rand rng{seed_ * (static_cast<u32>(numRead_) * 31 + 5)};
-  std::shuffle(indices_.begin(), indices_.end(), rng);
-  numRead_ += 1;
 
   return Status::Ok();
 }
+
+void TrainerBatch::shuffleData(bool usePartial) {
+  if (usePartial) {
+    totalTrainers_ = activeFullTrainers() + partialTrainerts_.size();
+  } else {
+    totalTrainers_ = activeFullTrainers();
+  }
+  indices_.reserve(totalTrainers());
+
+  for (int i = 0; i < activeFullTrainers(); ++i) {
+    indices_.push_back(i);
+  }
+
+  if (usePartial) {
+    for (int i = 0; i < partialTrainerts_.size(); ++i) {
+      indices_.push_back(~i);
+    }
+  }
+
+  JPP_DCHECK_EQ(indices_.size(), totalTrainers());
+
+  std::minstd_rand rng{seed_ * (static_cast<u32>(numShuffles_) * 31 + 5)};
+  std::shuffle(indices_.begin(), indices_.end(), rng);
+  numShuffles_ += 1;
+}
+
+Status TrainerBatch::readPartialExamples(PartialExampleReader *reader) {
+  std::unique_ptr<OwningPartialTrainer> trainer;
+  trainer.reset(new OwningPartialTrainer);
+  bool eof = true;
+  do {
+    JPP_RETURN_IF_ERROR(reader->readExample(&trainer->trainer_.example_, &eof));
+    if (eof) {
+      break;
+    }
+    JPP_DCHECK(config_);
+    JPP_DCHECK(scorerDef_);
+    JPP_RETURN_IF_ERROR(trainer->initialize(*config_, *scorerDef_));
+    partialTrainerts_.emplace_back(trainer.release());
+  } while (!eof);
+  return Status::Ok();
+}
+
+ITrainer *TrainerBatch::trainer(i32 idx) const {
+  JPP_DCHECK_EQ(totalTrainers(), indices_.size());
+  JPP_DCHECK_IN(idx, 0, totalTrainers());
+  auto idx2 = indices_[idx];
+  if (idx2 >= 0) {
+    JPP_DCHECK_IN(idx2, 0, activeFullTrainers());
+    return trainers_[idx2].get();
+  } else {
+    auto idx3 = ~idx2;
+    JPP_DCHECK_IN(idx3, 0, partialTrainerts_.size());
+    return partialTrainerts_[idx3].get();
+  }
+}
+
 }  // namespace training
 }  // namespace core
 }  // namespace jumanpp

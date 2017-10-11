@@ -19,17 +19,17 @@ namespace core {
 namespace training {
 
 struct TrainingExecutionResult {
-  OwningTrainer* trainer;
+  ITrainer* trainer;
   Status processStatus;
 
   TrainingExecutionResult() : trainer{nullptr}, processStatus{Status::Ok()} {}
-  TrainingExecutionResult(OwningTrainer* tr, Status status)
+  TrainingExecutionResult(ITrainer* tr, Status status)
       : trainer{tr}, processStatus{std::move(status)} {}
 };
 
 class TrainingExecutorThread {
   const analysis::ScorerDef* scoreConf_;
-  util::bounded_queue<OwningTrainer*>* trainers_;
+  util::bounded_queue<ITrainer*>* trainers_;
   util::bounded_queue<TrainingExecutionResult>* results_;
   std::thread thread_;
 
@@ -40,23 +40,20 @@ class TrainingExecutorThread {
 
  public:
   explicit TrainingExecutorThread(
-      const analysis::ScorerDef* conf,
-      util::bounded_queue<OwningTrainer*>* trainers,
+      const analysis::ScorerDef* conf, util::bounded_queue<ITrainer*>* trainers,
       util::bounded_queue<TrainingExecutionResult>* results);
   void finish();
 };
 
 class TrainingExecutor {
   std::vector<std::unique_ptr<TrainingExecutorThread>> threads_;
-  util::bounded_queue<OwningTrainer*> trainers_;
+  util::bounded_queue<ITrainer*> trainers_;
   util::bounded_queue<TrainingExecutionResult> results_;
 
  public:
   Status initialize(const analysis::ScorerDef* sconf, u32 nthreads);
 
-  bool submitNext(OwningTrainer* next) {
-    return trainers_.offer(std::move(next));
-  }
+  bool submitNext(ITrainer* next) { return trainers_.offer(std::move(next)); }
 
   bool resultWithoutWait(TrainingExecutionResult* result) {
     return results_.recieve(result);

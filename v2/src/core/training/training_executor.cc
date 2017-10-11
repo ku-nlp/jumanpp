@@ -10,8 +10,7 @@ namespace core {
 namespace training {
 
 TrainingExecutorThread::TrainingExecutorThread(
-    const analysis::ScorerDef* conf,
-    util::bounded_queue<OwningTrainer*>* trainers,
+    const analysis::ScorerDef* conf, util::bounded_queue<ITrainer*>* trainers,
     util::bounded_queue<TrainingExecutionResult>* results)
     : scoreConf_{conf},
       trainers_{trainers},
@@ -35,9 +34,9 @@ void TrainingExecutorThread::run() {
       auto ops = ::jumanpp::status_impl::StatusOps(&status);
       ops.AddFrame(__FILE__, __LINE__, __FUNCTION__);
       ::jumanpp::status_impl::MessageBuilder mbld;
-      mbld << "while processing example ["
-           << trainer->trainer()->example().comment() << "] on line "
-           << trainer->line();
+      auto einfo = trainer->exampleInfo();
+      mbld << "while processing example [" << einfo.comment << "] on line "
+           << einfo.line << " of file: " << einfo.file;
       mbld.ReplaceMessage(ops.data());
     }
     TrainingExecutionResult result{trainer, std::move(status)};

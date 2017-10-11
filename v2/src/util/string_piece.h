@@ -107,16 +107,21 @@ class StringPiece {
   }
 
   JPP_ALWAYS_INLINE constexpr StringPiece from(ptrdiff_t from) const noexcept {
-    JPP_DCHECK_GE(from, 0);
-    JPP_DCHECK_LT(from, size());
+    JPP_DCHECK_IN(from, 0, size());
     return StringPiece{std::min(begin() + from, end()), end()};
   }
 
   JPP_ALWAYS_INLINE constexpr StringPiece take(ptrdiff_t num) const noexcept {
-    JPP_DCHECK_GE(num, 0);
-    JPP_DCHECK_LT(num, size());
+    JPP_DCHECK_IN(num, 0, size());
     return StringPiece{begin(), std::min(begin() + num, end())};
   }
+
+  char operator[](size_t pos) const noexcept {
+    JPP_DCHECK_IN(pos, 0, size());
+    return begin_[pos];
+  }
+
+  bool empty() const noexcept { return begin_ == end_; }
 
   JPP_ALWAYS_INLINE constexpr pointer_t char_begin() const noexcept {
     return begin_;
@@ -135,6 +140,11 @@ class StringPiece {
   }
 
   static StringPiece fromCString(const char* data);
+
+  template <typename C>
+  void assignTo(C& result) {
+    result.assign(begin(), size());
+  }
 };
 
 static constexpr const StringPiece EMPTY_SP = StringPiece{};

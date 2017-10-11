@@ -220,9 +220,9 @@ class NgramDynamicFeatureApply
         break;
       }
       default:
-        return Status::InvalidState()
-               << "invalid ngram feature of order " << nf.arguments.size()
-               << " only 1-3 are supported";
+        return JPPS_INVALID_STATE << "invalid ngram feature of order "
+                                  << nf.arguments.size()
+                                  << " only 1-3 are supported";
     }
     return Status::Ok();
   }

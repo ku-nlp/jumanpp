@@ -59,8 +59,10 @@ TEST_CASE("can read simple example with difficult conditions") {
   CHECK(tspec.surfaceIdx == 3);
   CHECK(tspec.fields.size() == 4);
   FullyAnnotatedExample exobj;
-  TrainingDataReader tdr;
-  REQUIRE_OK(tdr.initialize(tspec, env.core()));
+  FullExampleReader tdr;
+  TrainingIo tio;
+  REQUIRE_OK(tio.initialize(spec.training, env.core()));
+  tdr.setTrainingIo(&tio);
   REQUIRE_OK(tdr.initDoubleCsv(ex));
   auto anaImpl = env.anaImpl();
   REQUIRE_OK(tdr.readFullExample(anaImpl->extraNodesContext(), &exobj));
@@ -86,8 +88,10 @@ TEST_CASE("can read simple example with hidden node") {
   auto& spec = env.spec();
   auto tspec = spec.training;
   FullyAnnotatedExample exobj;
-  TrainingDataReader tdr;
-  REQUIRE_OK(tdr.initialize(tspec, env.core()));
+  FullExampleReader tdr;
+  TrainingIo tio;
+  REQUIRE_OK(tio.initialize(spec.training, env.core()));
+  tdr.setTrainingIo(&tio);
   REQUIRE_OK(tdr.initDoubleCsv(ex));
   auto anaImpl = env.anaImpl();
   REQUIRE_OK(tdr.readFullExample(anaImpl->extraNodesContext(), &exobj));
