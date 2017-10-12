@@ -7,6 +7,7 @@
 #include "core/training/scw.h"
 #include "partial_example.h"
 #include "training_test_common.h"
+#include "util/logging.hpp"
 
 namespace {
 class TrainerEnv : public GoldExampleEnv {
@@ -19,8 +20,8 @@ class TrainerEnv : public GoldExampleEnv {
   core::training::TrainingIo tio;
   core::training::PartialExampleReader rdr;
   core::training::PartialTrainer trainer;
-  TrainerEnv(StringPiece s, bool kataUnks = false)
-      : GoldExampleEnv(s, kataUnks), trainer{anaImpl()} {
+  explicit TrainerEnv(StringPiece s, bool kataUnks = false)
+      : GoldExampleEnv(s, kataUnks), trainer{anaImpl(), (1 << 12) - 1} {
     REQUIRE_OK(tio.initialize(env.saveLoad.training, core()));
     REQUIRE_OK(rdr.initialize(&tio));
   }
@@ -64,7 +65,36 @@ class TrainerEnv : public GoldExampleEnv {
 };
 }  // namespace
 
-TEST_CASE("can train a simple example") {
+TEST_CASE("correctly computes matching nodes") {
+  TrainerEnv env{"UNK,N,5\nもも,N,0\nも,PRT,1\nモ,PRT,2"};
+  env.parseMrph("\tもも\nも\n\tもも\n\tもも\nも\n\n");
+  CHECK(env.trainer.prepare());
+  auto ex = env.trainer.example();
+  auto l = env.anaImpl()->lattice();
+  auto checkNode = [&](u16 bnd, u16 pos, StringPiece surface, bool result) {
+    CAPTURE(bnd);
+    CAPTURE(pos);
+    CHECK(ex.doesNodeMatch(l, bnd, pos) == result);
+    CHECK(env.firstNode(LatticeNodePtr{bnd, pos}).a == surface);
+  };
+  checkNode(2, 0, "も", false);
+  checkNode(2, 1, "もも", true);
+  checkNode(3, 0, "も", false);
+  checkNode(3, 1, "もも", false);
+  checkNode(4, 0, "も", true);
+  checkNode(4, 1, "もも", false);
+  checkNode(5, 0, "も", false);
+  checkNode(5, 1, "もも", true);
+  checkNode(6, 0, "も", false);
+  checkNode(6, 1, "もも", false);
+  checkNode(7, 0, "も", false);
+  checkNode(7, 1, "もも", true);
+  checkNode(8, 0, "も", false);
+  checkNode(8, 1, "もも", false);
+  checkNode(9, 0, "も", true);
+}
+
+TEST_CASE("can compute loss/features from a simple example") {
   TrainerEnv env{"UNK,N,5\nもも,N,0\nも,PRT,1\nモ,PRT,2"};
   env.parseMrph("もも\nも\nもも\n\n");
   CHECK(env.trainer.prepare());
@@ -78,7 +108,7 @@ TEST_CASE("can train a simple example") {
   CHECK(total == Approx(0.0));
 }
 
-TEST_CASE("can train a simple example with tags") {
+TEST_CASE("can compute loss/features from a simple example with tags") {
   TrainerEnv env{"UNK,N,5\nもも,N,0\nも,PRT,1\nモ,PRT,2"};
   env.parseMrph("\tもも\nも\n\tもも\n\tもも\nも\n\n");
   CHECK(env.trainer.prepare());
@@ -90,4 +120,22 @@ TEST_CASE("can train a simple example with tags") {
     total += e.score;
   }
   CHECK(total == Approx(0.0));
+}
+
+TEST_CASE("can decrease loss/features from a simple example with tags") {
+  TrainerEnv env{"UNK,N,5\nもも,N,0\nも,PRT,1\nモ,PRT,2"};
+  env.parseMrph("\tもも\nも\n\tもも\n\tもも\nモ\n\n");
+  CHECK(env.trainer.prepare());
+  SoftConfidenceWeighted scw{TrainerEnv::testConf()};
+  CHECK(env.trainer.compute(scw.scorers()));
+  CHECK(env.trainer.loss() > 0);
+  for (int iter = 0; iter < 5; ++iter) {
+    // LOG_DEBUG() << "LOSS: " << env.trainer.loss();
+    scw.update(env.trainer.loss(), env.trainer.featureDiff());
+    CHECK(env.trainer.compute(scw.scorers()));
+    // env.dumpTrainers("/tmp/jpp-debug", iter);
+  }
+  auto sconf = scw.scorers();
+  env.trainer.compute(sconf);
+  CHECK(env.trainer.loss() == Approx(0));
 }

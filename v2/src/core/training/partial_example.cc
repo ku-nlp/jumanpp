@@ -5,6 +5,7 @@
 #include "partial_example.h"
 #include "core/analysis/unk_nodes_creator.h"
 #include "core/training/loss.h"
+#include "util/logging.hpp"
 
 namespace jumanpp {
 namespace core {
@@ -25,6 +26,7 @@ Status PartialTrainer::compute(const analysis::ScorerDef* sconf) {
   loss_ = 0;
   handleBoundaryConstraints();
   handleTagConstraints();
+  handleEos();
   finalizeFeatures();
   return Status::Ok();
 }
@@ -33,7 +35,7 @@ void PartialTrainer::handleBoundaryConstraints() {
   auto l = analyzer_->lattice();
   auto eos = l->boundary(l->createdBoundaryCount() - 1);
   auto top1 = eos->starts()->beamData().at(0);
-  auto nodeEnd = top1.ptr.previous;
+  const analysis::ConnectionPtr* nodeEnd = &top1.ptr;
   auto nodeStart = nodeEnd->previous;
   auto bnditer = std::crbegin(example_.boundaries());
   auto end = std::crend(example_.boundaries());
@@ -46,7 +48,13 @@ void PartialTrainer::handleBoundaryConstraints() {
       nodeStart = nodeEnd->previous;
     } else if (nodeStart->boundary < bndary && bndary < nodeEnd->boundary) {
       // BAD: boundary constraint is violated
-      addBadNode(nodeStart, bndary);
+      int nextBndary = 2;
+      auto nextIter = bnditer;
+      ++nextIter;
+      if (nextIter != std::crend(example_.boundaries())) {
+        nextBndary = *nextIter;
+      }
+      addBadNode(nodeStart, bndary, nextBndary);
       loss_ += 1.0f / top1_.totalNodes();
       ++bnditer;
     } else if (bndary >= nodeEnd->boundary) {
@@ -98,6 +106,9 @@ void PartialTrainer::handleTagConstraints() {
 }
 
 void PartialTrainer::finalizeFeatures() {
+  for (auto& f : features_) {
+    f.feature &= mask_;
+  }
   std::sort(std::begin(features_), std::end(features_),
             [](const ScoredFeature& f1, const ScoredFeature& f2) {
               return f1.feature < f2.feature;
@@ -123,7 +134,7 @@ void PartialTrainer::finalizeFeatures() {
 }
 
 void PartialTrainer::addBadNode(const analysis::ConnectionPtr* node,
-                                i32 boundary) {
+                                i32 boundary, i32 prevBoundary) {
   auto l = analyzer_->lattice();
   auto goodBnd = l->boundary(boundary);
   auto endingNodes = goodBnd->ends()->nodePtrs();
@@ -138,8 +149,18 @@ void PartialTrainer::addBadNode(const analysis::ConnectionPtr* node,
   util::MutableArraySlice<u32> buffer{&featureBuf_};
 
   for (auto& end : endingNodes) {  // positive features
+    // a situation where a node spans through the previous
+    // boundary condition
+    // it's incorrect, so forbid it
+    if (end.boundary < prevBoundary) {
+      continue;
+    }
+
     auto bnd = l->boundary(end.boundary);
     auto beam = bnd->starts()->beamData().row(end.position);
+
+    // LOG_TRACE() << "Add boundary +features for [" << end.boundary << "," <<
+    // end.position << "]";
 
     for (auto& beamEl : beam) {
       if (analysis::EntryBeam::isFake(beamEl)) {
@@ -170,6 +191,8 @@ void PartialTrainer::addBadNode(const analysis::ConnectionPtr* node,
     auto t0 = node;
     auto t1 = t0->previous;
     auto t2 = t1->previous;
+    // LOG_TRACE() << "Add boundary -features for [" << t0->boundary << "," <<
+    // t0->right << "]";
     NgramFeatureRef ref{t2->latticeNodePtr(), t1->latticeNodePtr(),
                         t0->latticeNodePtr()};
     nfc.calculateNgramFeatures(ref, buffer);
@@ -245,6 +268,8 @@ float PartialTrainer::addBadNode2(const analysis::ConnectionPtr* node,
       continue;
     }
 
+    // LOG_TRACE() << "Add tag +features for [" << boundary << "," << i << "]";
+
     auto beam = bndNodes->beamData().row(i);
     for (auto& beamEl : beam) {
       if (analysis::EntryBeam::isFake(beamEl)) {
@@ -271,6 +296,8 @@ float PartialTrainer::addBadNode2(const analysis::ConnectionPtr* node,
     auto t0 = node;
     auto t1 = t0->previous;
     auto t2 = t1->previous;
+    // LOG_TRACE() << "Add tag -features for [" << t0->boundary << "," <<
+    // t0->right << "]";
     NgramFeatureRef ref{t2->latticeNodePtr(), t1->latticeNodePtr(),
                         t0->latticeNodePtr()};
     nfc.calculateNgramFeatures(ref, buffer);
@@ -282,37 +309,136 @@ float PartialTrainer::addBadNode2(const analysis::ConnectionPtr* node,
   return static_cast<float>(nodes) / bndNodes->arraySize();
 }
 
+bool PartialExample::doesNodeMatch(const analysis::Lattice* lr, i32 boundary,
+                                   i32 position) const {
+  return doesNodeMatch(lr->boundary(boundary)->starts(), boundary, position);
+}
+
+bool PartialExample::doesNodeMatch(const analysis::LatticeRightBoundary* lr,
+                                   i32 boundary, i32 position) const {
+  auto iter =
+      std::lower_bound(boundaries_.begin(), boundaries_.end(), boundary);
+  if (iter == boundaries_.end()) {
+    return false;
+  }
+
+  if (*iter != boundary && boundary != 2) {
+    return false;
+  }
+
+  auto nodeIter = std::find_if(
+      nodes_.begin(), nodes_.end(),
+      [boundary](const NodeConstraint& n) { return n.boundary == boundary; });
+
+  auto len = lr->nodeInfo().at(position).numCodepoints();
+  if (nodeIter == nodes_.end()) {
+    ++iter;
+    if (iter != boundaries_.end()) {
+      // A node violates length limitation -> bad
+      return len <= (*iter - boundary);
+    }
+    return true;
+  }
+
+  auto& nodeCstrs = *nodeIter;
+  if (len != nodeCstrs.length) {
+    return false;
+  }
+
+  auto data = lr->entryData().row(position);
+  for (auto& tag : nodeCstrs.tags) {
+    if (data.at(tag.field) != tag.value) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 void PartialTrainer::markGold(
     std::function<void(analysis::LatticeNodePtr)> callback,
     analysis::Lattice* l) const {
-  auto& ex = example_;
-  for (auto bnd : ex.boundaries()) {
-    if (std::find_if(ex.nodes().begin(), ex.nodes().end(),
-                     [bnd](const NodeConstraint& n) {
-                       return n.boundary == bnd;
-                     }) != ex.nodes().end()) {
-      auto bobj = l->boundary(bnd);
-      auto cnt = bobj->starts()->arraySize();
-      u16 bndU16 = static_cast<u16>(bnd);
-      for (u16 i = 0; i < cnt; ++i) {
-        callback(analysis::LatticeNodePtr{bndU16, i});
+  for (u16 bnd = 0; bnd < l->createdBoundaryCount(); ++bnd) {
+    auto bndobj = l->boundary(bnd);
+    auto bndRight = bndobj->starts();
+    for (u16 pos = 0; pos < bndRight->arraySize(); ++pos) {
+      if (example_.doesNodeMatch(bndRight, bnd, pos)) {
+        callback(analysis::LatticeNodePtr{bnd, pos});
+      }
+    }
+  }
+}
+
+void PartialTrainer::handleEos() {
+  auto l = analyzer_->lattice();
+  auto eos = l->boundary(l->createdBoundaryCount() - 1);
+  auto top1 = eos->starts()->beamData().at(0);
+
+  int nodes = 0;
+  int beams = 0;
+  auto prev = top1.ptr.previous;
+
+  for (auto& prevPtr : eos->ends()->nodePtrs()) {
+    auto starts = l->boundary(prevPtr.boundary)->starts();
+    if (example_.doesNodeMatch(starts, prevPtr.boundary, prevPtr.position)) {
+      if (prev->latticeNodePtr() == prevPtr) {
+        // we have prev node in gold
+        // do an early stop
+        return;
+      }
+      nodes += 1;
+      for (auto& beam : starts->beamData().row(prevPtr.position)) {
+        if (analysis::EntryBeam::isFake(beam)) {
+          break;
+        }
+        beams += 1;
       }
     }
   }
 
-  for (auto& node : ex.nodes()) {
-    auto bnd = l->boundary(node.boundary);
-    auto starts = bnd->starts();
-    for (int i = 0; i < starts->arraySize(); ++i) {
-      auto vals = starts->entryData().row(i);
-      for (auto& tag : node.tags) {
-        if (vals.at(tag.field) != tag.value) {
+  if (nodes == 0) {
+    return;
+  }
+
+  float score = 1.0f / beams;
+  loss_ += 1.0f * nodes / eos->ends()->arraySize() / l->createdBoundaryCount();
+  NgramExampleFeatureCalculator nfc{l, analyzer_->core().features()};
+  featureBuf_.resize(analyzer_->core().runtime().features.ngrams.size());
+  util::MutableArraySlice<u32> buffer{&featureBuf_};
+
+  analysis::LatticeNodePtr eosPtr{
+      static_cast<u16>(l->createdBoundaryCount() - 1), 0};
+
+  for (auto& prevPtr : eos->ends()->nodePtrs()) {
+    auto starts = l->boundary(prevPtr.boundary)->starts();
+    if (example_.doesNodeMatch(starts, prevPtr.boundary, prevPtr.position)) {
+      // LOG_TRACE() << "Add eos +features for [" << prevPtr.boundary << "," <<
+      // prevPtr.position << "]";
+      for (auto& beam : starts->beamData().row(prevPtr.position)) {
+        if (analysis::EntryBeam::isFake(beam)) {
           break;
         }
-        callback(analysis::LatticeNodePtr{static_cast<u16>(node.boundary),
-                                          static_cast<u16>(i)});
+        auto prev2 = beam.ptr.previous;
+        NgramFeatureRef ref{prev2->latticeNodePtr(), prev->latticeNodePtr(),
+                            eosPtr};
+        nfc.calculateNgramFeatures(ref, buffer);
+        for (auto feature : buffer) {
+          features_.push_back(ScoredFeature{feature, score});
+        }
       }
     }
+  }
+
+  auto top1prev = top1.ptr.previous;
+  auto top1prev2 = top1prev->previous;
+  NgramFeatureRef top1ref{top1prev2->latticeNodePtr(),
+                          top1prev->latticeNodePtr(),
+                          top1.ptr.latticeNodePtr()};
+  // LOG_TRACE() << "Add eos -features for [" << top1prev->boundary << "," <<
+  // top1prev->right << "]";
+  nfc.calculateNgramFeatures(top1ref, buffer);
+  for (auto feature : buffer) {
+    features_.push_back(ScoredFeature{feature, -1});
   }
 }
 
@@ -321,7 +447,8 @@ Status OwningPartialTrainer::initialize(const TrainerFullConfig& cfg,
   analyzer_.initialize(&cfg.core, ScoringConfig{1, cfg.trainingConfig.beamSize},
                        cfg.analyzerConfig);
   JPP_RETURN_IF_ERROR(analyzer_.value().initScorers(scorerDef));
-  trainer_.initialize(&analyzer_.value());
+  u32 numFeatures = 1u << cfg.trainingConfig.featureNumberExponent;
+  trainer_.initialize(&analyzer_.value(), numFeatures - 1);
   return Status::Ok();
 }
 
@@ -354,6 +481,7 @@ Status PartialExampleReader::readExample(PartialExample* result, bool* eof) {
   result->boundaries_.clear();
   result->surface_.clear();
   result->nodes_.clear();
+  result->boundaries_.push_back(boundary);
   while (csv_.nextLine()) {
     if (firstLine) {
       result->line_ = csv_.lineNumber();

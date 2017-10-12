@@ -3,8 +3,8 @@
 //
 
 #include "trainer.h"
-#include "util/logging.hpp"
 #include <random>
+#include "util/logging.hpp"
 
 namespace jumanpp {
 namespace core {

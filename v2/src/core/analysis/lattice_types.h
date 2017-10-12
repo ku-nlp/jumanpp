@@ -44,10 +44,19 @@ class LatticeRightBoundary final : public util::memory::StructOfArrays {
                        const LatticeBoundaryConfig& lbc);
 
   util::Sliceable<NodeInfo> nodeInfo() { return nodeInfo_; }
+  util::ConstSliceable<NodeInfo> nodeInfo() const { return nodeInfo_; }
   util::Sliceable<i32> entryData() { return entryDataStorage; }
+  util::ConstSliceable<i32> entryData() const { return entryDataStorage; }
   util::Sliceable<u64> primitiveFeatureData() { return primitiveFeatures; }
+  util::ConstSliceable<u64> primitiveFeatureData() const {
+    return primitiveFeatures;
+  }
   util::Sliceable<u64> patternFeatureData() { return featurePatterns; }
+  util::ConstSliceable<u64> patternFeatureData() const {
+    return featurePatterns;
+  }
   util::Sliceable<ConnectionBeamElement> beamData() { return beam; }
+  util::ConstSliceable<ConnectionBeamElement> beamData() const { return beam; }
 };
 
 class LatticeBoundaryConnection final
@@ -97,7 +106,9 @@ class LatticeBoundary {
   }
 
   LatticeLeftBoundary* ends() { return &left; }
+  const LatticeLeftBoundary* ends() const { return &left; }
   LatticeRightBoundary* starts() { return &right; }
+  const LatticeRightBoundary* starts() const { return &right; }
   u32 localNodeCount() const { return config.beginNodes; }
 
   friend class Lattice;

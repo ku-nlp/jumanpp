@@ -273,6 +273,11 @@ class SizedArrayField : public SOAField {
     JPP_DCHECK(manager_->hasField(this));
     return Sliceable<T>{objects_, rowCnt_, manager_->arraySize()};
   }
+
+  operator ConstSliceable<T>() const {
+    JPP_DCHECK(manager_->hasField(this));
+    return ConstSliceable<T>{data(), rowCnt_, manager_->arraySize()};
+  }
 };
 
 }  // namespace memory

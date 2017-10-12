@@ -54,6 +54,11 @@ class PartialExample {
     return ExampleInfo{file_, comment_, line_};
   }
 
+  bool doesNodeMatch(const analysis::Lattice* l, i32 boundary,
+                     i32 position) const;
+  bool doesNodeMatch(const analysis::LatticeRightBoundary* lr, i32 boundary,
+                     i32 position) const;
+
   friend class PartialExampleReader;
 };
 
@@ -64,15 +69,18 @@ class PartialTrainer {
   analysis::AnalyzerImpl* analyzer_;
   std::vector<u32> featureBuf_;
   float loss_;
+  u32 mask_;
 
   void handleBoundaryConstraints();
+  void handleEos();
   void handleTagConstraints();
   void finalizeFeatures();
 
   friend class TrainerBatch;
 
  public:
-  explicit PartialTrainer(analysis::AnalyzerImpl* ana) : analyzer_{ana} {}
+  explicit PartialTrainer(analysis::AnalyzerImpl* ana, u32 mask)
+      : analyzer_{ana}, mask_{mask} {}
 
   Status prepare();
   Status compute(const analysis::ScorerDef* sconf);
@@ -80,7 +88,8 @@ class PartialTrainer {
   float loss() const { return loss_; }
   util::ArraySlice<ScoredFeature> featureDiff() const { return features_; }
 
-  void addBadNode(const analysis::ConnectionPtr* node, i32 boundary);
+  void addBadNode(const analysis::ConnectionPtr* node, i32 boundary,
+                  i32 prevBoundary);
   float addBadNode2(const analysis::ConnectionPtr* node, i32 boundary,
                     i32 length, util::ArraySlice<TagConstraint> tagFilter);
 
