@@ -514,7 +514,6 @@ Status PartialExampleReader::readExample(PartialExample* result, bool* eof) {
   result->boundaries_.clear();
   result->surface_.clear();
   result->nodes_.clear();
-  result->boundaries_.push_back(boundary);
   while (csv_.nextLine()) {
     if (firstLine) {
       result->line_ = csv_.lineNumber();

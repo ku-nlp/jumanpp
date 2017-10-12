@@ -32,6 +32,13 @@ Status parseArgs(int argc, const char** argv, t::TrainingArguments* args) {
       "Filename of corpus that will be used for training",
       {"corpus"}};
 
+  args::ValueFlag<std::string> partialCorpus {
+      ioGroup,
+      "FILENAME",
+      "Filename of partially annotated corpus",
+      {"partial-corpus"}
+  };
+
   args::ValueFlag<std::string> rnnFile{
       ioGroup,
       "FILENAME",
@@ -104,6 +111,7 @@ Status parseArgs(int argc, const char** argv, t::TrainingArguments* args) {
   args->modelFilename = modelFile.Get();
   args->outputFilename = modelOutput.Get();
   args->corpusFilename = corpusFile.Get();
+  args->partialCorpus = partialCorpus.Get();
   args->rnnModelFilename = rnnFile.Get();
   auto sizeExp = paramSizeExponent.Get();
   args->trainingConfig.featureNumberExponent = sizeExp;
@@ -195,6 +203,13 @@ int doTrainJpp(t::TrainingArguments& args, core::JumanppEnv& env) {
   if (!s) {
     LOG_ERROR() << "failed to initialize training process: " << s;
     return 1;
+  }
+
+  if (!args.partialCorpus.empty()) {
+    s = exec.loadPartialExamples(args.partialCorpus);
+    if (!s) {
+      LOG_ERROR() << "failed to load partially annotated corpus: " << s;
+    }
   }
 
   s = exec.loadInput(args.corpusFilename);

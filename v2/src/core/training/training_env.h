@@ -26,6 +26,7 @@ struct TrainingArguments {
   std::string modelFilename;
   std::string outputFilename;
   std::string corpusFilename;
+  std::string partialCorpus;
   std::string rnnModelFilename;
   std::string scwDumpDirectory;
   std::string scwDumpPrefix;
