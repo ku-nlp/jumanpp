@@ -80,7 +80,7 @@ TEST_CASE("can train a simple example") {
 
 TEST_CASE("can train a simple example with tags") {
   TrainerEnv env{"UNK,N,5\nもも,N,0\nも,PRT,1\nモ,PRT,2"};
-  env.parseMrph("\tもも\n\tもも\n\tもも\n\n");
+  env.parseMrph("\tもも\nも\n\tもも\n\tもも\nも\n\n");
   CHECK(env.trainer.prepare());
   SoftConfidenceWeighted scw{TrainerEnv::testConf()};
   CHECK(env.trainer.compute(scw.scorers()));

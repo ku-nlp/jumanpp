@@ -9,10 +9,12 @@ TEST_CASE("jumanpp can correctly read stuff") {
   env.initialize();
   REQUIRE_OK(env.trainEnv.value().loadInput("jumandic/train_mini_01.txt"));
   REQUIRE_OK(env.trainEnv.value().readOneBatch());
+  env.trainEnv.value().prepareTrainers();
   REQUIRE_OK(env.trainEnv.value().trainOneBatch());
   // env.dumpTrainers("/tmp/dots/1");
   REQUIRE_OK(env.trainEnv.value().loadInput("jumandic/train_mini_01.txt"));
   REQUIRE_OK(env.trainEnv.value().readOneBatch());
+  env.trainEnv.value().prepareTrainers();
   REQUIRE_OK(env.trainEnv.value().trainOneBatch());
   // env.dumpTrainers("/tmp/dots/2");
   REQUIRE_OK(env.trainEnv.value().trainOneBatch());

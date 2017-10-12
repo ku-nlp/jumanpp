@@ -3,6 +3,7 @@
 //
 
 #include "trainer.h"
+#include "util/logging.hpp"
 #include <random>
 
 namespace jumanpp {
@@ -94,6 +95,7 @@ Status TrainerBatch::initialize(const TrainerFullConfig &tfc,
 }
 
 Status TrainerBatch::readFullBatch(FullExampleReader *rdr) {
+  indices_.clear();
   current_ = 0;
   int trIdx = 0;
   for (; trIdx < trainers_.size(); ++trIdx) {
@@ -105,7 +107,6 @@ Status TrainerBatch::readFullBatch(FullExampleReader *rdr) {
     }
   }
   current_ = trIdx;
-  indices_.clear();
 
   return Status::Ok();
 }
@@ -116,7 +117,7 @@ void TrainerBatch::shuffleData(bool usePartial) {
   } else {
     totalTrainers_ = activeFullTrainers();
   }
-  indices_.reserve(totalTrainers());
+  indices_.reserve(totalTrainers_);
 
   for (int i = 0; i < activeFullTrainers(); ++i) {
     indices_.push_back(i);

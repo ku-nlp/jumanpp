@@ -152,7 +152,10 @@ class TrainerBatch {
   ITrainer* trainer(i32 idx) const;
 
   i32 activeFullTrainers() const { return current_; }
-  i32 totalTrainers() const { return totalTrainers_; }
+  i32 totalTrainers() const {
+    JPP_DCHECK_EQ(totalTrainers_, indices_.size());
+    return totalTrainers_;
+  }
 };
 
 }  // namespace training
