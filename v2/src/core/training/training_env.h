@@ -39,6 +39,7 @@ class TrainingEnv {
   core::analysis::AnalyzerConfig aconf_;
   TrainingIo trainingIo_;
   FullExampleReader fullReader_;
+  PartialExampleReader partReader_;
   TrainerBatch trainers_;
   SoftConfidenceWeighted scw_;
   TrainingExecutor executor_;
@@ -62,8 +63,9 @@ class TrainingEnv {
 
   Status initOther();
 
-  Status loadInputData(StringPiece data);
+  Status loadPartialExamples(StringPiece filename);
 
+  Status loadInputData(StringPiece data);
   Status loadInput(StringPiece fileName);
   void resetInput();
 

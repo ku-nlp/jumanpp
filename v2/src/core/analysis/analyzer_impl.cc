@@ -43,13 +43,12 @@ Status AnalyzerImpl::initScorers(const ScorerDef& cfg) {
   JPP_RETURN_IF_ERROR(core_->features().validate());
 
   if (cfg.scoreWeights.size() != latticeConfig_.scoreCnt) {
-    return Status::InvalidState() << "AnalyzerImpl: number of scorers was "
-                                     "different from number of score "
-                                     "coefficients";
+    return JPPS_INVALID_PARAMETER << "AnalyzerImpl: number of scorers (" <<
+        cfg.scoreWeights.size() << ") was different from number of score coefficients (" << latticeConfig_.scoreCnt << ")";
   }
 
   if (latticeConfig_.beamSize == 0) {
-    return Status::InvalidState()
+    return JPPS_INVALID_PARAMETER
            << "AnalyzerImpl: beam size can not be zero for scoring";
   }
 

@@ -14,7 +14,7 @@
 #include "util/lazy.h"
 
 using namespace jumanpp;
-
+namespace {
 class JumandicTrainingTestEnv {
  public:
   testing::TestEnv testEnv;
@@ -38,6 +38,10 @@ class JumandicTrainingTestEnv {
     testEnv.loadEnv(&jppEnv);
     REQUIRE_OK(fields.initialize(testEnv.analyzer->output()));
     trainArgs.trainingConfig.featureNumberExponent = 14;  // 16k
+  }
+
+  void loadPartialData(StringPiece filename) {
+    REQUIRE_OK(trainEnv.value().loadPartialExamples(filename));
   }
 
   void singleEpochFrom(StringPiece filename) {
@@ -80,5 +84,6 @@ class JumandicTrainingTestEnv {
     }
   }
 };
+}
 
 #endif  // JUMANPP_JUMANDIC_TEST_ENV_H

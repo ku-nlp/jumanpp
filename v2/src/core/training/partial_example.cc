@@ -374,9 +374,41 @@ void PartialTrainer::handleEos() {
   auto eos = l->boundary(l->createdBoundaryCount() - 1);
   auto top1 = eos->starts()->beamData().at(0);
 
+  auto prev = top1.ptr.previous;
+  auto prevLen = l->boundary(prev->boundary)->starts()->nodeInfo().at(prev->right).numCodepoints();
+  bool invalidNode = false;
+  auto prevStart = prev->boundary;
+  auto prevEnd = prevStart + prevLen;
+  for (auto b: example_.boundaries()) {
+    if (prevStart < b && b < prevEnd) {
+      invalidNode = true;
+    }
+  }
+
+  auto prevFields = l->boundary(prev->boundary)->starts()->entryData().row(prev->right);
+  for (auto& n: example_.nodes()) {
+    if (n.boundary == prev->boundary) {
+      if (n.length != prevLen) {
+        invalidNode = true;
+        break;
+      }
+
+      for (auto& t: n.tags) {
+        if (prevFields[t.field] != t.value) {
+          invalidNode = true;
+          break;
+        }
+      }
+    }
+  }
+
+  if (!invalidNode) {
+    return;
+  }
+
+
   int nodes = 0;
   int beams = 0;
-  auto prev = top1.ptr.previous;
 
   for (auto& prevPtr : eos->ends()->nodePtrs()) {
     auto starts = l->boundary(prevPtr.boundary)->starts();
@@ -444,10 +476,10 @@ void PartialTrainer::handleEos() {
 
 Status OwningPartialTrainer::initialize(const TrainerFullConfig& cfg,
                                         const analysis::ScorerDef& scorerDef) {
-  analyzer_.initialize(&cfg.core, ScoringConfig{1, cfg.trainingConfig.beamSize},
-                       cfg.analyzerConfig);
+  analyzer_.initialize(cfg.core, ScoringConfig{cfg.trainingConfig->beamSize, 1},
+                       *cfg.analyzerConfig);
   JPP_RETURN_IF_ERROR(analyzer_.value().initScorers(scorerDef));
-  u32 numFeatures = 1u << cfg.trainingConfig.featureNumberExponent;
+  u32 numFeatures = 1u << cfg.trainingConfig->featureNumberExponent;
   trainer_.initialize(&analyzer_.value(), numFeatures - 1);
   return Status::Ok();
 }
@@ -467,6 +499,7 @@ analysis::Lattice* OwningPartialTrainer::lattice() const {
 
 Status PartialExampleReader::initialize(TrainingIo* tio) {
   tio_ = tio;
+  fields_.clear();
   for (auto& x : tio->fields()) {
     fields_.insert(std::make_pair(x.name, &x));
   }
@@ -501,6 +534,7 @@ Status PartialExampleReader::readExample(PartialExample* result, bool* eof) {
         if (!bnds.empty()) {
           bnds.erase(bnds.end() - 1, bnds.end());
         }
+        *eof = false;
         return Status::Ok();
       }
       codepts_.clear();

@@ -136,8 +136,8 @@ Status TrainingEnv::initOther() {
 
   JPP_RETURN_IF_ERROR(trainingIo_.initialize(trainingSpec, *pHolder));
   fullReader_.setTrainingIo(&trainingIo_);
-  core::training::TrainerFullConfig conf{aconf_, *pHolder, trainingSpec,
-                                         args_.trainingConfig};
+  core::training::TrainerFullConfig conf{&aconf_, pHolder, &trainingSpec,
+                                         &args_.trainingConfig};
   auto sconf = scw_.scorers();
   JPP_RETURN_IF_ERROR(trainers_.initialize(conf, sconf, args_.batchSize));
   JPP_RETURN_IF_ERROR(executor_.initialize(sconf, args_.numThreads));
@@ -188,6 +188,13 @@ void TrainingEnv::warnOnNonMatchingFeatures(const spec::TrainingSpec& spec) {
                   "fields: features="
                << VOut(diff1) << " gold=" << VOut(diff2);
   }
+}
+
+Status TrainingEnv::loadPartialExamples(StringPiece filename) {
+  JPP_RETURN_IF_ERROR(partReader_.initialize(&trainingIo_));
+  JPP_RETURN_IF_ERROR(partReader_.openFile(filename))
+  JPP_RETURN_IF_ERROR(trainers_.readPartialExamples(&partReader_));
+  return Status::Ok();
 }
 
 }  // namespace training

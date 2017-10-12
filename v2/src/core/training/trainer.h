@@ -69,9 +69,9 @@ class OwningFullTrainer final : public ITrainer {
 
  public:
   explicit OwningFullTrainer(const TrainerFullConfig& conf)
-      : analyzer_{&conf.core, ScoringConfig{conf.trainingConfig.beamSize, 1},
-                  conf.analyzerConfig},
-        trainer_{&analyzer_, &conf.trainingSpec, conf.trainingConfig} {}
+      : analyzer_{conf.core, ScoringConfig{conf.trainingConfig->beamSize, 1},
+                  *conf.analyzerConfig},
+        trainer_{&analyzer_, conf.trainingSpec, *conf.trainingConfig} {}
 
   void reset() {
     wasPrepared = false;
@@ -128,7 +128,7 @@ class OwningFullTrainer final : public ITrainer {
 };
 
 class TrainerBatch {
-  const TrainerFullConfig* config_;
+  TrainerFullConfig config_;
   const analysis::ScorerDef* scorerDef_;
   std::vector<std::unique_ptr<OwningFullTrainer>> trainers_;
   std::vector<std::unique_ptr<OwningPartialTrainer>> partialTrainerts_;

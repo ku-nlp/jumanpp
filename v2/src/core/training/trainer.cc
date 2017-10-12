@@ -88,8 +88,8 @@ Status TrainerBatch::initialize(const TrainerFullConfig &tfc,
     JPP_RETURN_IF_ERROR(trainer->initAnalyzer(sconf));
     trainers_.emplace_back(std::move(trainer));
   }
-  seed_ = tfc.trainingConfig.randomSeed;
-  config_ = &tfc;
+  seed_ = tfc.trainingConfig->randomSeed;
+  config_ = tfc;
   scorerDef_ = sconf;
   return Status::Ok();
 }
@@ -117,6 +117,7 @@ void TrainerBatch::shuffleData(bool usePartial) {
   } else {
     totalTrainers_ = activeFullTrainers();
   }
+  indices_.clear();
   indices_.reserve(totalTrainers_);
 
   for (int i = 0; i < activeFullTrainers(); ++i) {
@@ -141,15 +142,15 @@ Status TrainerBatch::readPartialExamples(PartialExampleReader *reader) {
   trainer.reset(new OwningPartialTrainer);
   bool eof = true;
   do {
+    JPP_RETURN_IF_ERROR(trainer->initialize(config_, *scorerDef_));
     JPP_RETURN_IF_ERROR(
         reader->readExample(&trainer->trainer_.value().example(), &eof));
     if (eof) {
       break;
     }
-    JPP_DCHECK(config_);
     JPP_DCHECK(scorerDef_);
-    JPP_RETURN_IF_ERROR(trainer->initialize(*config_, *scorerDef_));
     partialTrainerts_.emplace_back(trainer.release());
+    trainer.reset(new OwningPartialTrainer);
   } while (!eof);
   return Status::Ok();
 }

@@ -19,10 +19,10 @@ struct ScoredFeature {
 };
 
 struct TrainerFullConfig {
-  const analysis::AnalyzerConfig& analyzerConfig;
-  const CoreHolder& core;
-  const spec::TrainingSpec& trainingSpec;
-  const TrainingConfig& trainingConfig;
+  const analysis::AnalyzerConfig* analyzerConfig;
+  const CoreHolder* core;
+  const spec::TrainingSpec* trainingSpec;
+  const TrainingConfig* trainingConfig;
 };
 
 class ITrainer {

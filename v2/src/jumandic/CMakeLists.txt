@@ -7,7 +7,7 @@ set(jumandic_sources shared/juman_format.cc
         shared/lattice_format.cc)
 
 set(jumandic_tests shared/jumandic_spec_test.cc shared/mini_dic_test.cc shared/training_test.cc
-        shared/mdic_format_test.cc)
+        shared/mdic_format_test.cc tests/partial_data_train.cc)
 
 set(bug_test_sources tests/bug_950111-003_test.cc tests/bug_28_lattice.cc)
 
