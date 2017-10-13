@@ -69,10 +69,10 @@ class BigramFeature {
 };
 
 class TrigramFeature {
+  u32 target_;
   u32 t0idx_;
   u32 t1idx_;
   u32 t2idx_;
-  u32 target_;
 
   static constexpr u64 TotalHashArgs = 5;
 

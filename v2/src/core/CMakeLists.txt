@@ -41,6 +41,7 @@ set(core_hdrs
 set(core_test_srcs darts_trie_test.cc dictionary_test.cc impl/field_import_test.cc
         impl/field_reader_test.cc impl/feature_impl_prim_test.cc impl/feature_impl_compute_test.cc
         impl/feature_impl_combine_test.cc impl/feature_test.cc runtime_info_test.cc impl/graphviz_format_test.cc
+        impl/feature_impl_ngram_partial_test.cc
         )
 
 set(core_train_test_srcs training/gold_example_test.cc training/gold_example2_test.cc training/trainer_test.cc
