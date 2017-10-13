@@ -84,6 +84,6 @@ class JumandicTrainingTestEnv {
     }
   }
 };
-}
+}  // namespace
 
 #endif  // JUMANPP_JUMANDIC_TEST_ENV_H

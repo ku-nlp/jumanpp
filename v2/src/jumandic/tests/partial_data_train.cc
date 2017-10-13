@@ -17,5 +17,6 @@ TEST_CASE("can train with combined examples (boundary only)") {
   env.singleEpochFrom("jumandic/train_mini_01.txt");
   env.singleEpochFrom("jumandic/train_mini_01.txt");
   env.singleEpochFrom("jumandic/train_mini_01.txt");
-  env.dumpTrainers("/tmp/jpp-debug");
+  //env.dumpTrainers("/tmp/jpp-debug");
+  CHECK(env.trainEnv.value().epochLoss() == Approx(0));
 }

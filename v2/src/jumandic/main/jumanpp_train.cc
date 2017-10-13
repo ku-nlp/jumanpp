@@ -32,12 +32,11 @@ Status parseArgs(int argc, const char** argv, t::TrainingArguments* args) {
       "Filename of corpus that will be used for training",
       {"corpus"}};
 
-  args::ValueFlag<std::string> partialCorpus {
+  args::ValueFlag<std::string> partialCorpus{
       ioGroup,
       "FILENAME",
       "Filename of partially annotated corpus",
-      {"partial-corpus"}
-  };
+      {"partial-corpus"}};
 
   args::ValueFlag<std::string> rnnFile{
       ioGroup,
