@@ -103,7 +103,7 @@ class PartialTrainer {
 };
 
 class OwningPartialTrainer : public ITrainer {
-  bool isPrepared_;
+  bool isPrepared_ = false;
   util::Lazy<PartialTrainer> trainer_;
   util::Lazy<analysis::AnalyzerImpl> analyzer_;
 
@@ -120,6 +120,10 @@ class OwningPartialTrainer : public ITrainer {
       return s;
     }
     return Status::Ok();
+  }
+
+  void reset() {
+    isPrepared_ = false;
   }
 
   Status compute(const analysis::ScorerDef* sconf) override {

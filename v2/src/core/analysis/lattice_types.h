@@ -130,11 +130,18 @@ class Lattice {
   Lattice(util::memory::ManagedAllocatorCore* alloc, const LatticeConfig& lc);
   u32 createdBoundaryCount() const { return (u32)boundaries.size(); }
   Status makeBoundary(const LatticeBoundaryConfig& lbc, LatticeBoundary** ptr);
+  LatticeBoundary* boundary(i32 idx) { return boundary(static_cast<u32>(idx)); }
   LatticeBoundary* boundary(u32 idx) {
     JPP_DCHECK_IN(idx, 0, boundaries.size());
     return boundaries[idx];
   }
-  const LatticeBoundary* boundary(u32 idx) const { return boundaries.at(idx); }
+  const LatticeBoundary* boundary(i32 idx) const {
+    return boundary(static_cast<u32>(idx));
+  }
+  const LatticeBoundary* boundary(u32 idx) const {
+    JPP_DCHECK_IN(idx, 0, boundaries.size());
+    return boundaries.at(idx);
+  }
   void hintSize(u32 size);
   void reset();
   const LatticeConfig& config() { return lconf; }

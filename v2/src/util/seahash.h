@@ -14,6 +14,7 @@ namespace hashing {
 
 static constexpr u64 SeaHashSeed0 = 0x16f11fe89b0d677cULL;
 static constexpr u64 SeaHashSeed1 = 0xb480a793d8e6c86cULL;
+static constexpr u64 SeaHashMult = 0x6eed0e9da4d94a4fULL;
 
 // See http://ticki.github.io/blog/seahash-explained/ for explanation.
 // This implementation uses only two u64 for states instead of four.
@@ -28,11 +29,11 @@ struct SeaHashState {
   }
 
   JPP_ALWAYS_INLINE inline static u64 diffuse(u64 v) {
-    v *= 0x6eed0e9da4d94a4fULL;
+    v *= SeaHashMult;
     auto a = v >> 32;
     auto b = static_cast<unsigned char>(v >> 60);
     v ^= a >> b;
-    v *= 0x6eed0e9da4d94a4fULL;
+    v *= SeaHashMult;
     return v;
   }
 
@@ -49,25 +50,45 @@ struct SeaHashState {
   }
 };
 
+class SeaHashLite {
+  u64 state_;
+
+  constexpr static JPP_ALWAYS_INLINE inline u64 diffuse(u64 v) {
+    v *= SeaHashMult;
+    auto a = v >> 32;
+    auto b = static_cast<unsigned char>(v >> 60);
+    return v ^ (a >> b);
+  }
+
+ public:
+  constexpr SeaHashLite() noexcept : state_{SeaHashSeed0} {}
+  constexpr explicit SeaHashLite(u64 state) noexcept : state_{state} {}
+
+  constexpr JPP_ALWAYS_INLINE SeaHashLite mix(u64 v) const noexcept {
+    return SeaHashLite{diffuse(state_ ^ v)};
+  }
+
+  constexpr JPP_ALWAYS_INLINE u64 finish() const noexcept {
+    return diffuse(state_ ^ SeaHashSeed1);
+  }
+
+  constexpr JPP_ALWAYS_INLINE u64 state() const noexcept { return state_; }
+};
+
 namespace detail {
-JPP_ALWAYS_INLINE inline SeaHashState seaHashSeqImpl(SeaHashState h) {
+JPP_ALWAYS_INLINE inline SeaHashLite seaHashSeqImpl(SeaHashLite h) {
   return h;
 }
 
-JPP_ALWAYS_INLINE inline SeaHashState seaHashSeqImpl(SeaHashState h, u64 one) {
+JPP_ALWAYS_INLINE inline SeaHashLite seaHashSeqImpl(SeaHashLite h,
+                                                      u64 one) {
   return h.mix(one);
 }
 
 template <typename... Args>
-JPP_ALWAYS_INLINE inline SeaHashState seaHashSeqImpl(SeaHashState h, u64 one,
-                                                     u64 two, Args... args) {
-  return seaHashSeqImpl(h.mix(one, two), args...);
-}
-
-template <>
-JPP_ALWAYS_INLINE inline SeaHashState seaHashSeqImpl(SeaHashState h, u64 one,
-                                                     u64 two) {
-  return h.mix(one, two);
+JPP_ALWAYS_INLINE inline SeaHashLite seaHashSeqImpl(SeaHashLite h, u64 arg,
+                                                      Args... args) {
+  return seaHashSeqImpl(h.mix(arg), args...);
 }
 }  // namespace detail
 
@@ -82,15 +103,33 @@ JPP_ALWAYS_INLINE inline SeaHashState seaHashSeqImpl(SeaHashState h, u64 one,
  */
 template <typename... Args>
 JPP_ALWAYS_INLINE inline u64 seaHashSeq(Args... args) {
-  return detail::seaHashSeqImpl(SeaHashState{}, sizeof...(args),
+  return detail::seaHashSeqImpl(SeaHashLite{}, sizeof...(args),
                                 static_cast<u64>(args)...)
+      .finish();
+}
+
+template <typename... Args>
+JPP_ALWAYS_INLINE inline u64 rawSeahashStart(Args... args) {
+  return detail::seaHashSeqImpl(SeaHashLite{}, static_cast<u64>(args)...)
+      .state();
+}
+
+template <typename... Args>
+JPP_ALWAYS_INLINE inline u64 rawSeahashContinue(u64 state, Args... args) {
+  return detail::seaHashSeqImpl(SeaHashLite{state}, static_cast<u64>(args)...)
+      .state();
+}
+
+template <typename... Args>
+JPP_ALWAYS_INLINE inline u64 rawSeahashFinish(u64 state, Args... args) {
+  return detail::seaHashSeqImpl(SeaHashLite{state}, static_cast<u64>(args)...)
       .finish();
 }
 
 // This version pushes tuple size as a last argument.
 template <typename... Args>
 JPP_ALWAYS_INLINE inline u64 seaHashSeq2(Args... args) {
-  return detail::seaHashSeqImpl(SeaHashState{}, static_cast<u64>(args)...,
+  return detail::seaHashSeqImpl(SeaHashLite{}, static_cast<u64>(args)...,
                                 sizeof...(args))
       .finish();
 }
@@ -98,14 +137,10 @@ JPP_ALWAYS_INLINE inline u64 seaHashSeq2(Args... args) {
 template <typename Seq, typename Idx>
 inline u64 seaHashIndexedSeq(u64 seed, const Seq& seq, const Idx& idx) {
   auto numIndices = idx.size();
-  SeaHashState state{numIndices};
+  SeaHashLite state{numIndices};
   state = state.mix(seed);
-  auto steps2 = numIndices / 2;
-  for (int i = 0; i < steps2; ++i) {
-    state = state.mix(seq[idx[i]], seq[idx[i + 1]]);
-  }
-  if ((numIndices & 0x1) != 0) {
-    state = state.mix(seq[idx[numIndices - 1]]);
+  for (auto i : idx) {
+    state = state.mix(seq[i]);
   }
   return state.finish();
 }

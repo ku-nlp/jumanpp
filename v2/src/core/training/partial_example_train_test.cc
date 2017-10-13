@@ -96,7 +96,7 @@ TEST_CASE("correctly computes matching nodes") {
 
 TEST_CASE("can compute loss/features from a simple example") {
   TrainerEnv env{"UNK,N,5\nもも,N,0\nも,PRT,1\nモ,PRT,2"};
-  env.parseMrph("もも\nも\nもも\n\n");
+  env.parseMrph("もも\nも\nも\nもも\n\n");
   CHECK(env.trainer.prepare());
   SoftConfidenceWeighted scw{TrainerEnv::testConf()};
   CHECK(env.trainer.compute(scw.scorers()));

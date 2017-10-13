@@ -7,6 +7,7 @@
 
 #include <memory>
 #include "runtime_info.h"
+#include "util/sliceable_array.h"
 
 namespace jumanpp {
 namespace core {
@@ -21,6 +22,7 @@ class ComputeFeatureContext;
 class PrimitiveFeatureData;
 class PatternFeatureData;
 class NgramFeatureData;
+class NgramDynamicFeatureApply;
 }  // namespace impl
 
 class FeatureApply {
@@ -50,6 +52,25 @@ class NgramFeatureApply : public FeatureApply {
   virtual void applyBatch(impl::NgramFeatureData* data) const noexcept = 0;
 };
 
+class PartialNgramFeatureApply : public FeatureApply {
+ public:
+  virtual void applyUni(util::ConstSliceable<u64> p0,
+                        util::Sliceable<u32> result) const = 0;
+  virtual void applyBiStep1(util::ConstSliceable<u64> p0,
+                            util::Sliceable<u64> result) const = 0;
+  virtual void applyBiStep2(util::ConstSliceable<u64> state,
+                            util::ArraySlice<u64> p1,
+                            util::Sliceable<u32> result) const = 0;
+  virtual void applyTriStep1(util::ConstSliceable<u64> p0,
+                             util::Sliceable<u64> result) const = 0;
+  virtual void applyTriStep2(util::ConstSliceable<u64> state,
+                             util::ArraySlice<u64> p1,
+                             util::Sliceable<u64> result) const = 0;
+  virtual void applyTriStep3(util::ConstSliceable<u64> state,
+                             util::ArraySlice<u64> p2,
+                             util::Sliceable<u32> result) const = 0;
+};
+
 class StaticFeatureFactory : public FeatureApply {
  public:
   virtual u64 runtimeHash() const { return 0; }
@@ -57,6 +78,7 @@ class StaticFeatureFactory : public FeatureApply {
   virtual ComputeFeatureApply* compute() const { return nullptr; }
   virtual PatternFeatureApply* pattern() const { return nullptr; }
   virtual NgramFeatureApply* ngram() const { return nullptr; }
+  virtual PartialNgramFeatureApply* ngramPartial() const { return nullptr; }
 };
 
 struct FeatureHolder {
@@ -69,11 +91,17 @@ struct FeatureHolder {
   std::unique_ptr<features::PatternFeatureApply> patternDynamic;
   std::unique_ptr<features::PatternFeatureApply> patternStatic;
   features::PatternFeatureApply* pattern = nullptr;
-  std::unique_ptr<features::NgramFeatureApply> ngramDynamic;
+  std::unique_ptr<features::impl::NgramDynamicFeatureApply> ngramDynamic;
   std::unique_ptr<features::NgramFeatureApply> ngramStatic;
   features::NgramFeatureApply* ngram = nullptr;
+  std::unique_ptr<features::PartialNgramFeatureApply> ngramPartialDynamic;
+  std::unique_ptr<features::PartialNgramFeatureApply> ngramPartialStatic;
+  features::PartialNgramFeatureApply* ngramPartial = nullptr;
 
   Status validate() const;
+
+  FeatureHolder();
+  ~FeatureHolder();
 };
 
 Status makeFeatures(const CoreHolder& core, const StaticFeatureFactory* sff,

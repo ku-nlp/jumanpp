@@ -12,7 +12,7 @@ set(core_srcs darts_trie.cc dictionary.cc impl/field_import.cc dic_builder.cc
         spec/spec_types.cc spec/spec_serialization.cc impl/model_io.cc analysis/unk_nodes.cc features_api.cc
         analysis/perceptron.cc analysis/score_processor.cc analysis/analysis_result.cc
         env.cc impl/graphviz_format.cc impl/feature_codegen.cc analysis/onomatopoeia_creator.cc
-        analysis/rnn_id_resolver.cc analysis/numeric_creator.cc)
+        analysis/rnn_id_resolver.cc analysis/numeric_creator.cc analysis/ngram_computations.cc)
 
 set(core_train_srcs
         training/training_io.h training/loss.h training/gold_example.h training/trainer.h training/scw.h
@@ -35,7 +35,8 @@ set(core_hdrs
         analysis/unk_nodes.h analysis/score_api.h analysis/perceptron.h
         analysis/score_processor.h analysis/analysis_result.h analysis/rnn_scorer.cc analysis/rnn_scorer.h
         impl/perceptron_io.h env.h impl/graphviz_format.h analysis/onomatopoeia_creator.h impl/feature_codegen.h
-        analysis/rnn_id_resolver.h analysis/rnn_serialization.h analysis/numeric_creator.h  )
+        analysis/rnn_id_resolver.h analysis/rnn_serialization.h analysis/numeric_creator.h
+        analysis/ngram_computations.h impl/feature_impl_ngram_partial.h)
 
 set(core_test_srcs darts_trie_test.cc dictionary_test.cc impl/field_import_test.cc
         impl/field_reader_test.cc impl/feature_impl_prim_test.cc impl/feature_impl_compute_test.cc

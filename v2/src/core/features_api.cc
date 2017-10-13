@@ -46,6 +46,7 @@ Status makeFeatures(const CoreHolder &info, const StaticFeatureFactory *sff,
       result->computeStatic.reset(sff->compute());
       result->patternStatic.reset(sff->pattern());
       result->ngramStatic.reset(sff->ngram());
+      result->ngramPartialStatic.reset(sff->ngramPartial());
     } else {
       LOG_WARN()
           << "hashes did not match, compiled static features can't be used";
@@ -76,28 +77,38 @@ Status makeFeatures(const CoreHolder &info, const StaticFeatureFactory *sff,
     result->ngram = result->ngramDynamic.get();
   }
 
+  if (result->ngramPartialStatic) {
+    result->ngramPartial = result->ngramPartialStatic.get();
+  } else {
+    result->ngramPartial = result->ngramPartialDynamic.get();
+  }
+
   return Status::Ok();
 }
 
 Status FeatureHolder::validate() const {
   if (primitive == nullptr) {
-    return Status::InvalidState() << "Features: primitive was null";
+    return JPPS_INVALID_STATE << "Features: primitive was null";
   }
 
   if (compute == nullptr) {
-    return Status::InvalidState() << "Features: compute was null";
+    return JPPS_INVALID_STATE << "Features: compute was null";
   }
 
   if (pattern == nullptr) {
-    return Status::InvalidState() << "Features: pattern was null";
+    return JPPS_INVALID_STATE << "Features: pattern was null";
   }
 
   if (ngram == nullptr) {
-    return Status::InvalidState() << "Features: ngram was null";
+    return JPPS_INVALID_STATE << "Features: ngram was null";
   }
 
   return Status::Ok();
 }
+
+FeatureHolder::FeatureHolder() = default;
+FeatureHolder::~FeatureHolder() = default;
+
 }  // namespace features
 }  // namespace core
 }  // namespace jumanpp

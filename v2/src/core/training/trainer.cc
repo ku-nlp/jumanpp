@@ -143,8 +143,10 @@ Status TrainerBatch::readPartialExamples(PartialExampleReader *reader) {
   bool eof = true;
   do {
     JPP_RETURN_IF_ERROR(trainer->initialize(config_, *scorerDef_));
+    auto &partialTrainer = trainer->trainer_.value();
     JPP_RETURN_IF_ERROR(
-        reader->readExample(&trainer->trainer_.value().example(), &eof));
+        reader->readExample(&partialTrainer.example(), &eof));
+    trainer->reset();
     if (eof) {
       break;
     }

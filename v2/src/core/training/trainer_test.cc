@@ -95,13 +95,16 @@ TEST_CASE(
   env.trainer.computeTrainingLoss();
   auto mem2 = env.anaImpl()->usedMemory();
   CHECK(env.trainer.lossValue() > 0);
-  scw.update(env.trainer.lossValue(), env.trainer.featureDiff());
-  CHECK(env.trainer.compute(scw.scorers()));
-  env.trainer.computeTrainingLoss();
-  auto mem3 = env.anaImpl()->usedMemory();
+  for (int i = 0; i < 10; ++i) {
+    scw.update(env.trainer.lossValue(), env.trainer.featureDiff());
+    CHECK(env.trainer.compute(scw.scorers()));
+    env.trainer.computeTrainingLoss();
+    auto mem3 = env.anaImpl()->usedMemory();
+    CHECK(mem1 == mem2);
+    CHECK(mem1 == mem3);
+  }
+
   CHECK(env.trainer.lossValue() == 0);
-  CHECK(mem1 == mem2);
-  CHECK(mem1 == mem3);
 }
 
 TEST_CASE("trainer can parse an example with comment") {
@@ -159,11 +162,14 @@ TEST_CASE("trainer can compute score for sentence with other POS unks") {
   CHECK(env.trainer.compute(scw.scorers()));
   env.trainer.computeTrainingLoss();
   CHECK(env.trainer.lossValue() >= 0);
-  scw.update(env.trainer.lossValue(), env.trainer.featureDiff());
-  CHECK(env.trainer.compute(scw.scorers()));
-  env.trainer.computeTrainingLoss();
+  for (int i = 0; i < 10; ++i) {
+    scw.update(env.trainer.lossValue(), env.trainer.featureDiff());
+    CHECK(env.trainer.compute(scw.scorers()));
+    env.trainer.computeTrainingLoss();
+  }
+
   CHECK(env.trainer.lossValue() == 0);
-  env.dumpTrainers("/tmp/jpp", 10);
+  //env.dumpTrainers("/tmp/jpp", 10);
 
   auto ana2 = env.newAnalyzer(scw.scorers());
   REQUIRE_OK(ana2->fullAnalyze("モモももも", scw.scorers()));

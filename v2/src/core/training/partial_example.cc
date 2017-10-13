@@ -375,25 +375,30 @@ void PartialTrainer::handleEos() {
   auto top1 = eos->starts()->beamData().at(0);
 
   auto prev = top1.ptr.previous;
-  auto prevLen = l->boundary(prev->boundary)->starts()->nodeInfo().at(prev->right).numCodepoints();
+  auto prevLen = l->boundary(prev->boundary)
+                     ->starts()
+                     ->nodeInfo()
+                     .at(prev->right)
+                     .numCodepoints();
   bool invalidNode = false;
   auto prevStart = prev->boundary;
   auto prevEnd = prevStart + prevLen;
-  for (auto b: example_.boundaries()) {
+  for (auto b : example_.boundaries()) {
     if (prevStart < b && b < prevEnd) {
       invalidNode = true;
     }
   }
 
-  auto prevFields = l->boundary(prev->boundary)->starts()->entryData().row(prev->right);
-  for (auto& n: example_.nodes()) {
+  auto prevFields =
+      l->boundary(prev->boundary)->starts()->entryData().row(prev->right);
+  for (auto& n : example_.nodes()) {
     if (n.boundary == prev->boundary) {
       if (n.length != prevLen) {
         invalidNode = true;
         break;
       }
 
-      for (auto& t: n.tags) {
+      for (auto& t : n.tags) {
         if (prevFields[t.field] != t.value) {
           invalidNode = true;
           break;
@@ -405,7 +410,6 @@ void PartialTrainer::handleEos() {
   if (!invalidNode) {
     return;
   }
-
 
   int nodes = 0;
   int beams = 0;
@@ -481,6 +485,7 @@ Status OwningPartialTrainer::initialize(const TrainerFullConfig& cfg,
   JPP_RETURN_IF_ERROR(analyzer_.value().initScorers(scorerDef));
   u32 numFeatures = 1u << cfg.trainingConfig->featureNumberExponent;
   trainer_.initialize(&analyzer_.value(), numFeatures - 1);
+  isPrepared_ = false;
   return Status::Ok();
 }
 

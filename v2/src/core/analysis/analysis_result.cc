@@ -24,6 +24,7 @@ Status AnalysisResult::fillTop1(AnalysisPath *result) {
 
 Status AnalysisPath::fillIn(Lattice *l) {
   auto bnds = l->createdBoundaryCount();
+  JPP_DCHECK_GE(bnds, 3);
   elems_.clear();
   offsets_.clear();
   elems_.reserve(bnds * 2);
