@@ -106,8 +106,8 @@ JPP_ALWAYS_INLINE inline u64 seaHashSeq(Args... args) {
 }
 
 template <typename... Args>
-JPP_ALWAYS_INLINE inline u64 rawSeahashStart(Args... args) {
-  return detail::seaHashSeqImpl(SeaHashLite{}, static_cast<u64>(args)...)
+JPP_ALWAYS_INLINE inline u64 rawSeahashStart(u64 count, Args... args) {
+  return detail::seaHashSeqImpl(SeaHashLite{}, count, static_cast<u64>(args)...)
       .state();
 }
 
