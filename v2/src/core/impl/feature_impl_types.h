@@ -179,9 +179,9 @@ class PatternFeatureData {
 };
 
 class NgramFeatureData {
-  util::ArraySlice<u64> t2;  // beam size
-  util::ArraySlice<u64> t1;  // only one
-  util::Sliceable<u64> t0;   // all in lattice boundary
+  util::ArraySlice<u64> t2;      // beam size
+  util::ArraySlice<u64> t1;      // only one
+  util::ConstSliceable<u64> t0;  // all in lattice boundary
   mutable util::Sliceable<u32> final;
   i32 t0index = -1;
 
@@ -189,7 +189,7 @@ class NgramFeatureData {
   NgramFeatureData(const util::Sliceable<u32>& final,
                    const util::ArraySlice<u64>& t2,
                    const util::ArraySlice<u64>& t1,
-                   const util::Sliceable<u64>& t0)
+                   const util::ConstSliceable<u64>& t0)
       : t2(t2), t1(t1), t0(t0), final(final) {}
 
   bool nextT0() {

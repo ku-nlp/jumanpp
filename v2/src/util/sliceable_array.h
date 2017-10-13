@@ -36,6 +36,8 @@ class Sliceable {
   const T& operator[](size_type idx) const { return data_.at(idx); }
   T& at(size_type idx) { return data_.at(idx); }
   const T& at(size_type idx) const { return data_.at(idx); }
+  T& at(size_t row, size_t col) { return this->row(row).at(col); }
+  const T& at(size_t row, size_t col) const { return this->row(row).at(col); }
   util::MutableArraySlice<T> row(i32 i) {
     JPP_DCHECK_IN(i, 0, numRows_);
     return util::MutableArraySlice<T>{data_, rowSize_ * i, rowSize_};
@@ -102,6 +104,7 @@ class ConstSliceable {
 
   const T& operator[](size_type idx) const { return data_.at(idx); }
   const T& at(size_type idx) const { return data_.at(idx); }
+  const T& at(size_t row, size_t col) const { return this->row(row).at(col); }
   util::ArraySlice<T> row(i32 i) const {
     JPP_DCHECK_IN(i, 0, numRows_);
     return util::ArraySlice<T>{data_, rowSize_ * i, rowSize_};

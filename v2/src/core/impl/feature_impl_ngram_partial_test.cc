@@ -54,3 +54,74 @@ TEST_CASE("trigram is equal to full") {
   partUni.step2(data3, state2, buf2);
   CHECK(buf1[0] == buf2[0]);
 }
+
+NgramFeature nf(i32 index, std::initializer_list<i32> data) {
+  NgramFeature f;
+  f.index = index;
+  f.arguments.assign(data);
+  return f;
+}
+
+TEST_CASE("partial and full trigram features produce the same result") {
+  NgramDynamicFeatureApply full;
+  PartialNgramDynamicFeatureApply part;
+  int idx = 0;
+  auto add = [&](std::initializer_list<i32> data) {
+    auto f = nf(idx++, data);
+    full.addChild(f);
+    part.addChild(f);
+  };
+  add({0});
+  add({1});
+  add({0, 1});
+  add({1, 0});
+  add({1, 1, 1});
+  add({0, 0, 0});
+  util::ArraySlice<u64> t0data{0, 1, 2, 0, 1, 2};
+  util::ArraySlice<u64> t1data{5, 2};
+  util::ArraySlice<u64> t2data{
+      2, 1,
+  };
+  u32 resultFullBuf[6 * 3];
+  u32 resultPartBuf[2 * 3];
+  util::Sliceable<u32> fullSlice{resultFullBuf, 6, 3};
+  util::ConstSliceable<u64> t0slice{t0data, 2, 3};
+  NgramFeatureData nfd{fullSlice, t2data, t1data, t0slice};
+  full.applyBatch(&nfd);
+
+  u32 partRes[6];
+  util::Sliceable<u32> partSlice{partRes, 2, 3};
+  part.applyUni(t0slice, partSlice);
+
+  CHECK(partSlice.at(0, 0) == fullSlice.at(0, 0));
+  CHECK(partSlice.at(1, 0) == fullSlice.at(1, 0));
+  CHECK(partSlice.at(2, 0) == fullSlice.at(2, 0));
+  CHECK(partSlice.at(0, 1) == fullSlice.at(0, 1));
+  CHECK(partSlice.at(1, 1) == fullSlice.at(1, 1));
+  CHECK(partSlice.at(2, 1) == fullSlice.at(2, 1));
+
+  u64 biState[6];
+  util::Sliceable<u64> biStateSlice{biState, 2, 3};
+  part.applyBiStep1(t0slice, biStateSlice);
+  part.applyBiStep2(biStateSlice, t1data, partSlice);
+  CHECK(partSlice.at(0, 0) == fullSlice.at(0, 2));
+  CHECK(partSlice.at(1, 0) == fullSlice.at(1, 2));
+  CHECK(partSlice.at(2, 0) == fullSlice.at(2, 2));
+  CHECK(partSlice.at(0, 1) == fullSlice.at(0, 3));
+  CHECK(partSlice.at(1, 1) == fullSlice.at(1, 3));
+  CHECK(partSlice.at(2, 1) == fullSlice.at(2, 3));
+
+  u64 triState1[6];
+  u64 triState2[6];
+  util::Sliceable<u64> triStateSlice1{triState1, 2, 3};
+  util::Sliceable<u64> triStateSlice2{triState2, 2, 3};
+  part.applyTriStep1(t0slice, triStateSlice1);
+  part.applyTriStep2(triStateSlice1, t1data, triStateSlice2);
+  part.applyTriStep3(triStateSlice2, t2data, partSlice);
+  CHECK(partSlice.at(0, 0) == fullSlice.at(0, 4));
+  CHECK(partSlice.at(1, 0) == fullSlice.at(1, 4));
+  CHECK(partSlice.at(2, 0) == fullSlice.at(2, 4));
+  CHECK(partSlice.at(0, 1) == fullSlice.at(0, 5));
+  CHECK(partSlice.at(1, 1) == fullSlice.at(1, 5));
+  CHECK(partSlice.at(2, 1) == fullSlice.at(2, 5));
+}
