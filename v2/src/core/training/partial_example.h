@@ -122,9 +122,7 @@ class OwningPartialTrainer : public ITrainer {
     return Status::Ok();
   }
 
-  void reset() {
-    isPrepared_ = false;
-  }
+  void reset() { isPrepared_ = false; }
 
   Status compute(const analysis::ScorerDef* sconf) override {
     return trainer_.value().compute(sconf);

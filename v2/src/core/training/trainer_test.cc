@@ -153,11 +153,12 @@ TEST_CASE("trainer can compute score for sentence with part unks") {
 TEST_CASE("trainer can compute score for sentence with other POS unks") {
   StringPiece dic = "UNK,N,5\nもも,N,0\nも,PRT,1\nモ,WTF,2\n寝る,V,3";
   StringPiece ex =
-      "モモ_V_10 も_PRT_1 モモ_N_5 も_PRT_1 モモ_V_10 も_PRT_1 もも_N_0\n";
+      "モモ_V_10 も_PRT_1 モモ_N_5 も_PRT_1 モモ_V_10 も_PRT_1 もも_N_0 "
+      "モモ_V_10 も_PRT_1 もも_N_0\n";
   TrainerEnv env{dic, true};  // use unks
   env.parseMrph(ex);
   SoftConfidenceWeighted scw{TrainerEnv::testConf()};
-  CHECK(env.trainer.example().numNodes() == 7);
+  CHECK(env.trainer.example().numNodes() == 10);
   CHECK(env.trainer.prepare());
   CHECK(env.trainer.compute(scw.scorers()));
   env.trainer.computeTrainingLoss();
@@ -169,7 +170,7 @@ TEST_CASE("trainer can compute score for sentence with other POS unks") {
   }
 
   CHECK(env.trainer.lossValue() == 0);
-  //env.dumpTrainers("/tmp/jpp", 10);
+  // env.dumpTrainers("/tmp/jpp", 10);
 
   auto ana2 = env.newAnalyzer(scw.scorers());
   REQUIRE_OK(ana2->fullAnalyze("モモももも", scw.scorers()));

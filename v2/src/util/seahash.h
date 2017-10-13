@@ -76,18 +76,15 @@ class SeaHashLite {
 };
 
 namespace detail {
-JPP_ALWAYS_INLINE inline SeaHashLite seaHashSeqImpl(SeaHashLite h) {
-  return h;
-}
+JPP_ALWAYS_INLINE inline SeaHashLite seaHashSeqImpl(SeaHashLite h) { return h; }
 
-JPP_ALWAYS_INLINE inline SeaHashLite seaHashSeqImpl(SeaHashLite h,
-                                                      u64 one) {
+JPP_ALWAYS_INLINE inline SeaHashLite seaHashSeqImpl(SeaHashLite h, u64 one) {
   return h.mix(one);
 }
 
 template <typename... Args>
 JPP_ALWAYS_INLINE inline SeaHashLite seaHashSeqImpl(SeaHashLite h, u64 arg,
-                                                      Args... args) {
+                                                    Args... args) {
   return seaHashSeqImpl(h.mix(arg), args...);
 }
 }  // namespace detail

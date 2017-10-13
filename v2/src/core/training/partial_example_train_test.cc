@@ -94,9 +94,9 @@ TEST_CASE("correctly computes matching nodes") {
   checkNode(9, 0, "も", true);
 }
 
-TEST_CASE("can compute loss/features from a simple example") {
+TEST_CASE("can compute loss/features from a simple example bnds/words") {
   TrainerEnv env{"UNK,N,5\nもも,N,0\nも,PRT,1\nモ,PRT,2"};
-  env.parseMrph("もも\nも\nも\nもも\n\n");
+  env.parseMrph("\tもも\nも\n\tもも\n\tもも\nも\n\n");
   CHECK(env.trainer.prepare());
   SoftConfidenceWeighted scw{TrainerEnv::testConf()};
   CHECK(env.trainer.compute(scw.scorers()));
@@ -109,8 +109,8 @@ TEST_CASE("can compute loss/features from a simple example") {
 }
 
 TEST_CASE("can compute loss/features from a simple example with tags") {
-  TrainerEnv env{"UNK,N,5\nもも,N,0\nも,PRT,1\nモ,PRT,2"};
-  env.parseMrph("\tもも\nも\n\tもも\n\tもも\nも\n\n");
+  TrainerEnv env{"UNK,N,5\nもも,N,0\nも,PRT,1\nも,ZAP,3\nモ,PRT,2"};
+  env.parseMrph("\tもも\n\tも\tb:ZAP\n\tもも\n\tもも\nも\n\n");
   CHECK(env.trainer.prepare());
   SoftConfidenceWeighted scw{TrainerEnv::testConf()};
   CHECK(env.trainer.compute(scw.scorers()));
