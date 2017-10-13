@@ -46,7 +46,7 @@ Status Analyzer::analyze(StringPiece input) {
   JPP_RETURN_IF_ERROR(ptr_->resetForInput(input));
   JPP_RETURN_IF_ERROR(ptr_->prepareNodeSeeds());
   JPP_RETURN_IF_ERROR(ptr_->buildLattice());
-  ptr_->bootstrapAnalysis();
+  JPP_RETURN_IF_ERROR(ptr_->bootstrapAnalysis());
   JPP_RETURN_IF_ERROR(ptr_->computeScores(scorer_));
   return Status::Ok();
 }

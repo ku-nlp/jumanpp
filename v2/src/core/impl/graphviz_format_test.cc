@@ -29,7 +29,7 @@ TEST_CASE("graphviz has working builder") {
   env.anaImpl()->resetForInput("bacababa");
   env.anaImpl()->prepareNodeSeeds();
   env.anaImpl()->buildLattice();
-  env.anaImpl()->bootstrapAnalysis();
+  REQUIRE_OK(env.anaImpl()->bootstrapAnalysis());
   env.anaImpl()->computeScores(scw.scorers());
   fmt.markGold({5, 0});
   CHECK_OK(fmt.render(env.anaImpl()->lattice()));

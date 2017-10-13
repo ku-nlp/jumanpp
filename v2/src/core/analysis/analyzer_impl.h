@@ -31,6 +31,7 @@ class AnalyzerImpl {
   ScoreProcessor* sproc_;
   std::vector<std::unique_ptr<ScoreComputer>> scorers_;
   LatticeCompactor compactor_;
+  NgramStats ngramStats_;
 
  public:
   AnalyzerImpl(const AnalyzerImpl&) = delete;
@@ -65,7 +66,7 @@ class AnalyzerImpl {
   Status setNewInput(StringPiece input);
   Status prepareNodeSeeds();
   Status buildLattice();
-  void bootstrapAnalysis();
+  Status bootstrapAnalysis();
   Status computeScores(const ScorerDef* sconf);
 
   Lattice* lattice() { return &lattice_; }
@@ -86,6 +87,7 @@ class AnalyzerImpl {
   }
 
   util::memory::ManagedAllocatorCore* alloc() const { return alloc_.get(); }
+  const NgramStats& ngramStats() const { return ngramStats_; }
 };
 
 }  // namespace analysis

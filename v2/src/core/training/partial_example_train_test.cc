@@ -129,11 +129,14 @@ TEST_CASE("can decrease loss/features from a simple example with tags") {
   SoftConfidenceWeighted scw{TrainerEnv::testConf()};
   CHECK(env.trainer.compute(scw.scorers()));
   CHECK(env.trainer.loss() > 0);
-  for (int iter = 0; iter < 5; ++iter) {
+  for (int iter = 0; iter < 30; ++iter) {
     // LOG_DEBUG() << "LOSS: " << env.trainer.loss();
     scw.update(env.trainer.loss(), env.trainer.featureDiff());
     CHECK(env.trainer.compute(scw.scorers()));
     // env.dumpTrainers("/tmp/jpp-debug", iter);
+    if (env.trainer.loss() == 0) {
+      break;
+    }
   }
   auto sconf = scw.scorers();
   env.trainer.compute(sconf);

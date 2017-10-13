@@ -137,7 +137,7 @@ TEST_CASE("RNN computes scores") {
   ana.resetForInput("bac");
   REQUIRE_OK(ana.prepareNodeSeeds());
   REQUIRE_OK(ana.buildLattice());
-  ana.bootstrapAnalysis();
+  REQUIRE_OK(ana.bootstrapAnalysis());
   REQUIRE_OK(ana.computeScores(&scorerDef));
   CHECK(ana.lattice()->createdBoundaryCount() == 6);
   CHECK(!std::isnan(
@@ -164,7 +164,7 @@ TEST_CASE("RNN computes scores with unks") {
   ana.resetForInput("newsanapple");
   REQUIRE_OK(ana.prepareNodeSeeds());
   REQUIRE_OK(ana.buildLattice());
-  ana.bootstrapAnalysis();
+  REQUIRE_OK(ana.bootstrapAnalysis());
   REQUIRE_OK(ana.computeScores(&scorerDef));
   CHECK(ana.lattice()->createdBoundaryCount() == 14);
   CHECK(!std::isnan(
@@ -207,13 +207,13 @@ TEST_CASE("RNN holder serializes and deserializes and has the same score") {
   impl1.resetForInput("newsanapple");
   REQUIRE_OK(impl1.prepareNodeSeeds());
   REQUIRE_OK(impl1.buildLattice());
-  impl1.bootstrapAnalysis();
+  REQUIRE_OK(impl1.bootstrapAnalysis());
   REQUIRE_OK(impl1.computeScores(&scorerDef1));
 
   impl2.resetForInput("newsanapple");
   REQUIRE_OK(impl2.prepareNodeSeeds());
   REQUIRE_OK(impl2.buildLattice());
-  impl2.bootstrapAnalysis();
+  REQUIRE_OK(impl2.bootstrapAnalysis());
   REQUIRE_OK(impl2.computeScores(&scorerDef1));
 
   CHECK(impl1.lattice()->boundary(13)->starts()->beamData().at(0).totalScore ==

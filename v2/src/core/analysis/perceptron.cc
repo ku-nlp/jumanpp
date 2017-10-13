@@ -21,13 +21,16 @@ void HashedFeaturePerceptron::compute(util::MutableArraySlice<float> result,
   }
 }
 
-void HashedFeaturePerceptron::add(util::MutableArraySlice<float> result,
+void HashedFeaturePerceptron::add(util::ArraySlice<float> source,
+                                  util::MutableArraySlice<float> result,
                                   util::ConstSliceable<u32> ngrams) const {
   JPP_DCHECK(util::memory::IsPowerOf2(weights_.size()));
+  JPP_DCHECK_EQ(source.size(), result.size());
   u32 mask = static_cast<u32>(weights_.size() - 1);
   for (int i = 0; i < ngrams.numRows(); ++i) {
-    result.at(i) +=
-        impl::computeUnrolled4Perceptron(weights_, ngrams.row(i), mask);
+    auto src = source.at(i);
+    auto add = impl::computeUnrolled4Perceptron(weights_, ngrams.row(i), mask);
+    result.at(i) = src + add;
   }
 }
 

@@ -37,7 +37,9 @@ AnalyzerImpl::AnalyzerImpl(const CoreHolder* core, const ScoringConfig& sconf,
       xtra_{alloc_.get(), core->dic().entries().entrySize(),
             core->runtime().unkMakers.numPlaceholders},
       outputManager_{alloc_.get(), &xtra_, &core->dic(), &lattice_},
-      compactor_{core->dic().entries()} {}
+      compactor_{core->dic().entries()} {
+  ngramStats_.initialze(&core->runtime().features);
+}
 
 Status AnalyzerImpl::initScorers(const ScorerDef& cfg) {
   JPP_RETURN_IF_ERROR(core_->features().validate());
@@ -227,8 +229,10 @@ Status AnalyzerImpl::buildLattice() {
   return Status::Ok();
 }
 
-void AnalyzerImpl::bootstrapAnalysis() {
-  sproc_ = ScoreProcessor::make(&lattice_, alloc_.get());
+Status AnalyzerImpl::bootstrapAnalysis() {
+  auto x = ScoreProcessor::make(this);
+  JPP_RETURN_IF_ERROR(std::move(x.first));
+  sproc_ = x.second;
 
   auto bndCount = lattice_.createdBoundaryCount();
   for (int boundary = 0; boundary < bndCount; ++boundary) {
@@ -256,6 +260,7 @@ void AnalyzerImpl::bootstrapAnalysis() {
   for (auto& s : scorers_) {
     s->preScore(&lattice_, &xtra_);
   }
+  return Status::Ok();
 }
 
 Status AnalyzerImpl::computeScores(const ScorerDef* sconf) {
@@ -273,28 +278,24 @@ Status AnalyzerImpl::computeScores(const ScorerDef* sconf) {
     auto bnd = lattice_.boundary(boundary);
     JPP_DCHECK(bnd->endingsFilled());
     auto left = bnd->ends()->nodePtrs();
-
-    auto t0features = bnd->starts()->patternFeatureData();
     auto& proc = *this->sproc_;
 
     EntryBeam::initializeBlock(bnd->starts()->beamData().data());
 
+    proc.startBoundary(bnd->localNodeCount());
+    proc.applyT0(boundary, sconf->feature);
+
     for (i32 t1idx = 0; t1idx < left.size(); ++t1idx) {
       auto& t1node = left[t1idx];
-      auto t1data = lattice_.boundary(t1node.boundary)->starts();
-      proc.gatherT2Features(t1node.boundary, t1node.position);
-
-      auto t1features = t1data->patternFeatureData().row(t1node.position);
+      proc.applyT1(t1node.boundary, t1node.position, sconf->feature);
+      proc.resolveBeamAt(t1node.boundary, t1node.position);
       LatticeBoundaryConnection* bndconn = bnd->connection(t1idx);
       // compute 1st feature data per beam computation is made so that active
       // dataset will fit into L1 cache
       for (i32 beamIdx = 0; beamIdx < proc.activeBeamSize(); ++beamIdx) {
-        proc.computeNgramFeatures(beamIdx, core_->features(), t0features,
-                                  t1features);
-        proc.computeFeatureScores(beamIdx, sconf->feature,
-                                  bnd->localNodeCount());
+        proc.applyT2(beamIdx, sconf->feature);
+        proc.copyFeatureScores(beamIdx, bndconn);
       }
-      proc.copyFeatureScores(bndconn);
     }
 
     // use other scorers if any

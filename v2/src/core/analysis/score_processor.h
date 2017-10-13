@@ -6,6 +6,7 @@
 #define JUMANPP_SCORE_PROCESSOR_H
 
 #include "core/analysis/lattice_config.h"
+#include "core/analysis/ngram_computations.h"
 #include "core/analysis/score_api.h"
 #include "core/features_api.h"
 #include "util/memory.hpp"
@@ -17,6 +18,7 @@ namespace analysis {
 class Lattice;
 class LatticeBoundary;
 class LatticeBoundaryConnection;
+class AnalyzerImpl;
 
 // this class is zero-weight heap on top of other storage
 class EntryBeam {
@@ -62,42 +64,29 @@ class EntryBeam {
 
 class ScoreProcessor {
   Lattice* lattice_;
-  util::Sliceable<u64> t2features;     // pattern x beamsize
-  util::Sliceable<Score> scoreBuffer;  // maxstart x beamsize
-  util::Sliceable<u32> ngramFeatures;  // features x maxstart
-  // is set to the actual beam by gatherT2features
-  util::ArraySlice<ConnectionBeamElement> beamPtrs;
-  i32 beamSize_;
+  NGramFeatureComputer ngram_;
+  util::ArraySlice<ConnectionBeamElement> beamPtrs_;
+  NgramScoreHolder scores_;
+  i32 beamSize_ = 0;
 
   ConnectionPtr* realPtr(const ConnectionPtr& ptr) const;
 
- public:
-  ScoreProcessor(Lattice* lattice_, const util::Sliceable<u64>& t2features,
-                 const util::Sliceable<Score>& scoreBuffer,
-                 const util::MutableArraySlice<ConnectionBeamElement>& beamPtrs,
-                 const util::Sliceable<u32>& ngramFeatures);
+  explicit ScoreProcessor(AnalyzerImpl* analyzer);
 
-  static ScoreProcessor* make(Lattice* lattice,
-                              util::memory::ManagedAllocatorCore* alloc);
+ public:
+  static std::pair<Status, ScoreProcessor*> make(AnalyzerImpl* impl);
 
   i32 activeBeamSize() const { return beamSize_; }
 
-  void gatherT2Features(i32 boundary, i32 position);
-
-  void computeNgramFeatures(i32 beamIdx,
-                            const features::FeatureHolder& features,
-                            util::Sliceable<u64> t0features,
-                            util::ArraySlice<u64> t1features);
-
-  void computeFeatureScores(i32 beamIdx, const FeatureScorer* scorer,
-                            u32 sliceSize);
-
-  void copyFeatureScores(LatticeBoundaryConnection* bndconn);
+  void resolveBeamAt(i32 boundary, i32 position);
+  void startBoundary(u32 currentNodes);
+  void applyT0(i32 boundary, FeatureScorer* features);
+  void applyT1(i32 boundary, i32 position, FeatureScorer* features);
+  void applyT2(i32 beamIdx, FeatureScorer* features);
+  void copyFeatureScores(i32 beam, LatticeBoundaryConnection* bndconn);
 
   void updateBeams(i32 boundary, i32 endPos, LatticeBoundary* bnd,
                    LatticeBoundaryConnection* bndconn, const ScorerDef* sc);
-
-  void resolveBeamAt(i32 boundary, i32 position);
 };
 
 }  // namespace analysis

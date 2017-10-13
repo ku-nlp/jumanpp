@@ -15,43 +15,71 @@ namespace core {
 namespace analysis {
 
 class NGramFeatureComputer;
+class Lattice;
 class AnalyzerImpl;
 class FeatureScorer;
 
 class NgramScoreHolder {
+  u32 curSize_;
+  util::MutableArraySlice<float> bufferT0_;
+  util::MutableArraySlice<float> bufferT1_;
+  util::MutableArraySlice<float> bufferT2_;
+
  public:
-  void prepare(const NGramFeatureComputer& computer);
-  void newBoundary(i32 numLeft, i32 numRight);
+  util::MutableArraySlice<float> bufferT0() {
+    return util::MutableArraySlice<float>{bufferT0_, 0, curSize_};
+  }
+
+  util::MutableArraySlice<float> bufferT1() {
+    return util::MutableArraySlice<float>{bufferT1_, 0, curSize_};
+  }
+
+  util::MutableArraySlice<float> bufferT2() {
+    return util::MutableArraySlice<float>{bufferT2_, 0, curSize_};
+  }
+
+  void prepare(AnalyzerImpl* analyzer, u32 maxNodes);
+
+  void newBoundary(u32 numRight) { curSize_ = numRight; }
+};
+
+struct NgramStats {
+  u32 num1Grams = 0;
+  u32 num2Grams = 0;
+  u32 num3Grams = 0;
+  u32 maxNGrams = 0;
+
+  void initialze(const features::FeatureRuntimeInfo* info);
 };
 
 class NGramFeatureComputer {
-  u32 num1Grams_ = 0;
-  u32 num2Grams_ = 0;
-  u32 num3Grams_ = 0;
   u32 maxStarts_ = 0;
   u32 currentSize_ = 0;
 
-  const AnalyzerImpl* analyzer_;
-  const FeatureScorer* scorer_;
+  const NgramStats& stats_;
+  const Lattice* lattice_;
   const features::PartialNgramFeatureApply* ngramApply_;
-  util::MutableArraySlice<u64> buffer1_;
-  util::MutableArraySlice<u64> buffer2_;
+  util::MutableArraySlice<u64> biBuffer_;
+  util::MutableArraySlice<u64> triBuffer1_;
+  util::MutableArraySlice<u64> triBuffer2_;
   util::MutableArraySlice<u32> featureBuffer_;
   util::ConstSliceable<u32> featureSubset_;
 
  public:
-  NGramFeatureComputer(const AnalyzerImpl* analyzer,
-                       const FeatureScorer* scorer);
+  explicit NGramFeatureComputer(const AnalyzerImpl* analyzer);
 
-  Status initialize();
+  Status initialize(const AnalyzerImpl* analyzer);
 
-  void compute1Grams(i32 boundary);
-  void compute2GramsStep1(i32 boundary);
-  void compute2GramsStep2(i32 boundary, i32 position);
-  void compute3GramsStep1(i32 boundary);
-  void compute3GramsStep2(i32 boundary, i32 position);
+  void computeUnigrams(i32 boundary);
+  void computeBigramsStep1(i32 boundary);
+  void computeBigramsStep2(i32 boundary, i32 position);
+  void computeTrigramsStep1(i32 boundary);
+  void computeTrigramsStep2(i32 boundary, i32 position);
   void compute3GramsStep3(i32 boundary, i32 position);
-  void addScores(util::MutableArraySlice<float> result);
+  void setScores(FeatureScorer* scorer, util::MutableArraySlice<float> result);
+  void addScores(FeatureScorer* scorer, util::ArraySlice<float> source,
+                 util::MutableArraySlice<float> result);
+  u32 maxStarts() const { return maxStarts_; }
 };
 
 }  // namespace analysis

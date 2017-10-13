@@ -35,7 +35,7 @@ class TestAnalyzer : public core::analysis::AnalyzerImpl {
     JPP_RETURN_IF_ERROR(this->resetForInput(input));
     JPP_RETURN_IF_ERROR(this->prepareNodeSeeds());
     JPP_RETURN_IF_ERROR(this->buildLattice());
-    this->bootstrapAnalysis();
+    JPP_RETURN_IF_ERROR(this->bootstrapAnalysis());
     JPP_RETURN_IF_ERROR(this->computeScores(sconf));
     return Status::Ok();
   }

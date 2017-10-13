@@ -67,7 +67,7 @@ class ManagedAllocatorCore {
   void *allocate_memory(size_t size, size_t alignment);
 
   template <typename T>
-  T *allocate(size_t align) {
+  T *allocate(size_t align = alignof(T)) {
     return (T *)allocate_memory(sizeof(T), align);
   };
 

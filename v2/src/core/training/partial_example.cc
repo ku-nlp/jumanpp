@@ -15,7 +15,7 @@ Status PartialTrainer::prepare() {
   JPP_RETURN_IF_ERROR(analyzer_->resetForInput(example_.surface()));
   JPP_RETURN_IF_ERROR(analyzer_->prepareNodeSeeds());
   JPP_RETURN_IF_ERROR(analyzer_->buildLattice());
-  analyzer_->bootstrapAnalysis();
+  JPP_RETURN_IF_ERROR(analyzer_->bootstrapAnalysis());
   return Status::Ok();
 }
 

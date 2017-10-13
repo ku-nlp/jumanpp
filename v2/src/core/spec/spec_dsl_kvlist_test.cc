@@ -105,7 +105,7 @@ class KVListTestEnv {
 
   void analyze2(StringPiece str) {
     analyze(str);
-    tenv.analyzer->bootstrapAnalysis();
+    REQUIRE_OK(tenv.analyzer->bootstrapAnalysis());
     CHECK_OK(tenv.analyzer->computeScores(&sconf));
     top1.fillIn(tenv.analyzer->lattice());
   }
