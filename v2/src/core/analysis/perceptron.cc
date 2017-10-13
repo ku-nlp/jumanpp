@@ -27,8 +27,16 @@ void HashedFeaturePerceptron::add(util::ArraySlice<float> source,
   JPP_DCHECK(util::memory::IsPowerOf2(weights_.size()));
   JPP_DCHECK_EQ(source.size(), result.size());
   u32 mask = static_cast<u32>(weights_.size() - 1);
-  for (int i = 0; i < ngrams.numRows(); ++i) {
+  auto total = ngrams.numRows();
+  for (int i = 0; i < total; ++i) {
     auto src = source.at(i);
+    if (i + 1 < total) {
+      auto rowp1 = ngrams.row(i + 1);
+      for (int j = 0; j < ngrams.size(); ++j) {
+        const float* ptr = weights_.data() + rowp1.at(j);
+        util::prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(ptr);
+      }
+    }
     auto add = impl::computeUnrolled4Perceptron(weights_, ngrams.row(i), mask);
     result.at(i) = src + add;
   }
