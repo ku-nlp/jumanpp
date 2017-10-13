@@ -27,7 +27,7 @@ class NgramDynamicFeatureApply;
 
 class FeatureApply {
  public:
-  virtual ~FeatureApply() = default;
+  virtual ~FeatureApply() noexcept = default;
 };
 
 class PrimitiveFeatureApply : public FeatureApply {
@@ -55,20 +55,20 @@ class NgramFeatureApply : public FeatureApply {
 class PartialNgramFeatureApply : public FeatureApply {
  public:
   virtual void applyUni(util::ConstSliceable<u64> p0,
-                        util::Sliceable<u32> result) const = 0;
+                        util::Sliceable<u32> result) const noexcept = 0;
   virtual void applyBiStep1(util::ConstSliceable<u64> p0,
-                            util::Sliceable<u64> result) const = 0;
+                            util::Sliceable<u64> result) const noexcept = 0;
   virtual void applyBiStep2(util::ConstSliceable<u64> state,
                             util::ArraySlice<u64> p1,
-                            util::Sliceable<u32> result) const = 0;
+                            util::Sliceable<u32> result) const noexcept = 0;
   virtual void applyTriStep1(util::ConstSliceable<u64> p0,
-                             util::Sliceable<u64> result) const = 0;
+                             util::Sliceable<u64> result) const noexcept = 0;
   virtual void applyTriStep2(util::ConstSliceable<u64> state,
                              util::ArraySlice<u64> p1,
-                             util::Sliceable<u64> result) const = 0;
+                             util::Sliceable<u64> result) const noexcept = 0;
   virtual void applyTriStep3(util::ConstSliceable<u64> state,
                              util::ArraySlice<u64> p2,
-                             util::Sliceable<u32> result) const = 0;
+                             util::Sliceable<u32> result) const noexcept = 0;
 };
 
 class StaticFeatureFactory : public FeatureApply {

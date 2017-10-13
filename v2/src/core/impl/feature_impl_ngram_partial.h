@@ -16,11 +16,6 @@ namespace impl {
 
 namespace h = util::hashing;
 
-class PartialDymanicFeature {
- public:
-  virtual ~PartialDymanicFeature() noexcept = default;
-};
-
 class UnigramFeature {
   u32 target_;
   u32 index_;
@@ -109,8 +104,92 @@ class TrigramFeature {
   }
 };
 
-class PartialNgramDynamicFeatureApply {
-  std::vector<std::unique_ptr<PartialDymanicFeature>> features_;
+template <typename Child>
+class PartianNgramFeatureApplyImpl : public PartialNgramFeatureApply {
+  const Child& child() const { return static_cast<const Child&>(*this); }
+
+ public:
+  void applyUni(util::ConstSliceable<u64> p0,
+                util::Sliceable<u32> results) const noexcept override {
+    for (auto row = 0; row < p0.numRows(); ++row) {
+      auto patterns = p0.row(row);
+      auto result = results.row(row);
+      child().uniStep0(patterns, result);
+    }
+  }
+
+  void applyBiStep1(util::ConstSliceable<u64> p0,
+                    util::Sliceable<u64> result) const noexcept override {
+    for (auto row = 0; row < p0.numRows(); ++row) {
+      auto patterns = p0.row(row);
+      auto state = result.row(row);
+      child().biStep0(patterns, state);
+    }
+  }
+
+  void applyBiStep2(util::ConstSliceable<u64> states, util::ArraySlice<u64> p1,
+                    util::Sliceable<u32> results) const noexcept override {
+    for (auto row = 0; row < states.numRows(); ++row) {
+      auto state = states.row(row);
+      auto result = results.row(row);
+      child().biStep1(p1, state, result);
+    }
+  }
+
+  void applyTriStep1(util::ConstSliceable<u64> p0,
+                     util::Sliceable<u64> result) const noexcept override {
+    for (auto row = 0; row < p0.numRows(); ++row) {
+      auto patterns = p0.row(row);
+      auto state = result.row(row);
+      child().triStep0(patterns, state);
+    }
+  }
+
+  void applyTriStep2(util::ConstSliceable<u64> states, util::ArraySlice<u64> p1,
+                     util::Sliceable<u64> results) const noexcept override {
+    for (auto row = 0; row < states.numRows(); ++row) {
+      auto state = states.row(row);
+      auto result = results.row(row);
+      child().triStep1(p1, state, result);
+    }
+  }
+
+  void applyTriStep3(util::ConstSliceable<u64> states, util::ArraySlice<u64> p2,
+                     util::Sliceable<u32> results) const noexcept override {
+    for (auto row = 0; row < states.numRows(); ++row) {
+      auto state = states.row(row);
+      auto result = results.row(row);
+      child().triStep2(p2, state, result);
+    }
+  }
+};
+
+class PartialNgramDynamicFeatureApply
+    : public PartianNgramFeatureApplyImpl<PartialNgramDynamicFeatureApply> {
+  std::vector<UnigramFeature> unigrams_;
+  std::vector<BigramFeature> bigrams_;
+  std::vector<TrigramFeature> trigrams_;
+
+ public:
+  Status addChild(const NgramFeature& nf);
+
+  void uniStep0(util::ArraySlice<u64> patterns,
+                util::MutableArraySlice<u32> result) const noexcept;
+
+  void biStep0(util::ArraySlice<u64> patterns,
+               util::MutableArraySlice<u64> state) const noexcept;
+
+  void biStep1(util::ArraySlice<u64> patterns, util::ArraySlice<u64> state,
+               util::MutableArraySlice<u32> result) const noexcept;
+
+  void triStep0(util::ArraySlice<u64> patterns,
+                util::MutableArraySlice<u64> state) const noexcept;
+
+  void triStep1(util::ArraySlice<u64> patterns, util::ArraySlice<u64> state,
+                util::MutableArraySlice<u64> result) const noexcept;
+
+  void triStep2(util::ArraySlice<u64> patterns, util::ArraySlice<u64> state,
+                util::MutableArraySlice<u32> result) const noexcept;
 };
 
 }  // namespace impl

@@ -6,6 +6,7 @@
 #include "core/core.h"
 #include "impl/feature_impl_combine.h"
 #include "impl/feature_impl_compute.h"
+#include "impl/feature_impl_ngram_partial.h"
 #include "impl/feature_impl_prim.h"
 #include "util/logging.hpp"
 
@@ -38,6 +39,12 @@ Status makeFeatures(const CoreHolder &info, const StaticFeatureFactory *sff,
   result->ngramDynamic.reset(dynNgram);
   for (auto &nf : runtimeFeatures.ngrams) {
     JPP_RETURN_IF_ERROR(dynNgram->addChild(nf));
+  }
+
+  auto partNgram = new impl::PartialNgramDynamicFeatureApply;
+  result->ngramPartialDynamic.reset(partNgram);
+  for (auto &nf : runtimeFeatures.ngrams) {
+    JPP_RETURN_IF_ERROR(partNgram->addChild(nf));
   }
 
   if (sff != nullptr) {
@@ -101,6 +108,10 @@ Status FeatureHolder::validate() const {
 
   if (ngram == nullptr) {
     return JPPS_INVALID_STATE << "Features: ngram was null";
+  }
+
+  if (ngramPartial == nullptr) {
+    return JPPS_INVALID_STATE << "Features: ngramPartial was null";
   }
 
   return Status::Ok();

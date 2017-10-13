@@ -2,10 +2,10 @@
 // Created by Arseny Tolmachev on 2017/10/13.
 //
 
-#include "testing/standalone_test.h"
 #include "feature_impl_ngram_partial.h"
-#include "feature_impl_combine.h"
 #include "core/analysis/perceptron.h"
+#include "feature_impl_combine.h"
+#include "testing/standalone_test.h"
 
 using namespace jumanpp;
 using namespace jumanpp::core;

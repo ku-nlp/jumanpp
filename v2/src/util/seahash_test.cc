@@ -2,9 +2,9 @@
 // Created by Arseny Tolmachev on 2017/10/13.
 //
 
+#include "seahash.h"
 #include <random>
 #include "testing/standalone_test.h"
-#include "seahash.h"
 
 namespace h = jumanpp::util::hashing;
 using jumanpp::u64;
