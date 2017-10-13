@@ -30,13 +30,6 @@ void HashedFeaturePerceptron::add(util::ArraySlice<float> source,
   auto total = ngrams.numRows();
   for (int i = 0; i < total; ++i) {
     auto src = source.at(i);
-    if (i + 1 < total) {
-      auto rowp1 = ngrams.row(i + 1);
-      for (int j = 0; j < ngrams.size(); ++j) {
-        const float* ptr = weights_.data() + rowp1.at(j);
-        util::prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(ptr);
-      }
-    }
     auto add = impl::computeUnrolled4Perceptron(weights_, ngrams.row(i), mask);
     result.at(i) = src + add;
   }
