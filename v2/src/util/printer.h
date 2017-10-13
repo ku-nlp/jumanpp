@@ -94,6 +94,8 @@ class Indent {
   ~Indent() { printer->addIndent(-indent); }
 };
 
+#define JPP_TEXT(x) #x
+
 }  // namespace io
 }  // namespace util
 }  // namespace jumanpp

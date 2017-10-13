@@ -7,6 +7,7 @@
 
 #include "core/features_api.h"
 #include "core/impl/feature_impl_types.h"
+#include "util/printer.h"
 #include "util/seahash.h"
 
 namespace jumanpp {
@@ -19,36 +20,40 @@ namespace h = util::hashing;
 class UnigramFeature {
   u32 target_;
   u32 index_;
+  u32 t0idx_;
 
  public:
-  constexpr UnigramFeature(u32 target, u32 index) noexcept
-      : target_{target}, index_{index} {}
+  constexpr UnigramFeature(u32 target, u32 index, u32 t0idx) noexcept
+      : target_{target}, index_{index}, t0idx_{t0idx} {}
 
   JPP_ALWAYS_INLINE void step0(util::ArraySlice<u64> patterns,
                                util::MutableArraySlice<u32> result) const
       noexcept {
-    auto t0 = patterns.at(index_);
-    auto v = h::seaHashSeq(UnigramSeed, target_, t0);
+    auto t0 = patterns.at(t0idx_);
+    auto v = h::seaHashSeq(UnigramSeed, index_, t0);
     result.at(target_) = static_cast<u32>(v);
   }
+
+  void writeMember(util::io::Printer& p, i32 count) const;
 };
 
 class BigramFeature {
   u32 target_;
+  u32 index_;
   u32 t0idx_;
   u32 t1idx_;
 
   static constexpr u64 TotalHashArgs = 4;
 
  public:
-  constexpr BigramFeature(u32 target, u32 t0idx, u32 t1idx) noexcept
-      : target_{target}, t0idx_{t0idx}, t1idx_{t1idx} {}
+  constexpr BigramFeature(u32 target, u32 index, u32 t0idx, u32 t1idx) noexcept
+      : target_{target}, index_{index}, t0idx_{t0idx}, t1idx_{t1idx} {}
 
   JPP_ALWAYS_INLINE void step0(util::ArraySlice<u64> patterns,
                                util::MutableArraySlice<u64> state) const
       noexcept {
     auto t0 = patterns.at(t0idx_);
-    auto v = h::rawSeahashStart(TotalHashArgs, BigramSeed, target_, t0);
+    auto v = h::rawSeahashStart(TotalHashArgs, BigramSeed, index_, t0);
     state.at(target_) = v;
   }
 
@@ -61,10 +66,13 @@ class BigramFeature {
     auto v = h::rawSeahashFinish(s, t1);
     result.at(target_) = static_cast<u32>(v);
   }
+
+  void writeMember(util::io::Printer& p, i32 count) const;
 };
 
 class TrigramFeature {
   u32 target_;
+  u32 index_;
   u32 t0idx_;
   u32 t1idx_;
   u32 t2idx_;
@@ -72,14 +80,19 @@ class TrigramFeature {
   static constexpr u64 TotalHashArgs = 5;
 
  public:
-  constexpr TrigramFeature(u32 target, u32 t0idx, u32 t1idx, u32 t2idx) noexcept
-      : target_{target}, t0idx_{t0idx}, t1idx_{t1idx}, t2idx_{t2idx} {}
+  constexpr TrigramFeature(u32 target, u32 index, u32 t0idx, u32 t1idx,
+                           u32 t2idx) noexcept
+      : target_{target},
+        index_{index},
+        t0idx_{t0idx},
+        t1idx_{t1idx},
+        t2idx_{t2idx} {}
 
   JPP_ALWAYS_INLINE void step0(util::ArraySlice<u64> patterns,
                                util::MutableArraySlice<u64> state) const
       noexcept {
     auto t0 = patterns.at(t0idx_);
-    auto v = h::rawSeahashStart(TotalHashArgs, TrigramSeed, target_, t0);
+    auto v = h::rawSeahashStart(TotalHashArgs, TrigramSeed, index_, t0);
     state.at(target_) = v;
   }
 
@@ -102,10 +115,12 @@ class TrigramFeature {
     auto v = h::rawSeahashFinish(s, t2);
     result.at(target_) = static_cast<u32>(v);
   }
+
+  void writeMember(util::io::Printer& p, i32 count) const;
 };
 
 template <typename Child>
-class PartianNgramFeatureApplyImpl : public PartialNgramFeatureApply {
+class PartialNgramFeatureApplyImpl : public PartialNgramFeatureApply {
   const Child& child() const { return static_cast<const Child&>(*this); }
 
  public:
@@ -165,12 +180,14 @@ class PartianNgramFeatureApplyImpl : public PartialNgramFeatureApply {
 };
 
 class PartialNgramDynamicFeatureApply
-    : public PartianNgramFeatureApplyImpl<PartialNgramDynamicFeatureApply> {
+    : public PartialNgramFeatureApplyImpl<PartialNgramDynamicFeatureApply> {
   std::vector<UnigramFeature> unigrams_;
   std::vector<BigramFeature> bigrams_;
   std::vector<TrigramFeature> trigrams_;
 
  public:
+  bool outputClassBody(util::io::Printer& p) const;
+
   Status addChild(const NgramFeature& nf);
 
   void uniStep0(util::ArraySlice<u64> patterns,

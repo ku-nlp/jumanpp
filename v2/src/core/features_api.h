@@ -23,6 +23,7 @@ class PrimitiveFeatureData;
 class PatternFeatureData;
 class NgramFeatureData;
 class NgramDynamicFeatureApply;
+class PartialNgramDynamicFeatureApply;
 }  // namespace impl
 
 class FeatureApply {
@@ -94,7 +95,7 @@ struct FeatureHolder {
   std::unique_ptr<features::impl::NgramDynamicFeatureApply> ngramDynamic;
   std::unique_ptr<features::NgramFeatureApply> ngramStatic;
   features::NgramFeatureApply* ngram = nullptr;
-  std::unique_ptr<features::PartialNgramFeatureApply> ngramPartialDynamic;
+  std::unique_ptr<impl::PartialNgramDynamicFeatureApply> ngramPartialDynamic;
   std::unique_ptr<features::PartialNgramFeatureApply> ngramPartialStatic;
   features::PartialNgramFeatureApply* ngramPartial = nullptr;
 

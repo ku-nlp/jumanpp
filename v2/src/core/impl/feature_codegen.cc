@@ -5,6 +5,7 @@
 #include "feature_codegen.h"
 #include <fstream>
 #include "core/impl/feature_impl_combine.h"
+#include "core/impl/feature_impl_ngram_partial.h"
 #include "util/logging.hpp"
 
 namespace jumanpp {
@@ -42,8 +43,10 @@ Status StaticFeatureCodegen::writeHeader(const std::string& filename) {
         << "namespace jumanpp_generated {\n"
         << "class " << config_.className
         << ": public jumanpp::core::features::StaticFeatureFactory {\n"
-        << "jumanpp::core::features::NgramFeatureApply* ngram() const "
-           "override;\n"
+        << JPP_TEXT(jumanpp::core::features::NgramFeatureApply*)
+        << "ngram() const override;\n"
+        << JPP_TEXT(jumanpp::core::features::PartialNgramFeatureApply*)
+        << "ngramPartial() const override;\n"
         << "};\n"
         << "} //namespace jumanpp_generated\n";
 
@@ -56,12 +59,7 @@ Status StaticFeatureCodegen::writeHeader(const std::string& filename) {
 }
 
 bool outputNgramFeatures(i::Printer& p, StringPiece name,
-                         NgramFeatureApply* ngr) {
-  auto all = dynamic_cast<features::impl::NgramDynamicFeatureApply*>(ngr);
-  if (!all) {
-    return false;
-  }
-
+                         features::impl::NgramDynamicFeatureApply* all) {
   util::codegen::MethodBody mb{};
   auto status = all->emitCode(&mb);
   if (!status) {
@@ -70,10 +68,10 @@ bool outputNgramFeatures(i::Printer& p, StringPiece name,
     return false;
   }
 
-  p << "class " << name
-    << " final : public jumanpp::core::features::impl::NgramFeatureApplyImpl< "
+  p << "class " << name << " final : public "
+    << JPP_TEXT(::jumanpp::core::features::impl::NgramFeatureApplyImpl) << " < "
     << name << " > {\n"
-    << "public:";
+    << "public :";
   {
     i::Indent id{p, 2};
     p << "\ninline void apply(jumanpp::util::MutableArraySlice<jumanpp::u32> "
@@ -91,7 +89,25 @@ bool outputNgramFeatures(i::Printer& p, StringPiece name,
     }
     p << "\n} // void apply";
   }
-  p << "\n}; // class " << name;
+  p << "\n}; // class " << name << "\n";
+  return true;
+}
+
+bool outputPartialNgramFeatures(
+    i::Printer& p, StringPiece name,
+    features::impl::PartialNgramDynamicFeatureApply* png) {
+  p << "class " << name << " final : "
+    << "public "
+    << JPP_TEXT(
+           ::jumanpp::core::features::impl::PartialNgramFeatureApplyImpl) "< "
+    << name << " > {\n"
+    << "public:";
+  {
+    i::Indent id{p, 2};
+    p << "\n";
+    JPP_RET_CHECK(png->outputClassBody(p));
+  }
+  p << "\n}; // class " << name << "\n";
   return true;
 }
 
@@ -101,6 +117,7 @@ Status StaticFeatureCodegen::writeSource(const std::string& filename,
 
   p << "#include \"util/seahash.h\"\n";
   p << "#include \"core/impl/feature_impl_combine.h\"\n";
+  p << "#include \"core/impl/feature_impl_ngram_partial.h\"\n";
   p << "#include \"" << config_.filename << ".h\"\n\n";
   p << "namespace jumanpp_generated {\n";
   p << "namespace {\n";
@@ -108,17 +125,37 @@ Status StaticFeatureCodegen::writeSource(const std::string& filename,
   std::string ngramName{"NgramFeatureStaticApply_"};
   ngramName += config_.className;
   bool ngramOk = outputNgramFeatures(p, ngramName, features.ngramDynamic.get());
+  std::string partNgramName{"PartNgramFeatureStaticApply_"};
+  partNgramName += config_.className;
+  bool partNgramOk = outputPartialNgramFeatures(
+      p, partNgramName, features.ngramPartialDynamic.get());
 
   p << "\n} //anon namespace\n";
 
-  p << "jumanpp::core::features::NgramFeatureApply* " << config_.className
-    << "::"
+  p << "\n"
+    << JPP_TEXT(jumanpp::core::features::NgramFeatureApply*)
+    << config_.className << "::"
     << "ngram() const {";
   {
     i::Indent io{p, 2};
     p << "\nreturn ";
     if (ngramOk) {
       p << "new " << ngramName << "{};";
+    } else {
+      p << "nullptr;";
+    }
+  }
+  p << "\n}";
+
+  p << "\n"
+    << JPP_TEXT(jumanpp::core::features::PartialNgramFeatureApply*)
+    << config_.className << "::"
+    << "ngramPartial() const {";
+  {
+    i::Indent io{p, 2};
+    p << "\nreturn ";
+    if (partNgramOk) {
+      p << "new " << partNgramName << "{};";
     } else {
       p << "nullptr;";
     }
