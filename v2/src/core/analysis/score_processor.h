@@ -69,8 +69,6 @@ class ScoreProcessor {
   NgramScoreHolder scores_;
   i32 beamSize_ = 0;
 
-  ConnectionPtr* realPtr(const ConnectionPtr& ptr) const;
-
   explicit ScoreProcessor(AnalyzerImpl* analyzer);
 
  public:

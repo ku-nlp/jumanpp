@@ -83,14 +83,6 @@ void ScoreProcessor::resolveBeamAt(i32 boundary, i32 position) {
   beamPtrs_ = util::ArraySlice<ConnectionBeamElement>{beam, 0, (u32)beamSize_};
 }
 
-ConnectionPtr *ScoreProcessor::realPtr(const ConnectionPtr &ptr) const {
-  auto bnd = lattice_->boundary(ptr.boundary);
-  auto itemPtr = bnd->ends()->nodePtrs().at(ptr.left);
-  auto bnd2 = lattice_->boundary(itemPtr.boundary);
-  auto beam = bnd2->starts()->beamData().row(itemPtr.position);
-  return &beam.at(ptr.beam).ptr;
-}
-
 void ScoreProcessor::startBoundary(u32 currentNodes) {
   scores_.newBoundary(currentNodes);
 }
@@ -111,8 +103,8 @@ void ScoreProcessor::applyT1(i32 boundary, i32 position,
 
 void ScoreProcessor::applyT2(i32 beamIdx, FeatureScorer *features) {
   auto &beam = beamPtrs_.at(beamIdx);
-  auto &ptr = beam.ptr;
-  ngram_.compute3GramsStep3(ptr.boundary, ptr.right);
+  auto ptr = beam.ptr.previous;
+  ngram_.compute3GramsStep3(ptr->boundary, ptr->right);
   ngram_.addScores(features, scores_.bufferT1(), scores_.bufferT2());
 }
 

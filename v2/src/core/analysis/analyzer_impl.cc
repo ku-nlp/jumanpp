@@ -290,8 +290,6 @@ Status AnalyzerImpl::computeScores(const ScorerDef* sconf) {
       proc.applyT1(t1node.boundary, t1node.position, sconf->feature);
       proc.resolveBeamAt(t1node.boundary, t1node.position);
       LatticeBoundaryConnection* bndconn = bnd->connection(t1idx);
-      // compute 1st feature data per beam computation is made so that active
-      // dataset will fit into L1 cache
       for (i32 beamIdx = 0; beamIdx < proc.activeBeamSize(); ++beamIdx) {
         proc.applyT2(beamIdx, sconf->feature);
         proc.copyFeatureScores(beamIdx, bndconn);
