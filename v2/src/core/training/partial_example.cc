@@ -37,8 +37,8 @@ void PartialTrainer::handleBoundaryConstraints() {
   auto top1 = eos->starts()->beamData().at(0);
   const analysis::ConnectionPtr* nodeEnd = &top1.ptr;
   auto nodeStart = nodeEnd->previous;
-  auto bnditer = std::crbegin(example_.boundaries());
-  auto end = std::crend(example_.boundaries());
+  auto bnditer = example_.boundaries().rbegin();
+  auto end = example_.boundaries().rend();
   while (nodeStart->boundary > 1 && bnditer != end) {
     auto bndary = *bnditer;
     if (nodeStart->boundary == bndary) {
@@ -51,7 +51,7 @@ void PartialTrainer::handleBoundaryConstraints() {
       int nextBndary = 2;
       auto nextIter = bnditer;
       ++nextIter;
-      if (nextIter != std::crend(example_.boundaries())) {
+      if (nextIter != example_.boundaries().rend()) {
         nextBndary = *nextIter;
       }
       addBadNode(nodeStart, bndary, nextBndary);
