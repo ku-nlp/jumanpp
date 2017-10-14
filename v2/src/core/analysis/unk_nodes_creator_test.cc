@@ -80,7 +80,7 @@ class UnkNodeTestEnv {
   }
 
   ~UnkNodeTestEnv() {
-    if (!Catch::getResultCapture().getLastResult()->isOk()) {
+    if (!Catch::getResultCapture().lastAssertionPassed()) {
       printAll();
     }
   }

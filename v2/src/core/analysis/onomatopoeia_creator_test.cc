@@ -81,7 +81,7 @@ class OnomatopoeiaTestEnv {
   }
 
   ~OnomatopoeiaTestEnv() {
-    if (!Catch::getResultCapture().getLastResult()->isOk()) {
+    if (!Catch::getResultCapture().lastAssertionPassed()) {
       printAll();
     }
   }

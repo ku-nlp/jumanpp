@@ -270,7 +270,7 @@ class KVListTestEnv {
   }
 
   ~KVListTestEnv() {
-    if (!Catch::getResultCapture().getLastResult()->isOk()) {
+    if (!Catch::getResultCapture().lastAssertionPassed()) {
       printAll();
     }
   }

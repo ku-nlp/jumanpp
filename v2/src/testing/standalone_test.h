@@ -46,6 +46,7 @@ class OkStatusMatcher
 
 class TempFile {
   std::string filename_;
+  INFO("temporary file name is: " << filename_);
 
  public:
   TempFile() {
@@ -72,12 +73,8 @@ class TempFile {
   const std::string &name() const { return filename_; }
 
   ~TempFile() {
-    if (!Catch::getResultCapture().getLastResult()->isOk()) {
-      WARN("temporary file name is: " << filename_);
-    } else {
-      // delete file
-      unlink(filename_.c_str());
-    }
+    // delete file
+    unlink(filename_.c_str());
   }
 };
 
