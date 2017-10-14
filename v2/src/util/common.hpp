@@ -57,7 +57,7 @@ JPP_ALWAYS_INLINE void prefetch(const void* x);
 // ---------------------------------------------------------------------------
 template <PrefetchHint hint>
 JPP_ALWAYS_INLINE inline void prefetch(const void* x) {
-#if defined(__llvm__) || defined(COMPILER_GCC)
+#if defined(__llvm__) || defined(__GNUC__)
   __builtin_prefetch(x, 0, hint);
 #else
 // You get no effect.  Feel free to add more sections above.
