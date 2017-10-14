@@ -1,0 +1,1 @@
+add_benchmark(perceptron_bench perceptron_bench.cc jpp_core)
