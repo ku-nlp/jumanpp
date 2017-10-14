@@ -12,7 +12,7 @@ set(JPP_TEST_RESOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/test)
 
 function(jpp_register_test executable)
     if (JPP_TEST_REPORT_JUNIT)
-        set(CATCH_FLAGS -r junit -o "${CMAKE_CURRENT_BINARY_DIR}/${executable}.report.xml")
+        set(CATCH_FLAGS -r junit "-#" --success "--out=${CMAKE_CURRENT_BINARY_DIR}/${executable}.report.xml")
     else(JPP_TEST_REPORT_JUNIT)
         set(CATCH_FLAGS "")
     endif(JPP_TEST_REPORT_JUNIT)
