@@ -2,8 +2,8 @@
 // Created by Arseny Tolmachev on 2017/10/16.
 //
 
-#include "testing/standalone_test.h"
 #include "seahash_simd.h"
+#include "testing/standalone_test.h"
 
 namespace h = jumanpp::util::hashing;
 using namespace jumanpp;

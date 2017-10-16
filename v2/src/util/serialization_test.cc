@@ -67,7 +67,7 @@ TEST_CASE("serialization works with floats") {
   };
 
   auto nan1 = std::numeric_limits<float>::quiet_NaN();
-  //CHECK(std::isnan(check(nan1)));
+  // CHECK(std::isnan(check(nan1)));
   CHECK(check(0.0f) == 0.0f);
   CHECK(check(1.0f) == 1.0f);
   CHECK(check(-1.0f) == -1.0f);
