@@ -1,1 +1,2 @@
 add_benchmark(perceptron_bench perceptron_bench.cc jpp_core)
+add_benchmark(fasthash_bench fasthash_bench.cc jpp_util)
