@@ -88,6 +88,17 @@ public:
 
   JPP_ALWAYS_INLINE FastHash2 mix(const u64* data) const noexcept {
     auto arg = _mm_loadu_si128(reinterpret_cast<const __m128i *>(data));
+    return mixImpl(arg);
+  }
+
+  JPP_ALWAYS_INLINE FastHash2 mixGather(const u64* data, const u32* indices) const noexcept {
+    auto arg = _mm_undefined_si128();
+    arg[0] = data[indices[0]];
+    arg[1] = data[indices[1]];
+    return mixImpl(arg);
+  }
+
+  JPP_ALWAYS_INLINE FastHash2 mixImpl(__m128i arg) const noexcept {
     auto v = _mm_xor_si128(state_, arg);
     v = Multiply64Bit(v, _mm_set1_epi64x(SeaHashMult));
     auto x = _mm_srli_epi64(v, 32);
@@ -145,6 +156,26 @@ public:
 
   JPP_ALWAYS_INLINE FastHash4 mix(const u64* data) const noexcept {
     auto arg = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(data));
+    return mixImpl(arg);
+  }
+
+  JPP_ALWAYS_INLINE FastHash4 mixGatherInstr(const u64* base, const u32* indices) const noexcept {
+    auto idx = _mm_loadu_si128(reinterpret_cast<const __m128i *>(indices));
+    auto ptr = reinterpret_cast<const long long int*>(base);
+    auto arg = _mm256_i32gather_epi64(ptr, idx, sizeof(u64));
+    return mixImpl(arg);
+  }
+
+  JPP_ALWAYS_INLINE FastHash4 mixGatherNaive(const u64* base, const u32* indices) const noexcept {
+    auto arg = _mm256_undefined_si256();
+    arg[0] = base[indices[0]];
+    arg[1] = base[indices[1]];
+    arg[2] = base[indices[2]];
+    arg[3] = base[indices[3]];
+    return mixImpl(arg);
+  }
+
+  JPP_ALWAYS_INLINE FastHash4 mixImpl(__m256i arg) const noexcept {
     auto v = _mm256_xor_si256(state_, arg);
     v = Multiply64Bit(v, _mm256_set1_epi64x(SeaHashMult));
     auto x = _mm256_srli_epi64(v, 32);

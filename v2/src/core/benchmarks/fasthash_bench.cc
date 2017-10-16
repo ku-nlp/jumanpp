@@ -19,53 +19,73 @@ volatile u32 numItems = 50;
 volatile u32 numNgrams = 32;
 volatile u32 maxFeature = (1 << 30);
 
+using hb = jumanpp::util::hashing::SeaHashLite;
 using h1 = jumanpp::util::hashing::FastHash1;
 using h2 = jumanpp::util::hashing::FastHash2;
 using h4 = jumanpp::util::hashing::FastHash4;
 
+const u32 offsets[] = {
+    7, 12, 31, 0,
+    11, 0, 5, 6,
+    21, 19, 16, 5,
+    8, 13, 4, 1,
+    11, 21, 15, 17,
+    8, 4, 11, 15,
+    19, 3, 6, 2,
+    31, 11, 15, 6,
+};
+
+static_assert(sizeof(offsets)/sizeof(u32) == 32, "numOffsets");
+
+JPP_ALWAYS_INLINE void hashSeahashLoop(util::ArraySlice<u64> state, util::ArraySlice<u64> data, util::MutableArraySlice<u32> result, u32 mask) {
+  for (int i = 0; i < state.size(); ++i) {
+    result.at(i) = static_cast<u32>(hb{state[i]}.mix(data[offsets[i]]).finish()) & mask;
+  }
+}
+
 JPP_ALWAYS_INLINE void hashLoop(util::ArraySlice<u64> state, util::ArraySlice<u64> data, util::MutableArraySlice<u32> result, u32 mask) {
   for (int i = 0; i < state.size(); ++i) {
-    result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + i).result()) & mask;
+    result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask;
   }
 }
 
 JPP_ALWAYS_INLINE void hashUnrolled(util::ArraySlice<u64> state, util::ArraySlice<u64> data, util::MutableArraySlice<u32> result, u32 mask) {
   u32 i = 0;
-  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + i).result()) & mask; ++i;
-  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + i).result()) & mask; ++i;
-  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + i).result()) & mask; ++i;
-  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + i).result()) & mask; ++i;
-  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + i).result()) & mask; ++i;
-  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + i).result()) & mask; ++i;
-  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + i).result()) & mask; ++i;
-  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + i).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
 
-  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + i).result()) & mask; ++i;
-  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + i).result()) & mask; ++i;
-  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + i).result()) & mask; ++i;
-  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + i).result()) & mask; ++i;
-  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + i).result()) & mask; ++i;
-  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + i).result()) & mask; ++i;
-  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + i).result()) & mask; ++i;
-  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + i).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
 
-  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + i).result()) & mask; ++i;
-  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + i).result()) & mask; ++i;
-  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + i).result()) & mask; ++i;
-  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + i).result()) & mask; ++i;
-  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + i).result()) & mask; ++i;
-  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + i).result()) & mask; ++i;
-  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + i).result()) & mask; ++i;
-  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + i).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
 
-  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + i).result()) & mask; ++i;
-  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + i).result()) & mask; ++i;
-  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + i).result()) & mask; ++i;
-  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + i).result()) & mask; ++i;
-  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + i).result()) & mask; ++i;
-  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + i).result()) & mask; ++i;
-  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + i).result()) & mask; ++i;
-  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + i).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
 }
 
 #ifdef JPP_SSE_IMPL
@@ -74,85 +94,68 @@ JPP_ALWAYS_INLINE void hashSseUnrolled(util::ArraySlice<u64> state, util::ArrayS
   u32 i = 0;
   {
     auto r = i;
-    auto s1 = h2{state.data() + i}.mix(data.data() + i);
+    auto s1 = h2{state.data() + i}.mixGather(data.data() + i, offsets + i);
     i += 2;
-    auto s2 = h2{state.data() + i}.mix(data.data() + i);
-    i += 2;
-    s1.jointMaskStore(s2, mask, result.data() + r);
-  }
-  {
-    auto r = i;
-    auto s1 = h2{state.data() + i}.mix(data.data() + i);
-    i += 2;
-    auto s2 = h2{state.data() + i}.mix(data.data() + i);
-    i += 2;
-    s1.jointMaskStore(s2, mask, result.data() + r);
-  }
-
-  {
-    auto r = i;
-    auto s1 = h2{state.data() + i}.mix(data.data() + i);
-    i += 2;
-    auto s2 = h2{state.data() + i}.mix(data.data() + i);
+    auto s2 = h2{state.data() + i}.mixGather(data.data() + i, offsets + i);
     i += 2;
     s1.jointMaskStore(s2, mask, result.data() + r);
   }
   {
     auto r = i;
-    auto s1 = h2{state.data() + i}.mix(data.data() + i);
+    auto s1 = h2{state.data() + i}.mixGather(data.data() + i, offsets + i);
     i += 2;
-    auto s2 = h2{state.data() + i}.mix(data.data() + i);
+    auto s2 = h2{state.data() + i}.mixGather(data.data() + i, offsets + i);
     i += 2;
     s1.jointMaskStore(s2, mask, result.data() + r);
   }
 
   {
     auto r = i;
-    auto s1 = h2{state.data() + i}.mix(data.data() + i);
+    auto s1 = h2{state.data() + i}.mixGather(data.data() + i, offsets + i);
     i += 2;
-    auto s2 = h2{state.data() + i}.mix(data.data() + i);
-    i += 2;
-    s1.jointMaskStore(s2, mask, result.data() + r);
-  }
-  {
-    auto r = i;
-    auto s1 = h2{state.data() + i}.mix(data.data() + i);
-    i += 2;
-    auto s2 = h2{state.data() + i}.mix(data.data() + i);
-    i += 2;
-    s1.jointMaskStore(s2, mask, result.data() + r);
-  }
-
-  {
-    auto r = i;
-    auto s1 = h2{state.data() + i}.mix(data.data() + i);
-    i += 2;
-    auto s2 = h2{state.data() + i}.mix(data.data() + i);
+    auto s2 = h2{state.data() + i}.mixGather(data.data() + i, offsets + i);
     i += 2;
     s1.jointMaskStore(s2, mask, result.data() + r);
   }
   {
     auto r = i;
-    auto s1 = h2{state.data() + i}.mix(data.data() + i);
+    auto s1 = h2{state.data() + i}.mixGather(data.data() + i, offsets + i);
     i += 2;
-    auto s2 = h2{state.data() + i}.mix(data.data() + i);
+    auto s2 = h2{state.data() + i}.mixGather(data.data() + i, offsets + i);
     i += 2;
     s1.jointMaskStore(s2, mask, result.data() + r);
   }
 
   {
     auto r = i;
-    auto s1 = h2{state.data() + i}.mix(data.data() + i);
+    auto s1 = h2{state.data() + i}.mixGather(data.data() + i, offsets + i);
     i += 2;
-    auto s2 = h2{state.data() + i}.mix(data.data() + i);
+    auto s2 = h2{state.data() + i}.mixGather(data.data() + i, offsets + i);
     i += 2;
     s1.jointMaskStore(s2, mask, result.data() + r);
   }
   {
     auto r = i;
-    auto s1 = h2{state.data() + i}.mix(data.data() + i);
+    auto s1 = h2{state.data() + i}.mixGather(data.data() + i, offsets + i);
     i += 2;
-    auto s2 = h2{state.data() + i}.mix(data.data() + i);
+    auto s2 = h2{state.data() + i}.mixGather(data.data() + i, offsets + i);
+    i += 2;
+    s1.jointMaskStore(s2, mask, result.data() + r);
+  }
+
+  {
+    auto r = i;
+    auto s1 = h2{state.data() + i}.mixGather(data.data() + i, offsets + i);
+    i += 2;
+    auto s2 = h2{state.data() + i}.mixGather(data.data() + i, offsets + i);
+    i += 2;
+    s1.jointMaskStore(s2, mask, result.data() + r);
+  }
+  {
+    auto r = i;
+    auto s1 = h2{state.data() + i}.mixGather(data.data() + i, offsets + i);
+    i += 2;
+    auto s2 = h2{state.data() + i}.mixGather(data.data() + i, offsets + i);
     i += 2;
     s1.jointMaskStore(s2, mask, result.data() + r);
   }
@@ -166,33 +169,69 @@ JPP_ALWAYS_INLINE void hashAvxUnrolled(util::ArraySlice<u64> state, util::ArrayS
   u32 i = 0;
   {
     auto r = i;
-    auto s1 = h4{state.data() + i}.mix(data.data() + i).maskCompact2(mask);
+    auto s1 = h4{state.data() + i}.mixGatherNaive(data.data() + i, offsets + i).maskCompact2(mask);
     i += 4;
-    auto s2 = h4{state.data() + i}.mix(data.data() + i).maskCompact2(mask);
-    i += 4;
-    s1.merge(s2).store(result.data() + r);
-  }
-  {
-    auto r = i;
-    auto s1 = h4{state.data() + i}.mix(data.data() + i).maskCompact2(mask);
-    i += 4;
-    auto s2 = h4{state.data() + i}.mix(data.data() + i).maskCompact2(mask);
+    auto s2 = h4{state.data() + i}.mixGatherNaive(data.data() + i, offsets + i).maskCompact2(mask);
     i += 4;
     s1.merge(s2).store(result.data() + r);
   }
   {
     auto r = i;
-    auto s1 = h4{state.data() + i}.mix(data.data() + i).maskCompact2(mask);
+    auto s1 = h4{state.data() + i}.mixGatherNaive(data.data() + i, offsets + i).maskCompact2(mask);
     i += 4;
-    auto s2 = h4{state.data() + i}.mix(data.data() + i).maskCompact2(mask);
+    auto s2 = h4{state.data() + i}.mixGatherNaive(data.data() + i, offsets + i).maskCompact2(mask);
     i += 4;
     s1.merge(s2).store(result.data() + r);
   }
   {
     auto r = i;
-    auto s1 = h4{state.data() + i}.mix(data.data() + i).maskCompact2(mask);
+    auto s1 = h4{state.data() + i}.mixGatherNaive(data.data() + i, offsets + i).maskCompact2(mask);
     i += 4;
-    auto s2 = h4{state.data() + i}.mix(data.data() + i).maskCompact2(mask);
+    auto s2 = h4{state.data() + i}.mixGatherNaive(data.data() + i, offsets + i).maskCompact2(mask);
+    i += 4;
+    s1.merge(s2).store(result.data() + r);
+  }
+  {
+    auto r = i;
+    auto s1 = h4{state.data() + i}.mixGatherNaive(data.data() + i, offsets + i).maskCompact2(mask);
+    i += 4;
+    auto s2 = h4{state.data() + i}.mixGatherNaive(data.data() + i, offsets + i).maskCompact2(mask);
+    i += 4;
+    s1.merge(s2).store(result.data() + r);
+  }
+}
+
+JPP_ALWAYS_INLINE void hashAvxUnrolledIgather(util::ArraySlice<u64> state, util::ArraySlice<u64> data, util::MutableArraySlice<u32> result, u32 mask) {
+  u32 i = 0;
+  {
+    auto r = i;
+    auto s1 = h4{state.data() + i}.mixGatherInstr(data.data() + i, offsets + i).maskCompact2(mask);
+    i += 4;
+    auto s2 = h4{state.data() + i}.mixGatherInstr(data.data() + i, offsets + i).maskCompact2(mask);
+    i += 4;
+    s1.merge(s2).store(result.data() + r);
+  }
+  {
+    auto r = i;
+    auto s1 = h4{state.data() + i}.mixGatherInstr(data.data() + i, offsets + i).maskCompact2(mask);
+    i += 4;
+    auto s2 = h4{state.data() + i}.mixGatherInstr(data.data() + i, offsets + i).maskCompact2(mask);
+    i += 4;
+    s1.merge(s2).store(result.data() + r);
+  }
+  {
+    auto r = i;
+    auto s1 = h4{state.data() + i}.mixGatherInstr(data.data() + i, offsets + i).maskCompact2(mask);
+    i += 4;
+    auto s2 = h4{state.data() + i}.mixGatherInstr(data.data() + i, offsets + i).maskCompact2(mask);
+    i += 4;
+    s1.merge(s2).store(result.data() + r);
+  }
+  {
+    auto r = i;
+    auto s1 = h4{state.data() + i}.mixGatherInstr(data.data() + i, offsets + i).maskCompact2(mask);
+    i += 4;
+    auto s2 = h4{state.data() + i}.mixGatherInstr(data.data() + i, offsets + i).maskCompact2(mask);
     i += 4;
     s1.merge(s2).store(result.data() + r);
   }
@@ -231,6 +270,16 @@ void doTest(util::Sliceable<u32> result, u32 mask, Fn f) {
     f(stateSlice.row(i), dataSlice.row(i), result.row(i), mask);
   }
 }
+
+__attribute__((noinline)) void test_naiveSeahashLoop(util::Sliceable<u32> result, u32 mask) {
+  doTest(result, mask, hashSeahashLoop);
+}
+
+BENCHMARK("sealite-loop", [](context* ctx) {
+  for (size_t i = 0; i < ctx->num_iterations(); ++i) {
+    test_naiveSeahashLoop(inputs.featuresSlice, maxFeature - 1u);
+  }
+});
 
 __attribute__((noinline)) void test_naiveLoop(util::Sliceable<u32> result, u32 mask) {
   doTest(result, mask, hashLoop);
@@ -272,9 +321,19 @@ __attribute__((noinline)) void test_avxUnrolled(util::Sliceable<u32> result, u32
   doTest(result, mask, hashAvxUnrolled);
 }
 
-BENCHMARK("avx-unrolled", [](context* ctx) {
+BENCHMARK("avx-unrolled-naive", [](context* ctx) {
   for (size_t i = 0; i < ctx->num_iterations(); ++i) {
     test_avxUnrolled(inputs.featuresSlice, maxFeature - 1u);
+  }
+});
+
+__attribute__((noinline)) void test_avxUnrolledIGather(util::Sliceable<u32> result, u32 mask) {
+  doTest(result, mask, hashAvxUnrolledIgather);
+}
+
+BENCHMARK("avx-unrolled-instr", [](context* ctx) {
+  for (size_t i = 0; i < ctx->num_iterations(); ++i) {
+    test_avxUnrolledIGather(inputs.featuresSlice, maxFeature - 1u);
   }
 });
 
