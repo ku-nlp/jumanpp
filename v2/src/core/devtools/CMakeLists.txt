@@ -1,0 +1,2 @@
+add_executable(fasthash_quality fasthash_quality.cc)
+target_link_libraries(fasthash_quality jpp_util)

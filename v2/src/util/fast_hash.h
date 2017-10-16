@@ -35,11 +35,15 @@ class FastHash1 {
   explicit FastHash1(u64 state) noexcept : state_{state} {}
   explicit FastHash1(const u64* state) noexcept : state_{*state} {}
 
-  JPP_ALWAYS_INLINE FastHash1 mix(const u64* data) const noexcept {
-    u64 v = state_ ^ *data;
+  JPP_ALWAYS_INLINE FastHash1 mix(const u64 data) const noexcept {
+    u64 v = state_ ^ data;
     v *= SeaHashMult;
     v = v ^ (v >> 32);
     return FastHash1{v};
+  }
+
+  JPP_ALWAYS_INLINE FastHash1 mix(const u64* data) const noexcept {
+    return mix(*data);
   }
 
   JPP_ALWAYS_INLINE u64 result() const noexcept { return state_; }

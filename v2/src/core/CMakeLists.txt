@@ -79,3 +79,6 @@ target_link_libraries(jpp_core_train_tests jpp_core_train)
 
 add_subdirectory(impl/codegen)
 add_subdirectory(benchmarks)
+if (${ENABLE_DEV_TOOLS})
+    add_subdirectory(devtools)
+endif()

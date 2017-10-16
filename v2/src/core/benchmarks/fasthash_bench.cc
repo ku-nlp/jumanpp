@@ -9,8 +9,8 @@
 #include <xmmintrin.h>
 #include <random>
 #include "benchpress/benchpress.hpp"
+#include "util/fast_hash.h"
 #include "util/seahash.h"
-#include "util/seahash_simd.h"
 
 using context = benchpress::context;
 using namespace jumanpp;

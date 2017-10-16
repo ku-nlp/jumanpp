@@ -18,6 +18,7 @@ include_directories("${CMAKE_SOURCE_DIR}/libs")
 
 option(JPP_TEST_REPORT_JUNIT OFF)
 option(ENABLE_BENCHMARKS OFF)
+option(ENABLE_DEV_TOOLS OFF)
 set(JPP_MAX_DIC_FIELDS 64 CACHE STRING "Maximum supported dictionary fields")
 
 enable_testing()
