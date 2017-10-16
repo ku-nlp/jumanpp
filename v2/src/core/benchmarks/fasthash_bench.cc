@@ -21,8 +21,7 @@ volatile u32 maxFeature = (1 << 30);
 
 using hb = jumanpp::util::hashing::SeaHashLite;
 using h1 = jumanpp::util::hashing::FastHash1;
-using h2 = jumanpp::util::hashing::FastHash2;
-using h4 = jumanpp::util::hashing::FastHash4;
+
 
 const u32 offsets[] = {
     7, 12, 31, 0,
@@ -88,7 +87,48 @@ JPP_ALWAYS_INLINE void hashUnrolled(util::ArraySlice<u64> state, util::ArraySlic
   result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
 }
 
+JPP_ALWAYS_INLINE void hashSeahashUnrolled(util::ArraySlice<u64> state, util::ArraySlice<u64> data, util::MutableArraySlice<u32> finish, u32 mask) {
+  u32 i = 0;
+  finish.at(i) = static_cast<u32>(hb{state[i]}.mix(data[offsets[i]]).finish()) & mask; ++i;
+  finish.at(i) = static_cast<u32>(hb{state[i]}.mix(data[offsets[i]]).finish()) & mask; ++i;
+  finish.at(i) = static_cast<u32>(hb{state[i]}.mix(data[offsets[i]]).finish()) & mask; ++i;
+  finish.at(i) = static_cast<u32>(hb{state[i]}.mix(data[offsets[i]]).finish()) & mask; ++i;
+  finish.at(i) = static_cast<u32>(hb{state[i]}.mix(data[offsets[i]]).finish()) & mask; ++i;
+  finish.at(i) = static_cast<u32>(hb{state[i]}.mix(data[offsets[i]]).finish()) & mask; ++i;
+  finish.at(i) = static_cast<u32>(hb{state[i]}.mix(data[offsets[i]]).finish()) & mask; ++i;
+  finish.at(i) = static_cast<u32>(hb{state[i]}.mix(data[offsets[i]]).finish()) & mask; ++i;
+
+  finish.at(i) = static_cast<u32>(hb{state[i]}.mix(data[offsets[i]]).finish()) & mask; ++i;
+  finish.at(i) = static_cast<u32>(hb{state[i]}.mix(data[offsets[i]]).finish()) & mask; ++i;
+  finish.at(i) = static_cast<u32>(hb{state[i]}.mix(data[offsets[i]]).finish()) & mask; ++i;
+  finish.at(i) = static_cast<u32>(hb{state[i]}.mix(data[offsets[i]]).finish()) & mask; ++i;
+  finish.at(i) = static_cast<u32>(hb{state[i]}.mix(data[offsets[i]]).finish()) & mask; ++i;
+  finish.at(i) = static_cast<u32>(hb{state[i]}.mix(data[offsets[i]]).finish()) & mask; ++i;
+  finish.at(i) = static_cast<u32>(hb{state[i]}.mix(data[offsets[i]]).finish()) & mask; ++i;
+  finish.at(i) = static_cast<u32>(hb{state[i]}.mix(data[offsets[i]]).finish()) & mask; ++i;
+
+  finish.at(i) = static_cast<u32>(hb{state[i]}.mix(data[offsets[i]]).finish()) & mask; ++i;
+  finish.at(i) = static_cast<u32>(hb{state[i]}.mix(data[offsets[i]]).finish()) & mask; ++i;
+  finish.at(i) = static_cast<u32>(hb{state[i]}.mix(data[offsets[i]]).finish()) & mask; ++i;
+  finish.at(i) = static_cast<u32>(hb{state[i]}.mix(data[offsets[i]]).finish()) & mask; ++i;
+  finish.at(i) = static_cast<u32>(hb{state[i]}.mix(data[offsets[i]]).finish()) & mask; ++i;
+  finish.at(i) = static_cast<u32>(hb{state[i]}.mix(data[offsets[i]]).finish()) & mask; ++i;
+  finish.at(i) = static_cast<u32>(hb{state[i]}.mix(data[offsets[i]]).finish()) & mask; ++i;
+  finish.at(i) = static_cast<u32>(hb{state[i]}.mix(data[offsets[i]]).finish()) & mask; ++i;
+
+  finish.at(i) = static_cast<u32>(hb{state[i]}.mix(data[offsets[i]]).finish()) & mask; ++i;
+  finish.at(i) = static_cast<u32>(hb{state[i]}.mix(data[offsets[i]]).finish()) & mask; ++i;
+  finish.at(i) = static_cast<u32>(hb{state[i]}.mix(data[offsets[i]]).finish()) & mask; ++i;
+  finish.at(i) = static_cast<u32>(hb{state[i]}.mix(data[offsets[i]]).finish()) & mask; ++i;
+  finish.at(i) = static_cast<u32>(hb{state[i]}.mix(data[offsets[i]]).finish()) & mask; ++i;
+  finish.at(i) = static_cast<u32>(hb{state[i]}.mix(data[offsets[i]]).finish()) & mask; ++i;
+  finish.at(i) = static_cast<u32>(hb{state[i]}.mix(data[offsets[i]]).finish()) & mask; ++i;
+  finish.at(i) = static_cast<u32>(hb{state[i]}.mix(data[offsets[i]]).finish()) & mask; ++i;
+}
+
 #ifdef JPP_SSE_IMPL
+
+using h2 = jumanpp::util::hashing::FastHash2;
 
 JPP_ALWAYS_INLINE void hashSseUnrolled(util::ArraySlice<u64> state, util::ArraySlice<u64> data, util::MutableArraySlice<u32> result, u32 mask) {
   u32 i = 0;
@@ -161,9 +201,79 @@ JPP_ALWAYS_INLINE void hashSseUnrolled(util::ArraySlice<u64> state, util::ArrayS
   }
 }
 
+JPP_ALWAYS_INLINE void hashSseInterleaved(util::ArraySlice<u64> state, util::ArraySlice<u64> data, util::MutableArraySlice<u32> result, u32 mask) {
+
+  u32 i = 0;
+
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+
+  {
+    auto r = i;
+    auto s1 = h2{state.data() + i}.mixGather(data.data() + i, offsets + i);
+    i += 2;
+    auto s2 = h2{state.data() + i}.mixGather(data.data() + i, offsets + i);
+    i += 2;
+    s1.jointMaskStore(s2, mask, result.data() + r);
+  }
+
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+
+  {
+    auto r = i;
+    auto s1 = h2{state.data() + i}.mixGather(data.data() + i, offsets + i);
+    i += 2;
+    auto s2 = h2{state.data() + i}.mixGather(data.data() + i, offsets + i);
+    i += 2;
+    s1.jointMaskStore(s2, mask, result.data() + r);
+  }
+
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+
+  {
+    auto r = i;
+    auto s1 = h2{state.data() + i}.mixGather(data.data() + i, offsets + i);
+    i += 2;
+    auto s2 = h2{state.data() + i}.mixGather(data.data() + i, offsets + i);
+    i += 2;
+    s1.jointMaskStore(s2, mask, result.data() + r);
+  }
+
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+
+  {
+    auto r = i;
+    auto s1 = h2{state.data() + i}.mixGather(data.data() + i, offsets + i);
+    i += 2;
+    auto s2 = h2{state.data() + i}.mixGather(data.data() + i, offsets + i);
+    i += 2;
+    s1.jointMaskStore(s2, mask, result.data() + r);
+  }
+
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+
+  {
+    auto r = i;
+    auto s1 = h2{state.data() + i}.mixGather(data.data() + i, offsets + i);
+    i += 2;
+    auto s2 = h2{state.data() + i}.mixGather(data.data() + i, offsets + i);
+    i += 2;
+    s1.jointMaskStore(s2, mask, result.data() + r);
+  }
+
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+}
+
 #endif //SSE
 
 #ifdef JPP_AVX2
+
+using h4 = jumanpp::util::hashing::FastHash4;
 
 JPP_ALWAYS_INLINE void hashAvxUnrolled(util::ArraySlice<u64> state, util::ArraySlice<u64> data, util::MutableArraySlice<u32> result, u32 mask) {
   u32 i = 0;
@@ -199,6 +309,49 @@ JPP_ALWAYS_INLINE void hashAvxUnrolled(util::ArraySlice<u64> state, util::ArrayS
     i += 4;
     s1.merge(s2).store(result.data() + r);
   }
+}
+
+JPP_ALWAYS_INLINE void hashAvxUnrolledInterleave1(util::ArraySlice<u64> state, util::ArraySlice<u64> data, util::MutableArraySlice<u32> result, u32 mask) {
+  u32 i = 0;
+
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+
+  {
+    auto r = i;
+    auto s1 = h4{state.data() + i}.mixGatherNaive(data.data() + i, offsets + i).maskCompact2(mask);
+    i += 4;
+    auto s2 = h4{state.data() + i}.mixGatherNaive(data.data() + i, offsets + i).maskCompact2(mask);
+    i += 4;
+    s1.merge(s2).store(result.data() + r);
+  }
+
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+
+  {
+    auto r = i;
+    auto s1 = h4{state.data() + i}.mixGatherNaive(data.data() + i, offsets + i).maskCompact2(mask);
+    i += 4;
+    auto s2 = h4{state.data() + i}.mixGatherNaive(data.data() + i, offsets + i).maskCompact2(mask);
+    i += 4;
+    s1.merge(s2).store(result.data() + r);
+  }
+
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+
+  {
+    auto r = i;
+    auto s1 = h4{state.data() + i}.mixGatherNaive(data.data() + i, offsets + i).maskCompact2(mask);
+    i += 4;
+    auto s2 = h4{state.data() + i}.mixGatherNaive(data.data() + i, offsets + i).maskCompact2(mask);
+    i += 4;
+    s1.merge(s2).store(result.data() + r);
+  }
+
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
+  result.at(i) = static_cast<u32>(h1{state.data() + i}.mix(data.data() + offsets[i]).result()) & mask; ++i;
 }
 
 JPP_ALWAYS_INLINE void hashAvxUnrolledIgather(util::ArraySlice<u64> state, util::ArraySlice<u64> data, util::MutableArraySlice<u32> result, u32 mask) {
@@ -281,6 +434,16 @@ BENCHMARK("sealite-loop", [](context* ctx) {
   }
 });
 
+__attribute__((noinline)) void test_unrolledSeahashLoop(util::Sliceable<u32> result, u32 mask) {
+  doTest(result, mask, hashSeahashUnrolled);
+}
+
+BENCHMARK("sealite-loop", [](context* ctx) {
+  for (size_t i = 0; i < ctx->num_iterations(); ++i) {
+    test_unrolledSeahashLoop(inputs.featuresSlice, maxFeature - 1u);
+  }
+});
+
 __attribute__((noinline)) void test_naiveLoop(util::Sliceable<u32> result, u32 mask) {
   doTest(result, mask, hashLoop);
 }
@@ -313,6 +476,16 @@ BENCHMARK("sse-unrolled", [](context* ctx) {
   }
 });
 
+__attribute__((noinline)) void test_sseInterleaved(util::Sliceable<u32> result, u32 mask) {
+  doTest(result, mask, hashSseInterleaved);
+}
+
+BENCHMARK("sse-interleaved", [](context* ctx) {
+  for (size_t i = 0; i < ctx->num_iterations(); ++i) {
+    test_sseInterleaved(inputs.featuresSlice, maxFeature - 1u);
+  }
+});
+
 #endif
 
 #ifdef JPP_AVX2
@@ -324,6 +497,16 @@ __attribute__((noinline)) void test_avxUnrolled(util::Sliceable<u32> result, u32
 BENCHMARK("avx-unrolled-naive", [](context* ctx) {
   for (size_t i = 0; i < ctx->num_iterations(); ++i) {
     test_avxUnrolled(inputs.featuresSlice, maxFeature - 1u);
+  }
+});
+
+__attribute__((noinline)) void test_avxUnrolledInterleave(util::Sliceable<u32> result, u32 mask) {
+  doTest(result, mask, hashAvxUnrolledInterleave1);
+}
+
+BENCHMARK("avx-unrolled-interleave", [](context* ctx) {
+  for (size_t i = 0; i < ctx->num_iterations(); ++i) {
+    test_avxUnrolledInterleave(inputs.featuresSlice, maxFeature - 1u);
   }
 });
 
