@@ -8,7 +8,7 @@
 #include "core/features_api.h"
 #include "core/impl/feature_impl_types.h"
 #include "util/printer.h"
-#include "util/seahash.h"
+#include "util/fast_hash.h"
 
 namespace jumanpp {
 namespace core {
@@ -22,16 +22,19 @@ class UnigramFeature {
   u32 index_;
   u32 t0idx_;
 
+  static constexpr u64 TotalHashArgs = 3;
+
  public:
   constexpr UnigramFeature(u32 target, u32 index, u32 t0idx) noexcept
       : target_{target}, index_{index}, t0idx_{t0idx} {}
 
   JPP_ALWAYS_INLINE void step0(util::ArraySlice<u64> patterns,
-                               util::MutableArraySlice<u32> result) const
+                               util::MutableArraySlice<u32> result,
+  u32 mask) const
       noexcept {
     auto t0 = patterns.at(t0idx_);
-    auto v = h::seaHashSeq(UnigramSeed, index_, t0);
-    result.at(target_) = static_cast<u32>(v);
+    auto v = h::FastHash1{}.mix(TotalHashArgs).mix(index_).mix(UnigramSeed).mix(t0);
+    result.at(target_) = v.masked(mask);
   }
 
   void writeMember(util::io::Printer& p, i32 count) const;
@@ -53,18 +56,18 @@ class BigramFeature {
                                util::MutableArraySlice<u64> state) const
       noexcept {
     auto t0 = patterns.at(t0idx_);
-    auto v = h::rawSeahashStart(TotalHashArgs, BigramSeed, index_, t0);
-    state.at(target_) = v;
+    auto v = h::FastHash1{}.mix(TotalHashArgs).mix(index_).mix(BigramSeed).mix(t0);
+    state.at(target_) = v.result();
   }
 
   JPP_ALWAYS_INLINE void step1(util::ArraySlice<u64> patterns,
                                util::ArraySlice<u64> state,
-                               util::MutableArraySlice<u32> result) const
+                               util::MutableArraySlice<u32> result, u32 mask) const
       noexcept {
     auto t1 = patterns.at(t1idx_);
     auto s = state.at(target_);
-    auto v = h::rawSeahashFinish(s, t1);
-    result.at(target_) = static_cast<u32>(v);
+    auto v = h::FastHash1{s}.mix(t1);
+    result.at(target_) = v.masked(mask);
   }
 
   void writeMember(util::io::Printer& p, i32 count) const;
@@ -92,8 +95,8 @@ class TrigramFeature {
                                util::MutableArraySlice<u64> state) const
       noexcept {
     auto t0 = patterns.at(t0idx_);
-    auto v = h::rawSeahashStart(TotalHashArgs, TrigramSeed, index_, t0);
-    state.at(target_) = v;
+    auto v = h::FastHash1{}.mix(TotalHashArgs).mix(index_).mix(TrigramSeed).mix(t0);
+    state.at(target_) = v.result();
   }
 
   JPP_ALWAYS_INLINE void step1(util::ArraySlice<u64> patterns,
@@ -102,18 +105,18 @@ class TrigramFeature {
       noexcept {
     auto t1 = patterns.at(t1idx_);
     auto s = state.at(target_);
-    auto v = h::rawSeahashContinue(s, t1);
-    result.at(target_) = v;
+    auto v = h::FastHash1{s}.mix(t1);
+    result.at(target_) = v.result();
   }
 
   JPP_ALWAYS_INLINE void step2(util::ArraySlice<u64> patterns,
                                util::ArraySlice<u64> state,
-                               util::MutableArraySlice<u32> result) const
+                               util::MutableArraySlice<u32> result, u32 mask) const
       noexcept {
     auto t2 = patterns.at(t2idx_);
     auto s = state.at(target_);
-    auto v = h::rawSeahashFinish(s, t2);
-    result.at(target_) = static_cast<u32>(v);
+    auto v = h::FastHash1{s}.mix(t2);
+    result.at(target_) = v.masked(mask);
   }
 
   void writeMember(util::io::Printer& p, i32 count) const;
@@ -125,7 +128,7 @@ class PartialNgramFeatureApplyImpl : public PartialNgramFeatureApply {
 
  public:
   void applyUni(util::ConstSliceable<u64> p0,
-                util::Sliceable<u32> results) const noexcept override {
+                util::Sliceable<u32> results, u32 mask) const noexcept override {
     for (auto row = 0; row < p0.numRows(); ++row) {
       auto patterns = p0.row(row);
       auto result = results.row(row);

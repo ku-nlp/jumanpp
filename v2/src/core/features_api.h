@@ -8,11 +8,16 @@
 #include <memory>
 #include "runtime_info.h"
 #include "util/sliceable_array.h"
+#include "util/memory.hpp"
 
 namespace jumanpp {
 namespace core {
 
 class CoreHolder;
+
+namespace analysis {
+class FeatureScorer;
+}
 
 namespace features {
 
@@ -53,13 +58,32 @@ class NgramFeatureApply : public FeatureApply {
   virtual void applyBatch(impl::NgramFeatureData* data) const noexcept = 0;
 };
 
+struct AnalysisRunStats {
+  u32 maxStarts;
+};
+
+struct FeatureBuffer {
+  util::MutableArraySlice<u64> t1Buffer;
+  util::MutableArraySlice<u64> t2Buffer1;
+  util::MutableArraySlice<u64> t2Buffer2;
+  util::MutableArraySlice<u32> valueBuffer1_;
+  util::MutableArraySlice<u32> valueBuffer2_;
+  util::MutableArraySlice<float> scoreBuffer1_;
+  util::MutableArraySlice<float> scoreBuffer2_;
+};
+
 class PartialNgramFeatureApply : public FeatureApply {
  public:
-  virtual void applyUni(util::ConstSliceable<u64> p0,
-                        util::Sliceable<u32> result) const noexcept = 0;
-  virtual void applyBiStep1(util::ConstSliceable<u64> p0,
-                            util::Sliceable<u64> result) const noexcept = 0;
-  virtual void applyBiStep2(util::ConstSliceable<u64> state,
+  virtual void allocateBuffers(FeatureBuffer *buffer, const AnalysisRunStats &stats,
+                               util::memory::ManagedAllocatorCore *alloc) const noexcept = 0;
+
+  virtual void applyUni(FeatureBuffer* buffers,
+                        u32 seed,
+                        analysis::FeatureScorer* scorer,
+                        util::MutableArraySlice<float> result) const noexcept = 0;
+  virtual void applyBiStep1(FeatureBuffer * buffers, util::ConstSliceable<u64> p0
+                            ) const noexcept = 0;
+  virtual void applyBiStep2(FeatureBuffer * buffers,
                             util::ArraySlice<u64> p1,
                             util::Sliceable<u32> result) const noexcept = 0;
   virtual void applyTriStep1(util::ConstSliceable<u64> p0,
