@@ -27,6 +27,8 @@ int main(int argc, char* argv[]) {
   u64 maxUni = 100 * 1000 * 1000;
   u64 maxBi = 50 * 1000;
   u64 maxTri = 3 * 1000;
+  auto biTotal = maxUni + maxBi * maxBi;
+  auto total = biTotal + maxTri * maxTri * maxTri;
 
   util::FlatMap<u64, NgramInfo> data;
   std::array<u32, 256> b0;
@@ -37,6 +39,8 @@ int main(int argc, char* argv[]) {
   util::fill(b1, 0);
   util::fill(b2, 0);
   util::fill(b3, 0);
+
+  data.reserve(total * 2);
 
   auto apply = [&](u64 v) {
     auto bt0 = v & 0xff;
@@ -106,7 +110,6 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  auto biTotal = maxUni + maxBi * maxBi;
   std::cout << "\r+Bi " << data.size() << "/" << biTotal << " "
             << (biTotal - data.size()) << " collisions\n";
   stats("byte-0", b0);
@@ -130,7 +133,7 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  auto total = biTotal + maxTri * maxTri * maxTri;
+
   std::cout << "+Tri" << data.size() << "/" << total << " "
             << (total - data.size()) << " collisions\n";
 
