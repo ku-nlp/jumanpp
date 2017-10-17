@@ -2,16 +2,15 @@
 // Created by Arseny Tolmachev on 2017/10/16.
 //
 
+#include <array>
 #include <iostream>
 #include <random>
-#include <array>
+#include <unordered_map>
 #include "util/array_slice.h"
 #include "util/fast_hash.h"
-#include "util/flatmap.h"
-#include "util/inlined_vector.h"
-#include "util/types.hpp"
 #include "util/stl_util.h"
 #include "util/string_piece.h"
+#include "util/types.hpp"
 
 using namespace jumanpp;
 
@@ -30,7 +29,7 @@ int main(int argc, char* argv[]) {
   auto biTotal = maxUni + maxBi * maxBi;
   auto total = biTotal + maxTri * maxTri * maxTri;
 
-  util::FlatMap<u64, NgramInfo> data;
+  std::unordered_map<u64, NgramInfo> data;
   std::array<u32, 256> b0;
   std::array<u32, 256> b1;
   std::array<u32, 256> b2;
@@ -40,6 +39,7 @@ int main(int argc, char* argv[]) {
   util::fill(b2, 0);
   util::fill(b3, 0);
 
+  std::cout << "asking for " << total * 2 << " elements in a hashmap\n";
   data.reserve(total * 2);
 
   auto apply = [&](u64 v) {
@@ -52,24 +52,24 @@ int main(int argc, char* argv[]) {
     auto bt3 = (v >> 24) & 0xff;
     b3[bt3] += 1;
   };
-  
+
   auto stats = [](StringPiece name, util::ArraySlice<u32> arr) {
     u64 sum = 0;
     u32 min = std::numeric_limits<u32>::max();
     u32 max = 0;
-    for (auto& i: arr) {
+    for (auto& i : arr) {
       sum += i;
       min = std::min(i, min);
       max = std::max(i, max);
     }
 
     auto avg = sum / arr.size();
-    std::cout << "Stats for " << name << ": min=" << min << ", max=" << max << ", avg=" << avg << ", sum=" << sum
-              << "\ndiff=[";
+    std::cout << "Stats for " << name << ": min=" << min << ", max=" << max
+              << ", avg=" << avg << ", sum=" << sum << "\ndiff=[";
     sum = 0;
     min = std::numeric_limits<u32>::max();
     max = 0;
-    for (auto&i : arr) {
+    for (auto& i : arr) {
       auto diff = static_cast<i64>(i) - static_cast<i64>(avg);
       auto absdiff = std::abs(diff);
       std::cout << absdiff << ",";
@@ -79,8 +79,8 @@ int main(int argc, char* argv[]) {
     }
     std::cout << "]\n";
     avg = sum / arr.size();
-    std::cout << "Diff stats: min=" << min << ", max=" << max << ", avg=" << avg << ", sum=" << sum
-              << "\ndiff=[";
+    std::cout << "Diff stats: min=" << min << ", max=" << max << ", avg=" << avg
+              << ", sum=" << sum << "\ndiff=[";
   };
 
   for (u32 i = 0; i < maxUni; ++i) {
@@ -133,7 +133,6 @@ int main(int argc, char* argv[]) {
     }
   }
 
-
   std::cout << "+Tri" << data.size() << "/" << total << " "
             << (total - data.size()) << " collisions\n";
 
@@ -142,7 +141,7 @@ int main(int argc, char* argv[]) {
   stats("byte-2", b2);
   stats("byte-3", b3);
 
-  data.clear_no_resize();
+  data.clear();
   util::fill(b0, 0);
   util::fill(b1, 0);
   util::fill(b2, 0);
