@@ -13,10 +13,10 @@ TEST_CASE("can train with combined examples (boundary only)") {
   CHECK(env.trainEnv.value().numTrainers() == 7);
   env.trainEnv.value().prepareTrainers();
   CHECK(env.trainEnv.value().numTrainers() == 11);
-  env.singleEpochFrom("jumandic/train_mini_01.txt");
-  env.singleEpochFrom("jumandic/train_mini_01.txt");
-  env.singleEpochFrom("jumandic/train_mini_01.txt");
-  env.singleEpochFrom("jumandic/train_mini_01.txt");
+  for (int i = 0; i < 10; ++i) {
+    env.singleEpochFrom("jumandic/train_mini_01.txt");
+  }
+
   // env.dumpTrainers("/tmp/jpp-debug");
   CHECK(env.trainEnv.value().epochLoss() == Approx(0));
 }

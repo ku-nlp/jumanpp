@@ -76,7 +76,7 @@ class ResultAssign {
 
   ResultAssign& addHashIndexed(StringPiece var, size_t idx) {
     ss_.str("");
-    ss_ << ".mix(" << var << '[' << idx << "])";
+    ss_ << ".mix(" << var << ".at(" << idx << "))";
     pieces_.push_back(ss_.str());
     return *this;
   }

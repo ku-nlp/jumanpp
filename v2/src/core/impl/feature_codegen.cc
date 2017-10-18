@@ -115,7 +115,6 @@ Status StaticFeatureCodegen::writeSource(const std::string& filename,
                                          const FeatureHolder& features) {
   util::io::Printer p;
 
-  p << "#include \"util/seahash.h\"\n";
   p << "#include \"core/impl/feature_impl_combine.h\"\n";
   p << "#include \"core/impl/feature_impl_ngram_partial.h\"\n";
   p << "#include \"" << config_.filename << ".h\"\n\n";

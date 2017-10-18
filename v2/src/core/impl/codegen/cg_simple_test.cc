@@ -5,7 +5,9 @@
 #include <array>
 #include "cg_2_spec.h"
 #include "cgtest02.h"
+#include "core/analysis/perceptron.h"
 #include "core/impl/feature_impl_combine.h"
+#include "core/impl/feature_impl_ngram_partial.h"
 #include "testing/test_analyzer.h"
 
 using namespace jumanpp::testing;
@@ -13,7 +15,7 @@ using namespace jumanpp::core::spec::dsl;
 using namespace jumanpp;
 
 constexpr size_t NumNgrams = 13;
-constexpr size_t NumExamples = 5;
+constexpr size_t NumExamples = 10;
 constexpr size_t NumFeatures = 5;
 
 template <typename T, size_t N>
@@ -47,7 +49,7 @@ struct BenchInput {
   }
 };
 
-TEST_CASE("feature values are the same for a small example") {
+TEST_CASE("full ngram feature values are the same for a small example") {
   TestEnv env;
   env.spec([](ModelSpecBuilder& msb) {
     jumanpp::codegentest::CgTwoSpecFactory::fillSpec(msb);
@@ -73,5 +75,72 @@ TEST_CASE("feature values are the same for a small example") {
   for (int i = 0; i < b1.result.size(); ++i) {
     CAPTURE(i);
     CHECK(b1.result[i] == b2.result[i]);
+  }
+}
+
+TEST_CASE("partial ngram feature computation produces the same values") {
+  TestEnv env;
+  env.spec([](ModelSpecBuilder& msb) {
+    jumanpp::codegentest::CgTwoSpecFactory::fillSpec(msb);
+  });
+  env.importDic("a,b,c\nc,d,e\nf,g,h\n");
+
+  JumanppEnv jenv1;
+  env.loadEnv(&jenv1);
+  jumanpp_generated::Test02 features;
+  REQUIRE_OK(jenv1.initFeatures(&features));
+
+  auto core = jenv1.coreHolder();
+  auto& fs = core->features();
+
+  features::FeatureBuffer fb1;
+  features::FeatureBuffer fb2;
+  features::AnalysisRunStats ars;
+  ars.maxStarts = NumExamples;
+
+  util::ArraySlice<float> weights{
+      1.0f, 5.0f, 10.0f, 50.0f, 100.0f, 500.0f, 0.1f, 0.5f,
+      1.0f, 5.0f, 10.0f, 50.0f, 100.0f, 500.0f, 0.1f, 0.5f,
+  };
+  core::analysis::HashedFeaturePerceptron perc{weights};
+
+  fs.ngramPartialStatic->allocateBuffers(&fb1, ars, env.analyzer->alloc());
+  fs.ngramPartialDynamic->allocateBuffers(&fb2, ars, env.analyzer->alloc());
+
+  BenchInput inp;
+
+  util::ConstSliceable<u64> t0i{inp.t0, NumFeatures, NumExamples};
+
+  float result1[NumExamples];
+  float result2[NumExamples];
+
+  fs.ngramPartialDynamic->applyUni(&fb1, t0i, &perc, result1);
+  fs.ngramPartialStatic->applyUni(&fb2, t0i, &perc, result2);
+
+  for (int i = 0; i < NumExamples; ++i) {
+    CAPTURE(i);
+    CHECK(result1[i] == Approx(result2[i]));
+  }
+
+  fs.ngramPartialDynamic->applyBiStep1(&fb1, t0i);
+  fs.ngramPartialDynamic->applyBiStep2(&fb1, inp.t1, &perc, result1);
+  fs.ngramPartialStatic->applyBiStep1(&fb2, t0i);
+  fs.ngramPartialStatic->applyBiStep2(&fb2, inp.t1, &perc, result2);
+
+  for (int i = 0; i < NumExamples; ++i) {
+    CAPTURE(i);
+    CHECK(result1[i] == Approx(result2[i]));
+  }
+
+  fs.ngramPartialDynamic->applyTriStep1(&fb1, t0i);
+  fs.ngramPartialDynamic->applyTriStep2(&fb1, inp.t1);
+  fs.ngramPartialDynamic->applyTriStep3(&fb1, inp.t2, &perc, result1);
+  fs.ngramPartialStatic->applyTriStep1(&fb1, t0i);
+  fs.ngramPartialStatic->applyTriStep2(&fb1, inp.t1);
+  fs.ngramPartialStatic->applyTriStep3(&fb1, inp.t2, &perc, result2);
+
+  for (int i = 0; i < NumExamples; ++i) {
+    CAPTURE(i);
+    CHECK(result1[i] == Approx(result2[i]));
   }
 }

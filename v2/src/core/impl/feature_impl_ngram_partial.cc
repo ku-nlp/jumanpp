@@ -98,23 +98,32 @@ void PartialNgramDynamicFeatureApply::triStep2(
 
 bool PartialNgramDynamicFeatureApply::outputClassBody(
     util::io::Printer& p) const {
-  p << "\nvoid uniStep0(" << JPP_TEXT(jumanpp::util::ArraySlice<jumanpp::u64>)
-    << " patterns, " << JPP_TEXT(jumanpp::util::MutableArraySlice<jumanpp::u32>)
-    << " result"
+  p << "\nvoid uniStep0("  // args
+    << JPP_TEXT(jumanpp::util::ArraySlice<jumanpp::u64>) << " patterns, "
+    << JPP_TEXT(jumanpp::u32) << " mask, "
+    << JPP_TEXT(jumanpp::util::ArraySlice<float>) << " weights, "
+    << JPP_TEXT(jumanpp::util::MutableArraySlice<jumanpp::u32>) << " result"
     << ") const noexcept {";
   {
     util::io::Indent id{p, 2};
     for (int i = 0; i < unigrams_.size(); ++i) {
       auto& f = unigrams_[i];
       f.writeMember(p, i);
-      p << "\nuni_" << i << ".step0(patterns, result);";
+      p << "\nuni_" << i << ".step0(patterns, result, mask);";
+#ifdef JPP_PREFETCH_FEATURE_WEIGHTS
+      p << "\n"
+        << JPP_TEXT(::jumanpp::util::prefetch<
+                    ::jumanpp::util::PrefetchHint::PREFETCH_HINT_T2>)
+        << "("
+        << "&weights.at(uni_" << i << ".target()));";
+#endif
     }
   }
   p << "\n}\n";
 
-  p << "\nvoid biStep0(" << JPP_TEXT(jumanpp::util::ArraySlice<jumanpp::u64>)
-    << " patterns, " << JPP_TEXT(jumanpp::util::MutableArraySlice<jumanpp::u64>)
-    << " state"
+  p << "\nvoid biStep0("  // args
+    << JPP_TEXT(jumanpp::util::ArraySlice<jumanpp::u64>) << " patterns, "
+    << JPP_TEXT(jumanpp::util::MutableArraySlice<jumanpp::u64>) << " state"
     << ") const noexcept {";
   {
     util::io::Indent id{p, 2};
@@ -126,17 +135,26 @@ bool PartialNgramDynamicFeatureApply::outputClassBody(
   }
   p << "\n}\n";
 
-  p << "\nvoid biStep1(" << JPP_TEXT(jumanpp::util::ArraySlice<jumanpp::u64>)
-    << " patterns, " << JPP_TEXT(jumanpp::util::ArraySlice<jumanpp::u64>)
-    << " state, " << JPP_TEXT(jumanpp::util::MutableArraySlice<jumanpp::u32>)
-    << " result"
+  p << "\nvoid biStep1("  // args
+    << JPP_TEXT(jumanpp::util::ArraySlice<jumanpp::u64>) << " patterns, "
+    << JPP_TEXT(jumanpp::util::ArraySlice<jumanpp::u64>) << " state, "
+    << JPP_TEXT(jumanpp::u32) << " mask, "
+    << JPP_TEXT(jumanpp::util::ArraySlice<float>) << " weights, "
+    << JPP_TEXT(jumanpp::util::MutableArraySlice<jumanpp::u32>) << " result"
     << ") const noexcept {";
   {
     util::io::Indent id{p, 2};
     for (int i = 0; i < bigrams_.size(); ++i) {
       auto& f = bigrams_[i];
       f.writeMember(p, i);
-      p << "\nbi_" << i << ".step1(patterns, state, result);";
+      p << "\nbi_" << i << ".step1(patterns, state, result, mask);";
+#ifdef JPP_PREFETCH_FEATURE_WEIGHTS
+      p << "\n"
+        << JPP_TEXT(::jumanpp::util::prefetch<
+                    ::jumanpp::util::PrefetchHint::PREFETCH_HINT_T2>)
+        << "("
+        << "&weights.at(bi_" << i << ".target()));";
+#endif
     }
   }
   p << "\n}\n";
@@ -170,20 +188,61 @@ bool PartialNgramDynamicFeatureApply::outputClassBody(
   }
   p << "\n}\n";
 
-  p << "\nvoid triStep2(" << JPP_TEXT(jumanpp::util::ArraySlice<jumanpp::u64>)
-    << " patterns, " << JPP_TEXT(jumanpp::util::ArraySlice<jumanpp::u64>)
-    << " state, " << JPP_TEXT(jumanpp::util::MutableArraySlice<jumanpp::u32>)
-    << " result"
+  p << "\nvoid triStep2("  // args
+    << JPP_TEXT(jumanpp::util::ArraySlice<jumanpp::u64>) << " patterns, "
+    << JPP_TEXT(jumanpp::util::ArraySlice<jumanpp::u64>) << " state, "
+    << JPP_TEXT(jumanpp::u32) << " mask, "
+    << JPP_TEXT(jumanpp::util::ArraySlice<float>) << " weights, "
+    << JPP_TEXT(jumanpp::util::MutableArraySlice<jumanpp::u32>) << " result"
     << ") const noexcept {";
   {
     util::io::Indent id{p, 2};
     for (int i = 0; i < trigrams_.size(); ++i) {
       auto& f = trigrams_[i];
       f.writeMember(p, i);
-      p << "\ntri_" << i << ".step2(patterns, state, result);";
+      p << "\ntri_" << i << ".step2(patterns, state, result, mask);";
+#ifdef JPP_PREFETCH_FEATURE_WEIGHTS
+      p << "\n"
+        << JPP_TEXT(::jumanpp::util::prefetch<
+                    ::jumanpp::util::PrefetchHint::PREFETCH_HINT_T2>)
+        << "("
+        << "&weights.at(tri_" << i << ".target()));";
+#endif
     }
   }
   p << "\n}\n";
+
+  p << "\nvoid allocateBuffers("  // args
+    << JPP_TEXT(::jumanpp::core::features::FeatureBuffer*) << " fbuf,"
+    << JPP_TEXT(const ::jumanpp::core::features::AnalysisRunStats&) << " stats,"
+    << JPP_TEXT(::jumanpp::util::memory::ManagedAllocatorCore*) << " alloc"
+    << ") const override {";
+  {
+    util::io::Indent id{p, 2};
+    p << "\nusing namespace jumanpp;";
+    p << "\nu32 maxNgrams = std::max({numUnigrams(), numBigrams(), "
+         "numTrigrams()});";
+    p << "\nfbuf->currentElems = ~0u;";
+    p << "\nfbuf->valueBuffer1 = alloc->allocateBuf<u32>(maxNgrams, 64);";
+    p << "\nfbuf->valueBuffer2 = alloc->allocateBuf<u32>(maxNgrams, 64);";
+    p << "\nfbuf->t1Buffer = alloc->allocateBuf<u64>(numBigrams() * "
+         "stats.maxStarts, 64);";
+    p << "\nfbuf->t2Buffer1 = alloc->allocateBuf<u64>(numTrigrams() * "
+         "stats.maxStarts, 64);";
+    p << "\nfbuf->t2Buffer2 = alloc->allocateBuf<u64>(numTrigrams() * "
+         "stats.maxStarts, 64);";
+  }
+
+  p << "\n}\n";
+
+  p << "\n::jumanpp::u32 numUnigrams() const noexcept { "
+    << "return " << this->numUnigrams() << "; }";
+
+  p << "\n::jumanpp::u32 numBigrams() const noexcept { "
+    << "return " << this->numBigrams() << "; }";
+
+  p << "\n::jumanpp::u32 numTrigrams() const noexcept { "
+    << "return " << this->numTrigrams() << "; }";
 
   return true;
 }
