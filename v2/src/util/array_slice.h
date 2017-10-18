@@ -293,9 +293,7 @@ class MutableArraySlice {
   // DEPRECATED(jacobsa): Please use data() instead.
   pointer mutable_data() const { return impl_.data(); }
 
-  void swap(MutableArraySlice& o) noexcept  {
-    impl_.swap(o.impl_);
-  }
+  void swap(MutableArraySlice& o) noexcept { impl_.swap(o.impl_); }
 
  private:
   Impl impl_;

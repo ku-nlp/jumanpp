@@ -20,8 +20,8 @@ std::pair<Status, ScoreProcessor *> ScoreProcessor::make(AnalyzerImpl *impl) {
 }
 
 ScoreProcessor::ScoreProcessor(AnalyzerImpl *analyzer)
-    : ngramApply_{analyzer->core().features().ngramPartial}, 
-  lattice_{analyzer->lattice()} {
+    : ngramApply_{analyzer->core().features().ngramPartial},
+      lattice_{analyzer->lattice()} {
   u32 maxNodes = 0;
   for (u32 idx = 2; idx < lattice_->createdBoundaryCount(); ++idx) {
     auto bnd = lattice_->boundary(idx);
@@ -31,7 +31,8 @@ ScoreProcessor::ScoreProcessor(AnalyzerImpl *analyzer)
 
   auto *alloc = analyzer->alloc();
   scores_.prepare(alloc, maxNodes);
-  analyzer->core().features().ngramPartial->allocateBuffers(&featureBuffer_, runStats_, alloc);
+  analyzer->core().features().ngramPartial->allocateBuffers(&featureBuffer_,
+                                                            runStats_, alloc);
 }
 
 void ScoreProcessor::updateBeams(i32 boundary, i32 endPos, LatticeBoundary *bnd,
@@ -97,7 +98,8 @@ void ScoreProcessor::startBoundary(u32 currentNodes) {
 
 void ScoreProcessor::applyT0(i32 boundary, FeatureScorer *features) {
   auto patterns = lattice_->boundary(boundary)->starts()->patternFeatureData();
-  ngramApply_->applyUni(&featureBuffer_, patterns, features, scores_.bufferT0());
+  ngramApply_->applyUni(&featureBuffer_, patterns, features,
+                        scores_.bufferT0());
   ngramApply_->applyBiStep1(&featureBuffer_, patterns);
   ngramApply_->applyTriStep1(&featureBuffer_, patterns);
 }
@@ -106,7 +108,8 @@ void ScoreProcessor::applyT1(i32 boundary, i32 position,
                              FeatureScorer *features) {
   auto result = scores_.bufferT1();
   util::copy_buffer(scores_.bufferT0(), result);
-  auto item = lattice_->boundary(boundary)->starts()->patternFeatureData().row(position);
+  auto item = lattice_->boundary(boundary)->starts()->patternFeatureData().row(
+      position);
   ngramApply_->applyBiStep2(&featureBuffer_, item, features, result);
   ngramApply_->applyTriStep2(&featureBuffer_, item);
 }
@@ -114,7 +117,10 @@ void ScoreProcessor::applyT1(i32 boundary, i32 position,
 void ScoreProcessor::applyT2(i32 beamIdx, FeatureScorer *features) {
   auto &beam = beamPtrs_.at(beamIdx);
   auto ptr = beam.ptr.previous;
-  auto item = lattice_->boundary(ptr->boundary)->starts()->patternFeatureData().row(ptr->right);
+  auto item = lattice_->boundary(ptr->boundary)
+                  ->starts()
+                  ->patternFeatureData()
+                  .row(ptr->right);
   auto result = scores_.bufferT2();
   util::copy_buffer(scores_.bufferT1(), result);
   ngramApply_->applyTriStep3(&featureBuffer_, item, features, result);

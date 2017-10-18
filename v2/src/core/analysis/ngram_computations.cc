@@ -9,7 +9,6 @@ namespace jumanpp {
 namespace core {
 namespace analysis {
 
-
 void NgramStats::initialze(const features::FeatureRuntimeInfo *info) {
   num1Grams = 0;
   num2Grams = 0;
@@ -28,7 +27,8 @@ void NgramStats::initialze(const features::FeatureRuntimeInfo *info) {
   maxNGrams = std::max({num1Grams, num2Grams, num3Grams});
 }
 
-void NgramScoreHolder::prepare(util::memory::ManagedAllocatorCore* alloc, u32 maxNodes) {
+void NgramScoreHolder::prepare(util::memory::ManagedAllocatorCore *alloc,
+                               u32 maxNodes) {
   bufferT0_ = alloc->allocateBuf<float>(maxNodes);
   bufferT1_ = alloc->allocateBuf<float>(maxNodes);
   bufferT2_ = alloc->allocateBuf<float>(maxNodes);

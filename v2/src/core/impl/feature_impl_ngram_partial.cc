@@ -6,10 +6,12 @@
 #include "core_config.h"
 
 #ifdef JPP_PREFETCH_FEATURE_WEIGHTS
-#define JPP_DO_PREFETCH(x) ::jumanpp::util::prefetch<::jumanpp::util::PrefetchHint::PREFETCH_HINT_T2>((x));
+#define JPP_DO_PREFETCH(x)                                                    \
+  ::jumanpp::util::prefetch<::jumanpp::util::PrefetchHint::PREFETCH_HINT_T2>( \
+      (x));
 #else
 #define JPP_DO_PREFETCH(x) ()
-#endif //JPP_PREFETCH_FEATURE_WEIGHTS
+#endif  // JPP_PREFETCH_FEATURE_WEIGHTS
 
 namespace jumanpp {
 namespace core {
@@ -42,11 +44,8 @@ Status PartialNgramDynamicFeatureApply::addChild(const NgramFeature& nf) {
 }
 
 void PartialNgramDynamicFeatureApply::uniStep0(
-  util::ArraySlice<u64> patterns,
-  u32 mask,
-  util::ArraySlice<float> weights,
-  util::MutableArraySlice<u32> result) const
-    noexcept {
+    util::ArraySlice<u64> patterns, u32 mask, util::ArraySlice<float> weights,
+    util::MutableArraySlice<u32> result) const noexcept {
   for (auto& uni : unigrams_) {
     uni.step0(patterns, result, mask);
     JPP_DO_PREFETCH(weights.data() + uni.target());
@@ -62,10 +61,9 @@ void PartialNgramDynamicFeatureApply::biStep0(
 }
 
 void PartialNgramDynamicFeatureApply::biStep1(
-  util::ArraySlice<u64> patterns, util::ArraySlice<u64> state,
-  u32 mask,
-  util::ArraySlice<float> weights,
-  util::MutableArraySlice<u32> result) const noexcept {
+    util::ArraySlice<u64> patterns, util::ArraySlice<u64> state, u32 mask,
+    util::ArraySlice<float> weights, util::MutableArraySlice<u32> result) const
+    noexcept {
   for (auto& bi : bigrams_) {
     bi.step1(patterns, state, result, mask);
     JPP_DO_PREFETCH(weights.data() + bi.target());
@@ -88,10 +86,10 @@ void PartialNgramDynamicFeatureApply::triStep1(
   }
 }
 
-void PartialNgramDynamicFeatureApply::triStep2(util::ArraySlice<u64> patterns, util::ArraySlice<u64> state,
-                                               u32 mask,
-                                               util::ArraySlice<float> weights,
-                                               util::MutableArraySlice<u32> result) const noexcept {
+void PartialNgramDynamicFeatureApply::triStep2(
+    util::ArraySlice<u64> patterns, util::ArraySlice<u64> state, u32 mask,
+    util::ArraySlice<float> weights, util::MutableArraySlice<u32> result) const
+    noexcept {
   for (auto& tri : trigrams_) {
     tri.step2(patterns, state, result, mask);
     JPP_DO_PREFETCH(weights.data() + tri.target());
@@ -190,15 +188,19 @@ bool PartialNgramDynamicFeatureApply::outputClassBody(
   return true;
 }
 
-void PartialNgramDynamicFeatureApply::allocateBuffers(FeatureBuffer *buffer, const AnalysisRunStats &stats,
-                                                      util::memory::ManagedAllocatorCore *alloc) const {
+void PartialNgramDynamicFeatureApply::allocateBuffers(
+    FeatureBuffer* buffer, const AnalysisRunStats& stats,
+    util::memory::ManagedAllocatorCore* alloc) const {
   u32 maxNgrams = std::max({numUnigrams(), numBigrams(), numTrigrams()});
   buffer->currentElems = ~0u;
   buffer->valueBuffer1 = alloc->allocateBuf<u32>(maxNgrams, 64);
   buffer->valueBuffer2 = alloc->allocateBuf<u32>(maxNgrams, 64);
-  buffer->t1Buffer = alloc->allocateBuf<u64>(numBigrams() * stats.maxStarts, 64);
-  buffer->t2Buffer1 = alloc->allocateBuf<u64>(numTrigrams() * stats.maxStarts, 64);
-  buffer->t2Buffer2 = alloc->allocateBuf<u64>(numTrigrams() * stats.maxStarts, 64);
+  buffer->t1Buffer =
+      alloc->allocateBuf<u64>(numBigrams() * stats.maxStarts, 64);
+  buffer->t2Buffer1 =
+      alloc->allocateBuf<u64>(numTrigrams() * stats.maxStarts, 64);
+  buffer->t2Buffer2 =
+      alloc->allocateBuf<u64>(numTrigrams() * stats.maxStarts, 64);
 }
 
 void UnigramFeature::writeMember(util::io::Printer& p, i32 count) const {

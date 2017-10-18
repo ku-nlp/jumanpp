@@ -76,7 +76,7 @@ class ResultAssign {
 
   ResultAssign& addHashIndexed(StringPiece var, size_t idx) {
     ss_.str("");
-    ss_  << ".mix(" << var << '[' << idx << "])";
+    ss_ << ".mix(" << var << '[' << idx << "])";
     pieces_.push_back(ss_.str());
     return *this;
   }
@@ -87,7 +87,7 @@ class ResultAssign {
       << "static_cast<::jumanpp::u32>("
       << "jumanpp::util::hashing::FastHash1{}";
     p << ".mix(" << pieces_.size() << ")";
-    for (const auto &piece : pieces_) {
+    for (const auto& piece : pieces_) {
       p << piece;
     }
     p << ".result())";

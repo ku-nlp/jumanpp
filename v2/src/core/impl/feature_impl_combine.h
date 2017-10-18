@@ -10,8 +10,8 @@
 #include "core/impl/feature_impl_types.h"
 #include "core/impl/feature_types.h"
 #include "util/codegen.h"
-#include "util/hashing.h"
 #include "util/fast_hash.h"
+#include "util/hashing.h"
 
 namespace jumanpp {
 namespace core {
@@ -174,7 +174,7 @@ class NgramFeatureDynamicAdapter : public DynamicNgramFeature {
 
     auto &bldr = cls->resultInto(impl.index)
                      .addHashConstant(impl.index)
-      .addHashConstant(hashSeed);
+                     .addHashConstant(hashSeed);
     if (N >= 1) {
       bldr.addHashIndexed("t0", impl.storage[0]);
     }

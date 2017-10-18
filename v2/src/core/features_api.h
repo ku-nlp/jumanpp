@@ -71,24 +71,24 @@ struct FeatureBuffer {
   util::MutableArraySlice<u32> valueBuffer2;
 
   util::MutableArraySlice<u32> valBuf1(u32 size) const {
-        return util::MutableArraySlice<u32>{valueBuffer1, 0, size};
+    return util::MutableArraySlice<u32>{valueBuffer1, 0, size};
   }
 
   util::MutableArraySlice<u32> valBuf2(u32 size) const {
-        return util::MutableArraySlice<u32>{valueBuffer2, 0, size};
+    return util::MutableArraySlice<u32>{valueBuffer2, 0, size};
   }
 
-  util::Sliceable<u64 > t1Buf(u32 numBigrams, u32 numElems) const {
-        util::MutableArraySlice<u64> slice{t1Buffer, 0, numBigrams * numElems};
-        return util::Sliceable<u64>{slice, numBigrams, numElems};
+  util::Sliceable<u64> t1Buf(u32 numBigrams, u32 numElems) const {
+    util::MutableArraySlice<u64> slice{t1Buffer, 0, numBigrams * numElems};
+    return util::Sliceable<u64>{slice, numBigrams, numElems};
   }
 
-  util::Sliceable<u64 > t2Buf1(u32 numTrigrams, u32 numElems) const {
+  util::Sliceable<u64> t2Buf1(u32 numTrigrams, u32 numElems) const {
     util::MutableArraySlice<u64> slice{t2Buffer1, 0, numTrigrams * numElems};
     return util::Sliceable<u64>{slice, numTrigrams, numElems};
   }
 
-  util::Sliceable<u64 > t2Buf2(u32 numTrigrams, u32 numElems) const {
+  util::Sliceable<u64> t2Buf2(u32 numTrigrams, u32 numElems) const {
     util::MutableArraySlice<u64> slice{t2Buffer2, 0, numTrigrams * numElems};
     return util::Sliceable<u64>{slice, numTrigrams, numElems};
   }
@@ -96,13 +96,11 @@ struct FeatureBuffer {
 
 class PartialNgramFeatureApply : public FeatureApply {
  public:
-  virtual void allocateBuffers(FeatureBuffer* buffer,
-                               const AnalysisRunStats& stats,
-                               util::memory::ManagedAllocatorCore* alloc) const
-      = 0;
+  virtual void allocateBuffers(
+      FeatureBuffer* buffer, const AnalysisRunStats& stats,
+      util::memory::ManagedAllocatorCore* alloc) const = 0;
 
-  virtual void applyUni(FeatureBuffer* buffers,
-                        util::ConstSliceable<u64> p0,
+  virtual void applyUni(FeatureBuffer* buffers, util::ConstSliceable<u64> p0,
                         analysis::FeatureScorer* scorer,
                         util::MutableArraySlice<float> result) const
       noexcept = 0;
@@ -110,14 +108,16 @@ class PartialNgramFeatureApply : public FeatureApply {
                             util::ConstSliceable<u64> p0) const noexcept = 0;
   virtual void applyBiStep2(FeatureBuffer* buffers, util::ArraySlice<u64> p1,
                             analysis::FeatureScorer* scorer,
-                            util::MutableArraySlice<float> result) const noexcept = 0;
+                            util::MutableArraySlice<float> result) const
+      noexcept = 0;
   virtual void applyTriStep1(FeatureBuffer* buffers,
                              util::ConstSliceable<u64> p0) const noexcept = 0;
   virtual void applyTriStep2(FeatureBuffer* buffers,
                              util::ArraySlice<u64> p1) const noexcept = 0;
   virtual void applyTriStep3(FeatureBuffer* buffers, util::ArraySlice<u64> p2,
                              analysis::FeatureScorer* scorer,
-                             util::MutableArraySlice<float> result) const noexcept = 0;
+                             util::MutableArraySlice<float> result) const
+      noexcept = 0;
 };
 
 class StaticFeatureFactory : public FeatureApply {

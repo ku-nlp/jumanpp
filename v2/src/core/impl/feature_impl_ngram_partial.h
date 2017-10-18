@@ -5,11 +5,11 @@
 #ifndef JUMANPP_FEATURE_IMPL_NGRAM_PARTIAL_H
 #define JUMANPP_FEATURE_IMPL_NGRAM_PARTIAL_H
 
+#include "core/analysis/perceptron.h"
 #include "core/features_api.h"
 #include "core/impl/feature_impl_types.h"
 #include "util/fast_hash.h"
 #include "util/printer.h"
-#include "core/analysis/perceptron.h"
 
 namespace jumanpp {
 namespace core {
@@ -136,9 +136,7 @@ class PartialNgramFeatureApplyImpl : public PartialNgramFeatureApply {
   const Child& child() const { return static_cast<const Child&>(*this); }
 
  public:
-
-  void applyUni(FeatureBuffer* buffers,
-                util::ConstSliceable<u64> p0,
+  void applyUni(FeatureBuffer* buffers, util::ConstSliceable<u64> p0,
                 analysis::FeatureScorer* scorer,
                 util::MutableArraySlice<float> result) const noexcept override {
     auto numUnigrams = child().numUnigrams();
@@ -151,22 +149,24 @@ class PartialNgramFeatureApplyImpl : public PartialNgramFeatureApply {
 
     auto weights = scorer->weights();
     auto mask = static_cast<u32>(weights.size() - 1);
-    //do row 0
+    // do row 0
     child().uniStep0(p0.row(0), mask, weights, buf2);
-    //do other rows
+    // do other rows
     u32 row = 1;
     for (; row < p0.numRows(); ++row) {
       auto patterns = p0.row(row);
       child().uniStep0(patterns, mask, weights, buf1);
       buf1.swap(buf2);
-      result.at(row - 1) = analysis::impl::computeUnrolled4RawPerceptron(weights, buf1);
+      result.at(row - 1) =
+          analysis::impl::computeUnrolled4RawPerceptron(weights, buf1);
     }
 
-    result.at(row - 1) = analysis::impl::computeUnrolled4RawPerceptron(weights, buf2);
+    result.at(row - 1) =
+        analysis::impl::computeUnrolled4RawPerceptron(weights, buf2);
   }
 
-  void applyBiStep1(FeatureBuffer* buffers,
-                    util::ConstSliceable<u64> p0) const noexcept override {
+  void applyBiStep1(FeatureBuffer* buffers, util::ConstSliceable<u64> p0) const
+      noexcept override {
     auto numElems = static_cast<u32>(p0.numRows());
     auto result = buffers->t1Buf(child().numBigrams(), numElems);
     for (auto row = 0; row < p0.numRows(); ++row) {
@@ -177,10 +177,10 @@ class PartialNgramFeatureApplyImpl : public PartialNgramFeatureApply {
     buffers->currentElems = numElems;
   }
 
-  void applyBiStep2(FeatureBuffer* buffers,
-                    util::ArraySlice<u64> p1,
+  void applyBiStep2(FeatureBuffer* buffers, util::ArraySlice<u64> p1,
                     analysis::FeatureScorer* scorer,
-                    util::MutableArraySlice<float> result) const noexcept override {
+                    util::MutableArraySlice<float> result) const
+      noexcept override {
     auto numBigrams = child().numBigrams();
     auto buf1 = buffers->valBuf1(numBigrams);
     auto buf2 = buffers->valBuf2(numBigrams);
@@ -194,22 +194,24 @@ class PartialNgramFeatureApplyImpl : public PartialNgramFeatureApply {
 
     auto weights = scorer->weights();
     auto mask = static_cast<u32>(weights.size() - 1);
-    //do row 0
+    // do row 0
     child().biStep1(p1, state.row(0), mask, weights, buf2);
-    //do other rows
+    // do other rows
     u32 row = 1;
     for (; row < state.numRows(); ++row) {
       auto srow = state.row(row);
       child().biStep1(p1, srow, mask, weights, buf1);
       buf1.swap(buf2);
-      result.at(row - 1) += analysis::impl::computeUnrolled4RawPerceptron(weights, buf1);
+      result.at(row - 1) +=
+          analysis::impl::computeUnrolled4RawPerceptron(weights, buf1);
     }
 
-    result.at(row - 1) += analysis::impl::computeUnrolled4RawPerceptron(weights, buf2);
+    result.at(row - 1) +=
+        analysis::impl::computeUnrolled4RawPerceptron(weights, buf2);
   }
 
-  void applyTriStep1(FeatureBuffer* buffers,
-                     util::ConstSliceable<u64> p0) const noexcept override {
+  void applyTriStep1(FeatureBuffer* buffers, util::ConstSliceable<u64> p0) const
+      noexcept override {
     auto numElems = static_cast<u32>(p0.numRows());
     JPP_DCHECK_EQ(numElems, buffers->currentElems);
     auto result = buffers->t2Buf1(child().numTrigrams(), numElems);
@@ -221,8 +223,8 @@ class PartialNgramFeatureApplyImpl : public PartialNgramFeatureApply {
     buffers->currentElems = numElems;
   }
 
-  void applyTriStep2(FeatureBuffer* buffers,
-                     util::ArraySlice<u64> p1) const noexcept override {
+  void applyTriStep2(FeatureBuffer* buffers, util::ArraySlice<u64> p1) const
+      noexcept override {
     auto numElems = buffers->currentElems;
     auto state = buffers->t2Buf1(child().numTrigrams(), numElems);
     auto result = buffers->t2Buf2(child().numTrigrams(), numElems);
@@ -236,7 +238,8 @@ class PartialNgramFeatureApplyImpl : public PartialNgramFeatureApply {
 
   void applyTriStep3(FeatureBuffer* buffers, util::ArraySlice<u64> p2,
                      analysis::FeatureScorer* scorer,
-                     util::MutableArraySlice<float> result) const noexcept override {
+                     util::MutableArraySlice<float> result) const
+      noexcept override {
     auto numTrigrams = child().numTrigrams();
     auto buf1 = buffers->valBuf1(numTrigrams);
     auto buf2 = buffers->valBuf2(numTrigrams);
@@ -250,18 +253,20 @@ class PartialNgramFeatureApplyImpl : public PartialNgramFeatureApply {
 
     auto weights = scorer->weights();
     auto mask = static_cast<u32>(weights.size() - 1);
-    //do row 0
+    // do row 0
     child().triStep2(p2, state.row(0), mask, weights, buf2);
-    //do other rows
+    // do other rows
     u32 row = 1;
     for (; row < state.numRows(); ++row) {
       auto srow = state.row(row);
       child().triStep2(p2, srow, mask, weights, buf1);
       buf1.swap(buf2);
-      result.at(row - 1) += analysis::impl::computeUnrolled4RawPerceptron(weights, buf1);
+      result.at(row - 1) +=
+          analysis::impl::computeUnrolled4RawPerceptron(weights, buf1);
     }
 
-    result.at(row - 1) += analysis::impl::computeUnrolled4RawPerceptron(weights, buf2);
+    result.at(row - 1) +=
+        analysis::impl::computeUnrolled4RawPerceptron(weights, buf2);
   }
 };
 
@@ -276,8 +281,7 @@ class PartialNgramDynamicFeatureApply
 
   Status addChild(const NgramFeature& nf);
 
-  void uniStep0(util::ArraySlice<u64> patterns,
-                u32 mask,
+  void uniStep0(util::ArraySlice<u64> patterns, u32 mask,
                 util::ArraySlice<float> weights,
                 util::MutableArraySlice<u32> result) const noexcept;
 
@@ -285,8 +289,7 @@ class PartialNgramDynamicFeatureApply
                util::MutableArraySlice<u64> state) const noexcept;
 
   void biStep1(util::ArraySlice<u64> patterns, util::ArraySlice<u64> state,
-               u32 mask,
-               util::ArraySlice<float> weights,
+               u32 mask, util::ArraySlice<float> weights,
                util::MutableArraySlice<u32> result) const noexcept;
 
   void triStep0(util::ArraySlice<u64> patterns,
@@ -296,16 +299,20 @@ class PartialNgramDynamicFeatureApply
                 util::MutableArraySlice<u64> result) const noexcept;
 
   void triStep2(util::ArraySlice<u64> patterns, util::ArraySlice<u64> state,
-                u32 mask,
-                util::ArraySlice<float> weights,
+                u32 mask, util::ArraySlice<float> weights,
                 util::MutableArraySlice<u32> result) const noexcept;
 
-  void allocateBuffers(FeatureBuffer *buffer, const AnalysisRunStats &stats,
-                       util::memory::ManagedAllocatorCore *alloc) const override;
+  void allocateBuffers(
+      FeatureBuffer* buffer, const AnalysisRunStats& stats,
+      util::memory::ManagedAllocatorCore* alloc) const override;
 
-  u32 numUnigrams() const noexcept { return static_cast<u32>(unigrams_.size()); }
+  u32 numUnigrams() const noexcept {
+    return static_cast<u32>(unigrams_.size());
+  }
   u32 numBigrams() const noexcept { return static_cast<u32>(bigrams_.size()); }
-  u32 numTrigrams() const noexcept { return static_cast<u32>(trigrams_.size()); }
+  u32 numTrigrams() const noexcept {
+    return static_cast<u32>(trigrams_.size());
+  }
 };
 
 }  // namespace impl

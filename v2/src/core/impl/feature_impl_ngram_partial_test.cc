@@ -82,9 +82,7 @@ TEST_CASE("partial and full trigram features produce the same result") {
   add({1, 1, 1});
   add({0, 0, 0});
   util::ArraySlice<u64> t0data{
-    0, 1,
-    2, 0,
-    1, 2,
+      0, 1, 2, 0, 1, 2,
   };
   util::ArraySlice<u64> t1data{5, 2};
   util::ArraySlice<u64> t2data{
@@ -133,7 +131,8 @@ TEST_CASE("partial and full trigram features produce the same result") {
   for (i32 r = 0; r < 3; ++r) {
     part.triStep0(t0slice.row(r), triStateSlice1.row(r));
     part.triStep1(t1data, triStateSlice1.row(r), triStateSlice2.row(r));
-    part.triStep2(t2data, triStateSlice2.row(r), fullMask, fake, partSlice.row(r));
+    part.triStep2(t2data, triStateSlice2.row(r), fullMask, fake,
+                  partSlice.row(r));
   }
   CHECK(partSlice.at(0, 0) == fullSlice.at(0, 4));
   CHECK(partSlice.at(1, 0) == fullSlice.at(1, 4));

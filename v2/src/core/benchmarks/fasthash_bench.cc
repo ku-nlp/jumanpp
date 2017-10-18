@@ -865,7 +865,8 @@ BENCHMARK("avx-unrolled-instr", [](context* ctx) {
   }
 });
 
-__attribute__((noinline)) void avxLoopVertTest(util::Sliceable<u32> result, u32 mask) {
+__attribute__((noinline)) void avxLoopVertTest(util::Sliceable<u32> result,
+                                               u32 mask) {
   auto& state = inputs.state;
   auto& data = inputs.data;
   u32 nitems = numItems;
@@ -879,9 +880,15 @@ __attribute__((noinline)) void avxLoopVertTest(util::Sliceable<u32> result, u32 
     auto results = result.rows(i, i + 4);
     for (int j = 0; j < ngrams; j += 2) {
       auto idx = j * 4;
-      h4{&states.at(idx)}.mix(&xdata.at(idx)).maskCompact(mask).store(&results.at(idx));
+      h4{&states.at(idx)}
+          .mix(&xdata.at(idx))
+          .maskCompact(mask)
+          .store(&results.at(idx));
       idx += 4;
-      h4{&states.at(idx)}.mix(&xdata.at(idx)).maskCompact(mask).store(&results.at(idx));
+      h4{&states.at(idx)}
+          .mix(&xdata.at(idx))
+          .maskCompact(mask)
+          .store(&results.at(idx));
     }
   }
   for (i -= 4; i < nitems; ++i) {
@@ -889,7 +896,8 @@ __attribute__((noinline)) void avxLoopVertTest(util::Sliceable<u32> result, u32 
   }
 }
 
-__attribute__((noinline)) void avxLoopBcastTest(util::Sliceable<u32> result, u32 mask) {
+__attribute__((noinline)) void avxLoopBcastTest(util::Sliceable<u32> result,
+                                                u32 mask) {
   auto& state = inputs.state;
   auto& data = inputs.data;
   u32 nitems = numItems;
@@ -904,9 +912,15 @@ __attribute__((noinline)) void avxLoopBcastTest(util::Sliceable<u32> result, u32
     auto results = result.rows(i, i + 4);
     for (int j = 0; j < ngrams; j += 2) {
       auto idx = j * 4;
-      h4{&states.at(idx)}.mixBcast(xdata.at(idx)).maskCompact(mask).store(&results.at(idx));
+      h4{&states.at(idx)}
+          .mixBcast(xdata.at(idx))
+          .maskCompact(mask)
+          .store(&results.at(idx));
       idx += 4;
-      h4{&states.at(idx)}.mixBcast(xdata.at(idx)).maskCompact(mask).store(&results.at(idx));
+      h4{&states.at(idx)}
+          .mixBcast(xdata.at(idx))
+          .maskCompact(mask)
+          .store(&results.at(idx));
     }
   }
   for (; i < nitems; ++i) {
