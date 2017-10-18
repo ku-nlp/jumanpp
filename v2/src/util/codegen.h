@@ -69,7 +69,7 @@ class ResultAssign {
 
   ResultAssign& addHashConstant(u64 value) {
     ss_.str("");
-    ss_ << ".mix(" << value << "ULL)";
+    ss_ << ".mix(::jumanpp::u64{" << value << "ULL})";
     pieces_.push_back(ss_.str());
     return *this;
   }
