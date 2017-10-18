@@ -60,7 +60,8 @@ class SoftConfidenceWeighted {
   const analysis::ScorerDef* scorers() const { return &sconf; }
   void exportModel(model::ModelInfo* model);
   void dumpModel(StringPiece directory, StringPiece prefix, i32 number);
-  void substractInitValues();
+  u64 substractInitValues();
+  u64 numWeights() const { return usableWeights.size(); }
   ~SoftConfidenceWeighted();
 };
 

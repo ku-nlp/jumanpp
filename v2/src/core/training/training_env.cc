@@ -39,7 +39,11 @@ Status TrainingEnv::trainOneEpoch() {
   }
 
   if (firstEpoch_) {
-    scw_.substractInitValues();
+    auto zeroed = scw_.substractInitValues();
+    auto total = scw_.numWeights();
+    auto ratio = float(zeroed) / total;
+    LOG_DEBUG() << "Zeroed " << zeroed << "features of " << total << " ("
+                << ratio * 100 << "%)";
     firstEpoch_ = false;
   }
 

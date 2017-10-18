@@ -214,14 +214,17 @@ void SoftConfidenceWeighted::dumpModel(StringPiece directory,
   }
 }
 
-void SoftConfidenceWeighted::substractInitValues() {
+u64 SoftConfidenceWeighted::substractInitValues() {
   double boundary = 1.01 / std::sqrt(usableWeights.size());
 
+  u64 zeroed = 0;
   for (auto& weight : usableWeights) {
     if (std::fabs(weight) < boundary) {
       weight = 0;
+      zeroed += 1;
     }
   }
+  return zeroed;
 }
 
 }  // namespace training
