@@ -13,6 +13,8 @@ using namespace jumanpp::core::analysis;
 using namespace jumanpp::core::features;
 using namespace jumanpp::core::features::impl;
 
+u32 fullMask = ~u32{0};
+
 TEST_CASE("unigram is equal to full") {
   NgramFeatureImpl<1> baseUni{0, 0};
   constexpr UnigramFeature partUni{0, 0, 0};
@@ -20,27 +22,27 @@ TEST_CASE("unigram is equal to full") {
   u32 buf1[1];
   u32 buf2[1];
   baseUni.apply(buf1, data, data, data);
-  partUni.step0(data, buf2);
+  partUni.step0(data, buf2, fullMask);
   CHECK(buf1[0] == buf2[0]);
 }
 
 TEST_CASE("bigram is equal to full") {
   NgramFeatureImpl<2> baseUni{0, 0, 0};
-  constexpr BigramFeature partUni{0, 0, 0, 0};
+  constexpr BigramFeature partBi{0, 0, 0, 0};
   util::ArraySlice<u64> data1{50};
   util::ArraySlice<u64> data2{60};
   u32 buf1[1];
   u32 buf2[1];
   u64 state1[1];
   baseUni.apply(buf1, data2, data2, data1);
-  partUni.step0(data1, state1);
-  partUni.step1(data2, state1, buf2);
+  partBi.step0(data1, state1);
+  partBi.step1(data2, state1, buf2, fullMask);
   CHECK(buf1[0] == buf2[0]);
 }
 
 TEST_CASE("trigram is equal to full") {
   NgramFeatureImpl<3> baseUni{0, 0, 0, 0};
-  constexpr TrigramFeature partUni{0, 0, 0, 0, 0};
+  constexpr TrigramFeature partTri{0, 0, 0, 0, 0};
   util::ArraySlice<u64> data1{50};
   util::ArraySlice<u64> data2{60};
   util::ArraySlice<u64> data3{70};
@@ -49,9 +51,9 @@ TEST_CASE("trigram is equal to full") {
   u64 state1[1];
   u64 state2[1];
   baseUni.apply(buf1, data3, data2, data1);
-  partUni.step0(data1, state1);
-  partUni.step1(data2, state1, state2);
-  partUni.step2(data3, state2, buf2);
+  partTri.step0(data1, state1);
+  partTri.step1(data2, state1, state2);
+  partTri.step2(data3, state2, buf2, fullMask);
   CHECK(buf1[0] == buf2[0]);
 }
 
@@ -65,6 +67,8 @@ NgramFeature nf(i32 index, std::initializer_list<i32> data) {
 TEST_CASE("partial and full trigram features produce the same result") {
   NgramDynamicFeatureApply full;
   PartialNgramDynamicFeatureApply part;
+  util::ArraySlice<float> fake{nullptr, fullMask + size_t{1}};
+  jumanpp::core::analysis::HashedFeaturePerceptron perc{fake};
   int idx = 0;
   auto add = [&](std::initializer_list<i32> data) {
     auto f = nf(idx++, data);
@@ -77,7 +81,11 @@ TEST_CASE("partial and full trigram features produce the same result") {
   add({1, 0});
   add({1, 1, 1});
   add({0, 0, 0});
-  util::ArraySlice<u64> t0data{0, 1, 2, 0, 1, 2};
+  util::ArraySlice<u64> t0data{
+    0, 1,
+    2, 0,
+    1, 2,
+  };
   util::ArraySlice<u64> t1data{5, 2};
   util::ArraySlice<u64> t2data{
       2, 1,
@@ -91,7 +99,11 @@ TEST_CASE("partial and full trigram features produce the same result") {
 
   u32 partRes[6];
   util::Sliceable<u32> partSlice{partRes, 2, 3};
-  part.applyUni(t0slice, partSlice);
+  features::FeatureBuffer fb;
+
+  for (i32 r = 0; r < 3; ++r) {
+    part.uniStep0(t0slice.row(r), fullMask, fake, partSlice.row(r));
+  }
 
   CHECK(partSlice.at(0, 0) == fullSlice.at(0, 0));
   CHECK(partSlice.at(1, 0) == fullSlice.at(1, 0));
@@ -102,8 +114,11 @@ TEST_CASE("partial and full trigram features produce the same result") {
 
   u64 biState[6];
   util::Sliceable<u64> biStateSlice{biState, 2, 3};
-  part.applyBiStep1(t0slice, biStateSlice);
-  part.applyBiStep2(biStateSlice, t1data, partSlice);
+  for (i32 r = 0; r < 3; ++r) {
+    part.biStep0(t0slice.row(r), biStateSlice.row(r));
+    part.biStep1(t1data, biStateSlice.row(r), fullMask, fake, partSlice.row(r));
+  }
+
   CHECK(partSlice.at(0, 0) == fullSlice.at(0, 2));
   CHECK(partSlice.at(1, 0) == fullSlice.at(1, 2));
   CHECK(partSlice.at(2, 0) == fullSlice.at(2, 2));
@@ -115,9 +130,11 @@ TEST_CASE("partial and full trigram features produce the same result") {
   u64 triState2[6];
   util::Sliceable<u64> triStateSlice1{triState1, 2, 3};
   util::Sliceable<u64> triStateSlice2{triState2, 2, 3};
-  part.applyTriStep1(t0slice, triStateSlice1);
-  part.applyTriStep2(triStateSlice1, t1data, triStateSlice2);
-  part.applyTriStep3(triStateSlice2, t2data, partSlice);
+  for (i32 r = 0; r < 3; ++r) {
+    part.triStep0(t0slice.row(r), triStateSlice1.row(r));
+    part.triStep1(t1data, triStateSlice1.row(r), triStateSlice2.row(r));
+    part.triStep2(t2data, triStateSlice2.row(r), fullMask, fake, partSlice.row(r));
+  }
   CHECK(partSlice.at(0, 0) == fullSlice.at(0, 4));
   CHECK(partSlice.at(1, 0) == fullSlice.at(1, 4));
   CHECK(partSlice.at(2, 0) == fullSlice.at(2, 4));

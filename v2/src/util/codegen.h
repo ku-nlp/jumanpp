@@ -69,14 +69,14 @@ class ResultAssign {
 
   ResultAssign& addHashConstant(u64 value) {
     ss_.str("");
-    ss_ << value << "ULL";
+    ss_ << ".mix(" << value << "ULL)";
     pieces_.push_back(ss_.str());
     return *this;
   }
 
   ResultAssign& addHashIndexed(StringPiece var, size_t idx) {
     ss_.str("");
-    ss_ << var << '[' << idx << ']';
+    ss_  << ".mix(" << var << '[' << idx << "])";
     pieces_.push_back(ss_.str());
     return *this;
   }
@@ -84,14 +84,13 @@ class ResultAssign {
   void render(io::Printer& p) const {
     PrintSemicolon x{p};
     p << "result.at(" << resultIdx_ << ") = "
-      << "jumanpp::util::hashing::seaHashSeq" << '(';
-    for (int i = 0; i < pieces_.size(); ++i) {
-      p << pieces_[i];
-      if (i != pieces_.size() - 1) {
-        p << ", ";
-      }
+      << "static_cast<::jumanpp::u32>("
+      << "jumanpp::util::hashing::FastHash1{}";
+    p << ".mix(" << pieces_.size() << ")";
+    for (const auto &piece : pieces_) {
+      p << piece;
     }
-    p << ')';
+    p << ".result())";
   }
 };
 

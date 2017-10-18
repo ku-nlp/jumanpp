@@ -206,6 +206,15 @@ class ArraySliceImplBase {
     return !(*this == other);
   }
 
+  void swap(ArraySliceImplBase& o) noexcept {
+    auto sizeTmp = length_;
+    auto dataTmp = ptr_;
+    length_ = o.length_;
+    ptr_ = o.ptr_;
+    o.ptr_ = dataTmp;
+    o.length_ = sizeTmp;
+  }
+
  private:
   pointer ptr_;
   size_type length_;

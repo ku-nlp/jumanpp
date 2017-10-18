@@ -40,6 +40,33 @@ inline float computeUnrolled4Perceptron(const util::ArraySlice<float> weights,
   }
   return r1 + r2 + r3 + r4;
 }
+
+  inline float computeUnrolled4RawPerceptron(const util::ArraySlice<float> weights,
+                                          const util::ArraySlice<u32> indices) {
+    // basically the sole purpose of this unrolling
+    // is to be able to do several parallel memory fetches at once
+    float r1 = 0, r2 = 0, r3 = 0, r4 = 0;
+    int i;
+    for (i = 0; (i + 4) <= indices.size(); i += 4) {
+      r1 += weights.at(indices.at(i) );
+      r2 += weights.at(indices.at(i + 1));
+      r3 += weights.at(indices.at(i + 2));
+      r4 += weights.at(indices.at(i + 3));
+    }
+    auto rest = indices.size() - i;
+    JPP_DCHECK_IN(rest, 0, 4);
+    switch (rest & 0x3) {
+      case 3:
+        r3 += weights.at(indices.at(i + 2));
+      case 2:
+        r2 += weights.at(indices.at(i + 1));
+      case 1:
+        r1 += weights.at(indices.at(i));
+      case 0:
+      default:;  // noop
+    }
+    return r1 + r2 + r3 + r4;
+  }
 }  // namespace impl
 
 class HashedFeaturePerceptron : public FeatureScorer {
@@ -56,6 +83,10 @@ class HashedFeaturePerceptron : public FeatureScorer {
            util::MutableArraySlice<float> result,
            util::ConstSliceable<u32> features) const override;
   Status load(const model::ModelInfo& model) override;
+
+  util::ArraySlice<float> weights() const override {
+    return weights_;
+  }
 };
 
 }  // namespace analysis

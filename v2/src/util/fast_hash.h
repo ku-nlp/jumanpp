@@ -167,6 +167,11 @@ class FastHash4 {
     return mixImpl(arg);
   }
 
+  JPP_ALWAYS_INLINE FastHash4 mixBcast(const u64 data) const noexcept {
+    auto arg = _mm256_set1_epi64x(data);
+    return mixImpl(arg);
+  }
+
   JPP_ALWAYS_INLINE FastHash4 mixGatherInstr(const u64* base,
                                              const u32* indices) const
       noexcept {

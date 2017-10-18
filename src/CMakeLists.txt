@@ -1,8 +1,7 @@
+find_package(Boost "1.57" REQUIRED)
+
 add_subdirectory(cdb)
 add_subdirectory(rnnlm)
-
-find_package(Boost "1.57" REQUIRED)
-include_directories(${Boost_INCLUDE_DIRECTORIES})
 
 add_definitions("-DHAVE_CONFIG_H=1")
 
@@ -24,10 +23,14 @@ set(JPP_SOURCES
         ${JPP_HEADERS}
 )
 
-add_executable(mkdarts ${JPP_SOURCES} mkdarts.cc)
 
-add_executable(jumanpp ${JPP_SOURCES} morph.cc)
+add_library(libjumanv1 ${JPP_SOURCES})
 
-target_link_libraries(jumanpp cdb rnnlm pthread)
+add_executable(mkdarts mkdarts.cc)
+add_executable(jumanpp morph.cc)
 
-target_link_libraries(mkdarts cdb rnnlm pthread)
+target_include_directories(libjumanv1 PUBLIC ${Boost_INCLUDE_DIRS})
+
+target_link_libraries(jumanpp cdb rnnlm pthread libjumanv1)
+
+target_link_libraries(mkdarts cdb rnnlm pthread libjumanv1)

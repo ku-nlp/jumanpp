@@ -865,4 +865,59 @@ BENCHMARK("avx-unrolled-instr", [](context* ctx) {
   }
 });
 
+__attribute__((noinline)) void avxLoopVertTest(util::Sliceable<u32> result, u32 mask) {
+  auto& state = inputs.state;
+  auto& data = inputs.data;
+  u32 nitems = numItems;
+  u32 ngrams = numNgrams;
+  util::ConstSliceable<u64> stateSlice{state, numNgrams, numItems};
+  util::ConstSliceable<u64> dataSlice{data, numNgrams, numItems};
+  int i = 0;
+  for (; i < nitems; i += 4) {
+    auto states = stateSlice.rows(i, i + 4);
+    auto xdata = dataSlice.rows(i, i + 4);
+    auto results = result.rows(i, i + 4);
+    for (int j = 0; j < ngrams; j += 2) {
+      auto idx = j * 4;
+      h4{&states.at(idx)}.mix(&xdata.at(idx)).maskCompact(mask).store(&results.at(idx));
+      idx += 4;
+      h4{&states.at(idx)}.mix(&xdata.at(idx)).maskCompact(mask).store(&results.at(idx));
+    }
+  }
+  for (i -= 4; i < nitems; ++i) {
+    hashAvxUnrolled(stateSlice.row(i), dataSlice.row(i), result.row(i), mask);
+  }
+}
+
+__attribute__((noinline)) void avxLoopBcastTest(util::Sliceable<u32> result, u32 mask) {
+  auto& state = inputs.state;
+  auto& data = inputs.data;
+  u32 nitems = numItems;
+  u32 ngrams = numNgrams;
+  util::ConstSliceable<u64> stateSlice{state, numNgrams, numItems};
+  util::ConstSliceable<u64> dataSlice{data, numNgrams, numItems};
+  int i = 0;
+  auto maxItems = nitems & ~0x3;
+  for (; i < maxItems; i += 4) {
+    auto states = stateSlice.rows(i, i + 4);
+    auto xdata = dataSlice.rows(i, i + 4);
+    auto results = result.rows(i, i + 4);
+    for (int j = 0; j < ngrams; j += 2) {
+      auto idx = j * 4;
+      h4{&states.at(idx)}.mixBcast(xdata.at(idx)).maskCompact(mask).store(&results.at(idx));
+      idx += 4;
+      h4{&states.at(idx)}.mixBcast(xdata.at(idx)).maskCompact(mask).store(&results.at(idx));
+    }
+  }
+  for (; i < nitems; ++i) {
+    hashAvxUnrolled(stateSlice.row(i), dataSlice.row(i), result.row(i), mask);
+  }
+}
+
+BENCHMARK("avx-vertical-instr", [](context* ctx) {
+  for (size_t i = 0; i < ctx->num_iterations(); ++i) {
+    avxLoopVertTest(inputs.featuresSlice, maxFeature - 1u);
+  }
+});
+
 #endif  // JPP_AVX2

@@ -96,6 +96,8 @@ bool outputNgramFeatures(i::Printer& p, StringPiece name,
 bool outputPartialNgramFeatures(
     i::Printer& p, StringPiece name,
     features::impl::PartialNgramDynamicFeatureApply* png) {
+  return false; //TODO: fixme
+
   p << "class " << name << " final : "
     << "public "
     << JPP_TEXT(

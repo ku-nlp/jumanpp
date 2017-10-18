@@ -63,11 +63,13 @@ class EntryBeam {
 };
 
 class ScoreProcessor {
-  Lattice* lattice_;
-  NGramFeatureComputer ngram_;
+  i32 beamSize_ = 0;
   util::ArraySlice<ConnectionBeamElement> beamPtrs_;
   NgramScoreHolder scores_;
-  i32 beamSize_ = 0;
+  features::FeatureBuffer featureBuffer_;
+  const features::PartialNgramFeatureApply* ngramApply_;
+  Lattice* lattice_;
+  features::AnalysisRunStats runStats_;
 
   explicit ScoreProcessor(AnalyzerImpl* analyzer);
 

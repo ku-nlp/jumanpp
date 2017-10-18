@@ -17,11 +17,15 @@ execute_process(COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/dependencies.sh)
 include_directories("${CMAKE_SOURCE_DIR}/libs")
 
 option(JPP_TEST_REPORT_JUNIT OFF)
-option(ENABLE_BENCHMARKS OFF)
-option(ENABLE_DEV_TOOLS OFF)
+option(ENABLE_BENCHMARKS "Enable benchmarks" OFF)
+option(ENABLE_DEV_TOOLS "Enable development-only binaries" OFF)
+option(JPP_PREFETCH_FEATURE_WEIGHTS "Prefetch linear model weights when computing features" ON)
 set(JPP_MAX_DIC_FIELDS 64 CACHE STRING "Maximum supported dictionary fields")
+option(JPP_ENABLE_TESTS "Enable tests" ON)
 
-enable_testing()
+if(${JPP_ENABLE_TESTS})
+    enable_testing()
+endif()
 
 find_package(Threads)
 

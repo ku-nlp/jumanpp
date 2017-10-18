@@ -14,7 +14,6 @@ namespace jumanpp {
 namespace core {
 namespace analysis {
 
-class NGramFeatureComputer;
 class Lattice;
 class AnalyzerImpl;
 class FeatureScorer;
@@ -38,7 +37,7 @@ class NgramScoreHolder {
     return util::MutableArraySlice<float>{bufferT2_, 0, curSize_};
   }
 
-  void prepare(AnalyzerImpl* analyzer, u32 maxNodes);
+  void prepare(util::memory::ManagedAllocatorCore* alloc, u32 maxNodes);
 
   void newBoundary(u32 numRight) { curSize_ = numRight; }
 };
@@ -50,36 +49,6 @@ struct NgramStats {
   u32 maxNGrams = 0;
 
   void initialze(const features::FeatureRuntimeInfo* info);
-};
-
-class NGramFeatureComputer {
-  u32 maxStarts_ = 0;
-  u32 currentSize_ = 0;
-
-  const NgramStats& stats_;
-  const Lattice* lattice_;
-  const features::PartialNgramFeatureApply* ngramApply_;
-  util::MutableArraySlice<u64> biBuffer_;
-  util::MutableArraySlice<u64> triBuffer1_;
-  util::MutableArraySlice<u64> triBuffer2_;
-  util::MutableArraySlice<u32> featureBuffer_;
-  util::ConstSliceable<u32> featureSubset_;
-
- public:
-  explicit NGramFeatureComputer(const AnalyzerImpl* analyzer);
-
-  Status initialize(const AnalyzerImpl* analyzer);
-
-  void computeUnigrams(i32 boundary);
-  void computeBigramsStep1(i32 boundary);
-  void computeBigramsStep2(i32 boundary, i32 position);
-  void computeTrigramsStep1(i32 boundary);
-  void computeTrigramsStep2(i32 boundary, i32 position);
-  void compute3GramsStep3(i32 boundary, i32 position);
-  void setScores(FeatureScorer* scorer, util::MutableArraySlice<float> result);
-  void addScores(FeatureScorer* scorer, util::ArraySlice<float> source,
-                 util::MutableArraySlice<float> result);
-  u32 maxStarts() const { return maxStarts_; }
 };
 
 }  // namespace analysis

@@ -106,6 +106,7 @@ stamp-h?
 #CLion
 .idea/
 build-dir/
+cmake-build-*/
 
 #VScode
 .vscode/

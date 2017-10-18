@@ -7,8 +7,9 @@
 
 #include "core/features_api.h"
 #include "core/impl/feature_impl_types.h"
-#include "util/printer.h"
 #include "util/fast_hash.h"
+#include "util/printer.h"
+#include "core/analysis/perceptron.h"
 
 namespace jumanpp {
 namespace core {
@@ -30,14 +31,16 @@ class UnigramFeature {
 
   JPP_ALWAYS_INLINE void step0(util::ArraySlice<u64> patterns,
                                util::MutableArraySlice<u32> result,
-  u32 mask) const
-      noexcept {
+                               u32 mask) const noexcept {
     auto t0 = patterns.at(t0idx_);
-    auto v = h::FastHash1{}.mix(TotalHashArgs).mix(index_).mix(UnigramSeed).mix(t0);
+    auto v =
+        h::FastHash1{}.mix(TotalHashArgs).mix(index_).mix(UnigramSeed).mix(t0);
     result.at(target_) = v.masked(mask);
   }
 
   void writeMember(util::io::Printer& p, i32 count) const;
+
+  constexpr u32 target() const noexcept { return target_; }
 };
 
 class BigramFeature {
@@ -56,14 +59,15 @@ class BigramFeature {
                                util::MutableArraySlice<u64> state) const
       noexcept {
     auto t0 = patterns.at(t0idx_);
-    auto v = h::FastHash1{}.mix(TotalHashArgs).mix(index_).mix(BigramSeed).mix(t0);
+    auto v =
+        h::FastHash1{}.mix(TotalHashArgs).mix(index_).mix(BigramSeed).mix(t0);
     state.at(target_) = v.result();
   }
 
   JPP_ALWAYS_INLINE void step1(util::ArraySlice<u64> patterns,
                                util::ArraySlice<u64> state,
-                               util::MutableArraySlice<u32> result, u32 mask) const
-      noexcept {
+                               util::MutableArraySlice<u32> result,
+                               u32 mask) const noexcept {
     auto t1 = patterns.at(t1idx_);
     auto s = state.at(target_);
     auto v = h::FastHash1{s}.mix(t1);
@@ -71,6 +75,8 @@ class BigramFeature {
   }
 
   void writeMember(util::io::Printer& p, i32 count) const;
+
+  constexpr u32 target() const noexcept { return target_; }
 };
 
 class TrigramFeature {
@@ -95,7 +101,8 @@ class TrigramFeature {
                                util::MutableArraySlice<u64> state) const
       noexcept {
     auto t0 = patterns.at(t0idx_);
-    auto v = h::FastHash1{}.mix(TotalHashArgs).mix(index_).mix(TrigramSeed).mix(t0);
+    auto v =
+        h::FastHash1{}.mix(TotalHashArgs).mix(index_).mix(TrigramSeed).mix(t0);
     state.at(target_) = v.result();
   }
 
@@ -111,8 +118,8 @@ class TrigramFeature {
 
   JPP_ALWAYS_INLINE void step2(util::ArraySlice<u64> patterns,
                                util::ArraySlice<u64> state,
-                               util::MutableArraySlice<u32> result, u32 mask) const
-      noexcept {
+                               util::MutableArraySlice<u32> result,
+                               u32 mask) const noexcept {
     auto t2 = patterns.at(t2idx_);
     auto s = state.at(target_);
     auto v = h::FastHash1{s}.mix(t2);
@@ -120,6 +127,8 @@ class TrigramFeature {
   }
 
   void writeMember(util::io::Printer& p, i32 count) const;
+
+  constexpr u32 target() const noexcept { return target_; }
 };
 
 template <typename Child>
@@ -127,58 +136,132 @@ class PartialNgramFeatureApplyImpl : public PartialNgramFeatureApply {
   const Child& child() const { return static_cast<const Child&>(*this); }
 
  public:
-  void applyUni(util::ConstSliceable<u64> p0,
-                util::Sliceable<u32> results, u32 mask) const noexcept override {
-    for (auto row = 0; row < p0.numRows(); ++row) {
-      auto patterns = p0.row(row);
-      auto result = results.row(row);
-      child().uniStep0(patterns, result);
+
+  void applyUni(FeatureBuffer* buffers,
+                util::ConstSliceable<u64> p0,
+                analysis::FeatureScorer* scorer,
+                util::MutableArraySlice<float> result) const noexcept override {
+    auto numUnigrams = child().numUnigrams();
+    auto buf1 = buffers->valBuf1(numUnigrams);
+    auto buf2 = buffers->valBuf2(numUnigrams);
+
+    if (p0.numRows() == 0) {
+      return;
     }
+
+    auto weights = scorer->weights();
+    auto mask = static_cast<u32>(weights.size() - 1);
+    //do row 0
+    child().uniStep0(p0.row(0), mask, weights, buf2);
+    //do other rows
+    u32 row = 1;
+    for (; row < p0.numRows(); ++row) {
+      auto patterns = p0.row(row);
+      child().uniStep0(patterns, mask, weights, buf1);
+      buf1.swap(buf2);
+      result.at(row - 1) = analysis::impl::computeUnrolled4RawPerceptron(weights, buf1);
+    }
+
+    result.at(row - 1) = analysis::impl::computeUnrolled4RawPerceptron(weights, buf2);
   }
 
-  void applyBiStep1(util::ConstSliceable<u64> p0,
-                    util::Sliceable<u64> result) const noexcept override {
+  void applyBiStep1(FeatureBuffer* buffers,
+                    util::ConstSliceable<u64> p0) const noexcept override {
+    auto numElems = static_cast<u32>(p0.numRows());
+    auto result = buffers->t1Buf(child().numBigrams(), numElems);
     for (auto row = 0; row < p0.numRows(); ++row) {
       auto patterns = p0.row(row);
       auto state = result.row(row);
       child().biStep0(patterns, state);
     }
+    buffers->currentElems = numElems;
   }
 
-  void applyBiStep2(util::ConstSliceable<u64> states, util::ArraySlice<u64> p1,
-                    util::Sliceable<u32> results) const noexcept override {
-    for (auto row = 0; row < states.numRows(); ++row) {
-      auto state = states.row(row);
-      auto result = results.row(row);
-      child().biStep1(p1, state, result);
+  void applyBiStep2(FeatureBuffer* buffers,
+                    util::ArraySlice<u64> p1,
+                    analysis::FeatureScorer* scorer,
+                    util::MutableArraySlice<float> result) const noexcept override {
+    auto numBigrams = child().numBigrams();
+    auto buf1 = buffers->valBuf1(numBigrams);
+    auto buf2 = buffers->valBuf2(numBigrams);
+    auto numElems = buffers->currentElems;
+
+    if (numElems == 0) {
+      return;
     }
+
+    auto state = buffers->t1Buf(numBigrams, numElems);
+
+    auto weights = scorer->weights();
+    auto mask = static_cast<u32>(weights.size() - 1);
+    //do row 0
+    child().biStep1(p1, state.row(0), mask, weights, buf2);
+    //do other rows
+    u32 row = 1;
+    for (; row < state.numRows(); ++row) {
+      auto srow = state.row(row);
+      child().biStep1(p1, srow, mask, weights, buf1);
+      buf1.swap(buf2);
+      result.at(row - 1) += analysis::impl::computeUnrolled4RawPerceptron(weights, buf1);
+    }
+
+    result.at(row - 1) += analysis::impl::computeUnrolled4RawPerceptron(weights, buf2);
   }
 
-  void applyTriStep1(util::ConstSliceable<u64> p0,
-                     util::Sliceable<u64> result) const noexcept override {
-    for (auto row = 0; row < p0.numRows(); ++row) {
+  void applyTriStep1(FeatureBuffer* buffers,
+                     util::ConstSliceable<u64> p0) const noexcept override {
+    auto numElems = static_cast<u32>(p0.numRows());
+    JPP_DCHECK_EQ(numElems, buffers->currentElems);
+    auto result = buffers->t2Buf1(child().numTrigrams(), numElems);
+    for (auto row = 0; row < numElems; ++row) {
       auto patterns = p0.row(row);
       auto state = result.row(row);
       child().triStep0(patterns, state);
     }
+    buffers->currentElems = numElems;
   }
 
-  void applyTriStep2(util::ConstSliceable<u64> states, util::ArraySlice<u64> p1,
-                     util::Sliceable<u64> results) const noexcept override {
-    for (auto row = 0; row < states.numRows(); ++row) {
-      auto state = states.row(row);
-      auto result = results.row(row);
-      child().triStep1(p1, state, result);
+  void applyTriStep2(FeatureBuffer* buffers,
+                     util::ArraySlice<u64> p1) const noexcept override {
+    auto numElems = buffers->currentElems;
+    auto state = buffers->t2Buf1(child().numTrigrams(), numElems);
+    auto result = buffers->t2Buf2(child().numTrigrams(), numElems);
+    for (auto row = 0; row < numElems; ++row) {
+      auto st = state.row(row);
+      auto res = result.row(row);
+      child().triStep1(p1, st, res);
     }
+    buffers->currentElems = numElems;
   }
 
-  void applyTriStep3(util::ConstSliceable<u64> states, util::ArraySlice<u64> p2,
-                     util::Sliceable<u32> results) const noexcept override {
-    for (auto row = 0; row < states.numRows(); ++row) {
-      auto state = states.row(row);
-      auto result = results.row(row);
-      child().triStep2(p2, state, result);
+  void applyTriStep3(FeatureBuffer* buffers, util::ArraySlice<u64> p2,
+                     analysis::FeatureScorer* scorer,
+                     util::MutableArraySlice<float> result) const noexcept override {
+    auto numTrigrams = child().numTrigrams();
+    auto buf1 = buffers->valBuf1(numTrigrams);
+    auto buf2 = buffers->valBuf2(numTrigrams);
+    auto numElems = buffers->currentElems;
+
+    if (numElems == 0) {
+      return;
     }
+
+    auto state = buffers->t2Buf2(numTrigrams, numElems);
+
+    auto weights = scorer->weights();
+    auto mask = static_cast<u32>(weights.size() - 1);
+    //do row 0
+    child().triStep2(p2, state.row(0), mask, weights, buf2);
+    //do other rows
+    u32 row = 1;
+    for (; row < state.numRows(); ++row) {
+      auto srow = state.row(row);
+      child().triStep2(p2, srow, mask, weights, buf1);
+      buf1.swap(buf2);
+      result.at(row - 1) += analysis::impl::computeUnrolled4RawPerceptron(weights, buf1);
+    }
+
+    result.at(row - 1) += analysis::impl::computeUnrolled4RawPerceptron(weights, buf2);
   }
 };
 
@@ -194,12 +277,16 @@ class PartialNgramDynamicFeatureApply
   Status addChild(const NgramFeature& nf);
 
   void uniStep0(util::ArraySlice<u64> patterns,
+                u32 mask,
+                util::ArraySlice<float> weights,
                 util::MutableArraySlice<u32> result) const noexcept;
 
   void biStep0(util::ArraySlice<u64> patterns,
                util::MutableArraySlice<u64> state) const noexcept;
 
   void biStep1(util::ArraySlice<u64> patterns, util::ArraySlice<u64> state,
+               u32 mask,
+               util::ArraySlice<float> weights,
                util::MutableArraySlice<u32> result) const noexcept;
 
   void triStep0(util::ArraySlice<u64> patterns,
@@ -209,7 +296,16 @@ class PartialNgramDynamicFeatureApply
                 util::MutableArraySlice<u64> result) const noexcept;
 
   void triStep2(util::ArraySlice<u64> patterns, util::ArraySlice<u64> state,
+                u32 mask,
+                util::ArraySlice<float> weights,
                 util::MutableArraySlice<u32> result) const noexcept;
+
+  void allocateBuffers(FeatureBuffer *buffer, const AnalysisRunStats &stats,
+                       util::memory::ManagedAllocatorCore *alloc) const override;
+
+  u32 numUnigrams() const noexcept { return static_cast<u32>(unigrams_.size()); }
+  u32 numBigrams() const noexcept { return static_cast<u32>(bigrams_.size()); }
+  u32 numTrigrams() const noexcept { return static_cast<u32>(trigrams_.size()); }
 };
 
 }  // namespace impl
