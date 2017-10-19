@@ -64,14 +64,16 @@ class BigramFeature {
     state.at(target_) = v.result();
   }
 
-  JPP_ALWAYS_INLINE void step1(util::ArraySlice<u64> patterns,
-                               util::ArraySlice<u64> state,
-                               util::MutableArraySlice<u32> result,
-                               u32 mask) const noexcept {
+  JPP_ALWAYS_INLINE u32 step1(util::ArraySlice<u64> patterns,
+                              util::ArraySlice<u64> state,
+                              util::MutableArraySlice<u32> result,
+                              u32 mask) const noexcept {
     auto t1 = patterns.at(t1idx_);
     auto s = state.at(target_);
     auto v = h::FastHash1{s}.mix(t1);
-    result.at(target_) = v.masked(mask);
+    u32 r = v.masked(mask);
+    result.at(target_) = r;
+    return r;
   }
 
   void writeMember(util::io::Printer& p, i32 count) const;

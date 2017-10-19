@@ -96,6 +96,76 @@ void PartialNgramDynamicFeatureApply::triStep2(
   }
 }
 
+bool outputBiApply2(util::io::Printer& p,
+                    util::ArraySlice<BigramFeature> bigrams) {
+  u32 numVars = 1;
+  if (bigrams.size() > 8) {
+    numVars = 8;
+  } else if (bigrams.size() > 4) {
+    numVars = 4;
+  }
+
+  p << "\n\nvoid applyBiStep2("  // args
+    << JPP_TEXT(::jumanpp::core::features::FeatureBuffer*) << " buffers, "
+    << JPP_TEXT(::jumanpp::util::ArraySlice<jumanpp::u64>) << " p1, "
+    << JPP_TEXT(::jumanpp::core::analysis::FeatureScorer*) << " scorer, "
+    << JPP_TEXT(::jumanpp::util::MutableArraySlice<float>) << " result"
+    << ") const noexcept override {";
+  {
+    util::io::Indent fnid{p, 2};
+    p << "\nauto numBigrams = this->numBigrams();";
+    p << "\nauto buf1 = buffers->valBuf1(numBigrams);";
+    p << "\nauto buf2 = buffers->valBuf2(numBigrams);";
+    p << "\nauto numElems = buffers->currentElems;";
+    p << "\nif (numElems == 0) { return; }";
+
+    p << "\nconst auto state = buffers->t1Buf(numBigrams, numElems);";
+    p << "\nauto weights = scorer->weights();";
+    p << "\nauto mask = static_cast<::jumanpp::u32>(weights.size() - 1);";
+    p << "\nthis->biStep1(p1, state.row(0), mask, weights, buf2);";
+    p << "\n::jumanpp::u32 row = 1;";
+
+    p << "\nfor (; row < state.numRows(); ++row) {";
+    {
+      util::io::Indent id2{p, 2};
+      p << "\nauto srow = state.row(row);";
+      for (int i = 0; i < numVars; ++i) {
+        p << "\nfloat f_" << i << " = 0;";
+      }
+      for (int i = 0; i < bigrams.size(); ++i) {
+        auto& bi = bigrams.at(i);
+        p << "\n{";
+        util::io::Indent id3{p, 2};
+        bi.writeMember(p, i);
+        p << "\nf_" << i % numVars << " += weights.at(buf2.at(" << i << "));";
+        p << "\n::jumanpp::u32 idx = bi_" << i
+          << ".step1(p1, srow, buf1, mask);";
+#ifdef JPP_PREFETCH_FEATURE_WEIGHTS
+        p << "\n"
+          << JPP_TEXT(::jumanpp::util::prefetch<
+                      ::jumanpp::util::PrefetchHint::PREFETCH_HINT_T2>)
+          << "(&weights.at(idx));";
+#endif
+        p << "\n}";
+      }
+
+      p << "\nresult.at(row - 1) += (f_0";
+      for (int i = 1; i < numVars; ++i) {
+        p << " + f_" << i;
+      }
+      p << ");";
+      p << "\nbuf1.swap(buf2);";
+    }
+    p << "\n}\n";
+    p << "\nresult.at(row - 1) += "
+      << "::jumanpp::core::analysis::impl::computeUnrolled4RawPerceptron("
+         "weights, buf2);";
+  }
+
+  p << "\n}\n";
+  return true;
+}
+
 bool PartialNgramDynamicFeatureApply::outputClassBody(
     util::io::Printer& p) const {
   p << "\nvoid uniStep0("  // args
@@ -243,6 +313,8 @@ bool PartialNgramDynamicFeatureApply::outputClassBody(
 
   p << "\n::jumanpp::u32 numTrigrams() const noexcept { "
     << "return " << this->numTrigrams() << "; }";
+
+  outputBiApply2(p, this->bigrams_);
 
   return true;
 }
