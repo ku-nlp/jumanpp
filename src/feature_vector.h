@@ -165,7 +165,7 @@ class FeatureVector {/*{{{*/
             }
         }
         ss << std::endl;
-        return std::move(ss.str());
+        return ss.str();
     }; /*}}}*/
 
     bool serialize(std::ofstream &os) { //{{{
