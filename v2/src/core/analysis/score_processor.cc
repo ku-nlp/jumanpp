@@ -31,51 +31,15 @@ ScoreProcessor::ScoreProcessor(AnalyzerImpl *analyzer)
 
   auto *alloc = analyzer->alloc();
   scores_.prepare(alloc, maxNodes);
+  beamCandidates_ = alloc->allocateBuf<BeamCandidate>(
+      maxNodes * lattice_->config().beamSize, 64);
   analyzer->core().features().ngramPartial->allocateBuffers(&featureBuffer_,
                                                             runStats_, alloc);
 }
 
-void ScoreProcessor::updateBeams(i32 boundary, i32 endPos, LatticeBoundary *bnd,
-                                 LatticeBoundaryConnection *bndconn,
-                                 const ScorerDef *sc) {
-  auto beam = bnd->starts()->beamData();
-  u16 bnd16 = (u16)boundary;
-  u16 end16 = (u16)endPos;
-  auto &scoreWeights = sc->scoreWeights;
-  auto ptr = bnd->ends()->nodePtrs().at(endPos);
-  auto swsize = scoreWeights.size();
-  resolveBeamAt(ptr.boundary, ptr.position);
-  for (int prevBeam = 0; prevBeam < beamSize_; ++prevBeam) {
-    auto scoreData = bndconn->entryScores(prevBeam);
-    for (i32 beginPos = 0; beginPos < beam.numRows(); ++beginPos) {
-      auto itemBeam = beam.row(beginPos);
-      auto scores = scoreData.row(beginPos);
-      Score s = 0;
-      switch (swsize) {
-        case 2:
-          s += scoreWeights[1] * scores[1];
-        case 1:
-          s += scoreWeights[0] * scores[0];
-          break;
-        default:
-          for (int sw = 0; sw < swsize; ++sw) {
-            s += scoreWeights[sw] * scores[sw];
-          }
-      }
-      auto &prevBi = this->beamPtrs_[prevBeam];
-      auto cumScore = s + prevBi.totalScore;
-      ConnectionPtr cptr{bnd16, end16, ((u16)beginPos), (u16)prevBeam,
-                         &prevBi.ptr};
-      ConnectionBeamElement cbe{cptr, cumScore};
-      EntryBeam beamObj{itemBeam};
-      beamObj.pushItem(cbe);
-    }
-  }
-}
-
-void ScoreProcessor::copyFeatureScores(i32 beam,
-                                       LatticeBoundaryConnection *bndconn) {
-  bndconn->importBeamScore(0, beam, scores_.bufferT2());
+void ScoreProcessor::copyFeatureScores(i32 left, i32 beam,
+                                       LatticeBoundaryScores *bndconn) {
+  bndconn->importBeamScore(left, 0, beam, scores_.bufferT2());
 }
 
 void ScoreProcessor::resolveBeamAt(i32 boundary, i32 position) {
@@ -124,6 +88,136 @@ void ScoreProcessor::applyT2(i32 beamIdx, FeatureScorer *features) {
   auto result = scores_.bufferT2();
   util::copy_buffer(scores_.bufferT1(), result);
   ngramApply_->applyTriStep3(&featureBuffer_, item, features, result);
+}
+
+u32 fillBeamCandidates(Lattice *l, LatticeBoundary *bnd, NodeScores scores,
+                       const ScorerDef *pDef,
+                       util::MutableArraySlice<BeamCandidate> cands) {
+  auto &weights = pDef->scoreWeights;
+  JPP_DCHECK_EQ(scores.numScorers(), weights.size());
+  auto ends = bnd->ends();
+  u32 activeBeams = 0;
+  switch (scores.numScorers()) {  // unroll loop for weights for common cases
+    case 2: {
+      auto w0 = weights[0];
+      auto w1 = weights[1];
+      for (u16 left = 0; left < scores.left(); ++left) {
+        auto leftPtr = ends->nodePtrs().at(left);
+        auto leftBeam = l->boundary(leftPtr.boundary)
+                            ->starts()
+                            ->beamData()
+                            .row(leftPtr.position);
+        for (u16 beam = 0; beam < scores.beam(); ++beam) {
+          auto &leftElm = leftBeam.at(beam);
+          if (EntryBeam::isFake(leftElm)) {
+            break;
+          }
+          auto s = scores.beamLeft(beam, left);
+          auto localScore = s.at(0) * w0 + s.at(1) + w1;
+          auto score = leftElm.totalScore + localScore;
+          cands.at(activeBeams) = BeamCandidate{score, left, beam};
+          activeBeams += 1;
+        }
+      }
+      break;
+    }
+    case 1: {
+      auto w0 = weights[0];
+      for (u16 left = 0; left < scores.left(); ++left) {
+        auto leftPtr = ends->nodePtrs().at(left);
+        auto leftBeam = l->boundary(leftPtr.boundary)
+                            ->starts()
+                            ->beamData()
+                            .row(leftPtr.position);
+        for (u16 beam = 0; beam < scores.beam(); ++beam) {
+          auto &leftElm = leftBeam.at(beam);
+          if (EntryBeam::isFake(leftElm)) {
+            break;
+          }
+          auto s = scores.beamLeft(beam, left);
+          auto localScore = s.at(0) * w0;
+          auto score = leftElm.totalScore + localScore;
+          cands.at(activeBeams) = BeamCandidate{score, left, beam};
+          activeBeams += 1;
+        }
+      }
+      break;
+    }
+    default: {
+      for (u16 left = 0; left < scores.left(); ++left) {
+        auto leftPtr = ends->nodePtrs().at(left);
+        auto leftBeam = l->boundary(leftPtr.boundary)
+                            ->starts()
+                            ->beamData()
+                            .row(leftPtr.position);
+        for (u16 beam = 0; beam < scores.beam(); ++beam) {
+          auto &leftElm = leftBeam.at(beam);
+          if (EntryBeam::isFake(leftElm)) {
+            break;
+          }
+          auto s = scores.beamLeft(beam, left);
+          Score score = leftElm.totalScore;
+          for (int i = 0; i < s.size(); ++i) {
+            score += s.at(i) * weights[i];
+          }
+          cands.at(activeBeams) = BeamCandidate{score, left, beam};
+          activeBeams += 1;
+        }
+      }
+    }
+  }
+  return activeBeams;
+}
+
+util::ArraySlice<BeamCandidate> processBeamCandidates(
+    util::MutableArraySlice<BeamCandidate> candidates, u32 maxBeam) {
+  auto comp = [](const BeamCandidate &c1, const BeamCandidate &c2) {
+    return c1.score > c2.score;
+  };
+  if (candidates.size() > maxBeam * 2) {
+    u32 maxElems = maxBeam * 2;
+    auto iter = util::partition(candidates.begin(), candidates.end(), comp,
+                                maxBeam, maxElems);
+    u32 sz = static_cast<u32>(iter - candidates.begin());
+    candidates = util::MutableArraySlice<BeamCandidate>{candidates, 0, sz};
+  }
+  std::sort(candidates.begin(), candidates.end(), comp);
+  auto size = std::min<u64>(maxBeam, candidates.size());
+  return util::ArraySlice<BeamCandidate>{candidates, 0, size};
+}
+
+void ScoreProcessor::makeBeams(i32 boundary, LatticeBoundary *bnd,
+                               const ScorerDef *sc) {
+  auto myNodes = bnd->localNodeCount();
+  auto prevData = bnd->ends()->nodePtrs();
+  auto maxBeam = lattice_->config().beamSize;
+  util::MutableArraySlice<BeamCandidate> cands{beamCandidates_, 0,
+                                               maxBeam * prevData.size()};
+  auto scores = bnd->scores();
+  auto beamData = bnd->starts()->beamData();
+  for (int node = 0; node < myNodes; ++node) {
+    auto cnt =
+        fillBeamCandidates(lattice_, bnd, scores->nodeScores(node), sc, cands);
+    util::MutableArraySlice<BeamCandidate> candSlice{cands, 0, cnt};
+    auto res = processBeamCandidates(candSlice, maxBeam);
+
+    auto beamElems = beamData.row(node);
+    // fill the beam
+    u16 beam = 0;
+    for (; beam < res.size(); ++beam) {
+      auto beamCand = res.at(beam);
+      auto prevPtr = prevData.at(beamCand.left());
+      auto prevBnd = lattice_->boundary(prevPtr.boundary);
+      auto prevNode = prevBnd->starts()->beamData().row(prevPtr.position);
+      ConnectionPtr ptr{static_cast<u16>(boundary), beamCand.left(),
+                        static_cast<u16>(node), beamCand.beam(),
+                        &prevNode.at(beamCand.beam()).ptr};
+      beamElems.at(beam) = ConnectionBeamElement{ptr, beamCand.score};
+    }
+    for (; beam < maxBeam; ++beam) {
+      beamElems.at(beam) = EntryBeam::fake();
+    }
+  }
 }
 
 }  // namespace analysis

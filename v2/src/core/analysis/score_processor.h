@@ -17,7 +17,7 @@ namespace analysis {
 
 class Lattice;
 class LatticeBoundary;
-class LatticeBoundaryConnection;
+class LatticeBoundaryScores;
 class AnalyzerImpl;
 
 // this class is zero-weight heap on top of other storage
@@ -35,10 +35,7 @@ class EntryBeam {
 
   static void initializeBlock(
       util::MutableArraySlice<ConnectionBeamElement> elems) {
-    u16 pat = (u16)(0xffffu);
-    auto val = std::numeric_limits<Score>::lowest();
-    ConnectionBeamElement zero{{pat, pat, pat, pat}, val};
-    std::fill(elems.begin(), elems.end(), zero);
+    std::fill(elems.begin(), elems.end(), fake());
   }
 
   void pushItem(const ConnectionBeamElement& item) {
@@ -60,6 +57,25 @@ class EntryBeam {
     u16 pat = (u16)(0xffffu);
     return e.ptr.boundary == pat && e.ptr.left == pat && e.ptr.right == pat;
   }
+
+  static ConnectionBeamElement fake() {
+    u16 pat = (u16)(0xffffu);
+    auto val = std::numeric_limits<Score>::lowest();
+    ConnectionBeamElement zero{{pat, pat, pat, pat}, val};
+    return zero;
+  }
+};
+
+struct BeamCandidate {
+  Score score;
+  u32 position;
+
+  BeamCandidate(Score score, u16 left, u16 beam)
+      : score{score}, position{(static_cast<u32>(left) << 16u) | beam} {}
+
+  u16 left() const noexcept { return static_cast<u16>(position >> 16); }
+
+  u16 beam() const noexcept { return static_cast<u16>(position); }
 };
 
 class ScoreProcessor {
@@ -70,6 +86,7 @@ class ScoreProcessor {
   const features::PartialNgramFeatureApply* ngramApply_;
   Lattice* lattice_;
   features::AnalysisRunStats runStats_;
+  util::MutableArraySlice<BeamCandidate> beamCandidates_;
 
   explicit ScoreProcessor(AnalyzerImpl* analyzer);
 
@@ -83,10 +100,9 @@ class ScoreProcessor {
   void applyT0(i32 boundary, FeatureScorer* features);
   void applyT1(i32 boundary, i32 position, FeatureScorer* features);
   void applyT2(i32 beamIdx, FeatureScorer* features);
-  void copyFeatureScores(i32 beam, LatticeBoundaryConnection* bndconn);
+  void copyFeatureScores(i32 left, i32 beam, LatticeBoundaryScores* bndconn);
 
-  void updateBeams(i32 boundary, i32 endPos, LatticeBoundary* bnd,
-                   LatticeBoundaryConnection* bndconn, const ScorerDef* sc);
+  void makeBeams(i32 boundary, LatticeBoundary* bnd, const ScorerDef* sc);
 };
 
 }  // namespace analysis

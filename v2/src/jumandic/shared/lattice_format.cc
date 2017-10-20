@@ -112,13 +112,8 @@ Status LatticeFormat::format(const core::analysis::Analyzer& analyzer,
         n.nodeInfo().ptrs.begin(), n.nodeInfo().ptrs.end(),
         [lat, &weights](const core::analysis::ConnectionPtr& p1,
                         const core::analysis::ConnectionPtr& p2) {
-          auto b1 = lat->boundary(p1.boundary);
-          auto c1 = b1->connection(p1.left);
-          auto s1 = c1->entryScores(p1.beam).row(p1.right);
-          auto b2 = lat->boundary(p2.boundary);
-          auto c2 = b2->connection(p2.left);
-          auto s2 = c2->entryScores(p2.beam).row(p2.right);
-
+          auto s1 = lat->boundary(p1.boundary)->scores()->forPtr(p1);
+          auto s2 = lat->boundary(p2.boundary)->scores()->forPtr(p2);
           float total1 = 0, total2 = 0;
           for (int i = 0; i < weights.size(); ++i) {
             total1 += s1[i] * weights[i];
@@ -180,8 +175,8 @@ Status LatticeFormat::format(const core::analysis::Analyzer& analyzer,
         printer << '|';
       }
 
-      auto conn = bnd->connection(cptr.left);
-      auto scores = conn->entryScores(cptr.beam).row(cptr.right);
+      auto conn = bnd->scores();
+      auto scores = conn->forPtr(cptr);
 
       JPP_DCHECK_GE(weights.size(), 1);
       float totalScore = scores[0] * weights[0];

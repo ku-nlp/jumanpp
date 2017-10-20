@@ -8,6 +8,7 @@
 #include <iostream>
 #include "util/array_slice.h"
 #include "util/sliceable_array.h"
+#include "util/string_piece.h"
 
 namespace jumanpp {
 namespace util {
@@ -52,6 +53,14 @@ template <typename C>
 util::VOutImpl<typename C::value_type> VOut(const C& slice) {
   using T = typename C::value_type;
   util::ArraySlice<T> aslice{slice};
+  return util::VOutImpl<T>{aslice};
+}
+
+template <typename It>
+util::VOutImpl<typename It::value_type> VOut(It beg, It end) {
+  using T = typename It::value_type;
+  u32 sz = static_cast<u32>(std::distance(beg, end));
+  util::ArraySlice<T> aslice{&*beg, sz};
   return util::VOutImpl<T>{aslice};
 }
 

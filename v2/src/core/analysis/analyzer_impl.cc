@@ -234,19 +234,6 @@ Status AnalyzerImpl::bootstrapAnalysis() {
   JPP_RETURN_IF_ERROR(std::move(x.first));
   sproc_ = x.second;
 
-  auto bndCount = lattice_.createdBoundaryCount();
-  for (int boundary = 0; boundary < bndCount; ++boundary) {
-    auto bnd = lattice_.boundary(boundary);
-    auto left = bnd->ends();
-    auto sz = left->arraySize();
-
-    // create all boundary connections
-    for (int i = 0; i < sz; ++i) {
-      LatticeBoundaryConnection* lbc;
-      bnd->newConnection(&lbc);
-    }
-  }
-
   // bootstrap beam pointers
   auto beam0 = lattice_.boundary(0)->starts()->beamData().data();
   EntryBeam::initializeBlock(beam0);
@@ -289,10 +276,11 @@ Status AnalyzerImpl::computeScores(const ScorerDef* sconf) {
       auto& t1node = left[t1idx];
       proc.applyT1(t1node.boundary, t1node.position, sconf->feature);
       proc.resolveBeamAt(t1node.boundary, t1node.position);
-      LatticeBoundaryConnection* bndconn = bnd->connection(t1idx);
-      for (i32 beamIdx = 0; beamIdx < proc.activeBeamSize(); ++beamIdx) {
+      auto scores = bnd->scores();
+      i32 activeBeam = proc.activeBeamSize();
+      for (i32 beamIdx = 0; beamIdx < activeBeam; ++beamIdx) {
         proc.applyT2(beamIdx, sconf->feature);
-        proc.copyFeatureScores(beamIdx, bndconn);
+        proc.copyFeatureScores(t1idx, beamIdx, scores);
       }
     }
 
@@ -303,18 +291,8 @@ Status AnalyzerImpl::computeScores(const ScorerDef* sconf) {
       scorerIdx += 1;
     }
 
-    for (i32 t1idx = 0; t1idx < left.size(); ++t1idx) {
-      LatticeBoundaryConnection* bndconn = bnd->connection(t1idx);
-      proc.updateBeams(boundary, t1idx, bnd, bndconn, sconf);
-    }
-
-    // finally sort beam items
-    auto starts = bnd->starts();
-    auto t2items = starts->arraySize();
-    for (int i = 0; i < t2items; ++i) {
-      auto beamData = starts->beamData().row(i);
-      EntryBeam::fixupBeam(beamData);
-    }
+    // Finally, make beams
+    proc.makeBeams(boundary, bnd, sconf);
   }
 
   return Status::Ok();

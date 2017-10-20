@@ -9,7 +9,7 @@ set(jpp_util_test_srcs memory_test.cpp mmap_test.cc string_piece_test.cc
         csv_reader_test.cc coded_io_test.cc characters_test.cpp hashing_test.cc
         array_slice_test.cc inlined_vector_test.cc soa_test.cc status_test.cpp
         serialization_test.cc printer_test.cc array_slice_util_test.cc lazy_test.cc
-        seahash_test.cc fast_hash_test.cc
+        seahash_test.cc fast_hash_test.cc stl_util_test.cc
         )
 
 add_library(jpp_util ${jpp_util_sources} ${jpp_util_headers})

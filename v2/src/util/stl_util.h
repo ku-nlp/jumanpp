@@ -48,6 +48,33 @@ inline void fill(C& c, const T& t) {
   std::fill(std::begin(c), std::end(c), t);
 };
 
+template <typename It, typename Comp>
+It part_step(It start, It end, Comp comp) {
+  auto sz = std::distance(start, end);
+  It pivot{start};
+  std::advance(pivot, sz / 2);
+  std::swap(*pivot, *start);
+  pivot = start;
+  ++start;
+  --end;
+  while (start != end) {
+    if (comp(*start, *pivot)) {
+      ++start;
+    } else {
+      std::swap(*start, *end);
+      --end;
+    }
+  }
+  std::swap(*pivot, *start);
+  return start;
+}
+
+template <typename It, typename Comp>
+It partition(It start, It end, Comp comp, size_t minSize, size_t maxSize) {
+  std::nth_element(start, start + minSize, end, comp);
+  return start + minSize;
+};
+
 }  // namespace util
 }  // namespace jumanpp
 

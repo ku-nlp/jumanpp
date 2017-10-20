@@ -59,32 +59,64 @@ class LatticeRightBoundary final : public util::memory::StructOfArrays {
   util::ConstSliceable<ConnectionBeamElement> beamData() const { return beam; }
 };
 
-class LatticeBoundaryConnection final
-    : public util::memory::StructOfArraysFactory<LatticeBoundaryConnection> {
-  const LatticeConfig& lconf;
-  const LatticeBoundaryConfig& lbconf;
-  util::memory::SizedArrayField<Score> scores;
-
-  friend class LatticeBoundary;
+class NodeScores {
+  util::Sliceable<Score> beamScores_;
+  u32 numLeft_;
+  u32 numScorers_;
 
  public:
-  LatticeBoundaryConnection(util::memory::ManagedAllocatorCore* alloc,
-                            const LatticeConfig& lc,
-                            const LatticeBoundaryConfig& lbc);
+  NodeScores(const util::Sliceable<Score>& beamScores, u32 numLeft,
+             u32 numScorers)
+      : beamScores_(beamScores), numLeft_(numLeft), numScorers_(numScorers) {}
 
-  LatticeBoundaryConnection(const LatticeBoundaryConnection& o);
+  util::MutableArraySlice<Score> beamLeft(i32 beam, i32 left) {
+    auto data = beamScores_.row(beam);
+    JPP_DCHECK_IN(left, 0, numLeft_);
+    auto numPerRow = numScorers_;
+    u32 start = left * numPerRow;
+    util::MutableArraySlice<Score> slice{data, start, numScorers_};
+    return slice;
+  }
 
-  LatticeBoundaryConnection* element(i32 idx) { return child(idx); }
+  u32 beam() const { return static_cast<u32>(beamScores_.numRows()); }
+  u32 left() const { return numLeft_; }
+  u32 numScorers() const { return numScorers_; }
+};
 
-  void importBeamScore(i32 scorer, i32 beam, util::ArraySlice<Score> scores);
-  util::Sliceable<Score> entryScores(i32 beam);
+class LatticeBoundaryScores final {
+  util::ArraySlice<Score*> scores_;
+  u32 scoresPerItem_;
+  u32 numLeft_;
+  u32 numBeam_;
+  u32 numScorers_;
+
+  friend class NodeScores;
+
+ public:
+  LatticeBoundaryScores(util::memory::ManagedAllocatorCore* alloc,
+                        const LatticeConfig& lc,
+                        const LatticeBoundaryConfig& lbc);
+
+  NodeScores nodeScores(i32 right) const noexcept {
+    auto data = scores_.at(right);
+    util::MutableArraySlice<Score> slice{data, scoresPerItem_};
+    util::Sliceable<Score> sl{slice, numLeft_ * numScorers_, numBeam_};
+    return NodeScores{sl, numLeft_, numScorers_};
+  }
+
+  util::ArraySlice<Score> forPtr(const ConnectionPtr& ptr) const {
+    return nodeScores(ptr.right).beamLeft(ptr.beam, ptr.left);
+  }
+
+  void importBeamScore(i32 left, i32 scorer, i32 beam,
+                       util::ArraySlice<Score> scores);
 };
 
 class LatticeBoundary {
-  LatticeBoundaryConfig config;
-  LatticeLeftBoundary left;
-  LatticeRightBoundary right;
-  LatticeBoundaryConnection connections;
+  LatticeBoundaryConfig cfg_;
+  LatticeLeftBoundary left_;
+  LatticeRightBoundary right_;
+  LatticeBoundaryScores scores_;
   u32 currentEnding_;
 
   Status initialize();
@@ -94,30 +126,28 @@ class LatticeBoundary {
                   const LatticeConfig& lc, const LatticeBoundaryConfig& lbc);
 
   EntryPtr entry(u32 position) const {
-    return right.nodeInfo_.data().at(position).entryPtr();
+    return right_.nodeInfo_.data().at(position).entryPtr();
   }
 
   bool endingsFilled() const {
-    return left.endingNodes.data().size() == currentEnding_;
+    return left_.endingNodes.data().size() == currentEnding_;
   }
 
-  bool isActive() const {
-    return config.beginNodes != 0 && config.endNodes != 0;
-  }
+  bool isActive() const { return cfg_.beginNodes != 0 && cfg_.endNodes != 0; }
 
-  LatticeLeftBoundary* ends() { return &left; }
-  const LatticeLeftBoundary* ends() const { return &left; }
-  LatticeRightBoundary* starts() { return &right; }
-  const LatticeRightBoundary* starts() const { return &right; }
-  u32 localNodeCount() const { return config.beginNodes; }
+  LatticeLeftBoundary* ends() { return &left_; }
+  const LatticeLeftBoundary* ends() const { return &left_; }
+  LatticeRightBoundary* starts() { return &right_; }
+  const LatticeRightBoundary* starts() const { return &right_; }
+  u32 localNodeCount() const { return cfg_.beginNodes; }
+
+  LatticeBoundaryScores* scores() { return &scores_; }
+
+  const LatticeBoundaryScores* scores() const { return &scores_; }
 
   friend class Lattice;
 
   void addEnd(LatticeNodePtr nodePtr);
-  Status newConnection(LatticeBoundaryConnection** result);
-  LatticeBoundaryConnection* connection(i32 index) {
-    return connections.element(index);
-  }
 };
 
 class Lattice {

@@ -236,9 +236,9 @@ struct RnnScorerState {
 
   void fillScoreData(LatticeBoundary* bnd, i32 leftIdx, i32 scorerIdx,
                      util::Sliceable<float> scoreData) {
-    auto conn = bnd->connection(leftIdx);
+    LatticeBoundaryScores* scores = bnd->scores();
     for (int i = 0; i < scoreData.numRows(); ++i) {
-      conn->importBeamScore(scorerIdx, i, scoreData.row(i));
+      scores->importBeamScore(leftIdx, scorerIdx, i, scoreData.row(i));
     }
   }
 

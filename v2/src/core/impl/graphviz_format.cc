@@ -118,9 +118,7 @@ detail::Renderable *GraphVizBuilder::makeFooter(int maxBeam) {
       if (analysis::EntryBeam::isFake(myBeam)) {
         out->lit("N/A");
       } else {
-        auto conn = bnd->connection(myBeam.ptr.left);
-        auto beamScores = conn->entryScores(myBeam.ptr.beam);
-        auto sc = beamScores.row(myBeam.ptr.right);
+        auto sc = bnd->scores()->forPtr(myBeam.ptr);
         auto max = sc.size();
         for (int j = 0; j < max; ++j) {
           auto score = sc.at(j);
