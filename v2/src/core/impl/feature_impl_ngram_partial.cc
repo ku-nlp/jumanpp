@@ -10,7 +10,7 @@
   ::jumanpp::util::prefetch<::jumanpp::util::PrefetchHint::PREFETCH_HINT_T2>( \
       (x));
 #else
-#define JPP_DO_PREFETCH(x) ()
+#define JPP_DO_PREFETCH(x)
 #endif  // JPP_PREFETCH_FEATURE_WEIGHTS
 
 namespace jumanpp {
