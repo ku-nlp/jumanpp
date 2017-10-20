@@ -51,11 +51,41 @@ inline void fill(C& c, const T& t) {
 template <typename It, typename Comp>
 It part_step(It start, It end, Comp comp) {
   auto sz = std::distance(start, end);
+  if (sz == 1) {
+    return end;
+  }
+  if (sz == 2) {
+    auto n = start;
+    ++n;
+    if (comp(*n, *start)) {
+      std::swap(*n, *start);
+    }
+    return n;
+  }
+  if (sz == 3) {
+    auto n0 = start;
+    auto n1 = n0;
+    ++n1;
+    auto n2 = n1;
+    ++n2;
+    if (comp(*n1, *n0)) {
+      std::swap(*n1, *n0);
+    }
+    if (comp(*n2, *n1)) {
+      std::swap(*n2, *n1);
+    }
+    if (comp(*n1, *n0)) {
+      std::swap(*n1, *n0);
+    }
+    return n1;
+  }
   It pivot{start};
   std::advance(pivot, sz / 2);
-  std::swap(*pivot, *start);
-  pivot = start;
-  ++start;
+  auto s0 = start;
+  auto e0 = end;
+  --end;
+  std::swap(*pivot, *end);
+  pivot = end;
   --end;
   while (start != end) {
     if (comp(*start, *pivot)) {
@@ -65,12 +95,49 @@ It part_step(It start, It end, Comp comp) {
       --end;
     }
   }
-  std::swap(*pivot, *start);
-  return start;
+  //++end;
+  if (comp(*pivot, *end)) {
+    std::swap(*pivot, *end);
+  } else {
+    ++end;
+    std::swap(*pivot, *end);
+  }
+  return end;
 }
 
 template <typename It, typename Comp>
 It partition(It start, It end, Comp comp, size_t minSize, size_t maxSize) {
+  auto sz = std::distance(start, end);
+  JPP_DCHECK_LE(minSize, sz);
+  JPP_DCHECK_LE(minSize, maxSize);
+  JPP_DCHECK_LE(maxSize, sz);
+
+  while (true) {
+    It mid = part_step(start, end, comp);
+    sz = std::distance(start, mid);
+    if (minSize <= sz && sz <= maxSize) {
+      return mid;
+    }
+
+    if (sz > maxSize) {
+      end = mid;
+      continue;
+    }
+
+    sz += 1;
+    start = mid;
+    ++start;
+    minSize -= sz;
+    maxSize -= sz;
+
+    if (minSize == 0) {
+      return start;
+    }
+  }
+};
+
+template <typename It, typename Comp>
+It partition_stl(It start, It end, Comp comp, size_t minSize, size_t maxSize) {
   std::nth_element(start, start + minSize, end, comp);
   return start + minSize;
 };
