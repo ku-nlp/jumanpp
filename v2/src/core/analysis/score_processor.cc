@@ -23,16 +23,19 @@ ScoreProcessor::ScoreProcessor(AnalyzerImpl *analyzer)
     : ngramApply_{analyzer->core().features().ngramPartial},
       lattice_{analyzer->lattice()} {
   u32 maxNodes = 0;
+  u32 maxEnds = 0;
   for (u32 idx = 2; idx < lattice_->createdBoundaryCount(); ++idx) {
     auto bnd = lattice_->boundary(idx);
     maxNodes = std::max<u32>(maxNodes, bnd->localNodeCount());
+    maxEnds = std::max<u32>(maxEnds, bnd->ends()->arraySize());
   }
   this->runStats_.maxStarts = maxNodes;
+  this->runStats_.maxEnds = maxEnds;
 
   auto *alloc = analyzer->alloc();
   scores_.prepare(alloc, maxNodes);
   beamCandidates_ = alloc->allocateBuf<BeamCandidate>(
-      maxNodes * lattice_->config().beamSize, 64);
+      maxEnds * lattice_->config().beamSize, 64);
   analyzer->core().features().ngramPartial->allocateBuffers(&featureBuffer_,
                                                             runStats_, alloc);
 }

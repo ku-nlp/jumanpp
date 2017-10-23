@@ -61,6 +61,7 @@ class NgramFeatureApply : public FeatureApply {
 
 struct AnalysisRunStats {
   u32 maxStarts;
+  u32 maxEnds;
 };
 
 struct FeatureBuffer {
