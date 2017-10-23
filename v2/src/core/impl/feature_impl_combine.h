@@ -37,7 +37,7 @@ class DynamicPatternFeatureImpl {
              util::MutableArraySlice<u64> result) const noexcept {
 
     auto hash = fh{}.mix(index).mix(arguments.size()).mix(PatternFeatureSeed);
-    for (auto& arg: arguments) {
+    for (i32 arg: arguments) {
       hash = hash.mix(features[arg]);
     }
     hash = hash.mix(util::hashing::SeaHashSeed1);
