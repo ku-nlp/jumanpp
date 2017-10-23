@@ -118,14 +118,16 @@ class TrigramFeature {
     result.at(target_) = v.result();
   }
 
-  JPP_ALWAYS_INLINE void step2(util::ArraySlice<u64> patterns,
-                               util::ArraySlice<u64> state,
-                               util::MutableArraySlice<u32> result,
-                               u32 mask) const noexcept {
+  JPP_ALWAYS_INLINE u32 step2(util::ArraySlice<u64> patterns,
+                              util::ArraySlice<u64> state,
+                              util::MutableArraySlice<u32> result,
+                              u32 mask) const noexcept {
     auto t2 = patterns.at(t2idx_);
     auto s = state.at(target_);
     auto v = h::FastHash1{s}.mix(t2);
-    result.at(target_) = v.masked(mask);
+    auto res = v.masked(mask);
+    result.at(target_) = res;
+    return res;
   }
 
   void writeMember(util::io::Printer& p, i32 count) const;

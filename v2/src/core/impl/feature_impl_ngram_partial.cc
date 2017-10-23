@@ -113,11 +113,11 @@ bool outputBiApply2(util::io::Printer& p,
     << ") const noexcept override {";
   {
     util::io::Indent fnid{p, 2};
+    p << "\nauto numElems = buffers->currentElems;";
+    p << "\nif (numElems == 0) { return; }";
     p << "\nauto numBigrams = this->numBigrams();";
     p << "\nauto buf1 = buffers->valBuf1(numBigrams);";
     p << "\nauto buf2 = buffers->valBuf2(numBigrams);";
-    p << "\nauto numElems = buffers->currentElems;";
-    p << "\nif (numElems == 0) { return; }";
 
     p << "\nconst auto state = buffers->t1Buf(numBigrams, numElems);";
     p << "\nauto weights = scorer->weights();";
@@ -140,6 +140,76 @@ bool outputBiApply2(util::io::Printer& p,
         p << "\nf_" << i % numVars << " += weights.at(buf2.at(" << i << "));";
         p << "\n::jumanpp::u32 idx = bi_" << i
           << ".step1(p1, srow, buf1, mask);";
+#ifdef JPP_PREFETCH_FEATURE_WEIGHTS
+        p << "\n"
+          << JPP_TEXT(::jumanpp::util::prefetch<
+                      ::jumanpp::util::PrefetchHint::PREFETCH_HINT_T2>)
+          << "(&weights.at(idx));";
+#endif
+        p << "\n}";
+      }
+
+      p << "\nresult.at(row - 1) += (f_0";
+      for (int i = 1; i < numVars; ++i) {
+        p << " + f_" << i;
+      }
+      p << ");";
+      p << "\nbuf1.swap(buf2);";
+    }
+    p << "\n}\n";
+    p << "\nresult.at(row - 1) += "
+      << "::jumanpp::core::analysis::impl::computeUnrolled4RawPerceptron("
+         "weights, buf2);";
+  }
+
+  p << "\n}\n";
+  return true;
+}
+
+bool outputTriApply3(util::io::Printer& p,
+                     util::ArraySlice<TrigramFeature> trigrams) {
+  u32 numVars = 1;
+  if (trigrams.size() > 8) {
+    numVars = 8;
+  } else if (trigrams.size() > 4) {
+    numVars = 4;
+  }
+
+  p << "\n\nvoid applyTriStep3("  // args
+    << JPP_TEXT(::jumanpp::core::features::FeatureBuffer*) << " buffers, "
+    << JPP_TEXT(::jumanpp::util::ArraySlice<jumanpp::u64>) << " p2, "
+    << JPP_TEXT(::jumanpp::core::analysis::FeatureScorer*) << " scorer, "
+    << JPP_TEXT(::jumanpp::util::MutableArraySlice<float>) << " result"
+    << ") const noexcept override {";
+  {
+    util::io::Indent fnid{p, 2};
+    p << "\nauto numElems = buffers->currentElems;";
+    p << "\nif (numElems == 0) { return; }";
+    p << "\nauto numTrigrams = this->numTrigrams();";
+    p << "\nauto buf1 = buffers->valBuf1(numTrigrams);";
+    p << "\nauto buf2 = buffers->valBuf2(numTrigrams);";
+
+    p << "\nconst auto state = buffers->t2Buf2(numTrigrams, numElems);";
+    p << "\nauto weights = scorer->weights();";
+    p << "\nauto mask = static_cast<::jumanpp::u32>(weights.size() - 1);";
+    p << "\nthis->triStep2(p2, state.row(0), mask, weights, buf2);";
+    p << "\n::jumanpp::u32 row = 1;";
+
+    p << "\nfor (; row < state.numRows(); ++row) {";
+    {
+      util::io::Indent id2{p, 2};
+      p << "\nauto srow = state.row(row);";
+      for (int i = 0; i < numVars; ++i) {
+        p << "\nfloat f_" << i << " = 0;";
+      }
+      for (int i = 0; i < trigrams.size(); ++i) {
+        auto& tri = trigrams.at(i);
+        p << "\n{";
+        util::io::Indent id3{p, 2};
+        tri.writeMember(p, i);
+        p << "\nf_" << i % numVars << " += weights.at(buf2.at(" << i << "));";
+        p << "\n::jumanpp::u32 idx = tri_" << i
+          << ".step2(p2, srow, buf1, mask);";
 #ifdef JPP_PREFETCH_FEATURE_WEIGHTS
         p << "\n"
           << JPP_TEXT(::jumanpp::util::prefetch<
@@ -315,6 +385,7 @@ bool PartialNgramDynamicFeatureApply::outputClassBody(
     << "return " << this->numTrigrams() << "; }";
 
   outputBiApply2(p, this->bigrams_);
+  outputTriApply3(p, this->trigrams_);
 
   return true;
 }
