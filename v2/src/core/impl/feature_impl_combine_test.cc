@@ -15,13 +15,12 @@ TEST_CASE("pattern feature compiles") {
   util::MutableArraySlice<u64> wrap{data};
   util::ArraySlice<u64> input{1, 2, 3, 4};
   pat.apply(input, &wrap);
-  CHECK(data[0] == 0x9d8a01713676eec6ULL);
+  CHECK(data[0] == 0x1482c5b80953ac1dULL);
   CHECK(data[1] == 0);
   CHECK(data[2] == 0);
 }
 
-// TODO: fixme
-TEST_CASE("ngram features can be compiled", "[.]") {
+TEST_CASE("ngram features can be compiled") {
   constexpr NgramFeatureImpl<1> uni{0, 1};
   constexpr NgramFeatureImpl<2> bi{1, 1, 2};
   constexpr NgramFeatureImpl<3> tri{2, 1, 2, 0};
@@ -33,7 +32,7 @@ TEST_CASE("ngram features can be compiled", "[.]") {
   uni.apply(&res, t2, t1, t0);
   bi.apply(&res, t2, t1, t0);
   tri.apply(&res, t2, t1, t0);
-  CHECK(data[0] == 0x45514d5e);
-  CHECK(data[1] == 0x1e35b1b0);
-  CHECK(data[2] == 0xf3eb0535);
+  CHECK(data[0] == 0x84fde475);
+  CHECK(data[1] == 0xe5e130dd);
+  CHECK(data[2] == 0x176432bf);
 }

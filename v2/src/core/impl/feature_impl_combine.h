@@ -18,6 +18,9 @@ namespace core {
 namespace features {
 namespace impl {
 
+
+using fh = util::hashing::FastHash1;
+
 class DynamicPatternFeatureImpl {
   i32 index;
   util::ArraySlice<i32> arguments;
@@ -32,8 +35,14 @@ class DynamicPatternFeatureImpl {
 
   void apply(util::ArraySlice<u64> features,
              util::MutableArraySlice<u64> result) const noexcept {
-    result.at(index) = util::hashing::hashIndexedSeq(PatternFeatureSeed ^ index,
-                                                     features, arguments);
+
+    auto hash = fh{}.mix(index).mix(arguments.size()).mix(PatternFeatureSeed);
+    for (auto& arg: arguments) {
+      hash = hash.mix(features[arg]);
+    }
+    hash = hash.mix(util::hashing::SeaHashSeed1);
+
+    result.at(index) = hash.result();
   }
 };
 
@@ -56,8 +65,6 @@ class NgramFeatureImpl {
              const util::ArraySlice<u64> &t2, const util::ArraySlice<u64> &t1,
              const util::ArraySlice<u64> &t0) const noexcept;
 };
-
-using fh = util::hashing::FastHash1;
 
 template <>
 inline void NgramFeatureImpl<1>::apply(util::MutableArraySlice<u32> result,
