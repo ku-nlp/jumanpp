@@ -34,9 +34,10 @@ TEST_CASE("character classes are compatible", "[characters]") {
 
 TEST_CASE("toCodepoint works with あ", "[characters]") {
   char32_t result;
-  auto literal = "あ";
-  CHECK(toCodepoint(literal, literal + sizeof(literal) - 1, &result));
-  CHECK(result == U'あ');
+  StringPiece literal{"あ"};
+  auto res = getCodepoint(literal.ubegin(), literal.uend());
+  CHECK(res.utf8Length == 3);
+  CHECK(res.codepoint == U'あ');
 }
 
 TEST_CASE("space type of codepints is detected correctly", "[characters]") {

@@ -13,7 +13,8 @@ set(core_srcs darts_trie.cc dictionary.cc impl/field_import.cc dic_builder.cc
         analysis/perceptron.cc analysis/score_processor.cc analysis/analysis_result.cc
         env.cc impl/graphviz_format.cc impl/feature_codegen.cc analysis/onomatopoeia_creator.cc
         analysis/rnn_id_resolver.cc analysis/numeric_creator.cc analysis/ngram_computations.cc
-        impl/feature_impl_ngram_partial.cc impl/feature_impl_combine.cc)
+        impl/feature_impl_ngram_partial.cc impl/feature_impl_combine.cc analysis/charlattice.cc
+        analysis/normalized_node_creator.cc)
 
 set(core_train_srcs
         training/training_io.h training/loss.h training/gold_example.h training/trainer.h training/scw.h
@@ -37,13 +38,13 @@ set(core_hdrs
         analysis/score_processor.h analysis/analysis_result.h analysis/rnn_scorer.cc analysis/rnn_scorer.h
         impl/perceptron_io.h env.h impl/graphviz_format.h analysis/onomatopoeia_creator.h impl/feature_codegen.h
         analysis/rnn_id_resolver.h analysis/rnn_serialization.h analysis/numeric_creator.h
-        analysis/ngram_computations.h impl/feature_impl_ngram_partial.h)
+        analysis/ngram_computations.h impl/feature_impl_ngram_partial.h analysis/charlattice.h
+        analysis/normalized_node_creator.h analysis/charlattice.h analysis/normalized_node_creator.h)
 
 set(core_test_srcs darts_trie_test.cc dictionary_test.cc impl/field_import_test.cc
         impl/field_reader_test.cc impl/feature_impl_prim_test.cc impl/feature_impl_compute_test.cc
         impl/feature_impl_combine_test.cc impl/feature_test.cc runtime_info_test.cc impl/graphviz_format_test.cc
-        impl/feature_impl_ngram_partial_test.cc
-        )
+        impl/feature_impl_ngram_partial_test.cc)
 
 set(core_train_test_srcs training/gold_example_test.cc training/gold_example2_test.cc training/trainer_test.cc
         training/partial_example_io_test.cc training/partial_example_train_test.cc)
@@ -58,7 +59,7 @@ set(analysis_test_srcs
         analysis/unk_nodes_creator_test.cc analysis/lattice_builder_test.cc
         analysis/perceptron_test.cc analysis/score_processor_test.cc analysis/analyzer_impl_test.cc
         analysis/lattice_compactor_test.cc analysis/onomatopoeia_creator_test.cc
-        analysis/rnn_scorer_test.cc analysis/numeric_creator_test.cc)
+        analysis/rnn_scorer_test.cc analysis/numeric_creator_test.cc analysis/charlattice_test.cc)
 
 add_library(jpp_core ${core_srcs} ${core_hdrs} ${libs3p_pegtl_headers})
 add_library(jpp_core_train ${core_train_srcs} ${core_hdrs})

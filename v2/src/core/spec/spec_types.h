@@ -45,7 +45,7 @@ enum class UnkMakerType {
   Chunking,
   Onomatopoeia,
   Numeric,
-  Prolonging
+  Normalize
 };
 
 enum class FieldExpressionKind {

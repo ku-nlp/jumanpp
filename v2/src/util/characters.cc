@@ -98,46 +98,6 @@ const util::FlatSet<char32_t> brackets{
     0xFF62, 0xFF63,  // HALFWIDTH CORNER BRACKET
 };
 
-bool toCodepoint(StringPiece::iterator &input_itr,
-                 StringPiece::iterator itr_end2, char32_t *result) noexcept {
-  char32_t u;
-  const u8 *itr = reinterpret_cast<const u8 *>(input_itr);
-  const u8 *itr_end = reinterpret_cast<const u8 *>(itr_end2);
-
-  if (*itr > 0x00ef) { /* 4 bytes */
-    JPP_RET_CHECK(itr_end - itr >= 4);
-    JPP_RET_CHECK(((*itr & ~0x7) ^ 0xf0) == 0);
-    u = (*(itr++) & 0x07) << 18;
-    JPP_RET_CHECK(((*itr & ~0x3f) ^ 0x80) == 0);
-    u |= (*(itr++) & 0x3f) << 12;
-    JPP_RET_CHECK(((*itr & ~0x3f) ^ 0x80) == 0);
-    u |= (*(itr++) & 0x3f) << 6;
-    JPP_RET_CHECK(((*itr & ~0x3f) ^ 0x80) == 0);
-    u |= (*(itr++) & 0x3f);
-  } else if (*itr > 0xdf) { /* 3 bytes */
-    JPP_RET_CHECK(itr_end - itr >= 3);
-    JPP_RET_CHECK(((*itr & ~0xf) ^ 0xe0) == 0);
-    u = (*(itr++) & 0x0f) << 12;
-    JPP_RET_CHECK(((*itr & ~0x3f) ^ 0x80) == 0);
-    u |= (*(itr++) & 0x3f) << 6;
-    JPP_RET_CHECK(((*itr & ~0x3f) ^ 0x80) == 0);
-    u |= *(itr++) & 0x3f;
-  } else if (*itr > 0x7f) { /* 2 bytes */
-    JPP_RET_CHECK(itr_end - itr >= 2);
-    JPP_RET_CHECK(((*itr & ~0x1f) ^ 0xc0) == 0);
-    u = (*(itr++) & 0x1f) << 6;
-    JPP_RET_CHECK(((*itr & ~0x3f) ^ 0x80) == 0);
-    u |= *(itr++) & 0x3f;
-  } else { /* 1 byte */
-    JPP_RET_CHECK(itr_end - itr >= 1);
-    JPP_RET_CHECK((*itr & ~0x7f) == 0);
-    u = *(itr++) & 0x7f;
-  }
-  *result = u;
-  input_itr = reinterpret_cast<StringPiece::pointer_t>(itr);
-  return true;
-}
-
 using Codepoint = char32_t;
 
 template <Codepoint... haystack>
@@ -269,13 +229,17 @@ CharacterClass getCodeType(char32_t input) noexcept {
 
 Status preprocessRawData(StringPiece utf8data,
                          std::vector<InputCodepoint> *result) {
-  auto itr = utf8data.begin();
-  while (itr < utf8data.end()) {
-    char32_t unicode;
+  auto itr = utf8data.ubegin();
+  StringPiece::byte_ptr end = utf8data.uend();
+  while (itr < end) {
     auto begin = itr;
-    bool ret = toCodepoint(itr, utf8data.end(), &unicode);
-    if (!ret) return JPPS_INVALID_PARAMETER << "Invalid UTF8 sequence";
+    auto ret = getCodepoint(itr, end);
 
+    if (ret.utf8Length == 0) {
+      return JPPS_INVALID_PARAMETER << "Invalid UTF8 sequence: " << utf8data;
+    }
+    itr += ret.utf8Length;
+    auto unicode = ret.codepoint;
     CharacterClass cc = getCodeType(unicode);
     result->emplace_back(InputCodepoint{unicode, cc, StringPiece(begin, itr)});
   }

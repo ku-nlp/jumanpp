@@ -81,6 +81,7 @@ class DoubleArrayTraversal {
   DoubleArrayTraversal(const DoubleArrayTraversal&) noexcept = default;
   i32 value() const { return value_; }
   TraverseStatus step(StringPiece data);
+  TraverseStatus step(StringPiece data, size_t& pos);
 };
 
 namespace impl {

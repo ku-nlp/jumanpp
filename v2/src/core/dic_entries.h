@@ -73,6 +73,9 @@ class IndexTraversal {
   IndexTraversal(const EntriesHolder* dic_)
       : da_(dic_->trie.traversal()), dic_(dic_) {}
   TraverseStatus step(const StringPiece& sp) { return da_.step(sp); }
+  TraverseStatus step(const StringPiece& sp, size_t& pos) {
+    return da_.step(sp, pos);
+  }
   IndexedEntries entries() const {
     auto reader = dic_->entryPtrs.listAt(da_.value());
     return IndexedEntries{dic_->entrySize, reader, dic_->entries};
