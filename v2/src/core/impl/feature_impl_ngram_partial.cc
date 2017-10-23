@@ -99,10 +99,12 @@ void PartialNgramDynamicFeatureApply::triStep2(
 bool outputBiApply2(util::io::Printer& p,
                     util::ArraySlice<BigramFeature> bigrams) {
   u32 numVars = 1;
-  if (bigrams.size() > 8) {
+  if (bigrams.size() >= 8) {
     numVars = 8;
-  } else if (bigrams.size() > 4) {
+  } else if (bigrams.size() >= 4) {
     numVars = 4;
+  } else if (bigrams.size() >= 2) {
+    numVars = 2;
   }
 
   p << "\n\nvoid applyBiStep2("  // args
@@ -169,10 +171,12 @@ bool outputBiApply2(util::io::Printer& p,
 bool outputTriApply3(util::io::Printer& p,
                      util::ArraySlice<TrigramFeature> trigrams) {
   u32 numVars = 1;
-  if (trigrams.size() > 8) {
+  if (trigrams.size() >= 8) {
     numVars = 8;
-  } else if (trigrams.size() > 4) {
+  } else if (trigrams.size() >= 4) {
     numVars = 4;
+  } else if (trigrams.size() >= 2) {
+    numVars = 2;
   }
 
   p << "\n\nvoid applyTriStep3("  // args
