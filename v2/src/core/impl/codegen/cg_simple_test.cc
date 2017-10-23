@@ -26,6 +26,7 @@ util::Sliceable<T> slice(std::array<T, N>* slc, size_t rows) {
 
 struct BenchInput {
   std::array<u32, NumNgrams * NumExamples> result;
+  std::array<u64, NumFeatures * NumExamples> pat;
   std::array<u64, NumFeatures * NumExamples> t0;
   std::array<u64, NumFeatures> t1;
   std::array<u64, NumFeatures> t2;
@@ -34,6 +35,7 @@ struct BenchInput {
     for (int f = 0; f < NumFeatures; ++f) {
       for (int ex = 0; ex < NumExamples; ++ex) {
         t0.at(f + ex * NumFeatures) = 10000 + 1000 * f + ex * 2;
+        pat.at(f + ex * NumFeatures) = 10000 + 1000 * f + ex * 2;
       }
       t1.at(f) = 20000 + f * 2;
       t2.at(f) = 30000 + f * 2;
@@ -47,7 +49,37 @@ struct BenchInput {
     util::MutableArraySlice<u64> t2s{&t2};
     return {resSl, t2s, t1s, t0SL};
   }
+
+  jumanpp::core::features::impl::PatternFeatureData patternData() {
+    auto s1 = slice(&pat, NumExamples);
+    auto s2 = slice(&t0, NumExamples);
+    return {s1, s2};
+  }
 };
+
+TEST_CASE("pattern feature produce the same result") {
+  TestEnv env;
+  env.spec([](ModelSpecBuilder& msb) {
+    jumanpp::codegentest::CgTwoSpecFactory::fillSpec(msb);
+  });
+  env.importDic("a,b,c\nc,d,e\nf,g,h\n");
+  JumanppEnv jenv1;
+  env.loadEnv(&jenv1);
+  jumanpp_generated::Test02 features;
+  REQUIRE_OK(jenv1.initFeatures(&features));
+  auto& fs = jenv1.coreHolder()->features();
+  BenchInput i1;
+  BenchInput i2;
+
+  auto d1 = i1.patternData();
+  fs.patternDynamic->applyBatch(&d1);
+  auto d2 = i2.patternData();
+  fs.patternStatic->applyBatch(&d2);
+  for (int i = 0; i < i1.t0.size(); ++i) {
+    CAPTURE(i);
+    CHECK(i1.t0[i] == i2.t0[i]);
+  }
+}
 
 TEST_CASE("full ngram feature values are the same for a small example") {
   TestEnv env;

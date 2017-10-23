@@ -27,6 +27,7 @@ class ComputeFeatureContext;
 class PrimitiveFeatureData;
 class PatternFeatureData;
 class NgramFeatureData;
+class PatternDynamicApplyImpl;
 class NgramDynamicFeatureApply;
 class PartialNgramDynamicFeatureApply;
 }  // namespace impl
@@ -137,7 +138,7 @@ struct FeatureHolder {
   std::unique_ptr<features::ComputeFeatureApply> computeDynamic;
   std::unique_ptr<features::ComputeFeatureApply> computeStatic;
   features::ComputeFeatureApply* compute = nullptr;
-  std::unique_ptr<features::PatternFeatureApply> patternDynamic;
+  std::unique_ptr<features::impl::PatternDynamicApplyImpl> patternDynamic;
   std::unique_ptr<features::PatternFeatureApply> patternStatic;
   features::PatternFeatureApply* pattern = nullptr;
   std::unique_ptr<features::impl::NgramDynamicFeatureApply> ngramDynamic;

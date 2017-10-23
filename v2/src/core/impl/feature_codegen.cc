@@ -47,6 +47,8 @@ Status StaticFeatureCodegen::writeHeader(const std::string& filename) {
         << "ngram() const override;\n"
         << JPP_TEXT(jumanpp::core::features::PartialNgramFeatureApply*)
         << "ngramPartial() const override;\n"
+        << JPP_TEXT(jumanpp::core::features::PatternFeatureApply*)
+        << "pattern() const override;\n"
         << "};\n"
         << "} //namespace jumanpp_generated\n";
 
@@ -111,6 +113,23 @@ bool outputPartialNgramFeatures(
   return true;
 }
 
+bool outputPatternFeatures(
+    i::Printer& p, StringPiece name,
+    features::impl::PatternDynamicApplyImpl* patternImpl) {
+  p << "class " << name << " final : "
+    << "public "
+    << JPP_TEXT(::jumanpp::core::features::impl::PatternFeatureApplyImpl) "< "
+    << name << " > {\n"
+    << "public:";
+  {
+    i::Indent id{p, 2};
+    p << "\n";
+    JPP_RET_CHECK(patternImpl->printClassBody(p));
+  }
+  p << "\n}; // class " << name << "\n";
+  return true;
+}
+
 Status StaticFeatureCodegen::writeSource(const std::string& filename,
                                          const FeatureHolder& features) {
   util::io::Printer p;
@@ -128,6 +147,10 @@ Status StaticFeatureCodegen::writeSource(const std::string& filename,
   partNgramName += config_.className;
   bool partNgramOk = outputPartialNgramFeatures(
       p, partNgramName, features.ngramPartialDynamic.get());
+  std::string patternName{"PatternFeatureStaticApply_"};
+  patternName += config_.className;
+  bool patternOk =
+      outputPatternFeatures(p, patternName, features.patternDynamic.get());
 
   p << "\n} //anon namespace\n";
 
@@ -155,6 +178,21 @@ Status StaticFeatureCodegen::writeSource(const std::string& filename,
     p << "\nreturn ";
     if (partNgramOk) {
       p << "new " << partNgramName << "{};";
+    } else {
+      p << "nullptr;";
+    }
+  }
+  p << "\n}";
+
+  p << "\n"
+    << JPP_TEXT(jumanpp::core::features::PatternFeatureApply*)
+    << config_.className << "::"
+    << "pattern() const {";
+  {
+    i::Indent io{p, 2};
+    p << "\nreturn ";
+    if (patternOk) {
+      p << "new " << patternName << "{};";
     } else {
       p << "nullptr;";
     }

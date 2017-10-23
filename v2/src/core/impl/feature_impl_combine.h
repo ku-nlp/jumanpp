@@ -18,32 +18,34 @@ namespace core {
 namespace features {
 namespace impl {
 
-
 using fh = util::hashing::FastHash1;
 
 class DynamicPatternFeatureImpl {
-  i32 index;
-  util::ArraySlice<i32> arguments;
+  i32 index_;
+  util::ArraySlice<i32> arguments_;
 
  public:
   template <size_t sz>
   constexpr DynamicPatternFeatureImpl(i32 ind, const i32 (&arr)[sz])
-      : index{ind}, arguments{arr} {}
+      : index_{ind}, arguments_{arr} {}
 
   DynamicPatternFeatureImpl(i32 ind, util::ArraySlice<i32> args)
-      : index{ind}, arguments{args} {}
+      : index_{ind}, arguments_{args} {}
 
-  void apply(util::ArraySlice<u64> features,
-             util::MutableArraySlice<u64> result) const noexcept {
-
-    auto hash = fh{}.mix(index).mix(arguments.size()).mix(PatternFeatureSeed);
-    for (i32 arg: arguments) {
+  inline void apply(util::ArraySlice<u64> features,
+                    util::MutableArraySlice<u64> result) const noexcept {
+    auto u32idx = static_cast<u32>(index_);
+    auto hash = fh{}.mix(u32idx).mix(arguments_.size()).mix(PatternFeatureSeed);
+    for (i32 arg : arguments_) {
       hash = hash.mix(features[arg]);
     }
     hash = hash.mix(util::hashing::SeaHashSeed1);
 
-    result.at(index) = hash.result();
+    result.at(u32idx) = hash.result();
   }
+
+  i32 index() const noexcept { return index_; }
+  util::ArraySlice<i32> arguments() const noexcept { return arguments_; }
 };
 
 template <int N>
@@ -112,7 +114,7 @@ template <typename Child>
 class PatternFeatureApplyImpl : public PatternFeatureApply {
  public:
   void applyBatch(impl::PatternFeatureData *data) const noexcept override {
-    const Child &c = static_cast<const Child &>(*this);
+    const auto &c = static_cast<const Child &>(*this);
     while (data->next()) {
       c.apply(data->primitive(), data->pattern());
     }
@@ -135,6 +137,8 @@ class PatternDynamicApplyImpl final
       c.apply(features, result);
     }
   }
+
+  bool printClassBody(util::io::Printer &p);
 };
 
 class DynamicNgramFeature : public FeatureApply {
@@ -213,30 +217,7 @@ class NgramDynamicFeatureApply
   std::vector<std::unique_ptr<DynamicNgramFeature>> children;
 
  public:
-  Status addChild(const NgramFeature &nf) {
-    switch (nf.arguments.size()) {
-      case 1: {
-        children.emplace_back(
-            new NgramFeatureDynamicAdapter<1>{nf.index, nf.arguments[0]});
-        break;
-      }
-      case 2: {
-        children.emplace_back(new NgramFeatureDynamicAdapter<2>{
-            nf.index, nf.arguments[0], nf.arguments[1]});
-        break;
-      }
-      case 3: {
-        children.emplace_back(new NgramFeatureDynamicAdapter<3>{
-            nf.index, nf.arguments[0], nf.arguments[1], nf.arguments[2]});
-        break;
-      }
-      default:
-        return JPPS_INVALID_STATE << "invalid ngram feature of order "
-                                  << nf.arguments.size()
-                                  << " only 1-3 are supported";
-    }
-    return Status::Ok();
-  }
+  Status addChild(const NgramFeature &nf);
 
   void apply(util::MutableArraySlice<u32> result,
              const util::ArraySlice<u64> &t2, const util::ArraySlice<u64> &t1,

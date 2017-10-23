@@ -13,7 +13,7 @@ set(core_srcs darts_trie.cc dictionary.cc impl/field_import.cc dic_builder.cc
         analysis/perceptron.cc analysis/score_processor.cc analysis/analysis_result.cc
         env.cc impl/graphviz_format.cc impl/feature_codegen.cc analysis/onomatopoeia_creator.cc
         analysis/rnn_id_resolver.cc analysis/numeric_creator.cc analysis/ngram_computations.cc
-        impl/feature_impl_ngram_partial.cc)
+        impl/feature_impl_ngram_partial.cc impl/feature_impl_combine.cc)
 
 set(core_train_srcs
         training/training_io.h training/loss.h training/gold_example.h training/trainer.h training/scw.h
