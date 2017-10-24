@@ -153,6 +153,11 @@ class FlatSet {
     return r.found ? const_iterator(r.b, rep_.limit(), r.index) : end();
   }
 
+  bool contains(const Key& k) const {
+    auto r = rep_.Find(k);
+    return r.found;
+  }
+
   std::pair<iterator, bool> insert(const Key& k) { return Insert(k); }
   template <typename InputIter>
   void insert(InputIter first, InputIter last) {

@@ -78,7 +78,7 @@ Status AnalyzerImpl::makeNodeSeedsFromDic() {
 
 Status AnalyzerImpl::makeUnkNodes1() {
   auto& unk = core_->unkMakers();
-  analysis::UnkNodesContext unc{&xtra_};
+  analysis::UnkNodesContext unc{&xtra_, alloc()};
   for (auto& m : unk.stage1) {
     if (!m->spawnNodes(input_, &unc, &latticeBldr_)) {
       return Status::InvalidState() << "failed to create unk nodes";
@@ -94,7 +94,7 @@ bool AnalyzerImpl::checkLatticeConnectivity() {
 
 Status AnalyzerImpl::makeUnkNodes2() {
   auto& unk = core_->unkMakers();
-  analysis::UnkNodesContext unc{&xtra_};
+  analysis::UnkNodesContext unc{&xtra_, alloc()};
   for (auto& m : unk.stage2) {
     if (!m->spawnNodes(input_, &unc, &latticeBldr_)) {
       return Status::InvalidState() << "failed to create unk nodes (2)";

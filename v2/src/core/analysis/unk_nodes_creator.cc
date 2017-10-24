@@ -139,6 +139,11 @@ bool UnkNodesContext::dicPatternMatches(const UnkNodeConfig& conf,
   return false;
 }
 
+EntryPtr UnkNodesContext::makePtr(StringPiece surface, EntryPtr ptr,
+                                  const UnkNodeConfig& conf, u64 feature) {
+  return EntryPtr(0);
+}
+
 i32 hashUnkString(StringPiece sp) {
   constexpr u64 unkStringSeed = 0xa76210bfULL;
   u64 hash =

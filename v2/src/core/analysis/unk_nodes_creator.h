@@ -35,12 +35,20 @@ i32 hashUnkString(StringPiece sp);
 
 class UnkNodesContext {
   ExtraNodesContext* xtra_;
+  util::memory::ManagedAllocatorCore* alloc_;
 
  public:
-  UnkNodesContext(ExtraNodesContext* xtra) : xtra_{xtra} {}
+  UnkNodesContext(ExtraNodesContext* xtra,
+                  util::memory::ManagedAllocatorCore* alloc)
+      : xtra_{xtra}, alloc_{alloc} {}
+
+  util::memory::ManagedAllocatorCore* alloc() const { return alloc_; }
 
   EntryPtr makePtr(StringPiece surface, const UnkNodeConfig& conf,
                    bool notPrefix);
+
+  EntryPtr makePtr(StringPiece surface, EntryPtr ptr, const UnkNodeConfig& conf,
+                   u64 feature = 0);
 
   /**
    * Check if any entries in dictionary have non-fillable fields

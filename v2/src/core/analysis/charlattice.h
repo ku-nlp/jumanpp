@@ -16,17 +16,23 @@ namespace core {
 namespace analysis {
 namespace charlattice {
 
+template <typename T>
+using Vec = util::memory::ManagedVector<T>;
+
 enum class OptCharLattice : u32 {
-  OPT_INVALID = 0x00000000,
-  OPT_NORMAL = 0x00000001,
-  OPT_NORMALIZE = 0x00000002,
+  OPT_EMPTY = 0x00000000,
+  OPT_ORIGINAL = 0x00000001,
+  OPT_SMALL_TO_LARGE = 0x00000002,
   OPT_DEVOICE = 0x00000004,
-  OPT_PROLONG_DEL = 0x00000008,
+  OPT_DELETE = 0x00000008,
   OPT_PROLONG_REPLACE = 0x00000010,
   OPT_PROLONG_DEL_LAST = 0x00000020,
+  OPT_DELETE_PROLONG = 0x00000040,
+  OPT_DELETE_HASTSUON = 0x0000080,
+  OPT_DELETE_SMALLKANA = 0x00000100,
 
-  OPT_PROLONG_REPLACED = OPT_NORMALIZE | OPT_PROLONG_REPLACE,
-  OPT_NORMALIZED = OPT_NORMALIZE | OPT_PROLONG_DEL | OPT_PROLONG_REPLACE |
+  OPT_PROLONG_REPLACED = OPT_SMALL_TO_LARGE | OPT_PROLONG_REPLACE,
+  OPT_NORMALIZED = OPT_SMALL_TO_LARGE | OPT_DELETE | OPT_PROLONG_REPLACE |
                    OPT_PROLONG_DEL_LAST
 };
 
@@ -51,55 +57,117 @@ inline OptCharLattice operator&(OptCharLattice c1, OptCharLattice c2) noexcept {
 using Codepoint = jumanpp::chars::InputCodepoint;
 using CharacterClass = jumanpp::chars::CharacterClass;
 
-inline Codepoint toCodepoint(const char* str) {
-  auto cp = Codepoint(StringPiece((const u8*)str, 3));
-  return Codepoint(StringPiece((const u8*)(str), 3));
+inline bool ExistFlag(OptCharLattice general, OptCharLattice query) {
+  return (general & query) != OptCharLattice::OPT_EMPTY;
 }
 
-class CharNode {
- public:
+struct CharNode {
   Codepoint cp;
-  OptCharLattice type = OptCharLattice::OPT_INVALID;
+  OptCharLattice type = OptCharLattice::OPT_EMPTY;
 
-  std::vector<size_t> daNodePos;
-  std::vector<OptCharLattice> nodeType;
-
- public:
   CharNode(const Codepoint& cpIn, const OptCharLattice initType) noexcept
       : cp(cpIn) {
     type = initType;
   };
+
+  bool hasType(OptCharLattice type) const noexcept {
+    return (this->type & type) != OptCharLattice::OPT_EMPTY;
+  }
+
+  bool isReplace() const {
+    return hasType(OptCharLattice::OPT_PROLONG_REPLACE);
+  }
+
+  bool isDelete() const { return hasType(OptCharLattice::OPT_DELETE); }
 };
+
+struct DaTrieResult {
+  EntryPtr entryPtr;
+  OptCharLattice flags;
+};
+
+struct CLResult {
+  EntryPtr entryPtr;
+  OptCharLattice flags;
+  LatticePosition start;
+  LatticePosition end;
+};
+
+class CharLattceTraversal;
 
 class CharLattice {
  private:
   bool constructed = false;
   //    static bool initialized;
   const dic::DictionaryEntries& entries;
-  std::vector<std::vector<CharNode>> nodeList;
+  Vec<Vec<CharNode>> nodeList;
+  util::memory::ManagedAllocatorCore* alloc_;
+  u32 notNormal = 0;
+
+  void add(size_t pos, const Codepoint& cp, OptCharLattice flags) {
+    if (flags != OptCharLattice::OPT_ORIGINAL) {
+      notNormal += 1;
+    }
+    nodeList[pos].emplace_back(cp, flags);
+  }
 
  public:
-  typedef std::pair<EntryPtr, OptCharLattice> DaTrieResult;
-  typedef std::tuple<EntryPtr, OptCharLattice, LatticePosition, LatticePosition>
-      CLResult;
-  int MostDistantPosition;
-
   int Parse(const std::vector<Codepoint>& codepoints);
-  std::vector<DaTrieResult> OneStep(int left_position, int right_position);
-  std::vector<CharLattice::CLResult> Search(size_t position);
+  // Vec<DaTrieResult> oneStep(int left_position, int right_position);
+  // Vec<CLResult> search(i32 position);
 
-  CharLattice(const dic::DictionaryEntries& entries_)
-      : entries(entries_),
-        CharRootNodeList{
-            CharNode(Codepoint(StringPiece((const u8*)"<root>", 6)),
-                     OptCharLattice::OPT_INVALID)} {
-    // RootNode
-    CharRootNodeList.back().daNodePos.push_back(0);
-    CharRootNodeList.back().nodeType.push_back(OptCharLattice::OPT_INVALID);
-  };
+  CharLattice(const dic::DictionaryEntries& entries_,
+              util::memory::ManagedAllocatorCore* alloc)
+      : entries{entries_}, alloc_{alloc}, nodeList{alloc} {}
+
+  bool isApplicable() const { return notNormal != 0; }
+
+  friend class CharLattceTraversal;
+
+  CharLattceTraversal traversal(util::ArraySlice<Codepoint> input);
+};
+
+struct TraverasalState {
+  DoubleArrayTraversal traversal;
+  LatticePosition start;
+  LatticePosition end;
+  OptCharLattice allFlags;
+  TraverseStatus lastStatus;
+
+  TraverasalState(const DoubleArrayTraversal& t, LatticePosition start,
+                  LatticePosition end, OptCharLattice flags)
+      : traversal{t}, start{start}, end{end}, allFlags{flags} {}
+};
+
+class CharLattceTraversal {
+  CharLattice& lattice_;
+  util::ArraySlice<Codepoint> input_;
+  Vec<TraverasalState*> states1_;
+  Vec<TraverasalState*> states2_;
+  Vec<TraverasalState*> buffer_;
+
+  Vec<CLResult> result_;
 
  public:
-  std::vector<CharNode> CharRootNodeList;
+  CharLattceTraversal(CharLattice& lattice, util::ArraySlice<Codepoint> input)
+      : lattice_{lattice},
+        input_{input},
+        states1_{lattice.alloc_},
+        states2_{lattice.alloc_},
+        buffer_{lattice.alloc_},
+        result_{lattice.alloc_} {}
+
+  const Vec<CLResult>& candidates() const { return result_; }
+
+  TraverasalState* make(const DoubleArrayTraversal& t, LatticePosition start,
+                        LatticePosition end, OptCharLattice flags);
+
+  void tryWalk(TraverasalState* pState, const Codepoint& codepoint,
+               OptCharLattice newFlag, bool doStep);
+
+  void doTraverseStep(i32 pos);
+
+  bool lookupCandidatesFrom(i32 start);
 };
 
 }  // namespace charlattice

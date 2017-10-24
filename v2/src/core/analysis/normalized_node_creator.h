@@ -25,10 +25,6 @@ class NormalizedNodeMaker : public UnkMaker {
   using CodepointStorage = std::vector<jumanpp::chars::InputCodepoint>;
   using Codepoint = jumanpp::chars::InputCodepoint;
 
-  // A charcter class for normalization
-  chars::CharacterClass prolongCharClass_;  // for prolong
-  chars::CharacterClass smallCharClass_;    // for small characters
-
   static const LatticePosition MaxLength = 64;
 
  public:

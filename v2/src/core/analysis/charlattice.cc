@@ -7,11 +7,12 @@ namespace core {
 namespace analysis {
 namespace charlattice {
 
-const char32_t DEF_PROLONG_SYMBOL1{u'ー'};
-const char32_t DEF_PROLONG_SYMBOL2{u'〜'};
-const char32_t DEF_PROLONG_SYMBOL3{u'っ'};
+const char32_t DEF_PROLONG_SYMBOL1{U'ー'};
+const char32_t DEF_PROLONG_SYMBOL2{U'〜'};
+const char32_t DEF_PROLONG_SYMBOL3{U'っ'};
+const char32_t DEF_PROLONG_SYMBOL4{U'ッ'};
 
-struct CharacterMap {
+struct CharDb {
   using Codepoint = jumanpp::chars::InputCodepoint;
   using CharacterClass = jumanpp::chars::CharacterClass;
   using CodepointStorage = std::vector<Codepoint>;
@@ -67,53 +68,86 @@ struct CharacterMap {
       {u'も', u'ぉ'}, {u'よ', u'ぉ'}, {u'ろ', u'ぉ'}, {u'ぞ', u'ぉ'},
       {u'ど', u'ぉ'}};
 
-  CharacterMap() noexcept {}
+  CharDb() = default;
 };
 
-const CharacterMap& CMaps() {
-  static CharacterMap singleton_;
+const CharDb& CMaps() {
+  static CharDb singleton_;
   return singleton_;
 }
 
-inline bool CheckRemovableChoon(bool preIsDeleted,
-                                const std::vector<Codepoint>& codepoints,
-                                size_t pos) {
-  // 長音記号で, 直前が削除されたか、直前が平仮名、直前が漢字かつ直後が平仮名
-  if (pos == 0) return false;
-  bool isLastCharacter = !(pos + 1 < codepoints.size());
-  bool isFirstCharacter = !(pos > 0);
-  const Codepoint& currentCp = codepoints[pos];
-  CharacterClass preCharType = (isFirstCharacter)
-                                   ? CharacterClass::FAMILY_OTHERS
-                                   : codepoints[pos - 1].charClass;
-  CharacterClass postCharType = (isLastCharacter)
-                                    ? CharacterClass::FAMILY_OTHERS
-                                    : codepoints[pos + 1].charClass;
+// Current char is prolong +
+// Previous char is Kanji/Hiragana/Katakana
+// or previous char was already deleted
+inline bool isRemovableProlong(bool preIsDeleted,
+                               const std::vector<Codepoint>& codepoints,
+                               size_t pos) {
+  if (pos < 1) return false;
+  auto& cp = codepoints[pos];
 
-  return ((preIsDeleted ||
-           IsCompatibleCharClass(preCharType, CharacterClass::KATAKANA) ||
-           IsCompatibleCharClass(preCharType, CharacterClass::HIRAGANA) ||
-           (IsCompatibleCharClass(preCharType, CharacterClass::KANJI) &&
-            (!isLastCharacter &&
-             IsCompatibleCharClass(postCharType, CharacterClass::HIRAGANA)))) &&
-          (currentCp.codepoint == DEF_PROLONG_SYMBOL1 ||
-           currentCp.codepoint == DEF_PROLONG_SYMBOL2));
+  if (!cp.hasClass(CharacterClass::CHOON)) {
+    return false;
+  }
+
+  CharacterClass preCharType = codepoints[pos - 1].charClass;
+
+  if (preIsDeleted) {
+    return true;
+  }
+
+  return IsCompatibleCharClass(preCharType, CharacterClass::FAMILY_PROLONGABLE);
 }
 
-inline bool CheckRmovableHatsuon(bool preIsDeleted,
-                                 const std::vector<Codepoint>& codepoints,
-                                 size_t pos) {
+// Remove if:
+// * Self is one of small tsu
+// * previous is removed
+// * is last character
+// * next is punctuation, alpha, digits
+// * next is the same
+// * previous and next are both either katakana or hiragana
+inline bool CheckRemovableHatsuon(bool preIsDeleted,
+                                  const std::vector<Codepoint>& codepoints,
+                                  size_t pos) {
   // 直前が削除されていて、現在文字が"っ"、かつ、直後が文末もしくは記号の場合も削除
   if (pos == 0) return false;
-  bool isLastCharacter = !(pos + 1 < codepoints.size());
+  bool isLastCharacter = pos + 1 >= codepoints.size();
   const Codepoint& currentCp = codepoints[pos];
-  CharacterClass postCharType = (isLastCharacter)
-                                    ? CharacterClass::FAMILY_OTHERS
-                                    : codepoints[pos + 1].charClass;
 
-  return (preIsDeleted && currentCp.codepoint == DEF_PROLONG_SYMBOL3 &&
-          (isLastCharacter ||
-           IsCompatibleCharClass(postCharType, CharacterClass::SYMBOL)));
+  if (currentCp.codepoint != DEF_PROLONG_SYMBOL3 &&
+      currentCp.codepoint != DEF_PROLONG_SYMBOL4) {
+    return false;
+  }
+
+  if (preIsDeleted) {
+    return true;
+  }
+
+  if (isLastCharacter) {
+    return true;
+  }
+
+  auto& nextCp = codepoints[pos + 1];
+  CharacterClass nextCharType = nextCp.charClass;
+  CharacterClass prevCharType = codepoints[pos - 1].charClass;
+
+  const auto alwaysDeleteFor =
+      CharacterClass::SPACE | CharacterClass::IDEOGRAPHIC_PUNC |
+      CharacterClass::FIGURE | CharacterClass::PERIOD |
+      CharacterClass::MIDDLE_DOT | CharacterClass::ALPH |
+      CharacterClass::SYMBOL | CharacterClass::BRACKET | CharacterClass::SLASH |
+      CharacterClass::COLON | CharacterClass::COMMA;
+
+  if (IsCompatibleCharClass(nextCharType, alwaysDeleteFor)) {
+    return true;
+  }
+
+  if (currentCp.codepoint == nextCp.codepoint) {
+    return true;
+  }
+
+  auto commonTypes = nextCharType & prevCharType & currentCp.charClass;
+
+  return IsCompatibleCharClass(commonTypes, CharacterClass::FAMILY_FULL_KANA);
 }
 
 inline bool CheckRemovableYouon(bool preIsDeleted,
@@ -130,8 +164,7 @@ inline bool CheckRemovableYouon(bool preIsDeleted,
   auto itr = CMaps().lowerMap.find(lastCp.codepoint);
   return (
       (itr != CMaps().lowerMap.end() && itr->second == currentCp.codepoint) ||
-      (preIsDeleted &&
-       CMaps().lowerList.find(currentCp.codepoint) != CMaps().lowerList.end() &&
+      (preIsDeleted && CMaps().lowerList.contains(currentCp.codepoint) &&
        currentCp.codepoint == lastCp.codepoint));
 }
 
@@ -152,49 +185,66 @@ inline bool CheckSubstituteLower(const std::vector<Codepoint>& codepoints,
   return (itr != CMaps().lower2upper.end());
 }
 
+CharLattceTraversal CharLattice::traversal(util::ArraySlice<Codepoint> input) {
+  return CharLattceTraversal{*this, input};
+}
+
 int CharLattice::Parse(const std::vector<Codepoint>& codepoints) {
   size_t length = codepoints.size();
-  int preIsDeleted = 0;
-  int nextPreIsDeleted = 0;
+  bool preIsDeleted = false;
+  bool nextPreIsDeleted = false;
 
-  Codepoint skipped(StringPiece((const u8*)"", (size_t)0));
+  Codepoint skipped("");
   nodeList.clear();  // Lattice
-  nodeList.resize(length);
+  nodeList.reserve(length);
+  for (int i = 0; i < length; ++i) {
+    nodeList.emplace_back(alloc_);
+  }
+
+  const auto& db = CMaps();
 
   for (size_t pos = 0; pos < length; ++pos) {
     const Codepoint& currentCp = codepoints[pos];
-    nodeList[pos].emplace_back(currentCp, OptCharLattice::OPT_NORMAL);
-    nextPreIsDeleted = 0;
+    nextPreIsDeleted = false;
 
     /* Double Width Characters */
     if (currentCp.hasClass(CharacterClass::FAMILY_DOUBLE)) {
       /* Substitution */
       if (CheckSubstituteChoon(codepoints, pos)) {
         // Substitute choon to boin (ex. ねーさん > ねえさん)
-        auto itr = CMaps().prolongedMap.find(codepoints[pos - 1].codepoint);
-        LOG_INFO() << "<substitute_choon_boin> " << currentCp.bytes << ">"
-                   << itr->second.bytes << "@" << pos << "\n";
-        nodeList[pos].emplace_back(itr->second,
-                                   OptCharLattice::OPT_PROLONG_REPLACED);
+        auto itr = db.prolongedMap.find(codepoints[pos - 1].codepoint);
+        //        LOG_TRACE() << "<substitute_choon_boin> " << currentCp.bytes
+        //        << ">"
+        //                   << itr->second.bytes << "@" << pos;
+        add(pos, itr->second, OptCharLattice::OPT_PROLONG_REPLACED);
       } else if (CheckSubstituteLower(codepoints, pos)) {
         // Substitute lower character to upper character (ex. ねぇさん >
         // ねえさん)
-        auto itr = CMaps().lower2upper.find(currentCp.codepoint);
-        LOG_INFO() << "<substitute_small_large> " << currentCp.bytes << ">"
-                   << itr->second.bytes << "@" << pos << "\n";
-        nodeList[pos].emplace_back(itr->second, OptCharLattice::OPT_NORMALIZE);
+        auto itr = db.lower2upper.find(currentCp.codepoint);
+        //        LOG_TRACE() << "<substitute_small_large> " << currentCp.bytes
+        //        << ">"
+        //                   << itr->second.bytes << "@" << pos;
+        add(pos, itr->second, OptCharLattice::OPT_SMALL_TO_LARGE);
       }
 
       /* Deletion */
-      if ((CheckRemovableChoon(preIsDeleted, codepoints, pos)) ||
-          CheckRmovableHatsuon(preIsDeleted, codepoints, pos)) {
-        LOG_INFO() << "<del_prolong> " << currentCp.bytes << "@" << pos << "\n";
-        nodeList[pos].emplace_back(skipped, OptCharLattice::OPT_PROLONG_DEL);
-        nextPreIsDeleted = 1;
+      if (isRemovableProlong(preIsDeleted, codepoints, pos)) {
+        //        LOG_TRACE() << "<del_prolong> " << currentCp.bytes << "@" <<
+        //        pos;
+        add(pos, skipped,
+            OptCharLattice::OPT_DELETE | OptCharLattice::OPT_DELETE_PROLONG);
+        nextPreIsDeleted = true;
+      } else if (CheckRemovableHatsuon(preIsDeleted, codepoints, pos)) {
+        //        LOG_TRACE() << "<del_hatsu> " << currentCp.bytes << "@" <<
+        //        pos;
+        add(pos, skipped,
+            OptCharLattice::OPT_DELETE | OptCharLattice::OPT_DELETE_HASTSUON);
+        nextPreIsDeleted = true;
       } else if (CheckRemovableYouon(preIsDeleted, codepoints, pos)) {
-        LOG_INFO() << "<del_youon> @" << pos << "\n";
-        nodeList[pos].emplace_back(skipped, OptCharLattice::OPT_PROLONG_DEL);
-        nextPreIsDeleted = 1;
+        //        LOG_TRACE() << "<del_youon> @" << pos;
+        add(pos, skipped,
+            OptCharLattice::OPT_DELETE | OptCharLattice::OPT_DELETE_SMALLKANA);
+        nextPreIsDeleted = true;
       }
     }
     preIsDeleted = nextPreIsDeleted;
@@ -203,130 +253,102 @@ int CharLattice::Parse(const std::vector<Codepoint>& codepoints) {
   return 0;
 }
 
-std::vector<CharLattice::DaTrieResult> CharLattice::OneStep(int leftPosition,
-                                                            int rightPosition) {
-  std::vector<CharLattice::DaTrieResult> result;
+bool CharLattceTraversal::lookupCandidatesFrom(i32 start) {
+  if (start > input_.length()) {
+    return false;
+  }
+  result_.clear();
+  auto trav = lattice_.entries.doubleArrayTraversal();
+  auto stat = trav.step(input_.at(start).bytes);
+  if (stat == TraverseStatus::NoNode) {
+    return false;
+  }
+  auto posStart = static_cast<LatticePosition>(start);
+  auto posEnd = static_cast<LatticePosition>(start + 1);
+  auto state = make(trav, posStart, posEnd, OptCharLattice::OPT_ORIGINAL);
+  state->lastStatus = stat;
+  states1_.push_back(state);
+  auto step = start + 1;
+  while (step < input_.length() && !states1_.empty()) {
+    doTraverseStep(step);
+    ++step;
+    states2_.swap(states1_);
+    for (auto s : states2_) {
+      buffer_.push_back(s);
+    }
+    states2_.clear();
+  }
+  return !result_.empty();
+}
 
-  std::vector<CharNode>* leftCharNodeList;
-  // Initialize leftCharNodeList
-  if (leftPosition < 0) {
-    leftCharNodeList = &(CharRootNodeList);
+void CharLattceTraversal::doTraverseStep(i32 pos) {
+  auto& ch = input_.at(pos);
+  auto& extraNodes = lattice_.nodeList[pos];
+  for (auto state : states1_) {
+    if (state->end != pos) {
+      states2_.push_back(state);
+    }
+    tryWalk(state, ch, OptCharLattice::OPT_ORIGINAL, true);
+    for (auto& n : extraNodes) {
+      tryWalk(state, n.cp, n.type, !n.hasType(OptCharLattice::OPT_DELETE));
+    }
+  }
+}
+
+void CharLattceTraversal::tryWalk(TraverasalState* pState,
+                                  const Codepoint& codepoint,
+                                  OptCharLattice newFlag, bool doStep) {
+  LatticePosition length{1};
+  auto nst = make(pState->traversal, pState->start, pState->end + length,
+                  pState->allFlags | newFlag);
+
+  TraverseStatus status;
+  if (doStep) {
+    status = nst->traversal.step(codepoint.bytes);
   } else {
-    leftCharNodeList = &(nodeList[leftPosition]);
+    status = pState->lastStatus;
   }
 
-  size_t currentDaNodeList;
-  auto trav = entries.traversal();  // root node
+  if (status == TraverseStatus::NoNode) {
+    buffer_.push_back(nst);  // return memory to pool
+    return;
+  }
 
-  for (CharNode& leftCharNode : (*leftCharNodeList)) {
-    // i: node_index
-    for (size_t i = 0; i < leftCharNode.daNodePos.size(); ++i) {
-      // rightPosition: 次の文字位置
-      std::vector<CharNode>& rightCharNodeList = nodeList[rightPosition];
+  nst->lastStatus = status;
 
-      for (CharNode& rightCharNode : rightCharNodeList) {
-        if (rightCharNode.cp.codepoint == 0) { /* Skipped node */
-          if (leftPosition >= 0) {
-            // Do not move on the double array.
-            auto status = trav.step("", leftCharNode.daNodePos[i]);
-
-            /* Generate node if mached */
-            if (status == TraverseStatus::Ok) {
-              auto dicEntries = trav.entries();
-              i32 ptr = 0;
-              while (dicEntries.readOnePtr(&ptr)) {
-                auto nodeType = (leftCharNode.nodeType[i] |
-                                 (rightCharNode.type &
-                                  (~(OptCharLattice::OPT_PROLONG_DEL))) |
-                                 OptCharLattice::OPT_PROLONG_DEL_LAST);
-                EntryPtr eptr(ptr);
-                result.push_back(std::make_pair(eptr, nodeType));
-              }
-            }
-
-            // 次の探索開始位置に登録
-            rightCharNode.nodeType.push_back(
-                leftCharNode.nodeType[i] | rightCharNode.type |
-                OptCharLattice::OPT_PROLONG_DEL_LAST);
-            rightCharNode.daNodePos.push_back(leftCharNode.daNodePos[i]);
-
-            if (MostDistantPosition < rightPosition)
-              MostDistantPosition = rightPosition;
-          }
-        } else { /* Normal node */
-          if ((rightCharNode.type & OptCharLattice::OPT_PROLONG_REPLACE) ==
-                  OptCharLattice::OPT_INVALID ||
-              ((rightCharNode.type & OptCharLattice::OPT_PROLONG_REPLACE) !=
-                   OptCharLattice::OPT_INVALID &&
-               leftPosition >= 0)) {
-            // 長音置換ノードは先頭以外である必要がある
-            currentDaNodeList = leftCharNode.daNodePos[i];
-            auto status = trav.step(rightCharNode.cp.bytes, currentDaNodeList);
-
-            if (status == TraverseStatus::Ok) {
-              auto nodeType = leftCharNode.nodeType[i] | rightCharNode.type;
-              // Generate only normalized nodes
-              if ((nodeType & OptCharLattice::OPT_NORMALIZED) !=
-                  OptCharLattice::OPT_INVALID) {
-                auto dicEntries = trav.entries();
-                i32 ptr = 0;
-                while (dicEntries.readOnePtr(&ptr)) {
-                  EntryPtr eptr(ptr);
-                  result.push_back(std::make_pair(eptr, nodeType));
-                }
-              }
-            }
-
-            if (status == TraverseStatus::Ok ||
-                status == TraverseStatus::NoLeaf) {
-              // 開始位置位置として追加
-              rightCharNode.nodeType.push_back(leftCharNode.nodeType[i] |
-                                               rightCharNode.type);
-              rightCharNode.daNodePos.push_back(currentDaNodeList);
-
-              if (MostDistantPosition < rightPosition)
-                MostDistantPosition = rightPosition;
-            }
-          }
-        }
+  if (status == TraverseStatus::Ok) {
+    if (nst->allFlags != OptCharLattice::OPT_ORIGINAL) {  // we have a result!
+      auto entries = this->lattice_.entries.entryTraversal(nst->traversal);
+      auto flags = nst->allFlags;
+      if (ExistFlag(newFlag, OptCharLattice::OPT_DELETE)) {
+        flags = flags | OptCharLattice::OPT_PROLONG_DEL_LAST;
+      }
+      i32 ptr;
+      while (entries.readOnePtr(&ptr)) {
+        result_.push_back({EntryPtr{ptr}, flags, nst->start, nst->end});
       }
     }
   }
-  return result;
+
+  states2_.push_back(nst);
 }
 
-std::vector<CharLattice::CLResult> CharLattice::Search(size_t position) {
-  std::vector<CharLattice::CLResult> result;
-  if (!constructed) return result;
-
-  /* initialization */
-  CharLattice::MostDistantPosition = position - 1;
-  for (auto charNode = nodeList.begin() + position; charNode < nodeList.end();
-       charNode++) {
-    for (auto& cnode : *charNode) {
-      cnode.daNodePos.clear();
-      cnode.nodeType.clear();
-    }
+TraverasalState* CharLattceTraversal::make(const DoubleArrayTraversal& t,
+                                           LatticePosition start,
+                                           LatticePosition end,
+                                           OptCharLattice flags) {
+  TraverasalState* data;
+  if (buffer_.empty()) {
+    data = lattice_.alloc_->make<TraverasalState>(t, start, end, flags);
+  } else {
+    data = buffer_.back();
+    buffer_.pop_back();
+    data->~TraverasalState();
+    new (data) TraverasalState{t, start, end, flags};
   }
-
-  auto tokensOneChar = OneStep(-1, position);
-  for (auto& pair : tokensOneChar) {  //一文字のノード
-    auto type = pair.second;
-    result.push_back(std::make_tuple(pair.first, type, position, position + 1));
-  }
-
-  for (size_t i = position + 1; i < nodeList.size(); i++) {  // 二文字以上
-    if (MostDistantPosition < static_cast<int>(i) - 1)
-      break;  // position まで辿りつけた文字がない場合
-    auto tokens = OneStep(i - 1, i);
-
-    for (auto& pair : tokens) {
-      auto type = pair.second;
-      result.push_back(std::make_tuple(pair.first, type, position, i + 1));
-    }
-  }
-  return result;
+  return data;
 }
+
 }  // namespace charlattice
 }  // namespace analysis
 }  // namespace core

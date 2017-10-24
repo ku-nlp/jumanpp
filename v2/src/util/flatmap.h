@@ -200,6 +200,11 @@ class FlatMap {
     return r.found ? const_iterator(r.b, rep_.limit(), r.index) : end();
   }
 
+  bool exists(const Key& k) const {
+    auto r = rep_.Find(k);
+    return r.found;
+  }
+
   Val& at(const Key& k) {
     auto r = rep_.Find(k);
     JPP_DCHECK(r.found);

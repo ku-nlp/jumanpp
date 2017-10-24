@@ -16,13 +16,6 @@ namespace jumanpp {
 namespace core {
 namespace dic {
 
-struct EntriesHolder {
-  DoubleArray trie;
-  i32 entrySize;
-  impl::IntStorageReader entries;
-  impl::IntStorageReader entryPtrs;
-};
-
 class IndexedEntries {
   i32 entrySize_;
   impl::IntListTraversal entries_;
@@ -65,30 +58,48 @@ class IndexedEntries {
   }
 };
 
+struct EntriesHolder {
+  DoubleArray trie;
+  i32 entrySize;
+  impl::IntStorageReader entries;
+  impl::IntStorageReader entryPtrs;
+
+  IndexedEntries entryTraversal(i32 ptr) const {
+    auto entries = entryPtrs.listAt(ptr);
+    return IndexedEntries{entrySize, entries, this->entries};
+  }
+};
+
 class IndexTraversal {
   DoubleArrayTraversal da_;
   const EntriesHolder* dic_;
 
  public:
-  IndexTraversal(const EntriesHolder* dic_)
+  explicit IndexTraversal(const EntriesHolder* dic_)
       : da_(dic_->trie.traversal()), dic_(dic_) {}
   TraverseStatus step(const StringPiece& sp) { return da_.step(sp); }
   TraverseStatus step(const StringPiece& sp, size_t& pos) {
     return da_.step(sp, pos);
   }
-  IndexedEntries entries() const {
-    auto reader = dic_->entryPtrs.listAt(da_.value());
-    return IndexedEntries{dic_->entrySize, reader, dic_->entries};
-  }
+  IndexedEntries entries() const { return dic_->entryTraversal(da_.value()); }
 };
 
 class DictionaryEntries {
   const EntriesHolder* data_;
 
  public:
-  DictionaryEntries(const EntriesHolder* data_) noexcept : data_(data_) {}
+  explicit DictionaryEntries(const EntriesHolder* data_) noexcept
+      : data_(data_) {}
   i32 entrySize() const { return static_cast<i32>(data_->entrySize); }
   IndexTraversal traversal() const { return IndexTraversal(data_); }
+  DoubleArrayTraversal doubleArrayTraversal() const {
+    return data_->trie.traversal();
+  }
+
+  IndexedEntries entryTraversal(const DoubleArrayTraversal& at) const {
+    return data_->entryTraversal(at.value());
+  }
+
   impl::IntListTraversal entryAtPtr(EntryPtr ptr) const {
     return entryAtPtr(ptr.dicPtr());
   }

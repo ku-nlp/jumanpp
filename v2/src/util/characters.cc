@@ -100,14 +100,40 @@ const util::FlatSet<char32_t> brackets{
 
 using Codepoint = char32_t;
 
+template <Codepoint Hay, Codepoint... Rest>
+struct InSetImplLinear {
+  static bool find(Codepoint cp) {
+    return cp == Hay || InSetImplLinear<Rest...>::find(cp);
+  }
+};
+
+template <Codepoint Hay>
+struct InSetImplLinear<Hay> {
+  static bool find(Codepoint cp) { return cp == Hay; }
+};
+
+template <bool IsLinear, Codepoint... Haystack>
+struct InSetDispatch {
+  static bool find(Codepoint needle) {
+    static const util::FlatSet<Codepoint> staticHaystack{Haystack...};
+    return staticHaystack.count(needle) != 0;
+  }
+};
+
+template <Codepoint... Haystack>
+struct InSetDispatch<true, Haystack...> {
+  static bool find(Codepoint needle) {
+    return InSetImplLinear<Haystack...>::find(needle);
+  }
+};
+
 template <Codepoint... haystack>
 bool inSet(Codepoint needle) {
-  static const util::FlatSet<Codepoint> staticHaystack{haystack...};
-  return staticHaystack.count(needle) != 0;
+  return InSetDispatch<sizeof...(haystack) < 10, haystack...>::find(needle);
 }
 
 CharacterClass getCodeType(char32_t input) noexcept {
-  Codepoint code = static_cast<Codepoint>(input);
+  auto code = static_cast<Codepoint>(input);
   /* SPACE */
   if (inSet<0x20,                                         // space
             0x3000,                                       // fullwidth space
@@ -125,32 +151,31 @@ CharacterClass getCodeType(char32_t input) noexcept {
   /* HIRAGANA */
   else if ((code > 0x303f && code < 0x30a0) ||
            /* Iteration marks ゝゞ*/
-           code == 0x309D || code == 0x309E || code == 0x30FF /* YORI ゟ */) {
-    if (lowercase.count(code) == 1)
-      return CharacterClass::HIRAGANA | CharacterClass::LOWER_CASE;
+           inSet<U'ゝ', U'ゞ', U'ゟ'>(code)) {
+    if (lowercase.contains(code))
+      return CharacterClass::HIRAGANA | CharacterClass::SMALL_KANA;
     else
       return CharacterClass::HIRAGANA;
   }
   /* KATAKANA and KATAKANA symbols */
   else if ((code > 0x309f && code < 0x30fb) ||
            /* Iteration marks ヽヾ */
-           code == 0x30FD || code == 0x30FE || code == 0x30FF /* KOTO ヿ*/) {
-    if (lowercase.count(code) == 1)
-      return CharacterClass::KATAKANA | CharacterClass::LOWER_CASE;
+           inSet<U'ヽ', U'ヾ', U'ヿ'>(code)) {
+    if (lowercase.contains(code))
+      return CharacterClass::KATAKANA | CharacterClass::SMALL_KANA;
     else
       return CharacterClass::KATAKANA;
-  } else if (code ==
-             0x30fc) {  // KATAKANA-HIRAGANA PROLONGED SOUND MARK (0x30fc)
-    return CharacterClass::KATAKANA | CharacterClass::CHOON;
+  } else if (inSet<U'ー', U'〜', U'～', U'∼'>(code)) {
+    // KATAKANA-HIRAGANA PROLONGED SOUND MARK (0x30fc)
+    // "〜"(0x301C)  ⁓ (U+2053)、Full-width tilde:
+    // ～ (U+FF5E)、tilde operator: ∼ (U+223C)
+    return CharacterClass::FAMILY_FULL_KANA | CharacterClass::CHOON;
   } else if (code == 0xFF70) {  // Half-widths HIRAGANA-KATAKANA PROLONGED SOUND
                                 // MARK (U+FF70
     return CharacterClass::HANKAKU_KANA | CharacterClass::CHOON;
   } else if (0xFF66 <= code &&
              code <= 0xFF9F) {  // Half-widths KATAKANA (0xFF66-0xFF9F)
     return CharacterClass::HANKAKU_KANA;
-  } else if (code == 0x30fc) {  // "〜"(0x301C)  ⁓ (U+2053)、Full-width tilde:
-                                // ～ (U+FF5E)、tilde operator: ∼ (U+223C)
-    return CharacterClass::CHOON;
   }
   /* "・"(0x30fb) "· 0x 00B7 */
   else if (code == 0x00B7 || code == 0x30fb) {
@@ -192,7 +217,7 @@ CharacterClass getCodeType(char32_t input) noexcept {
            code == 0x516b ||  //八
            code == 0x4e5d ||  //九
            false) {
-    return CharacterClass::KANJI_FIGURE;
+    return CharacterClass::KANJI_FIGURE | CharacterClass::KANJI;
   } else if (code == 0x5341 ||  //十
              code == 0x767e ||  //百
              code == 0x5343 ||  //千
@@ -204,7 +229,7 @@ CharacterClass getCodeType(char32_t input) noexcept {
              code == 0x5E7E ||  //幾
              false) {
     if (code == 0x6570 || code == 0x4F55 || code == 0x5E7E) /* 数，何，幾 */
-      return CharacterClass::FIGURE_EXCEPTION;
+      return CharacterClass::FIGURE_EXCEPTION | CharacterClass::KANJI;
     else
       /* DIGITs */
       return CharacterClass::KANJI_FIGURE | CharacterClass::FIGURE_DIGIT;
@@ -219,7 +244,7 @@ CharacterClass getCodeType(char32_t input) noexcept {
   else if ((code > 0x4dff && code < 0xa000) || code == 0x3005 ||
            code == 0x3007) {
     return CharacterClass::KANJI;
-  } else if (brackets.count(code) == 1) {
+  } else if (brackets.contains(code)) {
     /* Brackets */
     return CharacterClass::BRACKET;
   } else {

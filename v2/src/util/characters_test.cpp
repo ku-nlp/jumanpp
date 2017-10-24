@@ -32,7 +32,7 @@ TEST_CASE("character classes are compatible", "[characters]") {
       IsCompatibleCharClass(CharacterClass::KANJI, CharacterClass::ALPH));
 }
 
-TEST_CASE("toCodepoint works with あ", "[characters]") {
+TEST_CASE("getCodepoint works with あ", "[characters]") {
   char32_t result;
   StringPiece literal{"あ"};
   auto res = getCodepoint(literal.ubegin(), literal.uend());

@@ -14,24 +14,31 @@ using CharacterClass = jumanpp::chars::CharacterClass;
 bool NormalizedNodeMaker::spawnNodes(const AnalysisInput& input,
                                      UnkNodesContext* ctx,
                                      LatticeBuilder* lattice) const {
-  CodepointStorage points = input.codepoints();
-  charlattice::CharLattice cl(entries_);
+  auto& points = input.codepoints();
+  charlattice::CharLattice cl{entries_, ctx->alloc()};
   cl.Parse(points);
 
+  if (!cl.isApplicable()) {
+    return true;
+  }
+
   // number of input characters
-  LatticePosition totalPoints = (LatticePosition)points.size();
+  auto totalPoints = (LatticePosition)points.size();
+  auto trav = cl.traversal(points);
 
   // for any position of input string
   for (LatticePosition begin = 0; begin < totalPoints; ++begin) {
     // traverse (access all of the nodes)
-    auto result = cl.Search(begin);
-    for (charlattice::CharLattice::CLResult& r : result) {
-      auto ptr = std::get<0>(r);
-      auto type = std::get<1>(r);
-      auto begin = std::get<2>(r);
-      auto end = std::get<3>(r);
-      auto surface_ptr = ctx->makePtr(input.surface(begin, end), info_, false);
-      lattice->appendSeed(surface_ptr, begin, end);
+    if (trav.lookupCandidatesFrom(begin)) {
+      for (auto& r : trav.candidates()) {
+        auto ptr = r.entryPtr;
+        auto type = r.flags;
+        auto begin = r.start;
+        auto end = r.end;
+        auto surface_ptr =
+            ctx->makePtr(input.surface(begin, end), info_, false);
+        lattice->appendSeed(surface_ptr, begin, end);
+      }
     }
   }
 
