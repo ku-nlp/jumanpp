@@ -267,3 +267,25 @@ TEST_CASE("charlattice finds prolonged e-row") {
   CHECK(env.exists("てめー", 0));
   CHECK(env.numNodeSeeds() == 1);
 }
+
+TEST_CASE("handles multiple prolongings correctly (#7)") {
+  CharLatticeTestEnv env{"x,l1\nツリー,l2\n"};
+  env.analyze("ツリーーー");
+  CHECK(env.exists("ツリーーー", 0));
+  CHECK(env.exists("ツリーー", 0));
+  CHECK(env.exists("ツリー", 0));
+  CHECK(env.numNodeSeeds() == 3);
+}
+
+//TODO: fixme
+TEST_CASE("handles multiple prolongings with variants correctly", "[.]") {
+  CharLatticeTestEnv env{"x,l1\nつれい,l2\nつれえ,l3\n"};
+  env.analyze("つれーーー");
+  CHECK(env.contains("つれー", 0, "l2"));
+  CHECK(env.contains("つれー", 0, "l3"));
+  CHECK(env.contains("つれーー", 0, "l2"));
+  CHECK(env.contains("つれーー", 0, "l3"));
+  CHECK(env.contains("つれーーー", 0, "l2"));
+  CHECK(env.contains("つれーーー", 0, "l3"));
+  CHECK(env.numNodeSeeds() == 3);
+}

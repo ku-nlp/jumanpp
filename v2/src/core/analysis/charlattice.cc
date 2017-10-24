@@ -290,6 +290,20 @@ bool CharLattceTraversal::lookupCandidatesFrom(i32 start) {
     }
     states2_.clear();
   }
+  if (result_.empty()) {
+    return false;
+  }
+  util::sort(result_, [](const CLResult& c1, const CLResult& c2) {
+    auto v1 = c1.end == c2.end;
+    if (v1) {
+      return c1.entryPtr.rawValue() < c2.entryPtr.rawValue();
+    }
+    return c1.end < c2.end;
+  });
+  auto it = std::unique(result_.begin(), result_.end(), [](const CLResult& c1, const CLResult& c2) {
+    return c1.entryPtr == c2.entryPtr && c1.end == c2.end; //starts are equal at this point
+  });
+  result_.erase(it, result_.end());
   return !result_.empty();
 }
 
