@@ -55,6 +55,7 @@ void SpecFactory::fillSpec(core::spec::dsl::ModelSpecBuilder& bldr) {
   auto& nominalize =
       bldr.feature("nominalize").matchData(features, "連用形名詞化");
   auto& notPrefix = bldr.feature("notPrefix").placeholder();
+  auto& nonstdSurf = bldr.feature("nonstdSurf").placeholder();
   auto& lexicalized =
       bldr.feature("lexicalized")
           .matchAnyRowOfCsv(lexicalizedData, {baseform, pos, subpos, conjtype})
@@ -84,6 +85,10 @@ void SpecFactory::fillSpec(core::spec::dsl::ModelSpecBuilder& bldr) {
   bldr.unk("digits", 6)
       .numeric(chars::CharacterClass::FAMILY_DIGITS)
       .outputTo({surface, baseform, reading});
+  bldr.unk("normalize", 1)  // 1 because of API
+      .normalize()
+      .outputTo({surface})
+      .notPrefixOfDicFeature(nonstdSurf);
 
   bldr.unigram({surface});
   bldr.unigram({auxWord});
@@ -104,6 +109,10 @@ void SpecFactory::fillSpec(core::spec::dsl::ModelSpecBuilder& bldr) {
   bldr.unigram({baseform, notPrefix});
   bldr.unigram({pos, subpos, surfaceLength});
   bldr.unigram({nominalize});
+  bldr.unigram({nonstdSurf});
+  bldr.unigram({nonstdSurf, pos});
+  bldr.unigram({nonstdSurf, pos, subpos});
+  bldr.unigram({nonstdSurf, baseform});
 
   bldr.bigram({pos}, {pos});
   bldr.bigram({pos}, {pos, subpos});

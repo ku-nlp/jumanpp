@@ -110,6 +110,8 @@ class KVListTestEnv {
     top1.fillIn(tenv.analyzer->lattice());
   }
 
+  const DictionaryHolder& dic() { return tenv.analyzer->dic(); }
+
   size_t numNodeSeeds() const {
     return tenv.analyzer->latticeBuilder().seeds().size();
   }
@@ -344,4 +346,18 @@ TEST_CASE("identical kvlist works with matchValue feature (key)") {
   CHECK(n0.primitve[3] == 1);
   CHECK(n1.primitve[3] == 0);
   CHECK(n2.primitve[3] == 1);
+}
+
+TEST_CASE("kvlist supports empty lists") {
+  StringPiece data = "z,z,\na,x,0\nb,y,0:2\nc,d,\n";
+  KVListTestEnv env{data, [](ModelSpecBuilder& b, Features f) {}};
+  env.analyze("c");
+  auto n0 = env.uniqueNode("c", 0);
+  auto& dic = env.dic();
+  CHECK(n0.entries[2] == 0);
+  auto& f2 = dic.fields().at(2);
+  CHECK(f2.name == "c");
+  CHECK(f2.columnType == ColumnType::StringKVList);
+  CHECK(f2.postions.lengthOf(0) == 0);
+  CHECK(n0.f3.size() == 0);
 }

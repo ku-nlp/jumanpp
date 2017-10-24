@@ -50,3 +50,22 @@ TEST_CASE("can build id mapping") {
   auto jdicNoun = idres.dicToJuman(noun);
   CHECK(jdicNoun.pos == 6);
 }
+
+TEST_CASE("placeholder index of normalized is correct") {
+  jumanpp::testing::TestEnv tenv;
+  tenv.spec([](spec::dsl::ModelSpecBuilder& bldr) {
+    jumanpp::jumandic::SpecFactory::fillSpec(bldr);
+  });
+  util::MappedFile fl;
+  REQUIRE_OK(
+      fl.open("jumandic/jumanpp_minimal.mdic", util::MMapType::ReadOnly));
+  util::MappedFileFragment frag;
+  REQUIRE_OK(fl.map(&frag, 0, fl.size()));
+  tenv.importDic(frag.asStringPiece(), "minimal.dic");
+  auto& spec = tenv.origDicBuilder.spec();
+  for (auto& c : spec.unkCreators) {
+    if (c.name == "normalize") {
+      CHECK(c.patternRow == jumandic::NormalizedPlaceholderIdx);
+    }
+  }
+}

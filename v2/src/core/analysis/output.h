@@ -194,6 +194,7 @@ class OutputManager {
   Status stringListField(StringPiece name, StringListField* result) const;
   Status kvListField(StringPiece name, KVListField* result) const;
   const dic::DictionaryHolder& dic() const { return *holder_; }
+  i32 valueOfUnkPlaceholder(EntryPtr eptr, i32 placeholderIdx) const;
 };
 
 }  // namespace analysis

@@ -3,6 +3,7 @@
 //
 
 #include "juman_format.h"
+#include "core/analysis/charlattice.h"
 
 namespace jumanpp {
 namespace jumandic {
@@ -39,6 +40,42 @@ Status JumanFormat::format(const core::analysis::Analyzer& analysis,
   return Status::Ok();
 }
 
+void formatNormalizedFeature(util::io::Printer& p, i32 featureVal) {
+  p << "非標準表記:";
+  using m = core::analysis::charlattice::Modifiers;
+  namespace c = core::analysis::charlattice;
+
+  auto flag = static_cast<c::Modifiers>(featureVal);
+
+  if (c::ExistFlag(flag, m::REPLACE)) {
+    p << "R";
+  }
+  if (c::ExistFlag(flag, m::REPLACE_SMALLKANA)) {
+    p << "s";
+  }
+  if (c::ExistFlag(flag, m::REPLACE_PROLONG)) {
+    p << "p";
+  }
+  if (c::ExistFlag(flag, m::REPLACE_EROW_WITH_E)) {
+    p << "e";
+  }
+  if (c::ExistFlag(flag, m::DELETE)) {
+    p << "D";
+  }
+  if (c::ExistFlag(flag, m::DELETE_PROLONG)) {
+    p << "P";
+  }
+  if (c::ExistFlag(flag, m::DELETE_SMALLKANA)) {
+    p << "S";
+  }
+  if (c::ExistFlag(flag, m::DELETE_HASTSUON)) {
+    p << "H";
+  }
+  if (c::ExistFlag(flag, m::DELETE_LAST)) {
+    p << "L";
+  }
+}
+
 bool JumanFormat::formatOne(const core::analysis::OutputManager& om,
                             const core::analysis::ConnectionPtr& ptr,
                             bool first) {
@@ -66,31 +103,47 @@ bool JumanFormat::formatOne(const core::analysis::OutputManager& om,
             << " ";
     auto res = flds.features[walker];
     auto canonic = flds.canonicForm[walker];
-    if (res.hasNext()) {
-      if (canonic.size() == 0) {
-        printer << "NIL";
-      } else {
-        printer << "\"代表表記:" << canonic << "\"";
-      }
+
+    auto eptr = walker.eptr();
+    bool hasFeatures = eptr.isSpecial() || res.hasNext() || !canonic.empty();
+
+    if (!hasFeatures) {
+      printer << "NIL";
     } else {
+      bool output = false;
       printer << '"';
       if (canonic.size() > 0) {
         printer << "代表表記:" << canonic;
-        if (!res.hasNext()) {
+        if (res.hasNext()) {
           printer << " ";
         }
+        output = true;
       }
       while (res.next()) {
+        output = true;
         printer << res.key();
         if (res.hasValue()) {
           printer << ':' << res.value();
         }
-        if (!res.hasNext()) {
+        if (res.hasNext()) {
           printer << " ";
         }
       }
+
+      if (eptr.isSpecial()) {
+        auto ufld =
+            om.valueOfUnkPlaceholder(eptr, jumandic::NormalizedPlaceholderIdx);
+        if (ufld != 0) {
+          if (output) {
+            printer << " ";
+          }
+          formatNormalizedFeature(printer, ufld);
+        }
+      }
+
       printer << '"';
     }
+
     printer << "\n";
     first = false;
   }

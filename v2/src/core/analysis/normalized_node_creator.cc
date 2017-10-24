@@ -3,6 +3,7 @@
 //
 
 #include "normalized_node_creator.h"
+#include "core_config.h"
 
 namespace jumanpp {
 namespace core {
@@ -35,8 +36,13 @@ bool NormalizedNodeMaker::spawnNodes(const AnalysisInput& input,
         auto type = r.flags;
         auto begin = r.start;
         auto end = r.end;
-        auto surface_ptr =
-            ctx->makePtr(input.surface(begin, end), info_, false);
+        auto entryData = entries_.entryAtPtr(ptr);
+        u32 buffer[JPP_MAX_DIC_FIELDS];
+        auto nfields = entryData.fill(buffer, JPP_MAX_DIC_FIELDS);
+        util::ArraySlice<u32> fieldData{buffer, nfields};
+        auto fieldCode = static_cast<i32>(type);
+        auto surface_ptr = ctx->makePtr(input.surface(begin, end), info_,
+                                        fieldData, fieldCode);
         lattice->appendSeed(surface_ptr, begin, end);
       }
     }

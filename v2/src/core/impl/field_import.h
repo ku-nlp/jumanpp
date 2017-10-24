@@ -113,7 +113,9 @@ class StringFieldImporter : public FieldImporter {
     return storage_->increaseFieldValueCount(sp);
   }
 
-  Status makeStorage(util::CodedBuffer* result) override;
+  // This is used only in tests,
+  // Probably should remove in future
+  Status makeStorage(util::CodedBuffer* result) final;
 
   virtual i32 fieldPointer(const util::CsvReader& csv) override {
     auto sp = csv.field(field_);
@@ -145,11 +147,9 @@ class StringListFieldImporter : public StringFieldImporter {
 
   bool importFieldValue(const util::CsvReader& csv) override;
 
-  virtual void injectFieldBuffer(util::CodedBuffer* buffer) override;
+  void injectFieldBuffer(util::CodedBuffer* buffer) override;
 
   i32 fieldPointer(const util::CsvReader& csv) override;
-
-  Status makeStorage(util::CodedBuffer* result) override;
 };
 
 class StringKeyValueListFieldImporter : public StringFieldImporter {
@@ -176,8 +176,6 @@ class StringKeyValueListFieldImporter : public StringFieldImporter {
   bool importFieldValue(const util::CsvReader& csv) override;
 
   i32 fieldPointer(const util::CsvReader& csv) override;
-
-  Status makeStorage(util::CodedBuffer* result) override;
 };
 
 template <typename C>

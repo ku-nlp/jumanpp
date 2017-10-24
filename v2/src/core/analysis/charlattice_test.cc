@@ -277,8 +277,7 @@ TEST_CASE("handles multiple prolongings correctly (#7)") {
   CHECK(env.numNodeSeeds() == 3);
 }
 
-//TODO: fixme
-TEST_CASE("handles multiple prolongings with variants correctly", "[.]") {
+TEST_CASE("handles multiple prolongings with variants correctly") {
   CharLatticeTestEnv env{"x,l1\nつれい,l2\nつれえ,l3\n"};
   env.analyze("つれーーー");
   CHECK(env.contains("つれー", 0, "l2"));
@@ -287,5 +286,5 @@ TEST_CASE("handles multiple prolongings with variants correctly", "[.]") {
   CHECK(env.contains("つれーー", 0, "l3"));
   CHECK(env.contains("つれーーー", 0, "l2"));
   CHECK(env.contains("つれーーー", 0, "l3"));
-  CHECK(env.numNodeSeeds() == 3);
+  CHECK(env.numNodeSeeds() == 6);
 }

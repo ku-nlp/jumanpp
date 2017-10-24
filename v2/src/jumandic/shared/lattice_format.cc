@@ -175,6 +175,16 @@ Status LatticeFormat::format(const core::analysis::Analyzer& analyzer,
         printer << '|';
       }
 
+      auto eptr = walker.eptr();
+      if (eptr.isSpecial()) {
+        auto v =
+            om.valueOfUnkPlaceholder(eptr, jumandic::NormalizedPlaceholderIdx);
+        if (v != 0) {
+          formatNormalizedFeature(printer, v);
+          printer << "|";
+        }
+      }
+
       auto conn = bnd->scores();
       auto scores = conn->forPtr(cptr);
 

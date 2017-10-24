@@ -179,7 +179,7 @@ class IntStorageReader {
     return KeyValueListTraversal{size, parser};
   }
 
-  i32 lengthOf(i32 ptr) {
+  i32 lengthOf(i32 ptr) const {
     JPP_DCHECK_IN(ptr, 0, data_.size());
     util::CodedBufferParser parser{data_.from(ptr)};
     i32 value = -1;

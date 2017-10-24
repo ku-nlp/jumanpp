@@ -47,8 +47,8 @@ class UnkNodesContext {
   EntryPtr makePtr(StringPiece surface, const UnkNodeConfig& conf,
                    bool notPrefix);
 
-  EntryPtr makePtr(StringPiece surface, EntryPtr ptr, const UnkNodeConfig& conf,
-                   u64 feature = 0);
+  EntryPtr makePtr(StringPiece surface, const UnkNodeConfig& conf,
+                   util::ArraySlice<u32> nodeData, i32 feature = 0);
 
   /**
    * Check if any entries in dictionary have non-fillable fields

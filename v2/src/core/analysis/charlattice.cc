@@ -221,13 +221,13 @@ int CharLattice::Parse(const std::vector<Codepoint>& codepoints) {
         //        LOG_TRACE() << "<substitute_choon_boin> " << currentCp.bytes
         //        << ">"
         //                   << itr->second.bytes << "@" << pos;
-        add(pos, itr->second, OptCharLattice::OPT_PROLONG_REPLACE);
+        add(pos, itr->second, Modifiers::REPLACE | Modifiers::REPLACE_PROLONG);
         if (CheckSubstituteChoon(codepoints, pos,
                                  CMaps().prolongedMapForErow)) {
           auto it2 = db.prolongedMapForErow.find(codepoints[pos - 1].codepoint);
           add(pos, it2->second,
-              OptCharLattice::OPT_PROLONG_REPLACE |
-                  OptCharLattice::OPT_PROLONG_EROW_WITH_E);
+              Modifiers::REPLACE | Modifiers::REPLACE_PROLONG |
+                  Modifiers::REPLACE_EROW_WITH_E);
         }
       } else if (CheckSubstituteLower(codepoints, pos)) {
         // Substitute lower character to upper character (ex. ねぇさん >
@@ -236,26 +236,24 @@ int CharLattice::Parse(const std::vector<Codepoint>& codepoints) {
         //        LOG_TRACE() << "<substitute_small_large> " << currentCp.bytes
         //        << ">"
         //                   << itr->second.bytes << "@" << pos;
-        add(pos, itr->second, OptCharLattice::OPT_SMALL_TO_LARGE);
+        add(pos, itr->second,
+            Modifiers::REPLACE | Modifiers::REPLACE_SMALLKANA);
       }
 
       /* Deletion */
       if (isRemovableProlong(preIsDeleted, codepoints, pos)) {
         //        LOG_TRACE() << "<del_prolong> " << currentCp.bytes << "@" <<
         //        pos;
-        add(pos, skipped,
-            OptCharLattice::OPT_DELETE | OptCharLattice::OPT_DELETE_PROLONG);
+        add(pos, skipped, Modifiers::DELETE | Modifiers::DELETE_PROLONG);
         nextPreIsDeleted = true;
       } else if (CheckRemovableHatsuon(preIsDeleted, codepoints, pos)) {
         //        LOG_TRACE() << "<del_hatsu> " << currentCp.bytes << "@" <<
         //        pos;
-        add(pos, skipped,
-            OptCharLattice::OPT_DELETE | OptCharLattice::OPT_DELETE_HASTSUON);
+        add(pos, skipped, Modifiers::DELETE | Modifiers::DELETE_HASTSUON);
         nextPreIsDeleted = true;
       } else if (CheckRemovableYouon(preIsDeleted, codepoints, pos)) {
         //        LOG_TRACE() << "<del_youon> @" << pos;
-        add(pos, skipped,
-            OptCharLattice::OPT_DELETE | OptCharLattice::OPT_DELETE_SMALLKANA);
+        add(pos, skipped, Modifiers::DELETE | Modifiers::DELETE_SMALLKANA);
         nextPreIsDeleted = true;
       }
     }
@@ -277,7 +275,7 @@ bool CharLattceTraversal::lookupCandidatesFrom(i32 start) {
   }
   auto posStart = static_cast<LatticePosition>(start);
   auto posEnd = static_cast<LatticePosition>(start + 1);
-  auto state = make(trav, posStart, posEnd, OptCharLattice::OPT_ORIGINAL);
+  auto state = make(trav, posStart, posEnd, Modifiers::ORIGINAL);
   state->lastStatus = stat;
   states1_.push_back(state);
   auto step = start + 1;
@@ -293,6 +291,10 @@ bool CharLattceTraversal::lookupCandidatesFrom(i32 start) {
   if (result_.empty()) {
     return false;
   }
+  for (auto& s : states1_) {
+    buffer_.push_back(s);
+  }
+  states1_.clear();
   util::sort(result_, [](const CLResult& c1, const CLResult& c2) {
     auto v1 = c1.end == c2.end;
     if (v1) {
@@ -300,9 +302,11 @@ bool CharLattceTraversal::lookupCandidatesFrom(i32 start) {
     }
     return c1.end < c2.end;
   });
-  auto it = std::unique(result_.begin(), result_.end(), [](const CLResult& c1, const CLResult& c2) {
-    return c1.entryPtr == c2.entryPtr && c1.end == c2.end; //starts are equal at this point
-  });
+  auto it = std::unique(result_.begin(), result_.end(),
+                        [](const CLResult& c1, const CLResult& c2) {
+                          // starts are equal at this point
+                          return c1.entryPtr == c2.entryPtr && c1.end == c2.end;
+                        });
   result_.erase(it, result_.end());
   return !result_.empty();
 }
@@ -314,19 +318,21 @@ void CharLattceTraversal::doTraverseStep(i32 pos) {
     if (state->end != pos) {
       states2_.push_back(state);
     }
-    tryWalk(state, ch, OptCharLattice::OPT_ORIGINAL, true);
+    tryWalk(state, ch, Modifiers::ORIGINAL, true);
     for (auto& n : extraNodes) {
-      tryWalk(state, n.cp, n.type, !n.hasType(OptCharLattice::OPT_DELETE));
+      tryWalk(state, n.cp, n.type, !n.hasType(Modifiers::DELETE));
     }
   }
 }
 
 void CharLattceTraversal::tryWalk(TraverasalState* pState,
-                                  const Codepoint& codepoint,
-                                  OptCharLattice newFlag, bool doStep) {
+                                  const Codepoint& codepoint, Modifiers newFlag,
+                                  bool doStep) {
   LatticePosition length{1};
-  auto nst = make(pState->traversal, pState->start, pState->end + length,
-                  pState->allFlags | newFlag);
+  auto end = std::min<LatticePosition>(
+      pState->end + length, static_cast<LatticePosition>(input_.size()));
+  auto nst =
+      make(pState->traversal, pState->start, end, pState->allFlags | newFlag);
 
   TraverseStatus status;
   if (doStep) {
@@ -343,11 +349,11 @@ void CharLattceTraversal::tryWalk(TraverasalState* pState,
   nst->lastStatus = status;
 
   if (status == TraverseStatus::Ok) {
-    if (nst->allFlags != OptCharLattice::OPT_ORIGINAL) {  // we have a result!
+    if (nst->allFlags != Modifiers::ORIGINAL) {  // we have a result!
       auto entries = this->lattice_.entries.entryTraversal(nst->traversal);
       auto flags = nst->allFlags;
-      if (ExistFlag(newFlag, OptCharLattice::OPT_DELETE)) {
-        flags = flags | OptCharLattice::OPT_PROLONG_DEL_LAST;
+      if (ExistFlag(newFlag, Modifiers::DELETE)) {
+        flags = flags | Modifiers::DELETE_LAST;
       }
       i32 ptr;
       while (entries.readOnePtr(&ptr)) {
@@ -362,7 +368,7 @@ void CharLattceTraversal::tryWalk(TraverasalState* pState,
 TraverasalState* CharLattceTraversal::make(const DoubleArrayTraversal& t,
                                            LatticePosition start,
                                            LatticePosition end,
-                                           OptCharLattice flags) {
+                                           Modifiers flags) {
   TraverasalState* data;
   if (buffer_.empty()) {
     data = lattice_.alloc_->make<TraverasalState>(t, start, end, flags);

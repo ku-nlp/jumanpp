@@ -43,6 +43,8 @@ struct JumandicFields {
   }
 };
 
+void formatNormalizedFeature(util::io::Printer& p, i32 featureVal);
+
 class OutputFormat {
  public:
   virtual ~OutputFormat() = default;

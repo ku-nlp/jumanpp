@@ -129,8 +129,15 @@ OutputManager::OutputManager(util::memory::ManagedAllocatorCore *alloc,
       entries_{holder->entries()},
       lattice_(lattice) {}
 
+i32 OutputManager::valueOfUnkPlaceholder(EntryPtr eptr,
+                                         i32 placeholderIdx) const {
+  JPP_DCHECK(eptr.isSpecial());
+  return xtra_->placeholderData(eptr, placeholderIdx);
+}
+
 bool NodeWalker::handleMultiple() {
   EntryPtr eptr{nodes_.at(nodes_.size() - (remaining_ + 1))};
+  current_ = eptr;
   return mgr_->fillEntry(eptr, values_);
 }
 

@@ -66,11 +66,6 @@ void StringListFieldImporter::injectFieldBuffer(util::CodedBuffer* buffer) {
   buffer->writeVarint(0);
 }
 
-Status StringListFieldImporter::makeStorage(util::CodedBuffer* result) {
-  buffer_->writeString("");
-  return StringFieldImporter::makeStorage(result);
-}
-
 IntFieldImporter::IntFieldImporter(i32 field)
     : fld_{field}, re_{"^\\d+$", std::regex::optimize | std::regex::basic} {}
 
@@ -115,6 +110,7 @@ Status StringStorage::makeStorage(util::CodedBuffer* result) {
 void StringKeyValueListFieldImporter::injectFieldBuffer(
     util::CodedBuffer* buffer) {
   buffer_ = buffer;
+  buffer->writeVarint(0);
 }
 
 bool StringKeyValueListFieldImporter::importFieldValue(
@@ -230,11 +226,6 @@ i32 StringKeyValueListFieldImporter::fieldPointer(const util::CsvReader& csv) {
   }
 
   return ptr;
-}
-
-Status StringKeyValueListFieldImporter::makeStorage(util::CodedBuffer* result) {
-  buffer_->writeString("");  // Write 0 as empty sequence
-  return StringFieldImporter::makeStorage(result);
 }
 
 }  // namespace impl

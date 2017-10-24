@@ -139,9 +139,21 @@ bool UnkNodesContext::dicPatternMatches(const UnkNodeConfig& conf,
   return false;
 }
 
-EntryPtr UnkNodesContext::makePtr(StringPiece surface, EntryPtr ptr,
-                                  const UnkNodeConfig& conf, u64 feature) {
-  return EntryPtr(0);
+EntryPtr UnkNodesContext::makePtr(StringPiece surface,
+                                  const UnkNodeConfig& conf,
+                                  util::ArraySlice<u32> nodeData, i32 feature) {
+  auto node = xtra_->makeUnk(conf.base);
+  auto data = xtra_->nodeContent(node);
+  util::copy_buffer(nodeData, data);
+  node->header.unk.surface = surface;
+  i32 hashValue = hashUnkString(surface);
+  node->header.unk.contentHash = hashValue;
+  JPP_DCHECK_LT(node->header.unk.contentHash, 0);
+  conf.fillElems(data, hashValue);
+  if (conf.notPrefixIndex != -1) {
+    xtra_->putPlaceholderData(node, conf.notPrefixIndex, feature);
+  }
+  return node->ptr();
 }
 
 i32 hashUnkString(StringPiece sp) {

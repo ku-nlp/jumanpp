@@ -12,6 +12,7 @@ namespace jumanpp {
 namespace jumandic {
 
 static constexpr i32 JumandicNumFields = 9;
+static constexpr i32 NormalizedPlaceholderIdx = 1;
 
 class SpecFactory {
  public:

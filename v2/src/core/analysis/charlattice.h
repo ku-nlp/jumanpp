@@ -19,73 +19,69 @@ namespace charlattice {
 template <typename T>
 using Vec = util::memory::ManagedVector<T>;
 
-enum class OptCharLattice : u32 {
-  OPT_EMPTY = 0x00000000,
-  OPT_ORIGINAL = 0x00000001,
-  OPT_SMALL_TO_LARGE = 0x00000002,
-  OPT_DEVOICE = 0x00000004,
-  OPT_DELETE = 0x00000008,
-  OPT_PROLONG_REPLACE = 0x00000010,
-  OPT_PROLONG_DEL_LAST = 0x00000020,
-  OPT_DELETE_PROLONG = 0x00000040,
-  OPT_DELETE_HASTSUON = 0x0000080,
-  OPT_DELETE_SMALLKANA = 0x00000100,
-  OPT_PROLONG_EROW_WITH_E = 0x00000200,
+enum class Modifiers : u32 {
+  EMPTY = 0x00000000,
+  ORIGINAL = 0x00000001,
+  REPLACE_SMALLKANA = 0x00000002,
+  REPLACE = 0x00000004,
+  DELETE = 0x00000008,
+  REPLACE_PROLONG = 0x00000010,
+  DELETE_LAST = 0x00000020,
+  DELETE_PROLONG = 0x00000040,
+  DELETE_HASTSUON = 0x0000080,
+  DELETE_SMALLKANA = 0x00000100,
+  REPLACE_EROW_WITH_E = 0x00000200,
 };
 
-inline OptCharLattice operator|(OptCharLattice c1, OptCharLattice c2) noexcept {
-  return static_cast<OptCharLattice>(static_cast<u32>(c1) |
-                                     static_cast<u32>(c2));
+inline Modifiers operator|(Modifiers c1, Modifiers c2) noexcept {
+  return static_cast<Modifiers>(static_cast<u32>(c1) | static_cast<u32>(c2));
 }
 
-inline OptCharLattice operator!(OptCharLattice c1) noexcept {
-  return static_cast<OptCharLattice>(!static_cast<u32>(c1));
+inline Modifiers operator!(Modifiers c1) noexcept {
+  return static_cast<Modifiers>(!static_cast<u32>(c1));
 }
 
-inline OptCharLattice operator~(OptCharLattice c1) noexcept {
-  return static_cast<OptCharLattice>(~static_cast<u32>(c1));
+inline Modifiers operator~(Modifiers c1) noexcept {
+  return static_cast<Modifiers>(~static_cast<u32>(c1));
 }
 
-inline OptCharLattice operator&(OptCharLattice c1, OptCharLattice c2) noexcept {
-  return static_cast<OptCharLattice>(static_cast<u32>(c1) &
-                                     static_cast<u32>(c2));
+inline Modifiers operator&(Modifiers c1, Modifiers c2) noexcept {
+  return static_cast<Modifiers>(static_cast<u32>(c1) & static_cast<u32>(c2));
 }
 
 using Codepoint = jumanpp::chars::InputCodepoint;
 using CharacterClass = jumanpp::chars::CharacterClass;
 
-inline bool ExistFlag(OptCharLattice general, OptCharLattice query) {
-  return (general & query) != OptCharLattice::OPT_EMPTY;
+inline bool ExistFlag(Modifiers general, Modifiers query) {
+  return (general & query) != Modifiers::EMPTY;
 }
 
 struct CharNode {
   Codepoint cp;
-  OptCharLattice type = OptCharLattice::OPT_EMPTY;
+  Modifiers type = Modifiers::EMPTY;
 
-  CharNode(const Codepoint& cpIn, const OptCharLattice initType) noexcept
+  CharNode(const Codepoint& cpIn, const Modifiers initType) noexcept
       : cp(cpIn) {
     type = initType;
   };
 
-  bool hasType(OptCharLattice type) const noexcept {
-    return (this->type & type) != OptCharLattice::OPT_EMPTY;
+  bool hasType(Modifiers type) const noexcept {
+    return (this->type & type) != Modifiers::EMPTY;
   }
 
-  bool isReplace() const {
-    return hasType(OptCharLattice::OPT_PROLONG_REPLACE);
-  }
+  bool isReplace() const { return hasType(Modifiers::REPLACE_PROLONG); }
 
-  bool isDelete() const { return hasType(OptCharLattice::OPT_DELETE); }
+  bool isDelete() const { return hasType(Modifiers::DELETE); }
 };
 
 struct DaTrieResult {
   EntryPtr entryPtr;
-  OptCharLattice flags;
+  Modifiers flags;
 };
 
 struct CLResult {
   EntryPtr entryPtr;
-  OptCharLattice flags;
+  Modifiers flags;
   LatticePosition start;
   LatticePosition end;
 };
@@ -101,8 +97,8 @@ class CharLattice {
   util::memory::ManagedAllocatorCore* alloc_;
   u32 notNormal = 0;
 
-  void add(size_t pos, const Codepoint& cp, OptCharLattice flags) {
-    if (flags != OptCharLattice::OPT_ORIGINAL) {
+  void add(size_t pos, const Codepoint& cp, Modifiers flags) {
+    if (flags != Modifiers::ORIGINAL) {
       notNormal += 1;
     }
     nodeList[pos].emplace_back(cp, flags);
@@ -128,11 +124,11 @@ struct TraverasalState {
   DoubleArrayTraversal traversal;
   LatticePosition start;
   LatticePosition end;
-  OptCharLattice allFlags;
+  Modifiers allFlags;
   TraverseStatus lastStatus;
 
   TraverasalState(const DoubleArrayTraversal& t, LatticePosition start,
-                  LatticePosition end, OptCharLattice flags)
+                  LatticePosition end, Modifiers flags)
       : traversal{t}, start{start}, end{end}, allFlags{flags} {}
 };
 
@@ -157,10 +153,10 @@ class CharLattceTraversal {
   const Vec<CLResult>& candidates() const { return result_; }
 
   TraverasalState* make(const DoubleArrayTraversal& t, LatticePosition start,
-                        LatticePosition end, OptCharLattice flags);
+                        LatticePosition end, Modifiers flags);
 
   void tryWalk(TraverasalState* pState, const Codepoint& codepoint,
-               OptCharLattice newFlag, bool doStep);
+               Modifiers newFlag, bool doStep);
 
   void doTraverseStep(i32 pos);
 
