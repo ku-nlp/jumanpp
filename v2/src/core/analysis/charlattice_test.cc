@@ -260,3 +260,10 @@ TEST_CASE("charlattice makes a node with choon and hatsuon") {
   CHECK(env.exists("せがーっ", 0));
   CHECK(env.numNodeSeeds() == 3);
 }
+
+TEST_CASE("charlattice finds prolonged e-row") {
+  CharLatticeTestEnv env{"x,l1\nてめえ,l2\n"};
+  env.analyze("てめー");
+  CHECK(env.exists("てめー", 0));
+  CHECK(env.numNodeSeeds() == 1);
+}

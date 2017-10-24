@@ -50,7 +50,12 @@ struct CharDb {
       P(u'こ', "う"), P(u'そ', "う"), P(u'と', "う"), P(u'の', "う"),
       P(u'ほ', "う"), P(u'も', "う"), P(u'よ', "う"), P(u'ろ', "う"),
       P(u'ご', "う"), P(u'ぞ', "う"), P(u'ど', "う"), P(u'ぼ', "う"),
-      P(u'ぽ', "う"), P(u'ょ', "う"), P(u'え', "え"), P(u'ね', "え"));
+      P(u'ぽ', "う"), P(u'ょ', "う"), P(u'え', "い"), P(u'ね', "い"));
+
+  const util::FlatMap<char32_t, Codepoint> prolongedMapForErow = codemapsfor(
+      P(u'え', "え"), P(u'け', "え"), P(u'げ', "え"), P(u'せ', "え"),
+      P(u'ぜ', "え"), P(u'て', "え"), P(u'で', "え"), P(u'ね', "え"),
+      P(u'へ', "え"), P(u'べ', "え"), P(u'め', "え"), P(u'れ', "え"));
 
   const util::FlatSet<char32_t> lowerList{u'ぁ', u'ぃ', u'ぅ', u'ぇ', u'ぉ'};
 
@@ -168,13 +173,13 @@ inline bool CheckRemovableYouon(bool preIsDeleted,
        currentCp.codepoint == lastCp.codepoint));
 }
 
-inline bool CheckSubstituteChoon(const std::vector<Codepoint>& codepoints,
-                                 size_t pos) {
+inline bool CheckSubstituteChoon(
+    const std::vector<Codepoint>& codepoints, size_t pos,
+    const util::FlatMap<char32_t, Codepoint>& map) {
   // (ーの文字 || 〜の文字)  && ２文字目以降
-  if (pos > 0 && (codepoints[pos].codepoint == DEF_PROLONG_SYMBOL1 ||
-                  codepoints[pos].codepoint == DEF_PROLONG_SYMBOL2)) {
-    auto itr = CMaps().prolongedMap.find(codepoints[pos - 1].codepoint);
-    return (itr != CMaps().prolongedMap.end());
+  if (pos > 0 && codepoints[pos].hasClass(CharacterClass::CHOON)) {
+    auto itr = map.find(codepoints[pos - 1].codepoint);
+    return (itr != map.end());
   } else
     return false;
 }
@@ -210,13 +215,20 @@ int CharLattice::Parse(const std::vector<Codepoint>& codepoints) {
     /* Double Width Characters */
     if (currentCp.hasClass(CharacterClass::FAMILY_DOUBLE)) {
       /* Substitution */
-      if (CheckSubstituteChoon(codepoints, pos)) {
+      if (CheckSubstituteChoon(codepoints, pos, CMaps().prolongedMap)) {
         // Substitute choon to boin (ex. ねーさん > ねえさん)
         auto itr = db.prolongedMap.find(codepoints[pos - 1].codepoint);
         //        LOG_TRACE() << "<substitute_choon_boin> " << currentCp.bytes
         //        << ">"
         //                   << itr->second.bytes << "@" << pos;
-        add(pos, itr->second, OptCharLattice::OPT_PROLONG_REPLACED);
+        add(pos, itr->second, OptCharLattice::OPT_PROLONG_REPLACE);
+        if (CheckSubstituteChoon(codepoints, pos,
+                                 CMaps().prolongedMapForErow)) {
+          auto it2 = db.prolongedMapForErow.find(codepoints[pos - 1].codepoint);
+          add(pos, it2->second,
+              OptCharLattice::OPT_PROLONG_REPLACE |
+                  OptCharLattice::OPT_PROLONG_EROW_WITH_E);
+        }
       } else if (CheckSubstituteLower(codepoints, pos)) {
         // Substitute lower character to upper character (ex. ねぇさん >
         // ねえさん)
