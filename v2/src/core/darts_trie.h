@@ -82,6 +82,11 @@ class DoubleArrayTraversal {
   i32 value() const { return value_; }
   TraverseStatus step(StringPiece data);
   TraverseStatus step(StringPiece data, size_t& pos);
+
+  bool operator==(const DoubleArrayTraversal& o) const {
+    return base_ == o.base_ && node_pos_ == o.node_pos_ &&
+           key_pos_ == o.key_pos_ && value_ == o.value_;
+  }
 };
 
 namespace impl {

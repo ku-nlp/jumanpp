@@ -288,3 +288,15 @@ TEST_CASE("handles multiple prolongings with variants correctly") {
   CHECK(env.contains("つれーーー", 0, "l3"));
   CHECK(env.numNodeSeeds() == 6);
 }
+
+TEST_CASE("don't crash on very long prolong") {
+  CharLatticeTestEnv env{"x,l1\nあ,l2\n"};
+  env.analyze(
+      "あーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー"
+      "ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー"
+      "ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー"
+      "ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー"
+      "ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー"
+      "ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー");
+  CHECK(env.numNodeSeeds() == 199);
+}

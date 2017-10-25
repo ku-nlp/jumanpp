@@ -263,6 +263,38 @@ int CharLattice::Parse(const std::vector<Codepoint>& codepoints) {
   return 0;
 }
 
+template <typename Iter, typename Comp, typename C>
+Iter unique(Iter begin, Iter end, Comp comp, C& c) {
+  switch (std::distance(begin, end)) {
+    case 0:
+    case 1:
+      return end;
+    default:;  // noop
+  }
+  Iter it = begin;
+  ++it;
+  while (it < end && !comp(*begin, *it)) {
+    ++it;
+    ++begin;
+  }
+  if (it == end) {
+    return end;
+  }
+  for (; it < end; ++it) {
+    JPP_DCHECK_LT(begin, it);
+    while (it < end && comp(*begin, *it)) {
+      c.push_back(std::move(*it));
+      ++it;
+    }
+    if (it < end) {
+      ++begin;
+      *begin = std::move(*it);
+    }
+  }
+  ++begin;
+  return begin;
+};
+
 bool CharLattceTraversal::lookupCandidatesFrom(i32 start) {
   if (start > input_.length()) {
     return false;
@@ -287,14 +319,24 @@ bool CharLattceTraversal::lookupCandidatesFrom(i32 start) {
       buffer_.push_back(s);
     }
     states2_.clear();
-  }
-  if (result_.empty()) {
-    return false;
+    auto ptr = unique(states1_.begin(), states1_.end(),
+                      [](const TraverasalState* s1, const TraverasalState* s2) {
+                        return s1->end == s2->end &&
+                               s1->allFlags == s2->allFlags &&
+                               s1->traversal == s2->traversal;
+                      },
+                      buffer_);
+    if (ptr != states1_.end()) {
+      states1_.erase(ptr, states1_.end());
+    }
   }
   for (auto& s : states1_) {
     buffer_.push_back(s);
   }
   states1_.clear();
+  if (result_.empty()) {
+    return false;
+  }
   util::sort(result_, [](const CLResult& c1, const CLResult& c2) {
     auto v1 = c1.end == c2.end;
     if (v1) {
@@ -316,7 +358,11 @@ void CharLattceTraversal::doTraverseStep(i32 pos) {
   auto& extraNodes = lattice_.nodeList[pos];
   for (auto state : states1_) {
     if (state->end != pos) {
-      states2_.push_back(state);
+      // need to place a copy, because the memory will be recycled
+      auto copy =
+          make(state->traversal, state->start, state->end, state->allFlags);
+      copy->allFlags = state->allFlags;
+      states2_.push_back(copy);
     }
     tryWalk(state, ch, Modifiers::ORIGINAL, true);
     for (auto& n : extraNodes) {
