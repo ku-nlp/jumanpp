@@ -36,20 +36,25 @@ class JumanppExec {
   Status writeGraphviz();
 
  public:
-  JumanppExec(const jumandic::JumanppConf& conf) : conf{conf} {}
+  explicit JumanppExec(const jumandic::JumanppConf& conf) : conf{conf} {}
 
   virtual Status initOutput();
 
   virtual Status init();
 
   Status analyze(StringPiece data, StringPiece comment = EMPTY_SP) {
-    JPP_RETURN_IF_ERROR(analyzer.analyze(data));
-    JPP_RETURN_IF_ERROR(format->format(analyzer, comment))
-    if (conf.graphvizDir.size() > 0) {
-      writeGraphviz();
+    try {
+      JPP_RETURN_IF_ERROR(analyzer.analyze(data));
+      JPP_RETURN_IF_ERROR(format->format(analyzer, comment))
+      if (conf.graphvizDir.size() > 0) {
+        writeGraphviz();
+      }
+      numAnalyzed_ += 1;
+      return Status::Ok();
+    } catch (std::exception& e) {
+      return JPPS_INVALID_STATE << "failed to analyze [" << data << "] ["
+                                << comment << "]: " << e.what();
     }
-    numAnalyzed_ += 1;
-    return Status::Ok();
   }
 
   StringPiece output() const { return format->result(); }
