@@ -343,7 +343,8 @@ Status FieldsHolder::load(const BuiltDictionary& dic) {
                        impl::IntStorageReader{f.fieldContent},
                        impl::StringStorageReader{f.stringContent},
                        f.emptyValue,
-                       f.stringStorageIdx};
+                       f.stringStorageIdx,
+                       f.isSurfaceField};
     fields_.push_back(df);
   }
   return Status::Ok();

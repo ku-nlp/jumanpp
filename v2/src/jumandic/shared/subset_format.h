@@ -12,7 +12,7 @@ namespace jumanpp {
 namespace jumandic {
 namespace output {
 
-class SubsetFormat : public OutputFormat {
+class SubsetFormat : public core::OutputFormat {
   MorphFormat morph_{true};
   MdicFormat mdic_;
   std::string buffer_;

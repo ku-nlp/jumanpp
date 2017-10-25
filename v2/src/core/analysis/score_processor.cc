@@ -36,6 +36,8 @@ ScoreProcessor::ScoreProcessor(AnalyzerImpl *analyzer)
   scores_.prepare(alloc, maxNodes);
   beamCandidates_ = alloc->allocateBuf<BeamCandidate>(
       maxEnds * lattice_->config().beamSize, 64);
+  globalBeam_ = alloc->allocateBuf<BeamCandidate>(
+      maxEnds * lattice_->config().beamSize, 64);
   analyzer->core().features().ngramPartial->allocateBuffers(&featureBuffer_,
                                                             runStats_, alloc);
 }
@@ -174,9 +176,7 @@ u32 fillBeamCandidates(Lattice *l, LatticeBoundary *bnd, NodeScores scores,
 
 util::ArraySlice<BeamCandidate> processBeamCandidates(
     util::MutableArraySlice<BeamCandidate> candidates, u32 maxBeam) {
-  auto comp = [](const BeamCandidate &c1, const BeamCandidate &c2) {
-    return c1.score > c2.score;
-  };
+  auto comp = std::greater<>();
   if (candidates.size() > maxBeam * 2) {
     u32 maxElems = maxBeam * 2;
     auto iter = util::partition(candidates.begin(), candidates.end(), comp,
@@ -215,12 +215,37 @@ void ScoreProcessor::makeBeams(i32 boundary, LatticeBoundary *bnd,
       ConnectionPtr ptr{static_cast<u16>(boundary), beamCand.left(),
                         static_cast<u16>(node), beamCand.beam(),
                         &prevNode.at(beamCand.beam()).ptr};
-      beamElems.at(beam) = ConnectionBeamElement{ptr, beamCand.score};
+      beamElems.at(beam) = ConnectionBeamElement{ptr, beamCand.score()};
     }
     for (; beam < maxBeam; ++beam) {
       beamElems.at(beam) = EntryBeam::fake();
     }
   }
+}
+
+util::ArraySlice<BeamCandidate> ScoreProcessor::makeGlobalBeam(i32 bndIdx,
+                                                               i32 maxElems) {
+  auto bnd = lattice_->boundary(bndIdx);
+  auto ends = bnd->ends();
+  u32 count = 0;
+  util::ArraySlice<LatticeNodePtr> leftNodes = ends->nodePtrs();
+  for (u16 left = 0; left < leftNodes.size(); ++left) {
+    auto ptr = leftNodes.at(left);
+    auto endBnd = lattice_->boundary(ptr.boundary);
+    auto endBeam = endBnd->starts()->beamData().row(ptr.position);
+    u16 beamIdx = 0;
+    for (auto &el : endBeam) {
+      if (EntryBeam::isFake(el)) {
+        break;
+      }
+      globalBeam_[count] = BeamCandidate{el.totalScore, left, beamIdx};
+      ++count;
+      ++beamIdx;
+    }
+  }
+  util::MutableArraySlice<BeamCandidate> slice{globalBeam_, 0, count};
+  auto res = processBeamCandidates(slice, maxElems);
+  return res;
 }
 
 }  // namespace analysis

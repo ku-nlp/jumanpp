@@ -48,7 +48,7 @@ class LatticeFormatInfo {
   i32 idOf(LatticeNodePtr ptr) const;
 };
 
-class LatticeFormat : public OutputFormat {
+class LatticeFormat : public core::OutputFormat {
   JumandicFields flds;
   util::io::Printer printer;
   std::array<i32, JumandicNumFields> fieldBuffer;

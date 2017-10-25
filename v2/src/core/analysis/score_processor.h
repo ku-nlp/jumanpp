@@ -67,15 +67,25 @@ class EntryBeam {
 };
 
 struct BeamCandidate {
-  Score score;
-  u32 position;
+  Score score_;
+  u32 position_;
 
   BeamCandidate(Score score, u16 left, u16 beam)
-      : score{score}, position{(static_cast<u32>(left) << 16u) | beam} {}
+      : score_{score}, position_{(static_cast<u32>(left) << 16u) | beam} {}
 
-  u16 left() const noexcept { return static_cast<u16>(position >> 16); }
+  Score score() const noexcept { return score_; }
 
-  u16 beam() const noexcept { return static_cast<u16>(position); }
+  u16 left() const noexcept { return static_cast<u16>(position_ >> 16); }
+
+  u16 beam() const noexcept { return static_cast<u16>(position_); }
+
+  bool operator<(const BeamCandidate& o) const noexcept {
+    return score_ < o.score_;
+  }
+
+  bool operator>(const BeamCandidate& o) const noexcept {
+    return score_ > o.score_;
+  }
 };
 
 class ScoreProcessor {
@@ -87,6 +97,7 @@ class ScoreProcessor {
   Lattice* lattice_;
   features::AnalysisRunStats runStats_;
   util::MutableArraySlice<BeamCandidate> beamCandidates_;
+  util::MutableArraySlice<BeamCandidate> globalBeam_;
 
   explicit ScoreProcessor(AnalyzerImpl* analyzer);
 
@@ -103,6 +114,7 @@ class ScoreProcessor {
   void copyFeatureScores(i32 left, i32 beam, LatticeBoundaryScores* bndconn);
 
   void makeBeams(i32 boundary, LatticeBoundary* bnd, const ScorerDef* sc);
+  util::ArraySlice<BeamCandidate> makeGlobalBeam(i32 bndIdx, i32 maxElems);
 };
 
 }  // namespace analysis

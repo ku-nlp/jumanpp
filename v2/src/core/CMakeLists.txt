@@ -14,7 +14,7 @@ set(core_srcs darts_trie.cc dictionary.cc impl/field_import.cc dic_builder.cc
         env.cc impl/graphviz_format.cc impl/feature_codegen.cc analysis/onomatopoeia_creator.cc
         analysis/rnn_id_resolver.cc analysis/numeric_creator.cc analysis/ngram_computations.cc
         impl/feature_impl_ngram_partial.cc impl/feature_impl_combine.cc analysis/charlattice.cc
-        analysis/normalized_node_creator.cc)
+        analysis/normalized_node_creator.cc impl/global_beam_position_fmt.cc)
 
 set(core_train_srcs
         training/training_io.h training/loss.h training/gold_example.h training/trainer.h training/scw.h
@@ -39,7 +39,8 @@ set(core_hdrs
         impl/perceptron_io.h env.h impl/graphviz_format.h analysis/onomatopoeia_creator.h impl/feature_codegen.h
         analysis/rnn_id_resolver.h analysis/rnn_serialization.h analysis/numeric_creator.h
         analysis/ngram_computations.h impl/feature_impl_ngram_partial.h analysis/charlattice.h
-        analysis/normalized_node_creator.h analysis/charlattice.h analysis/normalized_node_creator.h)
+        analysis/normalized_node_creator.h analysis/charlattice.h analysis/normalized_node_creator.h
+        impl/global_beam_position_fmt.h)
 
 set(core_test_srcs darts_trie_test.cc dictionary_test.cc impl/field_import_test.cc
         impl/field_reader_test.cc impl/feature_impl_prim_test.cc impl/feature_impl_compute_test.cc
@@ -80,6 +81,6 @@ target_link_libraries(jpp_core_train_tests jpp_core_train)
 
 add_subdirectory(impl/codegen)
 add_subdirectory(benchmarks)
-if (${ENABLE_DEV_TOOLS})
+if (${JPP_ENABLE_DEV_TOOLS})
     add_subdirectory(devtools)
 endif()

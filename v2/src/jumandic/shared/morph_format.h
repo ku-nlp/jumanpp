@@ -11,7 +11,7 @@ namespace jumanpp {
 namespace jumandic {
 namespace output {
 
-class MorphFormat : public OutputFormat {
+class MorphFormat : public core::OutputFormat {
   JumandicFields fields_;
   util::io::Printer printer_;
   core::analysis::AnalysisResult analysisResult_;

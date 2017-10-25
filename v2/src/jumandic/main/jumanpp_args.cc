@@ -36,6 +36,10 @@ bool parseArgs(int argc, char* argv[], JumanppConf* result) {
       "DIRECTORY",
       "Directory for GraphViz .dot files output",
       {"graphviz-dir"}};
+  args::Flag printVersion{outputType,
+                          "printVersion",
+                          "Just print version and exit",
+                          {'v', "version"}};
 
   args::Group modelParams{parser, "Model parameters"};
   args::ValueFlag<std::string> modelFile{
@@ -46,6 +50,17 @@ bool parseArgs(int argc, char* argv[], JumanppConf* result) {
   args::Group analysisParams{parser, "Analysis parameters"};
   args::ValueFlag<i32> beamSize{
       analysisParams, "N", "Beam size (5 default)", {"beam"}, 5};
+  args::ValueFlag<i32> globalBeamSize{analysisParams,
+                                      "N",
+                                      "Global beam size (2*beamSize default)",
+                                      {"global-beam"}};
+#ifdef JPP_ENABLE_DEV_TOOLS
+  args::Group devParams{parser, "Dev options"};
+  args::Flag globalBeamPos{devParams,
+                           "globalBeamPos",
+                           "Global beam position output",
+                           {"global-beam-pos"}};
+#endif
 
 #if 1
   winsize winsz{0};
@@ -92,6 +107,9 @@ bool parseArgs(int argc, char* argv[], JumanppConf* result) {
     result->outputType = OutputType::Lattice;
     result->beamOutput = lattice.Get();
   }
+  if (printVersion) {
+    result->printVersion = true;
+  }
 
   result->inputFile = input.Get();
 
@@ -104,6 +122,18 @@ bool parseArgs(int argc, char* argv[], JumanppConf* result) {
   result->rnnConfig = rnnArgs.config();
   result->graphvizDir = graphvis.Get();
   result->beamSize = std::max(beamSize.Get(), result->beamOutput);
+
+  if (globalBeamSize) {
+    result->globalBeam = std::max(globalBeamSize.Get(), result->beamSize);
+  } else {
+    result->globalBeam = result->beamSize * 2;
+  }
+
+#ifdef JPP_ENABLE_DEV_TOOLS
+  if (globalBeamPos) {
+    result->outputType = OutputType::GlobalBeamPos;
+  }
+#endif
 
   return true;
 }

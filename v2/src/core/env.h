@@ -55,6 +55,14 @@ class JumanppEnv {
   model::ModelInfo modelInfoCopy() const { return modelInfo_; }
 };
 
+class OutputFormat {
+ public:
+  virtual ~OutputFormat() = default;
+  virtual Status format(const core::analysis::Analyzer& analyzer,
+                        StringPiece comment) = 0;
+  virtual StringPiece result() const = 0;
+};
+
 }  // namespace core
 }  // namespace jumanpp
 

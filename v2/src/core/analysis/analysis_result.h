@@ -105,7 +105,7 @@ class AnalysisPath {
     return false;
   }
 
-  Status fillIn(Lattice* l);
+  Status fillIn(const Lattice* l);
 };
 
 class Analyzer;

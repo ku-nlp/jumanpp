@@ -13,6 +13,8 @@ constexpr size_t JPP_MAX_DIC_FIELDS = @JPP_MAX_DIC_FIELDS@;
 
 #cmakedefine JPP_PREFETCH_FEATURE_WEIGHTS
 
+#cmakedefine JPP_ENABLE_DEV_TOOLS
+
 }
 }
 

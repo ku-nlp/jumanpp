@@ -27,6 +27,7 @@ struct BuiltField {
   i32 stringStorageIdx;
   StringPiece stringContent;
   StringPiece fieldContent;
+  bool isSurfaceField;
 };
 
 struct BuiltDictionary {

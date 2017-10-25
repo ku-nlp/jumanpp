@@ -4,6 +4,7 @@
 
 #include "jumandic_env.h"
 #include "core/analysis/analyzer_impl.h"
+#include "core/impl/global_beam_position_fmt.h"
 #include "core/impl/graphviz_format.h"
 #include "jpp_jumandic_cg.h"
 #include "jumandic/shared/lattice_format.h"
@@ -71,6 +72,13 @@ Status JumanppExec::initOutput() {
       JPP_RETURN_IF_ERROR(mfmt->initialize(analyzer.output()));
       break;
     }
+#ifdef JPP_ENABLE_DEV_TOOLS
+    case OutputType::GlobalBeamPos: {
+      auto mfmt = new core::output::GlobalBeamPositionFormat{conf.globalBeam};
+      format.reset(mfmt);
+      JPP_RETURN_IF_ERROR(mfmt->initialize(analyzer));
+    }
+#endif
   }
   return Status::Ok();
 }

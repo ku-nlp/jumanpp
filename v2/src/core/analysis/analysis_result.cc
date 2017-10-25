@@ -22,7 +22,7 @@ Status AnalysisResult::fillTop1(AnalysisPath *result) {
   return result->fillIn(ptr_);
 }
 
-Status AnalysisPath::fillIn(Lattice *l) {
+Status AnalysisPath::fillIn(const Lattice *l) {
   auto bnds = l->createdBoundaryCount();
   JPP_DCHECK_GE(bnds, 3);
   elems_.clear();

@@ -7,11 +7,21 @@
 
 #include <string>
 #include "core/analysis/rnn_scorer.h"
+#include "core_config.h"
 
 namespace jumanpp {
 namespace jumandic {
 
-enum class OutputType { Juman, Morph, FullMorph, DicSubset, Lattice };
+enum class OutputType {
+  Juman,
+  Morph,
+  FullMorph,
+  DicSubset,
+  Lattice,
+#ifdef JPP_ENABLE_DEV_TOOLS
+  GlobalBeamPos
+#endif
+};
 
 struct JumanppConf {
   std::string modelFile;
@@ -22,6 +32,8 @@ struct JumanppConf {
   std::string graphvizDir;
   i32 beamSize = 5;
   i32 beamOutput = 1;
+  i32 globalBeam = 10;
+  bool printVersion = false;
 };
 
 bool parseArgs(int argc, char* argv[], JumanppConf* result);

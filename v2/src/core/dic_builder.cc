@@ -252,6 +252,7 @@ struct DictionaryBuilderStorage {
         fld.fieldContent = builtInts[i.descriptor->intStorage];
       }
       fld.colType = i.descriptor->columnType;
+      fld.isSurfaceField = i.descriptor->isTrieKey;
       fld.uniqueValues = i.importer->uniqueValues();
       flds.push_back(fld);
     }
@@ -480,6 +481,7 @@ Status DictionaryBuilder::fixupDictionary(const model::ModelPart& dicInfo) {
              << "column type check for column " << f.name << " failed";
     }
     f.stringStorageIdx = fd.stringStorage;
+    f.isSurfaceField = fd.isTrieKey;
     if (fd.stringStorage != -1) {
       f.stringContent = storage_->builtStrings[fd.stringStorage];
     }

@@ -25,6 +25,7 @@ struct DictionaryField {
   impl::StringStorageReader strings;
   StringPiece emptyValue;
   i32 stringStorageIdx;
+  bool isSurfaceField;
 };
 
 class FieldsHolder {
@@ -47,6 +48,8 @@ class FieldsHolder {
   }
 
   Status load(const BuiltDictionary& dic);
+
+  u32 totalFields() const { return fields_.size(); }
 };
 
 class DictionaryHolder {

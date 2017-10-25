@@ -19,7 +19,7 @@ jumanpp::util::io::Printer& printMaybeQuoteStringList(
     core::analysis::StringListIterator items);
 }  // namespace fmt
 
-class MdicFormat : public OutputFormat {
+class MdicFormat : public core::OutputFormat {
   JumandicFields flds_;
   util::io::Printer printer_;
   std::array<i32, JumandicNumFields> fieldBuffer_;

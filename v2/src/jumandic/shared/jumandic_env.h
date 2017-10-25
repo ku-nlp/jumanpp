@@ -22,7 +22,7 @@ class JumanppExec {
   jumandic::JumanppConf conf;
   core::JumanppEnv env;
   core::analysis::Analyzer analyzer;
-  std::unique_ptr<jumandic::output::OutputFormat> format;
+  std::unique_ptr<core::OutputFormat> format;
 
   // use default values
   core::analysis::AnalyzerConfig analyzerConfig;

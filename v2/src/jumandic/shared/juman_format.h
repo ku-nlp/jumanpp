@@ -10,6 +10,7 @@
 #include "core/analysis/analysis_result.h"
 #include "core/analysis/analyzer.h"
 #include "core/analysis/output.h"
+#include "core/env.h"
 #include "jumandic/shared/jumandic_spec.h"
 #include "jumandic_id_resolver.h"
 #include "util/printer.h"
@@ -45,15 +46,7 @@ struct JumandicFields {
 
 void formatNormalizedFeature(util::io::Printer& p, i32 featureVal);
 
-class OutputFormat {
- public:
-  virtual ~OutputFormat() = default;
-  virtual Status format(const core::analysis::Analyzer& analyzer,
-                        StringPiece comment) = 0;
-  virtual StringPiece result() const = 0;
-};
-
-class JumanFormat : public OutputFormat {
+class JumanFormat : public core::OutputFormat {
   JumandicFields flds;
   util::io::Printer printer;
   core::analysis::AnalysisResult analysisResult;
