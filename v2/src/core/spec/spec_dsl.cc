@@ -252,6 +252,14 @@ Status ModelSpecBuilder::createRemainingPrimitiveFeatures(
       f->handled = true;
       pfd.kind = PrimitiveFeatureKind::CodepointSize;
       pfd.references.push_back(index);
+    } else if (type == FeatureType::Codepoint) {
+      f->handled = true;
+      pfd.kind = PrimitiveFeatureKind::Codepoint;
+      pfd.references.push_back(f->intParam_);
+    } else if (type == FeatureType::CodepointType) {
+      f->handled = true;
+      pfd.kind = PrimitiveFeatureKind::CodepointType;
+      pfd.references.push_back(f->intParam_);
     } else if (type == FeatureType::MatchValue) {
       if (f->fields_.size() == 1) {
         i32 index = 0;
@@ -631,25 +639,27 @@ Status FieldBuilder::fill(FieldDescriptor* descriptor,
 
 Status FeatureBuilder::validate() const {
   if (type_ == FeatureType::Initial) {
-    return Status::InvalidParameter()
-           << "feature " << name_ << " was not initialized";
+    return JPPS_INVALID_PARAMETER << "feature " << name_
+                                  << " was not initialized";
   }
+
   if (type_ == FeatureType::Invalid) {
-    return Status::InvalidParameter()
-           << "feature " << name_ << " was initialized more than one time";
+    return JPPS_INVALID_PARAMETER << "feature " << name_
+                                  << " was initialized more than one time";
   }
+
   if (type_ == FeatureType::Length && fields_.size() != 1) {
-    return Status::InvalidState()
-           << "feature " << name_ << " can contain only one field reference";
+    return JPPS_INVALID_PARAMETER << "feature " << name_
+                                  << " can contain only one field reference";
   }
 
   if (type_ == FeatureType::CodepointSize && fields_.size() != 1) {
-    return Status::InvalidState()
-           << "feature " << name_ << " can contain only one field reference";
+    return JPPS_INVALID_PARAMETER << "feature " << name_
+                                  << " can contain only one field reference";
   }
 
   if ((trueTransforms_.size() != 0) ^ (falseTransforms_.size() != 0)) {
-    return Status::InvalidParameter()
+    return JPPS_INVALID_PARAMETER
            << name_
            << ": matching features must ether have both branches or have none";
   }
@@ -657,8 +667,15 @@ Status FeatureBuilder::validate() const {
   if (trueTransforms_.size() != 0 && falseTransforms_.size() != 0) {
     if (!util::contains({FeatureType::MatchCsv, FeatureType::MatchValue},
                         type_)) {
-      return Status::InvalidParameter()
+      return JPPS_INVALID_PARAMETER
              << name_ << ": only matching features can have branches";
+    }
+  }
+
+  if (type_ == FeatureType::Codepoint) {
+    if (intParam_ == 0) {
+      return JPPS_INVALID_PARAMETER
+             << name_ << ": feature can't point to the word itself";
     }
   }
 
@@ -667,18 +684,18 @@ Status FeatureBuilder::validate() const {
 
 Status UnkProcBuilder::validate() const {
   if (name_.size() == 0) {
-    return Status::InvalidParameter() << "unk processor must have a name";
+    return JPPS_INVALID_PARAMETER << "unk processor must have a name";
   }
   if (type_ == UnkMakerType::Invalid) {
-    return Status::InvalidParameter()
-           << name_ << ": unk processor was not initialized";
+    return JPPS_INVALID_PARAMETER << name_
+                                  << ": unk processor was not initialized";
   }
   if (pattern_ == -1) {
-    return Status::InvalidParameter()
+    return JPPS_INVALID_PARAMETER
            << name_ << ": unk processor must have pattern specified";
   }
   if (pattern_ <= 0) {
-    return Status::InvalidParameter()
+    return JPPS_INVALID_PARAMETER
            << name_ << ": unk pattern row numbers start from 1, found "
            << pattern_;
   }

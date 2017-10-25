@@ -77,22 +77,24 @@ class FeatureConstructionContext {
 };
 
 class PrimitiveFeatureContext {
-  analysis::ExtraNodesContext* extraCtx;
-  const dic::FieldsHolder& fields;
+  analysis::ExtraNodesContext* extraCtx_;
+  const dic::FieldsHolder& fields_;
+  util::ArraySlice<chars::InputCodepoint> codepts_;
 
  public:
   PrimitiveFeatureContext(analysis::ExtraNodesContext* extraCtx,
-                          const dic::FieldsHolder& fields)
-      : extraCtx(extraCtx), fields(fields) {}
+                          const dic::FieldsHolder& fields,
+                          util::ArraySlice<chars::InputCodepoint> codepts)
+      : extraCtx_(extraCtx), fields_(fields), codepts_{codepts} {}
 
   DicListTraversal traversal(i32 fieldIdx, i32 fieldPtr) const {
-    auto& fld = fields.at(fieldIdx);
+    auto& fld = fields_.at(fieldIdx);
     auto trav = fld.postions.listAt(fieldPtr);
     return DicListTraversal{trav};
   }
 
   KeyValueTraversal kvTraversal(i32 fieldIdx, i32 fieldPtr) const {
-    auto& fld = fields.at(fieldIdx);
+    auto& fld = fields_.at(fieldIdx);
     auto trav = fld.postions.kvListAt(fieldPtr);
     return KeyValueTraversal{trav};
   }
@@ -101,20 +103,20 @@ class PrimitiveFeatureContext {
     if (!entryPtr.isSpecial()) {
       return 0;
     }
-    auto node = extraCtx->node(entryPtr);
+    auto node = extraCtx_->node(entryPtr);
     if (node == nullptr ||
         node->header.type != analysis::ExtraNodeType::Unknown) {
       return 0;
     }
-    return extraCtx->placeholderData(entryPtr, index);
+    return extraCtx_->placeholderData(entryPtr, index);
   }
 
   i32 lengthOf(NodeInfo nodeInfo, i32 fieldNum, i32 fieldPtr,
                LengthFieldSource field, bool useBytes) {
     if (fieldPtr < 0) {
-      return extraCtx->lengthOf(nodeInfo.entryPtr());
+      return extraCtx_->lengthOf(nodeInfo.entryPtr());
     }
-    auto fld = fields.at(fieldNum);
+    auto fld = fields_.at(fieldNum);
     switch (field) {
       case LengthFieldSource::Positions:
         return fld.postions.lengthOf(fieldPtr);
@@ -127,6 +129,10 @@ class PrimitiveFeatureContext {
       default:
         return -1;
     }
+  }
+
+  util::ArraySlice<chars::InputCodepoint> inputCodepoints() const {
+    return codepts_;
   }
 };
 
@@ -149,7 +155,7 @@ class PrimitiveFeatureData {
     return index_ < entries_.size();
   }
 
-  NodeInfo nodeInfo() const { return entries_[index_]; }
+  const NodeInfo& nodeInfo() const { return entries_[index_]; }
 
   util::ArraySlice<i32> entryData() const { return entryData_.row(index_); }
 

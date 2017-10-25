@@ -92,7 +92,9 @@ enum class PrimitiveFeatureKind {
   Provided,
   Length,
   CodepointSize,
-  MatchKey
+  MatchKey,
+  CodepointType,
+  Codepoint
 };
 
 struct PrimitiveFeatureDescriptor {

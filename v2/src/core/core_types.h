@@ -59,19 +59,18 @@ class NodeInfo {
    */
   EntryPtr entry_;
 
-  /**
-   * Surface length in codepoints
-   */
-  i32 codepoints_;
+  u16 start_;
+  u16 end_;
 
  public:
-  NodeInfo() : entry_{EntryPtr::EOS()}, codepoints_{0} {}
-  NodeInfo(const EntryPtr& entry_, i32 codepoints_)
-      : entry_(entry_), codepoints_(codepoints_) {}
+  NodeInfo() : entry_{EntryPtr::EOS()}, start_{0}, end_{0} {}
+  NodeInfo(const EntryPtr& entry_, u16 start, u16 end)
+      : entry_(entry_), start_{start}, end_{end} {}
 
   EntryPtr entryPtr() const { return entry_; }
-
-  i32 numCodepoints() const { return codepoints_; }
+  i32 numCodepoints() const { return end_ - start_; }
+  u16 start() const { return start_; }
+  u16 end() const { return end_; }
 };
 
 }  // namespace core

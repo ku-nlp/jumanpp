@@ -160,7 +160,9 @@ enum class FeatureType {
   MatchCsv,
   Length,
   CodepointSize,
-  Placeholder
+  Placeholder,
+  CodepointType,
+  Codepoint
 };
 
 class FeatureBuilder : DslOpBase {
@@ -171,6 +173,7 @@ class FeatureBuilder : DslOpBase {
   util::InlinedVector<StringPiece, 4> fields_;
   util::InlinedVector<FieldExpressionBldr, 8> trueTransforms_;
   util::InlinedVector<FieldExpressionBldr, 8> falseTransforms_;
+  i32 intParam_;
 
   void changeType(FeatureType target) {
     if (type_ == FeatureType::Initial) {
@@ -227,6 +230,18 @@ class FeatureBuilder : DslOpBase {
     for (auto&& o : transforms) {
       trueTransforms_.emplace_back(o);
     }
+    return *this;
+  }
+
+  FeatureBuilder& codepointType(i32 offset) {
+    intParam_ = offset;
+    changeType(FeatureType::CodepointType);
+    return *this;
+  }
+
+  FeatureBuilder& codepoint(i32 offset) {
+    intParam_ = offset;
+    changeType(FeatureType::Codepoint);
     return *this;
   }
 

@@ -220,6 +220,12 @@ Status PrimitiveFeaturesDynamicApply::initialize(
       case PrimitiveFeatureKind::MatchKey:
         feature.reset(new DynamicPrimitiveFeature<MatchKeyPrimFeatureImpl>{});
         break;
+      case PrimitiveFeatureKind::Codepoint:
+        feature.reset(new DynamicPrimitiveFeature<CodepointFeatureImpl>{});
+        break;
+      case PrimitiveFeatureKind::CodepointType:
+        feature.reset(new DynamicPrimitiveFeature<CodepointTypeFeatureImpl>{});
+        break;
       default:
         return JPPS_NOT_IMPLEMENTED << "Could not create feature: " << f.name
                                     << " its type was not supported";
@@ -232,13 +238,38 @@ Status PrimitiveFeaturesDynamicApply::initialize(
 }
 
 void PrimitiveFeaturesDynamicApply::apply(
-    PrimitiveFeatureContext *ctx, NodeInfo entryPtr,
+    PrimitiveFeatureContext *ctx, const NodeInfo &nodeInfo,
     const util::ArraySlice<i32> &entry,
     util::MutableArraySlice<u64> *features) const noexcept {
   for (auto &f : features_) {
-    f->apply(ctx, entryPtr, entry, features);
+    f->apply(ctx, nodeInfo, entry, features);
   }
 }
+
+Status CodepointFeatureImpl::initialize(FeatureConstructionContext *ctx,
+                                        const PrimitiveFeature &f) {
+  if (f.matchData.size() != 1) {
+    return JPPS_INVALID_PARAMETER << "match data of feature [" << f.name
+                                  << "] should be 1, was "
+                                  << f.matchData.size();
+  }
+  this->fieldIdx = static_cast<u32>(f.index);
+  this->offset = f.matchData[0];
+  return Status::Ok();
+}
+
+Status CodepointTypeFeatureImpl::initialize(FeatureConstructionContext *ctx,
+                                            const PrimitiveFeature &f) {
+  if (f.matchData.size() != 1) {
+    return JPPS_INVALID_PARAMETER << "match data of feature [" << f.name
+                                  << "] should be 1, was "
+                                  << f.matchData.size();
+  }
+  this->fieldIdx = static_cast<u32>(f.index);
+  this->offset = f.matchData[0];
+  return Status::Ok();
+}
+
 }  // namespace impl
 }  // namespace features
 }  // namespace core

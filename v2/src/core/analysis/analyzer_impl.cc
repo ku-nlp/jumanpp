@@ -113,11 +113,11 @@ class InNodeFeatureComputer {
  public:
   InNodeFeatureComputer(const dic::DictionaryHolder& dic,
                         const features::FeatureHolder& features,
-                        ExtraNodesContext* xtra)
+                        ExtraNodesContext* xtra, const AnalysisInput& input)
       : entries_{dic.entries()},
         xtra_{*xtra},
         features_{features},
-        pfc_{xtra, dic.fields()} {}
+        pfc_{xtra, dic.fields(), input.codepoints()} {}
 
   bool importOneEntry(NodeInfo nfo, util::MutableArraySlice<i32> result) {
     auto ptr = nfo.entryPtr();
@@ -201,7 +201,7 @@ Status AnalyzerImpl::buildLattice() {
   lattice_.hintSize(input_.numCodepoints() + 3);
 
   LatticeConstructionContext lcc;
-  InNodeFeatureComputer fc{core_->dic(), core_->features(), &xtra_};
+  InNodeFeatureComputer fc{core_->dic(), core_->features(), &xtra_, input_};
 
   JPP_RETURN_IF_ERROR(latticeBldr_.makeBos(&lcc, &lattice_));
   JPP_DCHECK_EQ(lattice_.createdBoundaryCount(), 2);
