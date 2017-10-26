@@ -15,6 +15,7 @@ namespace analysis {
 struct AnalyzerConfig {
   size_t pageSize = 4 * 1024 * 1024;
   size_t maxInputBytes = 4 * 1024;
+  i32 globalBeamSize = 0;
 };
 
 /**

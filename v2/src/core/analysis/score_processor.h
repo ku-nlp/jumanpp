@@ -5,6 +5,7 @@
 #ifndef JUMANPP_SCORE_PROCESSOR_H
 #define JUMANPP_SCORE_PROCESSOR_H
 
+#include <util/flatmap.h>
 #include "core/analysis/lattice_config.h"
 #include "core/analysis/ngram_computations.h"
 #include "core/analysis/score_api.h"
@@ -89,7 +90,7 @@ struct BeamCandidate {
   }
 };
 
-class ScoreProcessor {
+class ScoreProcessor {  
   i32 beamSize_ = 0;
   util::ArraySlice<ConnectionBeamElement> beamPtrs_;
   NgramScoreHolder scores_;
@@ -98,7 +99,16 @@ class ScoreProcessor {
   Lattice* lattice_;
   features::AnalysisRunStats runStats_;
   util::MutableArraySlice<BeamCandidate> beamCandidates_;
+
+  i32 globalBeamSize_;
   util::MutableArraySlice<BeamCandidate> globalBeam_;
+  util::FlatMap<LatticeNodePtr, u32> t1PtrData_;
+  util::MutableArraySlice<LatticeNodePtr> t1PtrBuffer_;
+  util::MutableArraySlice<u32> t1positions_;
+  util::Sliceable<u64> t1patBuf_;
+  util::Sliceable<u64> t2patBuf_;
+  util::MutableArraySlice<Score> gbeamScoreBuf_;
+  util::MutableArraySlice<u32> beamIdxBuffer_;
 
   explicit ScoreProcessor(AnalyzerImpl* analyzer);
 
@@ -115,7 +125,16 @@ class ScoreProcessor {
   void copyFeatureScores(i32 left, i32 beam, LatticeBoundaryScores* bndconn);
 
   void makeBeams(i32 boundary, LatticeBoundary* bnd, const ScorerDef* sc);
+  
+  //GLOBAL BEAM IMPL
   util::ArraySlice<BeamCandidate> makeGlobalBeam(i32 bndIdx, i32 maxElems);
+  void computeGbeamScores(i32 bndIdx, util::ArraySlice<BeamCandidate> gbeam, FeatureScorer* features);
+
+  util::ArraySlice<u32> dedupT1(i32 bndIdx, util::ArraySlice<BeamCandidate> gbeam);
+  util::Sliceable<u64> gatherT1();
+  util::Sliceable<u64> gatherT2(i32 bndIdx, util::ArraySlice<BeamCandidate> gbeam);
+  void copyT0Scores(i32 bndIdx, i32 t0idx, util::ArraySlice<BeamCandidate> gbeam, util::MutableArraySlice<Score> scores, Score t0Score);
+  void makeT0Beam(i32 bndIdx, i32 t0idx, util::ArraySlice<BeamCandidate> gbeam, util::MutableArraySlice<Score> scores);
 };
 
 }  // namespace analysis

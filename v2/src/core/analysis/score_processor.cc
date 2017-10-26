@@ -2,6 +2,7 @@
 // Created by Arseny Tolmachev on 2017/03/07.
 //
 
+#include <numeric>
 #include "score_processor.h"
 #include "core/analysis/analyzer_impl.h"
 #include "core/analysis/lattice_types.h"
@@ -31,6 +32,7 @@ ScoreProcessor::ScoreProcessor(AnalyzerImpl *analyzer)
   }
   this->runStats_.maxStarts = maxNodes;
   this->runStats_.maxEnds = maxEnds;
+  this->globalBeamSize_ = analyzer->cfg().globalBeamSize;
 
   auto *alloc = analyzer->alloc();
   scores_.prepare(alloc, maxNodes);
@@ -246,6 +248,129 @@ util::ArraySlice<BeamCandidate> ScoreProcessor::makeGlobalBeam(i32 bndIdx,
   util::MutableArraySlice<BeamCandidate> slice{globalBeam_, 0, count};
   auto res = processBeamCandidates(slice, maxElems);
   return res;
+}
+
+void ScoreProcessor::computeGbeamScores(i32 bndIdx, util::ArraySlice<BeamCandidate> gbeam, FeatureScorer *features) {
+  auto bnd = lattice_->boundary(bndIdx);
+  util::MutableArraySlice<u32> t1positions;
+  auto t1Ptrs = dedupT1(bndIdx, gbeam);
+  util::Sliceable<u64> t1data = gatherT1();
+  util::Sliceable<u64> t2data = gatherT2(bndIdx, gbeam);
+
+  auto right = bnd->starts();
+  auto t0data = right->patternFeatureData();
+  util::MutableArraySlice<Score> result{gbeamScoreBuf_, 0, gbeam.size()};
+  for (auto t0idx = 0; t0idx < t0data.numRows(); ++t0idx) {
+    JPP_CAPTURE(t0idx);
+    auto t0 = t0data.row(t0idx);
+    ngramApply_->applyBiTri(&featureBuffer_, t0, t1data, t2data, t1positions, features, result);
+    auto t0Score = scores_.bufferT0().at(t0idx);
+    copyT0Scores(bndIdx, t0idx, gbeam, result, t0Score);
+    makeT0Beam(bndIdx, t0idx, gbeam, result);
+  }
+}
+
+util::ArraySlice<u32>
+ScoreProcessor::dedupT1(i32 bndIdx, util::ArraySlice<BeamCandidate> gbeam) {
+  auto left = lattice_->boundary(bndIdx)->ends()->nodePtrs();
+  t1PtrData_.clear();
+
+  util::MutableArraySlice<u32> subset{t1positions_, 0, gbeam.size()};
+  for (int i = 0; i < gbeam.size(); ++i) {
+    auto& it = left.at(gbeam.at(i).left());
+    auto idx = t1PtrData_.findOrInsert(it, [&]() { return static_cast<u32>(t1PtrData_.size()); });
+    subset[i] = idx;
+  }
+
+  return subset;
+}
+
+util::Sliceable<u64> ScoreProcessor::gatherT1() {
+  util::Sliceable<u64> result = t1patBuf_.topRows(t1PtrData_.size());
+  for (auto& obj: t1PtrData_) {
+    auto bnd = lattice_->boundary(obj.first.boundary);
+    const auto pats = bnd->starts()->patternFeatureData();
+    auto therow = pats.row(obj.first.position);
+    auto target = result.row(obj.second);
+    util::copy_buffer(therow, target);
+  }
+  return result;
+}
+
+util::Sliceable<u64> ScoreProcessor::gatherT2(i32 bndIdx, util::ArraySlice<BeamCandidate> gbeam) {
+  util::Sliceable<u64> result = t1patBuf_.topRows(gbeam.size());
+  auto ptrs = lattice_->boundary(bndIdx)->ends()->nodePtrs();
+  int i = 0;
+  for (auto& c: gbeam) {
+    auto pt = ptrs.at(c.left());
+    auto bnd = lattice_->boundary(pt.boundary);
+    auto beam = bnd->starts()->beamData().row(pt.position);
+    auto &beamPtr = beam.at(c.beam());
+    auto prev = beamPtr.ptr.previous;
+    auto t2Bnd = lattice_->boundary(prev->boundary)->starts();
+    auto therow = t2Bnd->patternFeatureData().row(prev->right);
+    auto target = result.row(i);
+    util::copy_buffer(therow, target);
+    ++i;
+  }
+  return result;
+}
+
+void ScoreProcessor::copyT0Scores(i32 bndIdx, i32 t0idx, util::ArraySlice<BeamCandidate> gbeam, util::MutableArraySlice<Score> scores, Score t0Score) {
+  auto sholder = lattice_->boundary(bndIdx)->scores();
+  auto nscores = sholder->nodeScores(t0idx);
+  for (int i = 0; i < gbeam.size(); ++i) {
+    auto& v = scores.at(i);
+    v += t0Score;        
+    auto &gb = gbeam.at(i);    
+    nscores.beamLeft(gb.beam(), gb.left()).at(0) = v;
+  }    
+}
+
+void ScoreProcessor::makeT0Beam(i32 bndIdx, i32 t0idx, util::ArraySlice<BeamCandidate> gbeam, util::MutableArraySlice<Score> scores) {
+  auto maxBeam = lattice_->config().beamSize;
+  util::MutableArraySlice<u32> idxes{beamIdxBuffer_, 0, gbeam.size()};
+  std::iota(idxes.begin(), idxes.end(), 0);
+  auto comp = [&scores](u32 i1, u32 i2) {
+    return scores[i1] > scores[i2];
+  };
+  auto itr = util::partition(idxes.begin(), idxes.end(), comp, maxBeam, maxBeam * 2);
+  std::sort(idxes.begin(), itr, comp);
+
+  auto start = lattice_->boundary(bndIdx)->starts();
+  auto beam = start->beamData();
+  auto prevPtrs = lattice_->boundary(bndIdx)->ends()->nodePtrs();
+
+  u32 beamIdx = 0;
+  for (auto it = idxes.begin(); it < itr; ++it) {
+    if (beamIdx > maxBeam) { break; }
+    auto &prev = gbeam.at(*it);
+    auto localScore = scores.at(*it);
+    auto globalScore = localScore + prev.score();
+    auto prevPtr = prevPtrs.at(prev.left());
+    auto prevBnd = lattice_->boundary(prevPtr.boundary)->starts();
+    auto& prevFullPtr = prevBnd->beamData().row(prevPtr.position).at(prev.beam());
+    ConnectionPtr cp {
+      static_cast<u16>(bndIdx),
+      static_cast<u16>(t0idx),
+      prev.left(),
+      prev.beam(),
+      &prevFullPtr.ptr
+    };
+
+    ConnectionBeamElement cbe {
+      cp,
+      globalScore
+    };
+
+    beam.at(beamIdx) = cbe;
+
+    ++beamIdx;
+  }
+
+  for (; beamIdx < maxBeam; ++beamIdx) {
+    beam.at(beamIdx) = EntryBeam::fake();
+  }
 }
 
 }  // namespace analysis

@@ -250,7 +250,7 @@ Status AnalyzerImpl::bootstrapAnalysis() {
   return Status::Ok();
 }
 
-Status AnalyzerImpl::computeScores(const ScorerDef* sconf) {
+Status AnalyzerImpl::computeScoresFull(const ScorerDef* sconf) {
   JPP_DCHECK_NE(sconf, nullptr);
   JPP_DCHECK_NE(sconf->feature, nullptr);
   JPP_DCHECK_NE(sproc_, nullptr);
@@ -262,6 +262,7 @@ Status AnalyzerImpl::computeScores(const ScorerDef* sconf) {
   }
 
   for (i32 boundary = 2; boundary < bndCount; ++boundary) {
+    JPP_CAPTURE(boundary);
     auto bnd = lattice_.boundary(boundary);
     JPP_DCHECK(bnd->endingsFilled());
     auto left = bnd->ends()->nodePtrs();
@@ -273,12 +274,14 @@ Status AnalyzerImpl::computeScores(const ScorerDef* sconf) {
     proc.applyT0(boundary, sconf->feature);
 
     for (i32 t1idx = 0; t1idx < left.size(); ++t1idx) {
+      JPP_CAPTURE(t1idx);
       auto& t1node = left[t1idx];
       proc.applyT1(t1node.boundary, t1node.position, sconf->feature);
       proc.resolveBeamAt(t1node.boundary, t1node.position);
       auto scores = bnd->scores();
       i32 activeBeam = proc.activeBeamSize();
       for (i32 beamIdx = 0; beamIdx < activeBeam; ++beamIdx) {
+        JPP_CAPTURE(beamIdx);
         proc.applyT2(beamIdx, sconf->feature);
         proc.copyFeatureScores(t1idx, beamIdx, scores);
       }
@@ -296,6 +299,41 @@ Status AnalyzerImpl::computeScores(const ScorerDef* sconf) {
   }
 
   return Status::Ok();
+}
+
+Status AnalyzerImpl::computeScoresGbeam(const ScorerDef *sconf) {
+  JPP_DCHECK_NE(sconf, nullptr);
+  JPP_DCHECK_NE(sconf->feature, nullptr);
+  JPP_DCHECK_NE(sproc_, nullptr);
+  JPP_DCHECK_EQ(sconf->others.size(), scorers_.size());
+
+  auto bndCount = lattice_.createdBoundaryCount();
+  if (bndCount <= 3) {  // 2xBOS + EOS
+    return Status::Ok();
+  }
+
+  auto& proc = *this->sproc_;
+
+  for (i32 boundary = 2; boundary < bndCount; ++boundary) {
+    JPP_CAPTURE(boundary);
+    auto bnd = lattice_.boundary(boundary);
+    JPP_DCHECK(bnd->endingsFilled());
+    proc.startBoundary(bnd->localNodeCount());
+    proc.applyT0(boundary, sconf->feature);
+    
+    auto gbeam = proc.makeGlobalBeam(boundary, cfg().globalBeamSize);
+    proc.computeGbeamScores(boundary, gbeam, sconf->feature);
+  }
+
+  return Status::Ok();
+}
+
+Status AnalyzerImpl::computeScores(const ScorerDef *sconf) {
+  if (cfg().globalBeamSize == 0) {
+    return computeScoresFull(sconf);
+  } else {
+    return computeScoresGbeam(sconf);
+  }
 }
 
 }  // namespace analysis

@@ -68,6 +68,8 @@ class AnalyzerImpl {
   Status buildLattice();
   Status bootstrapAnalysis();
   Status computeScores(const ScorerDef* sconf);
+  Status computeScoresFull(const ScorerDef* sconf);
+  Status computeScoresGbeam(const ScorerDef *sconf);
 
   Lattice* lattice() { return &lattice_; }
   const Lattice* lattice() const { return &lattice_; }
@@ -88,6 +90,7 @@ class AnalyzerImpl {
 
   util::memory::ManagedAllocatorCore* alloc() const { return alloc_.get(); }
   const NgramStats& ngramStats() const { return ngramStats_; }
+  const AnalyzerConfig& cfg() const { return cfg_; }
 };
 
 }  // namespace analysis
