@@ -98,8 +98,8 @@ void PartialNgramDynamicFeatureApply::triStep2(
 
 void PartialNgramDynamicFeatureApply::biFull(
     util::ArraySlice<u64> t0, util::ArraySlice<u64> t1, u32 mask,
-    util::ArraySlice<float> weights,
-    util::MutableArraySlice<u32> result) const noexcept {
+    util::ArraySlice<float> weights, util::MutableArraySlice<u32> result) const
+    noexcept {
   for (auto& bi : bigrams_) {
     auto idx = bi.jointApply(t0, t1, result, mask);
     JPP_DO_PREFETCH(&weights.at(idx));
@@ -388,11 +388,12 @@ bool PartialNgramDynamicFeatureApply::outputClassBody(
     for (int i = 0; i < bigrams_.size(); ++i) {
       auto& f = bigrams_[i];
       f.writeMember(p, i);
-      p << "\nauto r_" << i << " = " << "bi_" << i << ".jointApply(t0, t1, result, mask);";
+      p << "\nauto r_" << i << " = "
+        << "bi_" << i << ".jointApply(t0, t1, result, mask);";
 #ifdef JPP_PREFETCH_FEATURE_WEIGHTS
       p << "\n"
         << JPP_TEXT(::jumanpp::util::prefetch<
-                      ::jumanpp::util::PrefetchHint::PREFETCH_HINT_T2>)
+                    ::jumanpp::util::PrefetchHint::PREFETCH_HINT_T2>)
         << "("
         << "&weights.at(r_" << i << "));";
 #endif
@@ -413,18 +414,18 @@ bool PartialNgramDynamicFeatureApply::outputClassBody(
     for (int i = 0; i < trigrams_.size(); ++i) {
       auto& f = trigrams_[i];
       f.writeMember(p, i);
-      p << "\nauto r_" << i << " = " << "tri_" << i << ".jointApply(t0, t1, t2, result, mask);";
+      p << "\nauto r_" << i << " = "
+        << "tri_" << i << ".jointApply(t0, t1, t2, result, mask);";
 #ifdef JPP_PREFETCH_FEATURE_WEIGHTS
       p << "\n"
         << JPP_TEXT(::jumanpp::util::prefetch<
-                      ::jumanpp::util::PrefetchHint::PREFETCH_HINT_T2>)
+                    ::jumanpp::util::PrefetchHint::PREFETCH_HINT_T2>)
         << "("
         << "&weights.at(r_" << i << "));";
 #endif
     }
   }
   p << "\n}\n";
-
 
   p << "\nvoid allocateBuffers("  // args
     << JPP_TEXT(::jumanpp::core::features::FeatureBuffer*) << " fbuf,"

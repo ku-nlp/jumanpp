@@ -311,12 +311,13 @@ class PartialNgramFeatureApplyImpl : public PartialNgramFeatureApply {
   }
 
   void applyBiTri(FeatureBuffer* buffers, util::ArraySlice<u64> t0,
-                  util::Sliceable<u64> t1, util::Sliceable<u64> t2,
+                  util::ConstSliceable<u64> t1, util::ConstSliceable<u64> t2,
                   util::ArraySlice<u32> t1idxes,
                   analysis::FeatureScorer* scorer,
-                  util::MutableArraySlice<float> result) const noexcept {
-    JPP_DCHECK_EQ(t1idxes.size(), t2.size());
-    auto numElems = t2.size();
+                  util::MutableArraySlice<float> result) const
+      noexcept override {
+    JPP_DCHECK_EQ(t1idxes.size(), t2.numRows());
+    auto numElems = t2.numRows();
     if (numElems == 0) {
       return;
     }
@@ -325,13 +326,13 @@ class PartialNgramFeatureApplyImpl : public PartialNgramFeatureApply {
     auto buf1 = buffers->valBuf1(numBigrams);
     auto buf2 = buffers->valBuf2(numBigrams);
     auto weights = scorer->weights();
-    auto scbuf = buffers->scoreBuf(t1.size());
+    auto scbuf = buffers->scoreBuf(t1.numRows());
     JPP_DCHECK(util::memory::IsPowerOf2(weights.size()));
     u32 mask = static_cast<u32>(weights.size() - 1);
 
     child().biFull(t0, t1.row(0), mask, weights, buf2);
     u32 row = 1;
-    for (; row < t1.size(); ++row) {
+    for (; row < t1.numRows(); ++row) {
       auto t1v = t1.row(row);
       child().biFull(t0, t1v, mask, weights, buf1);
       buf1.swap(buf2);

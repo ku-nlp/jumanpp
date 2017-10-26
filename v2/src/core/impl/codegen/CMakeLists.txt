@@ -12,6 +12,6 @@ jpp_feature_codegen(
         DEPEND cg_2_spec.h
 )
 
-jpp_test_executable(codegen_tests cg_simple_test.cc ${cgtest02_SRC})
+jpp_test_executable(codegen_tests feature_codegen_test.cc ${cgtest02_SRC})
 target_include_directories(codegen_tests PRIVATE ${cgtest02_INCLUDE})
 target_link_libraries(codegen_tests jpp_core)

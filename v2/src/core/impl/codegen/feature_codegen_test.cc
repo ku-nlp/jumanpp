@@ -176,3 +176,56 @@ TEST_CASE("partial ngram feature computation produces the same values") {
     CHECK(result1[i] == Approx(result2[i]));
   }
 }
+
+TEST_CASE("partial ngram joint biTri produces the same values") {
+  TestEnv env;
+  env.spec([](ModelSpecBuilder& msb) {
+    jumanpp::codegentest::CgTwoSpecFactory::fillSpec(msb);
+  });
+  env.importDic("a,b,c\nc,d,e\nf,g,h\n");
+
+  JumanppEnv jenv1;
+  env.loadEnv(&jenv1);
+  jumanpp_generated::Test02 features;
+  REQUIRE_OK(jenv1.initFeatures(&features));
+
+  auto core = jenv1.coreHolder();
+  auto& fs = core->features();
+
+  features::FeatureBuffer fb1;
+  features::FeatureBuffer fb2;
+  features::AnalysisRunStats ars{};
+  ars.maxStarts = NumExamples;
+  ars.maxEnds = NumExamples;
+
+  util::ArraySlice<float> weights{
+      1.0f, 5.0f, 10.0f, 50.0f, 100.0f, 500.0f, 0.1f, 0.5f,
+      1.0f, 5.0f, 10.0f, 50.0f, 100.0f, 500.0f, 0.1f, 0.5f,
+  };
+  core::analysis::HashedFeaturePerceptron perc{weights};
+
+  fs.ngramPartialStatic->allocateBuffers(&fb1, ars, env.analyzer->alloc());
+  fs.ngramPartialDynamic->allocateBuffers(&fb2, ars, env.analyzer->alloc());
+
+  BenchInput inp;
+
+  util::ConstSliceable<u64> t0i{inp.t0, NumFeatures, NumExamples};
+
+  float result1[NumExamples];
+  float result2[NumExamples];
+
+  util::ConstSliceable<u64> sl0{inp.t0, NumFeatures, NumExamples};
+  auto subset = sl0.rows(2, 5);
+  util::ArraySlice<u32> idxes{
+      0, 2, 1, 2, 1, 0, 0, 1, 0, 0,
+  };
+
+  fs.ngramPartialDynamic->applyBiTri(&fb1, inp.t1, subset, sl0, idxes, &perc,
+                                     result1);
+  fs.ngramPartialStatic->applyBiTri(&fb1, inp.t1, subset, sl0, idxes, &perc,
+                                    result2);
+
+  for (int i = 0; i < NumExamples; ++i) {
+    CHECK(result1[i] == Approx(result2[i]));
+  }
+}

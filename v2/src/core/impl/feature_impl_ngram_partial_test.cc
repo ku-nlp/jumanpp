@@ -124,6 +124,19 @@ TEST_CASE("partial and full trigram features produce the same result") {
   CHECK(partSlice.at(1, 1) == fullSlice.at(1, 3));
   CHECK(partSlice.at(2, 1) == fullSlice.at(2, 3));
 
+  for (i32 r = 0; r < 3; ++r) {
+    partSlice.at(r, 0) = 0;
+    partSlice.at(r, 1) = 0;
+    part.biFull(t0slice.row(r), t1data, fullMask, fake, partSlice.row(r));
+  }
+
+  CHECK(partSlice.at(0, 0) == fullSlice.at(0, 2));
+  CHECK(partSlice.at(1, 0) == fullSlice.at(1, 2));
+  CHECK(partSlice.at(2, 0) == fullSlice.at(2, 2));
+  CHECK(partSlice.at(0, 1) == fullSlice.at(0, 3));
+  CHECK(partSlice.at(1, 1) == fullSlice.at(1, 3));
+  CHECK(partSlice.at(2, 1) == fullSlice.at(2, 3));
+
   u64 triState1[6];
   u64 triState2[6];
   util::Sliceable<u64> triStateSlice1{triState1, 2, 3};
@@ -133,6 +146,19 @@ TEST_CASE("partial and full trigram features produce the same result") {
     part.triStep1(t1data, triStateSlice1.row(r), triStateSlice2.row(r));
     part.triStep2(t2data, triStateSlice2.row(r), fullMask, fake,
                   partSlice.row(r));
+  }
+  CHECK(partSlice.at(0, 0) == fullSlice.at(0, 4));
+  CHECK(partSlice.at(1, 0) == fullSlice.at(1, 4));
+  CHECK(partSlice.at(2, 0) == fullSlice.at(2, 4));
+  CHECK(partSlice.at(0, 1) == fullSlice.at(0, 5));
+  CHECK(partSlice.at(1, 1) == fullSlice.at(1, 5));
+  CHECK(partSlice.at(2, 1) == fullSlice.at(2, 5));
+
+  for (i32 r = 0; r < 3; ++r) {
+    partSlice.at(r, 0) = 0;
+    partSlice.at(r, 1) = 0;
+    part.triFull(t0slice.row(r), t1data, t2data, fullMask, fake,
+                 partSlice.row(r));
   }
   CHECK(partSlice.at(0, 0) == fullSlice.at(0, 4));
   CHECK(partSlice.at(1, 0) == fullSlice.at(1, 4));

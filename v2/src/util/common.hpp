@@ -5,30 +5,11 @@
 #ifndef JUMANPP_COMMON_HPP
 #define JUMANPP_COMMON_HPP
 
-#include <cassert>
-
 #define JPP_ALWAYS_INLINE __attribute__((always_inline))
+#define JPP_NO_INLINE __attribute__((noinline))
 
 #define JPP_LIKELY(x) __builtin_expect((x), 1)
 #define JPP_UNLIKELY(x) __builtin_expect((x), 0)
-
-#ifndef NDEBUG
-#define JPP_DCHECK(x) (assert(x))
-#define JPP_INDEBUG(x) x
-#else
-#define JPP_DCHECK(x)
-#define JPP_INDEBUG(x)
-#endif
-
-#define JPP_DCHECK_EQ(a, b) JPP_DCHECK((a) == (b))
-#define JPP_DCHECK_NE(a, b) JPP_DCHECK((a) != (b))
-#define JPP_DCHECK_GE(a, b) JPP_DCHECK((a) >= (b))
-#define JPP_DCHECK_GT(a, b) JPP_DCHECK((a) > (b))
-#define JPP_DCHECK_LE(a, b) JPP_DCHECK((a) <= (b))
-#define JPP_DCHECK_LT(a, b) JPP_DCHECK((a) < (b))
-#define JPP_DCHECK_NOT(x) JPP_DCHECK(!(x))
-#define JPP_DCHECK_IN(val, low, high) \
-  JPP_DCHECK(((low) <= (val)) && ((val) < (high)))
 
 namespace jumanpp {
 namespace util {
@@ -75,5 +56,7 @@ constexpr bool kLittleEndian = true;
 
 }  // namespace util
 }  // namespace jumanpp
+
+#include "util/assert.h"
 
 #endif  // JUMANPP_COMMON_HPP

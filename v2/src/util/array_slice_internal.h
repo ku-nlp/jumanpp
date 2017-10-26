@@ -155,6 +155,8 @@ class ArraySliceImplBase {
   // len must be non-negative and will be pinned to at most x.length() - pos.
   ArraySliceImplBase(const ArraySliceImplBase& x, size_type pos, size_type len)
       : ptr_(x.ptr_ + pos), length_(std::min(x.length_ - pos, len)) {
+    JPP_CAPTURE(pos);
+    JPP_CAPTURE(length_);
     JPP_DCHECK_GE(len, 0);
     JPP_DCHECK_LE(len, x.size() - pos);
     JPP_INDEBUG(if (len > 0) { JPP_DCHECK_IN(pos, 0, x.size()); })

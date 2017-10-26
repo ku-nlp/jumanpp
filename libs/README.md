@@ -8,3 +8,4 @@ Right now the full list is:
 * PEGTL ([https://github.com/ColinH/PEGTL]) -- Parser generator library
 * args ([https://github.com/Taywee/args]) -- Argument parser library
 * benchpress ([https://github.com/cjgdev/benchpress]) -- Benchmarking library
+* backward ([https://github.com/bombela/backward-cpp]) -- stack trace library for C++

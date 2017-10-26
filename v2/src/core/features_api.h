@@ -125,6 +125,14 @@ class PartialNgramFeatureApply : public FeatureApply {
                              analysis::FeatureScorer* scorer,
                              util::MutableArraySlice<float> result) const
       noexcept = 0;
+
+  virtual void applyBiTri(FeatureBuffer* buffers, util::ArraySlice<u64> t0,
+                          util::ConstSliceable<u64> t1,
+                          util::ConstSliceable<u64> t2,
+                          util::ArraySlice<u32> t1idxes,
+                          analysis::FeatureScorer* scorer,
+                          util::MutableArraySlice<float> result) const
+      noexcept = 0;
 };
 
 class StaticFeatureFactory : public FeatureApply {
