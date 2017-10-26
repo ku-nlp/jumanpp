@@ -6,6 +6,8 @@
 #define JUMANPP_ASSERT_H
 
 #include <cassert>
+#include <functional>
+#include <memory>
 #include <ostream>
 #include <utility>
 
@@ -33,11 +35,28 @@ struct AssertData;
 using Stringify = std::function<std::ostream&(std::ostream&)>;
 
 template <typename T>
-auto make_stringify(const T& v) -> typename std::enable_if<
-    std::is_same<std::ostream&,
-                 decltype(std::declval<std::ostream>() << v)>::value,
-    Stringify>::type {
-  return Stringify{[v](std::ostream& o) -> std::ostream& { return o << v; }};
+auto deduceStrArgs(std::ostream& o, const T& v) -> decltype(o << v);
+void deduceStrArgs(...);
+
+template <typename T, typename O = decltype(deduceStrArgs(
+                          std::declval<std::ostream&>(),
+                          std::declval<typename std::add_const<T>::type&>()))>
+struct StringifyGate {
+  using deduced = O;
+  static constexpr bool enabled = std::is_same<std::ostream&, deduced>::value;
+};
+
+template <>
+struct StringifyGate<std::nullptr_t> {
+  static constexpr bool enabled = false;
+};
+
+template <typename T>
+auto make_stringify(const T& v) ->
+    typename std::enable_if<StringifyGate<T>::enabled, Stringify>::type {
+  auto ref = std::cref(v);
+  return Stringify{
+      [ref](std::ostream& o) -> std::ostream& { return o << ref.get(); }};
 }
 
 class AssertException : public std::exception {
@@ -69,9 +88,8 @@ class AssertBuilder {
   void AddArgImpl(size_t n, const char* name, Stringify value);
 
   template <size_t N, typename T>
-  auto AddArg(const char (&name)[N], const T& value) -> typename std::enable_if<
-      std::is_same<std::ostream&, decltype(std::declval<std::ostream>()
-                                           << value)>::value>::type {
+  auto AddArg(const char (&name)[N], const T& value) ->
+      typename std::enable_if<StringifyGate<T>::enabled>::type {
     AddArgImpl(N, name, make_stringify(value));
   }
 
