@@ -73,13 +73,21 @@ class ManagedAllocatorCore {
 
   template <typename T>
   T *allocateArray(size_t count, size_t align = alignof(T)) {
-    return (T *)allocate_memory(sizeof(T) * count, align);
+    auto data = allocate_memory(sizeof(T) * count, align);
+    auto valid = new (data) T[count]{};
+    return valid;
+  }
+
+  template <typename T>
+  T *allocateRawArray(size_t count, size_t align = alignof(T)) {
+    auto data = allocate_memory(sizeof(T) * count, align);
+    return reinterpret_cast<T *>(data);
   }
 
   template <typename T>
   util::MutableArraySlice<T> allocateBuf(size_t count,
                                          size_t align = alignof(T)) {
-    auto mem = (T *)allocate_memory(sizeof(T) * count, align);
+    auto mem = allocateArray<T>(sizeof(T) * count, align);
     return util::MutableArraySlice<T>{mem, count};
   }
 
@@ -149,7 +157,7 @@ class StlManagedAlloc {
 
   StlManagedAlloc(ManagedAllocatorCore *core) noexcept : core_{core} {}
 
-  pointer allocate(size_t n) { return core_->allocateArray<T>(n); }
+  pointer allocate(size_t n) { return core_->allocateRawArray<T>(n); }
 
   void deallocate(T *obj, size_t n) noexcept {
     // noop!

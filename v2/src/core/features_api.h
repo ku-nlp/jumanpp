@@ -71,6 +71,7 @@ struct FeatureBuffer {
   util::MutableArraySlice<u64> t2Buffer2;
   util::MutableArraySlice<u32> valueBuffer1;
   util::MutableArraySlice<u32> valueBuffer2;
+  util::MutableArraySlice<float> scoreBuffer;
 
   util::MutableArraySlice<u32> valBuf1(u32 size) const {
     return util::MutableArraySlice<u32>{valueBuffer1, 0, size};
@@ -93,6 +94,10 @@ struct FeatureBuffer {
   util::Sliceable<u64> t2Buf2(u32 numTrigrams, u32 numElems) const {
     util::MutableArraySlice<u64> slice{t2Buffer2, 0, numTrigrams * numElems};
     return util::Sliceable<u64>{slice, numTrigrams, numElems};
+  }
+
+  util::MutableArraySlice<float> scoreBuf(u32 size) const {
+    return util::MutableArraySlice<float>{scoreBuffer, 0, size};
   }
 };
 

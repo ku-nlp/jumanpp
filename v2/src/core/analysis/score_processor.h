@@ -70,6 +70,7 @@ struct BeamCandidate {
   Score score_;
   u32 position_;
 
+  BeamCandidate() = default;
   BeamCandidate(Score score, u16 left, u16 beam)
       : score_{score}, position_{(static_cast<u32>(left) << 16u) | beam} {}
 

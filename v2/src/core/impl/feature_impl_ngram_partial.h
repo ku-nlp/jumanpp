@@ -76,6 +76,23 @@ class BigramFeature {
     return r;
   }
 
+  JPP_ALWAYS_INLINE u32 jointApply(util::ArraySlice<u64> t0,
+                                   util::ArraySlice<u64> t1,
+                                   util::MutableArraySlice<u32> result,
+                                   u32 mask) const noexcept {
+    auto t0v = t0.at(t0idx_);
+    auto t1v = t1.at(t1idx_);
+    auto v = h::FastHash1{}
+                 .mix(TotalHashArgs)
+                 .mix(index_)
+                 .mix(BigramSeed)
+                 .mix(t0v)
+                 .mix(t1v);
+    u32 r = v.masked(mask);
+    result.at(target_) = r;
+    return r;
+  }
+
   void writeMember(util::io::Printer& p, i32 count) const;
 
   constexpr u32 target() const noexcept { return target_; }
@@ -128,6 +145,26 @@ class TrigramFeature {
     auto res = v.masked(mask);
     result.at(target_) = res;
     return res;
+  }
+
+  JPP_ALWAYS_INLINE u32 jointApply(util::ArraySlice<u64> t0,
+                                   util::ArraySlice<u64> t1,
+                                   util::ArraySlice<u64> t2,
+                                   util::MutableArraySlice<u32> result,
+                                   u32 mask) const noexcept {
+    auto t0v = t0.at(t0idx_);
+    auto t1v = t1.at(t1idx_);
+    auto t2v = t2.at(t2idx_);
+    auto v = h::FastHash1{}
+                 .mix(TotalHashArgs)
+                 .mix(index_)
+                 .mix(TrigramSeed)
+                 .mix(t0v)
+                 .mix(t1v)
+                 .mix(t2v);
+    u32 r = v.masked(mask);
+    result.at(target_) = r;
+    return r;
   }
 
   void writeMember(util::io::Printer& p, i32 count) const;
@@ -272,6 +309,58 @@ class PartialNgramFeatureApplyImpl : public PartialNgramFeatureApply {
     result.at(row - 1) +=
         analysis::impl::computeUnrolled4RawPerceptron(weights, buf2);
   }
+
+  void applyBiTri(FeatureBuffer* buffers, util::ArraySlice<u64> t0,
+                  util::Sliceable<u64> t1, util::Sliceable<u64> t2,
+                  util::ArraySlice<u32> t1idxes,
+                  analysis::FeatureScorer* scorer,
+                  util::MutableArraySlice<float> result) const noexcept {
+    JPP_DCHECK_EQ(t1idxes.size(), t2.size());
+    auto numElems = t2.size();
+    if (numElems == 0) {
+      return;
+    }
+    auto numBigrams = child().numBigrams();
+    auto numTrigrams = child().numTrigrams();
+    auto buf1 = buffers->valBuf1(numBigrams);
+    auto buf2 = buffers->valBuf2(numBigrams);
+    auto weights = scorer->weights();
+    auto scbuf = buffers->scoreBuf(t1.size());
+    JPP_DCHECK(util::memory::IsPowerOf2(weights.size()));
+    u32 mask = static_cast<u32>(weights.size() - 1);
+
+    child().biFull(t0, t1.row(0), mask, weights, buf2);
+    u32 row = 1;
+    for (; row < t1.size(); ++row) {
+      auto t1v = t1.row(row);
+      child().biFull(t0, t1v, mask, weights, buf1);
+      buf1.swap(buf2);
+      scbuf.at(row - 1) =
+          analysis::impl::computeUnrolled4RawPerceptron(weights, buf1);
+    }
+    scbuf.at(row - 1) =
+        analysis::impl::computeUnrolled4RawPerceptron(weights, buf2);
+
+    for (int i = 0; i < t1idxes.size(); ++i) {
+      result.at(i) = scbuf.at(t1idxes.at(i));
+    }
+
+    buf1 = buffers->valBuf1(numTrigrams);
+    buf2 = buffers->valBuf2(numTrigrams);
+
+    child().triFull(t0, t1.row(t1idxes.at(0)), t2.row(0), mask, weights, buf2);
+    row = 1;
+    for (; row < numElems; ++row) {
+      auto t1v = t1.row(t1idxes.at(row));
+      auto t2v = t2.row(row);
+      child().triFull(t0, t1v, t2v, mask, weights, buf1);
+      buf1.swap(buf2);
+      result.at(row - 1) +=
+          analysis::impl::computeUnrolled4RawPerceptron(weights, buf1);
+    }
+    result.at(row - 1) +=
+        analysis::impl::computeUnrolled4RawPerceptron(weights, buf2);
+  }
 };
 
 class PartialNgramDynamicFeatureApply
@@ -305,6 +394,15 @@ class PartialNgramDynamicFeatureApply
   void triStep2(util::ArraySlice<u64> patterns, util::ArraySlice<u64> state,
                 u32 mask, util::ArraySlice<float> weights,
                 util::MutableArraySlice<u32> result) const noexcept;
+
+  void biFull(util::ArraySlice<u64> t0, util::ArraySlice<u64> t1, u32 mask,
+              util::ArraySlice<float> weights,
+              util::MutableArraySlice<u32> result) const noexcept;
+
+  void triFull(util::ArraySlice<u64> t0, util::ArraySlice<u64> t1,
+               util::ArraySlice<u64> t2, u32 mask,
+               util::ArraySlice<float> weights,
+               util::MutableArraySlice<u32> result) const noexcept;
 
   void allocateBuffers(
       FeatureBuffer* buffer, const AnalysisRunStats& stats,

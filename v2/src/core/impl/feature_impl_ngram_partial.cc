@@ -65,8 +65,8 @@ void PartialNgramDynamicFeatureApply::biStep1(
     util::ArraySlice<float> weights, util::MutableArraySlice<u32> result) const
     noexcept {
   for (auto& bi : bigrams_) {
-    bi.step1(patterns, state, result, mask);
-    JPP_DO_PREFETCH(weights.data() + bi.target());
+    auto idx = bi.step1(patterns, state, result, mask);
+    JPP_DO_PREFETCH(&weights.at(idx));
   }
 }
 
@@ -91,8 +91,28 @@ void PartialNgramDynamicFeatureApply::triStep2(
     util::ArraySlice<float> weights, util::MutableArraySlice<u32> result) const
     noexcept {
   for (auto& tri : trigrams_) {
-    tri.step2(patterns, state, result, mask);
-    JPP_DO_PREFETCH(weights.data() + tri.target());
+    auto idx = tri.step2(patterns, state, result, mask);
+    JPP_DO_PREFETCH(&weights.at(idx));
+  }
+}
+
+void PartialNgramDynamicFeatureApply::biFull(
+    util::ArraySlice<u64> t0, util::ArraySlice<u64> t1, u32 mask,
+    util::ArraySlice<float> weights,
+    util::MutableArraySlice<u32> result) const noexcept {
+  for (auto& bi : bigrams_) {
+    auto idx = bi.jointApply(t0, t1, result, mask);
+    JPP_DO_PREFETCH(&weights.at(idx));
+  }
+}
+
+void PartialNgramDynamicFeatureApply::triFull(
+    util::ArraySlice<u64> t0, util::ArraySlice<u64> t1,
+    util::ArraySlice<u64> t2, u32 mask, util::ArraySlice<float> weights,
+    util::MutableArraySlice<u32> result) const noexcept {
+  for (auto& tri : trigrams_) {
+    auto idx = tri.jointApply(t0, t1, t2, result, mask);
+    JPP_DO_PREFETCH(&weights.at(idx));
   }
 }
 
@@ -356,6 +376,56 @@ bool PartialNgramDynamicFeatureApply::outputClassBody(
   }
   p << "\n}\n";
 
+  p << "\nvoid biFull("  // args
+    << JPP_TEXT(jumanpp::util::ArraySlice<jumanpp::u64>) << " t0, "
+    << JPP_TEXT(jumanpp::util::ArraySlice<jumanpp::u64>) << " t1, "
+    << JPP_TEXT(jumanpp::u32) << " mask, "
+    << JPP_TEXT(jumanpp::util::ArraySlice<float>) << " weights, "
+    << JPP_TEXT(jumanpp::util::MutableArraySlice<jumanpp::u32>) << " result"
+    << ") const noexcept {";
+  {
+    util::io::Indent id{p, 2};
+    for (int i = 0; i < bigrams_.size(); ++i) {
+      auto& f = bigrams_[i];
+      f.writeMember(p, i);
+      p << "\nauto r_" << i << " = " << "bi_" << i << ".jointApply(t0, t1, result, mask);";
+#ifdef JPP_PREFETCH_FEATURE_WEIGHTS
+      p << "\n"
+        << JPP_TEXT(::jumanpp::util::prefetch<
+                      ::jumanpp::util::PrefetchHint::PREFETCH_HINT_T2>)
+        << "("
+        << "&weights.at(r_" << i << "));";
+#endif
+    }
+  }
+  p << "\n}\n";
+
+  p << "\nvoid triFull("  // args
+    << JPP_TEXT(jumanpp::util::ArraySlice<jumanpp::u64>) << " t0, "
+    << JPP_TEXT(jumanpp::util::ArraySlice<jumanpp::u64>) << " t1, "
+    << JPP_TEXT(jumanpp::util::ArraySlice<jumanpp::u64>) << " t2, "
+    << JPP_TEXT(jumanpp::u32) << " mask, "
+    << JPP_TEXT(jumanpp::util::ArraySlice<float>) << " weights, "
+    << JPP_TEXT(jumanpp::util::MutableArraySlice<jumanpp::u32>) << " result"
+    << ") const noexcept {";
+  {
+    util::io::Indent id{p, 2};
+    for (int i = 0; i < trigrams_.size(); ++i) {
+      auto& f = trigrams_[i];
+      f.writeMember(p, i);
+      p << "\nauto r_" << i << " = " << "tri_" << i << ".jointApply(t0, t1, t2, result, mask);";
+#ifdef JPP_PREFETCH_FEATURE_WEIGHTS
+      p << "\n"
+        << JPP_TEXT(::jumanpp::util::prefetch<
+                      ::jumanpp::util::PrefetchHint::PREFETCH_HINT_T2>)
+        << "("
+        << "&weights.at(r_" << i << "));";
+#endif
+    }
+  }
+  p << "\n}\n";
+
+
   p << "\nvoid allocateBuffers("  // args
     << JPP_TEXT(::jumanpp::core::features::FeatureBuffer*) << " fbuf,"
     << JPP_TEXT(const ::jumanpp::core::features::AnalysisRunStats&) << " stats,"
@@ -375,8 +445,8 @@ bool PartialNgramDynamicFeatureApply::outputClassBody(
          "stats.maxStarts, 64);";
     p << "\nfbuf->t2Buffer2 = alloc->allocateBuf<u64>(numTrigrams() * "
          "stats.maxStarts, 64);";
+    p << "\nfbuf->scoreBuffer = alloc->allocateBuf<float>(stats.maxEnds, 16);";
   }
-
   p << "\n}\n";
 
   p << "\n::jumanpp::u32 numUnigrams() const noexcept { "
@@ -407,6 +477,7 @@ void PartialNgramDynamicFeatureApply::allocateBuffers(
       alloc->allocateBuf<u64>(numTrigrams() * stats.maxStarts, 64);
   buffer->t2Buffer2 =
       alloc->allocateBuf<u64>(numTrigrams() * stats.maxStarts, 64);
+  buffer->scoreBuffer = alloc->allocateBuf<float>(stats.maxEnds, 16);
 }
 
 void UnigramFeature::writeMember(util::io::Printer& p, i32 count) const {
