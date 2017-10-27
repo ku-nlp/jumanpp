@@ -53,6 +53,8 @@ class JumanppEnv {
   }
 
   model::ModelInfo modelInfoCopy() const { return modelInfo_; }
+
+  void setGlobalBeam(i32 globalBeam);
 };
 
 class OutputFormat {

@@ -18,6 +18,7 @@ namespace jumandic {
 Status JumanppExec::init() {
   JPP_RETURN_IF_ERROR(env.loadModel(conf.modelFile));
   env.setBeamSize(conf.beamSize);
+  env.setGlobalBeam(conf.globalBeam);
 
   bool newRnn = !conf.rnnModelFile.empty();
 
