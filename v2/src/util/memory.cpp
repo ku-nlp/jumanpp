@@ -120,6 +120,14 @@ void ManagedAllocatorCore::reset() {
   offset_ = 0;
   end_ = 0;
 }
+
+void *ManagedEalloc::Allocate(size_t size, size_t align) {
+  return nullptr;
+}
+
+void ManagedEalloc::Reclaim(void *pVoid) noexcept {
+
+}
 }
 }  // namespace util
 }  // namespace jumanpp

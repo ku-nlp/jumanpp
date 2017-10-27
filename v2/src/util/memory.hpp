@@ -174,6 +174,27 @@ class StlManagedAlloc {
 
 template <typename T>
 using ManagedVector = std::vector<T, StlManagedAlloc<T>>;
+
+class ErasedAllocator {
+public:
+  virtual void* Allocate(size_t size, size_t align) = 0;
+  virtual void Reclaim(void*) noexcept = 0;
+  virtual ~ErasedAllocator() noexcept = default;
+};
+
+class ManagedEalloc : public ErasedAllocator {
+  ManagedAllocatorCore* core_;
+public:
+  void *Allocate(size_t size, size_t align) override;
+
+  void Reclaim(void *pVoid) noexcept override;
+};
+
+
+class MallocEalloc : public ErasedAllocator {
+  
+};
+
 }  // namespace memory
 }  // namespace util
 }  // namespace jumanpp
