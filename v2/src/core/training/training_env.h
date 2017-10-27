@@ -37,7 +37,7 @@ struct TrainingArguments {
 class TrainingEnv {
   const TrainingArguments& args_;
   core::JumanppEnv* env_;
-  core::analysis::AnalyzerConfig aconf_;
+  core::analysis::AnalyzerConfig aconf_{};
   TrainingIo trainingIo_;
   FullExampleReader fullReader_;
   PartialExampleReader partReader_;

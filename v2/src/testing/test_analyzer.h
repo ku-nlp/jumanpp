@@ -47,7 +47,7 @@ class TestEnv {
   std::unique_ptr<TestAnalyzer> analyzer;
   std::unique_ptr<CoreHolder> core;
   spec::AnalysisSpec saveLoad;
-  AnalyzerConfig aconf;
+  AnalyzerConfig aconf{};
   dic::DictionaryBuilder origDicBuilder;
   dic::DictionaryBuilder dicBuilder;
   TempFile tmpFile;

@@ -19,7 +19,7 @@ struct RnnScorerEnv {
   core::JumanppEnv jppEnv;
   std::vector<float> features_{0, 0.f};
   util::Lazy<core::analysis::AnalyzerImpl> anaImpl;
-  core::analysis::AnalyzerConfig anaCfg;
+  core::analysis::AnalyzerConfig anaCfg{};
   core::ScoringConfig scoreCfg;
   core::analysis::HashedFeaturePerceptron perceptron{features_};
 

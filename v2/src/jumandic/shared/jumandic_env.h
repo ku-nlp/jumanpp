@@ -24,9 +24,6 @@ class JumanppExec {
   core::analysis::Analyzer analyzer;
   std::unique_ptr<core::OutputFormat> format;
 
-  // use default values
-  core::analysis::AnalyzerConfig analyzerConfig;
-
   // rnn
   rnn::mikolov::MikolovModelReader mikolovModel;
   core::analysis::rnn::RnnHolder rnnHolder;

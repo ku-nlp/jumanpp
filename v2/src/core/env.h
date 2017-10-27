@@ -22,7 +22,7 @@ class JumanppEnv {
   dic::DictionaryHolder dicHolder_;
   std::unique_ptr<core::CoreHolder> core_;
 
-  analysis::AnalyzerConfig analyzerConfig_;
+  analysis::AnalyzerConfig analyzerConfig_{};
 
   analysis::HashedFeaturePerceptron perceptron_;
   analysis::rnn::RnnHolder rnnHolder_;

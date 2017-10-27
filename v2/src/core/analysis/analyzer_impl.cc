@@ -329,7 +329,7 @@ Status AnalyzerImpl::computeScoresGbeam(const ScorerDef* sconf) {
 }
 
 Status AnalyzerImpl::computeScores(const ScorerDef* sconf) {
-  if (cfg().globalBeamSize < 0) {
+  if (cfg().globalBeamSize <= 0) {
     return computeScoresFull(sconf);
   } else {
     return computeScoresGbeam(sconf);
