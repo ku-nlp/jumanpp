@@ -33,6 +33,8 @@ struct JumanppConf {
   i32 beamSize = 5;
   i32 beamOutput = 1;
   i32 globalBeam = -1;
+  i32 rightBeam = -1;
+  i32 rightCheck = -1;
   bool printVersion = false;
 };
 

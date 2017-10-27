@@ -23,6 +23,7 @@ std::pair<Status, ScoreProcessor *> ScoreProcessor::make(AnalyzerImpl *impl) {
 ScoreProcessor::ScoreProcessor(AnalyzerImpl *analyzer)
     : ngramApply_{analyzer->core().features().ngramPartial},
       lattice_{analyzer->lattice()},
+      cfg_{&analyzer->cfg()},
       t1PtrData_{analyzer->alloc()} {
   u32 maxNodes = 0;
   u32 maxEnds = 0;
@@ -51,6 +52,12 @@ ScoreProcessor::ScoreProcessor(AnalyzerImpl *analyzer)
   t2patBuf_ = alloc->allocate2d<u64>(globalBeamSize_, lcfg.numFeaturePatterns);
   gbeamScoreBuf_ = alloc->allocateBuf<Score>(globalBeamSize_);
   beamIdxBuffer_ = alloc->allocateBuf<u32>(globalBeamSize_);
+  if (cfg_->rightGbeamCheck > 0) {
+    t0prescores_ =
+        alloc->allocate2d<Score>(cfg_->rightGbeamCheck, maxNodes, 64);
+    t0cutoffBuffer_ = alloc->allocateBuf<Score>(maxNodes);
+    t0cutoffIdxBuffer_ = alloc->allocateBuf<u32>(maxNodes);
+  }
 }
 
 void ScoreProcessor::copyFeatureScores(i32 left, i32 beam,
@@ -270,14 +277,66 @@ void ScoreProcessor::computeGbeamScores(i32 bndIdx,
   auto right = bnd->starts();
   auto t0data = right->patternFeatureData();
   util::MutableArraySlice<Score> result{gbeamScoreBuf_, 0, gbeam.size()};
-  for (auto t0idx = 0; t0idx < t0data.numRows(); ++t0idx) {
-    JPP_CAPTURE(t0idx);
-    auto t0 = t0data.row(t0idx);
-    ngramApply_->applyBiTri(&featureBuffer_, t0, t1data, t2data, t1Ptrs,
-                            features, result);
-    auto t0Score = scores_.bufferT0().at(t0idx);
-    copyT0Scores(bndIdx, t0idx, gbeam, result, t0Score);
-    makeT0Beam(bndIdx, t0idx, gbeam, result);
+
+  if (cfg_->rightGbeamCheck > 0) {
+    // we cut off right elements as well
+    computeT0Prescores(gbeam, features);
+    auto size = static_cast<size_t>(cfg_->rightGbeamCheck);
+    auto fullBeamApplySize =
+        std::min<size_t>({size, bnd->localNodeCount(), gbeam.size()});
+    auto toKeep = std::min<i32>(cfg_->rightGbeamSize, bnd->localNodeCount());
+    makeT0cutoffBeam(fullBeamApplySize, toKeep);
+
+    u32 remainingItems =
+        (u32)std::max<i32>(gbeam.size() - fullBeamApplySize, 0);
+    auto t1PtrTail =
+        util::ArraySlice<u32>{t1Ptrs, fullBeamApplySize, remainingItems};
+    auto t2Tail = t2data.rows(fullBeamApplySize, t2data.numRows());
+    util::MutableArraySlice<Score> resultTail{result, fullBeamApplySize,
+                                              remainingItems};
+    util::ArraySlice<BeamCandidate> gbeamHead{gbeam, 0, fullBeamApplySize};
+    util::ArraySlice<BeamCandidate> gbeamTail{gbeam, fullBeamApplySize,
+                                              remainingItems};
+
+    auto t0pos = 0;
+    // first, we process elements which require feature/score computation
+    for (; t0pos < toKeep; ++t0pos) {
+      auto t0idx = t0cutoffIdxBuffer_.at(t0pos);
+      auto t0 = t0data.row(t0idx);
+      for (int i = 0; i < fullBeamApplySize; ++i) {
+        result.at(i) = t0prescores_.row(i).at(t0idx);
+      }
+      copyT0Scores(bndIdx, t0idx, gbeamHead, result, 0);
+      if (t1PtrTail.size() > 0) {
+        auto t0Score = scores_.bufferT0().at(t0idx);
+        ngramApply_->applyBiTri(&featureBuffer_, t0, t1data, t2Tail, t1PtrTail,
+                                features, resultTail);
+        copyT0Scores(bndIdx, t0idx, gbeamTail, resultTail, t0Score);
+      }
+      makeT0Beam(bndIdx, t0idx, gbeam, result);
+    }
+
+    // then we form beams for the remaining items
+    for (; t0pos < t0data.numRows(); ++t0pos) {
+      auto t0idx = t0cutoffIdxBuffer_.at(t0pos);
+      for (int i = 0; i < fullBeamApplySize; ++i) {
+        result.at(i) = t0prescores_.row(i).at(t0idx);
+      }
+      copyT0Scores(bndIdx, t0idx, gbeamHead, result, 0);
+      makeT0Beam(bndIdx, t0idx, gbeamHead, result);
+    }
+
+  } else {
+    // we score all gbeam <-> right pairs
+    for (auto t0idx = 0; t0idx < t0data.numRows(); ++t0idx) {
+      JPP_CAPTURE(t0idx);
+      auto t0 = t0data.row(t0idx);
+      ngramApply_->applyBiTri(&featureBuffer_, t0, t1data, t2data, t1Ptrs,
+                              features, result);
+      auto t0Score = scores_.bufferT0().at(t0idx);
+      copyT0Scores(bndIdx, t0idx, gbeam, result, t0Score);
+      makeT0Beam(bndIdx, t0idx, gbeam, result);
+    }
   }
 }
 
@@ -352,7 +411,7 @@ void ScoreProcessor::makeT0Beam(i32 bndIdx, i32 t0idx,
   std::iota(idxes.begin(), idxes.end(), 0);
   auto comp = [&scores](u32 i1, u32 i2) { return scores[i1] > scores[i2]; };
   auto itr = idxes.end();
-  auto partitionBoundary = maxBeam * 2;
+  auto partitionBoundary = maxBeam * 4 / 3;
   if (idxes.size() > partitionBoundary) {
     itr = util::partition(idxes.begin(), itr, comp, maxBeam, partitionBoundary);
   }
@@ -378,8 +437,8 @@ void ScoreProcessor::makeT0Beam(i32 bndIdx, i32 t0idx,
 
     ConnectionBeamElement cbe{cp, globalScore};
 
-    //     LOG_TRACE() << "assign beam " << cbe << " at " << bndIdx << ", " <<
-    //     t0idx << " gb: " << *it << " -> " << beamIdx;
+    //   LOG_TRACE() << "assign beam " << cbe << " at " << bndIdx << ", " <<
+    //   t0idx << " gb: " << *it << " -> " << beamIdx;
     beam.at(beamIdx) = cbe;
 
     ++beamIdx;
@@ -387,6 +446,47 @@ void ScoreProcessor::makeT0Beam(i32 bndIdx, i32 t0idx,
 
   for (; beamIdx < maxBeam; ++beamIdx) {
     beam.at(beamIdx) = EntryBeam::fake();
+  }
+}
+
+void ScoreProcessor::makeT0cutoffBeam(u32 fullAnalysis, u32 rightBeam) {
+  auto slice = t0prescores_.topRows(fullAnalysis);
+  auto curElemCnt = featureBuffer_.currentElems;
+
+  util::MutableArraySlice<u32> idxBuf{t0cutoffIdxBuffer_, 0, curElemCnt};
+  std::iota(idxBuf.begin(), idxBuf.end(), 0);
+
+  if (curElemCnt <= rightBeam) {
+    return;
+  }
+
+  util::MutableArraySlice<Score> cutoffScores{t0cutoffBuffer_, 0, curElemCnt};
+  for (int i = 0; i < curElemCnt; ++i) {
+    Score s = 0;
+    for (int j = 0; j < fullAnalysis; ++j) {
+      s += slice.row(j).at(i);
+    }
+    cutoffScores.at(i) = s;
+  }
+  auto comp = [&](u32 a, u32 b) {
+    return cutoffScores.at(a) > cutoffScores.at(b);
+  };
+  util::partition(idxBuf.begin(), idxBuf.end(), comp, rightBeam, rightBeam);
+}
+
+void ScoreProcessor::computeT0Prescores(util::ArraySlice<BeamCandidate> gbeam,
+                                        FeatureScorer *scorer) {
+  auto max = cfg_->rightGbeamCheck;
+  auto theMax = std::min<i32>(max, gbeam.size());
+  for (int i = 0; i < theMax; ++i) {
+    auto t1idx = t1positions_.at(i);
+    auto t1 = t1patBuf_.row(t1idx);
+    auto t2 = t2patBuf_.row(i);
+    auto scores = t0prescores_.row(i);
+    util::copy_buffer(scores_.bufferT0(), scores);
+    ngramApply_->applyTriStep2(&featureBuffer_, t1);
+    ngramApply_->applyBiStep2(&featureBuffer_, t1, scorer, scores);
+    ngramApply_->applyTriStep3(&featureBuffer_, t2, scorer, scores);
   }
 }
 

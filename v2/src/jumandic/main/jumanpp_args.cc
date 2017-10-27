@@ -50,10 +50,12 @@ bool parseArgs(int argc, char* argv[], JumanppConf* result) {
   args::Group analysisParams{parser, "Analysis parameters"};
   args::ValueFlag<i32> beamSize{
       analysisParams, "N", "Beam size (5 default)", {"beam"}, 5};
-  args::ValueFlag<i32> globalBeamSize{analysisParams,
-                                      "N",
-                                      "Global beam size (2*beamSize default)",
-                                      {"global-beam"}};
+  args::ValueFlag<i32> globalBeamSize{
+      analysisParams, "N", "Global beam size", {"global-beam"}};
+  args::ValueFlag<i32> rightCheckBeam{
+      analysisParams, "N", "Right check size", {"right-check"}};
+  args::ValueFlag<i32> rightBeamSize{
+      analysisParams, "N", "Right beam size", {"right-beam"}};
 #ifdef JPP_ENABLE_DEV_TOOLS
   args::Group devParams{parser, "Dev options"};
   args::Flag globalBeamPos{devParams,
@@ -62,7 +64,7 @@ bool parseArgs(int argc, char* argv[], JumanppConf* result) {
                            {"global-beam-pos"}};
 #endif
 
-#if 1
+#if defined(TIOCGWINSZ)
   winsize winsz{0};
   if (ioctl(0, TIOCGWINSZ, &winsz) == 0) {
     parser.helpParams.width = std::max<unsigned>(80, winsz.ws_col);
@@ -124,12 +126,13 @@ bool parseArgs(int argc, char* argv[], JumanppConf* result) {
   result->beamSize = std::max(beamSize.Get(), result->beamOutput);
 
   if (globalBeamSize) {
-    auto val = globalBeamSize.Get();
-    if (val <= 0) {
-      result->globalBeam = val;
-    } else {
-      result->globalBeam = std::max(globalBeamSize.Get(), result->beamSize);
-    }
+    result->globalBeam = globalBeamSize.Get();
+  }
+  if (rightCheckBeam) {
+    result->rightCheck = rightCheckBeam.Get();
+  }
+  if (rightBeamSize) {
+    result->rightBeam = rightBeamSize.Get();
   }
 
 #ifdef JPP_ENABLE_DEV_TOOLS

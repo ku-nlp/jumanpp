@@ -59,7 +59,8 @@ class Sliceable {
   }
 
   Sliceable<T> rows(size_t start, size_t end) {
-    JPP_DCHECK_IN(start, 0, numRows_);
+    JPP_DCHECK_GE(start, 0);
+    JPP_DCHECK_LE(start, numRows_);
     JPP_DCHECK_LE(start, end);
     JPP_DCHECK_LE(end, numRows_);
     auto numElem = end - start;

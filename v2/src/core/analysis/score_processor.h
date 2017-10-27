@@ -20,6 +20,7 @@ class Lattice;
 class LatticeBoundary;
 class LatticeBoundaryScores;
 class AnalyzerImpl;
+struct AnalyzerConfig;
 
 // this class is zero-weight heap on top of other storage
 class EntryBeam {
@@ -100,6 +101,7 @@ class ScoreProcessor {
   features::AnalysisRunStats runStats_;
   util::MutableArraySlice<BeamCandidate> beamCandidates_;
 
+  const AnalyzerConfig* cfg_;
   i32 globalBeamSize_;
   util::MutableArraySlice<BeamCandidate> globalBeam_;
   util::FlatMap<LatticeNodePtr, u32> t1PtrData_;
@@ -108,6 +110,9 @@ class ScoreProcessor {
   util::Sliceable<u64> t2patBuf_;
   util::MutableArraySlice<Score> gbeamScoreBuf_;
   util::MutableArraySlice<u32> beamIdxBuffer_;
+  util::Sliceable<Score> t0prescores_;
+  util::MutableArraySlice<Score> t0cutoffBuffer_;
+  util::MutableArraySlice<u32> t0cutoffIdxBuffer_;
 
   explicit ScoreProcessor(AnalyzerImpl* analyzer);
 
@@ -140,6 +145,10 @@ class ScoreProcessor {
                     util::MutableArraySlice<Score> scores, Score t0Score);
   void makeT0Beam(i32 bndIdx, i32 t0idx, util::ArraySlice<BeamCandidate> gbeam,
                   util::MutableArraySlice<Score> scores);
+
+  void computeT0Prescores(util::ArraySlice<BeamCandidate> gbeam,
+                          FeatureScorer* scorer);
+  void makeT0cutoffBeam(u32 fullAnalysis, u32 rightBeam);
 };
 
 }  // namespace analysis

@@ -56,6 +56,11 @@ Status AnalyzerImpl::initScorers(const ScorerDef& cfg) {
            << "AnalyzerImpl: beam size can not be zero for scoring";
   }
 
+  if (cfg_.rightGbeamCheck > 0 && cfg_.rightGbeamSize <= 0) {
+    return JPPS_INVALID_PARAMETER
+           << "right global beam size should not be zero if you enable it";
+  }
+
   JPP_RETURN_IF_ERROR(compactor_.initialize(&xtra_, core_->runtime()));
   scorers_.clear();
   scorers_.reserve(cfg.others.size());
@@ -320,7 +325,6 @@ Status AnalyzerImpl::computeScoresGbeam(const ScorerDef* sconf) {
     JPP_DCHECK(bnd->endingsFilled());
     proc.startBoundary(bnd->localNodeCount());
     proc.applyT0(boundary, sconf->feature);
-
     auto gbeam = proc.makeGlobalBeam(boundary, cfg().globalBeamSize);
     proc.computeGbeamScores(boundary, gbeam, sconf->feature);
   }

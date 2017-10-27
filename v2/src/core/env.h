@@ -54,7 +54,7 @@ class JumanppEnv {
 
   model::ModelInfo modelInfoCopy() const { return modelInfo_; }
 
-  void setGlobalBeam(i32 globalBeam);
+  void setGlobalBeam(i32 globalBeam, i32 rightCheck, i32 rightBeam);
 };
 
 class OutputFormat {

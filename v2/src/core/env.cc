@@ -83,8 +83,10 @@ void JumanppEnv::setRnnConfig(
   }
 }
 
-void JumanppEnv::setGlobalBeam(i32 globalBeam) {
+void JumanppEnv::setGlobalBeam(i32 globalBeam, i32 rightCheck, i32 rightBeam) {
   analyzerConfig_.globalBeamSize = globalBeam;
+  analyzerConfig_.rightGbeamCheck = rightCheck;
+  analyzerConfig_.rightGbeamSize = rightBeam;
 }
 
 }  // namespace core
