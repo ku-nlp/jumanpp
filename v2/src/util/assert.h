@@ -132,6 +132,11 @@ JPP_NORETURN void die();
 }  // namespace util
 }  // namespace jumanpp
 
+
+#define JPP_CONCAT(a, b) a##b
+
+#define JPP_CAPTURE_NAME(line, ctr) JPP_CONCAT(__jpp_capture_, ctr)
+
 #ifndef NDEBUG
 #define JPP_DCHECK_IMPL1(expr) \
   JPP_UNLIKELY(!(expr)) ? \
@@ -165,6 +170,13 @@ JPP_NORETURN void die();
     return bldr_.MakeException(); \
   	}().doThrow() : (void)0;
 
+#define JPP_CAPTURE(x)                                                       \
+  ::jumanpp::util::asserts::UnwindPrinter JPP_CAPTURE_NAME(__LINE__,         \
+                                                           __COUNTER__) {    \
+    #x, ::jumanpp::util::asserts::make_stringify(x), __FILE__, __FUNCTION__, \
+        __LINE__                                                             \
+  }
+
 #define JPP_INDEBUG(x) x
 #else
 #define JPP_DCHECK_IMPL1(x)
@@ -184,16 +196,5 @@ JPP_NORETURN void die();
 #define JPP_DCHECK_LT(a, b) JPP_DCHECK_IMPL2((a) < (b), a, b)
 #define JPP_DCHECK_IN(val, low, high) \
   JPP_DCHECK_IMPL3(((low) <= (val)) && ((val) < (high)), val, low, high)
-
-#define JPP_CONCAT(a, b) a##b
-
-#define JPP_CAPTURE_NAME(line, ctr) JPP_CONCAT(__jpp_capture_, ctr)
-
-#define JPP_CAPTURE(x)                                                       \
-  ::jumanpp::util::asserts::UnwindPrinter JPP_CAPTURE_NAME(__LINE__,         \
-                                                           __COUNTER__) {    \
-    #x, ::jumanpp::util::asserts::make_stringify(x), __FILE__, __FUNCTION__, \
-        __LINE__                                                             \
-  }
 
 #endif  // JUMANPP_ASSERT_H
