@@ -172,7 +172,7 @@ class KVListField {
 };
 
 class OutputManager {
-  util::memory::ManagedAllocatorCore* alloc_;
+  util::memory::PoolAlloc* alloc_;
   const ExtraNodesContext* xtra_;
   const dic::DictionaryHolder* holder_;
   dic::DictionaryEntries entries_;
@@ -183,8 +183,7 @@ class OutputManager {
   friend class NodeWalker;
 
  public:
-  OutputManager(util::memory::ManagedAllocatorCore* alloc,
-                const ExtraNodesContext* xtra,
+  OutputManager(util::memory::PoolAlloc* alloc, const ExtraNodesContext* xtra,
                 const dic::DictionaryHolder* holder, const Lattice* lattice);
 
   bool locate(LatticeNodePtr ptr, NodeWalker* result) const;

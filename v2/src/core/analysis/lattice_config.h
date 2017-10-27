@@ -6,6 +6,7 @@
 #define JUMANPP_LATTICE_CONFIG_H
 
 #include <functional>
+#include <iosfwd>
 #include "util/types.hpp"
 
 namespace jumanpp {
@@ -71,6 +72,9 @@ struct ConnectionBeamElement {
   ConnectionPtr ptr;
   Score totalScore;
 };
+
+std::ostream& operator<<(std::ostream& o, const ConnectionPtr& cbe);
+std::ostream& operator<<(std::ostream& o, const ConnectionBeamElement& cbe);
 
 class Lattice;
 

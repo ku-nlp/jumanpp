@@ -37,7 +37,7 @@ class NgramScoreHolder {
     return util::MutableArraySlice<float>{bufferT2_, 0, curSize_};
   }
 
-  void prepare(util::memory::ManagedAllocatorCore* alloc, u32 maxNodes);
+  void prepare(util::memory::PoolAlloc* alloc, u32 maxNodes);
 
   void newBoundary(u32 numRight) { curSize_ = numRight; }
 };

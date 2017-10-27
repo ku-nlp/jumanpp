@@ -43,12 +43,11 @@ class OwningDictNode {
 };
 
 class DicReader {
-  util::memory::ManagedAllocatorCore* alloc_;
+  util::memory::PoolAlloc* alloc_;
   const dic::DictionaryHolder& dic_;
 
  public:
-  DicReader(util::memory::ManagedAllocatorCore* alloc,
-            const dic::DictionaryHolder& holder)
+  DicReader(util::memory::PoolAlloc* alloc, const dic::DictionaryHolder& holder)
       : alloc_{alloc}, dic_{holder} {}
   OwningDictNode readEntry(EntryPtr ptr) const;
 };

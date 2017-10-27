@@ -430,7 +430,7 @@ bool PartialNgramDynamicFeatureApply::outputClassBody(
   p << "\nvoid allocateBuffers("  // args
     << JPP_TEXT(::jumanpp::core::features::FeatureBuffer*) << " fbuf,"
     << JPP_TEXT(const ::jumanpp::core::features::AnalysisRunStats&) << " stats,"
-    << JPP_TEXT(::jumanpp::util::memory::ManagedAllocatorCore*) << " alloc"
+    << JPP_TEXT(::jumanpp::util::memory::PoolAlloc*) << " alloc"
     << ") const override {";
   {
     util::io::Indent id{p, 2};
@@ -467,7 +467,7 @@ bool PartialNgramDynamicFeatureApply::outputClassBody(
 
 void PartialNgramDynamicFeatureApply::allocateBuffers(
     FeatureBuffer* buffer, const AnalysisRunStats& stats,
-    util::memory::ManagedAllocatorCore* alloc) const {
+    util::memory::PoolAlloc* alloc) const {
   u32 maxNgrams = std::max({numUnigrams(), numBigrams(), numTrigrams()});
   buffer->currentElems = ~0u;
   buffer->valueBuffer1 = alloc->allocateBuf<u32>(maxNgrams, 64);

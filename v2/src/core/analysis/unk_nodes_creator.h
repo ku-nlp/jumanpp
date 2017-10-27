@@ -35,14 +35,13 @@ i32 hashUnkString(StringPiece sp);
 
 class UnkNodesContext {
   ExtraNodesContext* xtra_;
-  util::memory::ManagedAllocatorCore* alloc_;
+  util::memory::PoolAlloc* alloc_;
 
  public:
-  UnkNodesContext(ExtraNodesContext* xtra,
-                  util::memory::ManagedAllocatorCore* alloc)
+  UnkNodesContext(ExtraNodesContext* xtra, util::memory::PoolAlloc* alloc)
       : xtra_{xtra}, alloc_{alloc} {}
 
-  util::memory::ManagedAllocatorCore* alloc() const { return alloc_; }
+  util::memory::PoolAlloc* alloc() const { return alloc_; }
 
   EntryPtr makePtr(StringPiece surface, const UnkNodeConfig& conf,
                    bool notPrefix);

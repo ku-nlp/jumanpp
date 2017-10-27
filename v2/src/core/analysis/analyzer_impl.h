@@ -21,7 +21,7 @@ class AnalyzerImpl {
   AnalyzerConfig cfg_;
   const CoreHolder* core_;
   util::memory::Manager memMgr_;
-  std::unique_ptr<util::memory::ManagedAllocatorCore> alloc_;
+  std::unique_ptr<util::memory::PoolAlloc> alloc_;
   AnalysisInput input_;
   LatticeConfig latticeConfig_;
   Lattice lattice_;
@@ -69,7 +69,7 @@ class AnalyzerImpl {
   Status bootstrapAnalysis();
   Status computeScores(const ScorerDef* sconf);
   Status computeScoresFull(const ScorerDef* sconf);
-  Status computeScoresGbeam(const ScorerDef *sconf);
+  Status computeScoresGbeam(const ScorerDef* sconf);
 
   Lattice* lattice() { return &lattice_; }
   const Lattice* lattice() const { return &lattice_; }
@@ -88,7 +88,7 @@ class AnalyzerImpl {
     return allocated - remaining;
   }
 
-  util::memory::ManagedAllocatorCore* alloc() const { return alloc_.get(); }
+  util::memory::PoolAlloc* alloc() const { return alloc_.get(); }
   const NgramStats& ngramStats() const { return ngramStats_; }
   const AnalyzerConfig& cfg() const { return cfg_; }
 };

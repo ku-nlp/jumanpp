@@ -23,7 +23,7 @@ class LatticeBoundaryContainer : public StructOfArrays {
   SizedArrayField<u64> featurePatterns;
 
  public:
-  LatticeBoundaryContainer(util::memory::ManagedAllocatorCore* alloc, u16 beam,
+  LatticeBoundaryContainer(util::memory::PoolAlloc* alloc, u16 beam,
                            u16 patternCnt, u16 numNodes)
       : StructOfArrays(alloc, numNodes),
         beams{this, static_cast<size_t>(beam)},
@@ -36,7 +36,7 @@ class BoundaryConnection final
   SizedArrayField<float, 64> vectors;
 
  public:
-  BoundaryConnection(ManagedAllocatorCore* alloc, u32 leftCount, u32 rightCount,
+  BoundaryConnection(PoolAlloc* alloc, u32 leftCount, u32 rightCount,
                      u32 beamSize)
       : StructOfArraysFactory(alloc, beamSize * rightCount, leftCount),
         ptrs{this, 10},

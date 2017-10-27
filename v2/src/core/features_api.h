@@ -103,9 +103,9 @@ struct FeatureBuffer {
 
 class PartialNgramFeatureApply : public FeatureApply {
  public:
-  virtual void allocateBuffers(
-      FeatureBuffer* buffer, const AnalysisRunStats& stats,
-      util::memory::ManagedAllocatorCore* alloc) const = 0;
+  virtual void allocateBuffers(FeatureBuffer* buffer,
+                               const AnalysisRunStats& stats,
+                               util::memory::PoolAlloc* alloc) const = 0;
 
   virtual void applyUni(FeatureBuffer* buffers, util::ConstSliceable<u64> p0,
                         analysis::FeatureScorer* scorer,

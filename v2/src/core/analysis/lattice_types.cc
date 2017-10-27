@@ -8,8 +8,7 @@ namespace jumanpp {
 namespace core {
 namespace analysis {
 
-Lattice::Lattice(util::memory::ManagedAllocatorCore *alloc,
-                 const LatticeConfig &lc)
+Lattice::Lattice(util::memory::PoolAlloc *alloc, const LatticeConfig &lc)
     : boundaries{alloc}, lconf{lc}, alloc{alloc} {}
 
 Status Lattice::makeBoundary(const LatticeBoundaryConfig &lbc,
@@ -28,7 +27,7 @@ void Lattice::reset() {
 
 void Lattice::hintSize(u32 size) { boundaries.reserve(size); }
 
-LatticeBoundary::LatticeBoundary(util::memory::ManagedAllocatorCore *alloc,
+LatticeBoundary::LatticeBoundary(util::memory::PoolAlloc *alloc,
                                  const LatticeConfig &lc,
                                  const LatticeBoundaryConfig &lbc)
     : cfg_{lbc},
@@ -48,9 +47,9 @@ void LatticeBoundary::addEnd(LatticeNodePtr nodePtr) {
   ++currentEnding_;
 }
 
-LatticeBoundaryScores::LatticeBoundaryScores(
-    util::memory::ManagedAllocatorCore *alloc, const LatticeConfig &lc,
-    const LatticeBoundaryConfig &lbc)
+LatticeBoundaryScores::LatticeBoundaryScores(util::memory::PoolAlloc *alloc,
+                                             const LatticeConfig &lc,
+                                             const LatticeBoundaryConfig &lbc)
     : scoresPerItem_{lc.beamSize * lbc.endNodes * lc.scoreCnt},
       numLeft_{lbc.endNodes},
       numBeam_{lc.beamSize},
@@ -76,9 +75,9 @@ void LatticeBoundaryScores::importBeamScore(i32 left, i32 scorer, i32 beam,
   }
 }
 
-LatticeRightBoundary::LatticeRightBoundary(
-    util::memory::ManagedAllocatorCore *alloc, const LatticeConfig &lc,
-    const LatticeBoundaryConfig &lbc)
+LatticeRightBoundary::LatticeRightBoundary(util::memory::PoolAlloc *alloc,
+                                           const LatticeConfig &lc,
+                                           const LatticeBoundaryConfig &lbc)
     : StructOfArrays(alloc, lbc.beginNodes),
       nodeInfo_{this, 1},
       entryDataStorage{this, lc.entrySize},
@@ -86,9 +85,9 @@ LatticeRightBoundary::LatticeRightBoundary(
       featurePatterns{this, lc.numFeaturePatterns},
       beam{this, lc.beamSize} {}
 
-LatticeLeftBoundary::LatticeLeftBoundary(
-    util::memory::ManagedAllocatorCore *alloc, const LatticeConfig &lc,
-    const LatticeBoundaryConfig &lbc)
+LatticeLeftBoundary::LatticeLeftBoundary(util::memory::PoolAlloc *alloc,
+                                         const LatticeConfig &lc,
+                                         const LatticeBoundaryConfig &lbc)
     : StructOfArrays(alloc, lbc.endNodes), endingNodes{this, 1} {}
 
 }  // namespace analysis

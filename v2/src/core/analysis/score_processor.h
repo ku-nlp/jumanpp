@@ -90,7 +90,7 @@ struct BeamCandidate {
   }
 };
 
-class ScoreProcessor {  
+class ScoreProcessor {
   i32 beamSize_ = 0;
   util::ArraySlice<ConnectionBeamElement> beamPtrs_;
   NgramScoreHolder scores_;
@@ -103,7 +103,6 @@ class ScoreProcessor {
   i32 globalBeamSize_;
   util::MutableArraySlice<BeamCandidate> globalBeam_;
   util::FlatMap<LatticeNodePtr, u32> t1PtrData_;
-  util::MutableArraySlice<LatticeNodePtr> t1PtrBuffer_;
   util::MutableArraySlice<u32> t1positions_;
   util::Sliceable<u64> t1patBuf_;
   util::Sliceable<u64> t2patBuf_;
@@ -125,16 +124,22 @@ class ScoreProcessor {
   void copyFeatureScores(i32 left, i32 beam, LatticeBoundaryScores* bndconn);
 
   void makeBeams(i32 boundary, LatticeBoundary* bnd, const ScorerDef* sc);
-  
-  //GLOBAL BEAM IMPL
-  util::ArraySlice<BeamCandidate> makeGlobalBeam(i32 bndIdx, i32 maxElems);
-  void computeGbeamScores(i32 bndIdx, util::ArraySlice<BeamCandidate> gbeam, FeatureScorer* features);
 
-  util::ArraySlice<u32> dedupT1(i32 bndIdx, util::ArraySlice<BeamCandidate> gbeam);
+  // GLOBAL BEAM IMPL
+  util::ArraySlice<BeamCandidate> makeGlobalBeam(i32 bndIdx, i32 maxElems);
+  void computeGbeamScores(i32 bndIdx, util::ArraySlice<BeamCandidate> gbeam,
+                          FeatureScorer* features);
+
+  util::ArraySlice<u32> dedupT1(i32 bndIdx,
+                                util::ArraySlice<BeamCandidate> gbeam);
   util::Sliceable<u64> gatherT1();
-  util::Sliceable<u64> gatherT2(i32 bndIdx, util::ArraySlice<BeamCandidate> gbeam);
-  void copyT0Scores(i32 bndIdx, i32 t0idx, util::ArraySlice<BeamCandidate> gbeam, util::MutableArraySlice<Score> scores, Score t0Score);
-  void makeT0Beam(i32 bndIdx, i32 t0idx, util::ArraySlice<BeamCandidate> gbeam, util::MutableArraySlice<Score> scores);
+  util::Sliceable<u64> gatherT2(i32 bndIdx,
+                                util::ArraySlice<BeamCandidate> gbeam);
+  void copyT0Scores(i32 bndIdx, i32 t0idx,
+                    util::ArraySlice<BeamCandidate> gbeam,
+                    util::MutableArraySlice<Score> scores, Score t0Score);
+  void makeT0Beam(i32 bndIdx, i32 t0idx, util::ArraySlice<BeamCandidate> gbeam,
+                  util::MutableArraySlice<Score> scores);
 };
 
 }  // namespace analysis

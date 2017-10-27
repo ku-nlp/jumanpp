@@ -56,9 +56,14 @@ class FlatMap {
   typedef const value_type& const_reference;
 
   FlatMap() : FlatMap(1) {}
+  FlatMap(util::memory::ErasedAllocator* alloc) : FlatMap(alloc, 1) {}
 
   explicit FlatMap(size_t N, const Hash& hf = Hash(), const Eq& eq = Eq())
       : rep_(N, hf, eq) {}
+
+  FlatMap(util::memory::ErasedAllocator* alloc, size_t N,
+          const Hash& hf = Hash(), const Eq& eq = Eq())
+      : rep_(alloc, N, hf, eq) {}
 
   FlatMap(const FlatMap& src) : rep_(src.rep_) {}
 

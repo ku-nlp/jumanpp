@@ -50,8 +50,10 @@ class PrimFeatureTestEnv {
 
  public:
   template <typename Fn>
-  PrimFeatureTestEnv(StringPiece csvData, Fn fn, i32 beamSize = 1) {
+  PrimFeatureTestEnv(StringPiece csvData, Fn fn, i32 beamSize = 1,
+                     i32 globalBeam = 0) {
     tenv.beamSize = beamSize;
+    tenv.aconf.globalBeamSize = globalBeam;
     tenv.spec([fn](dsl::ModelSpecBuilder& specBldr) {
       auto& a = specBldr.field(1, "a").strings().trieIndex();
       auto& b = specBldr.field(2, "b").strings();

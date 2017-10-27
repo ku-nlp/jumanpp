@@ -301,7 +301,7 @@ Status AnalyzerImpl::computeScoresFull(const ScorerDef* sconf) {
   return Status::Ok();
 }
 
-Status AnalyzerImpl::computeScoresGbeam(const ScorerDef *sconf) {
+Status AnalyzerImpl::computeScoresGbeam(const ScorerDef* sconf) {
   JPP_DCHECK_NE(sconf, nullptr);
   JPP_DCHECK_NE(sconf->feature, nullptr);
   JPP_DCHECK_NE(sproc_, nullptr);
@@ -320,7 +320,7 @@ Status AnalyzerImpl::computeScoresGbeam(const ScorerDef *sconf) {
     JPP_DCHECK(bnd->endingsFilled());
     proc.startBoundary(bnd->localNodeCount());
     proc.applyT0(boundary, sconf->feature);
-    
+
     auto gbeam = proc.makeGlobalBeam(boundary, cfg().globalBeamSize);
     proc.computeGbeamScores(boundary, gbeam, sconf->feature);
   }
@@ -328,7 +328,7 @@ Status AnalyzerImpl::computeScoresGbeam(const ScorerDef *sconf) {
   return Status::Ok();
 }
 
-Status AnalyzerImpl::computeScores(const ScorerDef *sconf) {
+Status AnalyzerImpl::computeScores(const ScorerDef* sconf) {
   if (cfg().globalBeamSize == 0) {
     return computeScoresFull(sconf);
   } else {

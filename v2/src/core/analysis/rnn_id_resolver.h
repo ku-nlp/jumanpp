@@ -36,7 +36,7 @@ class RnnIdContainer {
   util::memory::ManagedVector<i32> ids_;
 
  public:
-  explicit RnnIdContainer(util::memory::ManagedAllocatorCore* alloc)
+  explicit RnnIdContainer(util::memory::PoolAlloc* alloc)
       : spans_{alloc}, offsets_{alloc}, ids_{alloc} {}
 
   void reset() {

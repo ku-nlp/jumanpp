@@ -84,7 +84,7 @@ class MyTester {
   std::unordered_map<StringPiece, i32> s2i;
   MikolovRnn rnn;
   util::memory::Manager mgr{1024 * 1024};
-  std::shared_ptr<util::memory::ManagedAllocatorCore> alloc;
+  std::shared_ptr<util::memory::PoolAlloc> alloc;
 
  public:
   MyTester() : alloc{mgr.core()} {

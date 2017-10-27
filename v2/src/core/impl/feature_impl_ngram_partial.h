@@ -405,9 +405,8 @@ class PartialNgramDynamicFeatureApply
                util::ArraySlice<float> weights,
                util::MutableArraySlice<u32> result) const noexcept;
 
-  void allocateBuffers(
-      FeatureBuffer* buffer, const AnalysisRunStats& stats,
-      util::memory::ManagedAllocatorCore* alloc) const override;
+  void allocateBuffers(FeatureBuffer* buffer, const AnalysisRunStats& stats,
+                       util::memory::PoolAlloc* alloc) const override;
 
   u32 numUnigrams() const noexcept {
     return static_cast<u32>(unigrams_.size());

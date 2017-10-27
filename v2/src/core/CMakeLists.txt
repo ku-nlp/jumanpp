@@ -14,7 +14,7 @@ set(core_srcs darts_trie.cc dictionary.cc impl/field_import.cc dic_builder.cc
         env.cc impl/graphviz_format.cc impl/feature_codegen.cc analysis/onomatopoeia_creator.cc
         analysis/rnn_id_resolver.cc analysis/numeric_creator.cc analysis/ngram_computations.cc
         impl/feature_impl_ngram_partial.cc impl/feature_impl_combine.cc analysis/charlattice.cc
-        analysis/normalized_node_creator.cc impl/global_beam_position_fmt.cc)
+        analysis/normalized_node_creator.cc impl/global_beam_position_fmt.cc analysis/lattice_config.cc)
 
 set(core_train_srcs
         training/training_io.h training/loss.h training/gold_example.h training/trainer.h training/scw.h

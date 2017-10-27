@@ -20,8 +20,7 @@ class LatticeLeftBoundary final : public util::memory::StructOfArrays {
   friend class LatticeBoundary;
 
  public:
-  LatticeLeftBoundary(util::memory::ManagedAllocatorCore* alloc,
-                      const LatticeConfig& lc,
+  LatticeLeftBoundary(util::memory::PoolAlloc* alloc, const LatticeConfig& lc,
                       const LatticeBoundaryConfig& lbc);
 
   util::ArraySlice<LatticeNodePtr> nodePtrs() const {
@@ -39,8 +38,7 @@ class LatticeRightBoundary final : public util::memory::StructOfArrays {
   friend class LatticeBoundary;
 
  public:
-  LatticeRightBoundary(util::memory::ManagedAllocatorCore* alloc,
-                       const LatticeConfig& lc,
+  LatticeRightBoundary(util::memory::PoolAlloc* alloc, const LatticeConfig& lc,
                        const LatticeBoundaryConfig& lbc);
 
   util::Sliceable<NodeInfo> nodeInfo() { return nodeInfo_; }
@@ -93,8 +91,7 @@ class LatticeBoundaryScores final {
   friend class NodeScores;
 
  public:
-  LatticeBoundaryScores(util::memory::ManagedAllocatorCore* alloc,
-                        const LatticeConfig& lc,
+  LatticeBoundaryScores(util::memory::PoolAlloc* alloc, const LatticeConfig& lc,
                         const LatticeBoundaryConfig& lbc);
 
   NodeScores nodeScores(i32 right) const noexcept {
@@ -122,8 +119,8 @@ class LatticeBoundary {
   Status initialize();
 
  public:
-  LatticeBoundary(util::memory::ManagedAllocatorCore* alloc,
-                  const LatticeConfig& lc, const LatticeBoundaryConfig& lbc);
+  LatticeBoundary(util::memory::PoolAlloc* alloc, const LatticeConfig& lc,
+                  const LatticeBoundaryConfig& lbc);
 
   EntryPtr entry(u32 position) const {
     return right_.nodeInfo_.data().at(position).entryPtr();
@@ -153,11 +150,11 @@ class LatticeBoundary {
 class Lattice {
   util::memory::ManagedVector<LatticeBoundary*> boundaries;
   LatticeConfig lconf;
-  util::memory::ManagedAllocatorCore* alloc;
+  util::memory::PoolAlloc* alloc;
 
  public:
   Lattice(const Lattice&) = delete;
-  Lattice(util::memory::ManagedAllocatorCore* alloc, const LatticeConfig& lc);
+  Lattice(util::memory::PoolAlloc* alloc, const LatticeConfig& lc);
   u32 createdBoundaryCount() const { return (u32)boundaries.size(); }
   Status makeBoundary(const LatticeBoundaryConfig& lbc, LatticeBoundary** ptr);
   LatticeBoundary* boundary(i32 idx) { return boundary(static_cast<u32>(idx)); }

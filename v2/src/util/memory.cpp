@@ -15,7 +15,7 @@ namespace util {
 namespace memory {
 
 #if JUMANPP_USE_DEFAULT_ALLOCATION
-void *ManagedAllocatorCore::allocate_memory(size_t size, size_t alignment) {
+void *PoolAlloc::allocate_memory(size_t size, size_t alignment) {
   assert(IsPowerOf2(alignment) && "alignment should be a power of 2");
   return mgr_->allocate(size, std::max<size_t>(alignment, 8));
 }
@@ -45,7 +45,7 @@ void Manager::reset() {
 }
 
 #else
-void* ManagedAllocatorCore::allocate_memory(size_t size, size_t alignment) {
+void* PoolAlloc::allocate_memory(size_t size, size_t alignment) {
   auto address = Align(offset_, alignment);
   auto end = address + size;
   auto requiredSize = end - offset_;
@@ -87,7 +87,7 @@ MemoryPage Manager::newPage() {
   }
 }
 
-bool ManagedAllocatorCore::ensureAvailable(size_t size) {
+bool PoolAlloc::ensureAvailable(size_t size) {
   auto remaining = end_ - offset_;
   if (remaining >= size) {
     return true;
@@ -115,18 +115,28 @@ Manager::~Manager() {
 
 #endif  // JUMANPP_USE_DEFAULT_ALLOCATION
 
-void ManagedAllocatorCore::reset() {
+void PoolAlloc::reset() {
   base_ = nullptr;
   offset_ = 0;
   end_ = 0;
 }
 
-void *ManagedEalloc::Allocate(size_t size, size_t align) {
-  return nullptr;
+void *MallocEalloc::Allocate(size_t size, size_t align) {
+  void *result;
+  auto maxAlign = std::max<size_t>(align, 8);
+  int error = posix_memalign(&result, maxAlign, size);
+  if (error != 0) {
+    LOG_ERROR() << "posix_memalign failed, errno=" << strerror(error);
+    throw std::bad_alloc();
+  }
+  return result;
 }
 
-void ManagedEalloc::Reclaim(void *pVoid) noexcept {
+void MallocEalloc::Reclaim(void *pVoid) noexcept { free(pVoid); }
 
+MallocEalloc *defaultEalloc() {
+  static MallocEalloc alloc;
+  return &alloc;
 }
 }
 }  // namespace util

@@ -119,7 +119,7 @@ bool OutputManager::locate(EntryPtr ptr, NodeWalker *result) const {
   return false;
 }
 
-OutputManager::OutputManager(util::memory::ManagedAllocatorCore *alloc,
+OutputManager::OutputManager(util::memory::PoolAlloc *alloc,
                              const ExtraNodesContext *xtra,
                              const dic::DictionaryHolder *holder,
                              const Lattice *lattice)

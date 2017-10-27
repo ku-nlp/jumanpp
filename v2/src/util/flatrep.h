@@ -6,7 +6,8 @@
 #define JUMANPP_FLATREP_H
 
 #include <cstring>
-#include "types.hpp"
+#include "util/memory.hpp"
+#include "util/types.hpp"
 
 namespace jumanpp {
 namespace util {
@@ -44,9 +45,17 @@ class FlatRep {
     Init(src.size());
     CopyEntries(src.array_, src.end_, CopyEntry());
   }
+
+  FlatRep(util::memory::ErasedAllocator* alloc) : allocator_{alloc} {}
+  FlatRep(util::memory::ErasedAllocator* alloc, size_t N, const Hash& hf,
+          const Eq& eq)
+      : allocator_{alloc}, hash_(hf), equal_(eq) {
+    Init(N);
+  }
+
   ~FlatRep() {
     clear_no_resize();
-    delete[] array_;
+    allocator_->Reclaim(array_);
   }
 
   // Simple accessors.
@@ -61,7 +70,7 @@ class FlatRep {
   void CopyFrom(const FlatRep& src) {
     if (this != &src) {
       clear_no_resize();
-      delete[] array_;
+      allocator_->Reclaim(array_);
       Init(src.size());
       CopyEntries(src.array_, src.end_, CopyEntry());
     }
@@ -96,6 +105,7 @@ class FlatRep {
     swap(deleted_, x.deleted_);
     swap(grow_, x.grow_);
     swap(shrink_, x.shrink_);
+    swap(allocator_, x.allocator_);
   }
 
   struct SearchResult {
@@ -206,7 +216,7 @@ class FlatRep {
     Bucket* old_end = end_;
     Init(N);
     CopyEntries(old, old_end, MoveEntry());
-    delete[] old;
+    allocator_->Reclaim(old);
   }
 
  private:
@@ -222,6 +232,7 @@ class FlatRep {
   size_t deleted_;    // Count of entries with marker == kDeleted
   size_t grow_;       // Grow array when not_empty_ >= grow_
   size_t shrink_;     // Shrink array when size() < shrink_
+  util::memory::ErasedAllocator* allocator_{util::memory::defaultEalloc()};
 
   // Avoid kEmpty and kDeleted markers when computing hash values to
   // store in Bucket::marker[].
@@ -234,7 +245,8 @@ class FlatRep {
       lg++;
     }
     const size_t n = (1 << lg);
-    Bucket* array = new Bucket[n];
+    void* memory = allocator_->Allocate(n * sizeof(Bucket), alignof(Bucket));
+    Bucket* array = new (memory) Bucket[n];
     for (size_t i = 0; i < n; i++) {
       Bucket* b = &array[i];
       std::memset(b->marker, kEmpty, kWidth);

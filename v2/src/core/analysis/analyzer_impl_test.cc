@@ -60,7 +60,7 @@ TEST_CASE("at least some scores can be computed with multiple paths") {
 TEST_CASE("global beam does not crash") {
   StringPiece dic = "XXX,z,KANA\na,b,\nb,c,\naf,b,\nfb,c,\nf,a,\n";
   PrimFeatureTestEnv env{
-    dic, [](dsl::ModelSpecBuilder& specBldr, FeatureSet& fs) {}, 2};
+      dic, [](dsl::ModelSpecBuilder& specBldr, FeatureSet& fs) {}, 3, 4};
   env.analyze2("afb");
   auto& top = env.top();
   ConnectionPtr el;

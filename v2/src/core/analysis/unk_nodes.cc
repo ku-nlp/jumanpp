@@ -17,7 +17,7 @@ namespace analysis {
 
 class UnkMakerFactory {
   util::memory::Manager mgr;
-  std::unique_ptr<util::memory::ManagedAllocatorCore> mac;
+  std::unique_ptr<util::memory::PoolAlloc> mac;
   DicReader rdr;
   dic::DictionaryEntries entries;
   const features::FeatureRuntimeInfo& fri;

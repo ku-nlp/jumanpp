@@ -60,7 +60,7 @@ RnnScorer::~RnnScorer() {}
 
 struct RnnScorerState {
   util::memory::Manager mgr;
-  std::unique_ptr<util::memory::ManagedAllocatorCore> alloc;
+  std::unique_ptr<util::memory::PoolAlloc> alloc;
   MikolovRnn mrnn;
   const RnnHolderState* rnnState;
 

@@ -13,7 +13,7 @@ namespace rm = rnn::mikolov;
 
 struct SimpleRnn {
   util::memory::Manager mgr{1024 * 1024};
-  std::shared_ptr<util::memory::ManagedAllocatorCore> alloc{mgr.core()};
+  std::shared_ptr<util::memory::PoolAlloc> alloc{mgr.core()};
 
   rm::MikolovRnnModelHeader header{16, 3, 150, 100, 0};
 

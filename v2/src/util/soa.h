@@ -46,14 +46,13 @@ class FieldUtil;
 
 class StructOfArraysBase : public ManagedObject {
  protected:
-  ManagedAllocatorCore* acore_;
+  PoolAlloc* acore_;
   ManagedVector<SOAField*> fields_;
   ArraySlice<SOAElementInfo> dataInfo_;
   size_t totalSize_ = 0;
   size_t maxAlignment_ = 0;
 
-  StructOfArraysBase(ManagedAllocatorCore* alloc)
-      : acore_{alloc}, fields_{acore_} {
+  StructOfArraysBase(PoolAlloc* alloc) : acore_{alloc}, fields_{acore_} {
     fields_.reserve(10);
   }
 
@@ -132,7 +131,7 @@ class StructOfArrays : public StructOfArraysBase {
   size_t count_;
 
  public:
-  StructOfArrays(ManagedAllocatorCore* alloc, size_t count)
+  StructOfArrays(PoolAlloc* alloc, size_t count)
       : StructOfArraysBase(alloc), count_{count} {}
 
   Status initialize() {
@@ -161,8 +160,7 @@ class StructOfArraysFactory : public StructOfArraysBase {
  protected:
   size_t itemCount_ = 0;
 
-  StructOfArraysFactory(ManagedAllocatorCore* alloc, size_t itemCount,
-                        size_t appxChildren)
+  StructOfArraysFactory(PoolAlloc* alloc, size_t itemCount, size_t appxChildren)
       : StructOfArraysBase(alloc), itemCount_(itemCount) {
     children_ = alloc->make_unique<ManagedVector<Child*>>(alloc);
     children_->reserve(appxChildren);

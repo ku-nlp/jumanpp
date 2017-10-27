@@ -46,14 +46,14 @@ struct ExtraNode {
 class ExtraNodesContext {
   size_t numFields_;
   size_t numPlaceholders_;
-  util::memory::ManagedAllocatorCore* alloc_;
+  util::memory::PoolAlloc* alloc_;
   std::vector<ExtraNode*> extraNodes_;
   util::FlatMap<StringPiece, i32> stringPtrs_;
 
   ExtraNode* allocateExtra();
 
  public:
-  ExtraNodesContext(util::memory::ManagedAllocatorCore* alloc, i32 numFields,
+  ExtraNodesContext(util::memory::PoolAlloc* alloc, i32 numFields,
                     i32 numPlaceholders)
       : numFields_{(size_t)numFields},
         numPlaceholders_{(size_t)numPlaceholders},

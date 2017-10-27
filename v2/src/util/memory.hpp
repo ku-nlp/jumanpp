@@ -53,7 +53,14 @@ struct DestructorOnlyDeleter {
 template <typename T>
 using ManagedPtr = std::unique_ptr<T, DestructorOnlyDeleter<T>>;
 
-class ManagedAllocatorCore {
+class ErasedAllocator {
+ public:
+  virtual void *Allocate(size_t size, size_t align) = 0;
+  virtual void Reclaim(void *ptr) noexcept = 0;
+  virtual ~ErasedAllocator() noexcept = default;
+};
+
+class PoolAlloc : public ErasedAllocator {
   Manager *mgr_;
   char *base_ = nullptr;
   size_t offset_ = 0;
@@ -61,8 +68,8 @@ class ManagedAllocatorCore {
   bool ensureAvailable(size_t size);
 
  public:
-  ManagedAllocatorCore(Manager *manager) : mgr_(manager) {}
-  ManagedAllocatorCore(const ManagedAllocatorCore &o) = delete;
+  PoolAlloc(Manager *manager) : mgr_(manager) {}
+  PoolAlloc(const PoolAlloc &o) = delete;
 
   void *allocate_memory(size_t size, size_t alignment);
 
@@ -113,6 +120,12 @@ class ManagedAllocatorCore {
   u64 remaining() const { return end_ - offset_; }
 
   void reset();
+
+  void *Allocate(size_t size, size_t align) override {
+    return allocate_memory(size, align);
+  }
+
+  void Reclaim(void *pVoid) noexcept override {}
 };
 
 class Manager {
@@ -121,9 +134,8 @@ class Manager {
   size_t page_size_;
 
  public:
-  std::unique_ptr<ManagedAllocatorCore> core() {
-    return std::unique_ptr<ManagedAllocatorCore>(
-        new ManagedAllocatorCore{this});
+  std::unique_ptr<PoolAlloc> core() {
+    return std::unique_ptr<PoolAlloc>(new PoolAlloc{this});
   }
 
   Manager(size_t page_size) : page_size_{page_size} {}
@@ -149,13 +161,13 @@ class Manager {
 
 template <typename T>
 class StlManagedAlloc {
-  ManagedAllocatorCore *core_;
+  PoolAlloc *core_;
 
  public:
   using value_type = T;
   using pointer = value_type *;
 
-  StlManagedAlloc(ManagedAllocatorCore *core) noexcept : core_{core} {}
+  StlManagedAlloc(PoolAlloc *core) noexcept : core_{core} {}
 
   pointer allocate(size_t n) { return core_->allocateRawArray<T>(n); }
 
@@ -175,25 +187,12 @@ class StlManagedAlloc {
 template <typename T>
 using ManagedVector = std::vector<T, StlManagedAlloc<T>>;
 
-class ErasedAllocator {
-public:
-  virtual void* Allocate(size_t size, size_t align) = 0;
-  virtual void Reclaim(void*) noexcept = 0;
-  virtual ~ErasedAllocator() noexcept = default;
-};
-
-class ManagedEalloc : public ErasedAllocator {
-  ManagedAllocatorCore* core_;
-public:
+class MallocEalloc : public ErasedAllocator {
   void *Allocate(size_t size, size_t align) override;
-
   void Reclaim(void *pVoid) noexcept override;
 };
 
-
-class MallocEalloc : public ErasedAllocator {
-  
-};
+MallocEalloc *defaultEalloc();
 
 }  // namespace memory
 }  // namespace util

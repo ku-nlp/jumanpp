@@ -94,7 +94,7 @@ class CharLattice {
   //    static bool initialized;
   const dic::DictionaryEntries& entries;
   Vec<Vec<CharNode>> nodeList;
-  util::memory::ManagedAllocatorCore* alloc_;
+  util::memory::PoolAlloc* alloc_;
   u32 notNormal = 0;
 
   void add(size_t pos, const Codepoint& cp, Modifiers flags) {
@@ -110,7 +110,7 @@ class CharLattice {
   // Vec<CLResult> search(i32 position);
 
   CharLattice(const dic::DictionaryEntries& entries_,
-              util::memory::ManagedAllocatorCore* alloc)
+              util::memory::PoolAlloc* alloc)
       : entries{entries_}, alloc_{alloc}, nodeList{alloc} {}
 
   bool isApplicable() const { return notNormal != 0; }

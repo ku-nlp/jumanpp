@@ -272,7 +272,7 @@ class FeatureCombinator {
   friend class ModelSpecBuilder;
 
  public:
-  FeatureCombinator(util::memory::ManagedAllocatorCore* alloc) : data{alloc} {}
+  FeatureCombinator(util::memory::PoolAlloc* alloc) : data{alloc} {}
 };
 
 struct UnkProcFeature {
@@ -362,7 +362,7 @@ class TrainExampleSpec {
 
 class ModelSpecBuilder : public DslOpBase {
   util::memory::Manager memmgr_;
-  std::unique_ptr<util::memory::ManagedAllocatorCore> alloc_;
+  std::unique_ptr<util::memory::PoolAlloc> alloc_;
   util::memory::ManagedVector<FieldBuilder*> fields_;
   util::memory::ManagedVector<FeatureBuilder*> features_;
   util::memory::ManagedVector<FeatureCombinator*> combinators_;
