@@ -32,7 +32,7 @@ struct JumanppConf {
   std::string graphvizDir;
   i32 beamSize = 5;
   i32 beamOutput = 1;
-  i32 globalBeam = 10;
+  i32 globalBeam = -1;
   bool printVersion = false;
 };
 

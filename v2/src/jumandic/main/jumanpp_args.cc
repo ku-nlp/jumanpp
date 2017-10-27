@@ -124,9 +124,12 @@ bool parseArgs(int argc, char* argv[], JumanppConf* result) {
   result->beamSize = std::max(beamSize.Get(), result->beamOutput);
 
   if (globalBeamSize) {
-    result->globalBeam = std::max(globalBeamSize.Get(), result->beamSize);
-  } else {
-    result->globalBeam = result->beamSize * 2;
+    auto val = globalBeamSize.Get();
+    if (val <= 0) {
+      result->globalBeam = val;
+    } else {
+      result->globalBeam = std::max(globalBeamSize.Get(), result->beamSize);
+    }
   }
 
 #ifdef JPP_ENABLE_DEV_TOOLS
