@@ -132,7 +132,6 @@ JPP_NORETURN void die();
 }  // namespace util
 }  // namespace jumanpp
 
-
 #define JPP_CONCAT(a, b) a##b
 
 #define JPP_CAPTURE_NAME(line, ctr) JPP_CONCAT(__jpp_capture_, ctr)

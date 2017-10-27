@@ -284,7 +284,7 @@ void ScoreProcessor::computeGbeamScores(i32 bndIdx,
 util::ArraySlice<u32> ScoreProcessor::dedupT1(
     i32 bndIdx, util::ArraySlice<BeamCandidate> gbeam) {
   auto left = lattice_->boundary(bndIdx)->ends()->nodePtrs();
-  t1PtrData_.clear();
+  t1PtrData_.clear_no_resize();
 
   util::MutableArraySlice<u32> subset{t1positions_, 0, gbeam.size()};
   for (int i = 0; i < gbeam.size(); ++i) {
@@ -340,6 +340,7 @@ void ScoreProcessor::copyT0Scores(i32 bndIdx, i32 t0idx,
     v += t0Score;
     auto &gb = gbeam.at(i);
     nscores.beamLeft(gb.beam(), gb.left()).at(0) = v;
+    v += gb.score();
   }
 }
 
@@ -367,8 +368,7 @@ void ScoreProcessor::makeT0Beam(i32 bndIdx, i32 t0idx,
       break;
     }
     auto &prev = gbeam.at(*it);
-    auto localScore = scores.at(*it);
-    auto globalScore = localScore + prev.score();
+    auto globalScore = scores.at(*it);
     auto prevPtr = prevPtrs.at(prev.left());
     auto prevBnd = lattice_->boundary(prevPtr.boundary)->starts();
     auto &prevFullPtr =
@@ -378,8 +378,8 @@ void ScoreProcessor::makeT0Beam(i32 bndIdx, i32 t0idx,
 
     ConnectionBeamElement cbe{cp, globalScore};
 
-    // LOG_TRACE() << "assign beam " << cbe << " at " << bndIdx << ", " <<
-    // t0idx;
+    //     LOG_TRACE() << "assign beam " << cbe << " at " << bndIdx << ", " <<
+    //     t0idx << " gb: " << *it << " -> " << beamIdx;
     beam.at(beamIdx) = cbe;
 
     ++beamIdx;

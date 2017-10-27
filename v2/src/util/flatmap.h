@@ -299,6 +299,7 @@ class FlatMap {
 
   template <typename Fn>
   Val& findOrInsert(const Key& k, Fn f) {
+    rep_.MaybeResize();
     auto t = rep_.FindOrInsert(k);
     auto& v = t.b->val(t.index);
     if (!t.found) {
