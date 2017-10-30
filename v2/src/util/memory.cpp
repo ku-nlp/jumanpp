@@ -72,7 +72,7 @@ MemoryPage Manager::newPage() {
   } else {
     int flags = MAP_ANON | MAP_PRIVATE;
 #if defined(MAP_HUGETLB) && defined(MAP_HUGE_2MB)
-    if (page_size_ > (1 << 21)) {
+    if (page_size_ >= (1 << 21)) {
       flags |= (MAP_HUGETLB | MAP_HUGE_2MB);
     }
 #endif
