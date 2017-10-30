@@ -238,7 +238,7 @@ void TrainingEnv::changeGlobalBeam(float ratio) {
 
 Status GlobalBeamParams::validate() const {
   if (leftEnabled()) {
-    if (minLeftBeam > maxLeftBeam) {
+    if (maxLeftBeam < minLeftBeam) {
       return JPPS_INVALID_PARAMETER
              << "min left beam size (" << minLeftBeam
              << ") should be smaller than max left beam size (" << maxLeftBeam
@@ -261,7 +261,7 @@ Status GlobalBeamParams::validate() const {
              << "right beam check: max is lesser than min";
     }
 
-    if (maxRightBeam > minRightBeam) {
+    if (maxRightBeam < minRightBeam) {
       return JPPS_INVALID_PARAMETER << "right beam: max is lesser than min";
     }
   }
