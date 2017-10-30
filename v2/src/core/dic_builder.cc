@@ -271,6 +271,9 @@ struct DictionaryBuilderStorage {
 
     for (auto& f : spec.features.primitive) {
       for (auto fldIdx : f.references) {
+        if (f.matchData.empty()) {
+          continue;
+        }
         auto ss = importers[fldIdx].descriptor->stringStorage;
         if (ss != -1) {
           auto& stor = storage[ss];

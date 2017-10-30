@@ -69,7 +69,8 @@ int main(int argc, char** argv) {
 
   jumanpp::core::features::FeatureHolder fh;
 
-  if (!jumanpp::core::features::makeFeatures(ch, nullptr, &fh)) {
+  if (!(s = jumanpp::core::features::makeFeatures(ch, nullptr, &fh))) {
+    std::cerr << "failed to make features: " << s;
     return 1;
   }
 

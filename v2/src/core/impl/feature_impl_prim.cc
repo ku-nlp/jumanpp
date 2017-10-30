@@ -248,25 +248,25 @@ void PrimitiveFeaturesDynamicApply::apply(
 
 Status CodepointFeatureImpl::initialize(FeatureConstructionContext *ctx,
                                         const PrimitiveFeature &f) {
-  if (f.matchData.size() != 1) {
+  if (f.references.size() != 1) {
     return JPPS_INVALID_PARAMETER << "match data of feature [" << f.name
                                   << "] should be 1, was "
-                                  << f.matchData.size();
+                                  << f.references.size();
   }
   this->fieldIdx = static_cast<u32>(f.index);
-  this->offset = f.matchData[0];
+  this->offset = f.references[0];
   return Status::Ok();
 }
 
 Status CodepointTypeFeatureImpl::initialize(FeatureConstructionContext *ctx,
                                             const PrimitiveFeature &f) {
-  if (f.matchData.size() != 1) {
+  if (f.references.size() != 1) {
     return JPPS_INVALID_PARAMETER << "match data of feature [" << f.name
                                   << "] should be 1, was "
-                                  << f.matchData.size();
+                                  << f.references.size();
   }
   this->fieldIdx = static_cast<u32>(f.index);
-  this->offset = f.matchData[0];
+  this->offset = f.references[0];
   return Status::Ok();
 }
 

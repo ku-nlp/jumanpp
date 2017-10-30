@@ -158,7 +158,7 @@ class CodepointFeatureImpl {
     if (offset > 0) {
       auto off = offset - 1;
       auto pos = nodeInfo.end() + off;
-      if (off < codepts.size()) {
+      if (pos < codepts.size()) {
         value = codepts.at(pos).codepoint;
       }
     } else {
@@ -197,7 +197,7 @@ class CodepointTypeFeatureImpl {
     } else if (offset > 0) {
       auto off = offset - 1;
       auto pos = nodeInfo.end() + off;
-      if (off < codepts.size()) {
+      if (pos < codepts.size()) {
         value = static_cast<u32>(codepts.at(pos).charClass);
       }
     } else {
