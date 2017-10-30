@@ -45,18 +45,20 @@ ScoreProcessor::ScoreProcessor(AnalyzerImpl *analyzer)
   analyzer->core().features().ngramPartial->allocateBuffers(&featureBuffer_,
                                                             runStats_, alloc);
   globalBeamSize_ = analyzer->cfg().globalBeamSize;
-  t1PtrData_.reserve(globalBeamSize_);
-  globalBeam_ = alloc->allocateBuf<BeamCandidate>(maxEnds * lcfg.beamSize, 64);
-  t1positions_ = alloc->allocateBuf<u32>(globalBeamSize_);
-  t1patBuf_ = alloc->allocate2d<u64>(maxEnds, lcfg.numFeaturePatterns);
-  t2patBuf_ = alloc->allocate2d<u64>(globalBeamSize_, lcfg.numFeaturePatterns);
-  gbeamScoreBuf_ = alloc->allocateBuf<Score>(globalBeamSize_);
-  beamIdxBuffer_ = alloc->allocateBuf<u32>(globalBeamSize_);
-  if (cfg_->rightGbeamCheck > 0) {
-    t0prescores_ =
+  if (globalBeamSize_ > 0) {
+    t1PtrData_.reserve(globalBeamSize_);
+    globalBeam_ = alloc->allocateBuf<BeamCandidate>(maxEnds * lcfg.beamSize, 64);
+    t1positions_ = alloc->allocateBuf<u32>(globalBeamSize_);
+    t1patBuf_ = alloc->allocate2d<u64>(maxEnds, lcfg.numFeaturePatterns);
+    t2patBuf_ = alloc->allocate2d<u64>(globalBeamSize_, lcfg.numFeaturePatterns);
+    gbeamScoreBuf_ = alloc->allocateBuf<Score>(globalBeamSize_);
+    beamIdxBuffer_ = alloc->allocateBuf<u32>(globalBeamSize_);
+    if (cfg_->rightGbeamCheck > 0) {
+      t0prescores_ =
         alloc->allocate2d<Score>(cfg_->rightGbeamCheck, maxNodes, 64);
-    t0cutoffBuffer_ = alloc->allocateBuf<Score>(maxNodes);
-    t0cutoffIdxBuffer_ = alloc->allocateBuf<u32>(maxNodes);
+      t0cutoffBuffer_ = alloc->allocateBuf<Score>(maxNodes);
+      t0cutoffIdxBuffer_ = alloc->allocateBuf<u32>(maxNodes);
+    }
   }
 }
 
