@@ -71,14 +71,20 @@ MemoryPage Manager::newPage() {
     return page;
   } else {
     int flags = MAP_ANON | MAP_PRIVATE;
-#if defined(MAP_HUGETLB) && defined(MAP_HUGE_2MB)
+    void* addr = MAP_FAILED;
+#if defined(MAP_HUGETLB)
+    int flags2 = flags;
     if (page_size_ >= (1 << 21)) {
-      flags |= (MAP_HUGETLB | MAP_HUGE_2MB);
+      flags2 |= MAP_HUGETLB;
     }
+    addr = ::mmap(NULL, page_size_, PROT_READ | PROT_WRITE, flags2, -1, 0);
 #endif
+    // MAP_HUGETLB mmap call can fail if there are no resources,
+    // try without MAP_HUGETLB
+    if (addr == MAP_FAILED) {
+      addr = ::mmap(NULL, page_size_, PROT_READ | PROT_WRITE, flags, -1, 0);
+    }
 
-    void* addr = ::mmap(NULL, page_size_, PROT_READ | PROT_WRITE,
-                        flags, -1, 0);
     if (JPP_UNLIKELY(addr == MAP_FAILED)) {
       LOG_ERROR()
           << "mmap call failed, could not allocate memory, probably out "
