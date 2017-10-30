@@ -138,7 +138,20 @@ Status MappedFile::map(MappedFileFragment *view, size_t offset, size_t size) {
       break;
   }
 
-  void *addr = ::mmap(NULL, size, protection, flags, this->fd_, (off_t)offset);
+  void *addr = MAP_FAILED;
+#if defined(MAP_HUGETLB)
+  int flags2 = flags;
+  if (size >= (1 << 21)) {
+    flags2 |= MAP_HUGETLB;
+  }
+  addr = ::mmap(NULL, size, protection, flags2, this->fd_, (off_t)offset);
+#endif
+  // MAP_HUGETLB mmap call can fail if there are no resources,
+  // try without MAP_HUGETLB
+  if (addr == MAP_FAILED) {
+    addr = ::mmap(NULL, size, protection, flags, this->fd_, (off_t)offset);
+  }
+
   if (addr == MAP_FAILED) {
     return JPPS_INVALID_STATE << "mmap call failed: error code = "
                               << strerror(errno);
