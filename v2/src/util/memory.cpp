@@ -70,8 +70,15 @@ MemoryPage Manager::newPage() {
     JPP_DCHECK(clearPage(page.base, page.size));
     return page;
   } else {
+    int flags = MAP_ANON | MAP_PRIVATE;
+#if defined(MAP_HUGETLB) && defined(MAP_HUGE_2MB)
+    if (page_size_ > (1 << 21)) {
+      flags |= (MAP_HUGETLB | MAP_HUGE_2MB);
+    }
+#endif
+
     void* addr = ::mmap(NULL, page_size_, PROT_READ | PROT_WRITE,
-                        MAP_ANON | MAP_PRIVATE, -1, 0);
+                        flags, -1, 0);
     if (JPP_UNLIKELY(addr == MAP_FAILED)) {
       LOG_ERROR()
           << "mmap call failed, could not allocate memory, probably out "
