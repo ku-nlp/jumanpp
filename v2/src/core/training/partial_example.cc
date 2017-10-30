@@ -502,6 +502,14 @@ analysis::Lattice* OwningPartialTrainer::lattice() const {
   return const_cast<analysis::AnalyzerImpl&>(analyzer_.value()).lattice();
 }
 
+void OwningPartialTrainer::setGlobalBeam(const GlobalBeamTrainConfig& cfg) {
+  if (analyzer_.value().setGlobalBeam(cfg.leftBeam, cfg.rightCheck,
+                                      cfg.rightBeam)) {
+    isPrepared_ = false;
+    analyzer_.value().reset();
+  }
+}
+
 Status PartialExampleReader::initialize(TrainingIo* tio) {
   tio_ = tio;
   fields_.clear();

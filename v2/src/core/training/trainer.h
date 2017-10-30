@@ -125,6 +125,8 @@ class OwningFullTrainer final : public ITrainer {
   analysis::Lattice* lattice() const override {
     return const_cast<analysis::AnalyzerImpl&>(analyzer_).lattice();
   }
+
+  void setGlobalBeam(const GlobalBeamTrainConfig& cfg) override;
 };
 
 class TrainerBatch {

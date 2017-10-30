@@ -5,6 +5,7 @@
 #ifndef JUMANPP_TRAINER_BASE_H
 #define JUMANPP_TRAINER_BASE_H
 
+#include "core/analysis/analyzer.h"
 #include "core/analysis/score_api.h"
 #include "core/training/training_io.h"
 #include "core/training/training_types.h"
@@ -25,6 +26,16 @@ struct TrainerFullConfig {
   const TrainingConfig* trainingConfig;
 };
 
+struct GlobalBeamTrainConfig {
+  i32 leftBeam = -1;
+  i32 rightBeam = -1;
+  i32 rightCheck = -1;
+
+  bool isEnabled() const { return leftBeam > 0; }
+};
+
+std::ostream& operator<<(std::ostream& o, const GlobalBeamTrainConfig& cfg);
+
 class ITrainer {
  public:
   virtual ~ITrainer() = default;
@@ -38,6 +49,7 @@ class ITrainer {
   virtual void markGold(
       std::function<void(analysis::LatticeNodePtr)> callback) const = 0;
   virtual analysis::Lattice* lattice() const = 0;
+  virtual void setGlobalBeam(const GlobalBeamTrainConfig& cfg) = 0;
 };
 
 }  // namespace training

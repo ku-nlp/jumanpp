@@ -97,6 +97,20 @@ Status parseArgs(int argc, const char** argv, t::TrainingArguments* args) {
 
   RnnArgs rnnArgs{parser};
 
+  args::Group gbeam{parser, "Global Beam"};
+  args::ValueFlag<i32> minLeftGbeam{
+      gbeam, "VALUE", "Left Min", {"gb-left-min"}, -1};
+  args::ValueFlag<i32> maxLeftGbeam{
+      gbeam, "VALUE", "Left Max", {"gb-left-max"}, -1};
+  args::ValueFlag<i32> minRightGbeam{
+      gbeam, "VALUE", "Right Min", {"gb-right-min"}, -1};
+  args::ValueFlag<i32> maxRightGbeam{
+      gbeam, "VALUE", "Right Max", {"gb-right-max"}, -1};
+  args::ValueFlag<i32> minRcheckGbeam{
+      gbeam, "VALUE", "Right Check Min", {"gb-rcheck-min"}, -1};
+  args::ValueFlag<i32> maxRcheckGbeam{
+      gbeam, "VALUE", "Right Check Max", {"gb-rcheck-max"}, -1};
+
   try {
     parser.ParseCLI(argc, argv);
   } catch (args::ParseError& e) {
@@ -124,6 +138,12 @@ Status parseArgs(int argc, const char** argv, t::TrainingArguments* args) {
   args->rnnConfig = rnnArgs.config();
   args->scwDumpDirectory = scwDumpDir.Get();
   args->scwDumpPrefix = scwDumpPrefix.Get();
+  args->globalBeam.minLeftBeam = minLeftGbeam.Get();
+  args->globalBeam.maxLeftBeam = maxLeftGbeam.Get();
+  args->globalBeam.minRightBeam = minRightGbeam.Get();
+  args->globalBeam.maxRightBeam = maxRightGbeam.Get();
+  args->globalBeam.minRightCheck = minRcheckGbeam.Get();
+  args->globalBeam.maxRightCheck = maxRcheckGbeam.Get();
 
   if (sizeExp > 31) {
     return Status::InvalidState() << "size exponent was too large: " << sizeExp
@@ -147,13 +167,18 @@ void doTrain(core::training::TrainingEnv& env,
 
   for (int nepoch = 0; nepoch < args.maxEpochs; ++nepoch) {
     env.resetInput();
+    float ratio = static_cast<float>(nepoch) / args.maxEpochs;
+    env.changeGlobalBeam(1.0f - ratio);
+
+    LOG_INFO() << "Starting E#" << nepoch
+               << " Global beam: " << env.globalBeam();
     Status s = env.trainOneEpoch();
     if (!s) {
       LOG_ERROR() << "failed to train: " << s;
       exit(1);
     }
 
-    LOG_INFO() << "EPOCH #" << nepoch << " finished, loss=" << env.epochLoss();
+    LOG_INFO() << "E#" << nepoch << " finished, loss=" << env.epochLoss();
 
     if (!args.scwDumpDirectory.empty()) {
       env.dumpScw(args.scwDumpDirectory, args.scwDumpPrefix, nepoch);

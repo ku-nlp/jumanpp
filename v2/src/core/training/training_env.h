@@ -17,6 +17,21 @@ class JumanppEnv;
 
 namespace training {
 
+struct GlobalBeamParams {
+  i32 minLeftBeam = -1;
+  i32 maxLeftBeam = -1;
+  i32 minRightBeam = -1;
+  i32 maxRightBeam = -1;
+  i32 minRightCheck = -1;
+  i32 maxRightCheck = -1;
+
+  bool leftEnabled() const { return minLeftBeam > 0; }
+
+  bool rightEnabled() const { return minRightBeam > 0; }
+
+  Status validate() const;
+};
+
 struct TrainingArguments {
   u32 batchSize = 1;
   u32 numThreads = 1;
@@ -32,6 +47,7 @@ struct TrainingArguments {
   std::string scwDumpPrefix;
   TrainingConfig trainingConfig;
   core::analysis::rnn::RnnInferenceConfig rnnConfig;
+  GlobalBeamParams globalBeam;
 };
 
 class TrainingEnv {
@@ -51,6 +67,8 @@ class TrainingEnv {
   double batchLoss_;
   double totalLoss_;
   bool firstEpoch_ = true;
+
+  GlobalBeamTrainConfig globalBeamCfg_;
 
  public:
   TrainingEnv(const TrainingArguments& args, JumanppEnv* env)
@@ -94,6 +112,9 @@ class TrainingEnv {
   void dumpScw(StringPiece dir, StringPiece prefix, i32 epoch) {
     scw_.dumpModel(dir, prefix, epoch);
   }
+
+  void changeGlobalBeam(float ratio);
+  const GlobalBeamTrainConfig& globalBeam() const { return globalBeamCfg_; }
 };
 
 }  // namespace training

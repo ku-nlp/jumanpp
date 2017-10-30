@@ -258,7 +258,6 @@ Status AnalyzerImpl::bootstrapAnalysis() {
 Status AnalyzerImpl::computeScoresFull(const ScorerDef* sconf) {
   JPP_DCHECK_NE(sconf, nullptr);
   JPP_DCHECK_NE(sconf->feature, nullptr);
-  JPP_DCHECK_NE(sproc_, nullptr);
   JPP_DCHECK_EQ(sconf->others.size(), scorers_.size());
 
   auto bndCount = lattice_.createdBoundaryCount();
@@ -309,7 +308,6 @@ Status AnalyzerImpl::computeScoresFull(const ScorerDef* sconf) {
 Status AnalyzerImpl::computeScoresGbeam(const ScorerDef* sconf) {
   JPP_DCHECK_NE(sconf, nullptr);
   JPP_DCHECK_NE(sconf->feature, nullptr);
-  JPP_DCHECK_NE(sproc_, nullptr);
   JPP_DCHECK_EQ(sconf->others.size(), scorers_.size());
 
   auto bndCount = lattice_.createdBoundaryCount();
@@ -333,11 +331,34 @@ Status AnalyzerImpl::computeScoresGbeam(const ScorerDef* sconf) {
 }
 
 Status AnalyzerImpl::computeScores(const ScorerDef* sconf) {
+  if (sproc_ == nullptr) {
+    return JPPS_INVALID_STATE << "Analyzer was not initialized";
+  }
   if (cfg().globalBeamSize <= 0) {
     return computeScoresFull(sconf);
   } else {
     return computeScoresGbeam(sconf);
   }
+}
+
+bool AnalyzerImpl::setGlobalBeam(i32 leftBeam, i32 rightCheck, i32 rightBeam) {
+  bool result = false;
+  if (cfg_.globalBeamSize != leftBeam) {
+    cfg_.globalBeamSize = leftBeam;
+    result = true;
+  }
+  if (cfg_.rightGbeamSize != rightBeam) {
+    cfg_.rightGbeamSize = rightBeam;
+    result = true;
+  }
+  if (cfg_.rightGbeamCheck != rightCheck) {
+    cfg_.rightGbeamCheck = rightCheck;
+    result = true;
+  }
+  if (result) {
+    sproc_ = nullptr;
+  }
+  return result;
 }
 
 }  // namespace analysis

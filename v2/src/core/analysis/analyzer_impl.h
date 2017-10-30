@@ -91,6 +91,7 @@ class AnalyzerImpl {
   util::memory::PoolAlloc* alloc() const { return alloc_.get(); }
   const NgramStats& ngramStats() const { return ngramStats_; }
   const AnalyzerConfig& cfg() const { return cfg_; }
+  bool setGlobalBeam(i32 leftBeam, i32 rightCheck, i32 rightBeam);
 };
 
 }  // namespace analysis

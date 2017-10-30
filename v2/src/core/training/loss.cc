@@ -192,6 +192,9 @@ bool LossCalculator::isGoldStillInBeam(
   auto prevGoldPtr = gold.nodes().at(goldPos - 1);
   for (auto& be : beam) {
     auto prev = be.ptr.previous;
+    if (prev == nullptr) {
+      return false;
+    }
     if (prev->boundary == prevGoldPtr.boundary &&
         prev->right == prevGoldPtr.position) {
       return true;
@@ -220,25 +223,29 @@ void LossCalculator::computeFeatureDiff(u32 mask) {
 
   util::sort(goldFeatures);
 
+  float numGold = static_cast<float>(goldFeatures.size());
+  float numTop = static_cast<float>(top1Features.size());
+  float goldWeight = 1.0f;
+  float topWeight = -goldWeight * numGold / numTop;
+
   while (topPos < topCnt && goldPos < goldCnt) {
     u32 goldEl = goldFeatures[goldPos];
     u32 topEl = top1Features[topPos];
-    if (goldEl == topEl) {
-      goldPos += 1;
-      topPos += 1;
-      continue;
-    }
-
     u32 target;
     float score;
 
-    if (goldEl < topEl) {
+    if (goldEl == topEl) {
+      goldPos += 1;
+      topPos += 1;
       target = goldEl;
-      score = 1;
+      score = goldWeight + topWeight;
+    } else if (goldEl < topEl) {
+      target = goldEl;
+      score = goldWeight;
       goldPos += 1;
     } else {
       target = topEl;
-      score = -1;
+      score = topWeight;
       topPos += 1;
     }
 
@@ -246,11 +253,11 @@ void LossCalculator::computeFeatureDiff(u32 mask) {
   }
 
   for (; topPos < topCnt; ++topPos) {
-    mergeOne(top1Features[topPos], -1);
+    mergeOne(top1Features[topPos], topWeight);
   }
 
   for (; goldPos < goldCnt; ++goldPos) {
-    mergeOne(goldFeatures[goldPos], 1);
+    mergeOne(goldFeatures[goldPos], goldWeight);
   }
 }
 

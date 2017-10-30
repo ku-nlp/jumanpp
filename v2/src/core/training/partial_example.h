@@ -142,6 +142,7 @@ class OwningPartialTrainer : public ITrainer {
   void markGold(
       std::function<void(analysis::LatticeNodePtr)> callback) const override;
   analysis::Lattice* lattice() const override;
+  void setGlobalBeam(const GlobalBeamTrainConfig& cfg) override;
 };
 
 class PartialExampleReader {

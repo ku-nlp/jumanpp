@@ -22,7 +22,7 @@ set(core_train_srcs
         training/training_types.h training/training_test_common.h training/training_executor.cc
         training/training_executor.h training/training_env.cc training/training_env.h
         training/trainer_base.h training/partial_example.h training/partial_example.cc
-        training/full_example.h training/full_example.cc)
+        training/full_example.h training/full_example.cc training/trainer_base.cc)
 
 set(core_hdrs
         ${CMAKE_CURRENT_BINARY_DIR}/core_config.h

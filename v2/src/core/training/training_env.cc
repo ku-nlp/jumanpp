@@ -60,9 +60,16 @@ Status TrainingEnv::trainOneBatch() {
   for (int processedTrainers = 0; processedTrainers < totalTrainers;
        ++processedTrainers) {
     // step1: load trainer queue with trainers
-    while (submittedTrainers < totalTrainers &&
-           executor_.submitNext(trainers_.trainer(submittedTrainers))) {
-      submittedTrainers += 1;
+    while (submittedTrainers < totalTrainers) {
+      auto trainer = trainers_.trainer(submittedTrainers);
+      if (globalBeamCfg_.isEnabled()) {
+        trainer->setGlobalBeam(globalBeamCfg_);
+      }
+      if (executor_.submitNext(trainer)) {
+        submittedTrainers += 1;
+      } else {
+        break;
+      }
     }
 
     // step2: wait for ready trainers and process them
@@ -145,6 +152,7 @@ Status TrainingEnv::initOther() {
   auto sconf = scw_.scorers();
   JPP_RETURN_IF_ERROR(trainers_.initialize(conf, sconf, args_.batchSize));
   JPP_RETURN_IF_ERROR(executor_.initialize(sconf, args_.numThreads));
+  JPP_RETURN_IF_ERROR(args_.globalBeam.validate());
   return Status::Ok();
 }
 
@@ -201,6 +209,64 @@ Status TrainingEnv::loadPartialExamples(StringPiece filename) {
   return Status::Ok();
 }
 
+template <typename T>
+T interpolate(T min, T max, float v) {
+  T diff = max - min;
+  return min + static_cast<T>(diff * v);
+}
+
+void TrainingEnv::changeGlobalBeam(float ratio) {
+  auto& thecfg = args_.globalBeam;
+
+  if (thecfg.leftEnabled()) {
+    globalBeamCfg_.leftBeam =
+        interpolate(thecfg.minLeftBeam, thecfg.maxLeftBeam, ratio);
+  } else {
+    globalBeamCfg_.leftBeam = 0;
+  }
+
+  if (thecfg.rightEnabled()) {
+    globalBeamCfg_.rightBeam =
+        interpolate(thecfg.minRightBeam, thecfg.maxRightBeam, ratio);
+    globalBeamCfg_.rightCheck =
+        interpolate(thecfg.minRightCheck, thecfg.maxRightCheck, ratio);
+  } else {
+    globalBeamCfg_.rightBeam = 0;
+    globalBeamCfg_.rightCheck = 0;
+  }
+}
+
+Status GlobalBeamParams::validate() const {
+  if (leftEnabled()) {
+    if (minLeftBeam > maxLeftBeam) {
+      return JPPS_INVALID_PARAMETER
+             << "min left beam size (" << minLeftBeam
+             << ") should be smaller than max left beam size (" << maxLeftBeam
+             << ")";
+    }
+  }
+  if (rightEnabled()) {
+    if (!leftEnabled()) {
+      return JPPS_INVALID_PARAMETER
+             << "right beam won't work without left beam";
+    }
+
+    if (minRightCheck < 1) {
+      return JPPS_INVALID_PARAMETER
+             << "right beam should check at least 1 left beam";
+    }
+
+    if (maxRightCheck < minRightCheck) {
+      return JPPS_INVALID_PARAMETER
+             << "right beam check: max is lesser than min";
+    }
+
+    if (maxRightBeam > minRightBeam) {
+      return JPPS_INVALID_PARAMETER << "right beam: max is lesser than min";
+    }
+  }
+  return Status::Ok();
+}
 }  // namespace training
 }  // namespace core
 }  // namespace jumanpp
