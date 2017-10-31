@@ -215,8 +215,13 @@ T interpolate(T min, T max, float v) {
   return min + static_cast<T>(diff * v);
 }
 
-void TrainingEnv::changeGlobalBeam(float ratio) {
+void TrainingEnv::changeGlobalBeam(float rawRatio) {
   auto& thecfg = args_.globalBeam;
+
+  //this fits [0, 1], [0.2, 0.5], [0.8, 0]
+  //https://www.desmos.com/calculator/qsdscncgi6
+  auto func = 1.09574f * std::exp(-3.04689f * rawRatio) - 0.0957439f;
+  float ratio = std::max(0.0f, func);
 
   if (thecfg.leftEnabled()) {
     globalBeamCfg_.leftBeam =

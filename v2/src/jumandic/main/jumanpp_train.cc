@@ -168,7 +168,7 @@ void doTrain(core::training::TrainingEnv& env,
   for (int nepoch = 0; nepoch < args.maxEpochs; ++nepoch) {
     env.resetInput();
     float ratio = static_cast<float>(nepoch) / args.maxEpochs;
-    env.changeGlobalBeam(1.0f - ratio);
+    env.changeGlobalBeam(ratio);
 
     LOG_INFO() << "Starting E#" << nepoch
                << " Global beam: " << env.globalBeam();
