@@ -7,7 +7,7 @@
 
 #include "core/analysis/extra_nodes.h"
 #include "core/analysis/lattice_types.h"
-#include "core/dictionary.h"
+#include "core/dic/dictionary.h"
 #include "util/flatmap.h"
 #include "util/memory.hpp"
 

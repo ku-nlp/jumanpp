@@ -2,16 +2,16 @@
 // Created by Arseny Tolmachev on 2017/02/21.
 //
 
-#include "core/dic_builder.h"
+#include "dic_builder.h"
 #include <memory>
 #include <util/status.hpp>
 #include <vector>
-#include "core/darts_trie.h"
-#include "core/impl/field_import.h"
-#include "core/impl/field_reader.h"
+#include "core/dic/darts_trie.h"
 #include "core/impl/runtime_ser.h"
+#include "core/spec/spec_serialization.h"
 #include "core/spec/spec_types.h"
-#include "spec/spec_serialization.h"
+#include "field_import.h"
+#include "field_reader.h"
 #include "util/coded_io.h"
 #include "util/csv_reader.h"
 #include "util/flatmap.h"

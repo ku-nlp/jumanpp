@@ -7,7 +7,7 @@
 
 #include "core/analysis/lattice_config.h"
 #include "core/analysis/unk_nodes.h"
-#include "core/dictionary.h"
+#include "core/dic/dictionary.h"
 #include "core/features_api.h"
 #include "core/runtime_info.h"
 

@@ -19,6 +19,7 @@ class DoubleArrayImpl;
 
 namespace jumanpp {
 namespace core {
+namespace dic {
 
 struct CharStringLength {
   size_t operator()(StringPiece::pointer_t data) const {
@@ -30,14 +31,15 @@ struct CharStringLength {
 namespace impl {
 
 using DoubleArrayCore =
-    Darts::DoubleArrayImpl<StringPiece::value_type, StringPiece::byte_t, i32,
-                           u32, CharStringLength>;
+    Darts::DoubleArrayImpl<char, unsigned char, i32, u32, CharStringLength>;
 
 struct PieceWithValue {
   StringPiece key;
-  int value;
-  PieceWithValue(const StringPiece& key, int value) : key(key), value(value) {}
+  i32 value;
+
+  PieceWithValue(const StringPiece &key, i32 value) : key(key), value(value) {}
 };
+
 }  // namespace impl
 
 class DoubleArrayBuilder {
@@ -49,12 +51,12 @@ class DoubleArrayBuilder {
   void add(StringPiece key, int value);
   Status build();
   size_t underlyingByteSize() const;
-  const void* underlyingStorage() const;
+  const void *underlyingStorage() const;
 
   StringPiece result() const {
-    return StringPiece{
-        reinterpret_cast<StringPiece::pointer_t>(underlyingStorage()),
-        underlyingByteSize()};
+    auto storage =
+        reinterpret_cast<StringPiece::pointer_t>(underlyingStorage());
+    return StringPiece{storage, underlyingByteSize()};
   }
 
   ~DoubleArrayBuilder();
@@ -70,38 +72,33 @@ enum class TraverseStatus {
 };
 
 class DoubleArrayTraversal {
-  const impl::DoubleArrayCore* base_;
+  const impl::DoubleArrayCore *base_;
   size_t node_pos_ = 0;
   size_t key_pos_ = 0;
   i32 value_;
 
  public:
-  DoubleArrayTraversal(const impl::DoubleArrayCore* base_) noexcept
+  DoubleArrayTraversal(const impl::DoubleArrayCore *base_) noexcept
       : base_(base_) {}
-  DoubleArrayTraversal(const DoubleArrayTraversal&) noexcept = default;
+
+  DoubleArrayTraversal(const DoubleArrayTraversal &) noexcept = default;
+
   i32 value() const { return value_; }
   TraverseStatus step(StringPiece data);
-  TraverseStatus step(StringPiece data, size_t& pos);
+  TraverseStatus step(StringPiece data, size_t &pos);
 
-  bool operator==(const DoubleArrayTraversal& o) const {
+  bool operator==(const DoubleArrayTraversal &o) const {
     return base_ == o.base_ && node_pos_ == o.node_pos_ &&
            key_pos_ == o.key_pos_ && value_ == o.value_;
   }
 };
 
-namespace impl {
-struct DoubleArrayBackingFile;
-constexpr size_t InvalidSize = ~size_t(0);
-}  // namespace impl
-
 class DoubleArray {
   std::unique_ptr<impl::DoubleArrayCore> underlying_;
-  std::unique_ptr<impl::DoubleArrayBackingFile> file_;
 
  public:
   Status loadFromMemory(StringPiece memory);
-  Status loadFromFile(StringPiece filename, size_t offset = 0,
-                      size_t length = impl::InvalidSize);
+
   DoubleArray();
   ~DoubleArray();
 
@@ -111,6 +108,8 @@ class DoubleArray {
 
   friend class DoubleArrayTraversal;
 };
+
+}  // namespace dic
 }  // namespace core
 }  // namespace jumanpp
 

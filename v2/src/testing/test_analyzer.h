@@ -7,7 +7,7 @@
 
 #include "core/analysis/analyzer_impl.h"
 #include "core/core.h"
-#include "core/dic_builder.h"
+#include "core/dic/dic_builder.h"
 #include "core/env.h"
 #include "core/impl/model_io.h"
 #include "core/runtime_info.h"

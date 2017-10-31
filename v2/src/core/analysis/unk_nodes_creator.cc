@@ -32,6 +32,7 @@ bool ChunkingUnkMaker::spawnNodes(const AnalysisInput& input,
         break;
       }
       auto status = trav.step(cp.bytes);
+      using dic::TraverseStatus;
 
       switch (status) {
         case TraverseStatus::NoNode: {
@@ -70,6 +71,7 @@ SingleUnkMaker::SingleUnkMaker(const dic::DictionaryEntries& entries_,
 bool SingleUnkMaker::spawnNodes(const AnalysisInput& input,
                                 UnkNodesContext* ctx,
                                 LatticeBuilder* lattice) const {
+  using dic::TraverseStatus;
   auto& codepoints = input.codepoints();
   for (LatticePosition i = 0; i < codepoints.size(); ++i) {
     auto& codept = codepoints[i];

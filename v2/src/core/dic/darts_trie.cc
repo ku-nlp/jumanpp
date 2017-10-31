@@ -10,19 +10,18 @@
 
 namespace jumanpp {
 namespace core {
-
-using namespace jumanpp::core::impl;
+namespace dic {
 
 void DoubleArrayBuilder::add(StringPiece key, int value) {
   immediate_.emplace_back(key, value);
 }
 
 DoubleArrayBuilder::DoubleArrayBuilder()
-    : array_{std::make_unique<DoubleArrayCore>()} {}
+    : array_{std::make_unique<impl::DoubleArrayCore>()} {}
 
 Status DoubleArrayBuilder::build() {
   std::sort(immediate_.begin(), immediate_.end(),
-            [](const PieceWithValue& l, const PieceWithValue& r) {
+            [](const impl::PieceWithValue &l, const impl::PieceWithValue &r) {
               int cmp = std::strncmp(l.key.char_begin(), r.key.char_begin(),
                                      std::min(l.key.size(), r.key.size()));
               if (cmp == 0) return l.key.size() < r.key.size();
@@ -36,7 +35,7 @@ Status DoubleArrayBuilder::build() {
   lengths.reserve(immediate_.size());
   values.reserve(immediate_.size());
 
-  for (auto& o : immediate_) {
+  for (auto &o : immediate_) {
     keys.push_back(o.key.begin());
     lengths.push_back(o.key.size());
     values.push_back(o.value);
@@ -61,49 +60,29 @@ size_t DoubleArrayBuilder::underlyingByteSize() const {
   return array_->total_size();
 }
 
-const void* DoubleArrayBuilder::underlyingStorage() const {
+const void *DoubleArrayBuilder::underlyingStorage() const {
   return array_->array();
 }
 
 // empty destructor is needed to hide darts interface completely
 DoubleArrayBuilder::~DoubleArrayBuilder() {}
 
-namespace impl {
-struct DoubleArrayBackingFile {
-  jumanpp::util::MappedFile file;
-  jumanpp::util::MappedFileFragment fragment;
-};
-}  // namespace impl
-
 Status DoubleArray::loadFromMemory(StringPiece memory) {
-  underlying_.reset(new DoubleArrayCore());
-  auto& arr = *underlying_;
+  underlying_.reset(new impl::DoubleArrayCore{});
+  auto &arr = *underlying_;
 
   // boo, this casts away const
-  void* ptr = (void*)memory.begin();
+  void *ptr = (void *)memory.begin();
   arr.set_array(ptr, memory.size());
 
   return Status::Ok();
 }
 
-Status DoubleArray::loadFromFile(StringPiece filename, size_t offset,
-                                 size_t length) {
-  file_.reset(new DoubleArrayBackingFile());
-  auto& file = file_->file;
-  auto& fragment = file_->fragment;
-
-  JPP_RETURN_IF_ERROR(file.open(filename, jumanpp::util::MMapType::ReadOnly));
-  if (length == InvalidSize) {
-    length = file_->file.size() - offset;
-  }
-  JPP_RETURN_IF_ERROR(file.map(&fragment, offset, length));
-  return loadFromMemory(fragment.asStringPiece());
-}
-
 DoubleArray::~DoubleArray() {}
+
 DoubleArray::DoubleArray() {}
 
-TraverseStatus DoubleArrayTraversal::step(StringPiece data, size_t& pos) {
+TraverseStatus DoubleArrayTraversal::step(StringPiece data, size_t &pos) {
   key_pos_ = 0;
   auto status = base_->traverse(data.begin(), pos, key_pos_, data.size());
 
@@ -122,5 +101,6 @@ TraverseStatus DoubleArrayTraversal::step(StringPiece data) {
   return step(data, node_pos_);
 }
 
+}  // namespace dic
 }  // namespace core
 }  // namespace jumanpp

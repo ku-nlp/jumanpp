@@ -3,8 +3,8 @@
 //
 
 #include "dictionary_node_creator.h"
-#include "core/dic_builder.h"
-#include "core/dictionary.h"
+#include "core/dic/dic_builder.h"
+#include "core/dic/dictionary.h"
 #include "core/spec/spec_dsl.h"
 #include "testing/test_analyzer.h"
 #include "util/string_piece.h"

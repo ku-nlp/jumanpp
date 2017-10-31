@@ -296,6 +296,8 @@ Iter unique(Iter begin, Iter end, Comp comp, C& c) {
 };
 
 bool CharLattceTraversal::lookupCandidatesFrom(i32 start) {
+  using dic::TraverseStatus;
+
   if (start > input_.length()) {
     return false;
   }
@@ -380,6 +382,8 @@ void CharLattceTraversal::tryWalk(TraverasalState* pState,
   auto nst =
       make(pState->traversal, pState->start, end, pState->allFlags | newFlag);
 
+  using dic::TraverseStatus;
+
   TraverseStatus status;
   if (doStep) {
     status = nst->traversal.step(codepoint.bytes);
@@ -411,7 +415,7 @@ void CharLattceTraversal::tryWalk(TraverasalState* pState,
   states2_.push_back(nst);
 }
 
-TraverasalState* CharLattceTraversal::make(const DoubleArrayTraversal& t,
+TraverasalState* CharLattceTraversal::make(const dic::DoubleArrayTraversal& t,
                                            LatticePosition start,
                                            LatticePosition end,
                                            Modifiers flags) {

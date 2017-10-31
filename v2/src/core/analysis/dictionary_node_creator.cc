@@ -17,6 +17,8 @@ bool DictionaryNodeCreator::spawnNodes(const AnalysisInput& input,
   for (LatticePosition begin = 0; begin < totalPoints; ++begin) {
     auto trav = entries_.traversal();
 
+    using dic::TraverseStatus;
+
     for (LatticePosition position = begin; position < totalPoints; ++position) {
       auto& cp = points[position];
       TraverseStatus status = trav.step(cp.bytes);

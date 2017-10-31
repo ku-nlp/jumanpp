@@ -7,7 +7,7 @@
 
 #include "core/analysis/analysis_input.h"
 #include "core/analysis/lattice_builder.h"
-#include "core/dic_entries.h"
+#include "core/dic/dic_entries.h"
 
 namespace jumanpp {
 namespace core {

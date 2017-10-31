@@ -6,7 +6,7 @@
 #define JUMANPP_RNN_SCORER_H
 
 #include "core/analysis/score_api.h"
-#include "core/dictionary.h"
+#include "core/dic/dictionary.h"
 #include "rnn/mikolov_rnn.h"
 #include "util/status.hpp"
 #include "util/types.hpp"

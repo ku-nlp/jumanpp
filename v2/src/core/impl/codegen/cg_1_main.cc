@@ -5,8 +5,8 @@
 #include <iostream>
 #include "cg_1_spec.h"
 #include "core/core.h"
-#include "core/dic_builder.h"
-#include "core/dictionary.h"
+#include "core/dic/dic_builder.h"
+#include "core/dic/dictionary.h"
 #include "core/impl/feature_codegen.h"
 #include "core/spec/spec_dsl.h"
 

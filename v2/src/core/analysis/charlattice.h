@@ -8,7 +8,7 @@
 
 #include "core/analysis/analysis_input.h"
 #include "core/analysis/lattice_builder.h"
-#include "core/dic_entries.h"
+#include "core/dic/dic_entries.h"
 #include "util/logging.hpp"
 
 namespace jumanpp {
@@ -121,13 +121,13 @@ class CharLattice {
 };
 
 struct TraverasalState {
-  DoubleArrayTraversal traversal;
+  dic::DoubleArrayTraversal traversal;
   LatticePosition start;
   LatticePosition end;
   Modifiers allFlags;
-  TraverseStatus lastStatus;
+  dic::TraverseStatus lastStatus;
 
-  TraverasalState(const DoubleArrayTraversal& t, LatticePosition start,
+  TraverasalState(const dic::DoubleArrayTraversal& t, LatticePosition start,
                   LatticePosition end, Modifiers flags)
       : traversal{t}, start{start}, end{end}, allFlags{flags} {}
 };
@@ -152,8 +152,9 @@ class CharLattceTraversal {
 
   const Vec<CLResult>& candidates() const { return result_; }
 
-  TraverasalState* make(const DoubleArrayTraversal& t, LatticePosition start,
-                        LatticePosition end, Modifiers flags);
+  TraverasalState* make(const dic::DoubleArrayTraversal& t,
+                        LatticePosition start, LatticePosition end,
+                        Modifiers flags);
 
   void tryWalk(TraverasalState* pState, const Codepoint& codepoint,
                Modifiers newFlag, bool doStep);

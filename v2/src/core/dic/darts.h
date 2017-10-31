@@ -12,6 +12,7 @@
 #include <cstdio>
 #include <cstring>
 #include <vector>
+#include "core/dic/progress.h"
 
 #ifdef HAVE_ZLIB_H
 namespace zlib {
@@ -118,10 +119,10 @@ class DoubleArrayImpl {
 
   int build(size_t key_size, const key_type **key, const size_t *length = 0,
             const value_type *value = 0,
-            int (*progress_func)(size_t, size_t) = 0) {
+            ::jumanpp::core::ProgressCallback *progress_func = nullptr) {
     if (!key_size || !key) return 0;
 
-    progress_func_ = progress_func;
+    progress_cb_ = progress_func;
     key_ = key;
     length_ = length;
     key_size_ = key_size;
@@ -352,7 +353,7 @@ class DoubleArrayImpl {
   size_t next_check_pos_;
   bool no_delete_;
   int error_;
-  int (*progress_func_)(size_t, size_t);
+  jumanpp::core::ProgressCallback *progress_cb_ = nullptr;
 
   size_t resize(const size_t new_size) {
     unit_t tmp;
@@ -390,7 +391,7 @@ class DoubleArrayImpl {
         tmp_node.depth = parent.depth + 1;
         tmp_node.code = cur;
         tmp_node.left = i;
-        if (!siblings.empty()) siblings[siblings.size() - 1].right = i;
+        if (!siblings.empty()) siblings.back().right = i;
 
         siblings.push_back(tmp_node);
       }
@@ -398,7 +399,7 @@ class DoubleArrayImpl {
       prev = cur;
     }
 
-    if (!siblings.empty()) siblings[siblings.size() - 1].right = parent.right;
+    if (!siblings.empty()) siblings.back().right = parent.right;
 
     return siblings.size();
   }
@@ -469,7 +470,9 @@ class DoubleArrayImpl {
         }
 
         ++progress_;
-        if (progress_func_) (*progress_func_)(progress_, key_size_);
+        if (progress_cb_ != nullptr) {
+          progress_cb_->report(progress_, key_size_);
+        }
 
       } else {
         size_t h = insert(new_siblings);
@@ -481,28 +484,6 @@ class DoubleArrayImpl {
   }
 };
 
-#if 4 == 2
-typedef Darts::DoubleArrayImpl<char, unsigned char, short, unsigned short>
-    DoubleArray;
-#define DARTS_ARRAY_SIZE_IS_DEFINED 1
-#endif
-
-#if 4 == 4 && !defined(DARTS_ARRAY_SIZE_IS_DEFINED)
-typedef Darts::DoubleArrayImpl<char, unsigned char, int, unsigned int>
-    DoubleArray;
-#define DARTS_ARRAY_SIZE_IS_DEFINED 1
-#endif
-
-#if 4 == 8 && !defined(DARTS_ARRAY_SIZE_IS_DEFINED)
-typedef Darts::DoubleArrayImpl<char, unsigned char, long, unsigned long>
-    DoubleArray;
-#define DARTS_ARRAY_SIZE_IS_DEFINED 1
-#endif
-
-#if 4 == 8 && !defined(DARTS_ARRAY_SIZE_IS_DEFINED)
-typedef Darts::DoubleArrayImpl<char, unsigned char, long long,
-                               unsigned long long>
-    DoubleArray;
-#endif
 }  // namespace Darts
-#endif
+
+#endif  // DARTS_H_

@@ -8,10 +8,10 @@
 #include <memory>
 #include <vector>
 #include "core/core_types.h"
-#include "core/dic_builder.h"
-#include "core/dic_entries.h"
-#include "core/impl/field_reader.h"
+#include "core/dic/dic_builder.h"
+#include "core/dic/dic_entries.h"
 #include "core/runtime_info.h"
+#include "field_reader.h"
 
 namespace jumanpp {
 namespace core {

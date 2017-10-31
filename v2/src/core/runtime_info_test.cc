@@ -3,9 +3,9 @@
 //
 
 #include "runtime_info.h"
+#include "core/dic/dic_builder.h"
+#include "core/dic/dictionary.h"
 #include "core/spec/spec_dsl.h"
-#include "dic_builder.h"
-#include "dictionary.h"
 #include "testing/standalone_test.h"
 
 using namespace jumanpp;

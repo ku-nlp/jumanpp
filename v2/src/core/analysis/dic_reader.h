@@ -5,7 +5,7 @@
 #ifndef JUMANPP_DIC_READER_H
 #define JUMANPP_DIC_READER_H
 
-#include "core/dictionary.h"
+#include "core/dic/dictionary.h"
 #include "util/array_slice.h"
 #include "util/memory.hpp"
 #include "util/types.hpp"

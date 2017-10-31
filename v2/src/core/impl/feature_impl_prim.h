@@ -6,7 +6,7 @@
 #define JUMANPP_FEATURE_IMPL_H
 
 #include "core/core_types.h"
-#include "core/dictionary.h"
+#include "core/dic/dictionary.h"
 #include "core/features_api.h"
 #include "core/impl/feature_impl_types.h"
 #include "core/impl/feature_types.h"

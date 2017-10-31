@@ -7,8 +7,8 @@
 
 #include "core/analysis/lattice_config.h"
 #include "core/core_types.h"
-#include "core/dic_entries.h"
-#include "core/impl/field_reader.h"
+#include "core/dic/dic_entries.h"
+#include "core/dic/field_reader.h"
 #include "util/array_slice.h"
 #include "util/lazy.h"
 #include "util/memory.hpp"

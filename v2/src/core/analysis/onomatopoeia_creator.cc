@@ -16,6 +16,7 @@ OnomatopoeiaUnkMaker::OnomatopoeiaUnkMaker(
 bool OnomatopoeiaUnkMaker::spawnNodes(const AnalysisInput& input,
                                       UnkNodesContext* ctx,
                                       LatticeBuilder* lattice) const {
+  using dic::TraverseStatus;
   auto& codepoints = input.codepoints();
   for (LatticePosition i = 0; i < codepoints.size(); ++i) {
     auto trav = entries_.traversal();

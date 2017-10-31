@@ -6,8 +6,8 @@
 #define JUMANPP_DIC_ENTRIES_H
 
 #include "core/core_types.h"
-#include "core/darts_trie.h"
-#include "core/impl/field_reader.h"
+#include "core/dic/darts_trie.h"
+#include "field_reader.h"
 #include "util/array_slice.h"
 #include "util/string_piece.h"
 #include "util/types.hpp"

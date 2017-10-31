@@ -5,7 +5,7 @@
 #include "darts_trie.h"
 #include <testing/standalone_test.h>
 
-namespace c = jumanpp::core;
+namespace c = jumanpp::core::dic;
 namespace j = jumanpp;
 
 TEST_CASE("darts builds without fail") {

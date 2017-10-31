@@ -1,4 +1,4 @@
-set(core_analysis_src
+jpp_core_files(core_srcs
 
         analysis_input.cc
         analysis_result.cc
@@ -41,7 +41,7 @@ set(core_analysis_tsrc
 
         )
 
-set(core_analysis_hdrs
+jpp_core_files(core_hdrs
 
         analysis_input.h
         analysis_result.h
@@ -72,6 +72,5 @@ set(core_analysis_hdrs
         )
 
 
-jpp_add_core_objlib(jpp_core_analysis core_analysis_src)
 jpp_test_executable(jpp_core_analysis_tests ${core_analysis_tsrc})
 target_link_libraries(jpp_core_analysis_tests jpp_core)

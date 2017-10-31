@@ -5,7 +5,7 @@
 #ifndef JUMANPP_JUMANDIC_ID_RESOLVER_H
 #define JUMANPP_JUMANDIC_ID_RESOLVER_H
 
-#include "core/dictionary.h"
+#include "core/dic/dictionary.h"
 #include "util/flatmap.h"
 
 namespace jumanpp {

@@ -7,7 +7,7 @@
 
 #include "core/analysis/extra_nodes.h"
 #include "core/core_types.h"
-#include "core/impl/field_reader.h"
+#include "core/dic/field_reader.h"
 #include "util/array_slice.h"
 #include "util/sliceable_array.h"
 #include "util/status.hpp"

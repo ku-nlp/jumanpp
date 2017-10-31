@@ -10,7 +10,7 @@
 #include "core/analysis/extra_nodes.h"
 #include "core/analysis/lattice_builder.h"
 #include "core/analysis/unk_nodes.h"
-#include "core/dic_entries.h"
+#include "core/dic/dic_entries.h"
 #include "util/characters.h"
 
 namespace jumanpp {

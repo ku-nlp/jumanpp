@@ -7,9 +7,9 @@
 
 #include <memory>
 #include <vector>
+#include "core/impl/model_format.h"
 #include "core/runtime_info.h"
 #include "core/spec/spec_types.h"
-#include "impl/model_format.h"
 #include "util/status.hpp"
 
 namespace jumanpp {

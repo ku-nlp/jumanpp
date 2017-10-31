@@ -3,8 +3,8 @@
 //
 
 #include <iostream>
-#include "core/dic_builder.h"
-#include "core/dictionary.h"
+#include "core/dic/dic_builder.h"
+#include "core/dic/dictionary.h"
 #include "core/impl/model_io.h"
 #include "jumandic/shared/jumandic_spec.h"
 #include "util/logging.hpp"

@@ -2,8 +2,8 @@
 // Created by Hajime Morita on 2017/07/21.
 //
 
-#include "core/dic_builder.h"
-#include "core/dictionary.h"
+#include "core/dic/dic_builder.h"
+#include "core/dic/dictionary.h"
 #include "core/spec/spec_dsl.h"
 #include "dictionary_node_creator.h"
 #include "normalized_node_creator.h"

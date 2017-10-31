@@ -55,6 +55,7 @@ NumericUnkMaker::NumericUnkMaker(const dic::DictionaryEntries &entries_,
 bool NumericUnkMaker::spawnNodes(const AnalysisInput &input,
                                  UnkNodesContext *ctx,
                                  LatticeBuilder *lattice) const {
+  using dic::TraverseStatus;
   // Spawn the longest matting node
   auto &codepoints = input.codepoints();
   for (LatticePosition i = 0; i < codepoints.size(); ++i) {

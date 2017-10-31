@@ -2,18 +2,16 @@
 // Created by Arseny Tolmachev on 2017/02/19.
 //
 
-#include "core/dictionary.h"
-#include "core/dic_builder.h"
-#include "core/dic_entries.h"
-#include "core/impl/field_reader.h"
+#include "dictionary.h"
+#include "core/dic/dic_builder.h"
+#include "core/dic/dic_entries.h"
 #include "core/spec/spec_dsl.h"
+#include "field_reader.h"
 #include "testing/standalone_test.h"
 
 using namespace jumanpp;
 using namespace jumanpp::core::dic;
 using namespace jumanpp::core::spec;
-
-using jumanpp::core::TraverseStatus;
 
 class TestStringColumn {
   impl::StringStorageReader rdr_;
