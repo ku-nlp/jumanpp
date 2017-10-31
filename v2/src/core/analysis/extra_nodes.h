@@ -28,8 +28,8 @@ struct UnkNodeHeader {
 };
 
 struct ExtraNodeHeader {
-  i32 index;
-  ExtraNodeType type;
+  i32 index = std::numeric_limits<i32>::min();
+  ExtraNodeType type = ExtraNodeType::Invalid;
   union {
     AliasNodeHeader alias;
     UnkNodeHeader unk;
@@ -41,6 +41,8 @@ struct ExtraNode {
   i32 content[];
 
   EntryPtr ptr() const { return EntryPtr{~header.index}; }
+
+  ExtraNode(): header{} {}
 };
 
 class ExtraNodesContext {
