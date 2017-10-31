@@ -22,12 +22,12 @@ class JumandicTrainingTestEnv {
   util::Lazy<core::training::TrainingEnv> trainEnv;
   jumandic::output::JumandicFields fields;
   core::training::TrainingArguments trainArgs;
-  
+
   void globalBeam(i32 left, i32 check, i32 right) {
     trainArgs.globalBeam.minLeftBeam = left;
     trainArgs.globalBeam.maxLeftBeam = 2 * left;
     trainArgs.globalBeam.minRightCheck = check;
-    trainArgs.globalBeam.maxRightCheck = 2* check;
+    trainArgs.globalBeam.maxRightCheck = 2 * check;
     trainArgs.globalBeam.minRightBeam = right;
     trainArgs.globalBeam.maxRightBeam = 2 * right;
   }
@@ -56,17 +56,17 @@ class JumandicTrainingTestEnv {
 
   void singleEpochFrom(StringPiece filename) {
     initialize();
-    
+
     REQUIRE_OK(trainEnv.value().loadInput(filename));
     trainEnv.value().changeGlobalBeam(1);
     REQUIRE_OK(trainEnv.value().trainOneEpoch());
   }
-  
+
   double trainNepochsFrom(StringPiece filename, i32 number) {
     initialize();
-    auto& env = trainEnv.value();
+    auto &env = trainEnv.value();
     REQUIRE_OK(env.loadInput(filename));
-    
+
     for (int i = 0; i < number; ++i) {
       float ratio = static_cast<float>(i) / number;
       env.changeGlobalBeam(ratio);

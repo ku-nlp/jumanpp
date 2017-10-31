@@ -24,10 +24,18 @@ void TrainingExecutorThread::run() {
       return;
     }
 
-    // read trainer field only once
-    auto status = trainer->prepare();
-    if (status) {
-      status = trainer->compute(scoreConf_);
+    Status status = Status::Ok();
+
+    try {
+      // read trainer field only once
+      status = trainer->prepare();
+      if (status) {
+        status = trainer->compute(scoreConf_);
+      }
+    } catch (std::exception& ae) {
+      auto bldr = JPPS_INVALID_STATE << "caught an exception while training: "
+                                     << ae.what();
+      status = bldr;
     }
 
     if (!status) {
