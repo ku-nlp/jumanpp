@@ -232,10 +232,9 @@ class RuntimeInfoCompiler {
           return Status::InvalidState() << "placeholder feature " << pfd.name
                                         << " could not be processed";
         }
-      } else {
-        std::copy(pfd.references.begin(), pfd.references.end(),
-                  std::back_inserter(pf.references));
       }
+
+      util::copy_insert(pfd.references, pf.references);
 
       if (pfd.references.empty()) {
         if (!pfd.matchData.empty()) {
@@ -243,8 +242,9 @@ class RuntimeInfoCompiler {
                  << pfd.name
                  << ": field had data, but did not have any references";
         }
-        // copy refs if there are any
-        util::copy_insert(pfd.references, pf.references);
+      }
+
+      if (pfd.matchData.empty()) {
         continue;
       }
 

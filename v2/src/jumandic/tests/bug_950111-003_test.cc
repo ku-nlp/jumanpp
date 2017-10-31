@@ -6,11 +6,12 @@
 
 TEST_CASE("example id S-ID:950110271-003 works") {
   JumandicTrainingTestEnv env{"jumandic/bug950111-003.mdic"};
-  env.trainArgs.batchSize = 100;
   env.initialize();
-  env.singleEpochFrom("jumandic/bug950111-003.in");
-  env.singleEpochFrom("jumandic/bug950111-003.in");
-  env.singleEpochFrom("jumandic/bug950111-003.in");
-  env.singleEpochFrom("jumandic/bug950111-003.in");
-  CHECK(env.trainEnv.value().batchLoss() == Approx(0.0f));
+  CHECK(env.trainNepochsFrom("jumandic/bug950111-003.in", 10) == Approx(0));
+}
+
+TEST_CASE("example id S-ID:950110271-003 works with gbeam", "[gbeam]") {
+  JumandicTrainingTestEnv env{"jumandic/bug950111-003.mdic"};
+  env.initialize();
+  CHECK(env.trainNepochsFrom("jumandic/bug950111-003.in", 10) == Approx(0));
 }
