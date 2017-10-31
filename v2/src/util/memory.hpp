@@ -81,7 +81,7 @@ class PoolAlloc : public ErasedAllocator {
   template <typename T>
   T *allocateArray(size_t count, size_t align = alignof(T)) {
     auto data = allocate_memory(sizeof(T) * count, align);
-    auto valid = new (data) T[count]{};
+    auto valid = new (data) T[count];
     return valid;
   }
 
