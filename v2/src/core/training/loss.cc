@@ -223,11 +223,6 @@ void LossCalculator::computeFeatureDiff(u32 mask) {
 
   util::sort(goldFeatures);
 
-  float numGold = static_cast<float>(goldFeatures.size());
-  float numTop = static_cast<float>(top1Features.size());
-  float goldWeight = 1.0f;
-  float topWeight = -goldWeight * numGold / numTop;
-
   while (topPos < topCnt && goldPos < goldCnt) {
     u32 goldEl = goldFeatures[goldPos];
     u32 topEl = top1Features[topPos];
@@ -237,15 +232,14 @@ void LossCalculator::computeFeatureDiff(u32 mask) {
     if (goldEl == topEl) {
       goldPos += 1;
       topPos += 1;
-      target = goldEl;
-      score = goldWeight + topWeight;
+      continue;
     } else if (goldEl < topEl) {
       target = goldEl;
-      score = goldWeight;
+      score = 1.0f;
       goldPos += 1;
     } else {
       target = topEl;
-      score = topWeight;
+      score = -1.0f;
       topPos += 1;
     }
 
@@ -253,11 +247,32 @@ void LossCalculator::computeFeatureDiff(u32 mask) {
   }
 
   for (; topPos < topCnt; ++topPos) {
-    mergeOne(top1Features[topPos], topWeight);
+    mergeOne(top1Features[topPos], 1.0f);
   }
 
   for (; goldPos < goldCnt; ++goldPos) {
-    mergeOne(goldFeatures[goldPos], goldWeight);
+    mergeOne(goldFeatures[goldPos], -1.0f);
+  }
+
+  float numGold = 0;
+  float numTop = 0;
+
+  for (auto& s : scored) {
+    if (s.score > 0) {
+      numGold += s.score;
+    } else {
+      numTop -= s.score;
+    }
+  }
+
+  float topWeight = 1.0f;
+  if (numTop != 0) {
+    topWeight = numGold / numTop;
+  }
+  for (auto& s : scored) {
+    if (s.score < 0) {
+      s.score *= topWeight;
+    }
   }
 }
 

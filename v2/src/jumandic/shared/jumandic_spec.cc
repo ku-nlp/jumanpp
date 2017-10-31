@@ -61,13 +61,12 @@ void SpecFactory::fillSpec(core::spec::dsl::ModelSpecBuilder& bldr) {
           .matchAnyRowOfCsv(lexicalizedData, {baseform, pos, subpos, conjtype})
           .ifTrue({surface, pos, subpos, conjtype, conjform})
           .ifFalse({pos, subpos, conjtype});
-  auto &scp1 = bldr.feature("scp1").codepoint(1);
-  auto &scp2 = bldr.feature("scp2").codepoint(2);
-  auto &scp3 = bldr.feature("scp3").codepoint(3);
-  auto &sct1 = bldr.feature("sct1").codepointType(1);
-  auto &sct0 = bldr.feature("sct1").codepointType(0);
-  auto &sct1n = bldr.feature("sct1n").codepointType(-1);
-
+  auto& scp1 = bldr.feature("scp1").codepoint(1);
+  auto& scp2 = bldr.feature("scp2").codepoint(2);
+  auto& scp3 = bldr.feature("scp3").codepoint(3);
+  auto& sct1 = bldr.feature("sct1").codepointType(1);
+  auto& sct0 = bldr.feature("sct1").codepointType(0);
+  auto& sct1n = bldr.feature("sct1n").codepointType(-1);
 
   bldr.unk("symbols", 1)
       .single(chars::CharacterClass::FAMILY_SYMBOL)

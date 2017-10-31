@@ -236,13 +236,18 @@ class RuntimeInfoCompiler {
         std::copy(pfd.references.begin(), pfd.references.end(),
                   std::back_inserter(pf.references));
       }
+
       if (pfd.references.empty()) {
         if (!pfd.matchData.empty()) {
           return Status::InvalidParameter()
                  << pfd.name
                  << ": field had data, but did not have any references";
         }
+        // copy refs if there are any
+        util::copy_insert(pfd.references, pf.references);
+        continue;
       }
+
       if (pfd.references.size() == 1) {
         JPP_RETURN_IF_ERROR(
             copyOneField(pfd.references[0], pfd.matchData, &pf.matchData));

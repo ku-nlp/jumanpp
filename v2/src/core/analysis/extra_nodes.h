@@ -42,7 +42,7 @@ struct ExtraNode {
 
   EntryPtr ptr() const { return EntryPtr{~header.index}; }
 
-  ExtraNode(): header{} {}
+  ExtraNode() : header{} {}
 };
 
 class ExtraNodesContext {

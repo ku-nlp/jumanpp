@@ -44,8 +44,9 @@ ExtraNode *ExtraNodesContext::allocateExtra() {
   void *rawPtr = alloc_->allocate_memory(memory, alignof(ExtraNode));
   auto ptr = new (rawPtr) ExtraNode{};
   ptr->header.index = (i32)extraNodes_.size();
-  //set placeholders to 0 (default value)
-  std::fill(ptr->content + numFields_, ptr->content + numFields_ + numPlaceholders_, 0);
+  // set placeholders to 0 (default value)
+  std::fill(ptr->content + numFields_,
+            ptr->content + numFields_ + numPlaceholders_, 0);
   extraNodes_.push_back(ptr);
   return ptr;
 }
