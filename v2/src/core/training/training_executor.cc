@@ -33,9 +33,8 @@ void TrainingExecutorThread::run() {
         status = trainer->compute(scoreConf_);
       }
     } catch (std::exception& ae) {
-      auto bldr = JPPS_INVALID_STATE << "caught an exception while training: "
-                                     << ae.what();
-      status = bldr;
+      status = JPPS_INVALID_STATE << "caught an exception while training: "
+                                  << ae.what();
     }
 
     if (!status) {
