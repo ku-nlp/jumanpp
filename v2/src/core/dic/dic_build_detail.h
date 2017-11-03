@@ -49,7 +49,6 @@ struct DictionaryBuilderStorage {
   i32 importActualData(util::CsvReader* csv);
   Status buildTrie();
   void fillResult(BuiltDictionary* dic_);
-  void importSpecData(const s::AnalysisSpec& spec);
   Status initGroupingFields(const s::AnalysisSpec& spec);
 };
 

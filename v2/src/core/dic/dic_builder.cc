@@ -27,7 +27,6 @@ Status DictionaryBuilder::importCsv(StringPiece name, StringPiece data) {
 
   // first csv pass -- compute stats
   JPP_RETURN_IF_ERROR(storage_->computeStats(name, &csv));
-  storage_->importSpecData(*spec_);
 
   // build string storage and internal state for the third step
   JPP_RETURN_IF_ERROR(storage_->makeStorage());
@@ -45,6 +44,8 @@ Status DictionaryBuilder::importCsv(StringPiece name, StringPiece data) {
 
   dic_.reset(new BuiltDictionary);
   dic_->entryCount = entryCnt;
+  dic_->numFeatures = spec_->features.numDicFeatures;
+  dic_->numData = spec_->features.numDicData;
   storage_->fillResult(dic_.get());
 
   return Status::Ok();
@@ -70,6 +71,8 @@ void Serialize(Arch& a, BuiltField& o) {
 template <typename Arch>
 void Serialize(Arch& a, BuiltDictionary& o) {
   a& o.entryCount;
+  a& o.numFeatures;
+  a& o.numData;
   a& o.fieldData;
 }
 

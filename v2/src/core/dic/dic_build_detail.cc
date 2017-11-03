@@ -28,51 +28,16 @@ void DictionaryBuilderStorage::fillResult(BuiltDictionary* dic_) {
     fld.name = i.descriptor->name;
     fld.emptyValue = i.descriptor->emptyString;
     fld.stringStorageIdx = i.descriptor->stringStorage;
-    if (i.descriptor->stringStorage != -1) {
+    if (i.descriptor->stringStorage != InvalidInt) {
       fld.stringContent = builtStrings[i.descriptor->stringStorage];
     }
-    if (i.descriptor->intStorage != -1) {
+    if (i.descriptor->intStorage != InvalidInt) {
       fld.fieldContent = builtInts[i.descriptor->intStorage];
     }
     fld.colType = i.descriptor->fieldType;
     fld.isSurfaceField = i.descriptor->isTrieKey;
     fld.uniqueValues = i.importer->uniqueValues();
     flds.push_back(fld);
-  }
-}
-
-void DictionaryBuilderStorage::importSpecData(const s::AnalysisSpec& spec) {
-  for (auto& f : spec.features.primitive) {
-    for (auto fldIdx : f.references) {
-      if (f.matchData.empty()) {
-        continue;
-      }
-      auto ss = importers[fldIdx].descriptor->stringStorage;
-      if (ss != -1) {
-        auto& stor = storage[ss];
-        for (auto& s : f.matchData) {
-          stor.increaseFieldValueCount(s);
-        }
-      }
-    }
-  }
-
-  for (auto& f : spec.features.computation) {
-    auto& data = f.matchData;
-    auto& refs = f.matchReference;
-    auto refSize = refs.size();
-    for (int i = 0; i < data.size(); ++i) {
-      auto refIdx = i % refSize;
-      auto& ref = refs[refIdx];
-      auto descr = importers[ref.dicFieldIdx].descriptor;
-      auto ss = descr->stringStorage;
-      if (ss != -1) {
-        auto obj = data[i];
-        if (descr->emptyString != obj) {
-          storage[ss].increaseFieldValueCount(obj);
-        }
-      }
-    }
   }
 }
 
@@ -124,8 +89,7 @@ Status DictionaryBuilderStorage::makeStorage() {
 i32 DictionaryBuilderStorage::importActualData(util::CsvReader* csv) {
   i32 entryCnt = 0;
   while (csv->nextLine()) {
-    entries.importOneLine(importers, *csv);
-    entryCnt += 1;
+    entryCnt += entries.importOneLine(importers, *csv);
   }
   return entryCnt;
 }
@@ -173,6 +137,16 @@ Status DictionaryBuilderStorage::initDicFeatures(const FeaturesSpec& dicSpec) {
 
 Status DictionaryBuilderStorage::initGroupingFields(
     const s::AnalysisSpec& spec) {
+  for (auto idx : spec.dictionary.aliasingSet) {
+    auto& fld = spec.dictionary.fields[idx];
+    auto dicIdx = fld.dicIndex;
+    if (dicIdx < 0) {
+      return JPPS_INVALID_PARAMETER << "field " << fld.name
+                                    << " could not be used for deduplication";
+    }
+    JPP_DCHECK_IN(dicIdx, 0, spec.features.numDicFeatures);
+    entries.dedupIdxes_.push_back(dicIdx);
+  }
   return Status::Ok();
 }
 

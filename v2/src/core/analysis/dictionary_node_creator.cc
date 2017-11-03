@@ -25,10 +25,8 @@ bool DictionaryNodeCreator::spawnNodes(const AnalysisInput& input,
       if (status == TraverseStatus::Ok) {
         LatticePosition end = position + LatticePosition(1);
         auto dicEntries = trav.entries();
-        i32 ptr = 0;
-        while (dicEntries.readOnePtr(&ptr)) {
-          EntryPtr eptr{ptr};
-          lattice->appendSeed(eptr, begin, end);
+        while (dicEntries.readOnePtr()) {
+          lattice->appendSeed(dicEntries.currentPtr(), begin, end);
         }
       } else if (status == TraverseStatus::NoNode) {
         break;

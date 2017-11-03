@@ -114,6 +114,8 @@ class CodedBufferParser {
     end_ = data.uend();
   }
 
+  bool atEnd() const { return position_ >= end_; }
+
   bool readVarint64Slowpath(u64* pInt) noexcept;
 
   // most of varints are small

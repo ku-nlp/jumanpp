@@ -61,7 +61,7 @@ class PrimFeatureTestEnv {
       auto& ph = specBldr.feature("ph").placeholder();
       specBldr.unk("chars", 1)
           .chunking(chars::CharacterClass::KATAKANA)
-          .notPrefixOfDicFeature(ph)
+          .writeFeatureTo(ph)
           .outputTo({a});
       FeatureSet fs{a, b, c, ph};
       fn(specBldr, fs);

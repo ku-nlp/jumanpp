@@ -51,6 +51,7 @@ set(core_test_srcs
   runtime_info_test.cc
   ${core_test_srcs}
   ${core_tsrcs}
+  test/test_analyzer_env.h
   )
 
 add_library(jpp_core ${core_srcs} ${core_hdrs} ${libs3p_pegtl_headers})

@@ -48,16 +48,18 @@ class StringStorageReader {
 };
 
 class IntListTraversal {
-  i32 length_;
+  i32 length_ = 0;
   i32 position_ = 0;
   util::CodedBufferParser parser_;
-
  public:
+  IntListTraversal() : parser_{EMPTY_SP} {}
   IntListTraversal(i32 length, const util::CodedBufferParser& parser)
       : length_{length}, parser_{parser} {}
 
   i32 size() const noexcept { return length_; }
   i32 remaining() const noexcept { return length_ - position_; }
+  bool empty() const noexcept { return position_ >= length_; }
+  bool didRead() const noexcept { return position_ >= 0; }
 
   inline bool readOne(i32* result) noexcept {
     bool ret = parser_.readInt(result) & (position_ < length_);
@@ -93,6 +95,11 @@ class IntListTraversal {
   }
 
   i32 pointer() const noexcept { return parser_.position(); }
+
+  void clear() {
+    length_ = 0;
+    position_ = 0;
+  }
 };
 
 class KeyValueListTraversal {

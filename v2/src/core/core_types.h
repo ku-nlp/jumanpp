@@ -29,9 +29,13 @@ class EntryPtr {
 
   constexpr inline bool isDic() const { return value_ >= 0; }
 
+  constexpr inline bool isAlias() const {
+    return isDic() && (value_ & 0x1) == 1;
+  }
+
   inline i32 dicPtr() const {
     JPP_DCHECK_GE(value_, 0);
-    return value_;
+    return value_ >> 1;
   }
 
   inline i32 extPtr() const {
@@ -40,17 +44,23 @@ class EntryPtr {
   }
 
   static constexpr EntryPtr BOS() {
-    return EntryPtr{std::numeric_limits<i32>::min()};
+    return EntryPtr{
+        static_cast<i32>(std::numeric_limits<i32>::min() & 0xffff'fffe)};
   }
 
   static constexpr EntryPtr EOS() {
-    return EntryPtr{std::numeric_limits<i32>::min() + 1};
+    return EntryPtr{
+        static_cast<i32>((std::numeric_limits<i32>::min() + 2) & 0xffff'fffe)};
   }
 
-  inline i32 rawValue() const { return value_; }
+  constexpr inline i32 rawValue() const { return value_; }
 
-  inline bool operator==(const EntryPtr& o) const { return value_ == o.value_; }
-  inline bool operator!=(const EntryPtr& o) const { return value_ != o.value_; }
+  constexpr inline bool operator==(const EntryPtr& o) const {
+    return value_ == o.value_;
+  }
+  constexpr inline bool operator!=(const EntryPtr& o) const {
+    return value_ != o.value_;
+  }
 };
 
 class NodeInfo {

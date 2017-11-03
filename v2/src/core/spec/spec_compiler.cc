@@ -319,8 +319,9 @@ i32 SpecCompiler::addDicImport(const FieldDescriptor& descriptor,
   v.name = descriptor.name;
   v.index = idx;
   v.kind = kind;
+  // v.target will be rewritten by dicIndex later, after it is be decided
   v.target = descriptor.specIndex;
-  v.references.push_back(descriptor.position);
+  v.references.push_back(descriptor.specIndex);
   return idx;
 }
 

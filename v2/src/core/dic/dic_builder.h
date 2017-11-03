@@ -35,7 +35,9 @@ struct BuiltDictionary {
   StringPiece entryPointers;
   StringPiece entryData;
   std::vector<BuiltField> fieldData;
-  i32 entryCount;
+  i32 entryCount = spec::InvalidInt;
+  i32 numFeatures = spec::InvalidInt;
+  i32 numData = spec::InvalidInt;
 };
 
 struct DictionaryBuilderStorage;

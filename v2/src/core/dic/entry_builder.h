@@ -67,7 +67,7 @@ struct EntryTableBuilder {
 
   std::vector<std::unique_ptr<DicFeatureBase>> features_;
   std::vector<ImportFieldDicFeatureImpl> content_;
-  xi::FeatureBuffer dedupIdxes_;
+  std::vector<i32> dedupIdxes_;
   xi::FeatureBuffer featureBuf_;
   u32 surfaceIdx_;
   impl::StringStorage* realSurfaceStorage_;

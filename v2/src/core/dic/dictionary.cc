@@ -86,7 +86,7 @@ class RuntimeInfoCompiler {
     auto last = std::unique(patterns.begin(), patterns.end());
     patterns.erase(last, patterns.end());
 
-    auto esize = entries_.entrySize;
+    auto esize = entries_.numFeatures;
     auto ents = entries_.entries.raw();
     i32 ptr = 0;
     i32 cnt = 0;
@@ -333,7 +333,8 @@ class RuntimeInfoCompiler {
 };
 
 Status fillEntriesHolder(const BuiltDictionary& dic, EntriesHolder* result) {
-  result->entrySize = static_cast<i32>(dic.fieldData.size());
+  result->numFeatures = static_cast<i32>(dic.numFeatures);
+  result->numData = static_cast<i32>(dic.numData);
   result->entries = impl::IntStorageReader{dic.entryData};
   result->entryPtrs = impl::IntStorageReader{dic.entryPointers};
   return result->trie.loadFromMemory(dic.trieContent);

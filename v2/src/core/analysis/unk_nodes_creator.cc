@@ -123,7 +123,8 @@ bool UnkNodesContext::dicPatternMatches(const UnkNodeConfig& conf,
   util::MutableArraySlice<i32> entryBuffer(entryBufferRaw, data.size());
   const auto& copy = conf.replaceWithSurface;
 
-  while (entries.fillEntryData(&entryBuffer)) {
+  JPP_DCHECK(false);
+  while (entries.fillEntryData(nullptr)) {
     int copyIdx = 0;
     for (int i = 0; i < data.size(); ++i) {
       if (copyIdx < copy.size() && copy[copyIdx] == i) {

@@ -405,9 +405,8 @@ void CharLattceTraversal::tryWalk(TraverasalState* pState,
       if (ExistFlag(newFlag, Modifiers::DELETE)) {
         flags = flags | Modifiers::DELETE_LAST;
       }
-      i32 ptr;
-      while (entries.readOnePtr(&ptr)) {
-        result_.push_back({EntryPtr{ptr}, flags, nst->start, nst->end});
+      while (entries.readOnePtr()) {
+        result_.push_back({entries.currentPtr(), flags, nst->start, nst->end});
       }
     }
   }

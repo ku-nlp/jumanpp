@@ -76,8 +76,6 @@ enum class FieldExpressionKind {
   AppendString
 };
 
-static constexpr i32 InvalidIntConstant = std::numeric_limits<i32>::min();
-
 enum class UnkFeatureType { NotPrefixOfDic, NormalizedActions };
 
 struct UnkMakerFeature {

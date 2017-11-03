@@ -7,6 +7,7 @@
 
 #include "core/core_types.h"
 #include "core/dic/darts_trie.h"
+#include "core_config.h"
 #include "field_reader.h"
 #include "util/array_slice.h"
 #include "util/string_piece.h"
@@ -16,57 +17,118 @@ namespace jumanpp {
 namespace core {
 namespace dic {
 
-class IndexedEntries {
-  i32 entrySize_;
-  impl::IntListTraversal entries_;
-  impl::IntStorageReader entryData_;
-  i32 count_;
-  i32 remaining_;
-  i32 lastIdx = 0;
+class DicEntryBuffer {
+  u32 numFeatures_;
+  u32 numData_;
+  i32 fieldBuffer_[JPP_MAX_DIC_FIELDS];
+  i32 dataBuffer_[JPP_MAX_DIC_FIELDS];
+  impl::IntListTraversal remainingData_;
+
+  friend class IndexedEntries;
 
  public:
-  IndexedEntries(i32 entrySize_, const impl::IntListTraversal& entries_,
-                 const impl::IntStorageReader& entryData_)
-      : entrySize_(entrySize_),
-        entries_(entries_),
-        entryData_(entryData_),
-        count_(entries_.size()),
-        remaining_{entries_.size()} {}
+  DicEntryBuffer() = default;
 
-  i32 count() const { return count_; }
-  i32 remaining() const { return remaining_; }
+  util::ArraySlice<i32> features() const {
+    return util::ArraySlice<i32>{fieldBuffer_, numFeatures_};
+  }
 
-  inline bool readOnePtr(i32* result) {
-    if (remaining_ <= 0) {
+  util::ArraySlice<i32> data() const {
+    if (remainingData_.size() == 0) {
+      return util::ArraySlice<i32>{fieldBuffer_ + numFeatures_, numData_};
+    }
+
+    return util::ArraySlice<i32>{dataBuffer_, numData_};
+  }
+
+  bool nextData() {
+    if (remainingData_.size() == 0) {  // data is stored in features fully
+      dataBuffer_[0] -= 1;
+      return dataBuffer_[0] >= 0;
+    }
+
+    if (remainingData_.remaining() == 0) {
       return false;
     }
-    JPP_RET_CHECK(entries_.readOneCumulative(&lastIdx));
-    *result = lastIdx;
+
+    auto res = remainingData_.fill(dataBuffer_, numData_);
+    return res == numData_;
+  }
+};
+
+class IndexedEntries {
+  i32 numFeatures_;
+  i32 numData_;
+  impl::IntListTraversal entries_;
+  impl::IntStorageReader entryData_;
+  i32 lastIdx_ = 0;
+
+ public:
+  IndexedEntries(i32 numFeatures, i32 dataSize,
+                 const impl::IntListTraversal& entries_,
+                 const impl::IntStorageReader& entryData_)
+      : numFeatures_(numFeatures),
+        numData_{dataSize},
+        entries_(entries_),
+        entryData_(entryData_) {}
+
+  i32 count() const { return entries_.size(); }
+  i32 remaining() const { return entries_.remaining(); }
+
+  inline bool readOnePtr() {
+    if (entries_.empty()) {
+      return false;
+    }
+    JPP_RET_CHECK(entries_.readOneCumulative(&lastIdx_));
     return true;
   }
 
-  bool fillEntryData(util::MutableArraySlice<i32>* result) {
-    if (remaining_ <= 0) {
-      return false;
+  EntryPtr currentPtr() const noexcept { return EntryPtr{lastIdx_}; }
+
+  bool fillEntryData(DicEntryBuffer* result) {
+    JPP_DCHECK(entries_.didRead());
+
+    result->numFeatures_ = static_cast<u32>(numFeatures_);
+    result->numData_ = static_cast<u32>(numData_);
+
+    auto ptr = currentPtr();
+
+    if (ptr.isAlias()) {
+      auto totalCnt = numFeatures_ + 1;
+      auto actualData = entryData_.rawWithLimit(ptr.dicPtr(), totalCnt);
+      auto num = actualData.fill(result->fieldBuffer_, totalCnt);
+      if (num < totalCnt) {
+        return false;
+      }
+      auto numAlias = result->fieldBuffer_[numFeatures_];
+      auto dataCnt = numData_ * numAlias;
+      result->remainingData_ =
+          entryData_.rawWithLimit(actualData.pointer(), dataCnt);
+    } else {
+      auto totalCnt = numFeatures_ + numData_;
+      auto actualData = entryData_.rawWithLimit(ptr.dicPtr(), totalCnt);
+      auto num = actualData.fill(result->fieldBuffer_, totalCnt);
+      if (num < totalCnt) {
+        return false;
+      }
+      result->remainingData_.clear();
+      result->dataBuffer_[0] = 1;
     }
-    JPP_DCHECK_EQ(entrySize_, result->size());
-    JPP_RET_CHECK(entries_.readOneCumulative(&lastIdx));
-    auto actualData = entryData_.rawWithLimit(lastIdx, entrySize_);
-    JPP_RET_CHECK(actualData.fill(*result, result->size()) == entrySize_);
-    remaining_ -= 1;
+
     return true;
   }
 };
 
 struct EntriesHolder {
   DoubleArray trie;
-  i32 entrySize;
+  i32 numFeatures;
+  i32 numData;
   impl::IntStorageReader entries;
   impl::IntStorageReader entryPtrs;
 
   IndexedEntries entryTraversal(i32 ptr) const {
     auto entries = entryPtrs.listAt(ptr);
-    return IndexedEntries{entrySize, entries, this->entries};
+    return IndexedEntries{numFeatures, numData, entries, this->entries};
   }
 };
 
@@ -90,7 +152,7 @@ class DictionaryEntries {
  public:
   explicit DictionaryEntries(const EntriesHolder* data_) noexcept
       : data_(data_) {}
-  i32 entrySize() const { return static_cast<i32>(data_->entrySize); }
+  i32 entrySize() const { return static_cast<i32>(data_->numFeatures); }
   IndexTraversal traversal() const { return IndexTraversal(data_); }
   DoubleArrayTraversal doubleArrayTraversal() const {
     return data_->trie.traversal();
@@ -104,7 +166,7 @@ class DictionaryEntries {
     return entryAtPtr(ptr.dicPtr());
   }
   impl::IntListTraversal entryAtPtr(i32 ptr) const {
-    auto rdr = data_->entries.rawWithLimit(ptr, data_->entrySize);
+    auto rdr = data_->entries.rawWithLimit(ptr, data_->numFeatures);
     return rdr;
   }
 };

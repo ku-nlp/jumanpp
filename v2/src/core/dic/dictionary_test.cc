@@ -28,48 +28,44 @@ class TestStringColumn {
 struct TesterStep {
   std::vector<TestStringColumn>& cols_;
   IndexTraversal trav;
-  std::unique_ptr<IndexedEntries> content;
+  std::shared_ptr<IndexedEntries> content;
+  DicEntryBuffer entry;
 
   TesterStep(std::vector<TestStringColumn>& cols_, const IndexTraversal& trav)
       : cols_(cols_), trav(trav) {}
-  TesterStep(TesterStep&& other)
-      : cols_{other.cols_},
-        trav{other.trav},
-        content{std::move(other.content)} {}
 
-  TesterStep step(StringPiece sp, TraverseStatus expected) {
+  TesterStep& step(StringPiece sp, TraverseStatus expected) {
     auto actual = trav.step(sp);
     REQUIRE(actual == expected);
-    return std::move(*this);
+    return *this;
   }
 
-  TesterStep fillEntries() {
+  TesterStep& fillEntries() {
     if (content) {
       REQUIRE(content->remaining() == 0);
       *content = trav.entries();
     } else {
       content.reset(new IndexedEntries{trav.entries()});
     }
-    return std::move(*this);
+    return *this;
   }
 
-  TesterStep strings(std::initializer_list<StringPiece> sp) {
+  TesterStep& strings(std::initializer_list<StringPiece> sp) {
     std::vector<StringPiece> local{std::begin(sp), std::end(sp)};
     CHECK(local.size() == cols_.size());
-    std::vector<i32> entryData;
-    entryData.resize(cols_.size());
-    util::MutableArraySlice<i32> slice(&entryData);
-    content->fillEntryData(&slice);
+    REQUIRE(content->readOnePtr());
+    REQUIRE(content->fillEntryData(&entry));
+    auto entryData = entry.features();
     for (int column = 0; column < local.size(); ++column) {
       CAPTURE(column);
       CHECK(cols_[column][entryData[column]] == local[column]);
     }
-    return std::move(*this);
+    return *this;
   }
 
   ~TesterStep() {
     if (content) {
-      REQUIRE(content->remaining() == 0);
+      CHECK(content->remaining() == 0);
     }
   }
 };
@@ -96,8 +92,9 @@ class TesterSpec {
 
   TesterSpec() {
     dsl::ModelSpecBuilder bldr;
-    bldr.field(1, "a").strings().trieIndex();
-    bldr.field(2, "b").strings();
+    auto& a = bldr.field(1, "a").strings().trieIndex();
+    auto& b = bldr.field(2, "b").strings();
+    bldr.unigram({a, b});
     CHECK_OK(bldr.build(&spec));
   }
 };
@@ -203,28 +200,29 @@ TEST_CASE("small with substrings dictionary is imported") {
 TEST_CASE("dictionary with shared storage is imported") {
   dsl::ModelSpecBuilder mb;
   auto& fa = mb.field(1, "a").strings().trieIndex();
-  mb.field(2, "b").strings().stringStorage(fa);
+  auto& fb = mb.field(2, "b").strings().stringStorage(fa);
+  mb.unigram({fa, fb});
   AnalysisSpec spec;
   CHECK_OK(mb.build(&spec));
 
-  StringPiece data{"a,b\na,a\ne,a\ng,a"};
+  StringPiece data{"a,c\na,d\ne,a\ng,a"};
   DictionaryBuilder bldr;
   CHECK_OK(bldr.importSpec(&spec));
   CHECK_OK(bldr.importCsv("data", data));
   auto& dic = bldr.result();
   CHECK(dic.entryCount == 4);
   CHECK(dic.fieldData.size() == 2);
-  CHECK(dic.fieldData[0].uniqueValues == 4);
-  CHECK(dic.fieldData[1].uniqueValues == 4);
+  CHECK(dic.fieldData[0].uniqueValues == 5);
+  CHECK(dic.fieldData[1].uniqueValues == 5);
   CHECK(dic.fieldData[0].stringContent == dic.fieldData[1].stringContent);
-  CHECK(dic.fieldData[0].stringContent.size() == 9);
+  CHECK(dic.fieldData[0].stringContent.size() == 11);
 
   DataTester tester{dic};
   tester()
       .step("a", TraverseStatus::Ok)
       .fillEntries()
-      .strings({"a", "b"})
-      .strings({"a", "a"})
+      .strings({"a", "c"})
+      .strings({"a", "d"})
       .step("x", TraverseStatus::NoNode);
 }
 
