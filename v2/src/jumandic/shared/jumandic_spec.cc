@@ -12,7 +12,7 @@ Status SpecFactory::makeSpec(core::spec::AnalysisSpec* spec) {
   core::spec::dsl::ModelSpecBuilder bldr;
   fillSpec(bldr);
   JPP_RETURN_IF_ERROR(bldr.build(spec));
-  auto specColSize = spec->dictionary.columns.size();
+  auto specColSize = spec->dictionary.fields.size();
   if (JumandicNumFields != specColSize) {
     return Status::InvalidState()
            << "please fix number of columns in jumandic::SpecFactory"
@@ -73,20 +73,20 @@ void SpecFactory::fillSpec(core::spec::dsl::ModelSpecBuilder& bldr) {
       .outputTo({surface, baseform, reading});
   bldr.unk("katakana", 2)
       .chunking(chars::CharacterClass::KATAKANA)
-      .notPrefixOfDicFeature(notPrefix)
+      .writeFeatureTo(notPrefix)
       .outputTo({surface, baseform, reading});
   bldr.unk("kanji", 3)
       .chunking(chars::CharacterClass::FAMILY_KANJI)
-      .notPrefixOfDicFeature(notPrefix)
+      .writeFeatureTo(notPrefix)
       .outputTo({surface, baseform, reading});
   bldr.unk("hiragana", 4)
       .chunking(chars::CharacterClass::HIRAGANA)
-      .notPrefixOfDicFeature(notPrefix)
+      .writeFeatureTo(notPrefix)
       .outputTo({surface, baseform, reading})
       .lowPriority();
   bldr.unk("alphabet", 5)
       .chunking(chars::CharacterClass::FAMILY_ALPH)
-      .notPrefixOfDicFeature(notPrefix)
+      .writeFeatureTo(notPrefix)
       .outputTo({surface, baseform, reading});
   bldr.unk("digits", 6)
       .numeric(chars::CharacterClass::FAMILY_DIGITS)
@@ -94,7 +94,7 @@ void SpecFactory::fillSpec(core::spec::dsl::ModelSpecBuilder& bldr) {
   bldr.unk("normalize", 1)  // 1 because of API
       .normalize()
       .outputTo({surface})
-      .notPrefixOfDicFeature(nonstdSurf);
+      .writeFeatureTo(nonstdSurf);
 
   bldr.unigram({surface});
   bldr.unigram({auxWord});

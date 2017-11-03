@@ -25,7 +25,7 @@ Status CopyPrimFeatureImpl::initialize(FeatureConstructionContext *ctx,
   fieldIdx = static_cast<u32>(f.references.at(0));
 
   JPP_RETURN_IF_ERROR(ctx->checkFieldType(
-      fieldIdx, {spec::ColumnType::String, spec::ColumnType::Int}));
+      fieldIdx, {spec::FieldType::String, spec::FieldType::Int}));
 
   return Status::Ok();
 }
@@ -51,7 +51,7 @@ Status ProvidedPrimFeatureImpl::initialize(FeatureConstructionContext *ctx,
 
 Status LengthPrimFeatureImpl::initialize(FeatureConstructionContext *ctx,
                                          const PrimitiveFeature &f) {
-  if (f.kind != PrimitiveFeatureKind::Length) {
+  if (f.kind != PrimitiveFeatureKind::ByteLength) {
     return Status::InvalidParameter() << f.name << ": type was not Length";
   }
 
@@ -106,7 +106,7 @@ Status MatchDicPrimFeatureImpl::initialize(FeatureConstructionContext *ctx,
   fieldIdx = static_cast<u32>(f.references.at(0));
 
   JPP_RETURN_IF_ERROR(ctx->checkFieldType(
-      fieldIdx, {spec::ColumnType::String, spec::ColumnType::Int}));
+      fieldIdx, {spec::FieldType::String, spec::FieldType::Int}));
 
   matchData = f.matchData;
 
@@ -131,7 +131,7 @@ Status MatchListElemPrimFeatureImpl::initialize(FeatureConstructionContext *ctx,
   fieldIdx = static_cast<u32>(f.references.at(0));
 
   JPP_RETURN_IF_ERROR(
-      ctx->checkFieldType(fieldIdx, {spec::ColumnType::StringList}));
+      ctx->checkFieldType(fieldIdx, {spec::FieldType::StringList}));
 
   matchData = f.matchData;
 
@@ -155,7 +155,7 @@ Status MatchKeyPrimFeatureImpl::initialize(FeatureConstructionContext *ctx,
   fieldIdx_ = static_cast<u32>(f.references[0]);
 
   JPP_RETURN_IF_ERROR(
-      ctx->checkFieldType(fieldIdx_, {spec::ColumnType::StringKVList}));
+      ctx->checkFieldType(fieldIdx_, {spec::FieldType::StringKVList}));
 
   keys_ = f.matchData;
 
@@ -163,7 +163,7 @@ Status MatchKeyPrimFeatureImpl::initialize(FeatureConstructionContext *ctx,
 }
 
 Status FeatureConstructionContext::checkFieldType(
-    i32 field, std::initializer_list<spec::ColumnType> columnTypes) const {
+    i32 field, std::initializer_list<spec::FieldType> columnTypes) const {
   auto &fld = fields->at(field);
 
   for (auto tp : columnTypes) {
@@ -210,7 +210,7 @@ Status PrimitiveFeaturesDynamicApply::initialize(
         feature.reset(
             new DynamicPrimitiveFeature<MatchListElemPrimFeatureImpl>{});
         break;
-      case PrimitiveFeatureKind::Length:
+      case PrimitiveFeatureKind::ByteLength:
         feature.reset(new DynamicPrimitiveFeature<LengthPrimFeatureImpl>{});
         break;
       case PrimitiveFeatureKind::CodepointSize:

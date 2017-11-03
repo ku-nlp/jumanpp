@@ -81,8 +81,6 @@ It part_step(It start, It end, Comp comp) {
   }
   It pivot{start};
   std::advance(pivot, sz / 2);
-  auto s0 = start;
-  auto e0 = end;
   --end;
   std::swap(*pivot, *end);
   pivot = end;

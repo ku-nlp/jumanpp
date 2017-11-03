@@ -21,7 +21,7 @@ struct BuiltField {
   i32 uniqueValues;
   StringPiece name;
   StringPiece emptyValue;
-  spec::ColumnType colType;
+  spec::FieldType colType;
 
   // FILLED IN
   i32 stringStorageIdx;

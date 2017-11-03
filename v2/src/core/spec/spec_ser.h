@@ -16,15 +16,16 @@ SERIALIZE_ENUM_CLASS(CharacterClass, i32);
 namespace core {
 namespace spec {
 
-SERIALIZE_ENUM_CLASS(ColumnType, int);
+SERIALIZE_ENUM_CLASS(FieldType, int);
 
 template <typename Arch>
 void Serialize(Arch &a, FieldDescriptor &fd) {
-  a &fd.index;
+  a &fd.specIndex;
   a &fd.position;
+  a &fd.dicIndex;
   a &fd.name;
   a &fd.isTrieKey;
-  a &fd.columnType;
+  a &fd.fieldType;
   a &fd.emptyString;
   a &fd.listSeparator;
   a &fd.kvSeparator;
@@ -34,7 +35,8 @@ void Serialize(Arch &a, FieldDescriptor &fd) {
 
 template <typename Arch>
 void Serialize(Arch &a, DictionarySpec &spec) {
-  a &spec.columns;
+  a &spec.fields;
+  a &spec.aliasingSet;
   a &spec.indexColumn;
   a &spec.numIntStorage;
   a &spec.numStringStorage;
@@ -44,24 +46,16 @@ SERIALIZE_ENUM_CLASS(UnkMakerType, int);
 
 SERIALIZE_ENUM_CLASS(FieldExpressionKind, int);
 
-template <typename Arch>
-void Serialize(Arch &a, FieldExpression &o) {
-  a &o.fieldIndex;
-  a &o.kind;
-  a &o.intConstant;
-  a &o.stringConstant;
-}
-
 SERIALIZE_ENUM_CLASS(UnkFeatureType, int);
 
 template <typename Arch>
 void Serialize(Arch &a, UnkMakerFeature &o) {
-  a &o.type;
-  a &o.reference;
+  a &o.targetPlaceholder;
+  a &o.featureType;
 }
 
 template <typename Arch>
-void Serialize(Arch &a, UnkMaker &o) {
+void Serialize(Arch &a, UnkProcessorDescriptor &o) {
   a &o.index;
   a &o.name;
   a &o.type;
@@ -69,7 +63,21 @@ void Serialize(Arch &a, UnkMaker &o) {
   a &o.priority;
   a &o.charClass;
   a &o.features;
-  a &o.outputExpressions;
+}
+
+SERIALIZE_ENUM_CLASS(DicImportKind, int);
+
+template <typename Arch>
+void Serialize(Arch &a, DicImportDescriptor &o) {
+  a &o.index;
+  a &o.target;
+  a &o.shift;
+  a &o.name;
+  a &o.kind;
+  a &o.references;
+  // we don't save data into model - no reason to do that
+  // everything is already inside the dic
+  // a &o.data;
 }
 
 SERIALIZE_ENUM_CLASS(PrimitiveFeatureKind, int);
@@ -106,24 +114,29 @@ void Serialize(Arch &a, PatternFeatureDescriptor &o) {
 }
 
 template <typename Arch>
-void Serialize(Arch &a, FinalFeatureDescriptor &o) {
+void Serialize(Arch &a, NgramFeatureDescriptor &o) {
   a &o.index;
   a &o.references;
 }
 
 template <typename Arch>
 void Serialize(Arch &a, FeaturesSpec &o) {
+  a &o.dictionary;
   a &o.primitive;
   a &o.computation;
   a &o.pattern;
-  a &o.final;
+  a &o.ngram;
+  a &o.numPlaceholders;
   a &o.totalPrimitives;
+  a &o.numDicFeatures;
+  a &o.numDicData;
 }
 
 template <typename Arch>
 void Serialize(Arch &a, TrainingField &o) {
   a &o.number;
   a &o.fieldIdx;
+  a &o.dicIdx;
   a &o.weight;
 }
 
@@ -135,10 +148,13 @@ void Serialize(Arch &a, TrainingSpec &o) {
 
 template <typename Arch>
 void Serialize(Arch &a, AnalysisSpec &spec) {
+  a &spec.specMagic_;
+  a &spec.specVersion_;
   a &spec.dictionary;
   a &spec.features;
   a &spec.unkCreators;
   a &spec.training;
+  a &spec.specMagic2_;
 }
 
 }  // namespace spec

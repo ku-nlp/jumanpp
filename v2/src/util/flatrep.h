@@ -49,7 +49,7 @@ class FlatRep {
   FlatRep(util::memory::ErasedAllocator* alloc) : allocator_{alloc} {}
   FlatRep(util::memory::ErasedAllocator* alloc, size_t N, const Hash& hf,
           const Eq& eq)
-      : allocator_{alloc}, hash_(hf), equal_(eq) {
+      : hash_(hf), equal_(eq), allocator_{alloc} {
     Init(N);
   }
 

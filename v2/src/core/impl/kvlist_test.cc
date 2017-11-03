@@ -68,7 +68,7 @@ class KVListTestEnv {
       auto& ph = specBldr.feature("ph").placeholder();
       specBldr.unk("chars", 1)
           .chunking(chars::CharacterClass::KATAKANA)
-          .notPrefixOfDicFeature(ph)
+          .writeFeatureTo(ph)
           .outputTo({a});
       auto f = Features{a, b, c, ph};
       fn(specBldr, f);
@@ -357,7 +357,7 @@ TEST_CASE("kvlist supports empty lists") {
   CHECK(n0.entries[2] == 0);
   auto& f2 = dic.fields().at(2);
   CHECK(f2.name == "c");
-  CHECK(f2.columnType == ColumnType::StringKVList);
+  CHECK(f2.columnType == FieldType::StringKVList);
   CHECK(f2.postions.lengthOf(0) == 0);
   CHECK(n0.f3.size() == 0);
 }

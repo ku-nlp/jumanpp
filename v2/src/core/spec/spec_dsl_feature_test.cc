@@ -78,10 +78,10 @@ TEST_CASE("simple dsl creates descrptor") {
   bldr.unigram({f1});
   AnalysisSpec spec{};
   CHECK_OK(bldr.build(&spec));
-  CHECK(spec.dictionary.columns.size() == 1);
+  CHECK(spec.dictionary.fields.size() == 1);
   CHECK(spec.features.totalPrimitives == 1);
   SeqEq(spec.features.primitive[0].references, {0});
-  CHECK(spec.features.final.size() == 1);
+  CHECK(spec.features.ngram.size() == 1);
 }
 
 TEST_CASE("simple dsl with two fields and two final features") {
@@ -92,11 +92,11 @@ TEST_CASE("simple dsl with two fields and two final features") {
   bldr.unigram({f1, f2});
   AnalysisSpec spec{};
   CHECK_OK(bldr.build(&spec));
-  CHECK(spec.dictionary.columns.size() == 2);
+  CHECK(spec.dictionary.fields.size() == 2);
   CHECK(spec.features.totalPrimitives == 2);
   SeqEq(spec.features.primitive[0].references, {0});
   SeqEq(spec.features.primitive[1].references, {1});
-  CHECK(spec.features.final.size() == 2);
+  CHECK(spec.features.ngram.size() == 2);
   CHECK(spec.features.pattern.size() == 2);
   SeqEq(spec.features.pattern[1].references, {0, 1});
 }
@@ -110,16 +110,17 @@ TEST_CASE("simple dsl with two fields and matcher") {
   bldr.unigram({f1, f2});
   AnalysisSpec spec{};
   CHECK_OK(bldr.build(&spec));
-  CHECK(spec.dictionary.columns.size() == 2);
-  CHECK(spec.features.totalPrimitives == 3);
-  SeqEq(spec.features.primitive[0].references, {0});
-  SeqEq(spec.features.primitive[1].references, {1});
-  SeqEq(spec.features.primitive[2].references, {0});
-  SeqEq(spec.features.primitive[2].matchData, {"x"});
-  CHECK(spec.features.primitive[2].kind == PrimitiveFeatureKind::MatchDic);
-  CHECK(spec.features.final.size() == 2);
+  CHECK(spec.dictionary.fields.size() == 3);
+  REQUIRE(spec.features.numDicFeatures == 3);
+  REQUIRE(spec.features.numDicData == 0);
+  REQUIRE(spec.features.totalPrimitives == 3);
+  SeqEq(spec.features.primitive[0].references, {2, 0});
+  CHECK(spec.features.primitive[0].kind == PrimitiveFeatureKind::SingleBit);
+  SeqEq(spec.features.primitive[1].references, {0});
+  SeqEq(spec.features.primitive[2].references, {1});
   CHECK(spec.features.pattern.size() == 2);
-  SeqEq(spec.features.pattern[1].references, {0, 1});
+  CHECK(spec.features.ngram.size() == 2);
+  SeqEq(spec.features.pattern[1].references, {1, 2});
 }
 
 TEST_CASE("simple dsl with two fields and list matcher") {
@@ -131,34 +132,43 @@ TEST_CASE("simple dsl with two fields and list matcher") {
   bldr.unigram({f1});
   AnalysisSpec spec{};
   CHECK_OK(bldr.build(&spec));
-  CHECK(spec.dictionary.columns.size() == 2);
+  CHECK(spec.dictionary.fields.size() == 3);
   CHECK(spec.features.totalPrimitives == 2);
-  SeqEq(spec.features.primitive[0].references, {0});
-  SeqEq(spec.features.primitive[1].references, {1});
-  SeqEq(spec.features.primitive[1].matchData, {"x"});
-  CHECK(spec.features.primitive[1].kind == PrimitiveFeatureKind::MatchListElem);
+  SeqEq(spec.features.primitive[0].references, {1, 0});
+  CHECK(spec.features.primitive[0].kind == PrimitiveFeatureKind::SingleBit);
+  SeqEq(spec.features.primitive[1].references, {0});
 }
 
 TEST_CASE("simple dsl with two fields and length matcher") {
   ModelSpecBuilder bldr;
   auto& f1 = bldr.field(1, "f1").strings().trieIndex();
-  auto& f2 = bldr.field(2, "f2").stringLists();
+  auto& f2 = bldr.field(2, "f2").strings();
   auto& ft1 = bldr.feature("ft1").length(f2);
   bldr.unigram({ft1});
   bldr.unigram({f1});
   AnalysisSpec spec{};
   CHECK_OK(bldr.build(&spec));
-  CHECK(spec.dictionary.columns.size() == 2);
-  CHECK(spec.features.totalPrimitives == 2);
-  SeqEq(spec.features.primitive[0].references, {0});
-  SeqEq(spec.features.primitive[1].references, {1});
-  CHECK(spec.features.primitive[1].kind == PrimitiveFeatureKind::Length);
+  CHECK(spec.dictionary.fields.size() == 2);
+  CHECK(spec.features.totalPrimitives == 3);
+  SeqEq(spec.features.primitive[0].references, {1});
+  CHECK(spec.features.primitive[0].kind == PrimitiveFeatureKind::ByteLength);
+  SeqEq(spec.features.primitive[1].references, {0});
 }
 
-TEST_CASE("dsl should fail to use string_list as final feature") {
+TEST_CASE("dsl should fail to use string_list as ngram feature") {
   ModelSpecBuilder bldr;
   auto& f1 = bldr.field(1, "f1").strings().trieIndex();
   auto& f2 = bldr.field(2, "f2").stringLists();
+  bldr.unigram({f1});
+  bldr.unigram({f2});
+  AnalysisSpec spec{};
+  CHECK_FALSE(bldr.build(&spec));
+}
+
+TEST_CASE("dsl should fail to use kvlist as ngram feature") {
+  ModelSpecBuilder bldr;
+  auto& f1 = bldr.field(1, "f1").strings().trieIndex();
+  auto& f2 = bldr.field(2, "f2").kvLists();
   bldr.unigram({f1});
   bldr.unigram({f2});
   AnalysisSpec spec{};
@@ -170,13 +180,15 @@ TEST_CASE("simple dsl with two fields and placeholder") {
   auto& f1 = bldr.field(1, "f1").strings().trieIndex();
   auto& f2 = bldr.field(2, "f2").stringLists();
   auto& ft1 = bldr.feature("ft1").placeholder();
+  bldr.unk("wat", 1)
+      .chunking(chars::CharacterClass::KATAKANA)
+      .writeFeatureTo(ft1);
   bldr.unigram({ft1});
   bldr.unigram({f1});
   AnalysisSpec spec{};
   CHECK_OK(bldr.build(&spec));
-  CHECK(spec.dictionary.columns.size() == 2);
+  CHECK(spec.dictionary.fields.size() == 2);
   CHECK(spec.features.totalPrimitives == 2);
+  CHECK(spec.features.primitive[0].kind == PrimitiveFeatureKind::Provided);
   SeqEq(spec.features.primitive[0].references, {0});
-  CHECK(spec.features.primitive[1].references.size() == 0);
-  CHECK(spec.features.primitive[1].kind == PrimitiveFeatureKind::Provided);
 }

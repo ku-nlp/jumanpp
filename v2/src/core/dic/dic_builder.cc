@@ -3,22 +3,7 @@
 //
 
 #include "dic_builder.h"
-#include <memory>
-#include <util/status.hpp>
-#include <vector>
-#include "core/dic/darts_trie.h"
-#include "core/impl/runtime_ser.h"
-#include "core/spec/spec_serialization.h"
-#include "core/spec/spec_types.h"
-#include "field_import.h"
-#include "field_reader.h"
-#include "util/coded_io.h"
-#include "util/csv_reader.h"
-#include "util/flatmap.h"
-#include "util/flatset.h"
-#include "util/inlined_vector.h"
-#include "util/serialization.h"
-#include "util/string_piece.h"
+#include "core/dic/dic_build_detail.h"
 
 namespace jumanpp {
 namespace core {
@@ -26,283 +11,6 @@ namespace dic {
 
 using namespace core::spec;
 
-struct ColumnImportContext {
-  i32 index;
-  const FieldDescriptor* descriptor;
-  bool isTrieIndexed = false;
-  std::unique_ptr<impl::FieldImporter> importer;
-
-  Status initialize(i32 index, const FieldDescriptor* descr,
-                    std::vector<impl::StringStorage>& storages) {
-    this->index = index;
-    this->descriptor = descr;
-    this->isTrieIndexed = descr->isTrieKey;
-
-    auto tp = descr->columnType;
-    auto colpos = descr->position - 1;
-    // we want to have original content here
-    StringPiece emptyStr = descr->emptyString;
-
-    switch (tp) {
-      case ColumnType::Int:
-        importer.reset(new impl::IntFieldImporter{colpos});
-      case ColumnType::String: {
-        i32 stringIdx = descr->stringStorage;
-        auto stor = &storages[stringIdx];
-        importer.reset(new impl::StringFieldImporter{stor, colpos, emptyStr});
-        break;
-      }
-      case ColumnType::StringList: {
-        i32 stringIdx = descr->stringStorage;
-        auto stor = &storages[stringIdx];
-        importer.reset(
-            new impl::StringListFieldImporter{stor, colpos, emptyStr});
-        break;
-      }
-      case ColumnType::StringKVList: {
-        i32 stringIdx = descr->stringStorage;
-        auto stor = &storages[stringIdx];
-        importer.reset(new impl::StringKeyValueListFieldImporter{
-            stor, colpos, emptyStr, descr->listSeparator, descr->kvSeparator});
-        break;
-      }
-      default:
-        return Status::NotImplemented()
-               << "importing field type=" << tp << " is not implemented";
-    }
-
-    return Status::Ok();
-  }
-
-  bool importFieldValue(const util::CsvReader& reader) {
-    return importer->importFieldValue(reader);
-  }
-};
-
-struct DicTrieBuilder {
-  util::CodedBuffer entryPtrBuffer;
-  util::FlatMap<i32, util::InlinedVector<i32, 4>> entriesWithField;
-  DoubleArrayBuilder daBuilder;
-
-  void addEntry(i32 fieldValue, i32 entryPtr) {
-    entriesWithField[fieldValue].push_back(entryPtr);
-  }
-
-  Status buildTrie(const impl::StringStorage& strings) {
-    for (auto& v : strings) {
-      StringPiece key = v.first;
-      i32 keyPtr = v.second;
-      auto it = entriesWithField.find(keyPtr);
-      if (it != entriesWithField.end()) {
-        auto& entries = it->second;
-        auto entriesPtr = static_cast<i32>(entryPtrBuffer.position());
-        impl::writePtrsAsDeltas(entries, entryPtrBuffer);
-        daBuilder.add(key, entriesPtr);
-      }
-    }
-    return daBuilder.build();
-  }
-};
-
-struct EntryTableBuilder {
-  /**
-   * This set contains row numbers which serve patterns for UNK builders
-   */
-  util::FlatSet<i32> ignoredRows;
-  util::CodedBuffer entryDataBuffer;
-  DicTrieBuilder trieBuilder;
-
-  i32 importOneLine(std::vector<ColumnImportContext>& columns,
-                    const util::CsvReader& csv) {
-    auto ptr = entryDataBuffer.position();
-    auto iptr = static_cast<i32>(ptr);
-    for (auto& c : columns) {
-      auto field = c.importer->fieldPointer(csv);
-      auto uns = static_cast<u32>(field);
-      entryDataBuffer.writeVarint(uns);
-      if (field != 0 && c.isTrieIndexed) {
-        if (ignoredRows.count(csv.lineNumber()) == 0) {
-          trieBuilder.addEntry(field, iptr);
-        }
-      }
-    }
-    return iptr;
-  }
-};
-
-struct DictionaryBuilderStorage {
-  std::vector<impl::StringStorage> storage;
-  std::vector<ColumnImportContext> importers;
-  std::vector<util::CodedBuffer> stringBuffers;
-  std::vector<util::CodedBuffer> intBuffers;
-  EntryTableBuilder entries;
-  util::CodedBuffer builtDicData;
-  util::CodedBuffer builtSpecData;
-  util::CodedBuffer builtRuntimeInfo;
-  std::unique_ptr<spec::AnalysisSpec> restoredSpec;
-  std::vector<StringPiece> builtStrings;
-  std::vector<StringPiece> builtInts;
-
-  i32 maxUsedCol = -1;
-  StringPiece maxFieldName;
-  i32 indexColumn = -1;
-
-  Status initialize(const DictionarySpec& dicSpec) {
-    indexColumn = dicSpec.indexColumn;
-
-    importers.resize(dicSpec.columns.size());
-    storage.resize(dicSpec.numStringStorage);
-    stringBuffers.resize(dicSpec.numStringStorage);
-    intBuffers.resize(dicSpec.numIntStorage);
-
-    for (int i = 0; i < dicSpec.columns.size(); ++i) {
-      const FieldDescriptor& column = dicSpec.columns[i];
-      JPP_RETURN_IF_ERROR(importers.at(i).initialize(i, &column, storage));
-      auto colIdx = column.position - 1;
-      if (maxUsedCol < colIdx) {
-        maxUsedCol = colIdx;
-        maxFieldName = column.name;
-      }
-    }
-
-    return Status::Ok();
-  }
-
-  Status computeStats(StringPiece name, util::CsvReader* csv) {
-    while (csv->nextLine()) {
-      auto ncols = csv->numFields();
-      if (maxUsedCol >= ncols) {
-        return Status::InvalidParameter()
-               << "when processing file: " << name << ", on line "
-               << csv->lineNumber() << " there were " << ncols
-               << " columns, however field " << maxFieldName
-               << " is defined as column #" << maxUsedCol + 1;
-      }
-
-      for (auto& imp : importers) {
-        if (!imp.importFieldValue(*csv)) {
-          return Status::InvalidState()
-                 << "when processing dictionary file " << name
-                 << " import failed when importing column number "
-                 << imp.descriptor->position << " named "
-                 << imp.descriptor->name << " line #" << csv->lineNumber();
-        }
-      }
-    }
-    return Status::Ok();
-  }
-
-  Status makeStorage() {
-    for (int i = 0; i < storage.size(); ++i) {
-      storage[i].makeStorage(&stringBuffers[i]);
-    }
-
-    for (auto& imp : importers) {
-      auto descriptor = imp.descriptor;
-
-      auto intNum = descriptor->intStorage;
-      if (intNum != -1) {
-        auto buffer = &intBuffers[intNum];
-        imp.importer->injectFieldBuffer(buffer);
-      }
-    }
-    return Status::Ok();
-  }
-
-  i32 importActualData(util::CsvReader* csv) {
-    i32 entryCnt = 0;
-    while (csv->nextLine()) {
-      entries.importOneLine(importers, *csv);
-      entryCnt += 1;
-    }
-    return entryCnt;
-  }
-
-  Status buildTrie() {
-    if (indexColumn == -1) {
-      return Status::InvalidParameter() << "index column was not specified";
-    }
-    auto storageIdx = importers[indexColumn].descriptor->stringStorage;
-    auto& stringBuf = storage[storageIdx];
-    JPP_RETURN_IF_ERROR(entries.trieBuilder.buildTrie(stringBuf));
-    return Status::Ok();
-  }
-
-  void fillResult(BuiltDictionary* dic_) {
-    for (auto& b : stringBuffers) {
-      builtStrings.push_back(b.contents());
-    }
-    for (auto& b : intBuffers) {
-      builtInts.push_back(b.contents());
-    }
-
-    dic_->trieContent = entries.trieBuilder.daBuilder.result();
-    dic_->entryPointers = entries.trieBuilder.entryPtrBuffer.contents();
-    dic_->entryData = entries.entryDataBuffer.contents();
-    auto& flds = dic_->fieldData;
-    for (auto& i : importers) {
-      BuiltField fld;
-      fld.name = i.descriptor->name;
-      fld.emptyValue = i.descriptor->emptyString;
-      fld.stringStorageIdx = i.descriptor->stringStorage;
-      if (i.descriptor->stringStorage != -1) {
-        fld.stringContent = builtStrings[i.descriptor->stringStorage];
-      }
-      if (i.descriptor->intStorage != -1) {
-        fld.fieldContent = builtInts[i.descriptor->intStorage];
-      }
-      fld.colType = i.descriptor->columnType;
-      fld.isSurfaceField = i.descriptor->isTrieKey;
-      fld.uniqueValues = i.importer->uniqueValues();
-      flds.push_back(fld);
-    }
-  }
-
-  void importSpecData(const AnalysisSpec& spec) {
-    for (auto& x : spec.unkCreators) {
-      entries.ignoredRows.insert(x.patternRow);
-      for (auto& ex : x.outputExpressions) {
-        auto ss = importers[ex.fieldIndex].descriptor->stringStorage;
-        if (ex.stringConstant.size() > 0 && ss != -1) {
-          storage[ss].increaseFieldValueCount(ex.stringConstant);
-        }
-      }
-    }
-
-    for (auto& f : spec.features.primitive) {
-      for (auto fldIdx : f.references) {
-        if (f.matchData.empty()) {
-          continue;
-        }
-        auto ss = importers[fldIdx].descriptor->stringStorage;
-        if (ss != -1) {
-          auto& stor = storage[ss];
-          for (auto& s : f.matchData) {
-            stor.increaseFieldValueCount(s);
-          }
-        }
-      }
-    }
-
-    for (auto& f : spec.features.computation) {
-      auto& data = f.matchData;
-      auto& refs = f.matchReference;
-      auto refSize = refs.size();
-      for (int i = 0; i < data.size(); ++i) {
-        auto refIdx = i % refSize;
-        auto& ref = refs[refIdx];
-        auto descr = importers[ref.dicFieldIdx].descriptor;
-        auto ss = descr->stringStorage;
-        if (ss != -1) {
-          auto obj = data[i];
-          if (descr->emptyString != obj) {
-            storage[ss].increaseFieldValueCount(obj);
-          }
-        }
-      }
-    }
-  }
-};
 
 Status DictionaryBuilder::importCsv(StringPiece name, StringPiece data) {
   if (dic_) {
@@ -313,6 +21,8 @@ Status DictionaryBuilder::importCsv(StringPiece name, StringPiece data) {
   storage_.reset(new DictionaryBuilderStorage);
 
   JPP_RETURN_IF_ERROR(storage_->initialize(spec_->dictionary));
+  JPP_RETURN_IF_ERROR(storage_->initDicFeatures(spec_->features));
+  JPP_RETURN_IF_ERROR(storage_->initGroupingFields(*spec_));
   JPP_RETURN_IF_ERROR(csv.initFromMemory(data));
 
   // first csv pass -- compute stats
@@ -323,7 +33,7 @@ Status DictionaryBuilder::importCsv(StringPiece name, StringPiece data) {
   JPP_RETURN_IF_ERROR(storage_->makeStorage());
 
   // reinitialize csv for second pass
-  JPP_RETURN_IF_ERROR(csv.initFromMemory(data));
+  csv.reset();
 
   // second csv pass -- compute entries
   i32 entryCnt = storage_->importActualData(&csv);
@@ -468,18 +178,18 @@ Status DictionaryBuilder::fixupDictionary(const model::ModelPart& dicInfo) {
     storage_->builtInts.push_back(dicInfo.data[cnt]);
     ++cnt;
   }
-  if (dic_->fieldData.size() != spec_->dictionary.columns.size()) {
+  if (dic_->fieldData.size() != spec_->dictionary.fields.size()) {
     return Status::InvalidParameter() << "number of columns in spec was not "
                                          "equal to loaded number of columns";
   }
   for (int j = 0; j < dic_->fieldData.size(); ++j) {
     auto& f = dic_->fieldData[j];
-    auto& fd = spec_->dictionary.columns[j];
+    auto& fd = spec_->dictionary.fields[j];
     if (f.name != fd.name) {
       return Status::InvalidParameter()
              << "column name check failed, probably the model is corrupted";
     }
-    if (f.colType != fd.columnType) {
+    if (f.colType != fd.fieldType) {
       return Status::InvalidParameter()
              << "column type check for column " << f.name << " failed";
     }

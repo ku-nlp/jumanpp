@@ -29,6 +29,17 @@ bool CsvReader::nextLine() {
   bool shouldEmit = true;
 
   for (;; ++position) {
+    // This block executes when end of file is reached
+    if (position == end) {
+      if (field_start != position) {
+        if (shouldEmit) {
+          fields_.emplace_back(field_start, position);
+        }
+        position_ = position;
+      }
+      break;
+    }
+
     auto ch = *position;
     if (ch == '\n') {
       if (shouldEmit) {
@@ -94,17 +105,6 @@ bool CsvReader::nextLine() {
       shouldEmit = false;
       position = resEnd;
     }
-
-    // This block executes when end of file is reached
-    if (position == end) {
-      if (field_start != position) {
-        if (shouldEmit) {
-          fields_.emplace_back(field_start, position);
-        }
-        position_ = position;
-      }
-      break;
-    }
   }
 
   return !fields_.empty();
@@ -118,7 +118,7 @@ StringPiece CsvReader::field(i32 idx) const {
 }
 
 Status CsvReader::initFromMemory(const StringPiece &data) {
-  position_ = data.char_begin();
+  start_ = position_ = data.char_begin();
   end_ = data.char_end();
   line_number_ = 0;
   return Status::Ok();
@@ -198,5 +198,11 @@ bool CsvReader::handleQuote(const char *position, StringPiece *result) {
   }
   return false;
 }
+
+void CsvReader::reset() noexcept {
+  position_ = start_;
+  line_number_ = 0;
+}
+
 }  // namespace util
 }  // namespace jumanpp

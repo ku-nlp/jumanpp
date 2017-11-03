@@ -93,8 +93,8 @@ class CharLattice {
   bool constructed = false;
   //    static bool initialized;
   const dic::DictionaryEntries& entries;
-  Vec<Vec<CharNode>> nodeList;
   util::memory::PoolAlloc* alloc_;
+  Vec<Vec<CharNode>> nodeList;
   u32 notNormal = 0;
 
   void add(size_t pos, const Codepoint& cp, Modifiers flags) {

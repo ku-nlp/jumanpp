@@ -62,6 +62,7 @@ class CsvReader {
   CharBuffer<16 * 1024> temp_;
   char separator_;
   char quote_;
+  const char* start_;
   const char* position_;
   const char* end_;
   i64 line_number_;
@@ -82,8 +83,10 @@ class CsvReader {
   i32 numFields() const;
   StringPiece field(i32 idx) const;
   i64 lineNumber() const { return line_number_; }
-
   char separator() const { return separator_; }
+  void reset() noexcept;
+  i64 bytePosition() const { return static_cast<i64>(position_ - start_); }
+  i64 byteSize() const { return static_cast<i64>(end_ - start_); }
 };
 }  // namespace util
 }  // namespace jumanpp

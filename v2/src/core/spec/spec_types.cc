@@ -6,23 +6,36 @@
 #include <iostream>
 
 std::ostream & ::jumanpp::core::spec::operator<<(
-    std::ostream &o, jumanpp::core::spec::ColumnType ct) {
+    std::ostream &o, jumanpp::core::spec::FieldType ct) {
   switch (ct) {
-    case ColumnType::String:
+    case FieldType::String:
       o << "String";
       break;
-    case ColumnType::Int:
+    case FieldType::Int:
       o << "Int";
       break;
-    case ColumnType::StringList:
+    case FieldType::StringList:
       o << "StringList";
       break;
-    case ColumnType::StringKVList:
+    case FieldType::StringKVList:
       o << "StringKVList";
       break;
-    case ColumnType::Error:
+    case FieldType::Error:
       o << "Error";
       break;
   }
   return o;
+}
+
+jumanpp::Status jumanpp::core::spec::AnalysisSpec::validate() const {
+  if (specMagic_ != SpecMagic || specMagic2_ != SpecMagic) {
+    return JPPS_INVALID_STATE
+           << "Spec was corrupted, magic number was not correct";
+  }
+  if (specVersion_ != SpecFormatVersion) {
+    return JPPS_INVALID_STATE
+           << "Spec version is incompatible, was " << specVersion_
+           << " but this binary can work only with " << SpecFormatVersion;
+  }
+  return jumanpp::Status::Ok();
 }

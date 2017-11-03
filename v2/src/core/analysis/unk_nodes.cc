@@ -32,18 +32,11 @@ class UnkMakerFactory {
 
   Status handlePrefixIndex(const UnkMakerInfo& info,
                            UnkNodeConfig* pConfig) const {
-    for (auto& x : info.features) {
-      if (x.type == spec::UnkFeatureType::NotPrefixOfDicWord) {
-        for (int i = 0; i < fri.placeholderMapping.size(); ++i) {
-          if (fri.placeholderMapping[i] == x.reference) {
-            pConfig->notPrefixIndex = i;
-          }
-        }
-        if (pConfig->notPrefixIndex == -1) {
-          return Status::InvalidState()
-                 << "could not find placeholder for notPrefix feature of "
-                 << info.name;
-        }
+    if (!info.features.empty()) {
+      pConfig->targetPlaceholder = info.features[0].targetPlaceholder;
+      if (info.features.size() != 1) {
+        return JPPS_NOT_IMPLEMENTED
+               << "we support only one placeholder per unk";
       }
     }
     return Status::Ok();

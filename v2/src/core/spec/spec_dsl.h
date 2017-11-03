@@ -17,6 +17,9 @@
 namespace jumanpp {
 namespace core {
 namespace spec {
+
+class SpecCompiler;
+
 namespace dsl {
 
 class DslOpBase {
@@ -60,7 +63,7 @@ class StorageAssigner;
 class FieldBuilder : public DslOpBase {
   i32 csvColumn_;
   StringPiece name_;
-  ColumnType columnType_ = ColumnType::Error;
+  FieldType columnType_ = FieldType::Error;
   bool trieIndex_ = false;
   std::string emptyValue_;
   StringPiece stringStorage_;
@@ -74,22 +77,22 @@ class FieldBuilder : public DslOpBase {
       : csvColumn_(csvColumn_), name_(name_) {}
 
   FieldBuilder& strings() {
-    columnType_ = ColumnType::String;
+    columnType_ = FieldType::String;
     return *this;
   }
 
   FieldBuilder& stringLists() {
-    columnType_ = ColumnType::StringList;
+    columnType_ = FieldType::StringList;
     return *this;
   }
 
   FieldBuilder& integers() {
-    columnType_ = ColumnType::Int;
+    columnType_ = FieldType::Int;
     return *this;
   }
 
   FieldBuilder& kvLists() {
-    columnType_ = ColumnType::StringKVList;
+    columnType_ = FieldType::StringKVList;
     return *this;
   }
 
@@ -125,24 +128,11 @@ class FieldBuilder : public DslOpBase {
 
   operator FieldExpressionBldr() const { return value(); }
 
-  FieldExpressionBldr replaceWith(StringPiece value) const {
-    return FieldExpressionBldr{name_, TransformType::ReplaceString, value, 0};
-  }
-
-  FieldExpressionBldr replaceWith(i32 value) const {
-    return FieldExpressionBldr{name_, TransformType::ReplaceInt,
-                               jumanpp::EMPTY_SP, value};
-  }
-
-  FieldExpressionBldr append(StringPiece value) const {
-    return FieldExpressionBldr{name_, TransformType::AppendString, value, 0};
-  }
-
   i32 getCsvColumn() const { return csvColumn_; }
 
   StringPiece name() const { return name_; }
 
-  ColumnType getColumnType() const { return columnType_; }
+  FieldType getColumnType() const { return columnType_; }
 
   bool isTrieIndex() const { return trieIndex_; }
 
@@ -150,7 +140,7 @@ class FieldBuilder : public DslOpBase {
 
   operator FieldReference() const { return FieldReference{name()}; }
 
-  Status fill(FieldDescriptor* descriptor, StorageAssigner* sa) const;
+  Status fill(FieldDescriptor* descriptor, StringPiece* stringStorName) const;
 };
 
 enum class FeatureType {
@@ -158,21 +148,22 @@ enum class FeatureType {
   Invalid,
   MatchValue,
   MatchCsv,
-  Length,
-  CodepointSize,
   Placeholder,
+  ByteLength,
+  CodepointSize,
   CodepointType,
   Codepoint
 };
 
 class FeatureBuilder : DslOpBase {
   bool handled = false;
+  bool notUsed = false;
   StringPiece name_;
   FeatureType type_ = FeatureType::Initial;
   StringPiece matchData_;
-  util::InlinedVector<StringPiece, 4> fields_;
-  util::InlinedVector<FieldExpressionBldr, 8> trueTransforms_;
-  util::InlinedVector<FieldExpressionBldr, 8> falseTransforms_;
+  util::memory::ManagedVector<StringPiece> fields_;
+  util::memory::ManagedVector<FieldExpressionBldr> trueTransforms_;
+  util::memory::ManagedVector<FieldExpressionBldr> falseTransforms_;
   i32 intParam_;
 
   void changeType(FeatureType target) {
@@ -184,10 +175,15 @@ class FeatureBuilder : DslOpBase {
   }
 
   friend class ModelSpecBuilder;
+  friend class spec::SpecCompiler;
 
  public:
   FeatureBuilder(const FeatureBuilder&) = delete;
-  FeatureBuilder(const StringPiece& name_) : name_(name_) {}
+  FeatureBuilder(const StringPiece& name_, util::memory::PoolAlloc* alloc)
+      : name_(name_),
+        fields_{alloc},
+        trueTransforms_{alloc},
+        falseTransforms_{alloc} {}
 
   StringPiece name() const { return name_; }
 
@@ -204,7 +200,7 @@ class FeatureBuilder : DslOpBase {
 
   FeatureBuilder& length(FieldBuilder& field) {
     fields_.push_back(field.name());
-    changeType(FeatureType::Length);
+    changeType(FeatureType::ByteLength);
     return *this;
   }
 
@@ -270,14 +266,15 @@ class FeatureRef {
 class FeatureCombinator {
   util::memory::ManagedVector<util::memory::ManagedVector<FeatureRef>> data;
   friend class ModelSpecBuilder;
+  friend class spec::SpecCompiler;
 
  public:
   FeatureCombinator(util::memory::PoolAlloc* alloc) : data{alloc} {}
 };
 
 struct UnkProcFeature {
-  UnkFeatureType type;
   FeatureRef ref;
+  UnkFeatureType type;
 };
 
 class UnkProcBuilder : public DslOpBase {
@@ -286,10 +283,10 @@ class UnkProcBuilder : public DslOpBase {
   chars::CharacterClass charClass_ = chars::CharacterClass::FAMILY_OTHERS;
   i32 pattern_ = -1;
   i32 priority_ = 0;
-  std::vector<UnkProcFeature> surfaceFeatures_;
+  std::vector<UnkProcFeature> sideFeatures_;
   std::vector<FieldExpressionBldr> output_;
 
-  friend class ModelSpecBuilder;
+  friend class ::jumanpp::core::spec::SpecCompiler;
 
  public:
   UnkProcBuilder(StringPiece name, i32 pattern)
@@ -326,9 +323,14 @@ class UnkProcBuilder : public DslOpBase {
     return *this;
   }
 
-  UnkProcBuilder& notPrefixOfDicFeature(FeatureRef ref) {
-    UnkProcFeature upf{UnkFeatureType::NotPrefixOfDicWord, ref};
-    surfaceFeatures_.emplace_back(upf);
+  UnkProcBuilder& writeFeatureTo(FeatureRef ref) {
+    JPP_DCHECK_NE(type_, UnkMakerType::Invalid);
+    UnkFeatureType tpe = UnkFeatureType::NotPrefixOfDic;
+    if (type_ == UnkMakerType::Normalize) {
+      tpe = UnkFeatureType::NormalizedActions;
+    }
+    UnkProcFeature upf{ref, tpe};
+    sideFeatures_.emplace_back(upf);
     return *this;
   }
 
@@ -351,7 +353,7 @@ class UnkProcBuilder : public DslOpBase {
 
 class TrainExampleSpec {
   std::vector<std::pair<FieldReference, float>> fields;
-  friend class ModelSpecBuilder;
+  friend class ::jumanpp::core::spec::SpecCompiler;
 
  public:
   TrainExampleSpec& field(FieldReference ref, float weight) {
@@ -365,34 +367,19 @@ class ModelSpecBuilder : public DslOpBase {
   std::unique_ptr<util::memory::PoolAlloc> alloc_;
   util::memory::ManagedVector<FieldBuilder*> fields_;
   util::memory::ManagedVector<FeatureBuilder*> features_;
-  util::memory::ManagedVector<FeatureCombinator*> combinators_;
+  util::memory::ManagedVector<FeatureCombinator*> ngrams_;
   util::memory::ManagedVector<UnkProcBuilder*> unks_;
   util::memory::ManagedPtr<TrainExampleSpec> train_;
-  mutable i32 currentFeature_ = 0;
 
-  Status makeFields(AnalysisSpec* spec) const;
-  Status makeFeatures(AnalysisSpec* spec) const;
-  void collectUsedNames(util::FlatSet<StringPiece>* names) const;
-  void createCopyFeatures(
-      const util::ArraySlice<FieldDescriptor>& fields,
-      const util::FlatSet<StringPiece>& names,
-      std::vector<PrimitiveFeatureDescriptor>* result) const;
-  Status createRemainingPrimitiveFeatures(
-      const util::ArraySlice<FieldDescriptor>& fields,
-      std::vector<PrimitiveFeatureDescriptor>* result) const;
   Status checkNoFeatureIsLeft() const;
-  Status createPatternsAndFinalFeatures(FeaturesSpec* spec) const;
-  Status createComputeFeatures(FeaturesSpec* fspec) const;
-  Status createUnkProcessors(AnalysisSpec* spec) const;
-  Status createTrainSpec(AnalysisSpec* spec) const;
 
  public:
-  ModelSpecBuilder(size_t page_size = 16 * 1024)
+  ModelSpecBuilder(size_t page_size = 128 * 1024)
       : memmgr_{page_size},
         alloc_{memmgr_.core()},
         fields_{alloc_.get()},
         features_{alloc_.get()},
-        combinators_{alloc_.get()},
+        ngrams_{alloc_.get()},
         unks_{alloc_.get()} {}
 
   ModelSpecBuilder(const ModelSpecBuilder& o) = delete;
@@ -404,7 +391,7 @@ class ModelSpecBuilder : public DslOpBase {
   }
 
   FeatureBuilder& feature(StringPiece name) {
-    auto ptr = alloc_->make<FeatureBuilder>(name);
+    auto ptr = alloc_->make<FeatureBuilder>(name, alloc_.get());
     features_.emplace_back(ptr);
     return *ptr;
   }
@@ -419,7 +406,7 @@ class ModelSpecBuilder : public DslOpBase {
     auto cmb = alloc_->make<FeatureCombinator>(alloc_.get());
     auto& data = cmb->data;
     data.emplace_back(t0, alloc_.get());
-    combinators_.emplace_back(cmb);
+    ngrams_.emplace_back(cmb);
   }
 
   void bigram(const std::initializer_list<FeatureRef>& t1,
@@ -428,7 +415,7 @@ class ModelSpecBuilder : public DslOpBase {
     auto& data = cmb->data;
     data.emplace_back(t0, alloc_.get());
     data.emplace_back(t1, alloc_.get());
-    combinators_.emplace_back(cmb);
+    ngrams_.emplace_back(cmb);
   }
 
   void trigram(const std::initializer_list<FeatureRef>& t2,
@@ -439,7 +426,7 @@ class ModelSpecBuilder : public DslOpBase {
     data.emplace_back(t0, alloc_.get());
     data.emplace_back(t1, alloc_.get());
     data.emplace_back(t2, alloc_.get());
-    combinators_.emplace_back(cmb);
+    ngrams_.emplace_back(cmb);
   }
 
   TrainExampleSpec& train() {
@@ -453,6 +440,8 @@ class ModelSpecBuilder : public DslOpBase {
   Status validateUnks() const;
   virtual Status validate() const override;
   Status build(AnalysisSpec* spec) const;
+
+  friend class ::jumanpp::core::spec::SpecCompiler;
 };
 }  // namespace dsl
 }  // namespace spec

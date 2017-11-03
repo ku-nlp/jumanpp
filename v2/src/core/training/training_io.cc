@@ -12,7 +12,7 @@ Status readStr2IdMap(const dic::DictionaryField &fld,
                      util::FlatMap<StringPiece, i32> *map) {
   auto &s2i = *map;
 
-  if (fld.columnType != spec::ColumnType::String) {
+  if (fld.columnType != spec::FieldType::String) {
     return JPPS_INVALID_PARAMETER
            << "training data reader allows only string-typed fields, field "
            << fld.name << " was not";

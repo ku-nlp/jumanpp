@@ -20,7 +20,7 @@ struct CharDb {
 
   inline static Codepoint toCodepoint(const char* str) {
     auto cp = Codepoint(StringPiece((const u8*)str, 3));
-    return Codepoint(StringPiece((const u8*)(str), 3));
+    return cp;
   }
 
   template <typename... T>

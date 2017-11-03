@@ -10,7 +10,7 @@ using namespace jumanpp::core::spec;
 using jumanpp::chars::CharacterClass;
 
 #define VALID(x) CHECK_OK((x).validate());
-#define NOT_VALID(x) CHECK(!(x).validate().isOk());
+#define NOT_VALID(x) CHECK_FALSE((x).validate());
 
 TEST_CASE("fields have names and references are stable") {
   ModelSpecBuilder spec;
@@ -71,8 +71,8 @@ TEST_CASE("two fields have the same string storage") {
   CHECK_OK(spec.build(&res));
   CHECK(res.dictionary.numStringStorage == 1);
   CHECK(res.dictionary.numIntStorage == 1);
-  CHECK(res.dictionary.columns[0].stringStorage == 0);
-  CHECK(res.dictionary.columns[1].stringStorage == 0);
+  CHECK(res.dictionary.fields[0].stringStorage == 0);
+  CHECK(res.dictionary.fields[1].stringStorage == 0);
 }
 
 TEST_CASE("feature length transform") {
@@ -90,10 +90,8 @@ TEST_CASE("feature value match") {
   auto& f1 = spec.field(1, "f1").strings().trieIndex();
   auto& f2 = spec.field(2, "f2").strings();
   auto& f3 = spec.field(3, "f3").strings();
-  auto& ft1 = spec.feature("ft1")
-                  .matchData(f1, "test")
-                  .ifTrue({f2.value(), f3.value()})
-                  .ifFalse({f3.value()});
+  auto& ft1 =
+      spec.feature("ft1").matchData(f1, "test").ifTrue({f2, f3}).ifFalse({f3});
   VALID(ft1);
   VALID(spec);
 }
@@ -103,10 +101,8 @@ TEST_CASE("matching feature has only one branch") {
   auto& f1 = spec.field(1, "f1").strings().trieIndex();
   auto& f2 = spec.field(2, "f2").strings();
   auto& f3 = spec.field(3, "f3").strings();
-  auto& ft1 = spec.feature("ft1")
-                  .matchData(f1, "test")
-                  .ifTrue({f2.value(), f3.value()});
-  auto& ft2 = spec.feature("ft1").matchData(f1, "test").ifFalse({f3.value()});
+  auto& ft1 = spec.feature("ft1").matchData(f1, "test").ifTrue({f2, f3});
+  auto& ft2 = spec.feature("ft1").matchData(f1, "test").ifFalse({f3});
   NOT_VALID(ft1);
   NOT_VALID(ft2);
 }
@@ -116,11 +112,9 @@ TEST_CASE("branches on non-matching features") {
   auto& f1 = spec.field(1, "f1").strings().trieIndex();
   auto& f2 = spec.field(2, "f2").strings();
   auto& f3 = spec.field(3, "f3").strings();
-  auto& ft1 = spec.feature("ft1")
-                  .ifTrue({f2.value(), f3.value()})
-                  .ifFalse({f3.value()});
-  auto& ft2 = spec.feature("ft2").ifFalse({f3.value()});
-  auto& ft3 = spec.feature("ft3").ifTrue({f2.value(), f3.value()});
+  auto& ft1 = spec.feature("ft1").ifTrue({f2, f3}).ifFalse({f3});
+  auto& ft2 = spec.feature("ft2").ifFalse({f3});
+  auto& ft3 = spec.feature("ft3").ifTrue({f2, f3});
   NOT_VALID(ft1);
   NOT_VALID(ft2);
   NOT_VALID(ft3);
@@ -134,6 +128,8 @@ TEST_CASE("can use unigram combiners") {
   spec.unigram({f1});
   spec.unigram({f2, f3});
   VALID(spec);
+  AnalysisSpec res;
+  CHECK_OK(spec.build(&res));
 }
 
 TEST_CASE("can specify unk makers") {
@@ -143,12 +139,13 @@ TEST_CASE("can specify unk makers") {
   auto& ft1 = spec.feature("ft1").placeholder();
   auto& unk1 = spec.unk("unk1", 1)
                    .chunking(CharacterClass::KATAKANA)
-                   .notPrefixOfDicFeature(ft1)
+                   .writeFeatureTo(ft1)
                    .outputTo({f1, f2});
+  spec.unigram({f1, f2, ft1});
   VALID(spec);
   AnalysisSpec res;
   CHECK_OK(spec.build(&res));
-  CHECK(res.unkCreators.size() == 1);
+  REQUIRE(res.unkCreators.size() == 1);
   CHECK(res.unkCreators[0].index == 0);
   CHECK(res.unkCreators[0].type == UnkMakerType::Chunking);
   CHECK(res.unkCreators[0].charClass == CharacterClass::KATAKANA);
@@ -161,17 +158,18 @@ TEST_CASE("can specify low prio unk makers") {
   auto& ft1 = spec.feature("ft1").placeholder();
   auto& unk1 = spec.unk("unk1", 1)
                    .chunking(CharacterClass::KATAKANA)
-                   .notPrefixOfDicFeature(ft1)
+                   .writeFeatureTo(ft1)
                    .outputTo({f1, f2});
   auto& unk2 = spec.unk("unk2", 2)
                    .chunking(CharacterClass::HIRAGANA)
-                   .notPrefixOfDicFeature(ft1)
+                   .writeFeatureTo(ft1)
                    .outputTo({f1, f2})
                    .lowPriority();
+  spec.unigram({f1, f2});
   VALID(spec);
   AnalysisSpec res;
   CHECK_OK(spec.build(&res));
-  CHECK(res.unkCreators.size() == 2);
+  REQUIRE(res.unkCreators.size() == 2);
   CHECK(res.unkCreators[0].index == 0);
   CHECK(res.unkCreators[0].type == UnkMakerType::Chunking);
   CHECK(res.unkCreators[0].charClass == CharacterClass::KATAKANA);

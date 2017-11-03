@@ -55,16 +55,16 @@ class FeatureConstructionContext {
   FeatureConstructionContext(const dic::FieldsHolder* fields);
 
   Status checkFieldType(
-      i32 field, std::initializer_list<spec::ColumnType> columnTypes) const;
+      i32 field, std::initializer_list<spec::FieldType> columnTypes) const;
 
   Status checkProvidedFeature(u32 index) const { return Status::Ok(); }
 
   Status setLengthField(i32 fieldNum, LengthFieldSource* field) {
     auto fld = fields->at(fieldNum);
     auto type = fld.columnType;
-    if (type == spec::ColumnType::StringList) {
+    if (type == spec::FieldType::StringList) {
       *field = LengthFieldSource::Positions;
-    } else if (type == spec::ColumnType::String) {
+    } else if (type == spec::FieldType::String) {
       *field = LengthFieldSource::Strings;
     } else {
       return Status::InvalidState()

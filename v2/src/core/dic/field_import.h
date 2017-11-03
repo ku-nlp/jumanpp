@@ -70,6 +70,8 @@ class StringStorage {
 
  public:
   bool increaseFieldValueCount(StringPiece sp) {
+    // the StringPiece could be transient if it was escaped
+    // need to import it before doing anything, if there were none
     if (mapping_.count(sp) == 0) {
       JPP_RET_CHECK(contents_.import(&sp));
       mapping_[sp] = 1;
@@ -122,6 +124,8 @@ class StringFieldImporter : public FieldImporter {
     if (sp.size() == 0 || ignore_ == sp) {
       return 0;
     }
+    JPP_CAPTURE(sp);
+    JPP_CAPTURE(field_);
     auto val = storage_->valueOf(sp);
     JPP_DCHECK_NE(val, -1);
     return val;

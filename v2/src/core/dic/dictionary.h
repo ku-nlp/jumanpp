@@ -20,7 +20,7 @@ namespace dic {
 struct DictionaryField {
   i32 index;
   StringPiece name;
-  spec::ColumnType columnType;
+  spec::FieldType columnType;
   impl::IntStorageReader postions;
   impl::StringStorageReader strings;
   StringPiece emptyValue;

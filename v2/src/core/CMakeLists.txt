@@ -53,10 +53,7 @@ set(core_test_srcs
   ${core_tsrcs}
   )
 
-set(core_objs
-  $<TARGET_OBJECTS:jpp_core_spec>)
-
-add_library(jpp_core ${core_srcs} ${core_hdrs} ${libs3p_pegtl_headers} ${core_objs})
+add_library(jpp_core ${core_srcs} ${core_hdrs} ${libs3p_pegtl_headers})
 
 target_include_directories(jpp_core PUBLIC ${jpp_core_cfg_dir})
 

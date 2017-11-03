@@ -126,11 +126,11 @@ class RuntimeInfoCompiler {
   }
 
   i32 strings(i32 fld) const {
-    return spec_.dictionary.columns[fld].stringStorage;
+    return spec_.dictionary.fields[fld].stringStorage;
   }
 
   bool isEmpty(StringPiece sp, i32 fldNo) const {
-    auto& fld = spec_.dictionary.columns[fldNo];
+    auto& fld = spec_.dictionary.fields[fldNo];
     return fld.emptyString == sp;
   }
 
@@ -293,7 +293,7 @@ class RuntimeInfoCompiler {
     }
 
     auto& ngram = fri->ngrams;
-    for (auto& ng : specf.final) {
+    for (auto& ng : specf.ngram) {
       ngram.emplace_back();
       auto& nf = ngram.back();
       nf.index = ng.index;
@@ -315,8 +315,8 @@ class RuntimeInfoCompiler {
       util::copy_insert(unk.features, mk.features);
       mk.priority = unk.priority;
       mk.patternPtr = ptrsOfEntries.at(unk.patternRow - 1);
-      for (auto& x : unk.outputExpressions) {
-        mk.output.push_back(x.fieldIndex);
+      for (auto& x : unk.replaceFields) {
+        mk.output.push_back(x);
       }
     }
 

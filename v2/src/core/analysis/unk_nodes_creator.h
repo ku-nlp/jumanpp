@@ -20,7 +20,7 @@ namespace analysis {
 struct UnkNodeConfig {
   OwningDictNode base;
   std::vector<i32> replaceWithSurface;
-  i32 notPrefixIndex = -1;
+  i32 targetPlaceholder = -1;
 
   void fillElems(util::MutableArraySlice<i32> buffer, i32 data) const {
     for (auto idx : replaceWithSurface) {

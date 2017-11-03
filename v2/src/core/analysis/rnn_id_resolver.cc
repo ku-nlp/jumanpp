@@ -17,7 +17,7 @@ Status RnnIdResolver::loadFromDic(const dic::DictionaryHolder& dic,
                                   StringPiece unkToken) {
   auto fld = dic.fieldByName(colName);
   targetIdx_ = fld->index;
-  if (fld->columnType != spec::ColumnType::String) {
+  if (fld->columnType != spec::FieldType::String) {
     return Status::InvalidState()
            << "RNN import: field " << colName << " was not strings";
   }

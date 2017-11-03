@@ -15,25 +15,45 @@ namespace jumanpp {
 namespace core {
 namespace spec {
 
-enum class ColumnType { String, Int, StringList, StringKVList, Error };
+enum class FieldType { String, Int, StringList, StringKVList, Error };
 
-std::ostream& operator<<(std::ostream& o, ColumnType ct);
+std::ostream& operator<<(std::ostream& o, FieldType ct);
+
+constexpr static i32 InvalidInt = std::numeric_limits<i32>::min();
+
+constexpr static u32 SpecMagic = 0xfeed0000;
+constexpr static u32 SpecFormatVersion = 0;
 
 struct FieldDescriptor {
-  i32 index = -1;
-  i32 position;
+  /**
+   * # of field in definition. All spec field references use this number.
+   */
+  i32 specIndex = InvalidInt;
+  /**
+   * # of field inside CSV (1-based)
+   * A value of 0 means that the field was auto-generated,
+   * stores some internal data and do NOT exist in csv dictionary file
+   */
+  i32 position = InvalidInt;
+  /**
+   * # of field inside the compiled dictionary,
+   * positive values are for feature fields,
+   * negative (one-compelement!!!!) values are for data fields.
+   */
+  i32 dicIndex = InvalidInt;
   std::string name;
   bool isTrieKey = false;
-  ColumnType columnType = ColumnType::Error;
+  FieldType fieldType = FieldType::Error;
   std::string emptyString;
   std::string listSeparator;
   std::string kvSeparator;
-  i32 stringStorage = -1;
-  i32 intStorage = -1;
+  i32 stringStorage = InvalidInt;
+  i32 intStorage = InvalidInt;
 };
 
 struct DictionarySpec {
-  std::vector<FieldDescriptor> columns;
+  std::vector<FieldDescriptor> fields;
+  std::vector<i32> aliasingSet;
   i32 indexColumn = -1;
   i32 numIntStorage = -1;
   i32 numStringStorage = -1;
@@ -58,21 +78,15 @@ enum class FieldExpressionKind {
 
 static constexpr i32 InvalidIntConstant = std::numeric_limits<i32>::min();
 
-struct FieldExpression {
-  i32 fieldIndex = -1;
-  FieldExpressionKind kind = FieldExpressionKind::Invalid;
-  i32 intConstant = InvalidIntConstant;
-  std::string stringConstant;
-};
-
-enum class UnkFeatureType { NotPrefixOfDicWord };
+enum class UnkFeatureType { NotPrefixOfDic, NormalizedActions };
 
 struct UnkMakerFeature {
-  UnkFeatureType type;
-  i32 reference;
+  i32 targetPlaceholder;
+  i32 targetFeature;
+  UnkFeatureType featureType;
 };
 
-struct UnkMaker {
+struct UnkProcessorDescriptor {
   i32 index = -1;
   std::string name;
   UnkMakerType type = UnkMakerType::Invalid;
@@ -81,7 +95,7 @@ struct UnkMaker {
   i32 priority = 0;
   chars::CharacterClass charClass = chars::CharacterClass::FAMILY_OTHERS;
   std::vector<UnkMakerFeature> features;
-  std::vector<FieldExpression> outputExpressions;
+  std::vector<i32> replaceFields;
 };
 
 enum class PrimitiveFeatureKind {
@@ -90,15 +104,35 @@ enum class PrimitiveFeatureKind {
   MatchDic,
   MatchListElem,
   Provided,
-  Length,
+  ByteLength,
   CodepointSize,
+  SurfaceCodepointSize,
   MatchKey,
   CodepointType,
-  Codepoint
+  Codepoint,
+  SingleBit
+};
+
+enum class DicImportKind {
+  Invalid,
+  ImportAsFeature,
+  MatchListKey,
+  MatchFields,
+  ImportAsData = 1000
+};
+
+struct DicImportDescriptor {
+  i32 index = InvalidInt;
+  i32 target = InvalidInt;
+  i32 shift = InvalidInt;
+  std::string name;
+  DicImportKind kind;
+  std::vector<i32> references;
+  std::vector<std::string> data;
 };
 
 struct PrimitiveFeatureDescriptor {
-  i32 index;
+  i32 index = InvalidInt;
   std::string name;
   PrimitiveFeatureKind kind;
   std::vector<i32> references;
@@ -111,7 +145,7 @@ struct MatchReference {
 };
 
 struct ComputationFeatureDescriptor {
-  i32 index;
+  i32 index = InvalidInt;
   std::string name;
   std::vector<MatchReference> matchReference;
   std::vector<std::string> matchData;
@@ -124,22 +158,27 @@ struct PatternFeatureDescriptor {
   std::vector<i32> references;
 };
 
-struct FinalFeatureDescriptor {
-  i32 index;
+struct NgramFeatureDescriptor {
+  i32 index = InvalidInt;
   std::vector<i32> references;
 };
 
 struct FeaturesSpec {
+  std::vector<DicImportDescriptor> dictionary;
   std::vector<PrimitiveFeatureDescriptor> primitive;
   std::vector<ComputationFeatureDescriptor> computation;
   std::vector<PatternFeatureDescriptor> pattern;
-  std::vector<FinalFeatureDescriptor> final;
-  i32 totalPrimitives = -1;
+  std::vector<NgramFeatureDescriptor> ngram;
+  i32 numPlaceholders = 0;
+  i32 totalPrimitives = InvalidInt;
+  i32 numDicFeatures = InvalidInt;
+  i32 numDicData = InvalidInt;
 };
 
 struct TrainingField {
   i32 number;
   i32 fieldIdx;
+  i32 dicIdx;
   float weight;
 };
 
@@ -149,10 +188,15 @@ struct TrainingSpec {
 };
 
 struct AnalysisSpec {
+  u32 specMagic_ = SpecMagic;
+  u32 specVersion_ = SpecFormatVersion;
   DictionarySpec dictionary;
   FeaturesSpec features;
-  std::vector<UnkMaker> unkCreators;
+  std::vector<UnkProcessorDescriptor> unkCreators;
   TrainingSpec training;
+  u32 specMagic2_ = SpecMagic;
+
+  Status validate() const;
 };
 
 }  // namespace spec

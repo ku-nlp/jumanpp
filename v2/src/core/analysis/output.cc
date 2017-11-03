@@ -16,7 +16,7 @@ Status OutputManager::stringField(StringPiece name, StringField *result) const {
     return JPPS_INVALID_PARAMETER << "dictionary field with name " << name
                                   << " was not found";
   }
-  if (fld->columnType != spec::ColumnType::String) {
+  if (fld->columnType != spec::FieldType::String) {
     return JPPS_INVALID_PARAMETER << "field " << name
                                   << " was not string typed";
   }
@@ -31,7 +31,7 @@ Status OutputManager::stringListField(StringPiece name,
     return JPPS_INVALID_PARAMETER << "dictionary field with name " << name
                                   << " was not found";
   }
-  if (fld->columnType != spec::ColumnType::StringList) {
+  if (fld->columnType != spec::FieldType::StringList) {
     return JPPS_INVALID_PARAMETER << "field " << name << " was not stringlist";
   }
   result->initialize(fld->index, fld->postions, fld->strings);
@@ -44,7 +44,7 @@ Status OutputManager::kvListField(StringPiece name, KVListField *result) const {
     return JPPS_INVALID_PARAMETER << "dictionary field with name " << name
                                   << " was not found";
   }
-  if (fld->columnType != spec::ColumnType::StringKVList) {
+  if (fld->columnType != spec::FieldType::StringKVList) {
     return JPPS_INVALID_PARAMETER << "field " << name << " was not kvlist";
   }
   result->initialize(fld->index, fld->postions, fld->strings);

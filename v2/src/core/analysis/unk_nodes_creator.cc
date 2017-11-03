@@ -110,8 +110,8 @@ EntryPtr UnkNodesContext::makePtr(StringPiece surface,
   node->header.unk.contentHash = hashValue;
   JPP_DCHECK_LT(node->header.unk.contentHash, 0);
   conf.fillElems(data, hashValue);
-  if (conf.notPrefixIndex != -1) {
-    xtra_->putPlaceholderData(node, conf.notPrefixIndex, (i32)notPrefix);
+  if (conf.targetPlaceholder != -1) {
+    xtra_->putPlaceholderData(node, conf.targetPlaceholder, (i32)notPrefix);
   }
   return node->ptr();
 }
@@ -152,8 +152,8 @@ EntryPtr UnkNodesContext::makePtr(StringPiece surface,
   node->header.unk.contentHash = hashValue;
   JPP_DCHECK_LT(node->header.unk.contentHash, 0);
   conf.fillElems(data, hashValue);
-  if (conf.notPrefixIndex != -1) {
-    xtra_->putPlaceholderData(node, conf.notPrefixIndex, feature);
+  if (conf.targetPlaceholder != -1) {
+    xtra_->putPlaceholderData(node, conf.targetPlaceholder, feature);
   }
   return node->ptr();
 }
