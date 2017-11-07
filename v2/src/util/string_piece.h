@@ -32,7 +32,9 @@ class StringPiece {
 
   JPP_ALWAYS_INLINE constexpr StringPiece(pointer_t begin,
                                           pointer_t end) noexcept
-      : begin_{begin}, end_{end} {}
+      : begin_{begin}, end_{end} {
+    JPP_DCHECK_LE(begin, end);
+  }
 
   JPP_ALWAYS_INLINE constexpr StringPiece(pointer_t begin,
                                           size_t length) noexcept

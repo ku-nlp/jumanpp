@@ -5,6 +5,7 @@
 #ifndef JUMANPP_DIC_ENTRIES_H
 #define JUMANPP_DIC_ENTRIES_H
 
+#include <array>
 #include "core/core_types.h"
 #include "core/dic/darts_trie.h"
 #include "core_config.h"
@@ -20,25 +21,47 @@ namespace dic {
 class DicEntryBuffer {
   u32 numFeatures_ = 0;
   u32 numData_ = 0;
-  i32 featureBuffer_[JPP_MAX_DIC_FIELDS];
-  i32 dataBuffer_[JPP_MAX_DIC_FIELDS];
+  std::array<i32, JPP_MAX_DIC_FIELDS> featureBuffer_;
+  std::array<i32, JPP_MAX_DIC_FIELDS> dataBuffer_;
   impl::IntListTraversal remainingData_;
 
   friend class IndexedEntries;
 
  public:
   DicEntryBuffer() = default;
+  DicEntryBuffer(const DicEntryBuffer& c) noexcept
+      : numFeatures_{c.numFeatures_},
+        numData_{c.numData_},
+        remainingData_{c.remainingData_} {
+    std::copy(
+        c.featureBuffer_.begin(),
+        std::min(std::max(c.featureBuffer_.begin(),
+                          c.featureBuffer_.begin() + numFeatures_ + numData_),
+                 c.featureBuffer_.end()),
+        featureBuffer_.begin());
+    std::copy(c.dataBuffer_.begin(),
+              std::min(std::max(c.dataBuffer_.begin() + numData_,
+                                c.dataBuffer_.begin()),
+                       c.dataBuffer_.end()),
+              dataBuffer_.begin());
+  }
+
+  DicEntryBuffer& operator=(const DicEntryBuffer& o) noexcept {
+    new (this) DicEntryBuffer(o);
+    return *this;
+  }
 
   util::ArraySlice<i32> features() const {
-    return util::ArraySlice<i32>{featureBuffer_, numFeatures_};
+    return util::ArraySlice<i32>{featureBuffer_.data(), numFeatures_};
   }
 
   util::ArraySlice<i32> data() const {
     if (remainingData_.size() == 0) {
-      return util::ArraySlice<i32>{featureBuffer_ + numFeatures_, numData_};
+      return util::ArraySlice<i32>{featureBuffer_.data() + numFeatures_,
+                                   numData_};
     }
 
-    return util::ArraySlice<i32>{dataBuffer_, numData_};
+    return util::ArraySlice<i32>{dataBuffer_.data(), numData_};
   }
 
   bool nextData() {

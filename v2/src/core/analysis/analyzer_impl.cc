@@ -4,6 +4,7 @@
 
 #include "core/analysis/analyzer_impl.h"
 #include "core/analysis/dictionary_node_creator.h"
+#include "core/analysis/innode_features.h"
 #include "core/analysis/score_api.h"
 #include "core/analysis/score_processor.h"
 #include "core/analysis/unk_nodes_creator.h"
@@ -35,10 +36,10 @@ AnalyzerImpl::AnalyzerImpl(const CoreHolder* core, const ScoringConfig& sconf,
       latticeConfig_{core->latticeConfig(sconf)},
       lattice_{alloc_.get(), latticeConfig_},
       xtra_{alloc_.get(), core->dic().entries().numFeatures(),
-            core->runtime().unkMakers.numPlaceholders},
+            core->spec().features.numPlaceholders},
       outputManager_{&xtra_, &core->dic(), &lattice_},
       compactor_{core->dic().entries()} {
-  ngramStats_.initialze(&core->runtime().features);
+  ngramStats_.initialze(&core->spec().features);
 }
 
 Status AnalyzerImpl::initScorers(const ScorerDef& cfg) {
@@ -60,8 +61,6 @@ Status AnalyzerImpl::initScorers(const ScorerDef& cfg) {
     return JPPS_INVALID_PARAMETER
            << "right global beam size should not be zero if you enable it";
   }
-
-  JPP_RETURN_IF_ERROR(compactor_.initialize(&xtra_, core_->runtime()));
   scorers_.clear();
   scorers_.reserve(cfg.others.size());
   for (auto& sf : cfg.others) {
@@ -109,86 +108,6 @@ Status AnalyzerImpl::makeUnkNodes2() {
   return Status::Ok();
 }
 
-class InNodeFeatureComputer {
-  const dic::DictionaryEntries entries_;
-  const ExtraNodesContext& xtra_;
-  const core::features::FeatureHolder& features_;
-  features::impl::PrimitiveFeatureContext pfc_;
-
- public:
-  InNodeFeatureComputer(const dic::DictionaryHolder& dic,
-                        const features::FeatureHolder& features,
-                        ExtraNodesContext* xtra, const AnalysisInput& input)
-      : entries_{dic.entries()},
-        xtra_{*xtra},
-        features_{features},
-        pfc_{xtra, dic.fields(), input.codepoints()} {}
-
-  bool importOneEntry(NodeInfo nfo, util::MutableArraySlice<i32> result) {
-    auto ptr = nfo.entryPtr();
-    if (ptr.isSpecial()) {
-      auto node = xtra_.node(ptr);
-      if (node->header.type == ExtraNodeType::Unknown) {
-        auto nodeData = xtra_.nodeContent(node);
-        util::copy_buffer(nodeData, result);
-        auto hash = node->header.unk.contentHash;
-        for (auto& e : result) {
-          if (e < 0) {
-            e = hash;
-          }
-        }
-      } else if (node->header.type == ExtraNodeType::Alias) {
-        auto nodeData = xtra_.nodeContent(node);
-        util::copy_buffer(nodeData, result);
-      } else {
-        return false;
-      }
-    } else {  // dic node
-      entries_.entryAtPtr(ptr.dicPtr()).fill(result, result.size());
-    }
-    return true;
-  }
-
-  Status importEntryData(LatticeBoundary* lb) {
-    auto ptrs = lb->starts()->nodeInfo();
-    auto entries = lb->starts()->entryData();
-    for (int i = 0; i < ptrs.size(); ++i) {
-      if (!importOneEntry(ptrs[i], entries.row(i))) {
-        return Status::InvalidState()
-               << "failed to import entry data into lattice";
-      }
-    }
-    return Status::Ok();
-  }
-
-  void applyPrimitiveFeatures(LatticeBoundary* lb) {
-    auto nodes = lb->starts();
-    auto ptrs = nodes->nodeInfo();
-    auto entries = nodes->entryData();
-    auto primFeature = nodes->primitiveFeatureData();
-    features::impl::PrimitiveFeatureData pfd{ptrs.data(), entries, primFeature};
-    features_.primitive->applyBatch(&pfc_, &pfd);
-  }
-
-  void applyComputeFeatures(LatticeBoundary* lb) {
-    auto nodes = lb->starts();
-    auto ptrs = nodes->nodeInfo();
-    auto entries = nodes->entryData();
-    auto primFeature = nodes->primitiveFeatureData();
-    features::impl::PrimitiveFeatureData pfd{ptrs.data(), entries, primFeature};
-    features::impl::ComputeFeatureContext cfc;
-    features_.compute->applyBatch(&cfc, &pfd);
-  }
-
-  void applyPatternFeatures(LatticeBoundary* lb) {
-    auto nodes = lb->starts();
-    auto primFeature = nodes->primitiveFeatureData();
-    auto patFeature = nodes->patternFeatureData();
-    features::impl::PatternFeatureData pfd{primFeature, patFeature};
-    features_.pattern->applyBatch(&pfd);
-  }
-};
-
 Status AnalyzerImpl::prepareNodeSeeds() {
   JPP_RETURN_IF_ERROR(makeNodeSeedsFromDic());
   JPP_RETURN_IF_ERROR(makeUnkNodes1());
@@ -213,14 +132,11 @@ Status AnalyzerImpl::buildLattice() {
   i32 totalBnds = input_.numCodepoints();
   for (i32 boundary = 0; boundary < totalBnds; ++boundary) {
     LatticeBoundary* bnd;
-    latticeBldr_.compactBoundary(boundary, &compactor_);
     JPP_RETURN_IF_ERROR(
         latticeBldr_.constructSingleBoundary(&lattice_, &bnd, boundary));
     fc.importEntryData(bnd);
     if (latticeBldr_.isAccessible(boundary)) {
-      fc.applyPrimitiveFeatures(bnd);
-      fc.applyComputeFeatures(bnd);
-      fc.applyPatternFeatures(bnd);
+      fc.patternFeaturesDynamic(bnd);
     }
 
     JPP_DCHECK_EQ(bnd->starts()->arraySize(),

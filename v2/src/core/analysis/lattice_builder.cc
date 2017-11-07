@@ -298,7 +298,7 @@ LatticeCompactor::LatticeCompactor(const dic::DictionaryEntries &dicEntries)
     : dicEntries(dicEntries) {}
 
 Status LatticeCompactor::initialize(ExtraNodesContext *ctx,
-                                    const RuntimeInfo &spec) {
+                                    const spec::AnalysisSpec &spec) {
   xtra = ctx;
 
   features.clear();

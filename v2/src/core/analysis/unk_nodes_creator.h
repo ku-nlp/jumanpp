@@ -18,7 +18,7 @@ namespace core {
 namespace analysis {
 
 struct UnkNodeConfig {
-  OwningDictNode base;
+  DictNode base;
   std::vector<i32> replaceWithSurface;
   i32 targetPlaceholder = -1;
 
@@ -28,7 +28,7 @@ struct UnkNodeConfig {
     }
   }
 
-  UnkNodeConfig(const OwningDictNode& base) : base(base) {}
+  UnkNodeConfig(const DictNode& base) : base(base) {}
 };
 
 i32 hashUnkString(StringPiece sp);

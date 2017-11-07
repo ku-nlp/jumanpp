@@ -30,8 +30,7 @@ struct UnkMakers {
   std::vector<std::unique_ptr<UnkMaker>> stage2;
 };
 
-Status makeMakers(const CoreHolder& core, const UnkMakersInfo& info,
-                  UnkMakers* result);
+Status makeMakers(const CoreHolder& core, UnkMakers* result);
 
 }  // namespace analysis
 }  // namespace core

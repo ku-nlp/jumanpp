@@ -175,7 +175,7 @@ void TrainingEnv::exportScwParams(model::ModelInfo* pInfo) {
 
 void TrainingEnv::warnOnNonMatchingFeatures(const spec::TrainingSpec& spec) {
   analysis::LatticeCompactor lcm{env_->coreHolder()->dic().entries()};
-  lcm.initialize(nullptr, env_->coreHolder()->runtime());
+  lcm.initialize(nullptr, env_->coreHolder()->spec());
   std::vector<i32> fields;
   std::vector<i32> diff1;
   std::vector<i32> diff2;

@@ -87,7 +87,7 @@ class LatticeCompactor {
  public:
   LatticeCompactor(const dic::DictionaryEntries& dicEntries);
 
-  Status initialize(ExtraNodesContext* ctx, const RuntimeInfo& spec);
+  Status initialize(ExtraNodesContext* ctx, const spec::AnalysisSpec& spec);
   void computeHashes(util::ArraySlice<LatticeNodeSeed> seeds);
   bool compact(util::MutableArraySlice<LatticeNodeSeed>* seeds);
   i32 numDeleted() const { return processed.size(); }

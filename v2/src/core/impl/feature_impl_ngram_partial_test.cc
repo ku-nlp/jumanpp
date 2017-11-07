@@ -57,10 +57,10 @@ TEST_CASE("trigram is equal to full") {
   CHECK(buf1[0] == buf2[0]);
 }
 
-NgramFeature nf(i32 index, std::initializer_list<i32> data) {
-  NgramFeature f;
+spec::NgramFeatureDescriptor nf(i32 index, std::initializer_list<i32> data) {
+  spec::NgramFeatureDescriptor f;
   f.index = index;
-  f.arguments.assign(data);
+  f.references.assign(data);
   return f;
 }
 

@@ -9,7 +9,6 @@
 #include "core/analysis/unk_nodes.h"
 #include "core/dic/dictionary.h"
 #include "core/features_api.h"
-#include "core/runtime_info.h"
 
 namespace jumanpp {
 namespace core {
@@ -20,14 +19,14 @@ struct ScoringConfig {
 };
 
 class CoreHolder {
-  const RuntimeInfo& runtime_;
+  const spec::AnalysisSpec& spec_;
   const dic::DictionaryHolder& dic_;
   analysis::UnkMakers unkMakers_;
   features::FeatureHolder features_;
   analysis::LatticeConfig latticeCfg_;
 
  public:
-  CoreHolder(const RuntimeInfo& runtime, const dic::DictionaryHolder& dic);
+  CoreHolder(const spec::AnalysisSpec& spec, const dic::DictionaryHolder& dic);
 
   Status initialize(const features::StaticFeatureFactory* sff);
 
@@ -39,9 +38,9 @@ class CoreHolder {
   }
 
   const dic::DictionaryHolder& dic() const { return dic_; }
-  const RuntimeInfo& runtime() const { return runtime_; }
   const analysis::UnkMakers& unkMakers() const { return unkMakers_; }
   const features::FeatureHolder& features() const { return features_; }
+  const spec::AnalysisSpec& spec() const { return spec_; }
 };
 
 }  // namespace core

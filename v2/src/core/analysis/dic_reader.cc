@@ -4,26 +4,26 @@
 
 #include "dic_reader.h"
 #include "core/analysis/extra_nodes.h"
+#include "util/stl_util.h"
 
 namespace jumanpp {
 namespace core {
 namespace analysis {
 
 util::MutableArraySlice<i32> DictNode::copyTo(ExtraNode *node) const {
-  size_t sz = baseData_.size();
+  size_t sz = this->entry_.numFeatures();
   util::MutableArraySlice<i32> slice{node->content, sz};
-  std::copy(baseData_.begin(), baseData_.end(), slice.begin());
+  util::copy_buffer(entry_.features(), slice);
   return slice;
 }
 
-OwningDictNode DicReader::readEntry(EntryPtr ptr) const {
-  i32 ipt = ptr.dicPtr();
-  auto entrySize = (size_t)dic_.entries().numFeatures();
-  OwningDictNode odn{entrySize};
-  auto arraySlice = odn.data();
-  JPP_DCHECK_EQ(arraySlice.size(), entrySize);
-  dic_.entries().entryAtPtr(ipt).fill(arraySlice, entrySize);
-  return odn;
+DictNode DicReader::readEntry(EntryPtr ptr) const {
+  DictNode node;
+  auto dicEntries = dic_.entries();
+  node.entry_.setCounts(static_cast<u32>(dicEntries.numFeatures()),
+                        static_cast<u32>(dicEntries.numData()));
+  JPP_DCHECK(node.entry_.fillFromStorage(ptr, dicEntries.entryData()));
+  return node;
 }
 
 }  // namespace analysis

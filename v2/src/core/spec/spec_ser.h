@@ -60,6 +60,7 @@ void Serialize(Arch &a, UnkProcessorDescriptor &o) {
   a &o.name;
   a &o.type;
   a &o.patternRow;
+  a &o.patternPtr;
   a &o.priority;
   a &o.charClass;
   a &o.features;
@@ -92,17 +93,10 @@ void Serialize(Arch &a, PrimitiveFeatureDescriptor &o) {
 }
 
 template <typename Arch>
-void Serialize(Arch &a, MatchReference &o) {
-  a &o.featureIdx;
-  a &o.dicFieldIdx;
-}
-
-template <typename Arch>
 void Serialize(Arch &a, ComputationFeatureDescriptor &o) {
-  a &o.index;
   a &o.name;
-  a &o.matchReference;
-  a &o.matchData;
+  a &o.index;
+  a &o.primitiveFeature;
   a &o.trueBranch;
   a &o.falseBranch;
 }

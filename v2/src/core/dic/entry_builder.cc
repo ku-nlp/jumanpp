@@ -113,6 +113,7 @@ void DicEntryData::addData(EntryTableBuilder* bldr,
   data.emplace_back();
   auto& v = data.back();
   v.resize(bldr->content_.size());
+  util::fill(v, 0);
   for (auto& c : bldr->content_) {
     c.apply(&v, csv);
   }

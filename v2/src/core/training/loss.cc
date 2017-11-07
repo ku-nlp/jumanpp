@@ -330,7 +330,7 @@ float LossCalculator::computeLoss(i32 till) {
 }
 
 void LossCalculator::computeGoldNgrams(i32 position) {
-  auto numNgrams = analyzer->core().runtime().features.ngrams.size();
+  auto numNgrams = analyzer->core().spec().features.ngram.size();
   util::ArraySlice<u32> slice{rawGoldFeatures, position * numNgrams, numNgrams};
   util::copy_insert(slice, goldFeatures);
 }
@@ -341,7 +341,7 @@ Status LossCalculator::resolveGold() {
   auto goldNodes = gold.nodes();
   auto numNodes = goldNodes.size();
   auto withEos = numNodes + 1;
-  auto numNgrams = analyzer->core().runtime().features.ngrams.size();
+  auto numNgrams = analyzer->core().spec().features.ngram.size();
   rawGoldFeatures.resize(withEos * numNgrams);
   if (numNodes == 0) {
     return Status::Ok();
@@ -366,7 +366,7 @@ void LossCalculator::computeGoldScores(const analysis::ScorerDef* scores) {
   goldNodeScores.resize(numGoldNodes);
   goldScores.resize(numGoldNodes);
   util::MutableArraySlice<float> scoreBuf{&goldNodeScores};
-  auto numNgrams = analyzer->core().runtime().features.ngrams.size();
+  auto numNgrams = analyzer->core().spec().features.ngram.size();
   util::Sliceable<u32> features{&rawGoldFeatures, numNgrams, numGoldNodes};
   scores->feature->compute(scoreBuf, features);
   std::partial_sum(goldNodeScores.begin(), goldNodeScores.end(),

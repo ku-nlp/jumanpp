@@ -37,8 +37,7 @@ struct Features {
 struct Node {
   std::string surface;
   EntryPtr eptr = EntryPtr::EOS();
-  std::vector<i32> entries;
-  std::vector<u64> primitve;
+  dic::DicEntryBuffer entryData;
   std::vector<u64> pattern;
   std::string f1;
   std::string f2;
@@ -74,13 +73,13 @@ class KVListTestEnv {
       fn(specBldr, f);
       specBldr.unigram({a, b});
     });
-    CHECK(tenv.saveLoad.unkCreators.size() == 1);
+    CHECK(tenv.originalSpec.unkCreators.size() == 1);
     tenv.importDic(csvData);
     REQUIRE_OK(tenv.analyzer->output().stringField("a", &flda));
     REQUIRE_OK(tenv.analyzer->output().stringField("b", &fldb));
     REQUIRE_OK(tenv.analyzer->output().kvListField("c", &fldc));
 
-    auto sa = tenv.dicBuilder.result().fieldData[0].stringContent;
+    auto sa = tenv.restoredDic.fieldData[0].stringContent;
     dic::impl::StringStorageTraversal sst{sa};
     StringPiece sp;
     while (sst.next(&sp)) {
@@ -193,15 +192,7 @@ class KVListTestEnv {
     return it->second;
   }
 
-  util::ArraySlice<u64> prim(i32 start, i32 node) {
-    CAPTURE(start);
-    auto bnd = tenv.analyzer->lattice()->boundary(start + 2);
-    auto pBoundary = bnd->starts();
-    REQUIRE(pBoundary->arraySize() > 0);
-    return pBoundary->primitiveFeatureData().row(node);
-  }
-
-  const spec::AnalysisSpec& spec() const { return tenv.dicBuilder.spec(); }
+  const spec::AnalysisSpec& spec() const { return tenv.restoredDic.spec; }
 
   void printAll() {
     auto& output = tenv.analyzer->output();
@@ -221,10 +212,11 @@ class KVListTestEnv {
     auto bnd = tenv.analyzer->lattice()->boundary(ptr.boundary);
     auto starts = bnd->starts();
     auto pos = ptr.position;
-    util::copy_insert(starts->entryData().row(pos), n.entries);
-    util::copy_insert(starts->primitiveFeatureData(), n.primitve);
     util::copy_insert(starts->patternFeatureData(), n.pattern);
     n.eptr = starts->nodeInfo().at(pos).entryPtr();
+    n.entryData.setCounts(dic().entries().numFeatures(),
+                          dic().entries().numData());
+    n.entryData.fillFromStorage(n.eptr, dic().entries().entryData());
 
     auto o = tenv.analyzer->output();
     auto w = o.nodeWalker();
@@ -329,8 +321,8 @@ TEST_CASE("identical kvlists have identical pointers") {
   auto n0 = env.uniqueNode("a", 0);
   auto n1 = env.uniqueNode("b", 1);
   auto n2 = env.uniqueNode("c", 2);
-  CHECK(n0.entries[2] == n2.entries[2]);
-  CHECK(n0.entries[2] != n1.entries[2]);
+  CHECK(n0.entryData.data().at(0) == n2.entryData.data().at(0));
+  CHECK(n0.entryData.data().at(0) != n1.entryData.data().at(0));
 }
 
 TEST_CASE("identical kvlist works with matchValue feature (key)") {
@@ -343,9 +335,11 @@ TEST_CASE("identical kvlist works with matchValue feature (key)") {
   auto n0 = env.uniqueNode("a", 0);
   auto n1 = env.uniqueNode("b", 1);
   auto n2 = env.uniqueNode("c", 2);
-  CHECK(n0.primitve[3] == 1);
-  CHECK(n1.primitve[3] == 0);
-  CHECK(n2.primitve[3] == 1);
+  CHECK(n0.entryData.features().at(2) == 1);
+  CHECK(n1.entryData.features().at(2) == 0);
+  CHECK(n2.entryData.features().at(2) == 1);
+  CHECK(n0.pattern[0] == n2.pattern[0]);
+  CHECK(n0.pattern[0] != n1.pattern[0]);
 }
 
 TEST_CASE("kvlist supports empty lists") {
@@ -354,7 +348,7 @@ TEST_CASE("kvlist supports empty lists") {
   env.analyze("c");
   auto n0 = env.uniqueNode("c", 0);
   auto& dic = env.dic();
-  CHECK(n0.entries[2] == 0);
+  CHECK(n0.entryData.data().at(0) == 0);
   auto& f2 = dic.fields().at(2);
   CHECK(f2.name == "c");
   CHECK(f2.columnType == FieldType::StringKVList);

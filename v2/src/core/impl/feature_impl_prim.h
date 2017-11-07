@@ -29,128 +29,156 @@ class FeatureImplBase {
 class PrimitiveFeatureImpl : public FeatureImplBase {
  public:
   virtual Status initialize(FeatureConstructionContext* ctx,
-                            const PrimitiveFeature& f) = 0;
+                            const spec::PrimitiveFeatureDescriptor& f) = 0;
 
-  virtual void apply(PrimitiveFeatureContext* ctx, const NodeInfo& nodeInfo,
-                     const util::ArraySlice<i32>& entry,
-                     util::MutableArraySlice<u64>* features) const noexcept = 0;
+  virtual u64 access(PrimitiveFeatureContext* ctx, const NodeInfo& nodeInfo,
+                     const util::ArraySlice<i32>& entry) const = 0;
+
+  virtual i32 index() const = 0;
 };
 
 template <typename Impl>
 class DynamicPrimitiveFeature : public PrimitiveFeatureImpl {
   Impl impl;
+  i32 index_;
 
  public:
-  virtual Status initialize(FeatureConstructionContext* ctx,
-                            const PrimitiveFeature& f) override {
+  explicit DynamicPrimitiveFeature(i32 index) : index_{index} {}
+
+  virtual Status initialize(
+      FeatureConstructionContext* ctx,
+      const spec::PrimitiveFeatureDescriptor& f) override {
     return impl.initialize(ctx, f);
   }
 
-  virtual void apply(PrimitiveFeatureContext* ctx, const NodeInfo& nodeInfo,
-                     const util::ArraySlice<i32>& entry,
-                     util::MutableArraySlice<u64>* features) const
-      noexcept override {
-    impl.apply(ctx, nodeInfo, entry, features);
+  virtual u64 access(PrimitiveFeatureContext* ctx, const NodeInfo& nodeInfo,
+                     const util::ArraySlice<i32>& entry) const override {
+    return impl.access(ctx, nodeInfo, entry);
   }
+
+  virtual i32 index() const override { return index_; }
 };
 
 class CopyPrimFeatureImpl {
   u32 fieldIdx;
-  u32 featureIdx;
 
  public:
-  CopyPrimFeatureImpl() {}
-  constexpr CopyPrimFeatureImpl(u32 fieldIdx, u32 featureIdx)
-      : fieldIdx{fieldIdx}, featureIdx{featureIdx} {}
+  CopyPrimFeatureImpl() = default;
+  constexpr CopyPrimFeatureImpl(u32 fieldIdx) : fieldIdx{fieldIdx} {}
 
-  Status initialize(FeatureConstructionContext* ctx, const PrimitiveFeature& f);
+  Status initialize(FeatureConstructionContext* ctx,
+                    const spec::PrimitiveFeatureDescriptor& f);
 
-  inline void apply(PrimitiveFeatureContext* ctx, const NodeInfo& nodeInfo,
-                    const util::ArraySlice<i32>& entry,
-                    util::MutableArraySlice<u64>* features) const noexcept {
-    features->at(featureIdx) = (u32)entry.at(fieldIdx);
+  inline u64 access(PrimitiveFeatureContext* ctx, const NodeInfo& nodeInfo,
+                    const util::ArraySlice<i32>& entry) const {
+    return static_cast<u32>(entry.at(fieldIdx));
+  }
+};
+
+class ShiftMaskPrimFeatureImpl {
+  u32 fieldIdx_;
+  u32 shift_;
+  u32 mask_;
+
+ public:
+  ShiftMaskPrimFeatureImpl() = default;
+  constexpr ShiftMaskPrimFeatureImpl(u32 fieldIdx_, u32 shift, u32 mask)
+      : fieldIdx_{fieldIdx_}, shift_{shift}, mask_{mask} {}
+
+  Status initialize(FeatureConstructionContext* ctx,
+                    const spec::PrimitiveFeatureDescriptor& f);
+
+  inline u64 access(PrimitiveFeatureContext* ctx, const NodeInfo& nodeInfo,
+                    const util::ArraySlice<i32>& entry) const {
+    return (static_cast<u32>(entry.at(fieldIdx_)) >> shift_) & mask_;
   }
 };
 
 class ProvidedPrimFeatureImpl {
   u32 providedIdx;
-  u32 featureIdx;
 
  public:
   ProvidedPrimFeatureImpl() {}
-  constexpr ProvidedPrimFeatureImpl(u32 providedIdx, u32 featureIdx)
-      : providedIdx(providedIdx), featureIdx(featureIdx) {}
+  constexpr ProvidedPrimFeatureImpl(u32 providedIdx)
+      : providedIdx(providedIdx) {}
 
-  Status initialize(FeatureConstructionContext* ctx, const PrimitiveFeature& f);
+  Status initialize(FeatureConstructionContext* ctx,
+                    const spec::PrimitiveFeatureDescriptor& f);
 
-  inline void apply(PrimitiveFeatureContext* ctx, const NodeInfo& nodeInfo,
-                    const util::ArraySlice<i32>& entry,
-                    util::MutableArraySlice<u64>* features) const noexcept {
-    features->at(featureIdx) =
-        (u32)ctx->providedFeature(nodeInfo.entryPtr(), providedIdx);
+  inline u64 access(PrimitiveFeatureContext* ctx, const NodeInfo& nodeInfo,
+                    const util::ArraySlice<i32>& entry) const {
+    return (u32)ctx->providedFeature(nodeInfo.entryPtr(), providedIdx);
   }
 };
 
-class LengthPrimFeatureImpl {
+class ByteLengthPrimFeatureImpl {
   u32 fieldIdx;
-  u32 featureIdx;
   LengthFieldSource field = LengthFieldSource::Invalid;
 
  public:
-  LengthPrimFeatureImpl() {}
-  constexpr LengthPrimFeatureImpl(u32 fieldIdx, u32 featureIdx,
-                                  LengthFieldSource fld)
-      : fieldIdx{fieldIdx}, featureIdx{featureIdx}, field{fld} {}
+  ByteLengthPrimFeatureImpl() {}
+  constexpr ByteLengthPrimFeatureImpl(u32 fieldIdx, LengthFieldSource fld)
+      : fieldIdx{fieldIdx}, field{fld} {}
 
-  Status initialize(FeatureConstructionContext* ctx, const PrimitiveFeature& f);
+  Status initialize(FeatureConstructionContext* ctx,
+                    const spec::PrimitiveFeatureDescriptor& f);
 
-  inline void apply(PrimitiveFeatureContext* ctx, const NodeInfo& nodeInfo,
-                    const util::ArraySlice<i32>& entry,
-                    util::MutableArraySlice<u64>* features) const noexcept {
+  inline u64 access(PrimitiveFeatureContext* ctx, const NodeInfo& nodeInfo,
+                    const util::ArraySlice<i32>& entry) const {
     auto fldPtr = entry[fieldIdx];
     auto length = ctx->lengthOf(nodeInfo, fieldIdx, fldPtr, field, true);
     JPP_DCHECK_NE(length, -1);
-    features->at(featureIdx) = (u32)length;
+    return static_cast<u64>(length);
   }
 };
 
 class CodepointLengthPrimFeatureImpl {
   u32 fieldIdx;
-  u32 featureIdx;
   LengthFieldSource field = LengthFieldSource::Invalid;
 
  public:
   CodepointLengthPrimFeatureImpl() = default;
-  constexpr CodepointLengthPrimFeatureImpl(u32 fieldIdx, u32 featureIdx,
-                                           LengthFieldSource fld)
-      : fieldIdx{fieldIdx}, featureIdx{featureIdx}, field{fld} {}
+  constexpr CodepointLengthPrimFeatureImpl(u32 fieldIdx, LengthFieldSource fld)
+      : fieldIdx{fieldIdx}, field{fld} {}
 
-  Status initialize(FeatureConstructionContext* ctx, const PrimitiveFeature& f);
+  Status initialize(FeatureConstructionContext* ctx,
+                    const spec::PrimitiveFeatureDescriptor& f);
 
-  inline void apply(PrimitiveFeatureContext* ctx, const NodeInfo& nodeInfo,
-                    const util::ArraySlice<i32>& entry,
-                    util::MutableArraySlice<u64>* features) const noexcept {
+  inline u64 access(PrimitiveFeatureContext* ctx, const NodeInfo& nodeInfo,
+                    const util::ArraySlice<i32>& entry) const {
     auto fldPtr = entry[fieldIdx];
     auto length = ctx->lengthOf(nodeInfo, fieldIdx, fldPtr, field, false);
     JPP_DCHECK_NE(length, -1);
-    features->at(featureIdx) = (u32)length;
+    return static_cast<u64>(length);
+  }
+};
+
+class SurfaceCodepointLengthPrimFeatureImpl {
+ public:
+  constexpr SurfaceCodepointLengthPrimFeatureImpl() = default;
+
+  Status initialize(FeatureConstructionContext* ctx,
+                    const spec::PrimitiveFeatureDescriptor& f);
+
+  inline u64 access(PrimitiveFeatureContext* ctx, const NodeInfo& nodeInfo,
+                    const util::ArraySlice<i32>& entry) const {
+    auto length = nodeInfo.end() - nodeInfo.start();
+    return static_cast<u64>(length);
   }
 };
 
 class CodepointFeatureImpl {
-  u32 fieldIdx;
   i32 offset;
 
  public:
   CodepointFeatureImpl() = default;
-  constexpr CodepointFeatureImpl(u32 fieldIdx, i32 offset)
-      : fieldIdx{fieldIdx}, offset{offset} {}
+  constexpr CodepointFeatureImpl(i32 offset) : offset{offset} {}
 
-  Status initialize(FeatureConstructionContext* ctx, const PrimitiveFeature& f);
+  Status initialize(FeatureConstructionContext* ctx,
+                    const spec::PrimitiveFeatureDescriptor& f);
 
-  inline void apply(PrimitiveFeatureContext* ctx, const NodeInfo& nodeInfo,
-                    const util::ArraySlice<i32>& entry,
-                    util::MutableArraySlice<u64>* features) const noexcept {
+  inline u64 access(PrimitiveFeatureContext* ctx, const NodeInfo& nodeInfo,
+                    const util::ArraySlice<i32>& entry) const {
     auto codepts = ctx->inputCodepoints();
 
     u64 value = ~u64{0};
@@ -167,25 +195,22 @@ class CodepointFeatureImpl {
         value = codepts.at(pos).codepoint;
       }
     }
-
-    features->at(fieldIdx) = value;
+    return value;
   }
 };
 
 class CodepointTypeFeatureImpl {
-  u32 fieldIdx;
   i32 offset;
 
  public:
   CodepointTypeFeatureImpl() = default;
-  constexpr CodepointTypeFeatureImpl(u32 fieldIdx, i32 offset)
-      : fieldIdx{fieldIdx}, offset{offset} {}
+  constexpr CodepointTypeFeatureImpl(i32 offset) : offset{offset} {}
 
-  Status initialize(FeatureConstructionContext* ctx, const PrimitiveFeature& f);
+  Status initialize(FeatureConstructionContext* ctx,
+                    const spec::PrimitiveFeatureDescriptor& f);
 
-  inline void apply(PrimitiveFeatureContext* ctx, const NodeInfo& nodeInfo,
-                    const util::ArraySlice<i32>& entry,
-                    util::MutableArraySlice<u64>* features) const noexcept {
+  inline u64 access(PrimitiveFeatureContext* ctx, const NodeInfo& nodeInfo,
+                    const util::ArraySlice<i32>& entry) const {
     auto codepts = ctx->inputCodepoints();
 
     u64 value = 0;
@@ -206,117 +231,8 @@ class CodepointTypeFeatureImpl {
         value = static_cast<u32>(codepts.at(pos).charClass);
       }
     }
-
-    features->at(fieldIdx) = value;
+    return value;
   }
-};
-
-class MatchDicPrimFeatureImpl {
-  u32 fieldIdx;
-  u32 featureIdx;
-  util::ArraySlice<i32> matchData;
-
- public:
-  MatchDicPrimFeatureImpl() {}
-  template <size_t S>
-  constexpr MatchDicPrimFeatureImpl(u32 fieldIdx, u32 featureIdx,
-                                    const i32 (&matchData)[S])
-      : fieldIdx{fieldIdx}, featureIdx{featureIdx}, matchData{matchData} {}
-
-  Status initialize(FeatureConstructionContext* ctx, const PrimitiveFeature& f);
-
-  inline void apply(PrimitiveFeatureContext* ctx, const NodeInfo& nodeInfo,
-                    const util::ArraySlice<i32>& entry,
-                    util::MutableArraySlice<u64>* features) const noexcept {
-    auto elem = entry.at(fieldIdx);
-    i32 result = 0;
-    if (contains(matchData, elem)) {
-      result = 1;
-    }
-    features->at(featureIdx) = (u32)result;
-  }
-};
-
-class MatchListElemPrimFeatureImpl {
-  u32 fieldIdx;
-  u32 featureIdx;
-  util::ArraySlice<i32> matchData;
-
- public:
-  MatchListElemPrimFeatureImpl() = default;
-  template <size_t S>
-  constexpr MatchListElemPrimFeatureImpl(u32 fieldIdx, u32 featureIdx,
-                                         const i32 (&matchData)[S])
-      : fieldIdx{fieldIdx}, featureIdx{featureIdx}, matchData{matchData} {}
-
-  Status initialize(FeatureConstructionContext* ctx, const PrimitiveFeature& f);
-
-  inline void apply(PrimitiveFeatureContext* ctx, const NodeInfo& nodeInfo,
-                    const util::ArraySlice<i32>& entry,
-                    util::MutableArraySlice<u64>* features) const noexcept {
-    auto elem = entry.at(fieldIdx);
-    auto trav = ctx->traversal(fieldIdx, elem);
-    i32 result = 0;
-    i32 value = 0;
-    while (trav.next(&value)) {
-      if (contains(matchData, value)) {
-        result = 1;
-        break;
-      }
-    }
-    features->at(featureIdx) = (u32)result;
-  }
-};
-
-class MatchKeyPrimFeatureImpl {
-  u32 fieldIdx_;
-  u32 featureIdx_;
-  util::ArraySlice<i32> keys_;
-
- public:
-  MatchKeyPrimFeatureImpl() = default;
-  Status initialize(FeatureConstructionContext* ctx, const PrimitiveFeature& f);
-  inline void apply(PrimitiveFeatureContext* ctx, const NodeInfo& nodeInfo,
-                    const util::ArraySlice<i32>& entry,
-                    util::MutableArraySlice<u64>* features) const noexcept {
-    auto elem = entry.at(fieldIdx_);
-    auto trav = ctx->kvTraversal(fieldIdx_, elem);
-    i32 result = 0;
-    while (trav.next()) {
-      if (contains(keys_, trav.key())) {
-        result = 1;
-        break;
-      }
-    }
-    features->at(featureIdx_) = (u32)result;
-  }
-};
-
-template <typename Child>
-class PrimitiveFeatureApplyImpl : public PrimitiveFeatureApply {
- public:
-  virtual void applyBatch(impl::PrimitiveFeatureContext* ctx,
-                          impl::PrimitiveFeatureData* data) const
-      noexcept override {
-    const Child& cld = static_cast<const Child&>(*this);
-    while (data->next()) {
-      auto slice = data->featureData();
-      cld.apply(ctx, data->nodeInfo(), data->entryData(), &slice);
-    }
-  }
-};
-
-class PrimitiveFeaturesDynamicApply final
-    : public PrimitiveFeatureApplyImpl<PrimitiveFeaturesDynamicApply> {
-  std::vector<std::unique_ptr<PrimitiveFeatureImpl>> features_;
-
- public:
-  Status initialize(FeatureConstructionContext* ctx,
-                    util::ArraySlice<PrimitiveFeature> featureData);
-
-  void apply(PrimitiveFeatureContext* ctx, const NodeInfo& nodeInfo,
-             const util::ArraySlice<i32>& entry,
-             util::MutableArraySlice<u64>* features) const noexcept;
 };
 
 }  // namespace impl

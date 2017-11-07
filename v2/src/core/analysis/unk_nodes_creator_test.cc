@@ -24,7 +24,7 @@ class UnkNodeTestEnv {
           .chunking(chars::CharacterClass::ALPH)
           .outputTo({a});
     });
-    CHECK(tenv.saveLoad.unkCreators.size() == 1);
+    CHECK(tenv.originalSpec.unkCreators.size() == 1);
     tenv.importDic(csvData);
     REQUIRE_OK(tenv.analyzer->output().stringField("a", &flda));
     REQUIRE_OK(tenv.analyzer->output().stringField("b", &fldb));

@@ -18,6 +18,8 @@ void jumanpp::util::CodedBuffer::grow(size_t atLeast) {
   buffer_.resize(newsize);
   front_ = buffer_.data() + offset;
   end_ = buffer_.data() + newsize;
+  JPP_DCHECK_LE(buffer_.data(), front_);
+  JPP_DCHECK_LE(front_, end_);
 }
 
 namespace impl {

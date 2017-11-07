@@ -13,6 +13,7 @@
 #include "util/flatmap.h"
 #include "util/flatset.h"
 #include "util/inlined_vector.h"
+#include "util/stl_util.h"
 #include "util/types.hpp"
 
 namespace jumanpp {
@@ -74,6 +75,7 @@ struct EntryTableBuilder {
 
   void computeFeatures(util::MutableArraySlice<i32> result,
                        const util::CsvReader& csv) const {
+    util::fill(result, 0);
     for (auto& f : features_) {
       f->apply(result, csv);
     }

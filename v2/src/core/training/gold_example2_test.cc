@@ -40,7 +40,7 @@ class GoldExample2Env {
     am.initialize(env.analyzer.get());
   }
 
-  const core::spec::AnalysisSpec& spec() const { return env.saveLoad; }
+  const core::spec::AnalysisSpec& spec() const { return env.originalSpec; }
 
   testing::TestAnalyzer* anaImpl() { return env.analyzer.get(); }
 

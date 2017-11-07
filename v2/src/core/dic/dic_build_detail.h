@@ -7,7 +7,6 @@
 
 #include <memory>
 #include <vector>
-#include "core/impl/runtime_ser.h"
 #include "core/spec/spec_serialization.h"
 #include "core/spec/spec_types.h"
 #include "core_config.h"
@@ -33,7 +32,6 @@ struct DictionaryBuilderStorage {
   EntryTableBuilder entries;
   util::CodedBuffer builtDicData;
   util::CodedBuffer builtSpecData;
-  util::CodedBuffer builtRuntimeInfo;
   std::unique_ptr<spec::AnalysisSpec> restoredSpec;
   std::vector<StringPiece> builtStrings;
   std::vector<StringPiece> builtInts;

@@ -32,7 +32,7 @@ class Saver {
   util::CodedBuffer *buf_;
 
  public:
-  Saver() : owned_{new CodedBuffer}, buf_{owned_.get()} {}
+  Saver() : owned_{new CodedBuffer{}}, buf_{owned_.get()} {}
 
   Saver(util::CodedBuffer *ptr) : buf_{ptr} {}
 
@@ -190,6 +190,22 @@ struct SerializeImpl<u64> {
     u64 r;
     JPP_RET_CHECK(p.readVarint64(&r));
     o = r;
+    return true;
+  }
+};
+
+template <>
+struct SerializeImpl<i64> {
+  static inline void DoSerializeSave(i64 &o, Saver *s, util::CodedBuffer &buf) {
+    auto r = static_cast<u64>(o);
+    buf.writeVarint(r);
+  }
+
+  static inline bool DoSerializeLoad(i64 &o, Loader *s,
+                                     util::CodedBufferParser &p) {
+    u64 r;
+    JPP_RET_CHECK(p.readVarint64(&r));
+    o = static_cast<i64>(r);
     return true;
   }
 };

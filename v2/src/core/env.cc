@@ -10,8 +10,8 @@ namespace core {
 Status JumanppEnv::loadModel(StringPiece filename) {
   JPP_RETURN_IF_ERROR(modelFile_.open(filename));
   JPP_RETURN_IF_ERROR(modelFile_.load(&modelInfo_));
-  JPP_RETURN_IF_ERROR(dicBldr_.restoreDictionary(modelInfo_, &runtime_));
-  JPP_RETURN_IF_ERROR(dicHolder_.load(dicBldr_.result()));
+  JPP_RETURN_IF_ERROR(dicBldr_.restoreDictionary(modelInfo_));
+  JPP_RETURN_IF_ERROR(dicHolder_.load(dicBldr_));
 
   if (hasPerceptronModel()) {
     JPP_RETURN_IF_ERROR(perceptron_.load(modelInfo_));
@@ -28,7 +28,7 @@ Status JumanppEnv::loadModel(StringPiece filename) {
     setRnnHolder(&rnnHolder_);
   }
 
-  core_.reset(new CoreHolder{runtime_, dicHolder_});
+  core_.reset(new CoreHolder{dicBldr_.spec, dicHolder_});
 
   return Status::Ok();
 }

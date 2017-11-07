@@ -18,8 +18,9 @@ namespace core {
 namespace features {
 namespace impl {
 
-Status PartialNgramDynamicFeatureApply::addChild(const NgramFeature& nf) {
-  auto& args = nf.arguments;
+Status PartialNgramDynamicFeatureApply::addChild(
+    const spec::NgramFeatureDescriptor& nf) {
+  auto& args = nf.references;
   auto sz = args.size();
   switch (sz) {
     case 1: {
@@ -37,7 +38,7 @@ Status PartialNgramDynamicFeatureApply::addChild(const NgramFeature& nf) {
     }
     default:
       return JPPS_INVALID_STATE << "invalid ngram feature #" << nf.index
-                                << "of order " << nf.arguments.size()
+                                << "of order " << args.size()
                                 << " only 1-3 are supported";
   }
   return Status::Ok();

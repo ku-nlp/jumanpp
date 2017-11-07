@@ -12,6 +12,8 @@ namespace impl {
 
 namespace i = util::io;
 
+#if 0
+
 bool PatternDynamicApplyImpl::printClassBody(util::io::Printer& p) {
   p << "\nvoid apply("  // args
     << JPP_TEXT(::jumanpp::util::ArraySlice<::jumanpp::u64>) << " features, "
@@ -46,26 +48,29 @@ bool PatternDynamicApplyImpl::printClassBody(util::io::Printer& p) {
   return true;
 }
 
-Status NgramDynamicFeatureApply::addChild(const NgramFeature& nf) {
-  switch (nf.arguments.size()) {
+#endif
+
+Status NgramDynamicFeatureApply::addChild(
+    const spec::NgramFeatureDescriptor& nf) {
+  switch (nf.references.size()) {
     case 1: {
       children.emplace_back(
-          new NgramFeatureDynamicAdapter<1>{nf.index, nf.arguments[0]});
+          new NgramFeatureDynamicAdapter<1>{nf.index, nf.references[0]});
       break;
     }
     case 2: {
       children.emplace_back(new NgramFeatureDynamicAdapter<2>{
-          nf.index, nf.arguments[0], nf.arguments[1]});
+          nf.index, nf.references[0], nf.references[1]});
       break;
     }
     case 3: {
       children.emplace_back(new NgramFeatureDynamicAdapter<3>{
-          nf.index, nf.arguments[0], nf.arguments[1], nf.arguments[2]});
+          nf.index, nf.references[0], nf.references[1], nf.references[2]});
       break;
     }
     default:
       return JPPS_INVALID_STATE << "invalid ngram feature of order "
-                                << nf.arguments.size()
+                                << nf.references.size()
                                 << " only 1-3 are supported";
   }
   return Status::Ok();

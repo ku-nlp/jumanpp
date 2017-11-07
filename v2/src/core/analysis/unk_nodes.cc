@@ -16,21 +16,15 @@ namespace core {
 namespace analysis {
 
 class UnkMakerFactory {
-  util::memory::Manager mgr;
-  std::unique_ptr<util::memory::PoolAlloc> mac;
   DicReader rdr;
   dic::DictionaryEntries entries;
-  const features::FeatureRuntimeInfo& fri;
+  const spec::AnalysisSpec& spec_;
 
  public:
   UnkMakerFactory(const CoreHolder& core)
-      : mgr{16 * 1024},
-        mac{mgr.core()},
-        rdr{mac.get(), core.dic()},
-        entries{core.dic().entries()},
-        fri{core.runtime().features} {}
+      : rdr{core.dic()}, entries{core.dic().entries()}, spec_{core.spec()} {}
 
-  Status handlePrefixIndex(const UnkMakerInfo& info,
+  Status handlePrefixIndex(const spec::UnkProcessorDescriptor& info,
                            UnkNodeConfig* pConfig) const {
     if (!info.features.empty()) {
       pConfig->targetPlaceholder = info.features[0].targetPlaceholder;
@@ -42,8 +36,8 @@ class UnkMakerFactory {
     return Status::Ok();
   }
 
-  Status make(const UnkMakersInfo& info, UnkMakers* result) const {
-    for (auto& x : info.makers) {
+  Status make(UnkMakers* result) const {
+    for (auto& x : spec_.unkCreators) {
       // resolve unk processing stage
       std::vector<std::unique_ptr<UnkMaker>>* stage;
       switch (x.priority) {
@@ -64,7 +58,7 @@ class UnkMakerFactory {
       switch (x.type) {
         case spec::UnkMakerType::Chunking: {
           UnkNodeConfig cfg{rdr.readEntry(EntryPtr{x.patternPtr})};
-          util::copy_insert(x.output, cfg.replaceWithSurface);
+          util::copy_insert(x.replaceFields, cfg.replaceWithSurface);
           handlePrefixIndex(x, &cfg);
           stage->emplace_back(
               new ChunkingUnkMaker{entries, x.charClass, std::move(cfg)});
@@ -72,7 +66,7 @@ class UnkMakerFactory {
         }
         case spec::UnkMakerType::Single: {
           UnkNodeConfig cfg{rdr.readEntry(EntryPtr{x.patternPtr})};
-          util::copy_insert(x.output, cfg.replaceWithSurface);
+          util::copy_insert(x.replaceFields, cfg.replaceWithSurface);
           handlePrefixIndex(x, &cfg);
           stage->emplace_back(
               new SingleUnkMaker{entries, x.charClass, std::move(cfg)});
@@ -80,7 +74,7 @@ class UnkMakerFactory {
         }
         case spec::UnkMakerType::Onomatopoeia: {
           UnkNodeConfig cfg{rdr.readEntry(EntryPtr{x.patternPtr})};
-          util::copy_insert(x.output, cfg.replaceWithSurface);
+          util::copy_insert(x.replaceFields, cfg.replaceWithSurface);
           handlePrefixIndex(x, &cfg);
           stage->emplace_back(
               new OnomatopoeiaUnkMaker{entries, x.charClass, std::move(cfg)});
@@ -88,7 +82,7 @@ class UnkMakerFactory {
         }
         case spec::UnkMakerType::Numeric: {
           UnkNodeConfig cfg{rdr.readEntry(EntryPtr{x.patternPtr})};
-          util::copy_insert(x.output, cfg.replaceWithSurface);
+          util::copy_insert(x.replaceFields, cfg.replaceWithSurface);
           handlePrefixIndex(x, &cfg);
           stage->emplace_back(
               new NumericUnkMaker{entries, x.charClass, std::move(cfg)});
@@ -96,7 +90,7 @@ class UnkMakerFactory {
         }
         case spec::UnkMakerType::Normalize: {
           UnkNodeConfig cfg{rdr.readEntry(EntryPtr{x.patternPtr})};
-          util::copy_insert(x.output, cfg.replaceWithSurface);
+          util::copy_insert(x.replaceFields, cfg.replaceWithSurface);
           handlePrefixIndex(x, &cfg);
           stage->emplace_back(new NormalizedNodeMaker{entries, std::move(cfg)});
           break;
@@ -110,10 +104,9 @@ class UnkMakerFactory {
   }
 };
 
-Status makeMakers(const CoreHolder& core, const UnkMakersInfo& info,
-                  UnkMakers* result) {
+Status makeMakers(const CoreHolder& core, UnkMakers* result) {
   UnkMakerFactory factory{core};
-  return factory.make(info, result);
+  return factory.make(result);
 }
 
 }  // namespace analysis

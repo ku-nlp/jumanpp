@@ -57,6 +57,16 @@ struct DictionarySpec {
   i32 indexColumn = -1;
   i32 numIntStorage = -1;
   i32 numStringStorage = -1;
+
+  const FieldDescriptor& forDicIdx(i32 dicIdx) const {
+    for (auto& f : fields) {
+      if (f.dicIndex == dicIdx) {
+        return f;
+      }
+    }
+    JPP_DCHECK_NOT("could not find a dic field for index");
+    std::terminate();
+  }
 };
 
 enum class UnkMakerType {
@@ -90,6 +100,7 @@ struct UnkProcessorDescriptor {
   UnkMakerType type = UnkMakerType::Invalid;
   // 1-based
   i32 patternRow = -1;
+  i32 patternPtr = InvalidInt;
   i32 priority = 0;
   chars::CharacterClass charClass = chars::CharacterClass::FAMILY_OTHERS;
   std::vector<UnkMakerFeature> features;
@@ -99,16 +110,13 @@ struct UnkProcessorDescriptor {
 enum class PrimitiveFeatureKind {
   Invalid,
   Copy,
-  MatchDic,
-  MatchListElem,
+  SingleBit,
   Provided,
   ByteLength,
   CodepointSize,
   SurfaceCodepointSize,
-  MatchKey,
   CodepointType,
   Codepoint,
-  SingleBit
 };
 
 enum class DicImportKind {
@@ -137,16 +145,10 @@ struct PrimitiveFeatureDescriptor {
   std::vector<std::string> matchData;
 };
 
-struct MatchReference {
-  i32 featureIdx;
-  i32 dicFieldIdx;
-};
-
 struct ComputationFeatureDescriptor {
-  i32 index = InvalidInt;
   std::string name;
-  std::vector<MatchReference> matchReference;
-  std::vector<std::string> matchData;
+  i32 index = InvalidInt;
+  i32 primitiveFeature = InvalidInt;
   std::vector<i32> trueBranch;
   std::vector<i32> falseBranch;
 };

@@ -145,7 +145,7 @@ void PartialTrainer::addBadNode(const analysis::ConnectionPtr* node,
 
   NgramExampleFeatureCalculator nfc{l, analyzer_->core().features()};
 
-  featureBuf_.resize(analyzer_->core().runtime().features.ngrams.size());
+  featureBuf_.resize(analyzer_->core().spec().features.ngram.size());
   util::MutableArraySlice<u32> buffer{&featureBuf_};
 
   for (auto& end : endingNodes) {  // positive features
@@ -255,7 +255,7 @@ float PartialTrainer::addBadNode2(const analysis::ConnectionPtr* node,
 
   NgramExampleFeatureCalculator nfc{l, analyzer_->core().features()};
 
-  featureBuf_.resize(analyzer_->core().runtime().features.ngrams.size());
+  featureBuf_.resize(analyzer_->core().spec().features.ngram.size());
   util::MutableArraySlice<u32> buffer{&featureBuf_};
 
   // PASS2: compute positive features
@@ -439,7 +439,7 @@ void PartialTrainer::handleEos() {
   float score = 1.0f / beams;
   loss_ += 1.0f * nodes / eos->ends()->arraySize() / l->createdBoundaryCount();
   NgramExampleFeatureCalculator nfc{l, analyzer_->core().features()};
-  featureBuf_.resize(analyzer_->core().runtime().features.ngrams.size());
+  featureBuf_.resize(analyzer_->core().spec().features.ngram.size());
   util::MutableArraySlice<u32> buffer{&featureBuf_};
 
   analysis::LatticeNodePtr eosPtr{

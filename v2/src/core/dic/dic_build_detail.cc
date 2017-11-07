@@ -25,8 +25,8 @@ void DictionaryBuilderStorage::fillResult(BuiltDictionary* dic_) {
   auto& flds = dic_->fieldData;
   for (auto& i : importers) {
     BuiltField fld;
-    fld.name = i.descriptor->name;
-    fld.emptyValue = i.descriptor->emptyString;
+    fld.dicIndex = i.descriptor->dicIndex;
+    fld.specIndex = i.descriptor->specIndex;
     fld.stringStorageIdx = i.descriptor->stringStorage;
     if (i.descriptor->stringStorage != InvalidInt) {
       fld.stringContent = builtStrings[i.descriptor->stringStorage];
@@ -34,10 +34,32 @@ void DictionaryBuilderStorage::fillResult(BuiltDictionary* dic_) {
     if (i.descriptor->intStorage != InvalidInt) {
       fld.fieldContent = builtInts[i.descriptor->intStorage];
     }
-    fld.colType = i.descriptor->fieldType;
-    fld.isSurfaceField = i.descriptor->isTrieKey;
-    fld.uniqueValues = i.importer->uniqueValues();
+    if (i.importer) {
+      fld.uniqueValues = i.importer->uniqueValues();
+    }
     flds.push_back(fld);
+  }
+
+  std::sort(flds.begin(), flds.end(),
+            [](const BuiltField& f1, const BuiltField& f2) {
+              i32 modIdx1 = f1.dicIndex ^ 0x8000'0000;
+              i32 modIdx2 = f2.dicIndex ^ 0x8000'0000;
+              return modIdx1 < modIdx2;
+            });
+
+  for (auto& ss : stringBuffers) {
+    dic_->stringStorages.push_back(ss.contents());
+  }
+
+  for (auto& ib : intBuffers) {
+    dic_->intStorages.push_back(ib.contents());
+  }
+
+  for (auto& unk : dic_->spec.unkCreators) {
+    auto iter = entries.ignoredRows.find(unk.patternRow);
+    if (iter != entries.ignoredRows.end()) {
+      unk.patternPtr = iter->second;
+    }
   }
 }
 
@@ -78,7 +100,7 @@ Status DictionaryBuilderStorage::makeStorage() {
     auto descriptor = imp.descriptor;
 
     auto intNum = descriptor->intStorage;
-    if (intNum != -1) {
+    if (intNum != spec::InvalidInt) {
       auto buffer = &intBuffers[intNum];
       imp.importer->injectFieldBuffer(buffer);
     }
@@ -147,6 +169,11 @@ Status DictionaryBuilderStorage::initGroupingFields(
     JPP_DCHECK_IN(dicIdx, 0, spec.features.numDicFeatures);
     entries.dedupIdxes_.push_back(dicIdx);
   }
+
+  for (auto& unk : spec.unkCreators) {
+    entries.ignoredRows[unk.patternRow] = InvalidInt;
+  }
+
   return Status::Ok();
 }
 

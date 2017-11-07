@@ -3,9 +3,11 @@ add_subdirectory(codegen)
 jpp_core_files(core_srcs
 
   feature_codegen.cc
+  feature_debug.cc
   feature_impl_combine.cc
   feature_impl_compute.cc
   feature_impl_ngram_partial.cc
+  feature_impl_pattern.cc
   feature_impl_prim.cc
   global_beam_position_fmt.cc
   graphviz_format.cc
@@ -28,9 +30,11 @@ jpp_core_files(core_tsrcs
 jpp_core_files(core_hdrs
 
   feature_codegen.h
+  feature_debug.h
   feature_impl_combine.h
   feature_impl_compute.h
   feature_impl_ngram_partial.h
+  feature_impl_pattern.h
   feature_impl_prim.h
   feature_impl_types.h
   feature_types.h
@@ -41,7 +45,6 @@ jpp_core_files(core_hdrs
   model_format_ser.h
   model_io.h
   perceptron_io.h
-  runtime_ser.h
 
   )
 

@@ -10,7 +10,6 @@
 #include "core/dic/dic_builder.h"
 #include "core/env.h"
 #include "core/impl/model_io.h"
-#include "core/runtime_info.h"
 #include "core/spec/spec_dsl.h"
 #include "core/spec/spec_serialization.h"
 #include "testing/standalone_test.h"
@@ -46,38 +45,31 @@ class TestEnv {
   i32 beamSize = 1;
   std::unique_ptr<TestAnalyzer> analyzer;
   std::unique_ptr<CoreHolder> core;
-  spec::AnalysisSpec saveLoad;
+  spec::AnalysisSpec originalSpec;
   AnalyzerConfig aconf{};
   dic::DictionaryBuilder origDicBuilder;
-  dic::DictionaryBuilder dicBuilder;
+  dic::BuiltDictionary restoredDic;
   TempFile tmpFile;
   model::FilesystemModel fsModel;
   model::ModelInfo actualInfo;
-  RuntimeInfo actualRuntime;
   dic::DictionaryHolder dic;
 
   template <typename Fn>
   void spec(Fn fn) {
     spec::dsl::ModelSpecBuilder bldr;
     fn(bldr);
-    spec::AnalysisSpec original;
-    REQUIRE_OK(bldr.build(&original));
-    util::CodedBuffer buf;
-    spec::saveSpec(original, &buf);
-    REQUIRE(spec::loadSpec(buf.contents(), &saveLoad));
+    REQUIRE_OK(bldr.build(&originalSpec));
   }
 
   void saveDic(const StringPiece& data,
                const StringPiece name = StringPiece{"test"}) {
-    REQUIRE_OK(origDicBuilder.importSpec(&saveLoad));
+    REQUIRE_OK(origDicBuilder.importSpec(&originalSpec));
     REQUIRE_OK(origDicBuilder.importCsv(name, data));
-    RuntimeInfo runtimeOrig{};
     dic::DictionaryHolder holder1;
     REQUIRE_OK(holder1.load(origDicBuilder.result()));
-    REQUIRE_OK(holder1.compileRuntimeInfo(saveLoad, &runtimeOrig));
     model::ModelInfo nfo{};
     nfo.parts.emplace_back();
-    REQUIRE_OK(origDicBuilder.fillModelPart(runtimeOrig, &nfo.parts.back()));
+    REQUIRE_OK(origDicBuilder.fillModelPart(&nfo.parts.back()));
     {
       model::ModelSaver saver;
       REQUIRE_OK(saver.open(tmpFile.name()));
@@ -91,14 +83,13 @@ class TestEnv {
     saveDic(data, name);
     REQUIRE_OK(fsModel.open(tmpFile.name()));
     REQUIRE_OK(fsModel.load(&actualInfo));
-    REQUIRE_OK(dicBuilder.restoreDictionary(actualInfo, &actualRuntime));
-    REQUIRE_OK(dic.load(dicBuilder.result()));
-    core.reset(new CoreHolder(actualRuntime, dic));
+    REQUIRE_OK(restoredDic.restoreDictionary(actualInfo));
+    REQUIRE_OK(dic.load(restoredDic));
+    core.reset(new CoreHolder(restoredDic.spec, dic));
     REQUIRE_OK(core->initialize(nullptr));
-    REQUIRE(core->features().primitive != nullptr);
-    REQUIRE(core->features().compute != nullptr);
-    REQUIRE(core->features().pattern != nullptr);
+    REQUIRE(core->features().patternDynamic != nullptr);
     REQUIRE(core->features().ngram != nullptr);
+    REQUIRE(core->features().ngramPartial != nullptr);
     ScoringConfig scoreConf{beamSize, 1};
     analyzer.reset(new TestAnalyzer(core.get(), scoreConf, aconf));
   }

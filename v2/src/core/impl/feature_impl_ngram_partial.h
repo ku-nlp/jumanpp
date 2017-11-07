@@ -373,7 +373,7 @@ class PartialNgramDynamicFeatureApply
  public:
   bool outputClassBody(util::io::Printer& p) const;
 
-  Status addChild(const NgramFeature& nf);
+  Status addChild(const spec::NgramFeatureDescriptor& nf);
 
   void uniStep0(util::ArraySlice<u64> patterns, u32 mask,
                 util::ArraySlice<float> weights,

@@ -487,6 +487,7 @@ Status SpecCompiler::fillRemainingFeatures() {
     auto& compData = compute[cf.second.number];
     compData.name = primData.name;
     compData.index = primData.index;
+    compData.primitiveFeature = primData.index;
     compData.trueBranch = cf.second.trueBranch;
     compData.falseBranch = cf.second.falseBranch;
   }

@@ -113,6 +113,7 @@ bool outputPartialNgramFeatures(
   return true;
 }
 
+#if 0
 bool outputPatternFeatures(
     i::Printer& p, StringPiece name,
     features::impl::PatternDynamicApplyImpl* patternImpl) {
@@ -129,6 +130,7 @@ bool outputPatternFeatures(
   p << "\n}; // class " << name << "\n";
   return true;
 }
+#endif
 
 Status StaticFeatureCodegen::writeSource(const std::string& filename,
                                          const FeatureHolder& features) {
@@ -149,8 +151,8 @@ Status StaticFeatureCodegen::writeSource(const std::string& filename,
       p, partNgramName, features.ngramPartialDynamic.get());
   std::string patternName{"PatternFeatureStaticApply_"};
   patternName += config_.className;
-  bool patternOk =
-      outputPatternFeatures(p, patternName, features.patternDynamic.get());
+  bool patternOk = false;
+  // outputPatternFeatures(p, patternName, features.patternDynamic.get());
 
   p << "\n} //anon namespace\n";
 

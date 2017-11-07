@@ -20,34 +20,6 @@ namespace impl {
 
 using fh = util::hashing::FastHash1;
 
-class DynamicPatternFeatureImpl {
-  i32 index_;
-  util::ArraySlice<i32> arguments_;
-
- public:
-  template <size_t sz>
-  constexpr DynamicPatternFeatureImpl(i32 ind, const i32 (&arr)[sz])
-      : index_{ind}, arguments_{arr} {}
-
-  DynamicPatternFeatureImpl(i32 ind, util::ArraySlice<i32> args)
-      : index_{ind}, arguments_{args} {}
-
-  inline void apply(util::ArraySlice<u64> features,
-                    util::MutableArraySlice<u64> result) const noexcept {
-    auto u32idx = static_cast<u32>(index_);
-    auto hash = fh{}.mix(u32idx).mix(arguments_.size()).mix(PatternFeatureSeed);
-    for (i32 arg : arguments_) {
-      hash = hash.mix(features[arg]);
-    }
-    hash = hash.mix(util::hashing::SeaHashSeed1);
-
-    result.at(u32idx) = hash.result();
-  }
-
-  i32 index() const noexcept { return index_; }
-  util::ArraySlice<i32> arguments() const noexcept { return arguments_; }
-};
-
 template <int N>
 class NgramFeatureImpl {
  public:
@@ -108,37 +80,6 @@ inline void NgramFeatureImpl<3>::apply(util::MutableArraySlice<u32> result,
   auto v2 = t2.at(p2);
   auto ret = fh{}.mix(5).mix(index).mix(TrigramSeed).mix(v0).mix(v1).mix(v2);
   result.at(index) = static_cast<u32>(ret.result());
-};
-
-template <typename Child>
-class PatternFeatureApplyImpl : public PatternFeatureApply {
- public:
-  void applyBatch(impl::PatternFeatureData *data) const noexcept override {
-    const auto &c = static_cast<const Child &>(*this);
-    while (data->next()) {
-      c.apply(data->primitive(), data->pattern());
-    }
-  }
-};
-
-class PatternDynamicApplyImpl final
-    : public PatternFeatureApplyImpl<PatternDynamicApplyImpl> {
-  std::vector<DynamicPatternFeatureImpl> children;
-
- public:
-  void addChild(const PatternFeature &pf) {
-    util::ArraySlice<i32> args{pf.arguments};
-    children.emplace_back(pf.index, args);
-  }
-
-  void apply(util::ArraySlice<u64> features,
-             util::MutableArraySlice<u64> result) const noexcept {
-    for (auto &c : children) {
-      c.apply(features, result);
-    }
-  }
-
-  bool printClassBody(util::io::Printer &p);
 };
 
 class DynamicNgramFeature : public FeatureApply {
@@ -217,7 +158,7 @@ class NgramDynamicFeatureApply
   std::vector<std::unique_ptr<DynamicNgramFeature>> children;
 
  public:
-  Status addChild(const NgramFeature &nf);
+  Status addChild(const spec::NgramFeatureDescriptor &nf);
 
   void apply(util::MutableArraySlice<u32> result,
              const util::ArraySlice<u64> &t2, const util::ArraySlice<u64> &t1,

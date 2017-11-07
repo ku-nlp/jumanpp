@@ -5,6 +5,7 @@
 #ifndef JUMANPP_NGRAM_COMPUTATIONS_H
 #define JUMANPP_NGRAM_COMPUTATIONS_H
 
+#include <core/spec/spec_types.h>
 #include <util/sliceable_array.h>
 #include "core/features_api.h"
 #include "util/array_slice.h"
@@ -48,7 +49,7 @@ struct NgramStats {
   u32 num3Grams = 0;
   u32 maxNGrams = 0;
 
-  void initialze(const features::FeatureRuntimeInfo* info);
+  void initialze(const spec::FeaturesSpec* info);
 };
 
 }  // namespace analysis

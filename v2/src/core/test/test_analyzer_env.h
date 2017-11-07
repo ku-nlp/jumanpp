@@ -67,13 +67,13 @@ class PrimFeatureTestEnv {
       fn(specBldr, fs);
       specBldr.unigram({a, b});
     });
-    CHECK(tenv.saveLoad.unkCreators.size() == 1);
+    CHECK(tenv.originalSpec.unkCreators.size() == 1);
     tenv.importDic(csvData);
     REQUIRE_OK(tenv.analyzer->output().stringField("a", &flda));
     REQUIRE_OK(tenv.analyzer->output().stringField("b", &fldb));
     REQUIRE_OK(tenv.analyzer->output().stringListField("c", &fldc));
 
-    auto sa = tenv.dicBuilder.result().fieldData[0].stringContent;
+    auto sa = tenv.restoredDic.fieldData[0].stringContent;
     dic::impl::StringStorageTraversal sst{sa};
     StringPiece sp;
     while (sst.next(&sp)) {
@@ -198,7 +198,7 @@ class PrimFeatureTestEnv {
     return pBoundary->primitiveFeatureData().row(node);
   }
 
-  const spec::AnalysisSpec& spec() const { return tenv.dicBuilder.spec(); }
+  const spec::AnalysisSpec& spec() const { return tenv.restoredDic.spec; }
 
   void printAll() {
     auto& output = tenv.analyzer->output();

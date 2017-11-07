@@ -25,7 +25,7 @@ class OnomatopoeiaTestEnv {
           .onomatopoeia(chars::CharacterClass::FAMILY_KANA)
           .outputTo({a});
     });
-    CHECK(tenv.saveLoad.unkCreators.size() == 1);
+    CHECK(tenv.originalSpec.unkCreators.size() == 1);
     tenv.importDic(csvData);
     REQUIRE_OK(tenv.analyzer->output().stringField("f1", &fld1));
     REQUIRE_OK(tenv.analyzer->output().stringField("f2", &fld2));

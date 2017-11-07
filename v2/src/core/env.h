@@ -17,8 +17,7 @@ class JumanppEnv {
   ScoringConfig scoringConf_{1, 0};
   model::FilesystemModel modelFile_;
   model::ModelInfo modelInfo_;
-  dic::DictionaryBuilder dicBldr_;
-  RuntimeInfo runtime_;
+  dic::BuiltDictionary dicBldr_;
   dic::DictionaryHolder dicHolder_;
   std::unique_ptr<core::CoreHolder> core_;
 
@@ -35,8 +34,7 @@ class JumanppEnv {
   void setBeamSize(u32 size);
 
   const CoreHolder* coreHolder() const { return core_.get(); }
-  const RuntimeInfo& runtimeInfo() const { return runtime_; }
-  const spec::AnalysisSpec& spec() const { return dicBldr_.spec(); }
+  const spec::AnalysisSpec& spec() const { return dicBldr_.spec; }
   bool hasPerceptronModel() const;
 
   bool hasRnnModel() const;

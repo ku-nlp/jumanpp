@@ -47,6 +47,12 @@ class CodedBuffer {
   void grow(size_t atLeast);
 
  public:
+  CodedBuffer() = default;
+  CodedBuffer(const CodedBuffer&) = delete;
+  CodedBuffer& operator=(const CodedBuffer&) = delete;
+  CodedBuffer(CodedBuffer&&) noexcept = default;
+  CodedBuffer& operator=(CodedBuffer&&) = default;
+
   size_t position() const noexcept {
     return static_cast<size_t>(front_ - buffer_.data());
   }
@@ -94,6 +100,7 @@ class CodedBuffer {
   StringPiece contents() const noexcept {
     auto begin = reinterpret_cast<StringPiece::iterator>(buffer_.data());
     auto end = reinterpret_cast<StringPiece::iterator>(front_);
+    JPP_DCHECK_LE(begin, end);
     return StringPiece{begin, end};
   }
 };

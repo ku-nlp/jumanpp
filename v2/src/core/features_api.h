@@ -6,9 +6,9 @@
 #define JUMANPP_FEATURE_API_H
 
 #include <memory>
-#include "runtime_info.h"
 #include "util/memory.hpp"
 #include "util/sliceable_array.h"
+#include "util/status.hpp"
 
 namespace jumanpp {
 namespace core {
@@ -37,22 +37,13 @@ class FeatureApply {
   virtual ~FeatureApply() noexcept = default;
 };
 
-class PrimitiveFeatureApply : public FeatureApply {
- public:
-  virtual void applyBatch(impl::PrimitiveFeatureContext* ctx,
-                          impl::PrimitiveFeatureData* data) const noexcept = 0;
-};
-
-class ComputeFeatureApply : public FeatureApply {
- public:
-  virtual void applyBatch(impl::ComputeFeatureContext* ctx,
-                          impl::PrimitiveFeatureData* data) const noexcept = 0;
-};
-
 class PatternFeatureApply : public FeatureApply {
  public:
-  virtual void applyBatch(impl::PatternFeatureData* data) const noexcept = 0;
+  virtual void applyBatch(impl::PrimitiveFeatureContext* pfc,
+                          impl::PrimitiveFeatureData* data) const noexcept = 0;
 };
+
+class GeneratedPatternFeatureApply : public FeatureApply {};
 
 class NgramFeatureApply : public FeatureApply {
  public:
@@ -138,23 +129,14 @@ class PartialNgramFeatureApply : public FeatureApply {
 class StaticFeatureFactory : public FeatureApply {
  public:
   virtual u64 runtimeHash() const { return 0; }
-  virtual PrimitiveFeatureApply* primitive() const { return nullptr; }
-  virtual ComputeFeatureApply* compute() const { return nullptr; }
-  virtual PatternFeatureApply* pattern() const { return nullptr; }
+  virtual GeneratedPatternFeatureApply* pattern() const { return nullptr; }
   virtual NgramFeatureApply* ngram() const { return nullptr; }
   virtual PartialNgramFeatureApply* ngramPartial() const { return nullptr; }
 };
 
 struct FeatureHolder {
-  std::unique_ptr<features::PrimitiveFeatureApply> primitiveDynamic;
-  std::unique_ptr<features::PrimitiveFeatureApply> primitiveStatic;
-  features::PrimitiveFeatureApply* primitive = nullptr;
-  std::unique_ptr<features::ComputeFeatureApply> computeDynamic;
-  std::unique_ptr<features::ComputeFeatureApply> computeStatic;
-  features::ComputeFeatureApply* compute = nullptr;
-  std::unique_ptr<features::impl::PatternDynamicApplyImpl> patternDynamic;
-  std::unique_ptr<features::PatternFeatureApply> patternStatic;
-  features::PatternFeatureApply* pattern = nullptr;
+  std::unique_ptr<features::PatternFeatureApply> patternDynamic;
+  std::unique_ptr<features::GeneratedPatternFeatureApply> patternStatic;
   std::unique_ptr<features::impl::NgramDynamicFeatureApply> ngramDynamic;
   std::unique_ptr<features::NgramFeatureApply> ngramStatic;
   features::NgramFeatureApply* ngram = nullptr;

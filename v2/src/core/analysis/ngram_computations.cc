@@ -9,13 +9,13 @@ namespace jumanpp {
 namespace core {
 namespace analysis {
 
-void NgramStats::initialze(const features::FeatureRuntimeInfo *info) {
+void NgramStats::initialze(const spec::FeaturesSpec *info) {
   num1Grams = 0;
   num2Grams = 0;
   num3Grams = 0;
-  auto &ngramInfo = info->ngrams;
+  auto &ngramInfo = info->ngram;
   for (auto &ng : ngramInfo) {
-    auto order = ng.arguments.size();
+    auto order = ng.references.size();
     if (order == 1) {
       num1Grams += 1;
     } else if (order == 2) {

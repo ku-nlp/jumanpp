@@ -29,7 +29,10 @@ struct ColumnImportContext {
                     std::vector<impl::StringStorage>& storages);
 
   bool importFieldValue(const util::CsvReader& reader) {
-    return importer->importFieldValue(reader);
+    if (importer) {
+      return importer->importFieldValue(reader);
+    }
+    return true;
   }
 };
 

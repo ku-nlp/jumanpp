@@ -53,6 +53,11 @@ struct ScorerDef {
   std::vector<Score> scoreWeights;
 };
 
+struct WeightBuffer {
+  float at(size_t pos) const;
+  size_t size() const;
+};
+
 }  // namespace analysis
 }  // namespace core
 }  // namespace jumanpp

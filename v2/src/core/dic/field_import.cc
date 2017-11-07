@@ -67,7 +67,7 @@ void StringListFieldImporter::injectFieldBuffer(util::CodedBuffer* buffer) {
 }
 
 IntFieldImporter::IntFieldImporter(i32 field)
-    : fld_{field}, re_{"^\\d+$", std::regex::optimize | std::regex::basic} {}
+    : fld_{field}, re_{"^\\d+$", std::regex::optimize | std::regex::extended} {}
 
 i32 IntFieldImporter::fieldPointer(const util::CsvReader& csv) {
   StringPiece sp = csv.field(fld_);

@@ -4,10 +4,10 @@
 
 #include "features_api.h"
 #include "core/core.h"
+#include "core/impl/feature_impl_pattern.h"
 #include "impl/feature_impl_combine.h"
 #include "impl/feature_impl_compute.h"
 #include "impl/feature_impl_ngram_partial.h"
-#include "impl/feature_impl_prim.h"
 #include "util/logging.hpp"
 
 namespace jumanpp {
@@ -17,40 +17,25 @@ namespace features {
 Status makeFeatures(const CoreHolder &info, const StaticFeatureFactory *sff,
                     FeatureHolder *result) {
   impl::FeatureConstructionContext fcc{&info.dic().fields()};
-  std::unique_ptr<impl::PrimitiveFeaturesDynamicApply> dynamic{
-      new impl::PrimitiveFeaturesDynamicApply};
-  auto &runtimeFeatures = info.runtime().features;
-  JPP_RETURN_IF_ERROR(dynamic->initialize(&fcc, runtimeFeatures.primitive));
-  result->primitiveDynamic = std::move(dynamic);
-
-  auto dynComp = new impl::ComputeFeatureDynamicApply;
-  result->computeDynamic.reset(dynComp);
-  for (auto &cf : runtimeFeatures.compute) {
-    dynComp->makeFeature(cf);
-  }
-
-  auto dynPat = new impl::PatternDynamicApplyImpl;
-  result->patternDynamic.reset(dynPat);
-  for (auto &patf : runtimeFeatures.patterns) {
-    dynPat->addChild(patf);
-  }
+  auto &runtimeFeatures = info.spec().features;
+  auto dynPattern = new impl::PatternDynamicApplyImpl;
+  result->patternDynamic.reset(dynPattern);
+  JPP_RETURN_IF_ERROR(dynPattern->initialize(&fcc, info.spec().features));
 
   auto dynNgram = new impl::NgramDynamicFeatureApply;
   result->ngramDynamic.reset(dynNgram);
-  for (auto &nf : runtimeFeatures.ngrams) {
+  for (auto &nf : runtimeFeatures.ngram) {
     JPP_RETURN_IF_ERROR(dynNgram->addChild(nf));
   }
 
   auto partNgram = new impl::PartialNgramDynamicFeatureApply;
   result->ngramPartialDynamic.reset(partNgram);
-  for (auto &nf : runtimeFeatures.ngrams) {
+  for (auto &nf : runtimeFeatures.ngram) {
     JPP_RETURN_IF_ERROR(partNgram->addChild(nf));
   }
 
   if (sff != nullptr) {
     if (true) {  // TODO: check hashes
-      result->primitiveStatic.reset(sff->primitive());
-      result->computeStatic.reset(sff->compute());
       result->patternStatic.reset(sff->pattern());
       result->ngramStatic.reset(sff->ngram());
       result->ngramPartialStatic.reset(sff->ngramPartial());
@@ -58,24 +43,6 @@ Status makeFeatures(const CoreHolder &info, const StaticFeatureFactory *sff,
       LOG_WARN()
           << "hashes did not match, compiled static features can't be used";
     }
-  }
-
-  if (result->primitiveStatic) {
-    result->primitive = result->primitiveStatic.get();
-  } else {
-    result->primitive = result->primitiveDynamic.get();
-  }
-
-  if (result->computeStatic) {
-    result->compute = result->computeStatic.get();
-  } else {
-    result->compute = result->computeDynamic.get();
-  }
-
-  if (result->patternStatic) {
-    result->pattern = result->patternStatic.get();
-  } else {
-    result->pattern = result->patternDynamic.get();
   }
 
   if (result->ngramStatic) {
@@ -94,16 +61,8 @@ Status makeFeatures(const CoreHolder &info, const StaticFeatureFactory *sff,
 }
 
 Status FeatureHolder::validate() const {
-  if (primitive == nullptr) {
-    return JPPS_INVALID_STATE << "Features: primitive was null";
-  }
-
-  if (compute == nullptr) {
-    return JPPS_INVALID_STATE << "Features: compute was null";
-  }
-
-  if (pattern == nullptr) {
-    return JPPS_INVALID_STATE << "Features: pattern was null";
+  if (patternDynamic == nullptr) {
+    return JPPS_INVALID_STATE << "Features: pattern dynamic was null";
   }
 
   if (ngram == nullptr) {

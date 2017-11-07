@@ -103,7 +103,7 @@ class LossCalculator {
   LossCalculator(analysis::AnalyzerImpl* analyzer,
                  const spec::TrainingSpec* spec)
       : analyzer{analyzer}, spec{spec} {
-    featureBuffer.resize(analyzer->core().runtime().features.ngrams.size());
+    featureBuffer.resize(analyzer->core().spec().features.ngram.size());
 
     fullWeight = 0;
     for (auto& x : spec->fields) {

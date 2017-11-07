@@ -9,23 +9,11 @@ using namespace jumanpp::core::features::impl;
 using namespace jumanpp;
 
 TEST_CASE("CopyPrimFeatureImpl compiles in both usage paterns") {
-  constexpr CopyPrimFeatureImpl f{0, 0};
-  DynamicPrimitiveFeature<CopyPrimFeatureImpl> impl;
+  constexpr CopyPrimFeatureImpl f{0};
+  DynamicPrimitiveFeature<CopyPrimFeatureImpl> impl{0};
 }
 
 TEST_CASE("ProvidedPrimFeatureImpl compiles in both usage paterns") {
-  constexpr ProvidedPrimFeatureImpl f{0, 0};
-  DynamicPrimitiveFeature<ProvidedPrimFeatureImpl> impl;
-}
-
-TEST_CASE("MatchDicPrimFeatureImpl compiles in both usage patterns") {
-  static constexpr i32 array[] = {0, 1, 2};
-  constexpr MatchDicPrimFeatureImpl f{0, 0, array};
-  DynamicPrimitiveFeature<MatchDicPrimFeatureImpl> impl;
-}
-
-TEST_CASE("MatchAnyDicPrimFeatureImpl compiles in both usage patterns") {
-  static constexpr i32 array[] = {0, 1, 2};
-  constexpr MatchListElemPrimFeatureImpl f{0, 0, array};
-  DynamicPrimitiveFeature<MatchListElemPrimFeatureImpl> impl;
+  constexpr ProvidedPrimFeatureImpl f{0};
+  DynamicPrimitiveFeature<ProvidedPrimFeatureImpl> impl{0};
 }

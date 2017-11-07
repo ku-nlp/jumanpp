@@ -8,18 +8,6 @@
 using namespace jumanpp::core::features::impl;
 using namespace jumanpp;
 
-TEST_CASE("pattern feature compiles") {
-  static constexpr i32 refs[] = {0, 2, 3};
-  constexpr DynamicPatternFeatureImpl pat{0, refs};
-  u64 data[] = {0, 0, 0};
-  util::MutableArraySlice<u64> wrap{data};
-  util::ArraySlice<u64> input{1, 2, 3, 4};
-  pat.apply(input, &wrap);
-  CHECK(data[0] == 0x1482c5b80953ac1dULL);
-  CHECK(data[1] == 0);
-  CHECK(data[2] == 0);
-}
-
 TEST_CASE("ngram features can be compiled") {
   constexpr NgramFeatureImpl<1> uni{0, 1};
   constexpr NgramFeatureImpl<2> bi{1, 1, 2};

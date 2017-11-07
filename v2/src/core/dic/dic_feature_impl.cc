@@ -15,9 +15,14 @@ Status ColumnImportContext::initialize(
     i32 index, const spec::FieldDescriptor* descr,
     std::vector<impl::StringStorage>& storages) {
   using namespace core::spec;
+
   this->index = index;
   this->descriptor = descr;
   this->isTrieIndexed = descr->isTrieKey;
+
+  if (descr->position == 0) {  // autogen
+    return Status::Ok();
+  }
 
   auto tp = descr->fieldType;
   auto colpos = descr->position - 1;
@@ -26,7 +31,13 @@ Status ColumnImportContext::initialize(
 
   switch (tp) {
     case FieldType::Int:
-      importer.reset(new impl::IntFieldImporter{colpos});
+      try {
+        importer.reset(new impl::IntFieldImporter{colpos});
+        break;
+      } catch (std::exception& e) {
+        return JPPS_INVALID_STATE << "failed to create an IntFieldImporter: "
+                                  << e.what();
+      }
     case FieldType::String: {
       i32 stringIdx = descr->stringStorage;
       auto stor = &storages[stringIdx];
@@ -108,7 +119,7 @@ Status MatchListDicFeatureImpl::initialize(
     if (!kvSep_.empty()) {
       auto it = std::search(v.begin(), v.end(), kvSep_.begin(), kvSep_.end());
       if (it != v.end()) {
-        v = StringPiece{v.end(), it};
+        v = StringPiece{v.begin(), it};
       }
     }
     auto idx = storage_->valueOf(v);
@@ -135,7 +146,7 @@ void MatchListDicFeatureImpl::apply(util::MutableArraySlice<i32> featureData,
     if (!kvSep_.empty()) {
       auto it = std::search(v.begin(), v.end(), kvSep_.begin(), kvSep_.end());
       if (it != v.end()) {
-        v = StringPiece{v.end(), it};
+        v = StringPiece{v.begin(), it};
       }
     }
     auto idx = storage_->valueOf(v);
