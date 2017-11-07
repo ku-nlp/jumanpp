@@ -18,7 +18,7 @@ util::MutableArraySlice<i32> DictNode::copyTo(ExtraNode *node) const {
 
 OwningDictNode DicReader::readEntry(EntryPtr ptr) const {
   i32 ipt = ptr.dicPtr();
-  auto entrySize = (size_t)dic_.entries().entrySize();
+  auto entrySize = (size_t)dic_.entries().numFeatures();
   OwningDictNode odn{entrySize};
   auto arraySlice = odn.data();
   JPP_DCHECK_EQ(arraySlice.size(), entrySize);

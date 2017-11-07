@@ -184,11 +184,11 @@ void LatticeConstructionContext::addEos(LatticeBoundary *lb) {
 
 void LatticeCompactor::computeHashes(util::ArraySlice<LatticeNodeSeed> seeds) {
   entries.clear();
-  entries.resize(seeds.size() * dicEntries.entrySize());
+  entries.resize(seeds.size() * dicEntries.numFeatures());
   hashes.clear();
   hashes.resize(seeds.size());
 
-  util::Sliceable<i32> entryData{&entries, (u32)dicEntries.entrySize(),
+  util::Sliceable<i32> entryData{&entries, (u32)dicEntries.numFeatures(),
                                  seeds.size()};
   for (int i = 0; i < seeds.size(); ++i) {
     auto &s = seeds[i];
@@ -240,7 +240,7 @@ bool LatticeCompactor::compact(
   processed.clear_no_resize();
   auto numElems = hashes.size();
   JPP_DCHECK_EQ(seeds->size(), numElems);
-  util::Sliceable<i32> entryData{&entries, (u32)dicEntries.entrySize(),
+  util::Sliceable<i32> entryData{&entries, (u32)dicEntries.numFeatures(),
                                  numElems};
   ValueChecker valueChecker{features};
   for (int i = 0; i < numElems; ++i) {

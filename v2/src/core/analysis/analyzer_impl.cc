@@ -34,9 +34,9 @@ AnalyzerImpl::AnalyzerImpl(const CoreHolder* core, const ScoringConfig& sconf,
       input_{cfg.maxInputBytes},
       latticeConfig_{core->latticeConfig(sconf)},
       lattice_{alloc_.get(), latticeConfig_},
-      xtra_{alloc_.get(), core->dic().entries().entrySize(),
+      xtra_{alloc_.get(), core->dic().entries().numFeatures(),
             core->runtime().unkMakers.numPlaceholders},
-      outputManager_{alloc_.get(), &xtra_, &core->dic(), &lattice_},
+      outputManager_{&xtra_, &core->dic(), &lattice_},
       compactor_{core->dic().entries()} {
   ngramStats_.initialze(&core->runtime().features);
 }

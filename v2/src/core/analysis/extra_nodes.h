@@ -25,6 +25,7 @@ struct AliasNodeHeader {
 struct UnkNodeHeader {
   i32 contentHash;
   StringPiece surface;
+  EntryPtr templatePtr;
 };
 
 struct ExtraNodeHeader {

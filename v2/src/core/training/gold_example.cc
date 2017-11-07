@@ -20,7 +20,7 @@ bool TrainingExampleAdapter::matchUnkNodeData(const analysis::ExtraNode *pNode,
                                               const ExampleNode &node) {
   i32 surfaceHash = analysis::hashUnkString(node.surface);
   auto &ndata = node.data;
-  util::ArraySlice<i32> latNodeData{pNode->content, (u32)entries.entrySize()};
+  util::ArraySlice<i32> latNodeData{pNode->content, (u32)entries.numFeatures()};
   for (int i = 0; i < ndata.size(); ++i) {
     auto &trainFld = spec->fields[i];
     if (trainFld.weight == 0) {

@@ -51,31 +51,7 @@ Status OutputManager::kvListField(StringPiece name, KVListField *result) const {
   return Status::Ok();
 }
 
-bool OutputManager::fillEntry(EntryPtr ptr,
-                              util::MutableArraySlice<i32> entries) const {
-  if (ptr.isSpecial()) {
-    auto node = xtra_->node(ptr);
-    if (node == nullptr) {
-      return false;
-    }
-    if (node->header.type == ExtraNodeType::Unknown) {
-      auto data = xtra_->nodeContent(node);
-      std::copy(data.begin(), data.end(), entries.begin());
-      return true;
-    }
-  } else {
-    auto entry = entries_.entryAtPtr(ptr.dicPtr());
-    entry.fill(entries, entries.size());
-    return true;
-  }
-  return false;
-}
-
-NodeWalker OutputManager::nodeWalker() const {
-  auto size = (size_t)entries_.entrySize();
-  util::MutableArraySlice<i32> slice{alloc_->allocateArray<i32>(size), size};
-  return NodeWalker{slice};
-}
+NodeWalker OutputManager::nodeWalker() const { return NodeWalker{}; }
 
 bool OutputManager::locate(LatticeNodePtr ptr, NodeWalker *result) const {
   auto bnd = lattice_->boundary(ptr.boundary);
@@ -85,46 +61,39 @@ bool OutputManager::locate(LatticeNodePtr ptr, NodeWalker *result) const {
 
 bool OutputManager::locate(EntryPtr ptr, NodeWalker *result) const {
   result->mgr_ = this;
-  result->status_ = NodeLookupStatus::Failure;
+  result->current_ = EntryPtr::Invalid();
+
+  result->buffer_.setCounts(static_cast<u32>(entries_.numFeatures()),
+                            static_cast<u32>(entries_.numData()));
+
   if (ptr.isSpecial()) {
     auto node = xtra_->node(ptr);
     if (node == nullptr) {
       return false;
     }
-    if (node->header.type == ExtraNodeType::Alias) {
-      result->status_ = NodeLookupStatus::Multiple;
-      auto &hdr = node->header.alias;
-      result->remaining_ = (i32)hdr.dictionaryNodes.size();
-      result->nodes_ = hdr.dictionaryNodes;
-      return true;
-    }
 
     if (node->header.type == ExtraNodeType::Unknown) {
-      result->status_ = NodeLookupStatus::Single;
-      result->remaining_ = 1;
-      result->current_ = ptr;
+      result->current_ = node->header.unk.templatePtr;
+      result->buffer_.fillFromStorage(result->current_,
+                                      this->entries_.entryData());
       auto data = xtra_->nodeContent(node);
-      std::copy(data.begin(), data.end(), result->values_.begin());
+      result->buffer_.overwriteFeaturesWith(data);
       return true;
     }
 
   } else {
-    auto entry = entries_.entryAtPtr(ptr.dicPtr());
-    entry.fill(result->values_, result->values_.size());
-    result->remaining_ = 1;
-    result->status_ = NodeLookupStatus::Single;
     result->current_ = ptr;
+    result->buffer_.fillFromStorage(result->current_,
+                                    this->entries_.entryData());
     return true;
   }
   return false;
 }
 
-OutputManager::OutputManager(util::memory::PoolAlloc *alloc,
-                             const ExtraNodesContext *xtra,
+OutputManager::OutputManager(const ExtraNodesContext *xtra,
                              const dic::DictionaryHolder *holder,
                              const Lattice *lattice)
-    : alloc_(alloc),
-      xtra_(xtra),
+    : xtra_(xtra),
       holder_(holder),
       entries_{holder->entries()},
       lattice_(lattice) {}
@@ -133,12 +102,6 @@ i32 OutputManager::valueOfUnkPlaceholder(EntryPtr eptr,
                                          i32 placeholderIdx) const {
   JPP_DCHECK(eptr.isSpecial());
   return xtra_->placeholderData(eptr, placeholderIdx);
-}
-
-bool NodeWalker::handleMultiple() {
-  EntryPtr eptr{nodes_.at(nodes_.size() - (remaining_ + 1))};
-  current_ = eptr;
-  return mgr_->fillEntry(eptr, values_);
 }
 
 StringPiece StringField::operator[](const NodeWalker &node) const {

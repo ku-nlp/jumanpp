@@ -53,6 +53,11 @@ class EntryPtr {
         static_cast<i32>((std::numeric_limits<i32>::min() + 2) & 0xffff'fffe)};
   }
 
+  static constexpr EntryPtr Invalid() {
+    return EntryPtr{
+        static_cast<i32>((std::numeric_limits<i32>::min() + 4) & 0xffff'fffe)};
+  }
+
   constexpr inline i32 rawValue() const { return value_; }
 
   constexpr inline bool operator==(const EntryPtr& o) const {

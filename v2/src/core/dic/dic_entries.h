@@ -18,9 +18,9 @@ namespace core {
 namespace dic {
 
 class DicEntryBuffer {
-  u32 numFeatures_;
-  u32 numData_;
-  i32 fieldBuffer_[JPP_MAX_DIC_FIELDS];
+  u32 numFeatures_ = 0;
+  u32 numData_ = 0;
+  i32 featureBuffer_[JPP_MAX_DIC_FIELDS];
   i32 dataBuffer_[JPP_MAX_DIC_FIELDS];
   impl::IntListTraversal remainingData_;
 
@@ -30,12 +30,12 @@ class DicEntryBuffer {
   DicEntryBuffer() = default;
 
   util::ArraySlice<i32> features() const {
-    return util::ArraySlice<i32>{fieldBuffer_, numFeatures_};
+    return util::ArraySlice<i32>{featureBuffer_, numFeatures_};
   }
 
   util::ArraySlice<i32> data() const {
     if (remainingData_.size() == 0) {
-      return util::ArraySlice<i32>{fieldBuffer_ + numFeatures_, numData_};
+      return util::ArraySlice<i32>{featureBuffer_ + numFeatures_, numData_};
     }
 
     return util::ArraySlice<i32>{dataBuffer_, numData_};
@@ -53,6 +53,53 @@ class DicEntryBuffer {
 
     auto res = remainingData_.fill(dataBuffer_, numData_);
     return res == numData_;
+  }
+
+  void setCounts(u32 numFeatures, u32 numData) {
+    numFeatures_ = numFeatures;
+    numData_ = numData;
+  }
+
+  u32 numFeatures() const { return numFeatures_; }
+  u32 numData() const { return numData_; }
+  i32 remaining() const {
+    if (remainingData_.size() == 0) {
+      return dataBuffer_[0];
+    } else {
+      return remainingData_.remaining() / numData_;
+    }
+  }
+
+  bool fillFromStorage(EntryPtr ptr, const impl::IntStorageReader& entryData) {
+    if (ptr.isAlias()) {
+      auto totalCnt = numFeatures_ + 1;
+      auto actualData = entryData.rawWithLimit(ptr.dicPtr(), totalCnt);
+      auto num = actualData.fill(featureBuffer_, totalCnt);
+      if (num < totalCnt) {
+        return false;
+      }
+      auto numAlias = featureBuffer_[numFeatures_];
+      auto dataCnt = numData_ * numAlias;
+      remainingData_ = entryData.rawWithLimit(actualData.pointer(), dataCnt);
+    } else {
+      auto totalCnt = numFeatures_ + numData_;
+      auto actualData = entryData.rawWithLimit(ptr.dicPtr(), totalCnt);
+      auto num = actualData.fill(featureBuffer_, totalCnt);
+      if (num < totalCnt) {
+        return false;
+      }
+      remainingData_.clear();
+      dataBuffer_[0] = 1;
+    }
+
+    return true;
+  }
+
+  void overwriteFeaturesWith(util::ArraySlice<i32> newFeatures) {
+    JPP_DCHECK_LT(newFeatures.size(), JPP_MAX_DIC_FIELDS);
+    for (int i = 0; i < newFeatures.size(); ++i) {
+      featureBuffer_[i] = newFeatures[i];
+    }
   }
 };
 
@@ -87,35 +134,10 @@ class IndexedEntries {
 
   bool fillEntryData(DicEntryBuffer* result) {
     JPP_DCHECK(entries_.didRead());
-
-    result->numFeatures_ = static_cast<u32>(numFeatures_);
-    result->numData_ = static_cast<u32>(numData_);
-
+    result->setCounts(static_cast<u32>(numFeatures_),
+                      static_cast<u32>(numData_));
     auto ptr = currentPtr();
-
-    if (ptr.isAlias()) {
-      auto totalCnt = numFeatures_ + 1;
-      auto actualData = entryData_.rawWithLimit(ptr.dicPtr(), totalCnt);
-      auto num = actualData.fill(result->fieldBuffer_, totalCnt);
-      if (num < totalCnt) {
-        return false;
-      }
-      auto numAlias = result->fieldBuffer_[numFeatures_];
-      auto dataCnt = numData_ * numAlias;
-      result->remainingData_ =
-          entryData_.rawWithLimit(actualData.pointer(), dataCnt);
-    } else {
-      auto totalCnt = numFeatures_ + numData_;
-      auto actualData = entryData_.rawWithLimit(ptr.dicPtr(), totalCnt);
-      auto num = actualData.fill(result->fieldBuffer_, totalCnt);
-      if (num < totalCnt) {
-        return false;
-      }
-      result->remainingData_.clear();
-      result->dataBuffer_[0] = 1;
-    }
-
-    return true;
+    return result->fillFromStorage(ptr, entryData_);
   }
 };
 
@@ -152,7 +174,9 @@ class DictionaryEntries {
  public:
   explicit DictionaryEntries(const EntriesHolder* data_) noexcept
       : data_(data_) {}
-  i32 entrySize() const { return static_cast<i32>(data_->numFeatures); }
+  i32 numFeatures() const { return static_cast<i32>(data_->numFeatures); }
+  i32 numData() const { return static_cast<i32>(data_->numData); }
+
   IndexTraversal traversal() const { return IndexTraversal(data_); }
   DoubleArrayTraversal doubleArrayTraversal() const {
     return data_->trie.traversal();
@@ -169,6 +193,8 @@ class DictionaryEntries {
     auto rdr = data_->entries.rawWithLimit(ptr, data_->numFeatures);
     return rdr;
   }
+
+  const impl::IntStorageReader& entryData() const { return data_->entries; }
 };
 
 }  // namespace dic

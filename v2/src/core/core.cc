@@ -10,7 +10,7 @@ namespace core {
 CoreHolder::CoreHolder(const RuntimeInfo &runtime,
                        const dic::DictionaryHolder &dic)
     : runtime_{runtime}, dic_{dic} {
-  latticeCfg_.entrySize = dic.entries().entrySize();
+  latticeCfg_.entrySize = dic.entries().numFeatures();
   latticeCfg_.numPrimitiveFeatures =
       runtime.features.primitive.size() + runtime.features.compute.size();
   latticeCfg_.numFeaturePatterns = runtime.features.patterns.size();

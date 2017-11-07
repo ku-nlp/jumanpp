@@ -29,40 +29,36 @@ enum class NodeLookupStatus { Failure, Single, Multiple };
 class OutputManager;
 
 class NodeWalker {
-  NodeLookupStatus status_;
-  util::MutableArraySlice<i32> values_;
-  util::ArraySlice<i32> nodes_;
-  i32 remaining_;
+  dic::DicEntryBuffer buffer_;
   const OutputManager* mgr_;
-  EntryPtr current_{EntryPtr::EOS()};
+  EntryPtr current_ = EntryPtr::Invalid();
+
   friend class OutputManager;
 
-  bool handleMultiple();
-
  public:
-  NodeWalker(util::MutableArraySlice<i32> v)
-      : status_{NodeLookupStatus::Failure}, values_{v}, remaining_{0} {}
+  NodeWalker() = default;
 
-  i32 remaining() const { return remaining_; }
+  i32 remaining() const { return buffer_.remaining(); }
 
-  bool next() {
-    --remaining_;
-    if (remaining_ < 0) return false;
-    if (status_ == NodeLookupStatus::Multiple) {
-      handleMultiple();
-    }
-    return remaining_ >= 0;
-  }
+  bool next() { return buffer_.nextData(); }
 
   bool valueOf(i32 fieldIdx, i32* result) const {
     if (!isSuccess()) return false;
-    *result = values_.at(fieldIdx);
-    return true;
+    if (fieldIdx < buffer_.numFeatures()) {
+      *result = buffer_.features().at(fieldIdx);
+      return true;
+    }
+    fieldIdx -= buffer_.numFeatures();
+    if (fieldIdx < buffer_.numData()) {
+      *result = buffer_.data().at(fieldIdx);
+      return true;
+    }
+    return false;
   }
 
   EntryPtr eptr() const { return current_; }
 
-  bool isSuccess() const { return status_ != NodeLookupStatus::Failure; }
+  bool isSuccess() const { return current_ != EntryPtr::Invalid(); }
 };
 
 class StringField {
@@ -172,18 +168,15 @@ class KVListField {
 };
 
 class OutputManager {
-  util::memory::PoolAlloc* alloc_;
   const ExtraNodesContext* xtra_;
   const dic::DictionaryHolder* holder_;
   dic::DictionaryEntries entries_;
   const Lattice* lattice_;
 
-  bool fillEntry(EntryPtr ptr, util::MutableArraySlice<i32> entries) const;
-
   friend class NodeWalker;
 
  public:
-  OutputManager(util::memory::PoolAlloc* alloc, const ExtraNodesContext* xtra,
+  OutputManager(const ExtraNodesContext* xtra,
                 const dic::DictionaryHolder* holder, const Lattice* lattice);
 
   bool locate(LatticeNodePtr ptr, NodeWalker* result) const;
