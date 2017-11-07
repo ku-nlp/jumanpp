@@ -197,7 +197,7 @@ void LatticeCompactor::computeHashes(util::ArraySlice<LatticeNodeSeed> seeds) {
     if (ptr.isSpecial()) {
       util::copy_buffer(xtra->nodeContent(xtra->node(ptr)), result);
     } else {
-      dicEntries.entryAtPtr(ptr.dicPtr()).fill(result, result.size());
+      dicEntries.entryAtPtr(ptr).fill(result, result.size());
     }
 
     hashes[i] = util::hashing::hashIndexedSeq(0x23fa23a12, result, features);

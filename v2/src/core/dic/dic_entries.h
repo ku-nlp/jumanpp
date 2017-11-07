@@ -210,10 +210,7 @@ class DictionaryEntries {
   }
 
   impl::IntListTraversal entryAtPtr(EntryPtr ptr) const {
-    return entryAtPtr(ptr.dicPtr());
-  }
-  impl::IntListTraversal entryAtPtr(i32 ptr) const {
-    auto rdr = data_->entries.rawWithLimit(ptr, data_->numFeatures);
+    auto rdr = data_->entries.rawWithLimit(ptr.dicPtr(), data_->numFeatures);
     return rdr;
   }
 

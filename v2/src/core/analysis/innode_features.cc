@@ -29,7 +29,7 @@ bool InNodeFeatureComputer::importOneEntry(
       return false;
     }
   } else {  // dic node
-    entries_.entryAtPtr(ptr.dicPtr()).fill(result, result.size());
+    entries_.entryAtPtr(ptr).fill(result, result.size());
   }
   return true;
 }
