@@ -97,17 +97,6 @@ class TrainingExampleAdapter {
     }
     return createdNewNode;
   }
-
-  int findNodeInBoundary(analysis::LatticeBoundary *pBoundary,
-                         const ExampleNode &node,
-                         analysis::LatticeNodePtr nodePtr);
-
-  /**
-   * After the Lattice is built, we need to fixup pointers of GoldenPath.
-   * Equivalent node compression could have invalidated our pointers, so
-   * recheck them.
-   */
-  Status repointPathPointers(const FullyAnnotatedExample &ex, GoldenPath *path);
 };
 
 }  // namespace training

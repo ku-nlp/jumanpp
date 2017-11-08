@@ -49,7 +49,7 @@ bool TrainingExampleAdapter::matchDicNodeData(const ExampleNode &node) {
     if (trainFld.weight == 0) {
       continue;
     }
-    auto latticeIdx = trainFld.fieldIdx;
+    auto latticeIdx = trainFld.dicIdx;
     JPP_DCHECK_IN(latticeIdx, 0, entryBuffer.size());
     if (ndata.at(trainFld.number) != entryBuffer[latticeIdx]) {
       return false;
@@ -111,67 +111,8 @@ EntryPtr TrainingExampleAdapter::makeUnkTrainingNode(const ExampleNode &node) {
   }
   unk->header.unk.contentHash = contHash;
   unk->header.unk.surface = node.surface;
+  unk->header.unk.templatePtr = EntryPtr{0};
   return unk->ptr();
-}
-
-int TrainingExampleAdapter::findNodeInBoundary(
-    analysis::LatticeBoundary *pBoundary, const ExampleNode &node,
-    analysis::LatticeNodePtr nodePtr) {
-  int start = std::min<int>(pBoundary->localNodeCount() - 1, nodePtr.position);
-
-  auto contentHash = analysis::hashUnkString(node.surface);
-  auto &exdata = spec->fields;
-
-  for (int i = start; i >= 0; --i) {
-    auto data = pBoundary->starts()->entryData().row(i);
-    for (int j = 0; j < exdata.size(); ++j) {
-      auto &fldInfo = exdata[j];
-      if (fldInfo.weight == 0) {
-        continue;
-      }
-      auto idx = fldInfo.fieldIdx;
-      auto latticeItem = data[idx];
-      i32 refItem = 0;
-      if (latticeItem < 0) {
-        refItem = contentHash;
-      } else {
-        refItem = node.data.at(fldInfo.number);
-      }
-      if (latticeItem != refItem) {
-        goto nextItem;
-      }
-    }
-    return i;
-  nextItem:;
-  }
-
-  return -1;
-}
-
-Status TrainingExampleAdapter::repointPathPointers(
-    const FullyAnnotatedExample &ex, GoldenPath *path) {
-  for (int i = 0; i < ex.numNodes(); ++i) {
-    auto exNode = ex.nodeAt(i);
-    auto ptr = path->nodes().at(i);
-    auto bnd = lattice->boundary(ptr.boundary);
-    JPP_DCHECK_EQ(bnd->localNodeCount(),
-                  latticeBuilder->infoAt(ptr.boundary - 2).startCount);
-    int idxOf = findNodeInBoundary(bnd, exNode, ptr);
-    if (idxOf == -1) {
-      LOG_TRACE() << "NODE=" << VOut(exNode.data);
-
-      auto sts = bnd->starts();
-      for (int j = 0; j < sts->arraySize(); ++j) {
-        auto entr = sts->entryData().row(j);
-        LOG_TRACE() << "LATTICE[" << j << "]=" << VOut(entr);
-      }
-
-      return Status::InvalidState()
-             << "could not find gold node in boundary #" << ptr.boundary;
-    }
-    path->fixBoundaryPos(i, idxOf);
-  }
-  return Status::Ok();
 }
 
 }  // namespace training

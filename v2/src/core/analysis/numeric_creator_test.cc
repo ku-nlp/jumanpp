@@ -21,10 +21,11 @@ class NumericTestEnv {
   NumericTestEnv(StringPiece csvData) {
     tenv.spec([](dsl::ModelSpecBuilder& specBldr) {
       auto& a = specBldr.field(1, "f1").strings().trieIndex();
-      specBldr.field(2, "f2").strings();
+      auto& b = specBldr.field(2, "f2").strings();
       specBldr.unk("numeric", 1)
           .numeric(chars::CharacterClass::FAMILY_DIGITS)  // 仕様を要検討
           .outputTo({a});
+      specBldr.unigram({a, b});
     });
     CHECK(tenv.originalSpec.unkCreators.size() == 1);
     tenv.importDic(csvData);

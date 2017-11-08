@@ -9,23 +9,26 @@ namespace {
 class GoldExample2Env {
  protected:
   testing::TestEnv env;
-  AnalyzerMethods<4> am;
+  AnalyzerMethods am;
 
  public:
   GoldExample2Env(StringPiece dic, bool katakanaUnks = false) {
     env.beamSize = 3;
     env.spec([katakanaUnks](core::spec::dsl::ModelSpecBuilder& bldr) {
       auto& a = bldr.field(1, "a").strings().trieIndex();
-      auto& b = bldr.field(2, "d").strings();
-      auto& c = bldr.field(3, "b").strings().stringStorage(b);
-      auto& d = bldr.field(4, "c").strings().stringStorage(b);
-      bldr.unigram({a, b});
+      auto& d = bldr.field(2, "d").strings();
+      auto& b = bldr.field(3, "b").strings().stringStorage(d);
+      auto& c = bldr.field(4, "c").strings().stringStorage(d);
+      bldr.unigram({a});
+      bldr.unigram({d});
+      bldr.unigram({c});
+      bldr.unigram({a, d});
       bldr.bigram({a}, {a});
-      bldr.bigram({b}, {b});
-      bldr.bigram({a, b}, {a, b});
+      bldr.bigram({d}, {d});
       bldr.bigram({a, d}, {a, d});
+      bldr.bigram({a, c}, {a, c});
       bldr.trigram({a}, {a}, {a});
-      bldr.train().field(d, 1.0f).field(b, 1.0f).field(c, 0.0f).field(a, 1.0f);
+      bldr.train().field(c, 1.0f).field(d, 1.0f).field(b, 0.0f).field(a, 1.0f);
 
       if (katakanaUnks) {
         bldr.unk("katakana", 1)
@@ -52,7 +55,7 @@ class GoldExample2Env {
 };
 }  // namespace
 
-TEST_CASE("can read simple example with difficult conditions") {
+TEST_CASE("can read simple example with aliased node") {
   StringPiece dic = "X,X,Y,Z\nもも,1,a,A\nも,2,b,B\n";
   StringPiece ex = "A_1_X_もも B_2_Y_も A_1_Z_もも # test\n";
   GoldExample2Env env{dic};
@@ -76,7 +79,6 @@ TEST_CASE("can read simple example with difficult conditions") {
   GoldenPath gpath;
   REQUIRE_FALSE(adapter.ensureNodes(exobj, &gpath));
   REQUIRE_OK(anaImpl->buildLattice());
-  REQUIRE_OK(adapter.repointPathPointers(exobj, &gpath));
   auto nodes = gpath.nodes();
   CHECK(env.firstNode(nodes[0]) == (ExampleData{"もも", "a", "A"}));
   CHECK(env.firstNode(nodes[1]) == (ExampleData{"も", "b", "B"}));
@@ -105,10 +107,6 @@ TEST_CASE("can read simple example with hidden node") {
   GoldenPath gpath;
   REQUIRE_FALSE(adapter.ensureNodes(exobj, &gpath));
   REQUIRE_OK(anaImpl->buildLattice());
-  REQUIRE_OK(adapter.repointPathPointers(exobj, &gpath));
-  auto xnodes = anaImpl->extraNodesContext()->node(core::EntryPtr{-1});
-  CHECK(xnodes->header.type == ExtraNodeType::Alias);
-  CHECK(xnodes->header.alias.dictionaryNodes.size() == 2);
   auto nodes = gpath.nodes();
   CHECK(env.firstNode(nodes[0]) == (ExampleData{"もも", "a", "A"}));
   CHECK(env.firstNode(nodes[1]) == (ExampleData{"も", "c", "B"}));

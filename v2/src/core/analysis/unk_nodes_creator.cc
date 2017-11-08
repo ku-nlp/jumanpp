@@ -143,27 +143,27 @@ EntryPtr UnkNodesContext::makePtr(StringPiece surface,
 
 bool UnkNodesContext::dicPatternMatches(const UnkNodeConfig& conf,
                                         dic::IndexedEntries entries) const {
-  auto data = conf.base.data();
-  i32 entryBufferRaw[JPP_MAX_DIC_FIELDS];
-  util::MutableArraySlice<i32> entryBuffer(entryBufferRaw, data.size());
-  const auto& copy = conf.replaceWithSurface;
+  auto baseData = conf.base.data();
+  dic::DicEntryBuffer buffer;
 
-  JPP_DCHECK(false);
-  while (entries.fillEntryData(nullptr)) {
-    int copyIdx = 0;
-    for (int i = 0; i < data.size(); ++i) {
-      if (copyIdx < copy.size() && copy[copyIdx] == i) {
-        copyIdx += 1;
-        continue;
-      }
-      if (data.at(i) != entryBuffer.at(i)) {
+  while (entries.readOnePtr()) {
+    if (!entries.fillEntryData(&buffer)) {
+      JPP_DCHECK(false);
+      LOG_WARN() << "FAILED TO READ DIC ENTRY, EPTR="
+                 << entries.currentPtr().rawValue();
+      return true;
+    }
+
+    auto entryData = buffer.features();
+
+    for (auto idx : conf.patternFields) {
+      if (entryData.at(idx) != baseData.at(idx)) {
         goto nextWord;
       }
     }
     return true;
   nextWord:;
   }
-
   return false;
 }
 
@@ -176,6 +176,14 @@ i32 hashUnkString(StringPiece sp) {
   return hashValue;
 }
 
+void UnkNodeConfig::fillPatternFields() {
+  for (int i = 0; i < base.data().size(); ++i) {
+    if (std::find(replaceWithSurface.begin(), replaceWithSurface.end(), i) ==
+        replaceWithSurface.end()) {
+      patternFields.push_back(i);
+    }
+  }
+}
 }  // namespace analysis
 }  // namespace core
 }  // namespace jumanpp

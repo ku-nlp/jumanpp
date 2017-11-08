@@ -139,6 +139,7 @@ class PrimFeatureTestEnv {
     i32 i = 0;
     for (auto& ninfo : starts->nodeInfo()) {
       REQUIRE(output.locate(ninfo.entryPtr(), &walker));
+      REQUIRE(walker.next());
       auto cont = flda[walker];
       if (cont == surface) {
         if (x != EntryPtr::EOS()) {
@@ -156,6 +157,8 @@ class PrimFeatureTestEnv {
     return makeNode(x, LatticeNodePtr::make(bndIdx, pos));
   }
 
+  const OutputManager& output() const { return tenv.analyzer->output(); }
+
   Node uniqueNode(StringPiece af, StringPiece bf, i32 position) {
     CAPTURE(af);
     CAPTURE(bf);
@@ -170,6 +173,7 @@ class PrimFeatureTestEnv {
     i32 i = 0;
     for (auto& ninfo : starts->nodeInfo()) {
       REQUIRE(output.locate(ninfo.entryPtr(), &walker));
+      REQUIRE(walker.next());
       auto cont = flda[walker];
       auto nodefb = fldb[walker];
       if (cont == af && bf == nodefb) {

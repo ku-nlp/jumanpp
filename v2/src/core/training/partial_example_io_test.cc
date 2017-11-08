@@ -10,7 +10,7 @@ namespace {
 class GoldExample2Env {
  protected:
   testing::TestEnv env;
-  AnalyzerMethods<4> am;
+  AnalyzerMethods am;
 
  public:
   GoldExample2Env(StringPiece dic, bool katakanaUnks = false) {
@@ -20,6 +20,10 @@ class GoldExample2Env {
       auto& b = bldr.field(2, "d").strings();
       auto& c = bldr.field(3, "b").strings().stringStorage(b);
       auto& d = bldr.field(4, "c").strings().stringStorage(b);
+      bldr.unigram({a});
+      bldr.unigram({b});
+      bldr.unigram({c});
+      bldr.unigram({d});
       bldr.unigram({a, b});
       bldr.bigram({a}, {a});
       bldr.bigram({b}, {b});

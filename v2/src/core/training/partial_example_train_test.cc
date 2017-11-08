@@ -95,12 +95,13 @@ TEST_CASE("correctly computes matching nodes") {
 }
 
 TEST_CASE("can compute loss/features from a simple example bnds/words") {
-  TrainerEnv env{"UNK,N,5\nもも,N,0\nも,PRT,1\nモ,PRT,2"};
-  env.parseMrph("\tもも\nも\n\tもも\n\tもも\nも\n\n");
+  TrainerEnv env{"UNK,N,5\nもも,N,0\nも,PRT,1\nも,PRA,2"};
+  env.parseMrph("\tもも\nも\n\tもも\n\tもも\n\tも\tb:PRT\n\tも\tb:PRA\n\n");
   CHECK(env.trainer.prepare());
   SoftConfidenceWeighted scw{TrainerEnv::testConf()};
   CHECK(env.trainer.compute(scw.scorers()));
   CHECK(env.trainer.loss() > 0);
+  // env.dumpTrainers("/tmp/jpp-dbg", 0);
   double total = 0;
   for (auto& e : env.trainer.featureDiff()) {
     total += e.score;
@@ -133,7 +134,7 @@ TEST_CASE("can decrease loss/features from a simple example with tags") {
     // LOG_DEBUG() << "LOSS: " << env.trainer.loss();
     scw.update(env.trainer.loss(), env.trainer.featureDiff());
     CHECK(env.trainer.compute(scw.scorers()));
-    // env.dumpTrainers("/tmp/jpp-debug", iter);
+    // env.dumpTrainers("/tmp/jpp-dbg", iter);
     if (env.trainer.loss() == 0) {
       break;
     }

@@ -94,19 +94,22 @@ class DicEntryBuffer {
   }
 
   bool fillFromStorage(EntryPtr ptr, const impl::IntStorageReader& entryData) {
+    auto dicPtr = ptr.dicPtr();
     if (ptr.isAlias()) {
       auto totalCnt = numFeatures_ + 1;
-      auto actualData = entryData.rawWithLimit(ptr.dicPtr(), totalCnt);
+      auto actualData = entryData.rawWithLimit(dicPtr, totalCnt);
       auto num = actualData.fill(featureBuffer_, totalCnt);
       if (num < totalCnt) {
         return false;
       }
       auto numAlias = featureBuffer_[numFeatures_];
       auto dataCnt = numData_ * numAlias;
-      remainingData_ = entryData.rawWithLimit(actualData.pointer(), dataCnt);
+      auto readBytes = actualData.numReadBytes();
+      auto dataPtr = dicPtr + readBytes;
+      remainingData_ = entryData.rawWithLimit(dataPtr, dataCnt);
     } else {
       auto totalCnt = numFeatures_ + numData_;
-      auto actualData = entryData.rawWithLimit(ptr.dicPtr(), totalCnt);
+      auto actualData = entryData.rawWithLimit(dicPtr, totalCnt);
       auto num = actualData.fill(featureBuffer_, totalCnt);
       if (num < totalCnt) {
         return false;

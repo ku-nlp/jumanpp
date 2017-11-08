@@ -4,6 +4,7 @@
 
 #include "entry_builder.h"
 #include "dic_build_detail.h"
+#include "util/logging.hpp"
 
 namespace jumanpp {
 namespace core {

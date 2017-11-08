@@ -24,8 +24,6 @@ namespace analysis {
 
 class ExtraNodesContext;
 
-enum class NodeLookupStatus { Failure, Single, Multiple };
-
 class OutputManager;
 
 class NodeWalker {
@@ -44,16 +42,14 @@ class NodeWalker {
 
   bool valueOf(i32 fieldIdx, i32* result) const {
     if (!isSuccess()) return false;
-    if (fieldIdx < buffer_.numFeatures()) {
+    if (fieldIdx >= 0) {
       *result = buffer_.features().at(fieldIdx);
       return true;
-    }
-    fieldIdx -= buffer_.numFeatures();
-    if (fieldIdx < buffer_.numData()) {
-      *result = buffer_.data().at(fieldIdx);
+    } else {
+      auto idx = ~fieldIdx;
+      *result = buffer_.data().at(idx);
       return true;
     }
-    return false;
   }
 
   EntryPtr eptr() const { return current_; }

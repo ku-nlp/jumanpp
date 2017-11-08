@@ -25,7 +25,8 @@ class NodeCreatorTestEnv {
  public:
   NodeCreatorTestEnv(StringPiece csvData) {
     tenv.spec([](dsl::ModelSpecBuilder& specBldr) {
-      specBldr.field(1, "a").strings().trieIndex();
+      auto& a = specBldr.field(1, "a").strings().trieIndex();
+      specBldr.unigram({a});
     });
     tenv.importDic(csvData);
     REQUIRE_OK(tenv.analyzer->output().stringField("a", &fld));
@@ -80,8 +81,9 @@ class NodeCreatorTestEnv2 {
  public:
   NodeCreatorTestEnv2(StringPiece csvData) {
     tenv.spec([](dsl::ModelSpecBuilder& specBldr) {
-      specBldr.field(1, "a").strings().trieIndex();
-      specBldr.field(2, "b").strings();
+      auto& a = specBldr.field(1, "a").strings().trieIndex();
+      auto& b = specBldr.field(2, "b").strings();
+      specBldr.unigram({a, b});
     });
     tenv.importDic(csvData);
     REQUIRE_OK(tenv.analyzer->output().stringField("a", &flda));

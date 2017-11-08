@@ -94,7 +94,7 @@ class IntListTraversal {
     return nread;
   }
 
-  i32 pointer() const noexcept { return parser_.position(); }
+  i32 numReadBytes() const noexcept { return parser_.numReadBytes(); }
 
   void clear() {
     length_ = 0;
@@ -208,7 +208,7 @@ class StringStorageTraversal {
   i32 position() const noexcept { return position_; }
 
   bool next(StringPiece* result) noexcept {
-    position_ = parser_.position();
+    position_ = parser_.numReadBytes();
     bool ret = parser_.readStringPiece(result);
     return ret;
   }

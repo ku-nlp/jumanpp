@@ -155,6 +155,7 @@ struct ComputationFeatureDescriptor {
 
 struct PatternFeatureDescriptor {
   i32 index;
+  i32 usage;
   std::vector<i32> references;
 };
 
@@ -173,6 +174,7 @@ struct FeaturesSpec {
   i32 totalPrimitives = InvalidInt;
   i32 numDicFeatures = InvalidInt;
   i32 numDicData = InvalidInt;
+  i32 numUniOnlyPats = InvalidInt;
 };
 
 struct TrainingField {

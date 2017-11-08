@@ -58,6 +58,7 @@ class UnkMakerFactory {
       UnkNodeConfig cfg{rdr.readEntry(eptr), eptr};
       util::copy_insert(x.replaceFields, cfg.replaceWithSurface);
       handlePrefixIndex(x, &cfg);
+      cfg.fillPatternFields();
 
       // resolve processor itself
       switch (x.type) {

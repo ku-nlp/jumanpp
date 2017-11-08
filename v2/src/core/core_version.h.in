@@ -1,0 +1,15 @@
+#pragma once
+#ifndef __JUMANPP_CORE_VERSION_H__
+#define __JUMANPP_CORE_VERSION_H__
+
+#include <util/string_piece.h>
+
+namespace jumanpp {
+namespace core {
+
+constexpr const StringPiece JPP_VERSION_STRING { "@JUMANPP_FULL_VERSION@" };
+
+}
+}
+
+#endif //__JUMANPP_CORE_VERSION_H__

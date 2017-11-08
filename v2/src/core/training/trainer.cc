@@ -42,8 +42,6 @@ Status Trainer::prepare() {
   }
 
   JPP_RETURN_IF_ERROR(analyzer->buildLattice());
-  JPP_RETURN_IF_ERROR(
-      adapter_.repointPathPointers(example_, &loss_.goldPath()));
   JPP_RETURN_IF_ERROR(analyzer->bootstrapAnalysis());
   JPP_RETURN_IF_ERROR(loss_.resolveGold());
   return Status::Ok();

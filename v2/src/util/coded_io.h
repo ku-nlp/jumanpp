@@ -174,7 +174,7 @@ class CodedBufferParser {
     return static_cast<size_t>(end_ - position_);
   };
 
-  i32 position() const noexcept {
+  i32 numReadBytes() const noexcept {
     return static_cast<i32>(position_ - begin_);
   };
 

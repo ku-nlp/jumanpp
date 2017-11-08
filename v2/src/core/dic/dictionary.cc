@@ -24,6 +24,7 @@ Status FieldsHolder::load(const BuiltDictionary& dic) {
     auto& f = dic.fieldData[index];
     auto& sf = dic.spec.dictionary.fields[f.specIndex];
     DictionaryField df{index,
+                       sf.dicIndex,
                        sf.name,
                        sf.fieldType,
                        impl::IntStorageReader{f.fieldContent},

@@ -10,6 +10,7 @@ jpp_core_files(core_srcs
 
 jpp_core_files(core_tsrcs
   darts_trie_test.cc
+  dic_deduplication_test.cc
   dictionary_test.cc
   field_import_test.cc
   field_reader_test.cc

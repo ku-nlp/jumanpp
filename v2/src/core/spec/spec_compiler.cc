@@ -216,6 +216,8 @@ void SpecCompiler::fillNgramFeatures() {
   for (auto& ngram : ngrams) {
     res.emplace_back();
     auto& ngramRes = res.back();
+    ngramRes.index = number;
+    ++number;
     for (auto& pos : ngram->data) {
       impl::DicEntryFeatures f;
       for (auto& access : pos) {
@@ -225,9 +227,7 @@ void SpecCompiler::fillNgramFeatures() {
       }
       auto& info = patternByCombo_[f];
       JPP_DCHECK_NE(info.number, -1);
-      ngramRes.index = number;
       ngramRes.references.push_back(info.number);
-      ++number;
     }
   }
 }
@@ -495,13 +495,21 @@ Status SpecCompiler::fillRemainingFeatures() {
   auto& pats = resFeatures.pattern;
   pats.resize(patternByCombo_.size());
 
+  i32 onlyUni = 0;
+
   for (auto& pf : patternByCombo_) {
     auto pfId = pf.second.number;
     JPP_DCHECK_IN(pfId, 0, pats.size());
     auto& pat = pats[pfId];
     pat.index = pfId;
+    pat.usage = pf.second.usage;
     util::copy_insert(pf.first.features, pat.references);
+    if (pat.usage == 0x1) {
+      onlyUni += 1;
+    }
   }
+
+  resFeatures.numUniOnlyPats = onlyUni;
 
   return Status::Ok();
 }
@@ -579,7 +587,7 @@ Status SpecCompiler::createTrainSpec() {
   for (int i = 0; i < tr.fields.size(); ++i) {
     auto& f = tr.fields[i];
     auto it = computeByName_.find(f.first.name());
-    if (it == computeByName_.end()) {
+    if (f.second != 0 && it == computeByName_.end()) {
       return JPPS_INVALID_PARAMETER
              << "a feature " << f.first.name()
              << " was specified for training, but no ngram feature uses it";
@@ -677,7 +685,9 @@ void SpecCompiler::buildAliasingSet() {
     std::sort(aset.begin(), aset.end());
   } else {
     for (auto& f : result_->training.fields) {
-      aset.push_back(f.fieldIdx);
+      if (f.weight != 0) {
+        aset.push_back(f.fieldIdx);
+      }
     }
   }
 }

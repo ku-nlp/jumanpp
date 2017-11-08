@@ -27,7 +27,6 @@ TEST_CASE("we can create a testing environment") {
   GoldenPath gpath;
   adapter.ensureNodes(exobj, &gpath);
   REQUIRE_OK(anaImpl->buildLattice());
-  REQUIRE_OK(adapter.repointPathPointers(exobj, &gpath));
   auto nodes = gpath.nodes();
   CHECK(env.firstNode(nodes[0]) == (ExampleData{"もも", "1", "1"}));
   CHECK(env.firstNode(nodes[1]) == (ExampleData{"も", "2", "2"}));
@@ -56,7 +55,6 @@ TEST_CASE("we can create a testing environment with merging nodes") {
   GoldenPath gpath;
   CHECK_FALSE(adapter.ensureNodes(exobj, &gpath));
   REQUIRE_OK(anaImpl->buildLattice());
-  REQUIRE_OK(adapter.repointPathPointers(exobj, &gpath));
   auto nodes = gpath.nodes();
   CHECK(env.firstNode(nodes[0]) == (ExampleData{"もも", "1", "1"}));
   CHECK(env.firstNode(nodes[1]) == (ExampleData{"も", "3", "3"}));
@@ -87,11 +85,10 @@ TEST_CASE("we can create a testing environment with unk nodes") {
   env.anaImpl()->latticeBldr()->sortSeeds();
   CHECK_OK(env.anaImpl()->latticeBldr()->prepare());
   REQUIRE_OK(anaImpl->buildLattice());
-  REQUIRE_OK(adapter.repointPathPointers(exobj, &gpath));
   auto nodes = gpath.nodes();
   CHECK(env.firstNode(nodes[0]) == (ExampleData{"もも", "1", "1"}));
   CHECK(env.firstNode(nodes[1]) == (ExampleData{"も", "2", "2"}));
-  CHECK(env.firstNode(nodes[2]) == (ExampleData{"もも", "3", ""}));
+  CHECK(env.firstNode(nodes[2]) == (ExampleData{"もも", "3", "1"}));
 }
 
 TEST_CASE(
@@ -121,9 +118,8 @@ TEST_CASE(
   CHECK_OK(env.anaImpl()->latticeBldr()->prepare());
   CHECK(env.anaImpl()->latticeBuilder().checkConnectability());
   REQUIRE_OK(anaImpl->buildLattice());
-  REQUIRE_OK(adapter.repointPathPointers(exobj, &gpath));
   auto nodes = gpath.nodes();
   CHECK(env.firstNode(nodes[0]) == (ExampleData{"もも", "1", "1"}));
   CHECK(env.firstNode(nodes[1]) == (ExampleData{"も", "2", "2"}));
-  CHECK(env.firstNode(nodes[2]) == (ExampleData{"うめ", "3", ""}));
+  CHECK(env.firstNode(nodes[2]) == (ExampleData{"うめ", "3", "1"}));
 }

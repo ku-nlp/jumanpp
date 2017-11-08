@@ -105,6 +105,7 @@ void Serialize(Arch &a, ComputationFeatureDescriptor &o) {
 template <typename Arch>
 void Serialize(Arch &a, PatternFeatureDescriptor &o) {
   a &o.index;
+  a &o.usage;
   a &o.references;
 }
 
@@ -125,6 +126,7 @@ void Serialize(Arch &a, FeaturesSpec &o) {
   a &o.totalPrimitives;
   a &o.numDicFeatures;
   a &o.numDicData;
+  a &o.numUniOnlyPats;
 }
 
 template <typename Arch>

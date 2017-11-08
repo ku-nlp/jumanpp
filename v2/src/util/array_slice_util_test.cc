@@ -1,8 +1,6 @@
 #include "array_slice_util.h"
 #include "testing/standalone_test.h"
 
-#include "core/analysis/lattice_builder.h"
-
 TEST_CASE("compact works with ints") {
   SECTION("when erasing first element") {
     std::vector<int> data{1, 5, 8, 12, 31};
@@ -41,9 +39,17 @@ TEST_CASE("compact works with ints") {
   }
 }
 
-using A = jumanpp::core::analysis::LatticeNodeSeed;
+struct A {
+  short i;
+  short j;
+  short k;
 
-A a(short i) { return A{jumanpp::core::EntryPtr{i}, i, i}; }
+  bool operator==(const A& o) const {
+    return std::tie(i, j, k) == std::tie(o.i, o.j, o.k);
+  }
+};
+
+A a(short i) { return A{i, i, i}; }
 
 TEST_CASE("compact works with large lists (4,8)") {
   std::vector<A> data{a(1), a(2),  a(3),  a(4),  a(5),  a(6),  a(7),  a(8),

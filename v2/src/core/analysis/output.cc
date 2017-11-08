@@ -20,7 +20,7 @@ Status OutputManager::stringField(StringPiece name, StringField *result) const {
     return JPPS_INVALID_PARAMETER << "field " << name
                                   << " was not string typed";
   }
-  result->initialize(fld->index, xtra_, fld->strings);
+  result->initialize(fld->idxInEntry, xtra_, fld->strings);
   return Status::Ok();
 }
 
@@ -34,7 +34,7 @@ Status OutputManager::stringListField(StringPiece name,
   if (fld->columnType != spec::FieldType::StringList) {
     return JPPS_INVALID_PARAMETER << "field " << name << " was not stringlist";
   }
-  result->initialize(fld->index, fld->postions, fld->strings);
+  result->initialize(fld->idxInEntry, fld->postions, fld->strings);
   return Status::Ok();
 }
 
@@ -47,7 +47,7 @@ Status OutputManager::kvListField(StringPiece name, KVListField *result) const {
   if (fld->columnType != spec::FieldType::StringKVList) {
     return JPPS_INVALID_PARAMETER << "field " << name << " was not kvlist";
   }
-  result->initialize(fld->index, fld->postions, fld->strings);
+  result->initialize(fld->idxInEntry, fld->postions, fld->strings);
   return Status::Ok();
 }
 

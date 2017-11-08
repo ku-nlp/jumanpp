@@ -5,10 +5,10 @@ configure_file(
   ${jpp_core_cfg_dir}/core_config.h
 )
 
-function(jpp_add_core_objlib NAME SRC)
-  add_library(${NAME} OBJECT ${${SRC}} ${ARGN})
-  target_include_directories(${NAME} PRIVATE ${jpp_core_cfg_dir} ${JPP_SRC_DIR})
-endfunction()
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/core_version.h.in
+  ${jpp_core_cfg_dir}/core_version.h
+)
 
 macro(jpp_core_files NAME)
   foreach (file ${ARGN})
@@ -38,7 +38,8 @@ set(core_srcs
   )
 
 set(core_hdrs
-  ${CMAKE_CURRENT_BINARY_DIR}/core_config.h
+  ${jpp_core_cfg_dir}/core_config.h
+  ${jpp_core_cfg_dir}/core_version.h
   core.h
   core_types.h
   env.h
@@ -54,10 +55,9 @@ set(core_test_srcs
   )
 
 add_library(jpp_core ${core_srcs} ${core_hdrs} ${libs3p_pegtl_headers})
+jpp_test_executable(jpp_core_tests ${core_test_srcs})
 
 target_include_directories(jpp_core PUBLIC ${jpp_core_cfg_dir})
-
-jpp_test_executable(jpp_core_tests ${core_test_srcs})
 
 target_link_libraries(jpp_core jpp_util jpp_rnn)
 target_link_libraries(jpp_core_tests jpp_core jpp_core_train)

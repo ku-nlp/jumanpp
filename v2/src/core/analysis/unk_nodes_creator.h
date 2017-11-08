@@ -21,6 +21,7 @@ struct UnkNodeConfig {
   DictNode base;
   EntryPtr patternPtr;
   std::vector<i32> replaceWithSurface;
+  std::vector<i32> patternFields;
   i32 targetPlaceholder = -1;
 
   void fillElems(util::MutableArraySlice<i32> buffer, i32 data) const {
@@ -31,6 +32,8 @@ struct UnkNodeConfig {
 
   UnkNodeConfig(const DictNode& base, EntryPtr pattern)
       : base(base), patternPtr{pattern} {}
+
+  void fillPatternFields();
 };
 
 i32 hashUnkString(StringPiece sp);

@@ -128,7 +128,7 @@ Status FilesystemModel::load(ModelInfo* info) {
   }
 
   util::serialization::Loader l{
-      rest.slice(cbp.position(), cbp.position() + hdrSize)};
+      rest.slice(cbp.numReadBytes(), cbp.numReadBytes() + hdrSize)};
   ModelInfoRaw mir;
   if (!l.load(&mir)) {
     return Status::InvalidState()
