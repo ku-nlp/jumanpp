@@ -51,8 +51,7 @@ class JumanFormat : public core::OutputFormat {
   util::io::Printer printer;
   core::analysis::AnalysisResult analysisResult;
   core::analysis::AnalysisPath top1;
-  std::array<i32, JumandicNumFields> fieldBuffer;
-  core::analysis::NodeWalker walker{&fieldBuffer};
+  core::analysis::NodeWalker walker;
   JumandicIdResolver idResolver;
 
  public:

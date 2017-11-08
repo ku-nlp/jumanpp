@@ -22,8 +22,7 @@ jumanpp::util::io::Printer& printMaybeQuoteStringList(
 class MdicFormat : public core::OutputFormat {
   JumandicFields flds_;
   util::io::Printer printer_;
-  std::array<i32, JumandicNumFields> fieldBuffer_;
-  core::analysis::NodeWalker walker{&fieldBuffer_};
+  core::analysis::NodeWalker walker;
   util::FlatSet<i32> displayed_;
 
   Status formatNode(i32 nodeRawPtr, const core::analysis::OutputManager& om);

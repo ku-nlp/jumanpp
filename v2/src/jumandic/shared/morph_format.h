@@ -16,8 +16,7 @@ class MorphFormat : public core::OutputFormat {
   util::io::Printer printer_;
   core::analysis::AnalysisResult analysisResult_;
   core::analysis::AnalysisPath top1_;
-  std::array<i32, JumandicNumFields> fieldBuffer_;
-  core::analysis::NodeWalker walker{&fieldBuffer_};
+  core::analysis::NodeWalker walker;
   bool fmrp_;
 
  public:

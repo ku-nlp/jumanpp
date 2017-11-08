@@ -20,7 +20,6 @@ jpp_feature_codegen(
         SPEC_INCLUDE shared/jumandic_spec.h
         SPEC_NAME jumanpp::jumandic::SpecFactory
         LINK jpp_jumandic_spec
-        DIC_FILE ${JPP_TEST_RESOURCE_DIR}/jumandic/jumanpp_minimal.mdic
 )
 
 message(${jpp_jumandic_cg_INCLUDE})

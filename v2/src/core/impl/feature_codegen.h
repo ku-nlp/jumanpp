@@ -6,6 +6,7 @@
 #define JUMANPP_FEATURE_CODEGEN_H
 
 #include "core/features_api.h"
+#include "core/spec/spec_types.h"
 #include "util/codegen.h"
 
 namespace jumanpp {
@@ -21,13 +22,14 @@ struct FeatureCodegenConfig {
 
 class StaticFeatureCodegen {
   FeatureCodegenConfig config_;
+  const spec::AnalysisSpec& spec_;
 
  public:
-  explicit StaticFeatureCodegen(const FeatureCodegenConfig& config);
-  Status writeSource(const std::string& filename,
-                     const FeatureHolder& features);
+  StaticFeatureCodegen(const FeatureCodegenConfig& config,
+                       const spec::AnalysisSpec& spec);
+  Status writeSource(const std::string& filename);
   Status writeHeader(const std::string& filename);
-  Status generateAndWrite(const FeatureHolder& features);
+  Status generateAndWrite();
 };
 
 }  // namespace codegen

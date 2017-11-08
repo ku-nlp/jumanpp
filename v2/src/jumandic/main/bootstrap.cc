@@ -31,14 +31,9 @@ Status importDictionary(StringPiece path, StringPiece target) {
   core::dic::DictionaryHolder holder;
   JPP_RETURN_IF_ERROR(holder.load(builder.result()));
 
-  std::cout << "compiling dynamic features..." << std::flush;
-  core::RuntimeInfo runtime;
-  JPP_RETURN_IF_ERROR(holder.compileRuntimeInfo(builder.spec(), &runtime));
-  std::cout << "done!\n";
-
   core::model::ModelInfo minfo{};
   minfo.parts.emplace_back();
-  JPP_RETURN_IF_ERROR(builder.fillModelPart(runtime, &minfo.parts.back()));
+  JPP_RETURN_IF_ERROR(builder.fillModelPart(&minfo.parts.back()));
 
   std::cout << "saving dictionary...";
   core::model::ModelSaver saver;

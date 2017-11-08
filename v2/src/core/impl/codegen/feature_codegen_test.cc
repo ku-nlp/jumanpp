@@ -57,6 +57,8 @@ struct BenchInput {
   }
 };
 
+#if 0
+
 TEST_CASE("pattern feature produce the same result") {
   TestEnv env;
   env.spec([](ModelSpecBuilder& msb) {
@@ -80,6 +82,8 @@ TEST_CASE("pattern feature produce the same result") {
     CHECK(i1.t0[i] == i2.t0[i]);
   }
 }
+
+#endif
 
 TEST_CASE("full ngram feature values are the same for a small example") {
   TestEnv env;

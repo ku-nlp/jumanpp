@@ -32,36 +32,9 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  jumanpp::core::dic::DictionaryBuilder dbld;
-  s = dbld.importSpec(&spec);
-  s = dbld.importCsv("none", "");
-  if (!s) {
-    std::cerr << "failed to import empty dic: " << s;
-    return 1;
-  }
+  cg::StaticFeatureCodegen sfc{conf, spec};
 
-  jumanpp::core::dic::DictionaryHolder dh;
-  if (!(s = dh.load(dbld.result()))) {
-    std::cerr << "failed to build dicholder " << s;
-    return 1;
-  }
-
-  jumanpp::core::RuntimeInfo runtimeInfo;
-  if (!dh.compileRuntimeInfo(spec, &runtimeInfo)) {
-    return 1;
-  }
-
-  jumanpp::core::CoreHolder ch{runtimeInfo, dh};
-
-  jumanpp::core::features::FeatureHolder fh;
-
-  if (!jumanpp::core::features::makeFeatures(ch, nullptr, &fh)) {
-    return 1;
-  }
-
-  cg::StaticFeatureCodegen sfc{conf};
-
-  s = sfc.generateAndWrite(fh);
+  s = sfc.generateAndWrite();
   if (!s) {
     std::cerr << "failed to create static files for " << conf.filename << ": "
               << s;

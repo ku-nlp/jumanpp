@@ -86,6 +86,8 @@ bool JumanFormat::formatOne(const core::analysis::OutputManager& om,
       printer << "@ ";
     }
 
+    auto fieldBuffer = walker.features();
+
     JumandicPosId rawId{fieldBuffer[1], fieldBuffer[2],
                         fieldBuffer[4],  // conjForm and conjType are reversed
                         fieldBuffer[3]};

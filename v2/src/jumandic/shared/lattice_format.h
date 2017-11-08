@@ -51,8 +51,7 @@ class LatticeFormatInfo {
 class LatticeFormat : public core::OutputFormat {
   JumandicFields flds;
   util::io::Printer printer;
-  std::array<i32, JumandicNumFields> fieldBuffer;
-  core::analysis::NodeWalker walker{&fieldBuffer};
+  core::analysis::NodeWalker walker;
   JumandicIdResolver idResolver;
   LatticeFormatInfo latticeInfo;
 

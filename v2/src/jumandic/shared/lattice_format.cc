@@ -153,6 +153,8 @@ Status LatticeFormat::format(const core::analysis::Analyzer& analyzer,
       printer << f.reading[walker] << '\t';
       printer << f.baseform[walker] << '\t';
 
+      auto fieldBuffer = walker.features();
+
       JumandicPosId rawId{fieldBuffer[1], fieldBuffer[2],
                           fieldBuffer[4],  // conjForm and conjType are reversed
                           fieldBuffer[3]};

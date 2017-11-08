@@ -34,49 +34,9 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  jumanpp::core::dic::DictionaryBuilder dbld;
-  s = dbld.importSpec(&spec);
-  if (argc == 5) {
-    auto inputFile = jumanpp::StringPiece::fromCString(argv[4]);
-    jumanpp::util::FullyMappedFile fmf;
-    s = fmf.open(inputFile);
-    if (!s) {
-      std::cerr << "failed to open raw dictionary file: " << inputFile << "\n";
-      return 1;
-    }
-    s = dbld.importCsv(inputFile, fmf.contents());
-  } else {
-    s = dbld.importCsv("none", "");
-  }
+  cg::StaticFeatureCodegen sfc{conf, spec};
 
-  if (!s) {
-    std::cerr << "failed to import empty dic: " << s;
-    return 1;
-  }
-
-  jumanpp::core::dic::DictionaryHolder dh;
-  if (!(s = dh.load(dbld.result()))) {
-    std::cerr << "failed to build dicholder " << s;
-    return 1;
-  }
-
-  jumanpp::core::RuntimeInfo runtimeInfo;
-  if (!dh.compileRuntimeInfo(spec, &runtimeInfo)) {
-    return 1;
-  }
-
-  jumanpp::core::CoreHolder ch{runtimeInfo, dh};
-
-  jumanpp::core::features::FeatureHolder fh;
-
-  if (!(s = jumanpp::core::features::makeFeatures(ch, nullptr, &fh))) {
-    std::cerr << "failed to make features: " << s;
-    return 1;
-  }
-
-  cg::StaticFeatureCodegen sfc{conf};
-
-  s = sfc.generateAndWrite(fh);
+  s = sfc.generateAndWrite();
   if (!s) {
     std::cerr << "failed to create static files for " << conf.filename << ": " << s;
     return 1;

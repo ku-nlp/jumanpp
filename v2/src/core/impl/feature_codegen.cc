@@ -13,7 +13,7 @@ namespace core {
 namespace features {
 namespace codegen {
 
-Status StaticFeatureCodegen::generateAndWrite(const FeatureHolder& features) {
+Status StaticFeatureCodegen::generateAndWrite() {
   std::string headerName{config_.baseDirectory};
   headerName += '/';
   headerName += config_.filename;
@@ -26,7 +26,7 @@ Status StaticFeatureCodegen::generateAndWrite(const FeatureHolder& features) {
   souceName += config_.filename;
   souceName += ".cc";
 
-  JPP_RETURN_IF_ERROR(writeSource(souceName, features));
+  JPP_RETURN_IF_ERROR(writeSource(souceName));
 
   return Status::Ok();
 }
@@ -46,10 +46,12 @@ Status StaticFeatureCodegen::writeHeader(const std::string& filename) {
         << JPP_TEXT(jumanpp::core::features::NgramFeatureApply*)
         << "ngram() const override;\n"
         << JPP_TEXT(jumanpp::core::features::PartialNgramFeatureApply*)
-        << "ngramPartial() const override;\n"
-        << JPP_TEXT(jumanpp::core::features::PatternFeatureApply*)
-        << "pattern() const override;\n"
-        << "};\n"
+        << "ngramPartial() const override;\n";
+#if 0
+        ofs << JPP_TEXT(jumanpp::core::features::PatternFeatureApply*)
+        << "pattern() const override;\n";
+#endif
+    ofs << "};\n"
         << "} //namespace jumanpp_generated\n";
 
   } catch (std::exception& e) {
@@ -132,8 +134,7 @@ bool outputPatternFeatures(
 }
 #endif
 
-Status StaticFeatureCodegen::writeSource(const std::string& filename,
-                                         const FeatureHolder& features) {
+Status StaticFeatureCodegen::writeSource(const std::string& filename) {
   util::io::Printer p;
 
   p << "#include \"core/impl/feature_impl_combine.h\"\n";
@@ -144,11 +145,17 @@ Status StaticFeatureCodegen::writeSource(const std::string& filename,
 
   std::string ngramName{"NgramFeatureStaticApply_"};
   ngramName += config_.className;
-  bool ngramOk = outputNgramFeatures(p, ngramName, features.ngramDynamic.get());
+  features::impl::NgramDynamicFeatureApply ndfa;
+  features::impl::PartialNgramDynamicFeatureApply ngramPart;
+  for (auto& n : spec_.features.ngram) {
+    JPP_RETURN_IF_ERROR(ndfa.addChild(n));
+    JPP_RETURN_IF_ERROR(ngramPart.addChild(n));
+  }
+
+  bool ngramOk = outputNgramFeatures(p, ngramName, &ndfa);
   std::string partNgramName{"PartNgramFeatureStaticApply_"};
   partNgramName += config_.className;
-  bool partNgramOk = outputPartialNgramFeatures(
-      p, partNgramName, features.ngramPartialDynamic.get());
+  bool partNgramOk = outputPartialNgramFeatures(p, partNgramName, &ngramPart);
   std::string patternName{"PatternFeatureStaticApply_"};
   patternName += config_.className;
   bool patternOk = false;
@@ -186,6 +193,8 @@ Status StaticFeatureCodegen::writeSource(const std::string& filename,
   }
   p << "\n}";
 
+#if 0
+
   p << "\n"
     << JPP_TEXT(jumanpp::core::features::PatternFeatureApply*)
     << config_.className << "::"
@@ -200,6 +209,7 @@ Status StaticFeatureCodegen::writeSource(const std::string& filename,
     }
   }
   p << "\n}";
+#endif
 
   p << "\n} //jumanpp_generated namespace";
 
@@ -213,8 +223,9 @@ Status StaticFeatureCodegen::writeSource(const std::string& filename,
   return Status::Ok();
 }
 
-StaticFeatureCodegen::StaticFeatureCodegen(const FeatureCodegenConfig& config_)
-    : config_(config_) {}
+StaticFeatureCodegen::StaticFeatureCodegen(const FeatureCodegenConfig& config_,
+                                           const spec::AnalysisSpec& spec)
+    : config_(config_), spec_{spec} {}
 
 }  // namespace codegen
 }  // namespace features
