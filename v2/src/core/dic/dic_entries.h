@@ -214,6 +214,12 @@ class DictionaryEntries {
     return rdr;
   }
 
+  bool fillBuffer(EntryPtr eptr, DicEntryBuffer* buffer) const {
+    buffer->setCounts(static_cast<u32>(numFeatures()),
+                      static_cast<u32>(numData()));
+    return buffer->fillFromStorage(eptr, entryData());
+  }
+
   const impl::IntStorageReader& entryData() const { return data_->entries; }
 };
 

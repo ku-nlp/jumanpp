@@ -19,6 +19,7 @@ namespace analysis {
 
 struct UnkNodeConfig {
   DictNode base;
+  EntryPtr patternPtr;
   std::vector<i32> replaceWithSurface;
   i32 targetPlaceholder = -1;
 
@@ -28,7 +29,8 @@ struct UnkNodeConfig {
     }
   }
 
-  UnkNodeConfig(const DictNode& base) : base(base) {}
+  UnkNodeConfig(const DictNode& base, EntryPtr pattern)
+      : base(base), patternPtr{pattern} {}
 };
 
 i32 hashUnkString(StringPiece sp);
@@ -36,10 +38,12 @@ i32 hashUnkString(StringPiece sp);
 class UnkNodesContext {
   ExtraNodesContext* xtra_;
   util::memory::PoolAlloc* alloc_;
+  dic::DictionaryEntries entries_;
 
  public:
-  UnkNodesContext(ExtraNodesContext* xtra, util::memory::PoolAlloc* alloc)
-      : xtra_{xtra}, alloc_{alloc} {}
+  UnkNodesContext(ExtraNodesContext* xtra, util::memory::PoolAlloc* alloc,
+                  dic::DictionaryEntries entries)
+      : xtra_{xtra}, alloc_{alloc}, entries_{entries} {}
 
   util::memory::PoolAlloc* alloc() const { return alloc_; }
 
@@ -47,7 +51,7 @@ class UnkNodesContext {
                    bool notPrefix);
 
   EntryPtr makePtr(StringPiece surface, const UnkNodeConfig& conf,
-                   util::ArraySlice<u32> nodeData, i32 feature = 0);
+                   EntryPtr eptr, i32 feature = 0);
 
   /**
    * Check if any entries in dictionary have non-fillable fields

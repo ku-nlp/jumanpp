@@ -135,14 +135,20 @@ Status MatchListDicFeatureImpl::initialize(
 void MatchListDicFeatureImpl::apply(util::MutableArraySlice<i32> featureData,
                                     const util::CsvReader& csv) const {
   auto data = csv.field(fieldIdx_);
+  if (contains(data)) {
+    featureData.at(target_) |= (1 << shift_);
+  }
+}
 
+bool MatchListDicFeatureImpl::contains(StringPiece data) const {
   util::CsvReader r{dataSep_};
   r.initFromMemory(data);
+  if (!r.nextLine()) {
+    return false;
+  }
 
-  bool contains = false;
-
-  while (r.nextLine()) {
-    auto v = r.field(0);
+  for (int fldnum = 0; fldnum < r.numFields(); ++fldnum) {
+    auto v = r.field(fldnum);
     if (!kvSep_.empty()) {
       auto it = std::search(v.begin(), v.end(), kvSep_.begin(), kvSep_.end());
       if (it != v.end()) {
@@ -151,23 +157,21 @@ void MatchListDicFeatureImpl::apply(util::MutableArraySlice<i32> featureData,
     }
     auto idx = storage_->valueOf(v);
     if (idx != -1 && data_.contains(idx)) {
-      contains = true;
-      break;
+      return true;
     }
   }
 
-  if (contains) {
-    featureData.at(target_) |= (1 << shift_);
-  }
+  return false;
 }
 
 Status MatchFieldTupleDicFeatureImpl::initialize(
     const DicFeatureContext& ctx, const spec::DicImportDescriptor& desc) {
-  util::copy_insert(desc.references, fields_);
-  for (auto f : fields_) {
-    auto& o = ctx.importers[f];
+  for (auto ref : desc.references) {
+    auto& o = ctx.importers[ref];
+    JPP_DCHECK_NE(o.descriptor->stringStorage, spec::InvalidInt);
     auto& ss = ctx.storage[o.descriptor->stringStorage];
     storages_.push_back(&ss);
+    fields_.push_back(o.descriptor->position - 1);
   }
 
   util::CsvReader csv;
@@ -212,7 +216,9 @@ void MatchFieldTupleDicFeatureImpl::apply(
   for (int i = 0; i < fields_.size(); ++i) {
     auto fldIdx = fields_[i];
     auto storage = storages_[i];
-    dft.features.push_back(storage->valueOf(csv.field(fldIdx)));
+    auto v = csv.field(fldIdx);
+    auto idx = storage->valueOf(v);
+    dft.features.push_back(idx);
   }
   if (data_.contains(dft)) {
     featureData.at(target_) |= (1 << shift_);

@@ -7,6 +7,7 @@
 
 #include <functional>
 #include <iosfwd>
+#include "util/common.hpp"
 #include "util/types.hpp"
 
 namespace jumanpp {
@@ -21,6 +22,13 @@ using Score = float;
 struct alignas(alignof(u32)) LatticeNodePtr {
   u16 boundary;
   u16 position;
+
+  template <typename I1, typename I2>
+  static LatticeNodePtr make(I1 i1, I2 i2) {
+    JPP_DCHECK_IN(i1, 0, std::numeric_limits<u16>::max());
+    JPP_DCHECK_IN(i2, 0, std::numeric_limits<u16>::max());
+    return LatticeNodePtr{static_cast<u16>(i1), static_cast<u16>(i2)};
+  };
 };
 
 inline bool operator==(const LatticeNodePtr& p1, const LatticeNodePtr& p2) {

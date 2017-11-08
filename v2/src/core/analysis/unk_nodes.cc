@@ -54,44 +54,34 @@ class UnkMakerFactory {
                                         << x.priority << " is not supported";
       }
 
+      auto eptr = EntryPtr{x.patternPtr};
+      UnkNodeConfig cfg{rdr.readEntry(eptr), eptr};
+      util::copy_insert(x.replaceFields, cfg.replaceWithSurface);
+      handlePrefixIndex(x, &cfg);
+
       // resolve processor itself
       switch (x.type) {
         case spec::UnkMakerType::Chunking: {
-          UnkNodeConfig cfg{rdr.readEntry(EntryPtr{x.patternPtr})};
-          util::copy_insert(x.replaceFields, cfg.replaceWithSurface);
-          handlePrefixIndex(x, &cfg);
           stage->emplace_back(
               new ChunkingUnkMaker{entries, x.charClass, std::move(cfg)});
           break;
         }
         case spec::UnkMakerType::Single: {
-          UnkNodeConfig cfg{rdr.readEntry(EntryPtr{x.patternPtr})};
-          util::copy_insert(x.replaceFields, cfg.replaceWithSurface);
-          handlePrefixIndex(x, &cfg);
           stage->emplace_back(
               new SingleUnkMaker{entries, x.charClass, std::move(cfg)});
           break;
         }
         case spec::UnkMakerType::Onomatopoeia: {
-          UnkNodeConfig cfg{rdr.readEntry(EntryPtr{x.patternPtr})};
-          util::copy_insert(x.replaceFields, cfg.replaceWithSurface);
-          handlePrefixIndex(x, &cfg);
           stage->emplace_back(
               new OnomatopoeiaUnkMaker{entries, x.charClass, std::move(cfg)});
           break;
         }
         case spec::UnkMakerType::Numeric: {
-          UnkNodeConfig cfg{rdr.readEntry(EntryPtr{x.patternPtr})};
-          util::copy_insert(x.replaceFields, cfg.replaceWithSurface);
-          handlePrefixIndex(x, &cfg);
           stage->emplace_back(
               new NumericUnkMaker{entries, x.charClass, std::move(cfg)});
           break;
         }
         case spec::UnkMakerType::Normalize: {
-          UnkNodeConfig cfg{rdr.readEntry(EntryPtr{x.patternPtr})};
-          util::copy_insert(x.replaceFields, cfg.replaceWithSurface);
-          handlePrefixIndex(x, &cfg);
           stage->emplace_back(new NormalizedNodeMaker{entries, std::move(cfg)});
           break;
         }

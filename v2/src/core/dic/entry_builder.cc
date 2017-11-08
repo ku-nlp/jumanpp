@@ -88,6 +88,7 @@ i32 DicEntryBag::add(EntryTableBuilder* bldr, const xi::FeatureBuffer& features,
   if (v.features.empty()) {
     v.features = features;
   }
+  v.order = static_cast<u32>(obj.data.size());
   v.addData(bldr, csv);
   obj.count += 1;
 
@@ -99,12 +100,22 @@ i32 DicEntryBag::write(EntryTableBuilder* bldr, const util::CsvReader& csv) {
   auto it = entries.find(surf);
 
   for (auto p : it->second.data) {
-    auto ptr = p.second.write(bldr);
+    reorderBuffer.push_back(&p.second);
+  }
+
+  std::sort(reorderBuffer.begin(), reorderBuffer.end(),
+            [](const DicEntryData* p1, const DicEntryData* p2) {
+              return p1->order < p2->order;
+            });
+
+  for (auto p : reorderBuffer) {
+    auto ptr = p->write(bldr);
     bldr->trieBuilder.addEntry(surf, ptr);
   }
 
   auto cnt = it->second.count;
   entries.erase(it);
+  reorderBuffer.clear();
   return cnt;
 }
 

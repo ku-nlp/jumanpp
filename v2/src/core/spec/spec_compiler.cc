@@ -397,7 +397,7 @@ Status SpecCompiler::makeMatchCsvFeature(dsl::FeatureBuilder* f) {
                                     << " was not a String, but "
                                     << fld->fieldType;
     }
-    v.references.push_back(fld->position);
+    v.references.push_back(fld->specIndex);
   }
   v.kind = DicImportKind::MatchFields;
   return Status::Ok();

@@ -59,6 +59,9 @@ class NodeWalker {
   EntryPtr eptr() const { return current_; }
 
   bool isSuccess() const { return current_ != EntryPtr::Invalid(); }
+
+  util::ArraySlice<i32> features() const { return buffer_.features(); }
+  util::ArraySlice<i32> data() const { return buffer_.data(); }
 };
 
 class StringField {

@@ -75,6 +75,8 @@ class MatchListDicFeatureImpl : public DicFeatureBase {
   std::string kvSep_;
   util::FlatSet<i32> data_;
 
+  bool contains(StringPiece data) const;
+
  public:
   Status initialize(const DicFeatureContext& ctx,
                     const spec::DicImportDescriptor& desc) override;

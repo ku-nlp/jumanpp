@@ -37,6 +37,7 @@ struct EntryTableBuilder;
 struct DicEntryData {
   xi::FeatureBuffer features;
   std::vector<xi::FeatureBuffer> data;
+  u32 order = 0;
 
   void addData(EntryTableBuilder* bldr, const util::CsvReader& csv);
   i32 write(EntryTableBuilder* bldr);
@@ -50,6 +51,7 @@ struct DicRawEntry {
 
 struct DicEntryBag {
   util::FlatMap<i32, DicRawEntry> entries;
+  std::vector<DicEntryData*> reorderBuffer;
 
   i32 add(EntryTableBuilder* bldr, const xi::FeatureBuffer& features,
           const util::CsvReader& csv);

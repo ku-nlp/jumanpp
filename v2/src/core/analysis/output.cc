@@ -66,6 +66,7 @@ bool OutputManager::locate(EntryPtr ptr, NodeWalker *result) const {
   result->buffer_.setCounts(static_cast<u32>(entries_.numFeatures()),
                             static_cast<u32>(entries_.numData()));
 
+  result->current_ = ptr;
   if (ptr.isSpecial()) {
     auto node = xtra_->node(ptr);
     if (node == nullptr) {
@@ -73,16 +74,14 @@ bool OutputManager::locate(EntryPtr ptr, NodeWalker *result) const {
     }
 
     if (node->header.type == ExtraNodeType::Unknown) {
-      result->current_ = node->header.unk.templatePtr;
-      result->buffer_.fillFromStorage(result->current_,
-                                      this->entries_.entryData());
+      auto actualPtr = node->header.unk.templatePtr;
+      result->buffer_.fillFromStorage(actualPtr, this->entries_.entryData());
       auto data = xtra_->nodeContent(node);
       result->buffer_.overwriteFeaturesWith(data);
       return true;
     }
 
   } else {
-    result->current_ = ptr;
     result->buffer_.fillFromStorage(result->current_,
                                     this->entries_.entryData());
     return true;

@@ -64,6 +64,7 @@ void Serialize(Arch &a, UnkProcessorDescriptor &o) {
   a &o.priority;
   a &o.charClass;
   a &o.features;
+  a &o.replaceFields;
 }
 
 SERIALIZE_ENUM_CLASS(DicImportKind, int);

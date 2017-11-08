@@ -3,6 +3,7 @@
 //
 
 #include "unk_nodes_creator.h"
+#include <util/logging.hpp>
 #include "core_config.h"
 #include "util/murmur_hash.h"
 
@@ -108,10 +109,34 @@ EntryPtr UnkNodesContext::makePtr(StringPiece surface,
   node->header.unk.surface = surface;
   i32 hashValue = hashUnkString(surface);
   node->header.unk.contentHash = hashValue;
+  node->header.unk.templatePtr = conf.patternPtr;
   JPP_DCHECK_LT(node->header.unk.contentHash, 0);
   conf.fillElems(data, hashValue);
   if (conf.targetPlaceholder != -1) {
     xtra_->putPlaceholderData(node, conf.targetPlaceholder, (i32)notPrefix);
+  }
+  return node->ptr();
+}
+
+EntryPtr UnkNodesContext::makePtr(StringPiece surface,
+                                  const UnkNodeConfig& conf, EntryPtr eptr,
+                                  i32 feature) {
+  auto node = xtra_->makeZeroedUnk();
+  auto data = xtra_->nodeContent(node);
+  node->header.unk.surface = surface;
+  node->header.unk.templatePtr = eptr;
+  dic::DicEntryBuffer buffer;
+  if (!entries_.fillBuffer(eptr, &buffer)) {
+    LOG_WARN() << "FAILED TO READ DATA FROM DICTIONARY: EPTR="
+               << eptr.rawValue();
+  }
+  util::copy_buffer(buffer.features(), data);
+  i32 hashValue = hashUnkString(surface);
+  node->header.unk.contentHash = hashValue;
+  JPP_DCHECK_LT(node->header.unk.contentHash, 0);
+  conf.fillElems(data, hashValue);
+  if (conf.targetPlaceholder != -1) {
+    xtra_->putPlaceholderData(node, conf.targetPlaceholder, feature);
   }
   return node->ptr();
 }
@@ -140,23 +165,6 @@ bool UnkNodesContext::dicPatternMatches(const UnkNodeConfig& conf,
   }
 
   return false;
-}
-
-EntryPtr UnkNodesContext::makePtr(StringPiece surface,
-                                  const UnkNodeConfig& conf,
-                                  util::ArraySlice<u32> nodeData, i32 feature) {
-  auto node = xtra_->makeUnk(conf.base);
-  auto data = xtra_->nodeContent(node);
-  util::copy_buffer(nodeData, data);
-  node->header.unk.surface = surface;
-  i32 hashValue = hashUnkString(surface);
-  node->header.unk.contentHash = hashValue;
-  JPP_DCHECK_LT(node->header.unk.contentHash, 0);
-  conf.fillElems(data, hashValue);
-  if (conf.targetPlaceholder != -1) {
-    xtra_->putPlaceholderData(node, conf.targetPlaceholder, feature);
-  }
-  return node->ptr();
 }
 
 i32 hashUnkString(StringPiece sp) {

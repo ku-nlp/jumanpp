@@ -107,11 +107,30 @@ class PrimFeatureTestEnv {
     return tenv.analyzer->latticeBuilder().seeds().size();
   }
 
+  Node makeNode(EntryPtr eptr, LatticeNodePtr lnp) {
+    auto om = this->tenv.analyzer->output();
+    auto w = om.nodeWalker();
+    REQUIRE(om.locate(eptr, &w));
+    REQUIRE(w.next());
+    Node n;
+    n.eptr = eptr;
+    n.surface = flda[w].str();
+    n.f1 = flda[w].str();
+    n.f2 = fldb[w].str();
+    util::copy_insert(w.features(), n.primitve);
+    auto bnd = tenv.analyzer->lattice()->boundary(lnp.boundary);
+    auto patterns = bnd->starts()->patternFeatureData().row(lnp.position);
+    util::copy_insert(patterns, n.pattern);
+
+    return n;
+  }
+
   Node uniqueNode(StringPiece surface, i32 position) {
     CAPTURE(surface);
     CAPTURE(position);
     auto& l = *tenv.analyzer->lattice();
-    auto b = l.boundary(position + 2);
+    auto bndIdx = position + 2;
+    auto b = l.boundary(bndIdx);
     auto starts = b->starts();
     auto& output = tenv.analyzer->output();
     auto walker = output.nodeWalker();
@@ -134,13 +153,7 @@ class PrimFeatureTestEnv {
       FAIL("could not find a node");
     }
 
-    Node n;
-    n.surface = surface.str();
-    n.eptr = x;
-    util::copy_insert(starts->entryData().row(pos), n.entries);
-    util::copy_insert(starts->primitiveFeatureData().row(pos), n.primitve);
-    util::copy_insert(starts->patternFeatureData().row(pos), n.pattern);
-    return n;
+    return makeNode(x, LatticeNodePtr::make(bndIdx, pos));
   }
 
   Node uniqueNode(StringPiece af, StringPiece bf, i32 position) {
@@ -173,13 +186,7 @@ class PrimFeatureTestEnv {
                                     << "]");
     }
 
-    Node n;
-    n.surface = af.str();
-    n.eptr = x;
-    util::copy_insert(starts->entryData().row(pos), n.entries);
-    util::copy_insert(starts->primitiveFeatureData().row(pos), n.primitve);
-    util::copy_insert(starts->patternFeatureData().row(pos), n.pattern);
-    return n;
+    return makeNode(x, LatticeNodePtr::make(position + 2, pos));
   }
 
   i32 idxa(StringPiece data) {
