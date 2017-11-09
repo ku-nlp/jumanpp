@@ -76,7 +76,7 @@ class TrainingEnv {
     aconf_.pageSize = 256 * 1024;
   }
 
-  void warnOnNonMatchingFeatures(const spec::TrainingSpec& spec);
+  void warnOnNonMatchingFeatures(const spec::AnalysisSpec& spec);
 
   Status initFeatures(const core::features::StaticFeatureFactory* sff);
 

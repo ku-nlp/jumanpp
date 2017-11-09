@@ -41,6 +41,16 @@ struct DicFeatureContext {
   const std::vector<ColumnImportContext>& importers;
   const std::vector<util::CodedBuffer>& stringBuffers;
   const std::vector<util::CodedBuffer>& intBuffers;
+  bool errorOnAbsentValues = false;
+
+  DicFeatureContext(const std::vector<impl::StringStorage>& storage,
+                    const std::vector<ColumnImportContext>& importers,
+                    const std::vector<util::CodedBuffer>& stringBuffers,
+                    const std::vector<util::CodedBuffer>& intBuffers)
+      : storage(storage),
+        importers(importers),
+        stringBuffers(stringBuffers),
+        intBuffers(intBuffers) {}
 };
 
 class DicFeatureBase {

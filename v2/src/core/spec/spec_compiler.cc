@@ -681,7 +681,6 @@ void SpecCompiler::buildAliasingSet() {
         }
       }
     }
-    std::sort(aset.begin(), aset.end());
   } else {
     for (auto& f : result_->training.fields) {
       if (f.weight != 0) {
@@ -689,6 +688,7 @@ void SpecCompiler::buildAliasingSet() {
       }
     }
   }
+  std::sort(aset.begin(), aset.end());
 }
 
 }  // namespace spec

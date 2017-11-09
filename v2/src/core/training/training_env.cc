@@ -143,7 +143,7 @@ Status TrainingEnv::initOther() {
     return Status::InvalidState() << "core holder was not constructed yet";
   }
   auto& trainingSpec = env_->spec().training;  // make a copy here
-  warnOnNonMatchingFeatures(trainingSpec);
+  warnOnNonMatchingFeatures(env_->spec());
 
   JPP_RETURN_IF_ERROR(trainingIo_.initialize(trainingSpec, *pHolder));
   fullReader_.setTrainingIo(&trainingIo_);
@@ -173,18 +173,16 @@ void TrainingEnv::exportScwParams(model::ModelInfo* pInfo) {
   scw_.exportModel(pInfo);
 }
 
-void TrainingEnv::warnOnNonMatchingFeatures(const spec::TrainingSpec& spec) {
-  analysis::LatticeCompactor lcm{env_->coreHolder()->dic().entries()};
-  lcm.initialize(nullptr, env_->coreHolder()->spec());
+void TrainingEnv::warnOnNonMatchingFeatures(const spec::AnalysisSpec& spec) {
   std::vector<i32> fields;
   std::vector<i32> diff1;
   std::vector<i32> diff2;
 
-  auto usedFeatures = lcm.usedFeatures();
+  auto& usedFeatures = spec.dictionary.aliasingSet;
 
-  for (auto& x : spec.fields) {
-    if (x.weight != 0) {
-      fields.push_back(x.fieldIdx);
+  for (auto& trainFld : spec.training.fields) {
+    if (trainFld.weight != 0) {
+      fields.push_back(trainFld.fieldIdx);
     }
   }
 

@@ -12,13 +12,6 @@ Status SpecFactory::makeSpec(core::spec::AnalysisSpec* spec) {
   core::spec::dsl::ModelSpecBuilder bldr;
   fillSpec(bldr);
   JPP_RETURN_IF_ERROR(bldr.build(spec));
-  auto specColSize = spec->dictionary.fields.size();
-  if (JumandicNumFields != specColSize) {
-    return Status::InvalidState()
-           << "please fix number of columns in jumandic::SpecFactory"
-           << "right now spec has " << specColSize << " and SpecFactory has "
-           << JumandicNumFields;
-  }
   return Status::Ok();
 }
 

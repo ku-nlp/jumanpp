@@ -124,10 +124,14 @@ Status MatchListDicFeatureImpl::initialize(
     }
     auto idx = storage_->valueOf(v);
     if (idx == -1) {
+      if (!ctx.errorOnAbsentValues) {
+        continue;
+      }
       return JPPS_INVALID_PARAMETER << " the value: " << v
                                     << " was not imported";
+    } else {
+      data_.insert(idx);
     }
-    data_.insert(idx);
   }
   return Status::Ok();
 }
@@ -190,6 +194,9 @@ Status MatchFieldTupleDicFeatureImpl::initialize(
       auto v = csv.field(i);
       auto idx = storages_[i]->valueOf(v);
       if (idx == -1) {
+        if (!ctx.errorOnAbsentValues) {
+          goto nextEntry;
+        }
         return JPPS_INVALID_PARAMETER << "in string: " << s
                                       << " the value: " << v
                                       << " was not imported";
@@ -197,6 +204,7 @@ Status MatchFieldTupleDicFeatureImpl::initialize(
       def.features.push_back(idx);
     }
     data_.insert(def);
+  nextEntry:;
   }
 
   target_ = static_cast<u32>(desc.target);
