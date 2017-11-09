@@ -192,3 +192,17 @@ TEST_CASE("simple dsl with two fields and placeholder") {
   CHECK(spec.features.primitive[0].kind == PrimitiveFeatureKind::Provided);
   SeqEq(spec.features.primitive[0].references, {0});
 }
+
+TEST_CASE("dic feature counts are resolved correctly") {
+  ModelSpecBuilder msb;
+  auto& f1 = msb.field(1, "f1").strings().trieIndex();
+  auto& f2 = msb.feature("f2").matchData(f1, "test");
+  auto& f3 = msb.field(2, "f3").strings();
+  auto& f4 = msb.field(3, "f4").strings();
+  auto& f5 = msb.feature("f5").matchAnyRowOfCsv("test,test", {f3, f1});
+  msb.unigram({f2, f5});
+  AnalysisSpec spec{};
+  REQUIRE_OK(msb.build(&spec));
+  CHECK(spec.features.numDicData == 1);
+  CHECK(spec.features.numDicFeatures == 3);
+}

@@ -272,7 +272,6 @@ Status SpecCompiler::makeDicFeatures() {
       });
 
   result_->features.numDicData = 0;
-  result_->features.numDicFeatures = 0;
 
   // assign dic numbers
   i32 idx = 0;
@@ -285,11 +284,10 @@ Status SpecCompiler::makeDicFeatures() {
       auto fld = fieldByName(f.name);
       fld->dicIndex = ~numDic;
       result_->features.numDicData += 1;
-    } else {
-      result_->features.numDicFeatures += 1;
     }
   }
 
+  result_->features.numDicFeatures = 0;
   auto dicIdx = 0;
   for (auto& f : dicf) {
     if (f.kind != DicImportKind::ImportAsData) {
@@ -298,6 +296,7 @@ Status SpecCompiler::makeDicFeatures() {
       if (fld.dicIndex == InvalidInt) {
         fld.dicIndex = dicIdx;
         ++dicIdx;
+        result_->features.numDicFeatures += 1;
       }
       auto it = computeByName_.find(f.name);
       if (it != computeByName_.end()) {
