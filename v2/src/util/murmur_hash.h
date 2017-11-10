@@ -5,6 +5,7 @@
 #ifndef JUMANPP_MURMUR_HASH_H
 #define JUMANPP_MURMUR_HASH_H
 
+#include <cstring>
 #include <utility>
 #include "common.hpp"
 #include "types.hpp"
