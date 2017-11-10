@@ -49,10 +49,8 @@ Status StaticFeatureCodegen::writeHeader(const std::string& filename) {
         << "ngram() const override;\n"
         << JPP_TEXT(jumanpp::core::features::PartialNgramFeatureApply*)
         << "ngramPartial() const override;\n";
-#if 0
-        ofs << JPP_TEXT(jumanpp::core::features::PatternFeatureApply*)
+    ofs << JPP_TEXT(jumanpp::core::features::GeneratedPatternFeatureApply*)
         << "pattern() const override;\n";
-#endif
     ofs << "};\n"
         << "} //namespace jumanpp_generated\n";
 
@@ -166,6 +164,7 @@ Status StaticFeatureCodegen::writeSource(const std::string& filename) {
   try {
     core::codegen::InNodeComputationsCodegen compCodegen{spec_};
     compCodegen.generate(p, patternName);
+    patternOk = true;
   } catch (std::exception& ex) {
     std::cerr << ex.what();
     patternOk = false;
@@ -203,10 +202,8 @@ Status StaticFeatureCodegen::writeSource(const std::string& filename) {
   }
   p << "\n}";
 
-#if 0
-
   p << "\n"
-    << JPP_TEXT(jumanpp::core::features::PatternFeatureApply*)
+    << JPP_TEXT(jumanpp::core::features::GeneratedPatternFeatureApply*)
     << config_.className << "::"
     << "pattern() const {";
   {
@@ -219,7 +216,6 @@ Status StaticFeatureCodegen::writeSource(const std::string& filename) {
     }
   }
   p << "\n}";
-#endif
 
   p << "\n} //jumanpp_generated namespace";
 
