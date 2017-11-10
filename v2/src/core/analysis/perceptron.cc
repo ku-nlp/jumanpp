@@ -37,13 +37,14 @@ void HashedFeaturePerceptron::add(util::ArraySlice<float> source,
   }
 }
 
+const size_t TWO_MEGS_FOR_FLOATS = 2 * 1024 * 1024 / sizeof(float);
 class PerceptronState {
   util::memory::Manager manager_;
   std::unique_ptr<util::memory::PoolAlloc> alloc_;
   size_t numElems_;
 
 public:
-  PerceptronState(size_t numElems): manager_{numElems * sizeof(float)}, alloc_{manager_.core()}, numElems_{numElems} {}
+  PerceptronState(size_t numElems): manager_{std::max(numElems * sizeof(float), TWO_MEGS_FOR_FLOATS)}, alloc_{manager_.core()}, numElems_{numElems} {}
   
   const float* importDoubles(const float* data) {
     auto objs = numElems_;
@@ -106,9 +107,7 @@ Status HashedFeaturePerceptron::load(const model::ModelInfo& model) {
   auto weightData = reinterpret_cast<const float*>(modelData.begin());
 
   if (util::memory::Manager::supportHugePages()) {
-    const size_t TWO_MEGS_FOR_FLOATS = 2 * 1024 * 1024 / sizeof(float);
-    auto theSize = std::max(TWO_MEGS_FOR_FLOATS, weightCount);
-    state_.reset(new PerceptronState{theSize});
+    state_.reset(new PerceptronState{weightCount});
     weightData = state_->importDoubles(weightData);
   }
 
