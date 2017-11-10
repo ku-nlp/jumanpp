@@ -45,7 +45,7 @@ JPP_ALWAYS_INLINE void hashLoop(util::ArraySlice<u64> state,
   for (int i = 0; i < state.size(); ++i) {
     result.at(i) =
         static_cast<u32>(
-            h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
+            h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
         mask;
   }
 }
@@ -57,165 +57,165 @@ JPP_ALWAYS_INLINE void hashUnrolled(util::ArraySlice<u64> state,
   u32 i = 0;
   result.at(i) =
       static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
       mask;
   ++i;
   result.at(i) =
       static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
       mask;
   ++i;
   result.at(i) =
       static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
       mask;
   ++i;
   result.at(i) =
       static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
       mask;
   ++i;
   result.at(i) =
       static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
       mask;
   ++i;
   result.at(i) =
       static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
       mask;
   ++i;
   result.at(i) =
       static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
       mask;
   ++i;
   result.at(i) =
       static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
-      mask;
-  ++i;
-
-  result.at(i) =
-      static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
-      mask;
-  ++i;
-  result.at(i) =
-      static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
-      mask;
-  ++i;
-  result.at(i) =
-      static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
-      mask;
-  ++i;
-  result.at(i) =
-      static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
-      mask;
-  ++i;
-  result.at(i) =
-      static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
-      mask;
-  ++i;
-  result.at(i) =
-      static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
-      mask;
-  ++i;
-  result.at(i) =
-      static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
-      mask;
-  ++i;
-  result.at(i) =
-      static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
       mask;
   ++i;
 
   result.at(i) =
       static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
       mask;
   ++i;
   result.at(i) =
       static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
       mask;
   ++i;
   result.at(i) =
       static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
       mask;
   ++i;
   result.at(i) =
       static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
       mask;
   ++i;
   result.at(i) =
       static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
       mask;
   ++i;
   result.at(i) =
       static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
       mask;
   ++i;
   result.at(i) =
       static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
       mask;
   ++i;
   result.at(i) =
       static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
       mask;
   ++i;
 
   result.at(i) =
       static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
       mask;
   ++i;
   result.at(i) =
       static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
       mask;
   ++i;
   result.at(i) =
       static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
       mask;
   ++i;
   result.at(i) =
       static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
       mask;
   ++i;
   result.at(i) =
       static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
       mask;
   ++i;
   result.at(i) =
       static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
       mask;
   ++i;
   result.at(i) =
       static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
       mask;
   ++i;
   result.at(i) =
       static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
+      mask;
+  ++i;
+
+  result.at(i) =
+      static_cast<u32>(
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
+      mask;
+  ++i;
+  result.at(i) =
+      static_cast<u32>(
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
+      mask;
+  ++i;
+  result.at(i) =
+      static_cast<u32>(
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
+      mask;
+  ++i;
+  result.at(i) =
+      static_cast<u32>(
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
+      mask;
+  ++i;
+  result.at(i) =
+      static_cast<u32>(
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
+      mask;
+  ++i;
+  result.at(i) =
+      static_cast<u32>(
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
+      mask;
+  ++i;
+  result.at(i) =
+      static_cast<u32>(
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
+      mask;
+  ++i;
+  result.at(i) =
+      static_cast<u32>(
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
       mask;
   ++i;
 }
@@ -412,32 +412,12 @@ JPP_ALWAYS_INLINE void hashSseInterleaved(util::ArraySlice<u64> state,
 
   result.at(i) =
       static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
       mask;
   ++i;
   result.at(i) =
       static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
-      mask;
-  ++i;
-
-  {
-    auto r = i;
-    auto s1 = h2{state.data() + i}.mixGather(data.data() + i, offsets + i);
-    i += 2;
-    auto s2 = h2{state.data() + i}.mixGather(data.data() + i, offsets + i);
-    i += 2;
-    s1.jointMaskStore(s2, mask, result.data() + r);
-  }
-
-  result.at(i) =
-      static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
-      mask;
-  ++i;
-  result.at(i) =
-      static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
       mask;
   ++i;
 
@@ -452,32 +432,12 @@ JPP_ALWAYS_INLINE void hashSseInterleaved(util::ArraySlice<u64> state,
 
   result.at(i) =
       static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
       mask;
   ++i;
   result.at(i) =
       static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
-      mask;
-  ++i;
-
-  {
-    auto r = i;
-    auto s1 = h2{state.data() + i}.mixGather(data.data() + i, offsets + i);
-    i += 2;
-    auto s2 = h2{state.data() + i}.mixGather(data.data() + i, offsets + i);
-    i += 2;
-    s1.jointMaskStore(s2, mask, result.data() + r);
-  }
-
-  result.at(i) =
-      static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
-      mask;
-  ++i;
-  result.at(i) =
-      static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
       mask;
   ++i;
 
@@ -492,12 +452,12 @@ JPP_ALWAYS_INLINE void hashSseInterleaved(util::ArraySlice<u64> state,
 
   result.at(i) =
       static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
       mask;
   ++i;
   result.at(i) =
       static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
       mask;
   ++i;
 
@@ -512,12 +472,52 @@ JPP_ALWAYS_INLINE void hashSseInterleaved(util::ArraySlice<u64> state,
 
   result.at(i) =
       static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
       mask;
   ++i;
   result.at(i) =
       static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
+      mask;
+  ++i;
+
+  {
+    auto r = i;
+    auto s1 = h2{state.data() + i}.mixGather(data.data() + i, offsets + i);
+    i += 2;
+    auto s2 = h2{state.data() + i}.mixGather(data.data() + i, offsets + i);
+    i += 2;
+    s1.jointMaskStore(s2, mask, result.data() + r);
+  }
+
+  result.at(i) =
+      static_cast<u32>(
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
+      mask;
+  ++i;
+  result.at(i) =
+      static_cast<u32>(
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
+      mask;
+  ++i;
+
+  {
+    auto r = i;
+    auto s1 = h2{state.data() + i}.mixGather(data.data() + i, offsets + i);
+    i += 2;
+    auto s2 = h2{state.data() + i}.mixGather(data.data() + i, offsets + i);
+    i += 2;
+    s1.jointMaskStore(s2, mask, result.data() + r);
+  }
+
+  result.at(i) =
+      static_cast<u32>(
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
+      mask;
+  ++i;
+  result.at(i) =
+      static_cast<u32>(
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
       mask;
   ++i;
 }
@@ -590,36 +590,12 @@ JPP_ALWAYS_INLINE void hashAvxUnrolledInterleave1(
 
   result.at(i) =
       static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
       mask;
   ++i;
   result.at(i) =
       static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
-      mask;
-  ++i;
-
-  {
-    auto r = i;
-    auto s1 = h4{state.data() + i}
-                  .mixGatherNaive(data.data() + i, offsets + i)
-                  .maskCompact2(mask);
-    i += 4;
-    auto s2 = h4{state.data() + i}
-                  .mixGatherNaive(data.data() + i, offsets + i)
-                  .maskCompact2(mask);
-    i += 4;
-    s1.merge(s2).store(result.data() + r);
-  }
-
-  result.at(i) =
-      static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
-      mask;
-  ++i;
-  result.at(i) =
-      static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
       mask;
   ++i;
 
@@ -638,12 +614,12 @@ JPP_ALWAYS_INLINE void hashAvxUnrolledInterleave1(
 
   result.at(i) =
       static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
       mask;
   ++i;
   result.at(i) =
       static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
       mask;
   ++i;
 
@@ -662,12 +638,36 @@ JPP_ALWAYS_INLINE void hashAvxUnrolledInterleave1(
 
   result.at(i) =
       static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
       mask;
   ++i;
   result.at(i) =
       static_cast<u32>(
-          h1{state.data() + i}.mix(data.data() + offsets[i]).result()) &
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
+      mask;
+  ++i;
+
+  {
+    auto r = i;
+    auto s1 = h4{state.data() + i}
+                  .mixGatherNaive(data.data() + i, offsets + i)
+                  .maskCompact2(mask);
+    i += 4;
+    auto s2 = h4{state.data() + i}
+                  .mixGatherNaive(data.data() + i, offsets + i)
+                  .maskCompact2(mask);
+    i += 4;
+    s1.merge(s2).store(result.data() + r);
+  }
+
+  result.at(i) =
+      static_cast<u32>(
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
+      mask;
+  ++i;
+  result.at(i) =
+      static_cast<u32>(
+          h1{state.data() + i}.mixMem(data.data() + offsets[i]).result()) &
       mask;
   ++i;
 }
@@ -881,12 +881,12 @@ __attribute__((noinline)) void avxLoopVertTest(util::Sliceable<u32> result,
     for (int j = 0; j < ngrams; j += 2) {
       auto idx = j * 4;
       h4{&states.at(idx)}
-          .mix(&xdata.at(idx))
+          .mixMem(&xdata.at(idx))
           .maskCompact(mask)
           .store(&results.at(idx));
       idx += 4;
       h4{&states.at(idx)}
-          .mix(&xdata.at(idx))
+          .mixMem(&xdata.at(idx))
           .maskCompact(mask)
           .store(&results.at(idx));
     }

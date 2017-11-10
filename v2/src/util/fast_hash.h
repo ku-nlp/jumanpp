@@ -42,7 +42,7 @@ class FastHash1 {
     return FastHash1{v};
   }
 
-  JPP_ALWAYS_INLINE FastHash1 mix(const u64* data) const noexcept {
+  JPP_ALWAYS_INLINE FastHash1 mixMem(const u64* data) const noexcept {
     return mix(*data);
   }
 
@@ -91,7 +91,7 @@ class FastHash2 {
                          _mm_add_epi64(ax0bx1_ay0by1_32, ax1bx0_ay1by0_32));
   }
 
-  JPP_ALWAYS_INLINE FastHash2 mix(const u64* data) const noexcept {
+  JPP_ALWAYS_INLINE FastHash2 mixMem(const u64* data) const noexcept {
     auto arg = _mm_loadu_si128(reinterpret_cast<const __m128i*>(data));
     return mixImpl(arg);
   }
@@ -162,7 +162,7 @@ class FastHash4 {
         ax0bx0_ay0by0, _mm256_add_epi64(ax0bx1_ay0by1_32, ax1bx0_ay1by0_32));
   }
 
-  JPP_ALWAYS_INLINE FastHash4 mix(const u64* data) const noexcept {
+  JPP_ALWAYS_INLINE FastHash4 mixMem(const u64* data) const noexcept {
     auto arg = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(data));
     return mixImpl(arg);
   }
