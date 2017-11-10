@@ -126,6 +126,14 @@ Manager::~Manager() {
   }
 }
 
+bool Manager::supportHugePages() {
+#if defined(MADV_HUGEPAGE) || defined(MAP_HUGETLB)
+  return true;
+#else
+  return false;
+#endif
+}
+
 #endif  // JUMANPP_USE_DEFAULT_ALLOCATION
 
 void PoolAlloc::reset() {

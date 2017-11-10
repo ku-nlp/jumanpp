@@ -156,6 +156,10 @@ class Manager {
     return total;
   }
 
+  size_t pageSize() const { return page_size_; }
+
+  static bool supportHugePages();
+
   ~Manager();
 };
 

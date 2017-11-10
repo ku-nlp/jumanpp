@@ -70,13 +70,16 @@ inline float computeUnrolled4RawPerceptron(
 }
 }  // namespace impl
 
+class PerceptronState;
+
 class HashedFeaturePerceptron : public FeatureScorer {
   util::ArraySlice<float> weights_;
+  std::unique_ptr<PerceptronState> state_;
 
  public:
-  HashedFeaturePerceptron() {}
-  HashedFeaturePerceptron(const util::ArraySlice<float>& weights)
-      : weights_{weights} {}
+  HashedFeaturePerceptron();
+  HashedFeaturePerceptron(const util::ArraySlice<float>& weights);
+  ~HashedFeaturePerceptron();
 
   void compute(util::MutableArraySlice<float> result,
                util::ConstSliceable<u32> ngrams) const override;
@@ -84,6 +87,10 @@ class HashedFeaturePerceptron : public FeatureScorer {
            util::MutableArraySlice<float> result,
            util::ConstSliceable<u32> features) const override;
   Status load(const model::ModelInfo& model) override;
+
+  void setWeightsTo(util::ArraySlice<float> weights) {
+    weights_ = weights;
+  }
 
   util::ArraySlice<float> weights() const override { return weights_; }
 };

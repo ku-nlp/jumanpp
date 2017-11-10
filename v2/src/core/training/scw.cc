@@ -108,7 +108,7 @@ SoftConfidenceWeighted::SoftConfidenceWeighted(const TrainingConfig& conf)
     usableWeights.push_back(dist(eng));
   }
 
-  perceptron = analysis::HashedFeaturePerceptron(usableWeights);
+  perceptron.setWeightsTo(usableWeights);
   sconf.feature = &perceptron;
   sconf.scoreWeights.clear();
   sconf.scoreWeights.push_back(1.0f);

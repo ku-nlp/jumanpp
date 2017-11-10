@@ -6,6 +6,8 @@
 #include "core/analysis/lattice_types.h"
 #include "core/impl/perceptron_io.h"
 #include "util/serialization.h"
+#include "util/memory.hpp"
+#include "util/logging.hpp"
 
 namespace jumanpp {
 namespace core {
@@ -34,6 +36,22 @@ void HashedFeaturePerceptron::add(util::ArraySlice<float> source,
     result.at(i) = src + add;
   }
 }
+
+class PerceptronState {
+  util::memory::Manager manager_;
+  std::unique_ptr<util::memory::PoolAlloc> alloc_;
+
+public:
+  PerceptronState(size_t size): manager_{size}, alloc_{manager_.core()} {}
+  
+  const float* importDoubles(const float* data) {
+    auto objs = manager_.pageSize();
+    auto arr = alloc_->allocateArray<float>(objs);
+    memcpy(arr, data, objs * sizeof(float));
+    LOG_TRACE() << "import perceptron data: " << objs << " objects at " << arr;
+    return arr;
+  }
+};
 
 Status HashedFeaturePerceptron::load(const model::ModelInfo& model) {
   const model::ModelPart* savedPerc = nullptr;
@@ -84,13 +102,26 @@ Status HashedFeaturePerceptron::load(const model::ModelInfo& model) {
            << "perceptron: slice size was not equal to model size in header";
   }
 
-  util::ArraySlice<float> weightData{
-      reinterpret_cast<const float*>(modelData.begin()), dataSize};
+  auto weightData = reinterpret_cast<const float*>(modelData.begin());
 
-  weights_ = weightData;
+  if (util::memory::Manager::supportHugePages()) {
+    state_.reset(new PerceptronState{dataSize});
+    weightData = state_->importDoubles(weightData);
+  }
+
+
+  util::ArraySlice<float> weightSlice{weightData, dataSize};
+
+  weights_ = weightSlice;
 
   return Status::Ok();
 }
+
+HashedFeaturePerceptron::HashedFeaturePerceptron(const util::ArraySlice<float> &weights)
+  : weights_{weights} {}
+
+HashedFeaturePerceptron::HashedFeaturePerceptron() = default;
+HashedFeaturePerceptron::~HashedFeaturePerceptron() = default;
 
 }  // namespace analysis
 }  // namespace core
