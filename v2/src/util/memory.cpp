@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <cstring>
 #include <memory>
+#include <cstdlib>
 #include "logging.hpp"
 
 namespace jumanpp {
@@ -63,6 +64,8 @@ bool clearPage(void* begin, size_t size) {
   return true;
 }
 
+constexpr size_t TWO_MEGS = 2 * 1024 * 1024;
+
 MemoryPage Manager::newPage() {
   if (currentPage < pages_.size()) {
     auto& page = pages_[currentPage];
@@ -70,27 +73,27 @@ MemoryPage Manager::newPage() {
     JPP_DCHECK(clearPage(page.base, page.size));
     return page;
   } else {
-    int flags = MAP_ANON | MAP_PRIVATE;
-    void* addr = MAP_FAILED;
-#if defined(MAP_HUGETLB)
-    int flags2 = flags;
-    if (page_size_ >= (1 << 21)) {
-      flags2 |= MAP_HUGETLB;
-    }
-    addr = ::mmap(NULL, page_size_, PROT_READ | PROT_WRITE, flags2, -1, 0);
+    void* addr;
+    if (page_size_ >= TWO_MEGS) {
+      int status = posix_memalign(&addr, TWO_MEGS, page_size_);
+      if (status != 0) {
+        LOG_ERROR() << "Error when trying to get memory: "
+                    << strerror(status);
+        throw std::bad_alloc();
+      }
+#ifdef MADV_HUGEPAGE
+      status = madvise(addr, page_size_, MADV_HUGEPAGE);
+      if (status == -1) {
+        LOG_WARN() << "madvise failed: " << strerror(status);
+      }
 #endif
-    // MAP_HUGETLB mmap call can fail if there are no resources,
-    // try without MAP_HUGETLB
-    if (addr == MAP_FAILED) {
-      addr = ::mmap(NULL, page_size_, PROT_READ | PROT_WRITE, flags, -1, 0);
-    }
-
-    if (JPP_UNLIKELY(addr == MAP_FAILED)) {
-      LOG_ERROR()
-          << "mmap call failed, could not allocate memory, probably out "
-             "of memory,"
-          << " errcode=" << strerror(errno);
-      throw std::bad_alloc();
+    } else {
+      int status = posix_memalign(&addr, 4096, page_size_);
+      if (status != 0) {
+        LOG_ERROR() << "Error when trying to get memory: "
+                    << strerror(status);
+        throw std::bad_alloc();
+      }
     }
     auto page = MemoryPage{addr, page_size_};
     JPP_DCHECK(clearPage(page.base, page.size));
@@ -119,10 +122,7 @@ void Manager::reset() { currentPage = 0; }
 
 Manager::~Manager() {
   for (auto page : pages_) {
-    auto ret = ::munmap(page.base, page.size);
-    if (ret == -1) {
-      LOG_WARN() << "error when unmapping memory: errno=" << strerror(errno);
-    }
+    std::free(page.base);
   }
 }
 
