@@ -96,6 +96,7 @@ class ScoreProcessor {
   util::ArraySlice<ConnectionBeamElement> beamPtrs_;
   NgramScoreHolder scores_;
   features::FeatureBuffer featureBuffer_;
+  const features::GeneratedPatternFeatureApply* patternStatic_;
   const features::PartialNgramFeatureApply* ngramApply_;
   Lattice* lattice_;
   features::AnalysisRunStats runStats_;
@@ -124,6 +125,9 @@ class ScoreProcessor {
   void resolveBeamAt(i32 boundary, i32 position);
   void startBoundary(u32 currentNodes);
   void applyT0(i32 boundary, FeatureScorer* features);
+  void computeT0All(i32 boundary, FeatureScorer* features,
+                    features::impl::PrimitiveFeatureContext* pfc,
+                    const dic::DictionaryEntries& dicEntries);
   void applyT1(i32 boundary, i32 position, FeatureScorer* features);
   void applyT2(i32 beamIdx, FeatureScorer* features);
   void copyFeatureScores(i32 left, i32 beam, LatticeBoundaryScores* bndconn);
@@ -149,6 +153,7 @@ class ScoreProcessor {
   void computeT0Prescores(util::ArraySlice<BeamCandidate> gbeam,
                           FeatureScorer* scorer);
   void makeT0cutoffBeam(u32 fullAnalysis, u32 rightBeam);
+  bool patternIsStatic() const { return patternStatic_ != nullptr; }
 };
 
 }  // namespace analysis

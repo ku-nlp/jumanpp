@@ -224,7 +224,7 @@ float PartialTrainer::addBadNode2(const analysis::ConnectionPtr* node,
   i32 nodes = 0;
 
   // LOOP1: count good nodes
-  for (int i = 0; i < bndNodes->arraySize(); ++i) {
+  for (int i = 0; i < bndNodes->numEntries(); ++i) {
     if (bndNodes->nodeInfo().at(i).numCodepoints() != length) {
       continue;
     }
@@ -259,7 +259,7 @@ float PartialTrainer::addBadNode2(const analysis::ConnectionPtr* node,
   util::MutableArraySlice<u32> buffer{&featureBuf_};
 
   // PASS2: compute positive features
-  for (int i = 0; i < bndNodes->arraySize(); ++i) {
+  for (int i = 0; i < bndNodes->numEntries(); ++i) {
     if (bndNodes->nodeInfo().at(i).numCodepoints() != length) {
       continue;
     }
@@ -306,7 +306,7 @@ float PartialTrainer::addBadNode2(const analysis::ConnectionPtr* node,
     }
   }
 
-  return static_cast<float>(nodes) / bndNodes->arraySize();
+  return static_cast<float>(nodes) / bndNodes->numEntries();
 }
 
 bool PartialExample::doesNodeMatch(const analysis::Lattice* lr, i32 boundary,
@@ -361,7 +361,7 @@ void PartialTrainer::markGold(
   for (u16 bnd = 0; bnd < l->createdBoundaryCount(); ++bnd) {
     auto bndobj = l->boundary(bnd);
     auto bndRight = bndobj->starts();
-    for (u16 pos = 0; pos < bndRight->arraySize(); ++pos) {
+    for (u16 pos = 0; pos < bndRight->numEntries(); ++pos) {
       if (example_.doesNodeMatch(bndRight, bnd, pos)) {
         callback(analysis::LatticeNodePtr{bnd, pos});
       }

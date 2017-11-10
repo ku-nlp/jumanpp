@@ -63,11 +63,12 @@ inline bool operator==(const ConnectionPtr& p1, const ConnectionPtr& p2) {
 
 struct LatticeConfig {
   u32 entrySize;
-  u32 numPrimitiveFeatures;
   u32 numFeaturePatterns;
-  u32 numFinalFeatures;
   u32 beamSize;
   u32 scoreCnt;
+
+  // will be automatically set by AnalyzerImpl if the conditions are correct
+  bool dontStoreEntryData = false;
 };
 
 struct LatticeBoundaryConfig {

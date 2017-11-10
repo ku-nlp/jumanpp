@@ -62,6 +62,8 @@ ScoreProcessor::ScoreProcessor(AnalyzerImpl *analyzer)
       t0cutoffIdxBuffer_ = alloc->allocateBuf<u32>(maxNodes);
     }
   }
+
+  patternStatic_ = analyzer->core().features().patternStatic.get();
 }
 
 void ScoreProcessor::copyFeatureScores(i32 left, i32 beam,
@@ -93,6 +95,17 @@ void ScoreProcessor::applyT0(i32 boundary, FeatureScorer *features) {
                         scores_.bufferT0());
   ngramApply_->applyBiStep1(&featureBuffer_, patterns);
   ngramApply_->applyTriStep1(&featureBuffer_, patterns);
+}
+
+void ScoreProcessor::computeT0All(i32 boundary, FeatureScorer *features,
+                                  features::impl::PrimitiveFeatureContext *pfc,
+                                  const dic::DictionaryEntries &dicEntries) {
+  auto bnd = lattice_->boundary(boundary)->starts();
+  auto nodeInfo = bnd->nodeInfo();
+  auto scores = scores_.bufferT0();
+  patternStatic_->patternsAndUnigramsApply(
+      pfc, nodeInfo, dicEntries, &featureBuffer_, bnd->patternFeatureData(),
+      features, scores);
 }
 
 void ScoreProcessor::applyT1(i32 boundary, i32 position,

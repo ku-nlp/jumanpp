@@ -10,10 +10,9 @@ namespace core {
 CoreHolder::CoreHolder(const spec::AnalysisSpec &spec,
                        const dic::DictionaryHolder &dic)
     : spec_{spec}, dic_{dic} {
-  latticeCfg_.entrySize = dic.entries().numFeatures();
-  latticeCfg_.numPrimitiveFeatures = spec.features.primitive.size();
-  latticeCfg_.numFeaturePatterns = spec.features.pattern.size();
-  latticeCfg_.numFinalFeatures = spec.features.ngram.size();
+  latticeCfg_.entrySize = static_cast<u32>(dic.entries().numFeatures());
+  latticeCfg_.numFeaturePatterns =
+      static_cast<u32>(spec.features.pattern.size());
 }
 
 Status CoreHolder::initialize(const features::StaticFeatureFactory *sff) {

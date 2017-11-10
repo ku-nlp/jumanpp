@@ -38,7 +38,6 @@ LatticeBoundary::LatticeBoundary(util::memory::PoolAlloc *alloc,
 
 Status LatticeBoundary::initialize() {
   JPP_RETURN_IF_ERROR(left_.initialize());
-  JPP_RETURN_IF_ERROR(right_.initialize());
   return Status::Ok();
 }
 
@@ -77,13 +76,18 @@ void LatticeBoundaryScores::importBeamScore(i32 left, i32 scorer, i32 beam,
 
 LatticeRightBoundary::LatticeRightBoundary(util::memory::PoolAlloc *alloc,
                                            const LatticeConfig &lc,
-                                           const LatticeBoundaryConfig &lbc)
-    : StructOfArrays(alloc, lbc.beginNodes),
-      nodeInfo_{this, 1},
-      entryDataStorage{this, lc.entrySize},
-      primitiveFeatures{this, lc.numPrimitiveFeatures},
-      featurePatterns{this, lc.numFeaturePatterns},
-      beam{this, lc.beamSize} {}
+                                           const LatticeBoundaryConfig &lbc) {
+  nodeInfo_ = alloc->allocateBuf<NodeInfo>(lbc.beginNodes, 64);
+  featurePatterns =
+      alloc->allocate2d<u64>(lbc.beginNodes, lc.numFeaturePatterns, 64);
+  beam =
+      alloc->allocate2d<ConnectionBeamElement>(lbc.beginNodes, lc.beamSize, 64);
+  if (lc.dontStoreEntryData) {
+    entryDataStorage = {};
+  } else {
+    entryDataStorage = alloc->allocate2d<i32>(lbc.beginNodes, lc.entrySize, 64);
+  }
+}
 
 LatticeLeftBoundary::LatticeLeftBoundary(util::memory::PoolAlloc *alloc,
                                          const LatticeConfig &lc,

@@ -68,6 +68,17 @@ Status AnalyzerImpl::initScorers(const ScorerDef& cfg) {
     JPP_RETURN_IF_ERROR(sf->makeInstance(&comp));
     scorers_.emplace_back(std::move(comp));
   }
+
+  cfg_.alwaysComputeEntries =
+      cfg_.alwaysComputeEntries || (!core_->features().patternStatic);
+  if (!cfg_.alwaysComputeEntries) {
+    latticeConfig_.dontStoreEntryData = true;
+    auto& fspec = core_->spec().features;
+    latticeConfig_.numFeaturePatterns =
+        static_cast<u32>(fspec.pattern.size() - fspec.numUniOnlyPats);
+    lattice_.updateConfig(latticeConfig_);
+  }
+
   return Status::Ok();
 }
 
@@ -130,16 +141,22 @@ Status AnalyzerImpl::buildLattice() {
   JPP_RETURN_IF_ERROR(latticeBldr_.makeBos(&lcc, &lattice_));
   JPP_DCHECK_EQ(lattice_.createdBoundaryCount(), 2);
   i32 totalBnds = input_.numCodepoints();
+
+  bool noStaticPattern = core_->features().patternStatic.get() == nullptr;
+
   for (i32 boundary = 0; boundary < totalBnds; ++boundary) {
     LatticeBoundary* bnd;
     JPP_RETURN_IF_ERROR(
         latticeBldr_.constructSingleBoundary(&lattice_, &bnd, boundary));
-    fc.importEntryData(bnd);
-    if (latticeBldr_.isAccessible(boundary)) {
-      fc.patternFeaturesDynamic(bnd);
+
+    if (!latticeConfig_.dontStoreEntryData) {
+      fc.importEntryData(bnd);
+      if (noStaticPattern && latticeBldr_.isAccessible(boundary)) {
+        fc.patternFeaturesDynamic(bnd);
+      }
     }
 
-    JPP_DCHECK_EQ(bnd->starts()->arraySize(),
+    JPP_DCHECK_EQ(bnd->starts()->numEntries(),
                   latticeBldr_.infoAt(boundary).startCount);
   }
 
@@ -191,7 +208,13 @@ Status AnalyzerImpl::computeScoresFull(const ScorerDef* sconf) {
     EntryBeam::initializeBlock(bnd->starts()->beamData().data());
 
     proc.startBoundary(bnd->localNodeCount());
-    proc.applyT0(boundary, sconf->feature);
+    if (proc.patternIsStatic()) {
+      features::impl::PrimitiveFeatureContext pfc{&xtra_, dic().fields(),
+                                                  input_.codepoints()};
+      proc.computeT0All(boundary, sconf->feature, &pfc, dic().entries());
+    } else {
+      proc.applyT0(boundary, sconf->feature);
+    }
 
     for (i32 t1idx = 0; t1idx < left.size(); ++t1idx) {
       JPP_CAPTURE(t1idx);
@@ -238,7 +261,14 @@ Status AnalyzerImpl::computeScoresGbeam(const ScorerDef* sconf) {
     auto bnd = lattice_.boundary(boundary);
     JPP_DCHECK(bnd->endingsFilled());
     proc.startBoundary(bnd->localNodeCount());
-    proc.applyT0(boundary, sconf->feature);
+    if (proc.patternIsStatic()) {
+      features::impl::PrimitiveFeatureContext pfc{&xtra_, dic().fields(),
+                                                  input_.codepoints()};
+      proc.computeT0All(boundary, sconf->feature, &pfc, dic().entries());
+    } else {
+      proc.applyT0(boundary, sconf->feature);
+    }
+
     auto gbeam = proc.makeGlobalBeam(boundary, cfg().globalBeamSize);
     proc.computeGbeamScores(boundary, gbeam, sconf->feature);
   }

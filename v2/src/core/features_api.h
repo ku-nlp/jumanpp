@@ -87,6 +87,7 @@ class PatternFeatureApply : public FeatureApply {
 };
 
 class GeneratedPatternFeatureApply : public FeatureApply {
+ public:
   virtual void patternsAndUnigramsApply(
       ::jumanpp::core::features::impl::PrimitiveFeatureContext* ctx,
       ::jumanpp::util::ArraySlice<::jumanpp::core::NodeInfo> nodeInfos,

@@ -22,7 +22,8 @@ DictNode DicReader::readEntry(EntryPtr ptr) const {
   auto dicEntries = dic_.entries();
   node.entry_.setCounts(static_cast<u32>(dicEntries.numFeatures()),
                         static_cast<u32>(dicEntries.numData()));
-  JPP_DCHECK(node.entry_.fillFromStorage(ptr, dicEntries.entryData()));
+  auto read = node.entry_.fillFromStorage(ptr, dicEntries.entryData());
+  JPP_DCHECK(read);
   return node;
 }
 

@@ -46,7 +46,7 @@ class InNodeFeatureComputer {
     auto ptrs = nodes->nodeInfo();
     auto entries = nodes->entryData();
     auto primFeature = nodes->patternFeatureData();
-    features::impl::PrimitiveFeatureData pfd{ptrs.data(), entries, primFeature};
+    features::impl::PrimitiveFeatureData pfd{ptrs, entries, primFeature};
     features_.patternDynamic->applyBatch(&pfc_, &pfd);
   }
 };

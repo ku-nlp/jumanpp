@@ -5,7 +5,7 @@
 #define BENCHPRESS_CONFIG_MAIN
 #include "benchpress/benchpress.hpp"
 
-#include "core/codegen/cg_1_spec.h"
+#include "core/benchmarks/other/spec_01.h"
 #include "core/core.h"
 #include "core/features_api.h"
 #include "core/impl/feature_impl_combine.h"
@@ -369,16 +369,11 @@ void doWork2(benchpress::context *ctx) {
     throw std::exception();
   }
 
-  jumanpp::core::RuntimeInfo runtimeInfo;
-  if (!dh.compileRuntimeInfo(spec, &runtimeInfo)) {
-    throw std::exception();
-  }
-
-  jumanpp::core::CoreHolder ch{runtimeInfo, dh};
-
   jumanpp::core::features::FeatureHolder fh;
 
-  if (!jumanpp::core::features::makeFeatures(ch, nullptr, &fh)) {
+  jumanpp::core::CoreHolder core{spec, dh};
+
+  if (!jumanpp::core::features::makeFeatures(core, nullptr, &fh)) {
     throw std::exception();
   }
 

@@ -28,12 +28,11 @@ class LatticeLeftBoundary final : public util::memory::StructOfArrays {
   }
 };
 
-class LatticeRightBoundary final : public util::memory::StructOfArrays {
-  util::memory::SizedArrayField<NodeInfo> nodeInfo_;
-  util::memory::SizedArrayField<i32, 64> entryDataStorage;
-  util::memory::SizedArrayField<u64, 64> primitiveFeatures;
-  util::memory::SizedArrayField<u64, 64> featurePatterns;
-  util::memory::SizedArrayField<ConnectionBeamElement, 64> beam;
+class LatticeRightBoundary {
+  util::MutableArraySlice<NodeInfo> nodeInfo_;
+  util::Sliceable<i32> entryDataStorage;
+  util::Sliceable<u64> featurePatterns;
+  util::Sliceable<ConnectionBeamElement> beam;
 
   friend class LatticeBoundary;
 
@@ -41,20 +40,17 @@ class LatticeRightBoundary final : public util::memory::StructOfArrays {
   LatticeRightBoundary(util::memory::PoolAlloc* alloc, const LatticeConfig& lc,
                        const LatticeBoundaryConfig& lbc);
 
-  util::Sliceable<NodeInfo> nodeInfo() { return nodeInfo_; }
-  util::ConstSliceable<NodeInfo> nodeInfo() const { return nodeInfo_; }
+  util::MutableArraySlice<NodeInfo> nodeInfo() { return nodeInfo_; }
+  util::ArraySlice<NodeInfo> nodeInfo() const { return nodeInfo_; }
   util::Sliceable<i32> entryData() { return entryDataStorage; }
   util::ConstSliceable<i32> entryData() const { return entryDataStorage; }
-  util::Sliceable<u64> primitiveFeatureData() { return primitiveFeatures; }
-  util::ConstSliceable<u64> primitiveFeatureData() const {
-    return primitiveFeatures;
-  }
   util::Sliceable<u64> patternFeatureData() { return featurePatterns; }
   util::ConstSliceable<u64> patternFeatureData() const {
     return featurePatterns;
   }
   util::Sliceable<ConnectionBeamElement> beamData() { return beam; }
   util::ConstSliceable<ConnectionBeamElement> beamData() const { return beam; }
+  size_t numEntries() const { return nodeInfo_.size(); }
 };
 
 class NodeScores {
@@ -123,7 +119,7 @@ class LatticeBoundary {
                   const LatticeBoundaryConfig& lbc);
 
   EntryPtr entry(u32 position) const {
-    return right_.nodeInfo_.data().at(position).entryPtr();
+    return right_.nodeInfo_.at(position).entryPtr();
   }
 
   bool endingsFilled() const {
@@ -172,6 +168,7 @@ class Lattice {
   void hintSize(u32 size);
   void reset();
   const LatticeConfig& config() { return lconf; }
+  void updateConfig(const LatticeConfig& cfg) { lconf = cfg; }
 };
 
 }  // namespace analysis

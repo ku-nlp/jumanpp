@@ -36,7 +36,7 @@ Status AnalysisPath::fillIn(const Lattice *l) {
   auto lastOne = l->boundary(bnds - 1);
   auto lastStart = lastOne->starts();
 
-  if (lastStart->arraySize() != 1) {
+  if (lastStart->numEntries() != 1) {
     return JPPS_INVALID_STATE << "last boundary had more than one node!";
   }
 

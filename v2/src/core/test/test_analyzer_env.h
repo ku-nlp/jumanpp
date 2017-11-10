@@ -10,6 +10,8 @@
 #include "core/analysis/perceptron.h"
 #include "core/impl/graphviz_format.h"
 #include "testing/test_analyzer.h"
+#include "util/debug_output.h"
+#include "util/logging.hpp"
 
 namespace tests {
 
@@ -201,14 +203,6 @@ class PrimFeatureTestEnv {
     return it->second;
   }
 
-  util::ArraySlice<u64> prim(i32 start, i32 node) {
-    CAPTURE(start);
-    auto bnd = tenv.analyzer->lattice()->boundary(start + 2);
-    auto pBoundary = bnd->starts();
-    REQUIRE(pBoundary->arraySize() > 0);
-    return pBoundary->primitiveFeatureData().row(node);
-  }
-
   const spec::AnalysisSpec& spec() const { return tenv.restoredDic.spec; }
 
   void printAll() {
@@ -231,7 +225,6 @@ class PrimFeatureTestEnv {
     Node n;
     auto pos = ptr.right;
     util::copy_insert(starts->entryData().row(pos), n.entries);
-    util::copy_insert(starts->primitiveFeatureData(), n.primitve);
     util::copy_insert(starts->patternFeatureData(), n.pattern);
     n.eptr = starts->nodeInfo().at(pos).entryPtr();
 

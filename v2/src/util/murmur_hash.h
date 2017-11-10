@@ -123,11 +123,12 @@ JPP_ALWAYS_INLINE inline uint64_t murmurhash3_memory(const u8 *begin,
 
   const uint8_t *data = begin;
   size_t len = end - begin;
-  const uint64_t *blocks = reinterpret_cast<const uint64_t *>(data);
   const size_t block_size = len / OWORDSIZE;
 
   for (unsigned int i = 0; i < block_size; i++) {
-    OWORD block = OWORD(blocks[i * 2], blocks[i * 2 + 1]);
+    OWORD block;
+    // unaligned read
+    std::memcpy(&block, begin + i * OWORDSIZE, sizeof(OWORDSIZE));
     murmur_oword(block, &value);
   }
 
