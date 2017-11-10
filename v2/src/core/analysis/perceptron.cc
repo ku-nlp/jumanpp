@@ -40,12 +40,13 @@ void HashedFeaturePerceptron::add(util::ArraySlice<float> source,
 class PerceptronState {
   util::memory::Manager manager_;
   std::unique_ptr<util::memory::PoolAlloc> alloc_;
+  size_t numElems_;
 
 public:
-  PerceptronState(size_t size): manager_{size}, alloc_{manager_.core()} {}
+  PerceptronState(size_t numElems): manager_{numElems * sizeof(float)}, alloc_{manager_.core()}, numElems_{numElems} {}
   
   const float* importDoubles(const float* data) {
-    auto objs = manager_.pageSize();
+    auto objs = numElems_;
     auto arr = alloc_->allocateArray<float>(objs);
     memcpy(arr, data, objs * sizeof(float));
     LOG_TRACE() << "import perceptron data: " << objs << " objects at " << arr;
@@ -95,9 +96,9 @@ Status HashedFeaturePerceptron::load(const model::ModelInfo& model) {
 
   StringPiece modelData = data[1];
 
-  auto sliceSize = modelData.size() / sizeof(float);
+  auto weightCount = modelData.size() / sizeof(float);
 
-  if (sliceSize != dataSize) {
+  if (weightCount != dataSize) {
     return Status::InvalidState()
            << "perceptron: slice size was not equal to model size in header";
   }
@@ -105,7 +106,9 @@ Status HashedFeaturePerceptron::load(const model::ModelInfo& model) {
   auto weightData = reinterpret_cast<const float*>(modelData.begin());
 
   if (util::memory::Manager::supportHugePages()) {
-    state_.reset(new PerceptronState{dataSize});
+    const size_t TWO_MEGS_FOR_FLOATS = 2 * 1024 * 1024 / sizeof(float);
+    auto theSize = std::max(TWO_MEGS_FOR_FLOATS, weightCount);
+    state_.reset(new PerceptronState{theSize});
     weightData = state_->importDoubles(weightData);
   }
 

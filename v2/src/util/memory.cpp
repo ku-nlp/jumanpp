@@ -109,8 +109,10 @@ bool PoolAlloc::ensureAvailable(size_t size) {
     return true;
   } else {
     MemoryPage page = mgr_->newPage();
-    assert(page.size > size &&
-           "page size is lesser than object size, please increase page size");
+    if (page.size < size) {
+      LOG_ERROR() << "page size (" << page.size << " is lesser than object size (" << size << "), please increase page size";
+      throw new std::bad_alloc();
+    }
     base_ = reinterpret_cast<char*>(page.base);
     offset_ = 0;
     end_ = page.size;
