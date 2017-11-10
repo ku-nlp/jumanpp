@@ -171,8 +171,6 @@ void InNodeComputationsCodegen::generate(i::Printer &p, StringPiece className) {
     p << "\n"
       << JPP_TEXT(::jumanpp::util::ArraySlice<::jumanpp::core::NodeInfo>)
       << " nodeInfos,";
-    p << "\nconst " << JPP_TEXT(::jumanpp::core::dic::DictionaryEntries)
-      << " &dicEntries,";
     p << "\n"
       << JPP_TEXT(::jumanpp::core::features::FeatureBuffer) << " *fbuffer,";
     p << "\n"
@@ -285,7 +283,7 @@ void InNodeComputationsCodegen::generateLoop(i::Printer &p) {
     i::Indent id{p, 2};
     p << "\nauto patterns = patternMatrix.row(item);";
     p << "\nauto& nodeInfo = nodeInfos.at(item);";
-    p << "\nbool status = dicEntries.fillBuffer("
+    p << "\nbool status = ctx->fillEntryBuffer("
       << "nodeInfo.entryPtr(), &entryBuffer);";
     p << "\nJPP_DCHECK(status);";
     p << "\nauto entry = entryBuffer.features();";

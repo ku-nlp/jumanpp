@@ -11,6 +11,7 @@
 #include "util/array_slice.h"
 #include "util/sliceable_array.h"
 #include "util/status.hpp"
+#include "util/stl_util.h"
 
 namespace jumanpp {
 namespace core {
@@ -78,14 +79,19 @@ class FeatureConstructionContext {
 
 class PrimitiveFeatureContext {
   analysis::ExtraNodesContext* extraCtx_;
+  const dic::DictionaryEntries entries_;
   const dic::FieldsHolder& fields_;
   util::ArraySlice<chars::InputCodepoint> codepts_;
 
  public:
   PrimitiveFeatureContext(analysis::ExtraNodesContext* extraCtx,
                           const dic::FieldsHolder& fields,
+                          const dic::DictionaryEntries& entries,
                           util::ArraySlice<chars::InputCodepoint> codepts)
-      : extraCtx_(extraCtx), fields_(fields), codepts_{codepts} {}
+      : extraCtx_(extraCtx),
+        entries_{entries},
+        fields_(fields),
+        codepts_{codepts} {}
 
   DicListTraversal traversal(i32 fieldIdx, i32 fieldPtr) const {
     auto& fld = fields_.at(fieldIdx);
@@ -100,7 +106,8 @@ class PrimitiveFeatureContext {
   }
 
   i32 providedFeature(EntryPtr entryPtr, u32 index) const {
-    if (!entryPtr.isSpecial()) {
+    if (!entryPtr.isSpecial() || entryPtr == EntryPtr::EOS() ||
+        entryPtr == EntryPtr::BOS()) {
       return 0;
     }
     auto node = extraCtx_->node(entryPtr);
@@ -109,6 +116,35 @@ class PrimitiveFeatureContext {
       return 0;
     }
     return extraCtx_->placeholderData(entryPtr, index);
+  }
+
+  bool fillEntryBuffer(EntryPtr eptr, dic::DicEntryBuffer* buffer) const {
+    auto size = static_cast<u32>(entries_.numFeatures());
+    buffer->numFeatures_ = size;
+    util::MutableArraySlice<i32> data{buffer->featureBuffer_.data(), size};
+    return fillEntryBuffer(eptr, data);
+  }
+
+  bool fillEntryBuffer(EntryPtr eptr,
+                       util::MutableArraySlice<i32> features) const {
+    if (eptr == EntryPtr::BOS() || eptr == EntryPtr::EOS()) {
+      util::fill(features, eptr.rawValue());
+      return true;
+    } else if (eptr == EntryPtr::Invalid()) {
+      return false;
+    }
+
+    auto numf = features.size();
+    if (eptr.isDic()) {
+      return entries_.entryAtPtr(eptr).fill(features, numf) == numf;
+    } else {
+      auto node = extraCtx_->node(eptr);
+      if (node == nullptr) {
+        return false;
+      }
+      util::copy_buffer(extraCtx_->nodeContent(node), features);
+      return true;
+    }
   }
 
   i32 lengthOf(NodeInfo nodeInfo, i32 fieldNum, i32 fieldPtr,

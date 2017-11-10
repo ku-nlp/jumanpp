@@ -470,7 +470,7 @@ class DoubleArrayImpl {
         }
 
         ++progress_;
-        if (progress_cb_ != nullptr) {
+        if (progress_cb_ != nullptr && progress_ % 4096 == 0) {
           progress_cb_->report(progress_, key_size_);
         }
 

@@ -8,6 +8,7 @@
 #include "core/dic/darts_trie.h"
 #include "core/dic/dic_feature_impl.h"
 #include "core/dic/field_import.h"
+#include "core/dic/progress.h"
 #include "util/coded_io.h"
 #include "util/csv_reader.h"
 #include "util/flatmap.h"
@@ -24,12 +25,14 @@ struct DicTrieBuilder {
   util::CodedBuffer entryPtrBuffer;
   util::FlatMap<i32, util::InlinedVector<i32, 4>> entriesWithField;
   DoubleArrayBuilder daBuilder;
+  ProgressCallback* callback = nullptr;
 
   void addEntry(i32 fieldValue, i32 entryPtr) {
     entriesWithField[fieldValue].push_back(entryPtr);
   }
 
-  Status buildTrie(const impl::StringStorage& strings);
+  Status buildTrie(const impl::StringStorage& strings,
+                   ProgressCallback* progress = nullptr);
 };
 
 struct EntryTableBuilder;
@@ -104,6 +107,8 @@ struct EntryTableBuilder {
 
   Status createFeatures(const spec::FeaturesSpec& features,
                         const DicFeatureContext& ctx);
+
+  void writeRest();
 };
 
 }  // namespace dic

@@ -172,14 +172,12 @@ void LatticeConstructionContext::addBos(LatticeBoundary *lb) {
   JPP_DCHECK_EQ(lb->localNodeCount(), 1);
   lb->starts()->nodeInfo()[0] = NodeInfo{EntryPtr::BOS(), 0, 0};
   auto features = lb->starts()->patternFeatureData();
-  util::fill(features, EntryPtr::BOS().rawValue());
+  u64 bos = static_cast<u32>(EntryPtr::BOS().rawValue());
+  util::fill(features, bos);
 }
 
 void LatticeConstructionContext::addEos(LatticeBoundary *lb) {
   JPP_DCHECK_EQ(lb->localNodeCount(), 1);
-  lb->starts()->nodeInfo()[0] = NodeInfo{EntryPtr::EOS(), 0, 0};
-  auto features = lb->starts()->patternFeatureData();
-  util::fill(features, EntryPtr::EOS().rawValue());
 }
 
 void LatticeCompactor::computeHashes(util::ArraySlice<LatticeNodeSeed> seeds) {

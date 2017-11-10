@@ -91,7 +91,6 @@ class GeneratedPatternFeatureApply : public FeatureApply {
   virtual void patternsAndUnigramsApply(
       ::jumanpp::core::features::impl::PrimitiveFeatureContext* ctx,
       ::jumanpp::util::ArraySlice<::jumanpp::core::NodeInfo> nodeInfos,
-      const ::jumanpp::core::dic::DictionaryEntries& dicEntries,
       FeatureBuffer* fbuffer,
       ::jumanpp::util::Sliceable<::jumanpp::u64> patternMatrix,
       const ::jumanpp::core::analysis::FeatureScorer* scorer,

@@ -16,6 +16,11 @@
 
 namespace jumanpp {
 namespace core {
+namespace features {
+namespace impl {
+class PrimitiveFeatureContext;
+}
+}  // namespace features
 namespace dic {
 
 class DicEntryBuffer {
@@ -26,6 +31,7 @@ class DicEntryBuffer {
   impl::IntListTraversal remainingData_;
 
   friend class IndexedEntries;
+  friend class jumanpp::core::features::impl::PrimitiveFeatureContext;
 
  public:
   DicEntryBuffer() = default;
@@ -126,6 +132,13 @@ class DicEntryBuffer {
     for (int i = 0; i < newFeatures.size(); ++i) {
       featureBuffer_[i] = newFeatures[i];
     }
+  }
+
+  void fillFeaturesWithValue(i32 value) {
+    for (int i = 0; i < JPP_MAX_DIC_FIELDS; ++i) {
+      featureBuffer_[i] = value;
+    }
+    dataBuffer_[0] = 0;
   }
 };
 

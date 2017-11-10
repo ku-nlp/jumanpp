@@ -10,28 +10,7 @@ namespace analysis {
 
 bool InNodeFeatureComputer::importOneEntry(
     NodeInfo nfo, util::MutableArraySlice<i32> result) {
-  auto ptr = nfo.entryPtr();
-  if (ptr.isSpecial()) {
-    auto node = xtra_.node(ptr);
-    if (node->header.type == ExtraNodeType::Unknown) {
-      auto nodeData = xtra_.nodeContent(node);
-      util::copy_buffer(nodeData, result);
-      auto hash = node->header.unk.contentHash;
-      for (auto& e : result) {
-        if (e < 0) {
-          e = hash;
-        }
-      }
-    } else if (node->header.type == ExtraNodeType::Alias) {
-      auto nodeData = xtra_.nodeContent(node);
-      util::copy_buffer(nodeData, result);
-    } else {
-      return false;
-    }
-  } else {  // dic node
-    entries_.entryAtPtr(ptr).fill(result, result.size());
-  }
-  return true;
+  return pfc_.fillEntryBuffer(nfo.entryPtr(), result);
 }
 }  // namespace analysis
 }  // namespace core

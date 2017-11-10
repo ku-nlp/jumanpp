@@ -64,7 +64,9 @@ void DictionaryBuilderStorage::fillResult(BuiltDictionary* dic_) {
 }
 
 Status DictionaryBuilderStorage::computeStats(StringPiece name,
-                                              util::CsvReader* csv) {
+                                              util::CsvReader* csv,
+                                              ProgressCallback* callback) {
+  u64 numLine = 1;
   while (csv->nextLine()) {
     auto ncols = csv->numFields();
     if (maxUsedCol >= ncols) {
@@ -87,13 +89,21 @@ Status DictionaryBuilderStorage::computeStats(StringPiece name,
         entries.addSurface(csv->field(imp.descriptor->position - 1));
       }
     }
+    if (callback != nullptr && numLine % 4096 == 0) {
+      callback->report(static_cast<u64>(csv->bytePosition()),
+                       static_cast<u64>(csv->byteSize()));
+    }
+    ++numLine;
   }
   return Status::Ok();
 }
 
-Status DictionaryBuilderStorage::makeStorage() {
+Status DictionaryBuilderStorage::makeStorage(ProgressCallback* callback) {
   for (int i = 0; i < storage.size(); ++i) {
     storage[i].makeStorage(&stringBuffers[i]);
+    if (callback != nullptr) {
+      callback->report(static_cast<u64>(i), storage.size());
+    }
   }
 
   for (auto& imp : importers) {
@@ -108,21 +118,29 @@ Status DictionaryBuilderStorage::makeStorage() {
   return Status::Ok();
 }
 
-i32 DictionaryBuilderStorage::importActualData(util::CsvReader* csv) {
+i32 DictionaryBuilderStorage::importActualData(util::CsvReader* csv,
+                                               ProgressCallback* callback) {
   i32 entryCnt = 0;
+  u64 numLine = 1;
   while (csv->nextLine()) {
     entryCnt += entries.importOneLine(importers, *csv);
+    if (callback != nullptr && numLine % 4096 == 0) {
+      callback->report(static_cast<u64>(csv->bytePosition()),
+                       static_cast<u64>(csv->byteSize()));
+    }
+    ++numLine;
   }
+  entries.writeRest();
   return entryCnt;
 }
 
-Status DictionaryBuilderStorage::buildTrie() {
+Status DictionaryBuilderStorage::buildTrie(ProgressCallback* callback) {
   if (indexColumn == -1) {
     return Status::InvalidParameter() << "index column was not specified";
   }
   auto storageIdx = importers[indexColumn].descriptor->stringStorage;
   auto& stringBuf = storage[storageIdx];
-  JPP_RETURN_IF_ERROR(entries.trieBuilder.buildTrie(stringBuf));
+  JPP_RETURN_IF_ERROR(entries.trieBuilder.buildTrie(stringBuf, callback));
   return Status::Ok();
 }
 
@@ -130,9 +148,9 @@ Status DictionaryBuilderStorage::initialize(const s::DictionarySpec& dicSpec) {
   indexColumn = dicSpec.indexColumn;
 
   importers.resize(dicSpec.fields.size());
-  storage.resize(dicSpec.numStringStorage);
-  stringBuffers.resize(dicSpec.numStringStorage);
-  intBuffers.resize(dicSpec.numIntStorage);
+  storage.resize(static_cast<size_t>(dicSpec.numStringStorage));
+  stringBuffers.resize(static_cast<size_t>(dicSpec.numStringStorage));
+  intBuffers.resize(static_cast<size_t>(dicSpec.numIntStorage));
 
   for (int i = 0; i < dicSpec.fields.size(); ++i) {
     auto& column = dicSpec.fields[i];
@@ -153,7 +171,7 @@ Status DictionaryBuilderStorage::initDicFeatures(const FeaturesSpec& dicSpec) {
   entries.surfaceIdx_ = static_cast<u32>(indexColumn);
   auto desc = importers[indexColumn].descriptor;
   entries.realSurfaceStorage_ = &storage[desc->stringStorage];
-  entries.featureBuf_.resize(dicSpec.numDicFeatures);
+  entries.featureBuf_.resize(static_cast<size_t>(dicSpec.numDicFeatures));
   return Status::Ok();
 }
 

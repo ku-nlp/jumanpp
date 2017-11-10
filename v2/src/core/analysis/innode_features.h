@@ -14,7 +14,6 @@ namespace analysis {
 
 class InNodeFeatureComputer {
   const dic::DictionaryEntries entries_;
-  const ExtraNodesContext& xtra_;
   const core::features::FeatureHolder& features_;
   features::impl::PrimitiveFeatureContext pfc_;
 
@@ -23,9 +22,8 @@ class InNodeFeatureComputer {
                         const features::FeatureHolder& features,
                         ExtraNodesContext* xtra, const AnalysisInput& input)
       : entries_{dic.entries()},
-        xtra_{*xtra},
         features_{features},
-        pfc_{xtra, dic.fields(), input.codepoints()} {}
+        pfc_{xtra, dic.fields(), dic.entries(), input.codepoints()} {}
 
   bool importOneEntry(NodeInfo nfo, util::MutableArraySlice<i32> result);
 

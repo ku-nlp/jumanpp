@@ -19,6 +19,7 @@ class DoubleArrayImpl;
 
 namespace jumanpp {
 namespace core {
+class ProgressCallback;
 namespace dic {
 
 struct CharStringLength {
@@ -49,7 +50,7 @@ class DoubleArrayBuilder {
  public:
   DoubleArrayBuilder();
   void add(StringPiece key, int value);
-  Status build();
+  Status build(ProgressCallback *progress = nullptr);
   size_t underlyingByteSize() const;
   const void *underlyingStorage() const;
 

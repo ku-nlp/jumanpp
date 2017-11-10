@@ -19,7 +19,7 @@ void DoubleArrayBuilder::add(StringPiece key, int value) {
 DoubleArrayBuilder::DoubleArrayBuilder()
     : array_{std::make_unique<impl::DoubleArrayCore>()} {}
 
-Status DoubleArrayBuilder::build() {
+Status DoubleArrayBuilder::build(ProgressCallback *progress) {
   std::sort(immediate_.begin(), immediate_.end(),
             [](const impl::PieceWithValue &l, const impl::PieceWithValue &r) {
               int cmp = std::strncmp(l.key.char_begin(), r.key.char_begin(),
@@ -45,8 +45,8 @@ Status DoubleArrayBuilder::build() {
   immediate_.clear();
   immediate_.shrink_to_fit();
 
-  auto retval =
-      array_->build(keys.size(), keys.data(), lengths.data(), values.data());
+  auto retval = array_->build(keys.size(), keys.data(), lengths.data(),
+                              values.data(), progress);
 
   if (retval != 0) {
     return Status::InvalidState()

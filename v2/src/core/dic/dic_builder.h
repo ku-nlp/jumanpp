@@ -13,6 +13,9 @@
 
 namespace jumanpp {
 namespace core {
+
+class ProgressCallback;
+
 namespace dic {
 
 struct BuiltField {
@@ -47,6 +50,9 @@ class DictionaryBuilder {
   spec::AnalysisSpec* spec_;
   std::unique_ptr<BuiltDictionary> dic_;
   std::unique_ptr<DictionaryBuilderStorage> storage_;
+  ProgressCallback* progress_ = nullptr;
+
+  void newProgressStep(StringPiece name);
 
  public:
   DictionaryBuilder();
@@ -57,6 +63,7 @@ class DictionaryBuilder {
   Status importCsv(StringPiece name, StringPiece data);
   const BuiltDictionary& result() const { return *dic_; }
   const spec::AnalysisSpec& spec() const { return *spec_; }
+  void setProgress(ProgressCallback* callback) { progress_ = callback; }
 };
 
 }  // namespace dic

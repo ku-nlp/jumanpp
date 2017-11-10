@@ -209,9 +209,9 @@ Status AnalyzerImpl::computeScoresFull(const ScorerDef* sconf) {
 
     proc.startBoundary(bnd->localNodeCount());
     if (proc.patternIsStatic()) {
-      features::impl::PrimitiveFeatureContext pfc{&xtra_, dic().fields(),
-                                                  input_.codepoints()};
-      proc.computeT0All(boundary, sconf->feature, &pfc, dic().entries());
+      features::impl::PrimitiveFeatureContext pfc{
+          &xtra_, dic().fields(), dic().entries(), input_.codepoints()};
+      proc.computeT0All(boundary, sconf->feature, &pfc);
     } else {
       proc.applyT0(boundary, sconf->feature);
     }
@@ -262,9 +262,10 @@ Status AnalyzerImpl::computeScoresGbeam(const ScorerDef* sconf) {
     JPP_DCHECK(bnd->endingsFilled());
     proc.startBoundary(bnd->localNodeCount());
     if (proc.patternIsStatic()) {
+      auto entries = dic().entries();
       features::impl::PrimitiveFeatureContext pfc{&xtra_, dic().fields(),
-                                                  input_.codepoints()};
-      proc.computeT0All(boundary, sconf->feature, &pfc, dic().entries());
+                                                  entries, input_.codepoints()};
+      proc.computeT0All(boundary, sconf->feature, &pfc);
     } else {
       proc.applyT0(boundary, sconf->feature);
     }

@@ -5,6 +5,7 @@
 #include <iostream>
 #include "core/dic/dic_builder.h"
 #include "core/dic/dictionary.h"
+#include "core/dic/progress.h"
 #include "core/impl/model_io.h"
 #include "jumandic/shared/jumandic_spec.h"
 #include "util/logging.hpp"
@@ -22,11 +23,28 @@ Status importDictionary(StringPiece path, StringPiece target) {
   util::MappedFileFragment frag;
   JPP_RETURN_IF_ERROR(file.map(&frag, 0, file.size()));
 
+  std::string name;
+  bool progressOk = true;
+  auto progress = core::progressCallback(
+      [&](u64 current, u64 total) {
+        if (current == total) {
+          if (!progressOk) {
+            std::cout << "\r" << name << " done!" << std::endl;
+            progressOk = true;
+          }
+        } else {
+          float percent = static_cast<float>(current) / total * 100;
+          std::cout << "\r" << name << ".." << percent << "%          "
+                    << std::flush;
+        }
+      },
+      [&](StringPiece newName) { newName.assignTo(name); });
+
   core::dic::DictionaryBuilder builder;
   JPP_RETURN_IF_ERROR(builder.importSpec(&spec));
-  std::cout << "reading csv file..." << std::flush;
+  builder.setProgress(&progress);
   JPP_RETURN_IF_ERROR(builder.importCsv(path, frag.asStringPiece()));
-  std::cout << "done!\n";
+  std::cout << "\nimport done\n";
 
   core::dic::DictionaryHolder holder;
   JPP_RETURN_IF_ERROR(holder.load(builder.result()));

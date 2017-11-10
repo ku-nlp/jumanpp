@@ -10,7 +10,8 @@ namespace jumanpp {
 namespace core {
 namespace dic {
 
-Status DicTrieBuilder::buildTrie(const impl::StringStorage& strings) {
+Status DicTrieBuilder::buildTrie(const impl::StringStorage& strings,
+                                 ProgressCallback* progress) {
   for (auto& v : strings) {
     StringPiece key = v.first;
     i32 keyPtr = v.second;
@@ -22,7 +23,7 @@ Status DicTrieBuilder::buildTrie(const impl::StringStorage& strings) {
       daBuilder.add(key, entriesPtr);
     }
   }
-  return daBuilder.build();
+  return daBuilder.build(progress);
 }
 
 i32 EntryTableBuilder::importOneLine(std::vector<ColumnImportContext>& columns,
@@ -70,6 +71,28 @@ Status EntryTableBuilder::createFeatures(const spec::FeaturesSpec& features,
   return Status::Ok();
 }
 
+void EntryTableBuilder::writeRest() {
+  auto& reorderBuffer = entryBag.reorderBuffer;
+  for (auto it : entryBag.entries) {
+    for (auto& p : it.second.data) {
+      reorderBuffer.push_back(&p.second);
+    }
+
+    std::sort(reorderBuffer.begin(), reorderBuffer.end(),
+              [](const DicEntryData* p1, const DicEntryData* p2) {
+                return p1->order < p2->order;
+              });
+
+    for (auto p : reorderBuffer) {
+      auto ptr = p->write(this);
+      this->trieBuilder.addEntry(it.first, ptr);
+    }
+
+    reorderBuffer.clear();
+  }
+  entryBag.entries.clear();
+}
+
 i32 DicEntryBag::add(EntryTableBuilder* bldr, const xi::FeatureBuffer& features,
                      const util::CsvReader& csv) {
   if (bldr->ignoredRows.exists(csv.lineNumber())) {
@@ -100,7 +123,7 @@ i32 DicEntryBag::write(EntryTableBuilder* bldr, const util::CsvReader& csv) {
   auto surf = bldr->surfaceOf(csv);
   auto it = entries.find(surf);
 
-  for (auto p : it->second.data) {
+  for (auto& p : it->second.data) {
     reorderBuffer.push_back(&p.second);
   }
 

@@ -5,6 +5,7 @@
 #include "dic_builder.h"
 #include <chrono>
 #include "core/dic/dic_build_detail.h"
+#include "core/dic/progress.h"
 #include "core/spec/spec_ser.h"
 
 namespace jumanpp {
@@ -27,10 +28,12 @@ Status DictionaryBuilder::importCsv(StringPiece name, StringPiece data) {
   JPP_RETURN_IF_ERROR(csv.initFromMemory(data));
 
   // first csv pass -- compute stats
-  JPP_RETURN_IF_ERROR(storage_->computeStats(name, &csv));
+  newProgressStep("Compiling column contents");
+  JPP_RETURN_IF_ERROR(storage_->computeStats(name, &csv, progress_));
 
   // build string storage and internal state for the third step
-  JPP_RETURN_IF_ERROR(storage_->makeStorage());
+  newProgressStep("Compiling column storage");
+  JPP_RETURN_IF_ERROR(storage_->makeStorage(progress_));
 
   // reinitialize csv for second pass
   csv.reset();
@@ -38,10 +41,12 @@ Status DictionaryBuilder::importCsv(StringPiece name, StringPiece data) {
   JPP_RETURN_IF_ERROR(storage_->initDicFeatures(spec_->features));
 
   // second csv pass -- compute entries
-  i32 entryCnt = storage_->importActualData(&csv);
+  newProgressStep("Compiling dictionary entries");
+  i32 entryCnt = storage_->importActualData(&csv, progress_);
 
   // finally: build trie
-  JPP_RETURN_IF_ERROR(storage_->buildTrie());
+  newProgressStep("Compiling trie index");
+  JPP_RETURN_IF_ERROR(storage_->buildTrie(progress_));
 
   // and create answer
 
@@ -103,6 +108,13 @@ Status DictionaryBuilder::fillModelPart(model::ModelPart* part) {
   }
 
   return Status::Ok();
+}
+
+void DictionaryBuilder::newProgressStep(StringPiece name) {
+  if (progress_ != nullptr) {
+    progress_->report(100, 100);
+    progress_->recordName(name);
+  }
 }
 
 inline Status fixupDictionary(const model::ModelPart& dicInfo,

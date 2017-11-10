@@ -126,8 +126,7 @@ class ScoreProcessor {
   void startBoundary(u32 currentNodes);
   void applyT0(i32 boundary, FeatureScorer* features);
   void computeT0All(i32 boundary, FeatureScorer* features,
-                    features::impl::PrimitiveFeatureContext* pfc,
-                    const dic::DictionaryEntries& dicEntries);
+                    features::impl::PrimitiveFeatureContext* pfc);
   void applyT1(i32 boundary, i32 position, FeatureScorer* features);
   void applyT2(i32 beamIdx, FeatureScorer* features);
   void copyFeatureScores(i32 left, i32 beam, LatticeBoundaryScores* bndconn);

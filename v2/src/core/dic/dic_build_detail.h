@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <vector>
+#include "core/dic/progress.h"
 #include "core/spec/spec_serialization.h"
 #include "core/spec/spec_types.h"
 #include "core_config.h"
@@ -42,10 +43,11 @@ struct DictionaryBuilderStorage {
 
   Status initialize(const s::DictionarySpec& dicSpec);
   Status initDicFeatures(const s::FeaturesSpec& dicSpec);
-  Status computeStats(StringPiece name, util::CsvReader* csv);
-  Status makeStorage();
-  i32 importActualData(util::CsvReader* csv);
-  Status buildTrie();
+  Status computeStats(StringPiece name, util::CsvReader* csv,
+                      ProgressCallback* callback);
+  Status makeStorage(ProgressCallback* callback);
+  i32 importActualData(util::CsvReader* csv, ProgressCallback* callback);
+  Status buildTrie(ProgressCallback* callback);
   void fillResult(BuiltDictionary* dic_);
   Status initGroupingFields(const s::AnalysisSpec& spec);
 };
