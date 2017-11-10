@@ -6,6 +6,7 @@
 #define JUMANPP_FEATURE_API_H
 
 #include <memory>
+#include "core/core_types.h"
 #include "util/memory.hpp"
 #include "util/sliceable_array.h"
 #include "util/status.hpp"
@@ -17,6 +18,10 @@ class CoreHolder;
 
 namespace analysis {
 class FeatureScorer;
+}
+
+namespace dic {
+class DictionaryEntries;
 }
 
 namespace features {
@@ -32,28 +37,6 @@ class NgramDynamicFeatureApply;
 class PartialNgramDynamicFeatureApply;
 }  // namespace impl
 
-class FeatureApply {
- public:
-  virtual ~FeatureApply() noexcept = default;
-};
-
-class PatternFeatureApply : public FeatureApply {
- public:
-  virtual void applyBatch(impl::PrimitiveFeatureContext* pfc,
-                          impl::PrimitiveFeatureData* data) const noexcept = 0;
-};
-
-class GeneratedPatternFeatureApply : public FeatureApply {};
-
-class NgramFeatureApply : public FeatureApply {
- public:
-  virtual void applyBatch(impl::NgramFeatureData* data) const noexcept = 0;
-};
-
-struct AnalysisRunStats {
-  u32 maxStarts;
-  u32 maxEnds;
-};
 
 struct FeatureBuffer {
   u32 currentElems;
@@ -90,6 +73,38 @@ struct FeatureBuffer {
   util::MutableArraySlice<float> scoreBuf(u32 size) const {
     return util::MutableArraySlice<float>{scoreBuffer, 0, size};
   }
+};
+
+class FeatureApply {
+ public:
+  virtual ~FeatureApply() noexcept = default;
+};
+
+class PatternFeatureApply : public FeatureApply {
+ public:
+  virtual void applyBatch(impl::PrimitiveFeatureContext* pfc,
+                          impl::PrimitiveFeatureData* data) const noexcept = 0;
+};
+
+class GeneratedPatternFeatureApply : public FeatureApply {
+  virtual void patternsAndUnigramsApply(
+      ::jumanpp::core::features::impl::PrimitiveFeatureContext* ctx,
+      ::jumanpp::util::ArraySlice<::jumanpp::core::NodeInfo> nodeInfos,
+      const ::jumanpp::core::dic::DictionaryEntries& dicEntries,
+      FeatureBuffer* fbuffer,
+      ::jumanpp::util::Sliceable<::jumanpp::u64> patternMatrix,
+      const ::jumanpp::core::analysis::FeatureScorer* scorer,
+      ::jumanpp::util::MutableArraySlice<float> scores) const = 0;
+};
+
+class NgramFeatureApply : public FeatureApply {
+ public:
+  virtual void applyBatch(impl::NgramFeatureData* data) const noexcept = 0;
+};
+
+struct AnalysisRunStats {
+  u32 maxStarts;
+  u32 maxEnds;
 };
 
 class PartialNgramFeatureApply : public FeatureApply {

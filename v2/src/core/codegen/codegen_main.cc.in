@@ -4,7 +4,7 @@
 
 #include <iostream>
 #include "core/spec/spec_dsl.h"
-#include "core/impl/feature_codegen.h"
+#include "core/codegen/feature_codegen.h"
 #include "core/dic/dic_builder.h"
 #include "core/dic/dictionary.h"
 #include "core/core.h"

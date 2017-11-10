@@ -29,13 +29,17 @@ class UnigramFeature {
   constexpr UnigramFeature(u32 target, u32 index, u32 t0idx) noexcept
       : target_{target}, index_{index}, t0idx_{t0idx} {}
 
+  JPP_ALWAYS_INLINE u32 maskedValueFor(u64 t0, u32 mask) const noexcept {
+    auto v =
+        h::FastHash1{}.mix(TotalHashArgs).mix(index_).mix(UnigramSeed).mix(t0);
+    return v.masked(mask);
+  }
+
   JPP_ALWAYS_INLINE void step0(util::ArraySlice<u64> patterns,
                                util::MutableArraySlice<u32> result,
                                u32 mask) const noexcept {
     auto t0 = patterns.at(t0idx_);
-    auto v =
-        h::FastHash1{}.mix(TotalHashArgs).mix(index_).mix(UnigramSeed).mix(t0);
-    result.at(target_) = v.masked(mask);
+    result.at(target_) = maskedValueFor(t0, mask);
   }
 
   void writeMember(util::io::Printer& p, i32 count) const;

@@ -4,8 +4,10 @@
 
 #include "feature_codegen.h"
 #include <fstream>
+#include <iostream>
 #include "core/impl/feature_impl_combine.h"
 #include "core/impl/feature_impl_ngram_partial.h"
+#include "pattern_feature_codegen.h"
 #include "util/logging.hpp"
 
 namespace jumanpp {
@@ -139,6 +141,7 @@ Status StaticFeatureCodegen::writeSource(const std::string& filename) {
 
   p << "#include \"core/impl/feature_impl_combine.h\"\n";
   p << "#include \"core/impl/feature_impl_ngram_partial.h\"\n";
+  p << "#include \"core/impl/feature_impl_prim.h\"\n";
   p << "#include \"" << config_.filename << ".h\"\n\n";
   p << "namespace jumanpp_generated {\n";
   p << "namespace {\n";
@@ -159,7 +162,14 @@ Status StaticFeatureCodegen::writeSource(const std::string& filename) {
   std::string patternName{"PatternFeatureStaticApply_"};
   patternName += config_.className;
   bool patternOk = false;
-  // outputPatternFeatures(p, patternName, features.patternDynamic.get());
+
+  try {
+    core::codegen::InNodeComputationsCodegen compCodegen{spec_};
+    compCodegen.generate(p, patternName);
+  } catch (std::exception& ex) {
+    std::cerr << ex.what();
+    patternOk = false;
+  }
 
   p << "\n} //anon namespace\n";
 

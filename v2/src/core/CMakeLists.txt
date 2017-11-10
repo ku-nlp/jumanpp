@@ -25,6 +25,7 @@ set(core_hdrs)
 
 add_subdirectory(analysis)
 add_subdirectory(api)
+add_subdirectory(codegen)
 add_subdirectory(dic)
 add_subdirectory(impl)
 add_subdirectory(spec)

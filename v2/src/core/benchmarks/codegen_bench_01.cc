@@ -5,7 +5,7 @@
 #define BENCHPRESS_CONFIG_MAIN
 #include "benchpress/benchpress.hpp"
 
-#include "cg_1_spec.h"
+#include "core/codegen/cg_1_spec.h"
 #include "core/core.h"
 #include "core/features_api.h"
 #include "core/impl/feature_impl_combine.h"

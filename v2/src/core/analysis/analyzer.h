@@ -19,6 +19,7 @@ struct AnalyzerConfig {
   i32 otherScorersTopN = 0;
   i32 rightGbeamCheck = 0;
   i32 rightGbeamSize = 0;
+  bool alwaysComputeEntries = false;
 };
 
 /**
