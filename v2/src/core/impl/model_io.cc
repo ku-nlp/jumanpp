@@ -3,8 +3,11 @@
 //
 
 #include "model_io.h"
+#include <util/printer.h>
 #include <cstring>
+#include <iostream>
 #include "model_format_ser.h"
+#include "util/debug_output.h"
 #include "util/memory.hpp"
 #include "util/mmap.h"
 #include "util/stl_util.h"
@@ -18,7 +21,8 @@ static const char ModelMagic[] = "jp2Mdl!";
 struct ModelFile {
   StringPiece name;
   util::MappedFile mmap;
-  std::vector<util::MappedFileFragment> fragments;
+  util::MappedFileFragment fragment;
+  ModelInfoRaw rawModel;
 };
 
 ModelSaver::ModelSaver() {}
@@ -41,15 +45,12 @@ Status ModelSaver::save(const ModelInfo& info) {
     return Status::InvalidState() << "can't save model, file is not opened";
   }
 
-  ModelInfoRaw raw;
-
-  raw.runtimeHash = info.runtimeHash;
-  raw.specHash = info.specHash;
-
+  ModelInfoRaw raw{};
   size_t offset = 4096;
   for (auto& part : info.parts) {
     ModelPartRaw rawPart;
     rawPart.kind = part.kind;
+    rawPart.start = offset;
 
     for (auto& buf : part.data) {
       util::MappedFileFragment frag;
@@ -58,6 +59,8 @@ Status ModelSaver::save(const ModelInfo& info) {
       rawPart.data.push_back(BlockPtr{offset, buf.size()});
       offset = util::memory::Align(offset + buf.size(), 4096);
     }
+
+    rawPart.end = offset;
     raw.parts.push_back(rawPart);
   }
 
@@ -102,6 +105,31 @@ Status FilesystemModel::open(StringPiece name) {
   file_.reset(new ModelFile);
   JPP_RETURN_IF_ERROR(file_->mmap.open(name, util::MMapType::ReadOnly));
   file_->name = name;
+
+  auto& hdrFrag = file_->fragment;
+  JPP_RETURN_IF_ERROR(file_->mmap.map(&file_->fragment, 0, file_->mmap.size(), true));
+  auto sp = hdrFrag.asStringPiece();
+  auto magicSp = StringPiece{ModelMagic};
+  if (sp.take(magicSp.size()) != magicSp) {
+    return Status::InvalidState()
+      << "model file " << file_->name << " has corrupted header";
+  }
+
+  auto rest = sp.slice(sizeof(ModelMagic), 4096 - sizeof(ModelMagic));
+  util::CodedBufferParser cbp{rest};
+  u64 hdrSize = 0;
+  if (!cbp.readVarint64(&hdrSize)) {
+    return Status::InvalidState()
+      << "could not read header size from " << file_->name;
+  }
+
+  util::serialization::Loader l{
+    rest.slice(cbp.numReadBytes(), cbp.numReadBytes() + hdrSize)};
+  if (!l.load(&file_->rawModel)) {
+    return Status::InvalidState()
+      << "model file " << file_->name << " has corrupted model header";
+  }
+
   return Status::Ok();
 }
 
@@ -110,45 +138,17 @@ Status FilesystemModel::load(ModelInfo* info) {
     return Status::InvalidState() << "can't load model, file is not opened";
   }
 
-  util::MappedFileFragment hdrFrag;
-  JPP_RETURN_IF_ERROR(file_->mmap.map(&hdrFrag, 0, 4096));
-  auto sp = hdrFrag.asStringPiece();
-  auto magicSp = StringPiece{ModelMagic};
-  if (sp.take(magicSp.size()) != magicSp) {
-    return Status::InvalidState()
-           << "model file " << file_->name << " has corrupted header";
-  }
-
-  auto rest = sp.slice(sizeof(ModelMagic), 4096 - sizeof(ModelMagic));
-  util::CodedBufferParser cbp{rest};
-  u64 hdrSize = 0;
-  if (!cbp.readVarint64(&hdrSize)) {
-    return Status::InvalidState()
-           << "could not read header size from " << file_->name;
-  }
-
-  util::serialization::Loader l{
-      rest.slice(cbp.numReadBytes(), cbp.numReadBytes() + hdrSize)};
-  ModelInfoRaw mir;
-  if (!l.load(&mir)) {
-    return Status::InvalidState()
-           << "model file " << file_->name << " has corrupted model header";
-  }
-
-  info->specHash = mir.specHash;
-  info->runtimeHash = mir.runtimeHash;
-
   auto& parts = info->parts;
+  auto& mir = file_->rawModel;
+  auto modelData = file_->fragment.asStringPiece();
   for (auto& p : mir.parts) {
     parts.emplace_back();
     auto& part = parts.back();
     part.kind = p.kind;
-
     for (auto& raw : p.data) {
-      file_->fragments.emplace_back();
-      auto frag = &file_->fragments.back();
-      JPP_RETURN_IF_ERROR(file_->mmap.map(frag, raw.offset, raw.size));
-      part.data.push_back(frag->asStringPiece());
+      ptrdiff_t start = static_cast<ptrdiff_t>(raw.offset);
+      ptrdiff_t end = static_cast<ptrdiff_t>(start + raw.size);
+      part.data.push_back(modelData.slice(start, end));
     }
   }
 
@@ -160,6 +160,35 @@ StringPiece FilesystemModel::name() const {
     return file_->name;
   }
   return StringPiece("<not opened>");
+}
+
+void FilesystemModel::renderInfo() {
+  util::io::Printer p;
+  if (file_) {
+    ModelInfo info;
+    if (!load(&info)) {
+      return;
+    }
+
+    for (int partNo = 0; partNo < info.parts.size(); ++partNo) {
+      auto& mp = info.parts[partNo];
+      auto& rawPart = file_->rawModel.parts[partNo];
+
+      switch (mp.kind) {
+        case ModelPartKind::Dictionary: {
+          break;
+        }
+        case ModelPartKind::Perceprton: {
+          break;
+        }
+        case ModelPartKind::Rnn: {
+          break;
+        }
+        default: { p << "\nUnsupported Segment Type"; }
+      }
+    }
+  }
+  std::cerr << p.result();
 }
 
 }  // namespace model

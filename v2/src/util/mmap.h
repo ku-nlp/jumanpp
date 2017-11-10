@@ -61,7 +61,8 @@ class MappedFile {
   MappedFile(MappedFile &&o) noexcept;
   MappedFile &operator=(MappedFile &&o) noexcept;
   Status open(const StringPiece &filename, MMapType type);
-  Status map(MappedFileFragment *view, size_t offset, size_t size);
+  Status map(MappedFileFragment *view, size_t offset, size_t size,
+             bool useHuge = false);
   void close();
 
   size_t size() const { return size_; }

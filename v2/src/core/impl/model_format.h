@@ -20,8 +20,6 @@ struct ModelPart {
 };
 
 struct ModelInfo {
-  u64 specHash;
-  u64 runtimeHash;
   std::vector<ModelPart> parts;
 };
 
@@ -33,11 +31,11 @@ struct BlockPtr {
 struct ModelPartRaw {
   ModelPartKind kind;
   std::vector<BlockPtr> data;
+  u64 start;
+  u64 end;
 };
 
 struct ModelInfoRaw {
-  u64 specHash;
-  u64 runtimeHash;
   std::vector<ModelPartRaw> parts;
 };
 

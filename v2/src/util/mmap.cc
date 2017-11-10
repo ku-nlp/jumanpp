@@ -11,6 +11,7 @@
 
 #include "logging.hpp"
 #include "mmap.h"
+#include "util/memory.hpp"
 
 namespace jumanpp {
 
@@ -95,7 +96,8 @@ Status MappedFile::open(const StringPiece &filename, MMapType type) {
 
 char ZERO[] = {'\0'};
 
-Status MappedFile::map(MappedFileFragment *view, size_t offset, size_t size) {
+Status MappedFile::map(MappedFileFragment *view, size_t offset, size_t size,
+                       bool useHuge) {
   int protection = 0;
   int flags = 0;
 
@@ -139,13 +141,19 @@ Status MappedFile::map(MappedFileFragment *view, size_t offset, size_t size) {
   }
 
   void *addr = MAP_FAILED;
+  const size_t TWO_MEGS = (1 << 21);
+  if (useHuge && size >= TWO_MEGS) {
+    if (!util::memory::IsAligned(offset, TWO_MEGS)) {
+      return JPPS_INVALID_PARAMETER << "offset is not aligned on 2MB boundary";
+    }
 #if defined(MAP_HUGETLB)
-  int flags2 = flags;
-  if (size >= (1 << 21)) {
-    flags2 |= MAP_HUGETLB;
-  }
-  addr = ::mmap(NULL, size, protection, flags2, this->fd_, (off_t)offset);
+    int flags2 = flags;
+    if (size >= TWO_MEGS) {
+      flags2 |= MAP_HUGETLB;
+    }
+    addr = ::mmap(NULL, size, protection, flags2, this->fd_, (off_t)offset);
 #endif
+  }
   // MAP_HUGETLB mmap call can fail if there are no resources,
   // try without MAP_HUGETLB
   if (addr == MAP_FAILED) {

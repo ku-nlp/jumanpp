@@ -173,8 +173,6 @@ void SoftConfidenceWeighted::dumpModel(StringPiece directory,
   if (retval <= 0) return;
 
   model::ModelInfo mnfo{};
-  mnfo.specHash = 0;
-  mnfo.runtimeHash = 0;
   ScwDumpInfo dumpInfo{featureExponent_, static_cast<float>(C),
                        static_cast<float>(phi)};
   util::serialization::Saver svr{};
