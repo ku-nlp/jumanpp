@@ -3,6 +3,9 @@
 //
 
 #include "lattice_types.h"
+#ifdef __SSE2__
+#include <emmintrin.h>
+#endif
 
 namespace jumanpp {
 namespace core {
@@ -64,13 +67,22 @@ LatticeBoundaryScores::LatticeBoundaryScores(util::memory::PoolAlloc *alloc,
   scores_ = buffers;
 }
 
+inline void nonTemporalStore4(void *dest, const void *src) {
+#ifdef __SSE2__
+  _mm_stream_si32(reinterpret_cast<int*>(dest), *reinterpret_cast<const int*>(src));
+#else
+  std::memcpy(dest, src, 4);
+#endif
+}
+
 void LatticeBoundaryScores::importBeamScore(i32 left, i32 scorer, i32 beam,
                                             util::ArraySlice<Score> scores) {
   auto num = scores.size();
   for (int i = 0; i < num; ++i) {
     auto node = nodeScores(i);
     auto svec = node.beamLeft(beam, left);
-    svec.at(scorer) = scores.at(i);
+    static_assert(sizeof(Score) == 4, "");
+    nonTemporalStore4(&svec.at(scorer), &scores.at(i));
   }
 }
 
