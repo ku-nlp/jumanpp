@@ -236,11 +236,6 @@ void InNodeComputationsCodegen::generateLoopBody(i::Printer &p) {
     ++varUsage;
   }
 
-  p << "\n// preload memory of next item";
-  p << "\nif (JPP_LIKELY(item < (numItems - 1))) {";
-  p << "\n  ctx->prefetchDicItem(nodeInfos.at(item + 1).entryPtr());";
-  p << "\n}";
-
   for (auto &pat : spec_.features.pattern) {
     auto usage = pat.usage;
     if ((usage & 1) != 0) {
