@@ -9,7 +9,6 @@
 #include "core/features_api.h"
 #include "core/impl/feature_impl_types.h"
 #include "util/fast_hash.h"
-#include "util/printer.h"
 
 namespace jumanpp {
 namespace core {
@@ -35,14 +34,14 @@ class UnigramFeature {
     return v.masked(mask);
   }
 
-  JPP_ALWAYS_INLINE void step0(util::ArraySlice<u64> patterns,
-                               util::MutableArraySlice<u32> result,
-                               u32 mask) const noexcept {
+  JPP_ALWAYS_INLINE u32 step0(util::ArraySlice<u64> patterns,
+                              util::MutableArraySlice<u32> result,
+                              u32 mask) const noexcept {
     auto t0 = patterns.at(t0idx_);
-    result.at(target_) = maskedValueFor(t0, mask);
+    auto v = maskedValueFor(t0, mask);
+    result.at(target_) = v;
+    return v;
   }
-
-  void writeMember(util::io::Printer& p, i32 count) const;
 
   constexpr u32 target() const noexcept { return target_; }
 };
@@ -96,8 +95,6 @@ class BigramFeature {
     result.at(target_) = r;
     return r;
   }
-
-  void writeMember(util::io::Printer& p, i32 count) const;
 
   constexpr u32 target() const noexcept { return target_; }
 };
@@ -170,8 +167,6 @@ class TrigramFeature {
     result.at(target_) = r;
     return r;
   }
-
-  void writeMember(util::io::Printer& p, i32 count) const;
 
   constexpr u32 target() const noexcept { return target_; }
 };
@@ -375,19 +370,18 @@ class PartialNgramDynamicFeatureApply
   std::vector<TrigramFeature> trigrams_;
 
  public:
-  bool outputClassBody(util::io::Printer& p) const;
 
   Status addChild(const spec::NgramFeatureDescriptor& nf);
 
   void uniStep0(util::ArraySlice<u64> patterns, u32 mask,
-                util::ArraySlice<float> weights,
+                analysis::WeightBuffer weights,
                 util::MutableArraySlice<u32> result) const noexcept;
 
   void biStep0(util::ArraySlice<u64> patterns,
                util::MutableArraySlice<u64> state) const noexcept;
 
   void biStep1(util::ArraySlice<u64> patterns, util::ArraySlice<u64> state,
-               u32 mask, util::ArraySlice<float> weights,
+               u32 mask, analysis::WeightBuffer weights,
                util::MutableArraySlice<u32> result) const noexcept;
 
   void triStep0(util::ArraySlice<u64> patterns,
@@ -397,16 +391,16 @@ class PartialNgramDynamicFeatureApply
                 util::MutableArraySlice<u64> result) const noexcept;
 
   void triStep2(util::ArraySlice<u64> patterns, util::ArraySlice<u64> state,
-                u32 mask, util::ArraySlice<float> weights,
+                u32 mask, analysis::WeightBuffer weights,
                 util::MutableArraySlice<u32> result) const noexcept;
 
   void biFull(util::ArraySlice<u64> t0, util::ArraySlice<u64> t1, u32 mask,
-              util::ArraySlice<float> weights,
+              analysis::WeightBuffer weights,
               util::MutableArraySlice<u32> result) const noexcept;
 
   void triFull(util::ArraySlice<u64> t0, util::ArraySlice<u64> t1,
                util::ArraySlice<u64> t2, u32 mask,
-               util::ArraySlice<float> weights,
+               analysis::WeightBuffer weights,
                util::MutableArraySlice<u32> result) const noexcept;
 
   void allocateBuffers(FeatureBuffer* buffer, const AnalysisRunStats& stats,

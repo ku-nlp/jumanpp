@@ -5,9 +5,10 @@
 #include "feature_codegen.h"
 #include <fstream>
 #include <iostream>
+#include "core/codegen/partial_ngram_feature_codegen.h"
+#include "core/codegen/pattern_feature_codegen.h"
 #include "core/impl/feature_impl_combine.h"
 #include "core/impl/feature_impl_ngram_partial.h"
-#include "pattern_feature_codegen.h"
 #include "util/logging.hpp"
 
 namespace jumanpp {
@@ -97,9 +98,8 @@ bool outputNgramFeatures(i::Printer& p, StringPiece name,
   return true;
 }
 
-bool outputPartialNgramFeatures(
-    i::Printer& p, StringPiece name,
-    features::impl::PartialNgramDynamicFeatureApply* png) {
+bool outputPartialNgramFeatures(i::Printer& p, StringPiece name,
+                                const spec::AnalysisSpec& spec) {
   p << "class " << name << " final : "
     << "public "
     << JPP_TEXT(
@@ -109,7 +109,8 @@ bool outputPartialNgramFeatures(
   {
     i::Indent id{p, 2};
     p << "\n";
-    JPP_RET_CHECK(png->outputClassBody(p));
+    core::codegen::PartialNgramPrinter pnp{spec};
+    pnp.outputClassBody(p);
   }
   p << "\n}; // class " << name << "\n";
   return true;
@@ -156,7 +157,7 @@ Status StaticFeatureCodegen::writeSource(const std::string& filename) {
   bool ngramOk = outputNgramFeatures(p, ngramName, &ndfa);
   std::string partNgramName{"PartNgramFeatureStaticApply_"};
   partNgramName += config_.className;
-  bool partNgramOk = outputPartialNgramFeatures(p, partNgramName, &ngramPart);
+  bool partNgramOk = outputPartialNgramFeatures(p, partNgramName, spec_);
   std::string patternName{"PatternFeatureStaticApply_"};
   patternName += config_.className;
   bool patternOk = false;

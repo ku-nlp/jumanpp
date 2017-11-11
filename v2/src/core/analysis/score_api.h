@@ -25,6 +25,20 @@ class ScorerBase {
   virtual Status load(const model::ModelInfo& model) = 0;
 };
 
+struct FloatBufferWeights {
+  util::ArraySlice<float> weights;
+  FloatBufferWeights(const util::ArraySlice<float>& weights)
+      : weights(weights) {}
+  float at(size_t idx) const { return weights.at(idx); }
+  size_t size() const { return weights.size(); }
+  template <util::PrefetchHint Hint>
+  void prefetch(size_t idx) const {
+    util::prefetch<Hint>(weights.data() + idx);
+  }
+};
+
+using WeightBuffer = FloatBufferWeights;
+
 class FeatureScorer : public ScorerBase {
  public:
   virtual void compute(util::MutableArraySlice<float> result,
@@ -32,7 +46,7 @@ class FeatureScorer : public ScorerBase {
   virtual void add(util::ArraySlice<float> source,
                    util::MutableArraySlice<float> result,
                    util::ConstSliceable<u32> features) const = 0;
-  virtual util::ArraySlice<float> weights() const = 0;
+  virtual WeightBuffer weights() const = 0;
 };
 
 class ScoreComputer {
@@ -51,11 +65,6 @@ struct ScorerDef {
   FeatureScorer* feature;
   std::vector<ScorerFactory*> others;
   std::vector<Score> scoreWeights;
-};
-
-struct WeightBuffer {
-  float at(size_t pos) const;
-  size_t size() const;
 };
 
 }  // namespace analysis

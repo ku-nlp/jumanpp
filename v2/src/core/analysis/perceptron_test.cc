@@ -16,7 +16,7 @@ TEST_CASE("perceptron impl computes simple sums") {
   util::ArraySlice<float> wslice{weights};
   CHECK(wslice.size() == 16);
   auto compute = [&](util::ArraySlice<u32> v) -> float {
-    return impl::computeUnrolled4Perceptron(weights, v, 16 - 1);
+    return impl::computeUnrolled4Perceptron({weights}, v, 16 - 1);
   };
 
   CHECK(compute({1}) == Approx(0.1f));
@@ -34,7 +34,7 @@ TEST_CASE("perceptron impl computes positioned sums") {
   util::ArraySlice<float> wslice{weights};
   CHECK(wslice.size() == 16);
   auto compute = [&](util::ArraySlice<u32> v) -> float {
-    return impl::computeUnrolled4Perceptron(weights, v, 16 - 1);
+    return impl::computeUnrolled4Perceptron({weights}, v, 16 - 1);
   };
 
   CHECK(compute({1}) == Approx(10.f));

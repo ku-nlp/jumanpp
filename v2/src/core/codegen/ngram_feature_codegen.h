@@ -2,8 +2,8 @@
 // Created by Arseny Tolmachev on 2017/11/10.
 //
 
-#ifndef JUMANPP_PARTIAL_NGRAM_FEATURE_CODEGEN_H
-#define JUMANPP_PARTIAL_NGRAM_FEATURE_CODEGEN_H
+#ifndef JUMANPP_NGRAM_FEATURE_CODEGEN_H
+#define JUMANPP_NGRAM_FEATURE_CODEGEN_H
 
 #include <string>
 #include "core/spec/spec_types.h"
@@ -28,10 +28,11 @@ class NgramFeatureCodegen {
                           StringPiece mask) const;
   void biStep0(i::Printer& p, StringPiece patterns, StringPiece state) const;
   void triStep0(i::Printer& p, StringPiece patterns, StringPiece state) const;
+  StringPiece name() const { return name_; }
 };
 
 }  // namespace codegen
 }  // namespace core
 }  // namespace jumanpp
 
-#endif  // JUMANPP_PARTIAL_NGRAM_FEATURE_CODEGEN_H
+#endif  // JUMANPP_NGRAM_FEATURE_CODEGEN_H

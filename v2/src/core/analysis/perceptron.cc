@@ -50,7 +50,6 @@ public:
     auto objs = numElems_;
     auto arr = alloc_->allocateArray<float>(objs);
     memcpy(arr, data, objs * sizeof(float));
-    LOG_TRACE() << "import perceptron data: " << objs << " objects at " << arr;
     return arr;
   }
 };
