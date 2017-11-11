@@ -97,8 +97,6 @@ Status ModelSpecBuilder::checkNoFeatureIsLeft() const {
   return Status::Ok();
 }
 
-
-
 Status ModelSpecBuilder::validateUnks() const {
   for (auto unk : unks_) {
     JPP_RETURN_IF_ERROR(unk->validate());

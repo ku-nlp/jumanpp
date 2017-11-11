@@ -37,7 +37,6 @@ class NgramDynamicFeatureApply;
 class PartialNgramDynamicFeatureApply;
 }  // namespace impl
 
-
 struct FeatureBuffer {
   u32 currentElems;
   util::MutableArraySlice<u64> t1Buffer;

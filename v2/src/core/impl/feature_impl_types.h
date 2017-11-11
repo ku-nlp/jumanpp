@@ -147,6 +147,12 @@ class PrimitiveFeatureContext {
     }
   }
 
+  inline void prefetchDicItem(EntryPtr eptr) {
+    if (JPP_LIKELY(eptr.isDic())) {
+      entries_.entryData().prefetch(eptr.dicPtr());
+    }
+  }
+
   i32 lengthOf(NodeInfo nodeInfo, i32 fieldNum, i32 fieldPtr,
                LengthFieldSource field, bool useBytes) {
     if (fieldPtr < 0) {

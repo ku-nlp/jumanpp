@@ -88,9 +88,7 @@ class HashedFeaturePerceptron : public FeatureScorer {
            util::ConstSliceable<u32> features) const override;
   Status load(const model::ModelInfo& model) override;
 
-  void setWeightsTo(util::ArraySlice<float> weights) {
-    weights_ = weights;
-  }
+  void setWeightsTo(util::ArraySlice<float> weights) { weights_ = weights; }
 
   WeightBuffer weights() const override;
 };

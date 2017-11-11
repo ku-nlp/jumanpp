@@ -51,6 +51,7 @@ class IntListTraversal {
   i32 length_ = 0;
   i32 position_ = 0;
   util::CodedBufferParser parser_;
+
  public:
   IntListTraversal() : parser_{EMPTY_SP} {}
   IntListTraversal(i32 length, const util::CodedBufferParser& parser)
@@ -192,6 +193,10 @@ class IntStorageReader {
     i32 value = -1;
     parser.readInt(&value);
     return value;
+  }
+
+  void prefetch(i32 ptr) const {
+    util::prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(data_.data() + ptr);
   }
 };
 

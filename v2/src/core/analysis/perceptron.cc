@@ -5,9 +5,9 @@
 #include "core/analysis/perceptron.h"
 #include "core/analysis/lattice_types.h"
 #include "core/impl/perceptron_io.h"
-#include "util/serialization.h"
-#include "util/memory.hpp"
 #include "util/logging.hpp"
+#include "util/memory.hpp"
+#include "util/serialization.h"
 
 namespace jumanpp {
 namespace core {
@@ -45,9 +45,12 @@ class PerceptronState {
   std::unique_ptr<util::memory::PoolAlloc> alloc_;
   size_t numElems_;
 
-public:
-  PerceptronState(size_t numElems): manager_{std::max(numElems * sizeof(float), TWO_MEGS_FOR_FLOATS)}, alloc_{manager_.core()}, numElems_{numElems} {}
-  
+ public:
+  PerceptronState(size_t numElems)
+      : manager_{std::max(numElems * sizeof(float), TWO_MEGS_FOR_FLOATS)},
+        alloc_{manager_.core()},
+        numElems_{numElems} {}
+
   const float* importDoubles(const float* data) {
     auto objs = numElems_;
     auto arr = alloc_->allocateArray<float>(objs);
@@ -112,7 +115,6 @@ Status HashedFeaturePerceptron::load(const model::ModelInfo& model) {
     weightData = state_->importDoubles(weightData);
   }
 
-
   util::ArraySlice<float> weightSlice{weightData, dataSize};
 
   weights_ = weightSlice;
@@ -120,8 +122,9 @@ Status HashedFeaturePerceptron::load(const model::ModelInfo& model) {
   return Status::Ok();
 }
 
-HashedFeaturePerceptron::HashedFeaturePerceptron(const util::ArraySlice<float> &weights)
-  : weights_{weights} {}
+HashedFeaturePerceptron::HashedFeaturePerceptron(
+    const util::ArraySlice<float>& weights)
+    : weights_{weights} {}
 
 HashedFeaturePerceptron::HashedFeaturePerceptron() = default;
 HashedFeaturePerceptron::~HashedFeaturePerceptron() = default;

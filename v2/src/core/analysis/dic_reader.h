@@ -28,6 +28,7 @@ class DictNode {
 
 class DicReader {
   const dic::DictionaryHolder& dic_;
+
  public:
   DicReader(const dic::DictionaryHolder& holder) : dic_{holder} {}
   DictNode readEntry(EntryPtr ptr) const;

@@ -107,12 +107,13 @@ Status FilesystemModel::open(StringPiece name) {
   file_->name = name;
 
   auto& hdrFrag = file_->fragment;
-  JPP_RETURN_IF_ERROR(file_->mmap.map(&file_->fragment, 0, file_->mmap.size(), true));
+  JPP_RETURN_IF_ERROR(
+      file_->mmap.map(&file_->fragment, 0, file_->mmap.size(), true));
   auto sp = hdrFrag.asStringPiece();
   auto magicSp = StringPiece{ModelMagic};
   if (sp.take(magicSp.size()) != magicSp) {
     return Status::InvalidState()
-      << "model file " << file_->name << " has corrupted header";
+           << "model file " << file_->name << " has corrupted header";
   }
 
   auto rest = sp.slice(sizeof(ModelMagic), 4096 - sizeof(ModelMagic));
@@ -120,14 +121,14 @@ Status FilesystemModel::open(StringPiece name) {
   u64 hdrSize = 0;
   if (!cbp.readVarint64(&hdrSize)) {
     return Status::InvalidState()
-      << "could not read header size from " << file_->name;
+           << "could not read header size from " << file_->name;
   }
 
   util::serialization::Loader l{
-    rest.slice(cbp.numReadBytes(), cbp.numReadBytes() + hdrSize)};
+      rest.slice(cbp.numReadBytes(), cbp.numReadBytes() + hdrSize)};
   if (!l.load(&file_->rawModel)) {
     return Status::InvalidState()
-      << "model file " << file_->name << " has corrupted model header";
+           << "model file " << file_->name << " has corrupted model header";
   }
 
   return Status::Ok();

@@ -370,7 +370,6 @@ class PartialNgramDynamicFeatureApply
   std::vector<TrigramFeature> trigrams_;
 
  public:
-
   Status addChild(const spec::NgramFeatureDescriptor& nf);
 
   void uniStep0(util::ArraySlice<u64> patterns, u32 mask,

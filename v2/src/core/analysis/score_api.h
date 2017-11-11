@@ -9,9 +9,9 @@
 #include "core/analysis/lattice_config.h"
 #include "core/impl/model_format.h"
 #include "util/array_slice.h"
+#include "util/quantized_weights.h"
 #include "util/sliceable_array.h"
 #include "util/status.hpp"
-#include "util/quantized_weights.h"
 
 namespace jumanpp {
 namespace core {
@@ -38,7 +38,7 @@ struct FloatBufferWeights {
   }
 };
 
-//using WeightBuffer = util::Float8BitLinearQ;
+// using WeightBuffer = util::Float8BitLinearQ;
 using WeightBuffer = FloatBufferWeights;
 
 class FeatureScorer : public ScorerBase {

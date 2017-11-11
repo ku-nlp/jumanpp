@@ -14,7 +14,6 @@ namespace dic {
 
 using namespace core::spec;
 
-
 Status DictionaryBuilder::importCsv(StringPiece name, StringPiece data) {
   if (dic_) {
     return Status::InvalidState() << "dictionary was already built or restored";

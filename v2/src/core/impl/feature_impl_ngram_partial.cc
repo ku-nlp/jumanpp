@@ -124,7 +124,6 @@ void PartialNgramDynamicFeatureApply::allocateBuffers(
   buffer->scoreBuffer = alloc->allocateBuf<float>(stats.maxEnds, 16);
 }
 
-
 }  // namespace impl
 }  // namespace features
 }  // namespace core

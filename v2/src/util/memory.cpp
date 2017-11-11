@@ -6,9 +6,9 @@
 #include <sys/mman.h>
 #include <cassert>
 #include <cstddef>
+#include <cstdlib>
 #include <cstring>
 #include <memory>
-#include <cstdlib>
 #include "logging.hpp"
 
 namespace jumanpp {
@@ -77,8 +77,7 @@ MemoryPage Manager::newPage() {
     if (page_size_ >= TWO_MEGS) {
       int status = posix_memalign(&addr, TWO_MEGS, page_size_);
       if (status != 0) {
-        LOG_ERROR() << "Error when trying to get memory: "
-                    << strerror(status);
+        LOG_ERROR() << "Error when trying to get memory: " << strerror(status);
         throw std::bad_alloc();
       }
 #ifdef MADV_HUGEPAGE
@@ -90,8 +89,7 @@ MemoryPage Manager::newPage() {
     } else {
       int status = posix_memalign(&addr, 4096, page_size_);
       if (status != 0) {
-        LOG_ERROR() << "Error when trying to get memory: "
-                    << strerror(status);
+        LOG_ERROR() << "Error when trying to get memory: " << strerror(status);
         throw std::bad_alloc();
       }
     }
@@ -110,7 +108,9 @@ bool PoolAlloc::ensureAvailable(size_t size) {
   } else {
     MemoryPage page = mgr_->newPage();
     if (page.size < size) {
-      LOG_ERROR() << "page size (" << page.size << " is lesser than object size (" << size << "), please increase page size";
+      LOG_ERROR() << "page size (" << page.size
+                  << " is lesser than object size (" << size
+                  << "), please increase page size";
       throw new std::bad_alloc();
     }
     base_ = reinterpret_cast<char*>(page.base);

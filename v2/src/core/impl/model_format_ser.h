@@ -24,8 +24,8 @@ template <typename Arch>
 void Serialize(Arch& a, ModelPartRaw& o) {
   a& o.kind;
   a& o.data;
-  a & o.start;
-  a & o.end;
+  a& o.start;
+  a& o.end;
 }
 
 template <typename Arch>

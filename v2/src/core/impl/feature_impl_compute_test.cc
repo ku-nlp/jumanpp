@@ -8,4 +8,3 @@
 using namespace jumanpp::core::features::impl;
 using namespace jumanpp::core::spec;
 using namespace jumanpp;
-

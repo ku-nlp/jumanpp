@@ -75,7 +75,6 @@ Status CodepointLengthPrimFeatureImpl::initialize(
            << f.name << ": type was not CodepointSize";
   }
 
-
   if (f.references.size() != 1) {
     return Status::InvalidParameter()
            << f.name << ": number of parameters must be 1";
