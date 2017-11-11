@@ -82,7 +82,8 @@ void LatticeBoundaryScores::importBeamScore(i32 left, i32 scorer, i32 beam,
     auto node = nodeScores(i);
     auto svec = node.beamLeft(beam, left);
     static_assert(sizeof(Score) == 4, "");
-    nonTemporalStore4(&svec.at(scorer), &scores.at(i));
+    //nonTemporalStore4(&svec.at(scorer), &scores.at(i));
+    svec.at(scorer) = scores.at(i);
   }
 }
 
