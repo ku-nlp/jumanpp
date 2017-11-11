@@ -11,6 +11,7 @@
 #include "util/array_slice.h"
 #include "util/sliceable_array.h"
 #include "util/status.hpp"
+#include "util/quantized_weights.h"
 
 namespace jumanpp {
 namespace core {
@@ -37,6 +38,7 @@ struct FloatBufferWeights {
   }
 };
 
+//using WeightBuffer = util::Float8BitLinearQ;
 using WeightBuffer = FloatBufferWeights;
 
 class FeatureScorer : public ScorerBase {

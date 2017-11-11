@@ -16,10 +16,11 @@ namespace analysis {
 void HashedFeaturePerceptron::compute(util::MutableArraySlice<float> result,
                                       util::ConstSliceable<u32> ngrams) const {
   JPP_DCHECK(util::memory::IsPowerOf2(weights_.size()));
-  u32 mask = static_cast<u32>(weights_.size() - 1);
+  auto weightobj = weights();
+  u32 mask = static_cast<u32>(weightobj.size() - 1);
   for (int i = 0; i < ngrams.numRows(); ++i) {
     result.at(i) =
-        impl::computeUnrolled4Perceptron(weights_, ngrams.row(i), mask);
+        impl::computeUnrolled4Perceptron(weightobj, ngrams.row(i), mask);
   }
 }
 
@@ -28,11 +29,12 @@ void HashedFeaturePerceptron::add(util::ArraySlice<float> source,
                                   util::ConstSliceable<u32> ngrams) const {
   JPP_DCHECK(util::memory::IsPowerOf2(weights_.size()));
   JPP_DCHECK_EQ(source.size(), result.size());
-  u32 mask = static_cast<u32>(weights_.size() - 1);
+  auto weightobj = weights();
+  u32 mask = static_cast<u32>(weightobj.size() - 1);
   auto total = ngrams.numRows();
   for (int i = 0; i < total; ++i) {
     auto src = source.at(i);
-    auto add = impl::computeUnrolled4Perceptron(weights_, ngrams.row(i), mask);
+    auto add = impl::computeUnrolled4Perceptron(weightobj, ngrams.row(i), mask);
     result.at(i) = src + add;
   }
 }
@@ -123,6 +125,17 @@ HashedFeaturePerceptron::HashedFeaturePerceptron(const util::ArraySlice<float> &
 
 HashedFeaturePerceptron::HashedFeaturePerceptron() = default;
 HashedFeaturePerceptron::~HashedFeaturePerceptron() = default;
+
+WeightBuffer HashedFeaturePerceptron::weights() const {
+#if 0
+  const char* data = reinterpret_cast<const char*>(weights_.data());
+  size_t sz = weights_.size();
+  float min = -1;
+  float step = 0.1;
+  return WeightBuffer{data, sz, min, step};
+#endif
+  return weights_;
+}
 
 }  // namespace analysis
 }  // namespace core

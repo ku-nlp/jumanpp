@@ -7,6 +7,7 @@
 
 #include <functional>
 #include <iosfwd>
+#include <limits>
 #include "util/common.hpp"
 #include "util/types.hpp"
 

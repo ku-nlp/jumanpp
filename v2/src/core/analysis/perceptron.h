@@ -92,7 +92,7 @@ class HashedFeaturePerceptron : public FeatureScorer {
     weights_ = weights;
   }
 
-  WeightBuffer weights() const override { return weights_; }
+  WeightBuffer weights() const override;
 };
 
 }  // namespace analysis
