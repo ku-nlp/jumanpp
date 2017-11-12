@@ -489,7 +489,7 @@ void ScoreProcessor::makeT0cutoffBeam(u32 fullAnalysis, u32 rightBeam) {
   auto comp = [&](u32 a, u32 b) {
     return cutoffScores.at(a) > cutoffScores.at(b);
   };
-  util::partition(idxBuf.begin(), idxBuf.end(), comp, rightBeam, rightBeam);
+  std::nth_element(idxBuf.begin(), idxBuf.begin() + rightBeam, idxBuf.end(), comp);
 }
 
 void ScoreProcessor::computeT0Prescores(util::ArraySlice<BeamCandidate> gbeam,
