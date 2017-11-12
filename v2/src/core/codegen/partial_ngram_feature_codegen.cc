@@ -204,44 +204,80 @@ void PartialNgramPrinter::outputApplyBiTri(util::io::Printer& p) {
     p << "\nauto tristateBuf = buffers->t2Buf1(numTrigrams, numElems);";
 
     p << "\nauto bistates = bistateBuf.row(t0idx);";
+    p << "\nauto buf1 = buffers->valBuf1(numBigrams);";
+    p << "\nauto buf2 = buffers->valBuf2(numBigrams);";
     p << "\nfor (auto row = 0; row < t1.numRows(); ++row) {";
     {
       VarNamer biNames{bigrams_.size()};
       i::Indent id2{p, 2};
       p << "\nauto t1row = t1.row(row);";
+      p << "\nbuf1.swap(buf2);";
       for (int i = 0; i < bigrams_.size(); ++i) {
         auto& b = bigrams_[i];
         b.makePartialObject(p);
         p << "\nauto bi_v_" << i << " = " << b.name() << ".raw2(bistates.at("
           << i << "), t1row, mask);";
-        p << "\n" << biNames.nameEqOrAdd(i) << "weights.at(bi_v_" << i << ");";
+        p << "\n"
+          << biNames.nameEqOrAdd(i) << "weights.at(buf2.at(" << i << "));";
+#ifdef JPP_PREFETCH_FEATURE_WEIGHTS
+        p << "\nweights.prefetch<"
+          << JPP_TEXT(::jumanpp::util::PrefetchHint::PREFETCH_HINT_T0)
+          << ">(bi_v_" << i << ");";
+#endif
+        p << "\nbuf1.at(" << i << ") = bi_v_" << i << ";";
       }
-      p << "\nscbuf.at(row) = ";
+      p << "\nif (JPP_LIKELY(row > 0)) {";
+      p << "\n  scbuf.at(row - 1) = ";
       biNames.printSum(p);
-      p << ";";
+      p << ";\n}";
     }
     p << "\n}";
+
+    // after the tribuf swap, buffer numbers WIIL be the same
+    // and the cycle will write to tribuf1(buf2).
+    // We need to keep the state of buf1
+    // till the computation of the last value for the bigram loop.
     p << "\nauto tristates = tristateBuf.row(t0idx);";
+    p << "\n::jumanpp::util::MutableArraySlice<::jumanpp::u32>"
+      << "tribuf1{buf2.data(), numTrigrams};";
+    p << "\n::jumanpp::util::MutableArraySlice<::jumanpp::u32>"
+      << "tribuf2{buf1.data(), numTrigrams};";
     p << "\nfor (auto row = 0; row < t2.numRows(); ++row) {";
     {
       VarNamer triNames{trigrams_.size()};
       i::Indent id2{p, 2};
       p << "\nauto t2row = t2.row(row);";
       p << "\nauto t1row = t1.row(t1idxes.at(row));";
+      p << "\ntribuf1.swap(tribuf2);";
       for (int i = 0; i < trigrams_.size(); ++i) {
         auto& b = trigrams_[i];
         b.makePartialObject(p);
         p << "\nauto tri_v_" << i << " = " << b.name() << ".raw23(tristates.at("
           << i << "), t1row, t2row, mask);";
+#ifdef JPP_PREFETCH_FEATURE_WEIGHTS
+        p << "\nweights.prefetch<"
+          << JPP_TEXT(::jumanpp::util::PrefetchHint::PREFETCH_HINT_T0)
+          << ">(tri_v_" << i << ");";
+#endif
+        p << "\ntribuf1.at(" << i << ") = tri_v_" << i << ";";
         p << "\n"
-          << triNames.nameEqOrAdd(i) << "weights.at(tri_v_" << i << ");";
+          << triNames.nameEqOrAdd(i) << "weights.at(tribuf2.at(" << i << "));";
       }
-      p << "\nresult.at(row) = scbuf.at(t1idxes.at(row)) + ";
+      p << "\nif (JPP_LIKELY(row > 0)) {";
+      p << "\n  result.at(row) = scbuf.at(t1idxes.at(row)) + ";
       triNames.printSum(p);
-      p << ";";
+      p << ";\n} else {";
+      p << "\n  scbuf.at(t1.numRows() - 1) = "
+        << JPP_TEXT(
+               ::jumanpp::core::analysis::impl::computeUnrolled4RawPerceptron)
+        << "(weights, buf1);\n}";
     }
     p << "\n}";
   }
+  p << "\nauto lastRow = t2.numRows() - 1;";
+  p << "\nresult.at(lastRow) = scbuf.at(t1idxes.at(lastRow)) + "
+    << JPP_TEXT(::jumanpp::core::analysis::impl::computeUnrolled4RawPerceptron)
+    << "(weights, tribuf1);";
 
   p << "\n}";
 }

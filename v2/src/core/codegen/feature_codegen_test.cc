@@ -222,6 +222,8 @@ TEST_CASE("partial ngram joint biTri produces the same values") {
       0, 2, 1, 2, 1, 0, 0, 1, 0, 0,
   };
 
+  util::fill(fb2.valueBuffer1, 0);
+
   util::ConstSliceable<u64> t0fake{inp.t1, NumFeatures, 1};
 
   fs.ngramPartialStatic->applyBiStep1(&fb2, t0fake);
@@ -233,6 +235,7 @@ TEST_CASE("partial ngram joint biTri produces the same values") {
                                     result2);
 
   for (int i = 0; i < NumExamples; ++i) {
+    CAPTURE(i);
     CHECK(result1[i] == Approx(result2[i]));
   }
 }
