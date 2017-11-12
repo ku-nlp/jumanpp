@@ -152,6 +152,100 @@ bool outputTriApply3(util::io::Printer& p,
   return true;
 }
 
+class VarNamer {
+  size_t numVars_ = 1;
+
+ public:
+  VarNamer(size_t totalSize, size_t max = 4) {
+    if (max >= 8 && totalSize >= 16) {
+      numVars_ = 8;
+    } else if (max >= 4 && totalSize >= 8) {
+      numVars_ = 4;
+    } else if (max >= 2 && totalSize >= 4) {
+      numVars_ = 2;
+    }
+  }
+
+  std::string nameEqOrAdd(int i) {
+    return concat((i >= numVars_ ? "" : "auto "), name(i),
+                  (i < numVars_ ? " = " : " += "));
+  }
+
+  std::string name(int i) { return concat("var_", i % numVars_); }
+
+  void printSum(i::Printer& p) {
+    p << "var_0";
+    for (int i = 1; i < numVars_; ++i) {
+      p << " + var_" << i;
+    }
+  }
+};
+
+void PartialNgramPrinter::outputApplyBiTri(util::io::Printer& p) {
+  p << "\n\nvoid applyBiTri("  // args
+    << JPP_TEXT(::jumanpp::core::features::FeatureBuffer*) << " buffers, \n"
+    << JPP_TEXT(::jumanpp::u32) << " t0idx, \n"
+    << JPP_TEXT(::jumanpp::util::ArraySlice<jumanpp::u64>) << " t0, \n"
+    << JPP_TEXT(::jumanpp::util::ConstSliceable<jumanpp::u64>) << " t1, \n"
+    << JPP_TEXT(::jumanpp::util::ConstSliceable<jumanpp::u64>) << " t2, \n"
+    << JPP_TEXT(::jumanpp::util::ArraySlice<jumanpp::u32>) << " t1idxes, \n"
+    << JPP_TEXT(::jumanpp::core::analysis::FeatureScorer*) << " scorer, \n"
+    << JPP_TEXT(::jumanpp::util::MutableArraySlice<float>) << " result"
+    << ") const noexcept override {";
+  {
+    i::Indent id{p, 2};
+    p << "\nauto numElems = t2.numRows();";
+    p << "\nauto numBigrams = this->numBigrams();";
+    p << "\nauto numTrigrams = this->numTrigrams();";
+    p << "\nauto weights = scorer->weights();";
+    p << "\nauto scbuf = buffers->scoreBuf(t1.numRows());";
+    p << "\nauto mask = static_cast<::jumanpp::u32>(weights.size() - 1);";
+    p << "\nauto bistateBuf = buffers->t1Buf(numBigrams, numElems);";
+    p << "\nauto tristateBuf = buffers->t2Buf1(numTrigrams, numElems);";
+
+    p << "\nauto bistates = bistateBuf.row(t0idx);";
+    p << "\nfor (auto row = 0; row < t1.numRows(); ++row) {";
+    {
+      VarNamer biNames{bigrams_.size()};
+      i::Indent id2{p, 2};
+      p << "\nauto t1row = t1.row(row);";
+      for (int i = 0; i < bigrams_.size(); ++i) {
+        auto& b = bigrams_[i];
+        b.makePartialObject(p);
+        p << "\nauto bi_v_" << i << " = " << b.name() << ".raw2(bistates.at("
+          << i << "), t1row, mask);";
+        p << "\n" << biNames.nameEqOrAdd(i) << "weights.at(bi_v_" << i << ");";
+      }
+      p << "\nscbuf.at(row) = ";
+      biNames.printSum(p);
+      p << ";";
+    }
+    p << "\n}";
+    p << "\nauto tristates = tristateBuf.row(t0idx);";
+    p << "\nfor (auto row = 0; row < t2.numRows(); ++row) {";
+    {
+      VarNamer triNames{trigrams_.size()};
+      i::Indent id2{p, 2};
+      p << "\nauto t2row = t2.row(row);";
+      p << "\nauto t1row = t1.row(t1idxes.at(row));";
+      for (int i = 0; i < trigrams_.size(); ++i) {
+        auto& b = trigrams_[i];
+        b.makePartialObject(p);
+        p << "\nauto tri_v_" << i << " = " << b.name() << ".raw23(tristates.at("
+          << i << "), t1row, t2row, mask);";
+        p << "\n"
+          << triNames.nameEqOrAdd(i) << "weights.at(tri_v_" << i << ");";
+      }
+      p << "\nresult.at(row) = scbuf.at(t1idxes.at(row)) + ";
+      triNames.printSum(p);
+      p << ";";
+    }
+    p << "\n}";
+  }
+
+  p << "\n}";
+}
+
 void PartialNgramPrinter::outputClassBody(util::io::Printer& p) {
   p << "\nvoid uniStep0("  // args
     << JPP_TEXT(jumanpp::util::ArraySlice<jumanpp::u64>) << " patterns, "
@@ -288,12 +382,12 @@ void PartialNgramPrinter::outputClassBody(util::io::Printer& p) {
   p << "\n}\n";
 
   p << "\nvoid triFull("  // args
-    << JPP_TEXT(jumanpp::util::ArraySlice<jumanpp::u64>) << " t0, "
-    << JPP_TEXT(jumanpp::util::ArraySlice<jumanpp::u64>) << " t1, "
-    << JPP_TEXT(jumanpp::util::ArraySlice<jumanpp::u64>) << " t2, "
-    << JPP_TEXT(jumanpp::u32) << " mask, "
-    << JPP_TEXT(jumanpp::core::analysis::WeightBuffer) << " weights, "
-    << JPP_TEXT(jumanpp::util::MutableArraySlice<jumanpp::u32>) << " result"
+    << JPP_TEXT(jumanpp::util::ArraySlice<jumanpp::u64>) << " t0, \n"
+    << JPP_TEXT(jumanpp::util::ArraySlice<jumanpp::u64>) << " t1, \n"
+    << JPP_TEXT(jumanpp::util::ArraySlice<jumanpp::u64>) << " t2, \n"
+    << JPP_TEXT(jumanpp::u32) << " mask, \n"
+    << JPP_TEXT(jumanpp::core::analysis::WeightBuffer) << " weights, \n"
+    << JPP_TEXT(jumanpp::util::MutableArraySlice<jumanpp::u32>) << " result\n"
     << ") const noexcept {";
   {
     util::io::Indent id{p, 2};
@@ -345,6 +439,7 @@ void PartialNgramPrinter::outputClassBody(util::io::Printer& p) {
 
   outputBiApply2(p, this->bigrams_);
   outputTriApply3(p, this->trigrams_);
+  outputApplyBiTri(p);
 }
 
 PartialNgramPrinter::PartialNgramPrinter(const spec::AnalysisSpec& spec)

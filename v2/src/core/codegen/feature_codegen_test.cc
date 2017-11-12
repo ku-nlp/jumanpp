@@ -213,8 +213,6 @@ TEST_CASE("partial ngram joint biTri produces the same values") {
 
   BenchInput inp;
 
-  util::ConstSliceable<u64> t0i{inp.t0, NumFeatures, NumExamples};
-
   float result1[NumExamples];
   float result2[NumExamples];
 
@@ -224,9 +222,14 @@ TEST_CASE("partial ngram joint biTri produces the same values") {
       0, 2, 1, 2, 1, 0, 0, 1, 0, 0,
   };
 
-  fs.ngramPartialDynamic->applyBiTri(&fb1, inp.t1, subset, sl0, idxes, &perc,
+  util::ConstSliceable<u64> t0fake{inp.t1, NumFeatures, 1};
+
+  fs.ngramPartialStatic->applyBiStep1(&fb2, t0fake);
+  fs.ngramPartialDynamic->applyTriStep1(&fb2, t0fake);
+
+  fs.ngramPartialDynamic->applyBiTri(&fb1, 0, inp.t1, subset, sl0, idxes, &perc,
                                      result1);
-  fs.ngramPartialStatic->applyBiTri(&fb1, inp.t1, subset, sl0, idxes, &perc,
+  fs.ngramPartialStatic->applyBiTri(&fb2, 0, inp.t1, subset, sl0, idxes, &perc,
                                     result2);
 
   for (int i = 0; i < NumExamples; ++i) {

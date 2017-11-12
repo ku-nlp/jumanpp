@@ -333,8 +333,8 @@ void ScoreProcessor::computeGbeamScores(i32 bndIdx,
       copyT0Scores(bndIdx, t0idx, gbeamHead, result, 0);
       if (t1PtrTail.size() > 0) {
         auto t0Score = scores_.bufferT0().at(t0idx);
-        ngramApply_->applyBiTri(&featureBuffer_, t0, t1data, t2Tail, t1PtrTail,
-                                features, resultTail);
+        ngramApply_->applyBiTri(&featureBuffer_, t0idx, t0, t1data, t2Tail,
+                                t1PtrTail, features, resultTail);
         copyT0Scores(bndIdx, t0idx, gbeamTail, resultTail, t0Score);
       }
       makeT0Beam(bndIdx, t0idx, gbeam, result);
@@ -355,8 +355,8 @@ void ScoreProcessor::computeGbeamScores(i32 bndIdx,
     for (auto t0idx = 0; t0idx < t0data.numRows(); ++t0idx) {
       JPP_CAPTURE(t0idx);
       auto t0 = t0data.row(t0idx);
-      ngramApply_->applyBiTri(&featureBuffer_, t0, t1data, t2data, t1Ptrs,
-                              features, result);
+      ngramApply_->applyBiTri(&featureBuffer_, t0idx, t0, t1data, t2data,
+                              t1Ptrs, features, result);
       auto t0Score = scores_.bufferT0().at(t0idx);
       copyT0Scores(bndIdx, t0idx, gbeam, result, t0Score);
       makeT0Beam(bndIdx, t0idx, gbeam, result);

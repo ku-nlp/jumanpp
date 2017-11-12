@@ -83,17 +83,25 @@ class BigramFeature {
                                    util::ArraySlice<u64> t1,
                                    util::MutableArraySlice<u32> result,
                                    u32 mask) const noexcept {
-    auto t0v = t0.at(t0idx_);
-    auto t1v = t1.at(t1idx_);
-    auto v = h::FastHash1{}
-                 .mix(TotalHashArgs)
-                 .mix(index_)
-                 .mix(BigramSeed)
-                 .mix(t0v)
-                 .mix(t1v);
-    u32 r = v.masked(mask);
+    u32 r = jointRaw(t0, t1, mask);
     result.at(target_) = r;
     return r;
+  }
+
+  JPP_ALWAYS_INLINE u32 raw2(u64 state, util::ArraySlice<u64> t1,
+                             u32 mask) const noexcept {
+    auto t1v = t1.at(t1idx_);
+    auto v = h::FastHash1{state}.mix(t1v);
+    return v.masked(mask);
+  }
+
+  JPP_ALWAYS_INLINE u32 jointRaw(util::ArraySlice<u64> t0,
+                                 util::ArraySlice<u64> t1, u32 mask) const
+      noexcept {
+    auto t0v = t0.at(t0idx_);
+    auto v =
+        h::FastHash1{}.mix(TotalHashArgs).mix(index_).mix(BigramSeed).mix(t0v);
+    return raw2(v.result(), t1, mask);
   }
 
   constexpr u32 target() const noexcept { return target_; }
@@ -148,22 +156,31 @@ class TrigramFeature {
     return res;
   }
 
+  JPP_ALWAYS_INLINE u32 raw23(u64 state, util::ArraySlice<u64> t1,
+                              util::ArraySlice<u64> t2, u32 mask) const
+      noexcept {
+    auto t1v = t1.at(t1idx_);
+    auto t2v = t2.at(t2idx_);
+    auto v = h::FastHash1{state}.mix(t1v).mix(t2v);
+    return v.masked(mask);
+  }
+
+  JPP_ALWAYS_INLINE u32 jointRaw(util::ArraySlice<u64> t0,
+                                 util::ArraySlice<u64> t1,
+                                 util::ArraySlice<u64> t2, u32 mask) const
+      noexcept {
+    auto t0v = t0.at(t0idx_);
+    auto v =
+        h::FastHash1{}.mix(TotalHashArgs).mix(index_).mix(TrigramSeed).mix(t0v);
+    return raw23(v.result(), t1, t2, mask);
+  }
+
   JPP_ALWAYS_INLINE u32 jointApply(util::ArraySlice<u64> t0,
                                    util::ArraySlice<u64> t1,
                                    util::ArraySlice<u64> t2,
                                    util::MutableArraySlice<u32> result,
                                    u32 mask) const noexcept {
-    auto t0v = t0.at(t0idx_);
-    auto t1v = t1.at(t1idx_);
-    auto t2v = t2.at(t2idx_);
-    auto v = h::FastHash1{}
-                 .mix(TotalHashArgs)
-                 .mix(index_)
-                 .mix(TrigramSeed)
-                 .mix(t0v)
-                 .mix(t1v)
-                 .mix(t2v);
-    u32 r = v.masked(mask);
+    u32 r = jointRaw(t0, t1, t2, mask);
     result.at(target_) = r;
     return r;
   }
@@ -309,7 +326,7 @@ class PartialNgramFeatureApplyImpl : public PartialNgramFeatureApply {
         analysis::impl::computeUnrolled4RawPerceptron(weights, buf2);
   }
 
-  void applyBiTri(FeatureBuffer* buffers, util::ArraySlice<u64> t0,
+  void applyBiTri(FeatureBuffer* buffers, u32 t0idx, util::ArraySlice<u64> t0,
                   util::ConstSliceable<u64> t1, util::ConstSliceable<u64> t2,
                   util::ArraySlice<u32> t1idxes,
                   analysis::FeatureScorer* scorer,
