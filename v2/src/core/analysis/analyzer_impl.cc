@@ -197,13 +197,13 @@ Status AnalyzerImpl::computeScoresFull(const ScorerDef* sconf) {
   if (bndCount <= 3) {  // 2xBOS + EOS
     return Status::Ok();
   }
+  auto& proc = *this->sproc_;
 
   for (i32 boundary = 2; boundary < bndCount; ++boundary) {
     JPP_CAPTURE(boundary);
     auto bnd = lattice_.boundary(boundary);
     JPP_DCHECK(bnd->endingsFilled());
     auto left = bnd->ends()->nodePtrs();
-    auto& proc = *this->sproc_;
 
     EntryBeam::initializeBlock(bnd->starts()->beamData().data());
 
@@ -241,6 +241,8 @@ Status AnalyzerImpl::computeScoresFull(const ScorerDef* sconf) {
     proc.makeBeams(boundary, bnd, sconf);
   }
 
+  proc.sortEosBeam();
+
   return Status::Ok();
 }
 
@@ -273,6 +275,8 @@ Status AnalyzerImpl::computeScoresGbeam(const ScorerDef* sconf) {
     auto gbeam = proc.makeGlobalBeam(boundary, cfg().globalBeamSize);
     proc.computeGbeamScores(boundary, gbeam, sconf->feature);
   }
+
+  proc.sortEosBeam();
 
   return Status::Ok();
 }

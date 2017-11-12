@@ -7,6 +7,7 @@
 #include "core/analysis/analyzer_impl.h"
 #include "core/analysis/lattice_types.h"
 #include "core/impl/feature_impl_types.h"
+#include "util/debug_output.h"
 #include "util/logging.hpp"
 
 namespace jumanpp {
@@ -210,20 +211,34 @@ u32 fillBeamCandidates(Lattice *l, LatticeBoundary *bnd, NodeScores scores,
   return activeBeams;
 }
 
+namespace {
+template <bool getTop>
 util::ArraySlice<BeamCandidate> processBeamCandidates(
     util::MutableArraySlice<BeamCandidate> candidates, u32 maxBeam) {
   auto comp = std::greater<>();
-  if (candidates.size() > maxBeam * 2) {
-    u32 maxElems = maxBeam * 2;
-    auto iter = util::partition(candidates.begin(), candidates.end(), comp,
-                                maxBeam, maxElems);
-    u32 sz = static_cast<u32>(iter - candidates.begin());
-    candidates = util::MutableArraySlice<BeamCandidate>{candidates, 0, sz};
+  if (candidates.size() > maxBeam) {
+    auto itemIdx = maxBeam - 1;
+    std::nth_element(candidates.begin(), candidates.begin() + itemIdx,
+                     candidates.end(), comp);
   }
-  std::sort(candidates.begin(), candidates.end(), comp);
   auto size = std::min<u64>(maxBeam, candidates.size());
+  if (getTop && JPP_LIKELY(!candidates.empty())) {
+    BeamCandidate maxBc = candidates.front();
+    int maxIdx = 0;
+    for (int i = 1; i < size; ++i) {
+      auto c = candidates[i];
+      if (comp(c, maxBc)) {
+        maxBc = c;
+        maxIdx = i;
+      }
+    }
+    if (maxIdx != 0) {
+      std::swap(candidates[0], candidates[maxIdx]);
+    }
+  }
   return util::ArraySlice<BeamCandidate>{candidates, 0, size};
 }
+}  // namespace
 
 void ScoreProcessor::makeBeams(i32 boundary, LatticeBoundary *bnd,
                                const ScorerDef *sc) {
@@ -238,7 +253,11 @@ void ScoreProcessor::makeBeams(i32 boundary, LatticeBoundary *bnd,
     auto cnt =
         fillBeamCandidates(lattice_, bnd, scores->nodeScores(node), sc, cands);
     util::MutableArraySlice<BeamCandidate> candSlice{cands, 0, cnt};
-    auto res = processBeamCandidates(candSlice, maxBeam);
+    auto res = processBeamCandidates<false>(candSlice, maxBeam);
+
+#if 0
+    LOG_TRACE() << "on " << boundary << ", " << node << " " << VOut(candSlice);
+#endif
 
     auto beamElems = beamData.row(node);
     // fill the beam
@@ -275,12 +294,18 @@ util::ArraySlice<BeamCandidate> ScoreProcessor::makeGlobalBeam(i32 bndIdx,
         break;
       }
       globalBeam_[count] = BeamCandidate{el.totalScore, left, beamIdx};
+#if 0
+      LOG_TRACE() << globalBeam_[count] << " " << el.totalScore << " " << left << " " << beamIdx << " " << count;
+#endif
       ++count;
       ++beamIdx;
     }
   }
   util::MutableArraySlice<BeamCandidate> slice{globalBeam_, 0, count};
-  auto res = processBeamCandidates(slice, maxElems);
+  auto res = processBeamCandidates<true>(slice, maxElems);
+#if 0
+  LOG_TRACE() << "gbeam at " << bndIdx << ": " << VOut(slice);
+#endif
   return res;
 }
 
@@ -429,11 +454,10 @@ void ScoreProcessor::makeT0Beam(i32 bndIdx, i32 t0idx,
   std::iota(idxes.begin(), idxes.end(), 0);
   auto comp = [&scores](u32 i1, u32 i2) { return scores[i1] > scores[i2]; };
   auto itr = idxes.end();
-  auto partitionBoundary = maxBeam * 4 / 3;
-  if (idxes.size() > partitionBoundary) {
-    itr = util::partition(idxes.begin(), itr, comp, maxBeam, partitionBoundary);
+  if (gbeam.size() > maxBeam) {
+    itr = idxes.begin() + maxBeam;
+    std::nth_element(idxes.begin(), itr, idxes.end(), comp);
   }
-  std::sort(idxes.begin(), itr, comp);
 
   auto start = lattice_->boundary(bndIdx)->starts();
   auto beam = start->beamData().row(t0idx);
@@ -506,6 +530,21 @@ void ScoreProcessor::computeT0Prescores(util::ArraySlice<BeamCandidate> gbeam,
     ngramApply_->applyBiStep2(&featureBuffer_, t1, scorer, scores);
     ngramApply_->applyTriStep3(&featureBuffer_, t2, scorer, scores);
   }
+}
+
+void ScoreProcessor::sortEosBeam() {
+  auto eosBnd = lattice_->boundary(lattice_->createdBoundaryCount() - 1);
+  auto beam = eosBnd->starts()->beamData().row(0);
+  std::sort(
+      beam.begin(), beam.end(),
+      [](const ConnectionBeamElement &e1, const ConnectionBeamElement &e2) {
+        return e1.totalScore > e2.totalScore;
+      });
+}
+
+std::ostream &operator<<(std::ostream &os, const BeamCandidate &bc) {
+  os << "[" << bc.left() << "," << bc.beam() << ":" << bc.score() << "]";
+  return os;
 }
 
 }  // namespace analysis
