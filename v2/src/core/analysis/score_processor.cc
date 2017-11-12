@@ -131,6 +131,8 @@ void ScoreProcessor::applyT2(i32 beamIdx, FeatureScorer *features) {
   ngramApply_->applyTriStep3(&featureBuffer_, item, features, result);
 }
 
+namespace {
+
 u32 fillBeamCandidates(Lattice *l, LatticeBoundary *bnd, NodeScores scores,
                        const ScorerDef *pDef,
                        util::MutableArraySlice<BeamCandidate> cands) {
@@ -209,6 +211,8 @@ u32 fillBeamCandidates(Lattice *l, LatticeBoundary *bnd, NodeScores scores,
   }
   return activeBeams;
 }
+
+}  // namespace
 
 util::ArraySlice<BeamCandidate> processBeamCandidates(
     util::MutableArraySlice<BeamCandidate> candidates, u32 maxBeam) {
