@@ -13,7 +13,7 @@ namespace output {
 
 class MorphFormat : public core::OutputFormat {
   JumandicFields fields_;
-  util::io::Printer printer_;
+  util::io::FastPrinter printer_;
   core::analysis::AnalysisResult analysisResult_;
   core::analysis::AnalysisPath top1_;
   core::analysis::NodeWalker walker;

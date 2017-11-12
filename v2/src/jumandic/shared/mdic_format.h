@@ -12,16 +12,16 @@ namespace jumandic {
 namespace output {
 
 namespace fmt {
-jumanpp::util::io::Printer& printMaybeQuoted(
-    jumanpp::util::io::Printer& printer, StringPiece data);
-jumanpp::util::io::Printer& printMaybeQuoteStringList(
-    jumanpp::util::io::Printer& printer,
+jumanpp::util::io::FastPrinter& printMaybeQuoted(
+    jumanpp::util::io::FastPrinter& printer, StringPiece data);
+jumanpp::util::io::FastPrinter& printMaybeQuoteStringList(
+    jumanpp::util::io::FastPrinter& printer,
     core::analysis::StringListIterator items);
 }  // namespace fmt
 
 class MdicFormat : public core::OutputFormat {
   JumandicFields flds_;
-  util::io::Printer printer_;
+  util::io::FastPrinter printer_;
   core::analysis::NodeWalker walker;
   util::FlatSet<i32> displayed_;
 

@@ -11,7 +11,7 @@ TEST_CASE("can correctly encode sequences") {
   auto checker = [](StringPiece raw, StringPiece result) {
     CAPTURE(raw);
     CAPTURE(result);
-    util::io::Printer p;
+    util::io::FastPrinter p;
     jumandic::output::fmt::printMaybeQuoted(p, raw);
     CHECK(p.result() == result);
   };

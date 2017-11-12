@@ -13,7 +13,7 @@
 #include "core/env.h"
 #include "jumandic/shared/jumandic_spec.h"
 #include "jumandic_id_resolver.h"
-#include "util/printer.h"
+#include "util/fast_printer.h"
 
 namespace jumanpp {
 namespace jumandic {
@@ -44,11 +44,11 @@ struct JumandicFields {
   }
 };
 
-void formatNormalizedFeature(util::io::Printer& p, i32 featureVal);
+void formatNormalizedFeature(util::io::FastPrinter& p, i32 featureVal);
 
 class JumanFormat : public core::OutputFormat {
   JumandicFields flds;
-  util::io::Printer printer;
+  util::io::FastPrinter printer;
   core::analysis::AnalysisResult analysisResult;
   core::analysis::AnalysisPath top1;
   core::analysis::NodeWalker walker;

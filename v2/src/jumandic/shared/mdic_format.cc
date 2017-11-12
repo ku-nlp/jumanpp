@@ -53,8 +53,8 @@ Status MdicFormat::initialize(const core::analysis::OutputManager& om) {
 
 namespace fmt {
 
-util::io::Printer& printMaybeQuoted(util::io::Printer& printer,
-                                    StringPiece data) {
+util::io::FastPrinter& printMaybeQuoted(util::io::FastPrinter& printer,
+                                        StringPiece data) {
   auto end = data.end();
   auto beg = data.begin();
   auto noCommas = std::find(beg, end, ',') == end;
@@ -77,8 +77,8 @@ util::io::Printer& printMaybeQuoted(util::io::Printer& printer,
   return printer;
 }
 
-util::io::Printer& printMaybeQuoteStringList(
-    util::io::Printer& printer, core::analysis::KVListIterator items) {
+util::io::FastPrinter& printMaybeQuoteStringList(
+    util::io::FastPrinter& printer, core::analysis::KVListIterator items) {
   auto shouldQuote = false;
   auto itemsCopy = items;
   while (itemsCopy.next()) {

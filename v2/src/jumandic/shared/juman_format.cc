@@ -40,7 +40,7 @@ Status JumanFormat::format(const core::analysis::Analyzer& analysis,
   return Status::Ok();
 }
 
-void formatNormalizedFeature(util::io::Printer& p, i32 featureVal) {
+void formatNormalizedFeature(util::io::FastPrinter& p, i32 featureVal) {
   p << "非標準表記:";
   using m = core::analysis::charlattice::Modifiers;
   namespace c = core::analysis::charlattice;

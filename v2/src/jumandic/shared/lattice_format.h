@@ -50,7 +50,7 @@ class LatticeFormatInfo {
 
 class LatticeFormat : public core::OutputFormat {
   JumandicFields flds;
-  util::io::Printer printer;
+  util::io::FastPrinter printer;
   core::analysis::NodeWalker walker;
   JumandicIdResolver idResolver;
   LatticeFormatInfo latticeInfo;
