@@ -51,13 +51,10 @@ class EntryBeam {
     }
   }
 
-  static void fixupBeam(util::MutableArraySlice<ConnectionBeamElement>& data) {
-    std::sort_heap(data.begin(), data.end(), compare);
-  }
-
   static bool isFake(const ConnectionBeamElement& e) {
-    u16 pat = (u16)(0xffffu);
-    return e.ptr.boundary == pat && e.ptr.left == pat && e.ptr.right == pat;
+    u64 el;
+    std::memcpy(&el, &e.ptr, sizeof(u64));
+    return (~el) == 0;
   }
 
   static ConnectionBeamElement fake() {
