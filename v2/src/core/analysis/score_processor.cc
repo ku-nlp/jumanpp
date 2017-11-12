@@ -44,6 +44,8 @@ ScoreProcessor::ScoreProcessor(AnalyzerImpl *analyzer)
 
   analyzer->core().features().ngramPartial->allocateBuffers(&featureBuffer_,
                                                             runStats_, alloc);
+  util::fill(featureBuffer_.valueBuffer1, 0);
+
   globalBeamSize_ = analyzer->cfg().globalBeamSize;
   if (globalBeamSize_ > 0) {
     t1PtrData_.reserve(globalBeamSize_);

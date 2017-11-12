@@ -227,8 +227,14 @@ void InNodeComputationsCodegen::generateLoopBody(i::Printer &p) {
     } else {
       p << "\nscore_part_" << (varUsage % numVars) << " += ";
     }
-    p << "weights.at(" << uniVal << ");"
+    p << "weights.at(buf2.at(" << varUsage << "));"
       << " // perceptron op";
+#ifdef JPP_PREFETCH_FEATURE_WEIGHTS
+    p << "\nweights.prefetch<"
+      << JPP_TEXT(::jumanpp::util::PrefetchHint::PREFETCH_HINT_T0) << ">("
+      << uniVal << ");";
+#endif
+    p << "\nbuf1.at(" << varUsage << ") = " << uniVal << ";";
 
     if (pat.usage != 1) {
       p << "\npatterns.at(" << pat.index << ") = " << name << ";";
@@ -263,11 +269,12 @@ void InNodeComputationsCodegen::generateLoopBody(i::Printer &p) {
   }
 
   p << "\n// publish perceptron value";
-  p << "\nscores.at(item) = score_part_0";
+  p << "\nif (JPP_LIKELY(item > 0)) {";
+  p << "\n  scores.at(item - 1) = score_part_0";
   for (int var = 1; var < numVars; ++var) {
     p << " + score_part_" << var;
   }
-  p << ";";
+  p << ";\n}";
 }
 
 void InNodeComputationsCodegen::generateLoop(i::Printer &p) {
@@ -278,6 +285,8 @@ void InNodeComputationsCodegen::generateLoop(i::Printer &p) {
     << JPP_TEXT(::jumanpp::core::dic::DicEntryBuffer) << " entryBuffer;";
   p << "\nauto t1state = fbuffer->t1Buf(" << numBigrams_ << ", numItems);";
   p << "\nauto t2state = fbuffer->t2Buf1(" << numTrigrams_ << ", numItems);";
+  p << "\nauto buf1 = fbuffer->valBuf1(" << numUnigrams_ << ");";
+  p << "\nauto buf2 = fbuffer->valBuf2(" << numUnigrams_ << ");";
   p << "\nfor (int item = 0; item < numItems; ++item) {";
   {
     i::Indent id{p, 2};
@@ -293,9 +302,13 @@ void InNodeComputationsCodegen::generateLoop(i::Printer &p) {
     p << "\nif (JPP_LIKELY(item < (numItems - 1))) {";
     p << "\n  ctx->prefetchDicItem(nodeInfos.at(item + 1).entryPtr());";
     p << "\n}";
+    p << "\nbuf1.swap(buf2);";
     generateLoopBody(p);
   }
   p << "\n}";
+  p << "\nscores.at(numItems - 1) = "
+    << JPP_TEXT(::jumanpp::core::analysis::impl::computeUnrolled4RawPerceptron)
+    << "(weights, buf1);";
 }
 
 InNodeComputationsCodegen::InNodeComputationsCodegen(
