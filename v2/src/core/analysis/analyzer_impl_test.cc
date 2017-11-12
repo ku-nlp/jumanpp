@@ -54,7 +54,7 @@ TEST_CASE("at least some scores can be computed with multiple paths") {
   CHECK(n3.f2 == "c");
   CHECK_FALSE(top.nextNode(&el));
   CHECK_FALSE(top.nextBoundary());
-  // env.dumpTrainers("/tmp/jpp-dbg", 5);
+  // env.dumpTrainers("/tmp/jpp", 5);
 }
 
 TEST_CASE("global beam does not crash") {
@@ -62,7 +62,6 @@ TEST_CASE("global beam does not crash") {
   PrimFeatureTestEnv env{
       dic, [](dsl::ModelSpecBuilder& specBldr, FeatureSet& fs) {}, 3, 4};
   env.analyze2("afb");
-  env.dumpTrainers("/tmp/jpp-dbg", 6);
   auto& top = env.top();
   ConnectionPtr el;
   CHECK(top.nextBoundary());
@@ -84,4 +83,5 @@ TEST_CASE("global beam does not crash") {
   CHECK(n3.f2 == "c");
   CHECK_FALSE(top.nextNode(&el));
   CHECK_FALSE(top.nextBoundary());
+  // env.dumpTrainers("/tmp/jpp", 5);
 }

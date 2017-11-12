@@ -93,14 +93,6 @@ struct BeamCandidate {
     return data_ > o.data_;
   }
 
-  bool operator==(const BeamCandidate& o) const noexcept {
-    return data_ == o.data_;
-  }
-
-  bool operator!=(const BeamCandidate& o) const noexcept {
-    return data_ != o.data_;
-  }
-
   static u64 pack(Score score, u16 left, u16 beam) noexcept {
     u32 value;
     std::memcpy(&value, &score, sizeof(float));
@@ -108,8 +100,6 @@ struct BeamCandidate {
     return (static_cast<u64>(value) << 32) | (left << 16) | beam;
   }
 };
-
-std::ostream& operator<<(std::ostream& os, const BeamCandidate& bc);
 
 class ScoreProcessor {
   i32 beamSize_ = 0;
@@ -173,7 +163,6 @@ class ScoreProcessor {
                           FeatureScorer* scorer);
   void makeT0cutoffBeam(u32 fullAnalysis, u32 rightBeam);
   bool patternIsStatic() const { return patternStatic_ != nullptr; }
-  void sortEosBeam();
 };
 
 }  // namespace analysis
