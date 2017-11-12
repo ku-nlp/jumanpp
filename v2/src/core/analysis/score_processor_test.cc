@@ -46,3 +46,46 @@ TEST_CASE("entry beam has highest scored element") {
   CHECK_FALSE(findScore(elems, 1.0f));
   CHECK_FALSE(findScore(elems, 1.1f));
 }
+
+TEST_CASE("beam candidate is valid") {
+  BeamCandidate bc{-1.0f, 5, 15};
+  CHECK(bc.score() == -1.0f);
+  CHECK(bc.left() == 5);
+  CHECK(bc.beam() == 15);
+  BeamCandidate bc2{1.5f, 55, 155};
+  CHECK(bc2.score() == 1.5f);
+  CHECK(bc2.left() == 55);
+  CHECK(bc2.beam() == 155);
+  BeamCandidate bc0{0, 0, 0};
+  CHECK(bc0.score() == 0);
+  CHECK(bc0.left() == 0);
+  CHECK(bc0.beam() == 0);
+}
+
+TEST_CASE("beam candidates are compared corectly") {
+  BeamCandidate bc0{0, 0, 0};
+  BeamCandidate bc{-1.5f, 5, 15};
+  BeamCandidate bc2{-0.1f, 5, 15};
+  BeamCandidate bc3{1.5f, 55, 155};
+  BeamCandidate bc4{2.5f, 556, 155};
+  CHECK(bc < bc2);
+  CHECK(bc < bc3);
+  CHECK(bc < bc4);
+  CHECK(bc2 < bc3);
+  CHECK(bc2 < bc4);
+  CHECK(bc3 < bc4);
+  CHECK(bc4 > bc3);
+  CHECK(bc4 > bc2);
+  CHECK(bc4 > bc);
+  CHECK(bc3 > bc2);
+  CHECK(bc3 > bc);
+  CHECK(bc2 > bc);
+  CHECK(bc < bc0);
+  CHECK(bc2 < bc0);
+  CHECK(bc0 < bc3);
+  CHECK(bc0 < bc4);
+  CHECK(bc0 > bc);
+  CHECK(bc0 > bc2);
+  CHECK(bc3 > bc0);
+  CHECK(bc4 > bc0);
+}

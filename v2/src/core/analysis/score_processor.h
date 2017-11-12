@@ -66,25 +66,38 @@ class EntryBeam {
 };
 
 struct BeamCandidate {
-  Score score_;
-  u32 position_;
+  static_assert(sizeof(Score) == sizeof(u32), "");
+  u64 data_;
 
   BeamCandidate() = default;
   BeamCandidate(Score score, u16 left, u16 beam)
-      : score_{score}, position_{(static_cast<u32>(left) << 16u) | beam} {}
+      : data_{pack(score, left, beam)} {}
 
-  Score score() const noexcept { return score_; }
+  Score score() const noexcept {
+    u32 value = static_cast<u32>(data_ >> 32);
+    value = ((value & 0x8000'0000) == 0) ? ~value : value ^ 0x8000'0000;
+    float result;
+    std::memcpy(&result, &value, sizeof(float));
+    return result;
+  }
 
-  u16 left() const noexcept { return static_cast<u16>(position_ >> 16); }
+  u16 left() const noexcept { return static_cast<u16>(data_ >> 16); }
 
-  u16 beam() const noexcept { return static_cast<u16>(position_); }
+  u16 beam() const noexcept { return static_cast<u16>(data_); }
 
   bool operator<(const BeamCandidate& o) const noexcept {
-    return score_ < o.score_;
+    return data_ < o.data_;
   }
 
   bool operator>(const BeamCandidate& o) const noexcept {
-    return score_ > o.score_;
+    return data_ > o.data_;
+  }
+
+  static u64 pack(Score score, u16 left, u16 beam) noexcept {
+    u32 value;
+    std::memcpy(&value, &score, sizeof(float));
+    value = ((value & 0x8000'0000) != 0) ? ~value : value ^ 0x8000'0000;
+    return (static_cast<u64>(value) << 32) | (left << 16) | beam;
   }
 };
 
