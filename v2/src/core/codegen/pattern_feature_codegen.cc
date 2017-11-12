@@ -289,6 +289,10 @@ void InNodeComputationsCodegen::generateLoop(i::Printer &p) {
     p << "\nauto entry = entryBuffer.features();";
     p << "\nauto t1row = t1state.row(item);";
     p << "\nauto t2row = t2state.row(item);";
+    p << "\n// preload memory of next item";
+    p << "\nif (JPP_LIKELY(item < (numItems - 1))) {";
+    p << "\n  ctx->prefetchDicItem(nodeInfos.at(item + 1).entryPtr());";
+    p << "\n}";
     generateLoopBody(p);
   }
   p << "\n}";

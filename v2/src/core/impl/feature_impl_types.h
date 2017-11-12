@@ -127,15 +127,15 @@ class PrimitiveFeatureContext {
 
   bool fillEntryBuffer(EntryPtr eptr,
                        util::MutableArraySlice<i32> features) const {
-    if (eptr == EntryPtr::BOS() || eptr == EntryPtr::EOS()) {
+    if (JPP_UNLIKELY(eptr == EntryPtr::BOS() || eptr == EntryPtr::EOS())) {
       util::fill(features, eptr.rawValue());
       return true;
-    } else if (eptr == EntryPtr::Invalid()) {
+    } else if (JPP_LIKELY(eptr == EntryPtr::Invalid())) {
       return false;
     }
 
     auto numf = features.size();
-    if (eptr.isDic()) {
+    if (JPP_LIKELY(eptr.isDic())) {
       return entries_.entryAtPtr(eptr).fill(features, numf) == numf;
     } else {
       auto node = extraCtx_->node(eptr);
