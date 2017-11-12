@@ -55,7 +55,7 @@ class JumanFormat : public core::OutputFormat {
   JumandicIdResolver idResolver;
 
  public:
-  JumanFormat() {}
+  JumanFormat();
 
   Status initialize(const core::analysis::OutputManager& om) {
     JPP_RETURN_IF_ERROR(idResolver.initialize(om.dic()));

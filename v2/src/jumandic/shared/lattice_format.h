@@ -59,7 +59,7 @@ class LatticeFormat : public core::OutputFormat {
   std::vector<LatticeInfoView> infoView;
 
  public:
-  LatticeFormat(i32 topN) : topN(topN) {}
+  LatticeFormat(i32 topN);
   Status initialize(const core::analysis::OutputManager& om);
   Status format(const core::analysis::Analyzer& analyzer,
                 StringPiece comment) override;

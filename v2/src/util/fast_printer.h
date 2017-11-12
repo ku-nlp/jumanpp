@@ -38,6 +38,8 @@ class FastPrinter {
   }
 
   void reset() { formatter_.clear(); }
+
+  void reserve(size_t size) { formatter_.buffer().reserve(size); }
 };
 
 }  // namespace io

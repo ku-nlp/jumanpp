@@ -227,6 +227,10 @@ Status LatticeFormat::initialize(const core::analysis::OutputManager& om) {
   return Status::Ok();
 }
 
+LatticeFormat::LatticeFormat(i32 topN) : topN(topN) {
+  printer.reserve(16 * 1024);
+}
+
 void LatticeNodeInfo::addElem(const core::analysis::ConnectionPtr& cptr,
                               i32 rank) {
   ranks.push_back(static_cast<u16>(rank));

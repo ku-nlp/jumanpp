@@ -152,6 +152,10 @@ bool JumanFormat::formatOne(const core::analysis::OutputManager& om,
   return true;
 }
 
+JumanFormat::JumanFormat() {
+  printer.reserve(16 * 1024);  // 16k
+}
+
 }  // namespace output
 }  // namespace jumandic
 }  // namespace jumanpp
