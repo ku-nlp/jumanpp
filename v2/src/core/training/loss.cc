@@ -191,6 +191,9 @@ bool LossCalculator::isGoldStillInBeam(
 
   auto prevGoldPtr = gold.nodes().at(goldPos - 1);
   for (auto& be : beam) {
+    if (analysis::EntryBeam::isFake(be)) {
+      break;
+    }
     auto prev = be.ptr.previous;
     if (prev == nullptr) {
       return false;

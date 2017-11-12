@@ -257,8 +257,10 @@ void ScoreProcessor::makeBeams(i32 boundary, LatticeBoundary *bnd,
                         &prevNode.at(beamCand.beam()).ptr};
       beamElems.at(beam) = ConnectionBeamElement{ptr, beamCand.score()};
     }
-    for (; beam < maxBeam; ++beam) {
-      beamElems.at(beam) = EntryBeam::fake();
+    size_t rest = maxBeam - beam;
+    if (rest > 0) {
+      std::memset(&beamElems.at(beam), 0xff,
+                  rest * sizeof(ConnectionBeamElement));
     }
   }
 }
@@ -466,8 +468,9 @@ void ScoreProcessor::makeT0Beam(i32 bndIdx, i32 t0idx,
     ++beamIdx;
   }
 
-  for (; beamIdx < maxBeam; ++beamIdx) {
-    beam.at(beamIdx) = EntryBeam::fake();
+  size_t rest = maxBeam - beamIdx;
+  if (rest > 0) {
+    std::memset(&beam.at(beamIdx), 0xff, rest * sizeof(ConnectionBeamElement));
   }
 }
 

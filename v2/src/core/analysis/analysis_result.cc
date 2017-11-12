@@ -56,6 +56,7 @@ Status AnalysisPath::fillIn(const Lattice *l) {
 
     auto topItem = beamAtBnd.at(myBeam);
     elems_.push_back(*topItem.ptr.previous);
+#if 0
     for (i32 id = myBeam + 1; id < beamAtBnd.size(); ++id) {
       auto nextItem = beamAtBnd.at(id);
       JPP_DCHECK_LE(nextItem.totalScore, topItem.totalScore);
@@ -64,6 +65,7 @@ Status AnalysisPath::fillIn(const Lattice *l) {
       }
       elems_.push_back(*nextItem.ptr.previous);
     }
+#endif
     offsets_.push_back((u32)elems_.size());
     myBeam = topPtr->beam;
     topPtr = topPtr->previous;
