@@ -58,7 +58,7 @@ inline bool outputBiApply2(util::io::Printer& p,
           << ".step1(p1, srow, buf1, mask);";
 #ifdef JPP_PREFETCH_FEATURE_WEIGHTS
         p << "\nweights.prefetch<"
-          << JPP_TEXT(::jumanpp::util::PrefetchHint::PREFETCH_HINT_T2)
+          << JPP_TEXT(::jumanpp::util::PrefetchHint::PREFETCH_HINT_T0)
           << ">(idx);";
 #endif
         p << "\n}";
@@ -129,7 +129,7 @@ bool outputTriApply3(util::io::Printer& p,
           << ".step2(p2, srow, buf1, mask);";
 #ifdef JPP_PREFETCH_FEATURE_WEIGHTS
         p << "\nweights.prefetch<"
-          << JPP_TEXT(::jumanpp::util::PrefetchHint::PREFETCH_HINT_T2)
+          << JPP_TEXT(::jumanpp::util::PrefetchHint::PREFETCH_HINT_T0)
           << ">(idx);";
 #endif
         p << "\n}";
@@ -262,7 +262,7 @@ void PartialNgramPrinter::outputClassBody(util::io::Printer& p) {
         << ".step0(patterns, result, mask);";
 #ifdef JPP_PREFETCH_FEATURE_WEIGHTS
       p << "\nweights.prefetch<"
-        << JPP_TEXT(::jumanpp::util::PrefetchHint::PREFETCH_HINT_T2)
+        << JPP_TEXT(::jumanpp::util::PrefetchHint::PREFETCH_HINT_T0)
         << ">(uni_v_" << i << ");";
 #endif
     }
@@ -299,7 +299,7 @@ void PartialNgramPrinter::outputClassBody(util::io::Printer& p) {
         << ".step1(patterns, state, result, mask);";
 #ifdef JPP_PREFETCH_FEATURE_WEIGHTS
       p << "\nweights.prefetch<"
-        << JPP_TEXT(::jumanpp::util::PrefetchHint::PREFETCH_HINT_T2)
+        << JPP_TEXT(::jumanpp::util::PrefetchHint::PREFETCH_HINT_T0)
         << ">(bi_val_" << i << ");";
 #endif
     }
@@ -351,7 +351,7 @@ void PartialNgramPrinter::outputClassBody(util::io::Printer& p) {
         << ".step2(patterns, state, result, mask);";
 #ifdef JPP_PREFETCH_FEATURE_WEIGHTS
       p << "\nweights.prefetch<"
-        << JPP_TEXT(::jumanpp::util::PrefetchHint::PREFETCH_HINT_T2)
+        << JPP_TEXT(::jumanpp::util::PrefetchHint::PREFETCH_HINT_T0)
         << ">(tri_v_" << i << ");";
 #endif
     }
@@ -374,7 +374,7 @@ void PartialNgramPrinter::outputClassBody(util::io::Printer& p) {
         << ".jointApply(t0, t1, result, mask);";
 #ifdef JPP_PREFETCH_FEATURE_WEIGHTS
       p << "\nweights.prefetch<"
-        << JPP_TEXT(::jumanpp::util::PrefetchHint::PREFETCH_HINT_T2) << ">(r_"
+        << JPP_TEXT(::jumanpp::util::PrefetchHint::PREFETCH_HINT_T0) << ">(r_"
         << i << ");";
 #endif
     }
@@ -398,7 +398,7 @@ void PartialNgramPrinter::outputClassBody(util::io::Printer& p) {
         << ".jointApply(t0, t1, t2, result, mask);";
 #ifdef JPP_PREFETCH_FEATURE_WEIGHTS
       p << "\nweights.prefetch<"
-        << JPP_TEXT(::jumanpp::util::PrefetchHint::PREFETCH_HINT_T2) << ">(r_"
+        << JPP_TEXT(::jumanpp::util::PrefetchHint::PREFETCH_HINT_T0) << ">(r_"
         << i << ");";
 #endif
     }
