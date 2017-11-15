@@ -26,8 +26,8 @@ class CgTwoSpecFactory {
     msb.bigram({f1}, {f1, f2, f3});
 
     msb.bigram({f1, f2}, {f1});
+    msb.bigram({f1, f2}, {f3});
     msb.bigram({f1, f2}, {f1, f2});
-
     msb.bigram({f1, f2, f3}, {f1});
 
     msb.trigram({f1, f2}, {f1, f2}, {f1, f2});

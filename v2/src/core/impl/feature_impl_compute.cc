@@ -13,7 +13,6 @@ Hash ExprComputeFeatureImpl::mixPrmitives(
     Hash input, PrimitiveFeatureContext *ctx, const NodeInfo &nodeInfo,
     const util::ArraySlice<i32> &entry) const {
   auto check = condition_->access(ctx, nodeInfo, entry);
-  input = input.mix(featureNum_);
   if (check != 0) {
     for (auto f : true_) {
       input = input.mix(f->access(ctx, nodeInfo, entry));
@@ -60,7 +59,7 @@ ExprComputeFeatureImpl::~ExprComputeFeatureImpl() = default;
 Hash NoopComputeFeatureImpl::mixPrmitives(
     Hash input, PrimitiveFeatureContext *ctx, const NodeInfo &nodeInfo,
     const util::ArraySlice<i32> &entry) const {
-  return input.mix(featureNum_).mix(prim_->access(ctx, nodeInfo, entry));
+  return input.mix(prim_->access(ctx, nodeInfo, entry));
 }
 
 Status NoopComputeFeatureImpl::initialize(

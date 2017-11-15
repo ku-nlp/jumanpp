@@ -93,7 +93,7 @@ inline void applyBiTriFullKernel(
       tribuf1.at(f) = v2;
       r2 += weights.at(tribuf2.at(f));
     }
-    if (numBiFeat & 0x1) {
+    if (numTriFeat & 0x1) {
       auto f = feat;
       auto t1v1 = t1row.at(t1FeaturesTri.at(f));
       auto t2v1 = t2row.at(t2FeaturesTri.at(f));

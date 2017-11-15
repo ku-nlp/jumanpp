@@ -22,13 +22,15 @@ set(jpp_codegen_hdrs
   )
 
 set(jpp_codegen_tsrcs
-  cg_2_spec.h
   feature_codegen_test.cc
+  pattern_codegen_test.cc
+  cg_2_spec.h
+  ${cgtest02_SRC}
   )
 
 add_library(jpp_core_codegen ${jpp_codegen_srcs} ${jpp_codegen_hdrs})
 
-jpp_test_executable(jpp_codegen_tests ${jpp_codegen_tsrcs} ${cgtest02_SRC})
+jpp_test_executable(jpp_codegen_tests ${jpp_codegen_tsrcs})
 target_include_directories(jpp_codegen_tests PRIVATE ${cgtest02_INCLUDE})
 target_link_libraries(jpp_core_codegen jpp_core)
 target_link_libraries(jpp_codegen_tests jpp_core_codegen)

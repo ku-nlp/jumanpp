@@ -14,7 +14,7 @@ using namespace jumanpp::testing;
 using namespace jumanpp::core::spec::dsl;
 using namespace jumanpp;
 
-constexpr size_t NumNgrams = 13;
+constexpr size_t NumNgrams = 14;
 constexpr size_t NumExamples = 10;
 constexpr size_t NumFeatures = 5;
 
@@ -91,6 +91,7 @@ TEST_CASE("full ngram feature values are the same for a small example") {
     jumanpp::codegentest::CgTwoSpecFactory::fillSpec(msb);
   });
   env.importDic("a,b,c\nc,d,e\nf,g,h\n");
+  REQUIRE(env.core->spec().features.ngram.size() == NumNgrams);
 
   JumanppEnv jenv1;
   env.loadEnv(&jenv1);
