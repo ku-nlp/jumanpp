@@ -231,7 +231,7 @@ inline void printPerceptronInfo(util::io::Printer& p, const ModelPart& part,
   double sum = 0;
   for (auto s = 0; s < w.size(); ++s) {
     auto v = w.at(s);
-    if (std::fabs(v) < 1e-3) {
+    if (std::fabs(v) < 1e-4) {
       zero += 1;
     }
     max = std::max(v, max);
@@ -239,8 +239,9 @@ inline void printPerceptronInfo(util::io::Printer& p, const ModelPart& part,
     sum += v;
   }
   float avg = static_cast<float>(sum / w.size());
+  float zeroPerc = static_cast<float>(zero) / w.size() * 100;
   p << "\n  size=" << w.size();
-  p << "\n  nz=" << zero;
+  p << "\n  zero=" << zero << " (" << zeroPerc << "%)";
   p << "\n  min=" << min << " max=" << max << " avg=" << avg;
 }
 
