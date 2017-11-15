@@ -410,6 +410,27 @@ JPP_NO_INLINE void noUnrollPrefetch(util::Sliceable<u64> state,
       core::analysis::impl::computeUnrolled4RawPerceptron(weights, buf1);
 }
 
+JPP_NO_INLINE void partUnroll2NoPrefetch(
+    util::Sliceable<u64> state, util::Sliceable<u64> data,
+    util::ArraySlice<float> weights, util::MutableArraySlice<float> result) {
+  u32 mask = static_cast<u32>(weights.size() - 1);
+  for (int row = 0; row < data.numRows(); ++row) {
+    auto sr = state.row(row);
+    auto dr = data.row(row);
+    float f1 = 0;
+    float f2 = 0;
+    for (u32 id0 = 0; id0 < 32; id0 += 2) {
+      auto id = id0;
+      auto v = doMix(sr.at(id), dr.at(id), mask);
+      f1 += weights.at(v);
+      ++id;
+      auto v2 = doMix(sr.at(id), dr.at(id), mask);
+      f2 += weights.at(v2);
+    }
+    result.at(row) = f1 + f2;
+  }
+}
+
 JPP_NO_INLINE void partUnroll2Prefetch(util::Sliceable<u64> state,
                                        util::Sliceable<u64> data,
                                        util::ArraySlice<float> weights,
@@ -509,6 +530,28 @@ BENCHMARK("no-unroll-no-prefetch", [](benchpress::context* ctx) {
   }
 });
 
+BENCHMARK("punroll2-no-prefetch", [](benchpress::context* ctx) {
+  InputData data{};
+  ctx->reset_timer();
+  for (size_t i = 0; i < ctx->num_iterations(); ++i) {
+    for (int nstate = 0; nstate < numStates; ++nstate) {
+      partUnroll2NoPrefetch(inputs.states(nstate), inputs.datas(),
+                            inputs.weights, &inputs.result);
+    }
+  }
+});
+
+BENCHMARK("full-unroll4-prefetch", [](benchpress::context* ctx) {
+  InputData data{};
+  ctx->reset_timer();
+  for (size_t i = 0; i < ctx->num_iterations(); ++i) {
+    for (int nstate = 0; nstate < numStates; ++nstate) {
+      unrollFull4Prefetch(inputs.states(nstate), inputs.datas(), inputs.weights,
+                          &inputs.result, &inputs.buffer1, &inputs.buffer2);
+    }
+  }
+});
+
 BENCHMARK("no-unroll-prefetch", [](benchpress::context* ctx) {
   InputData data{};
   ctx->reset_timer();
@@ -526,17 +569,6 @@ BENCHMARK("punroll2-prefetch", [](benchpress::context* ctx) {
   for (size_t i = 0; i < ctx->num_iterations(); ++i) {
     for (int nstate = 0; nstate < numStates; ++nstate) {
       partUnroll2Prefetch(inputs.states(nstate), inputs.datas(), inputs.weights,
-                          &inputs.result, &inputs.buffer1, &inputs.buffer2);
-    }
-  }
-});
-
-BENCHMARK("full-unroll4-prefetch", [](benchpress::context* ctx) {
-  InputData data{};
-  ctx->reset_timer();
-  for (size_t i = 0; i < ctx->num_iterations(); ++i) {
-    for (int nstate = 0; nstate < numStates; ++nstate) {
-      unrollFull4Prefetch(inputs.states(nstate), inputs.datas(), inputs.weights,
                           &inputs.result, &inputs.buffer1, &inputs.buffer2);
     }
   }
