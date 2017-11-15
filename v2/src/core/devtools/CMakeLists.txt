@@ -1,2 +1,4 @@
 add_executable(fasthash_quality fasthash_quality.cc)
 target_link_libraries(fasthash_quality jpp_util)
+add_executable(strings_alignment_hinter strings_alignment_hinter.cc)
+target_link_libraries(strings_alignment_hinter jpp_core)
