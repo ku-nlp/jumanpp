@@ -48,13 +48,12 @@ void Manager::reset() {
 #else
 void* PoolAlloc::allocate_memory(size_t size, size_t alignment) {
   auto address = Align(offset_, alignment);
-  auto end = address + size;
-  auto requiredSize = end - offset_;
-  if (!JPP_LIKELY(ensureAvailable(requiredSize))) {
+  auto objEnd = address + size;
+  if (JPP_UNLIKELY(objEnd > end_)) {
+    switchToNewPage(size);
     return allocate_memory(size, alignment);
   }
-
-  offset_ += requiredSize;
+  offset_ = objEnd;
   // LOG_DEBUG() << "allocated " << requiredSize << " bytes";
   return base_ + address;
 }
@@ -101,23 +100,17 @@ MemoryPage Manager::newPage() {
   }
 }
 
-bool PoolAlloc::ensureAvailable(size_t size) {
-  auto remaining = end_ - offset_;
-  if (remaining >= size) {
-    return true;
-  } else {
-    MemoryPage page = mgr_->newPage();
-    if (page.size < size) {
-      LOG_ERROR() << "page size (" << page.size
-                  << " is lesser than object size (" << size
-                  << "), please increase page size";
-      throw new std::bad_alloc();
-    }
-    base_ = reinterpret_cast<char*>(page.base);
-    offset_ = 0;
-    end_ = page.size;
-    return false;
+bool PoolAlloc::switchToNewPage(size_t size) {
+  MemoryPage page = mgr_->newPage();
+  if (page.size < size) {
+    LOG_ERROR() << "page size (" << page.size << " is lesser than object size ("
+                << size << "), please increase page size";
+    throw new std::bad_alloc();
   }
+  base_ = reinterpret_cast<char*>(page.base);
+  offset_ = 0;
+  end_ = page.size;
+  return true;
 }
 
 void Manager::reset() { currentPage = 0; }

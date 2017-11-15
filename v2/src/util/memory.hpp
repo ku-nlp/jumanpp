@@ -65,7 +65,7 @@ class PoolAlloc : public ErasedAllocator {
   char *base_ = nullptr;
   size_t offset_ = 0;
   size_t end_ = 0;
-  bool ensureAvailable(size_t size);
+  bool switchToNewPage(size_t size);
 
  public:
   PoolAlloc(Manager *manager) : mgr_(manager) {}

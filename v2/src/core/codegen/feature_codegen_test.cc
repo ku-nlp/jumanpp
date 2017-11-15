@@ -223,6 +223,7 @@ TEST_CASE("partial ngram joint biTri produces the same values") {
   };
 
   util::fill(fb2.valueBuffer1, 0);
+  util::fill(fb2.valueBuffer2, 0);
 
   util::ConstSliceable<u64> t0fake{inp.t1, NumFeatures, 1};
 

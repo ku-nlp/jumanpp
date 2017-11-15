@@ -42,8 +42,9 @@ inline float computeUnrolled4Perceptron(WeightBuffer weights,
 }
 
 // This guy does not do masking
-inline float computeUnrolled4RawPerceptron(
-    WeightBuffer weights, const util::ArraySlice<u32> indices) {
+template <typename Weights, typename Indices>
+inline float computeUnrolled4RawPerceptron(const Weights& weights,
+                                           const Indices& indices) {
   // basically the sole purpose of this unrolling
   // is to be able to do several parallel memory fetches at once
   float r1 = 0, r2 = 0, r3 = 0, r4 = 0;

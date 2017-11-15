@@ -8,8 +8,8 @@
 #define JPP_ALWAYS_INLINE __attribute__((always_inline))
 #define JPP_NO_INLINE __attribute__((noinline))
 
-#define JPP_LIKELY(x) __builtin_expect((x), 1)
 #define JPP_UNLIKELY(x) __builtin_expect((x), 0)
+#define JPP_LIKELY(x) __builtin_expect(!!(x), 1)
 
 namespace jumanpp {
 namespace util {
