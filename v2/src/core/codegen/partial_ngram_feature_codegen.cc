@@ -531,13 +531,13 @@ void PartialNgramPrinter::outputClassBody(util::io::Printer& p) {
   }
   p << "\n}\n";
 
-  p << "\nconstexpr ::jumanpp::u32 numUnigrams() const noexcept { "
+  p << "\n::jumanpp::u32 numUnigrams() const noexcept { "
     << "return " << this->unigrams_.size() << "; }";
 
-  p << "\nconstexpr ::jumanpp::u32 numBigrams() const noexcept { "
+  p << "\n::jumanpp::u32 numBigrams() const noexcept { "
     << "return " << this->bigrams_.size() << "; }";
 
-  p << "\nconstexpr ::jumanpp::u32 numTrigrams() const noexcept { "
+  p << "\n::jumanpp::u32 numTrigrams() const noexcept { "
     << "return " << this->trigrams_.size() << "; }";
 
   outputBiApply2(p, this->bigrams_);
