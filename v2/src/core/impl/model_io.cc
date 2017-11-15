@@ -205,7 +205,7 @@ inline void printDicInfo(i::Printer& p, const ModelPart& mp,
   }
 
   for (int intStorNo = 0; intStorNo < dic.intStorages.size(); ++intStorNo) {
-    auto& sstor = mpr.data[sstorNo + intStorNo];
+    auto& sstor = mpr.data[4 + sstorNo + intStorNo];
     p << "\nIndex Storage: [" << sstor.offset << ", " << sstor.size << "]";
     p << "\n  used by fields: ";
     for (auto& f : dic.spec.dictionary.fields) {
@@ -226,13 +226,22 @@ inline void printPerceptronInfo(util::io::Printer& p, const ModelPart& part,
 
   auto w = hfp.weights();
   size_t zero = 0;
+  float max = -1000000.f;
+  float min = 10000000.f;
+  double sum = 0;
   for (auto s = 0; s < w.size(); ++s) {
-    if (std::fabs(s) < 1e-3) {
+    auto v = w.at(s);
+    if (std::fabs(v) < 1e-3) {
       zero += 1;
     }
+    max = std::max(v, max);
+    min = std::min(v, min);
+    sum += v;
   }
+  float avg = static_cast<float>(sum / w.size());
   p << "\n  size=" << w.size();
   p << "\n  nz=" << zero;
+  p << "\n  min=" << min << " max=" << max << " avg=" << avg;
 }
 
 void FilesystemModel::renderInfo() {
