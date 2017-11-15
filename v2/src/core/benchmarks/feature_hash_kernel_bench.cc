@@ -128,28 +128,28 @@ JPP_NO_INLINE void unrollFull4Prefetch(util::Sliceable<u64> state,
     //clang-format off
     {
       auto v = doMix(sr.at(id), dr.at(id), mask);
-      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T2>(&weights.at(v));
+      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(&weights.at(v));
       buf1.at(id) = v;
       f1 += weights.at(buf2.at(id));
       ++id;
     }
     {
       auto v = doMix(sr.at(id), dr.at(id), mask);
-      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T2>(&weights.at(v));
+      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(&weights.at(v));
       buf1.at(id) = v;
       f2 += weights.at(buf2.at(id));
       ++id;
     }
     {
       auto v = doMix(sr.at(id), dr.at(id), mask);
-      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T2>(&weights.at(v));
+      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(&weights.at(v));
       buf1.at(id) = v;
       f3 += weights.at(buf2.at(id));
       ++id;
     }
     {
       auto v = doMix(sr.at(id), dr.at(id), mask);
-      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T2>(&weights.at(v));
+      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(&weights.at(v));
       buf1.at(id) = v;
       f4 += weights.at(buf2.at(id));
       ++id;
@@ -157,28 +157,28 @@ JPP_NO_INLINE void unrollFull4Prefetch(util::Sliceable<u64> state,
 
     {
       auto v = doMix(sr.at(id), dr.at(id), mask);
-      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T2>(&weights.at(v));
+      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(&weights.at(v));
       buf1.at(id) = v;
       f1 += weights.at(buf2.at(id));
       ++id;
     }
     {
       auto v = doMix(sr.at(id), dr.at(id), mask);
-      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T2>(&weights.at(v));
+      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(&weights.at(v));
       buf1.at(id) = v;
       f2 += weights.at(buf2.at(id));
       ++id;
     }
     {
       auto v = doMix(sr.at(id), dr.at(id), mask);
-      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T2>(&weights.at(v));
+      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(&weights.at(v));
       buf1.at(id) = v;
       f3 += weights.at(buf2.at(id));
       ++id;
     }
     {
       auto v = doMix(sr.at(id), dr.at(id), mask);
-      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T2>(&weights.at(v));
+      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(&weights.at(v));
       buf1.at(id) = v;
       f4 += weights.at(buf2.at(id));
       ++id;
@@ -186,28 +186,28 @@ JPP_NO_INLINE void unrollFull4Prefetch(util::Sliceable<u64> state,
 
     {
       auto v = doMix(sr.at(id), dr.at(id), mask);
-      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T2>(&weights.at(v));
+      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(&weights.at(v));
       buf1.at(id) = v;
       f1 += weights.at(buf2.at(id));
       ++id;
     }
     {
       auto v = doMix(sr.at(id), dr.at(id), mask);
-      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T2>(&weights.at(v));
+      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(&weights.at(v));
       buf1.at(id) = v;
       f2 += weights.at(buf2.at(id));
       ++id;
     }
     {
       auto v = doMix(sr.at(id), dr.at(id), mask);
-      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T2>(&weights.at(v));
+      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(&weights.at(v));
       buf1.at(id) = v;
       f3 += weights.at(buf2.at(id));
       ++id;
     }
     {
       auto v = doMix(sr.at(id), dr.at(id), mask);
-      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T2>(&weights.at(v));
+      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(&weights.at(v));
       buf1.at(id) = v;
       f4 += weights.at(buf2.at(id));
       ++id;
@@ -215,28 +215,28 @@ JPP_NO_INLINE void unrollFull4Prefetch(util::Sliceable<u64> state,
 
     {
       auto v = doMix(sr.at(id), dr.at(id), mask);
-      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T2>(&weights.at(v));
+      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(&weights.at(v));
       buf1.at(id) = v;
       f1 += weights.at(buf2.at(id));
       ++id;
     }
     {
       auto v = doMix(sr.at(id), dr.at(id), mask);
-      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T2>(&weights.at(v));
+      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(&weights.at(v));
       buf1.at(id) = v;
       f2 += weights.at(buf2.at(id));
       ++id;
     }
     {
       auto v = doMix(sr.at(id), dr.at(id), mask);
-      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T2>(&weights.at(v));
+      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(&weights.at(v));
       buf1.at(id) = v;
       f3 += weights.at(buf2.at(id));
       ++id;
     }
     {
       auto v = doMix(sr.at(id), dr.at(id), mask);
-      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T2>(&weights.at(v));
+      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(&weights.at(v));
       buf1.at(id) = v;
       f4 += weights.at(buf2.at(id));
       ++id;
@@ -244,28 +244,28 @@ JPP_NO_INLINE void unrollFull4Prefetch(util::Sliceable<u64> state,
 
     {
       auto v = doMix(sr.at(id), dr.at(id), mask);
-      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T2>(&weights.at(v));
+      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(&weights.at(v));
       buf1.at(id) = v;
       f1 += weights.at(buf2.at(id));
       ++id;
     }
     {
       auto v = doMix(sr.at(id), dr.at(id), mask);
-      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T2>(&weights.at(v));
+      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(&weights.at(v));
       buf1.at(id) = v;
       f2 += weights.at(buf2.at(id));
       ++id;
     }
     {
       auto v = doMix(sr.at(id), dr.at(id), mask);
-      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T2>(&weights.at(v));
+      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(&weights.at(v));
       buf1.at(id) = v;
       f3 += weights.at(buf2.at(id));
       ++id;
     }
     {
       auto v = doMix(sr.at(id), dr.at(id), mask);
-      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T2>(&weights.at(v));
+      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(&weights.at(v));
       buf1.at(id) = v;
       f4 += weights.at(buf2.at(id));
       ++id;
@@ -273,28 +273,28 @@ JPP_NO_INLINE void unrollFull4Prefetch(util::Sliceable<u64> state,
 
     {
       auto v = doMix(sr.at(id), dr.at(id), mask);
-      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T2>(&weights.at(v));
+      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(&weights.at(v));
       buf1.at(id) = v;
       f1 += weights.at(buf2.at(id));
       ++id;
     }
     {
       auto v = doMix(sr.at(id), dr.at(id), mask);
-      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T2>(&weights.at(v));
+      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(&weights.at(v));
       buf1.at(id) = v;
       f2 += weights.at(buf2.at(id));
       ++id;
     }
     {
       auto v = doMix(sr.at(id), dr.at(id), mask);
-      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T2>(&weights.at(v));
+      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(&weights.at(v));
       buf1.at(id) = v;
       f3 += weights.at(buf2.at(id));
       ++id;
     }
     {
       auto v = doMix(sr.at(id), dr.at(id), mask);
-      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T2>(&weights.at(v));
+      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(&weights.at(v));
       buf1.at(id) = v;
       f4 += weights.at(buf2.at(id));
       ++id;
@@ -302,28 +302,28 @@ JPP_NO_INLINE void unrollFull4Prefetch(util::Sliceable<u64> state,
 
     {
       auto v = doMix(sr.at(id), dr.at(id), mask);
-      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T2>(&weights.at(v));
+      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(&weights.at(v));
       buf1.at(id) = v;
       f1 += weights.at(buf2.at(id));
       ++id;
     }
     {
       auto v = doMix(sr.at(id), dr.at(id), mask);
-      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T2>(&weights.at(v));
+      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(&weights.at(v));
       buf1.at(id) = v;
       f2 += weights.at(buf2.at(id));
       ++id;
     }
     {
       auto v = doMix(sr.at(id), dr.at(id), mask);
-      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T2>(&weights.at(v));
+      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(&weights.at(v));
       buf1.at(id) = v;
       f3 += weights.at(buf2.at(id));
       ++id;
     }
     {
       auto v = doMix(sr.at(id), dr.at(id), mask);
-      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T2>(&weights.at(v));
+      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(&weights.at(v));
       buf1.at(id) = v;
       f4 += weights.at(buf2.at(id));
       ++id;
@@ -331,28 +331,28 @@ JPP_NO_INLINE void unrollFull4Prefetch(util::Sliceable<u64> state,
 
     {
       auto v = doMix(sr.at(id), dr.at(id), mask);
-      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T2>(&weights.at(v));
+      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(&weights.at(v));
       buf1.at(id) = v;
       f1 += weights.at(buf2.at(id));
       ++id;
     }
     {
       auto v = doMix(sr.at(id), dr.at(id), mask);
-      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T2>(&weights.at(v));
+      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(&weights.at(v));
       buf1.at(id) = v;
       f2 += weights.at(buf2.at(id));
       ++id;
     }
     {
       auto v = doMix(sr.at(id), dr.at(id), mask);
-      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T2>(&weights.at(v));
+      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(&weights.at(v));
       buf1.at(id) = v;
       f3 += weights.at(buf2.at(id));
       ++id;
     }
     {
       auto v = doMix(sr.at(id), dr.at(id), mask);
-      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T2>(&weights.at(v));
+      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(&weights.at(v));
       buf1.at(id) = v;
       f4 += weights.at(buf2.at(id));
       ++id;
@@ -399,7 +399,7 @@ JPP_NO_INLINE void noUnrollPrefetch(util::Sliceable<u64> state,
     for (u32 id = 0; id < 32; ++id) {
       auto v = doMix(sr.at(id), dr.at(id), mask);
       buf1.at(id) = v;
-      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T2>(&weights.at(v));
+      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(&weights.at(v));
       f += weights.at(buf2.at(id));
     }
     if (JPP_LIKELY(row > 0)) {
@@ -448,12 +448,12 @@ JPP_NO_INLINE void partUnroll2Prefetch(util::Sliceable<u64> state,
       auto id = id0;
       auto v = doMix(sr.at(id), dr.at(id), mask);
       buf1.at(id) = v;
-      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T2>(&weights.at(v));
+      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(&weights.at(v));
       f1 += weights.at(buf2.at(id));
       ++id;
       auto v2 = doMix(sr.at(id), dr.at(id), mask);
       buf1.at(id) = v2;
-      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T2>(&weights.at(v2));
+      util::prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(&weights.at(v2));
       f2 += weights.at(buf2.at(id));
     }
     if (JPP_LIKELY(row > 0)) {
