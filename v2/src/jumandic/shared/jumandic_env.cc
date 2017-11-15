@@ -106,5 +106,11 @@ Status JumanppExec::writeGraphviz() {
   return Status::Ok();
 }
 
+void JumanppExec::printModelInfo() const {
+  core::model::FilesystemModel model;
+  model.open(this->conf.modelFile);
+  model.renderInfo();
+}
+
 }  // namespace jumandic
 }  // namespace jumanpp

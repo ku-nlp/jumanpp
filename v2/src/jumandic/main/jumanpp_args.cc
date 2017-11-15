@@ -40,6 +40,10 @@ bool parseArgs(int argc, char* argv[], JumanppConf* result) {
                           "printVersion",
                           "Just print version and exit",
                           {'v', "version"}};
+  args::Flag printDicInfo{outputType,
+                          "printModelInfo",
+                          "Print model info and exit",
+                          {"model-info"}};
 
   args::Group modelParams{parser, "Model parameters"};
   args::ValueFlag<std::string> modelFile{
@@ -134,6 +138,8 @@ bool parseArgs(int argc, char* argv[], JumanppConf* result) {
   if (rightBeamSize) {
     result->rightBeam = rightBeamSize.Get();
   }
+
+  result->printModelInfo = printDicInfo.Get();
 
 #ifdef JPP_ENABLE_DEV_TOOLS
   if (globalBeamPos) {

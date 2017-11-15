@@ -36,6 +36,7 @@ struct JumanppConf {
   i32 rightBeam = -1;
   i32 rightCheck = -1;
   bool printVersion = false;
+  bool printModelInfo = false;
 };
 
 bool parseArgs(int argc, char* argv[], JumanppConf* result);

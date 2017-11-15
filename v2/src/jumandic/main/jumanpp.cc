@@ -5,6 +5,7 @@
 #include "jumanpp.h"
 #include <fstream>
 #include <iostream>
+#include "core_version.h"
 #include "jumanpp_args.h"
 
 using namespace jumanpp;
@@ -19,11 +20,21 @@ int main(int argc, char** argv) {
     return 1;
   }
 
+  if (conf.printVersion) {
+    std::cout << "Juman++ Version: " << core::JPP_VERSION_STRING << "\n";
+    return 0;
+  }
+
   jumandic::JumanppExec exec{conf};
   Status s = exec.init();
   if (!s.isOk()) {
     std::cerr << "failed to load model from disk: " << s;
     return 1;
+  }
+
+  if (conf.printModelInfo) {
+    exec.printModelInfo();
+    return 0;
   }
 
   if (conf.inputFile == "-") {

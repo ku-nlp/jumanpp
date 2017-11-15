@@ -6,6 +6,7 @@
 #include <util/printer.h>
 #include <cstring>
 #include <iostream>
+#include "core/dic/dic_builder.h"
 #include "model_format_ser.h"
 #include "util/debug_output.h"
 #include "util/memory.hpp"
@@ -163,6 +164,56 @@ StringPiece FilesystemModel::name() const {
   return StringPiece("<not opened>");
 }
 
+namespace i = util::io;
+
+inline void printDicInfo(i::Printer& p, const ModelPart& mp,
+                         const ModelPartRaw& mpr, const ModelInfo& info) {
+  core::dic::BuiltDictionary dic;
+  auto s = dic.restoreDictionary(info);
+  if (!s) {
+    p << "failed to restore dictionary: " << s;
+    return;
+  }
+
+  auto hdr = mpr.data[0];
+
+  p << "\nHeader+Spec: [" << hdr.offset << ", " << hdr.size << "]";
+
+  auto trieIndex = mpr.data[1];
+  p << "\nTrie index: [" << trieIndex.offset << ", " << trieIndex.size << "]";
+
+  auto entryPtrs = mpr.data[2];
+  p << "\nEntry Pointers: [" << entryPtrs.offset << ", " << entryPtrs.size
+    << "]";
+
+  auto entryData = mpr.data[3];
+  p << "\nField Pointers: [" << entryData.offset << ", " << entryData.size
+    << "]";
+
+  int sstorNo = 0;
+  for (; sstorNo < dic.stringStorages.size(); ++sstorNo) {
+    auto& sstor = mpr.data[4 + sstorNo];
+    p << "\nString Storage: [" << sstor.offset << ", " << sstor.size << "]";
+    p << "\n  used by fields: ";
+    for (auto& f : dic.spec.dictionary.fields) {
+      if (f.stringStorage == sstorNo) {
+        p << f.name << ", ";
+      }
+    }
+  }
+
+  for (int intStorNo = 0; intStorNo < dic.intStorages.size(); ++intStorNo) {
+    auto& sstor = mpr.data[sstorNo + intStorNo];
+    p << "\nIndex Storage: [" << sstor.offset << ", " << sstor.size << "]";
+    p << "\n  used by fields: ";
+    for (auto& f : dic.spec.dictionary.fields) {
+      if (f.intStorage == intStorNo) {
+        p << f.name << ", ";
+      }
+    }
+  }
+}
+
 void FilesystemModel::renderInfo() {
   util::io::Printer p;
   if (file_) {
@@ -171,18 +222,26 @@ void FilesystemModel::renderInfo() {
       return;
     }
 
+    p << "Juman++ model with the following contents:";
+
     for (int partNo = 0; partNo < info.parts.size(); ++partNo) {
       auto& mp = info.parts[partNo];
       auto& rawPart = file_->rawModel.parts[partNo];
 
       switch (mp.kind) {
         case ModelPartKind::Dictionary: {
+          p << "\nDictionary: [" << rawPart.start << "-" << rawPart.end << "]";
+          i::Indent id{p, 2};
+          printDicInfo(p, mp, rawPart, info);
           break;
         }
         case ModelPartKind::Perceprton: {
+          p << "\nLinear model: [" << rawPart.start << "-" << rawPart.end
+            << "]";
           break;
         }
         case ModelPartKind::Rnn: {
+          p << "\nRNN: [" << rawPart.start << "-" << rawPart.end << "]";
           break;
         }
         default: { p << "\nUnsupported Segment Type"; }

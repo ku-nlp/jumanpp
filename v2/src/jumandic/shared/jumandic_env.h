@@ -59,6 +59,8 @@ class JumanppExec {
   u64 numAnalyzed() const { return numAnalyzed_; }
 
   virtual ~JumanppExec() = default;
+
+  void printModelInfo() const;
 };
 
 }  // namespace jumandic
