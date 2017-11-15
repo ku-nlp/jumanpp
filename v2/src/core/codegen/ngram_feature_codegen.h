@@ -29,6 +29,7 @@ class NgramFeatureCodegen {
   void biStep0(i::Printer& p, StringPiece patterns, StringPiece state) const;
   void triStep0(i::Printer& p, StringPiece patterns, StringPiece state) const;
   StringPiece name() const { return name_; }
+  const spec::NgramFeatureDescriptor& spec() const { return ngram_; }
 };
 
 }  // namespace codegen

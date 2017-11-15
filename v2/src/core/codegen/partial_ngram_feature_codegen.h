@@ -20,7 +20,8 @@ class PartialNgramPrinter {
  public:
   PartialNgramPrinter(const spec::AnalysisSpec& spec);
   void outputClassBody(util::io::Printer& p);
-  void outputApplyBiTri(util::io::Printer& p);
+  void outputApplyBiTriFullUnrolled(util::io::Printer& p);
+  void outputApplyBiTriLoop(util::io::Printer& p);
 };
 
 }  // namespace codegen

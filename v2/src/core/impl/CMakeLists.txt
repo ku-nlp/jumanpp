@@ -30,6 +30,7 @@ jpp_core_files(core_hdrs
   feature_impl_combine.h
   feature_impl_compute.h
   feature_impl_ngram_partial.h
+  feature_impl_ngram_partial_kernels.h
   feature_impl_pattern.h
   feature_impl_prim.h
   feature_impl_types.h

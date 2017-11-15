@@ -181,7 +181,74 @@ class VarNamer {
   }
 };
 
-void PartialNgramPrinter::outputApplyBiTri(util::io::Printer& p) {
+void PartialNgramPrinter::outputApplyBiTriLoop(util::io::Printer& p) {
+  p << "\n\nvoid applyBiTri("  // args
+    << JPP_TEXT(::jumanpp::core::features::FeatureBuffer*) << " buffers, \n"
+    << JPP_TEXT(::jumanpp::u32) << " t0idx, \n"
+    << JPP_TEXT(::jumanpp::util::ArraySlice<jumanpp::u64>) << " t0, \n"
+    << JPP_TEXT(::jumanpp::util::ConstSliceable<jumanpp::u64>) << " t1, \n"
+    << JPP_TEXT(::jumanpp::util::ConstSliceable<jumanpp::u64>) << " t2, \n"
+    << JPP_TEXT(::jumanpp::util::ArraySlice<jumanpp::u32>) << " t1idxes, \n"
+    << JPP_TEXT(::jumanpp::core::analysis::FeatureScorer*) << " scorer, \n"
+    << JPP_TEXT(::jumanpp::util::MutableArraySlice<float>) << " result"
+    << ") const noexcept override {";
+
+  {
+    i::Indent id{p, 2};
+    p << "\nauto numElems = t2.numRows();";
+    p << "\nconstexpr auto numBigrams = " << bigrams_.size() << ";";
+    p << "\nconstexpr auto numTrigrams = " << trigrams_.size() << ";";
+    p << "\nauto weights = scorer->weights();";
+    p << "\nauto scbuf = buffers->scoreBuf(t1.numRows());";
+    p << "\nconst auto bistateBuf = buffers->t1Buf(numBigrams, numElems);";
+    p << "\nconst auto tristateBuf = buffers->t2Buf1(numTrigrams, numElems);";
+
+    p << "\nauto buf1 = buffers->valBuf1(numBigrams);";
+    p << "\nauto buf2 = buffers->valBuf2(numBigrams);";
+    p << "\nstatic constexpr jumanpp::u32"
+      << " t1BiFeatureIdxes[numBigrams] = {\n  ";
+    for (auto& bi : bigrams_) {
+      p << bi.spec().references[1] << ", ";
+    }
+    p << "\n};";
+
+    p << "\nstatic constexpr jumanpp::u32"
+      << " t1TriFeatureIdxes[numTrigrams] = {\n  ";
+    for (auto& tri : trigrams_) {
+      p << tri.spec().references[1] << ", ";
+    }
+    p << "\n};";
+    p << "\nstatic constexpr jumanpp::u32"
+      << " t2TriFeatureIdxes[numTrigrams] = {\n  ";
+    for (auto& tri : trigrams_) {
+      p << tri.spec().references[2] << ", ";
+    }
+    p << "\n};";
+
+    p << "\n::jumanpp::core::features::impl::applyBiTriFullKernel(";
+    {
+      i::Indent id2{p, 2};
+      p << "\nbistateBuf.row(t0idx),";
+      p << "\ntristateBuf.row(t0idx),";
+      p << "\nt1,";
+      p << "\nt2,";
+      p << "\nt1idxes,";
+      p << "\nt1BiFeatureIdxes,";
+      p << "\nt1TriFeatureIdxes,";
+      p << "\nt2TriFeatureIdxes,";
+      p << "\nbuf1,";
+      p << "\nbuf2,";
+      p << "\nweights,";
+      p << "\nscbuf,";
+      p << "\nresult";
+    }
+    p << "\n);";
+  }
+
+  p << "\n}";
+}
+
+void PartialNgramPrinter::outputApplyBiTriFullUnrolled(util::io::Printer& p) {
   p << "\n\nvoid applyBiTri("  // args
     << JPP_TEXT(::jumanpp::core::features::FeatureBuffer*) << " buffers, \n"
     << JPP_TEXT(::jumanpp::u32) << " t0idx, \n"
@@ -239,9 +306,9 @@ void PartialNgramPrinter::outputApplyBiTri(util::io::Printer& p) {
     // till the computation of the last value for the bigram loop.
     p << "\nauto tristates = tristateBuf.row(t0idx);";
     p << "\n::jumanpp::util::MutableArraySlice<::jumanpp::u32>"
-      << "tribuf1{buf2.data(), numTrigrams};";
+      << "tribuf1{buf1.data(), numTrigrams};";
     p << "\n::jumanpp::util::MutableArraySlice<::jumanpp::u32>"
-      << "tribuf2{buf1.data(), numTrigrams};";
+      << "tribuf2{buf2.data(), numTrigrams};";
     p << "\nfor (auto row = 0; row < t2.numRows(); ++row) {";
     {
       VarNamer triNames{trigrams_.size()};
@@ -464,18 +531,18 @@ void PartialNgramPrinter::outputClassBody(util::io::Printer& p) {
   }
   p << "\n}\n";
 
-  p << "\n::jumanpp::u32 numUnigrams() const noexcept { "
+  p << "\nconstexpr ::jumanpp::u32 numUnigrams() const noexcept { "
     << "return " << this->unigrams_.size() << "; }";
 
-  p << "\n::jumanpp::u32 numBigrams() const noexcept { "
+  p << "\nconstexpr ::jumanpp::u32 numBigrams() const noexcept { "
     << "return " << this->bigrams_.size() << "; }";
 
-  p << "\n::jumanpp::u32 numTrigrams() const noexcept { "
+  p << "\nconstexpr ::jumanpp::u32 numTrigrams() const noexcept { "
     << "return " << this->trigrams_.size() << "; }";
 
   outputBiApply2(p, this->bigrams_);
   outputTriApply3(p, this->trigrams_);
-  outputApplyBiTri(p);
+  outputApplyBiTriLoop(p);
 }
 
 PartialNgramPrinter::PartialNgramPrinter(const spec::AnalysisSpec& spec)

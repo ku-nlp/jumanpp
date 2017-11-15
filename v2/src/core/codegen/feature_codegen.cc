@@ -141,6 +141,7 @@ Status StaticFeatureCodegen::writeSource(const std::string& filename) {
   p << "#include \"core/impl/feature_impl_combine.h\"\n";
   p << "#include \"core/impl/feature_impl_ngram_partial.h\"\n";
   p << "#include \"core/impl/feature_impl_prim.h\"\n";
+  p << "#include \"core/impl/feature_impl_ngram_partial_kernels.h\"\n";
   p << "#include \"" << config_.filename << ".h\"\n\n";
   p << "namespace jumanpp_generated {\n";
   p << "namespace {\n";
