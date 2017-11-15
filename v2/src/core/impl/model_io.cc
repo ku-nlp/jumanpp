@@ -3,7 +3,9 @@
 //
 
 #include "model_io.h"
+#include <core/analysis/perceptron.h>
 #include <util/printer.h>
+#include <cmath>
 #include <cstring>
 #include <iostream>
 #include "core/dic/dic_builder.h"
@@ -214,6 +216,25 @@ inline void printDicInfo(i::Printer& p, const ModelPart& mp,
   }
 }
 
+inline void printPerceptronInfo(util::io::Printer& p, const ModelPart& part,
+                                const ModelPartRaw& raw,
+                                const ModelInfo& info) {
+  core::analysis::HashedFeaturePerceptron hfp;
+  if (!hfp.load(info)) {
+    return;
+  }
+
+  auto w = hfp.weights();
+  size_t zero = 0;
+  for (auto s = 0; s < w.size(); ++s) {
+    if (std::fabs(s) < 1e-3) {
+      zero += 1;
+    }
+  }
+  p << "\n  size=" << w.size();
+  p << "\n  nz=" << zero;
+}
+
 void FilesystemModel::renderInfo() {
   util::io::Printer p;
   if (file_) {
@@ -238,6 +259,8 @@ void FilesystemModel::renderInfo() {
         case ModelPartKind::Perceprton: {
           p << "\nLinear model: [" << rawPart.start << "-" << rawPart.end
             << "]";
+          i::Indent id{p, 2};
+          printPerceptronInfo(p, mp, rawPart, info);
           break;
         }
         case ModelPartKind::Rnn: {
@@ -247,6 +270,7 @@ void FilesystemModel::renderInfo() {
         default: { p << "\nUnsupported Segment Type"; }
       }
     }
+    p << "\n";
   }
   std::cerr << p.result();
 }

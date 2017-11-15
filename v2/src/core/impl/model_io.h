@@ -5,6 +5,7 @@
 #ifndef JUMANPP_MODEL_IO_H
 #define JUMANPP_MODEL_IO_H
 
+#include <util/printer.h>
 #include <memory>
 #include "model_format.h"
 #include "util/status.hpp"
