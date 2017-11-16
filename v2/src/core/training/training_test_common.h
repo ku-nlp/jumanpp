@@ -19,70 +19,11 @@ namespace training {}
 using namespace jumanpp;
 using namespace jumanpp::core::training;
 using namespace jumanpp::core::analysis;
-
-struct ExampleData {
-  StringPiece a;
-  StringPiece b;
-  StringPiece c;
-
-  ExampleData(StringPiece a, StringPiece b, StringPiece c) : a{a}, b{b}, c{c} {}
-
-  bool operator==(const ExampleData& o) const noexcept {
-    return a == o.a && b == o.b && c == o.c;
-  }
-
-  friend std::ostream& operator<<(std::ostream& os, const ExampleData& data) {
-    os << "{a:" << data.a << " b:" << data.b << " c:" << data.c << "}";
-    return os;
-  }
-};
-
-class AnalyzerMethods {
- protected:
-  AnalysisPath path;
-  NodeWalker walker;
-  StringField fa;
-  StringField fb;
-  StringField fc;
-  AnalyzerImpl* analyzer;
-
- public:
-  AnalyzerMethods() : walker{} {}
-
-  explicit AnalyzerMethods(AnalyzerImpl* analyzer) : AnalyzerMethods() {
-    REQUIRE_OK(initialize(analyzer));
-  }
-
-  Status initialize(AnalyzerImpl* analyzerImpl) {
-    analyzer = analyzerImpl;
-    auto omg = analyzer->output();
-    JPP_RETURN_IF_ERROR(omg.stringField("a", &fa));
-    JPP_RETURN_IF_ERROR(omg.stringField("b", &fb));
-    JPP_RETURN_IF_ERROR(omg.stringField("c", &fc));
-    return Status::Ok();
-  }
-
-  ExampleData firstNode(LatticeNodePtr ptr) {
-    auto omgr = analyzer->output();
-    auto& w = walker;
-    REQUIRE(omgr.locate(ptr, &w));
-    REQUIRE(w.next());
-    return {fa[w], fb[w], fc[w]};
-  }
-
-  ExampleData top1Node(int idx) {
-    REQUIRE_OK(path.fillIn(analyzer->lattice()));
-    path.moveToChunk(idx);
-    REQUIRE(path.totalNodesInChunk() == 1);
-    ConnectionPtr ptr;
-    REQUIRE(path.nextNode(&ptr));
-    return firstNode({ptr.boundary, ptr.right});
-  }
-};
+using namespace jumanpp::testing;
 
 class GoldExampleEnv {
  protected:
-  testing::TestEnv env;
+  TestEnv env;
   AnalyzerMethods am;
 
  public:

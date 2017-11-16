@@ -69,6 +69,7 @@ class FieldBuilder : public DslOpBase {
   StringPiece stringStorage_;
   std::string fieldSeparator_ = " ";
   std::string kvSeparator_ = ":";
+  i32 alignment_ = 0;
 
   FieldBuilder() {}
 
@@ -118,6 +119,11 @@ class FieldBuilder : public DslOpBase {
 
   FieldBuilder& kvSeparator(StringPiece sep) {
     this->kvSeparator_ = sep.str();
+    return *this;
+  }
+
+  FieldBuilder& align(i32 power) {
+    this->alignment_ = power;
     return *this;
   }
 

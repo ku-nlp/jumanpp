@@ -67,7 +67,7 @@ class Loader {
     }
     status_ = true;
     auto ret = SerializeImpl<T>::DoSerializeLoad(*o, this, parser_);
-    return ret && status_ && parser_.remaining() == 0;
+    return ret && status_ && parser_.atEnd();
   }
 
   template <typename T>

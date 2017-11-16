@@ -14,6 +14,7 @@ jpp_core_files(core_srcs
 
 jpp_core_files(core_tsrcs
 
+  aligned_field_test.cc
   feature_impl_combine_test.cc
   feature_impl_compute_test.cc
   feature_impl_ngram_partial_test.cc

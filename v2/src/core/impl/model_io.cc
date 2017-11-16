@@ -102,8 +102,8 @@ FilesystemModel::~FilesystemModel() {}
 
 Status FilesystemModel::open(StringPiece name) {
   if (file_) {
-    return Status::InvalidState()
-           << "another file, " << file_->name << " is already opened";
+    return JPPS_INVALID_STATE << "another file, " << file_->name
+                              << " is already opened";
   }
   file_.reset(new ModelFile);
   JPP_RETURN_IF_ERROR(file_->mmap.open(name, util::MMapType::ReadOnly));
@@ -115,23 +115,23 @@ Status FilesystemModel::open(StringPiece name) {
   auto sp = hdrFrag.asStringPiece();
   auto magicSp = StringPiece{ModelMagic};
   if (sp.take(magicSp.size()) != magicSp) {
-    return Status::InvalidState()
-           << "model file " << file_->name << " has corrupted header";
+    return JPPS_INVALID_STATE << "model file " << file_->name
+                              << " has corrupted header";
   }
 
   auto rest = sp.slice(sizeof(ModelMagic), 4096 - sizeof(ModelMagic));
   util::CodedBufferParser cbp{rest};
   u64 hdrSize = 0;
   if (!cbp.readVarint64(&hdrSize)) {
-    return Status::InvalidState()
-           << "could not read header size from " << file_->name;
+    return JPPS_INVALID_STATE << "could not read header size from "
+                              << file_->name;
   }
 
   util::serialization::Loader l{
       rest.slice(cbp.numReadBytes(), cbp.numReadBytes() + hdrSize)};
   if (!l.load(&file_->rawModel)) {
-    return Status::InvalidState()
-           << "model file " << file_->name << " has corrupted model header";
+    return JPPS_INVALID_STATE << "model file " << file_->name
+                              << " has corrupted model header";
   }
 
   return Status::Ok();
@@ -139,7 +139,7 @@ Status FilesystemModel::open(StringPiece name) {
 
 Status FilesystemModel::load(ModelInfo* info) {
   if (!file_) {
-    return Status::InvalidState() << "can't load model, file is not opened";
+    return JPPS_INVALID_STATE << "can't load model, file is not opened";
   }
 
   auto& parts = info->parts;

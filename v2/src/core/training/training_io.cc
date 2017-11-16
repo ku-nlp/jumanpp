@@ -22,7 +22,7 @@ Status readStr2IdMap(const dic::DictionaryField &fld,
     s2i[fld.emptyValue] = 0;
   }
 
-  core::dic::impl::StringStorageTraversal everything{fld.strings.data()};
+  core::dic::impl::StringStorageTraversal everything{fld.strings};
   StringPiece data;
 
   while (everything.next(&data)) {

@@ -10,7 +10,7 @@ namespace jumandic {
 
 util::FlatMap<StringPiece, i32> readFieldToMap(
     const core::dic::DictionaryField* fld) {
-  core::dic::impl::StringStorageTraversal trav{fld->strings.data()};
+  core::dic::impl::StringStorageTraversal trav{fld->strings};
   StringPiece sp;
   util::FlatMap<StringPiece, i32> result;
   while (trav.next(&sp)) {

@@ -4,6 +4,7 @@
 
 #include "field_import.h"
 #include <algorithm>
+#include "util/memory.hpp"
 
 namespace jumanpp {
 namespace core {
@@ -95,11 +96,17 @@ Status StringStorage::makeStorage(util::CodedBuffer* result) {
 
   util::CodedBuffer& buf = *result;
 
+  using util::memory::Align;
   // always put empty string at 0
   buf.writeString("");
 
   for (const auto& obj : forSort) {
-    auto ptr = static_cast<i32>(buf.position());
+    auto position = buf.position();
+    auto alignedPosition = Align(position, alignment);
+    for (auto i = position; i < alignedPosition; ++i) {
+      buf.writeVarint(0);
+    }
+    auto ptr = static_cast<i32>(alignedPosition >> alignmentPower);
     mapping_[obj.first] = ptr;
     buf.writeString(obj.first);
   }

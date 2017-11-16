@@ -29,14 +29,17 @@ Status SpecFactory::makeSpec(core::spec::AnalysisSpec* spec) {
 // 付属動詞候補（タ系） 謙譲動詞:貰う/もらう;食べる/たべる;飲む/のむ
 
 void SpecFactory::fillSpec(core::spec::dsl::ModelSpecBuilder& bldr) {
-  auto& surface = bldr.field(1, "surface").strings().trieIndex();
-  auto& pos = bldr.field(5, "pos").strings().emptyValue("*");
-  auto& subpos = bldr.field(6, "subpos").strings().emptyValue("*");
-  auto& conjform = bldr.field(7, "conjform").strings().emptyValue("*");
-  auto& conjtype = bldr.field(8, "conjtype").strings().emptyValue("*");
+  auto& surface = bldr.field(1, "surface").strings().trieIndex().align(4);
+  auto& pos = bldr.field(5, "pos").strings().emptyValue("*").align(3);
+  auto& subpos = bldr.field(6, "subpos").strings().emptyValue("*").align(3);
+  auto& conjform = bldr.field(7, "conjform").strings().emptyValue("*").align(5);
+  auto& conjtype = bldr.field(8, "conjtype").strings().emptyValue("*").align(4);
   auto& baseform = bldr.field(9, "baseform").strings().stringStorage(surface);
   auto& reading = bldr.field(10, "reading").strings().stringStorage(surface);
-  /*auto& canonic = */ bldr.field(11, "canonic").strings().emptyValue("*");
+  /*auto& canonic = */ bldr.field(11, "canonic")
+      .strings()
+      .emptyValue("*")
+      .align(3);
   auto& features = bldr.field(12, "features").kvLists().emptyValue("NIL");
 
   auto& auxWord = bldr.feature("auxWord")

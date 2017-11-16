@@ -94,7 +94,7 @@ done:
 }  // namespace impl
 
 bool CodedBufferParser::readVarint64Slowpath(u64* pInt) noexcept {
-  if (remaining() == 0) return false;
+  if (atEnd()) return false;
 
   // We won't get to the end of buffer with this decode
   // So we can use faster implementation.

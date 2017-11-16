@@ -82,6 +82,7 @@ int main(int argc, char* argv[]) {
   std::vector<i32> fields;
   bool hasDicData = false;
   i32 storageIdx;
+  u32 fieldAlign = 0;
 
   for (auto& f : dic.spec.dictionary.fields) {
     if (f.name == fieldName) {
@@ -90,6 +91,7 @@ int main(int argc, char* argv[]) {
       }
       raw = dic.stringStorages[f.stringStorage];
       storageIdx = f.stringStorage;
+      fieldAlign = static_cast<u32>(f.alignment);
 
       if (f.dicIndex < 0) {
         hasDicData = true;
@@ -134,7 +136,7 @@ int main(int argc, char* argv[]) {
     idxPtr += ptrs.numReadBytes();
   }
 
-  core::dic::impl::StringStorageTraversal trav{raw};
+  core::dic::impl::StringStorageTraversal trav{raw, fieldAlign};
   StringPiece res;
   while (trav.next(&res)) {
     alignStatus.addStorage(trav.position(), res.size());

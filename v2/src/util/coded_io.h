@@ -8,6 +8,7 @@
 #include <vector>
 #include "string_piece.h"
 #include "types.hpp"
+#include "util/memory.hpp"
 
 namespace jumanpp {
 namespace util {
@@ -174,9 +175,15 @@ class CodedBufferParser {
     return static_cast<size_t>(end_ - position_);
   };
 
-  i32 numReadBytes() const noexcept {
-    return static_cast<i32>(position_ - begin_);
-  };
+  ptrdiff_t numReadBytes() const noexcept {
+    return static_cast<ptrdiff_t>(position_ - begin_);
+  }
+
+  void alignPointer(size_t align) {
+    auto current = position_ - begin_;
+    auto aligned = util::memory::Align(current, align);
+    position_ = begin_ + aligned;
+  }
 
   size_t limit(size_t cnt) noexcept {
     size_t cur = remaining();

@@ -31,6 +31,7 @@ void Serialize(Arch &a, FieldDescriptor &fd) {
   a &fd.kvSeparator;
   a &fd.stringStorage;
   a &fd.intStorage;
+  a &fd.alignment;
 }
 
 template <typename Arch>

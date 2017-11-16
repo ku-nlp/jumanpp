@@ -19,7 +19,7 @@ Status ModelSpecBuilder::validateFields() const {
   i32 indexCount = 0;
   for (auto fp : fields_) {
     auto& f = *fp;
-    JPP_RETURN_IF_ERROR(f.validate());
+    JPP_RIE_MSG(f.validate(), "field name: " << f.name());
     if (fieldIdx.count(f.getCsvColumn()) == 0) {
       fieldIdx.insert(f.getCsvColumn());
     } else {
@@ -129,11 +129,17 @@ Status FieldBuilder::validate() const {
   }
 
   if (stringStorage_.size() > 0) {
-    if (!util::contains({FieldType::StringList, FieldType::String},
-                        columnType_)) {
+    if (!util::contains(
+            {FieldType::StringList, FieldType::String, FieldType::StringKVList},
+            columnType_)) {
       return Status::InvalidParameter() << "string storage can be specified "
                                            "only for string or stringList "
                                            "typed columns";
+    }
+
+    if (alignment_ != 0) {
+      return JPPS_INVALID_PARAMETER
+             << "either alignment or string sotrage can be specified";
     }
   }
 
@@ -149,6 +155,7 @@ Status FieldBuilder::fill(FieldDescriptor* descriptor,
   descriptor->name = name_.str();
   descriptor->listSeparator = fieldSeparator_;
   descriptor->kvSeparator = kvSeparator_;
+  descriptor->alignment = alignment_;
   *stringStorName = stringStorage_.size() == 0 ? name() : stringStorage_;
   return Status::Ok();
 }

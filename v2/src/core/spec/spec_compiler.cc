@@ -73,6 +73,15 @@ Status SpecCompiler::buildFields() {
       spec->indexColumn = (i32)i;
     }
   }
+
+  util::FlatMap<i32, i32> sstor2align;
+  sstor2align[spec::InvalidInt] = 0;
+  for (auto& f : cols) {
+    auto align = sstor2align.findOrInsert(f.stringStorage,
+                                          [&f]() { return f.alignment; });
+    f.alignment = align;
+  }
+
   spec->numIntStorage = sa.getNumInts();
   spec->numStringStorage = sa.getNumStrings();
   JPP_DCHECK_NE(spec->indexColumn, InvalidInt);

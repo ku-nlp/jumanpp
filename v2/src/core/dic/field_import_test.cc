@@ -28,14 +28,14 @@ TEST_CASE("string field importer processes storage") {
   CHECK(feedData(rdr, importer));
   util::CodedBuffer buffer;
   CHECK_OK(importer.makeStorage(&buffer));
-  StringStorageTraversal trav{buffer.contents()};
+  StringStorageTraversal trav{buffer.contents(), 0};
   util::FlatMap<StringPiece, i32> actualPositions;
   while (trav.hasNext()) {
     StringPiece sp;
     REQUIRE(trav.next(&sp));
     actualPositions[sp] = trav.position();
   }
-  StringStorageReader storageReader{buffer.contents()};
+  StringStorageReader storageReader{buffer.contents(), 0};
   StringPiece piece;
   CHECK(actualPositions.size() == 6);  // 5 + empty
   CHECK_OK(rdr.initFromMemory(testData));
@@ -116,11 +116,31 @@ TEST_CASE("string list field processes input") {
   }
   CHECK(pointers.size() == 6);
   IntStorageReader fieldCntReader{fieldData.contents()};
-  StringStorageReader stringRdr{stringData.contents()};
+  StringStorageReader stringRdr{stringData.contents(), 0};
 
   checkSLFld(fieldCntReader, stringRdr, 0, pointers, {"this", "is"});
   checkSLFld(fieldCntReader, stringRdr, 1, pointers, {"no", "more"});
   checkSLFld(fieldCntReader, stringRdr, 2, pointers, {});
   checkSLFld(fieldCntReader, stringRdr, 3, pointers, {"it", "is", "more"});
   checkSLFld(fieldCntReader, stringRdr, 4, pointers, {"no"});
+}
+
+TEST_CASE("string storage makes aligned data") {
+  StringStorage ss;
+  ss.setAlignment(3);
+  ss.increaseFieldValueCount("testtestt");
+  ss.increaseFieldValueCount("testtestt");
+  ss.increaseFieldValueCount("heart");
+  util::CodedBuffer buf;
+  ss.makeStorage(&buf);
+  util::CodedBufferParser parser{};
+  StringPiece sp;
+  parser.reset(buf.contents().from(8));
+  CHECK(parser.readStringPiece(&sp));
+  CHECK(sp == "testtestt");
+  CHECK(ss.valueOf("testtestt") == 1);
+  parser.reset(buf.contents().from(24));
+  CHECK(parser.readStringPiece(&sp));
+  CHECK(sp == "heart");
+  CHECK(ss.valueOf("heart") == 3);
 }

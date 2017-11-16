@@ -17,7 +17,7 @@ class TestStringColumn {
   impl::StringStorageReader rdr_;
 
  public:
-  TestStringColumn(StringPiece data) : rdr_{data} {}
+  TestStringColumn(StringPiece data, u32 align) : rdr_{data, align} {}
   StringPiece operator[](i32 pos) {
     StringPiece pc;
     REQUIRE(rdr_.readAt(pos, &pc));
@@ -77,7 +77,7 @@ struct DataTester {
 
   DataTester(const BuiltDictionary& dic) {
     for (auto& x : dic.fieldData) {
-      columns.emplace_back(x.stringContent);
+      columns.emplace_back(x.stringContent, 0);
     }
     CHECK_OK(fillEntriesHolder(dic, &holder));
     entrs.reset(new DictionaryEntries{&holder});

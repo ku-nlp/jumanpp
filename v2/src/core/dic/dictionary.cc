@@ -28,9 +28,11 @@ Status FieldsHolder::load(const BuiltDictionary& dic) {
                        sf.name,
                        sf.fieldType,
                        impl::IntStorageReader{f.fieldContent},
-                       impl::StringStorageReader{f.stringContent},
+                       impl::StringStorageReader{
+                           f.stringContent, static_cast<u32>(sf.alignment)},
                        sf.emptyString,
                        f.stringStorageIdx,
+                       static_cast<u32>(sf.alignment),
                        sf.isTrieKey};
     fields_.push_back(df);
   }

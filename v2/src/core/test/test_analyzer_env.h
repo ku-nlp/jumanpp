@@ -76,7 +76,7 @@ class PrimFeatureTestEnv {
     REQUIRE_OK(tenv.analyzer->output().stringListField("c", &fldc));
 
     auto sa = tenv.restoredDic.fieldData[0].stringContent;
-    dic::impl::StringStorageTraversal sst{sa};
+    dic::impl::StringStorageTraversal sst{sa, 0};
     StringPiece sp;
     while (sst.next(&sp)) {
       a2idx[sp] = sst.position();

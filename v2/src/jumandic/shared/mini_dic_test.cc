@@ -39,7 +39,7 @@ TEST_CASE("can build id mapping") {
 
   util::FlatMap<StringPiece, i32> s2i;
   dic::impl::StringStorageTraversal sst{
-      tenv.core->dic().fieldByName("pos")->strings.data()};
+      tenv.core->dic().fieldByName("pos")->strings};
   StringPiece sp;
   while (sst.next(&sp)) {
     s2i[sp] = sst.position();

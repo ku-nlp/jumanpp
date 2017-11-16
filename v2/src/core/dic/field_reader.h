@@ -15,29 +15,34 @@ namespace impl {
 
 class StringStorageReader {
   StringPiece data_;
+  u32 alignPower_;
 
  public:
-  explicit StringStorageReader(const StringPiece& obj) noexcept : data_{obj} {}
+  explicit StringStorageReader(const StringPiece& obj, u32 alignPower) noexcept
+      : data_{obj}, alignPower_{alignPower} {}
 
   StringPiece data() const noexcept { return data_; }
 
   bool readAt(i32 ptr, StringPiece* ret) const noexcept {
-    util::CodedBufferParser parser;
-    parser.reset(data_.from(ptr));
+    i64 realPtr = static_cast<i64>(ptr) << alignPower_;
+    JPP_DCHECK_IN(realPtr, 0, data_.size());
+    util::CodedBufferParser parser{data_.from(realPtr)};
     return parser.readStringPiece(ret);
   }
 
   i32 lengthOf(i32 ptr) {
-    JPP_DCHECK_IN(ptr, 0, data_.size());
-    util::CodedBufferParser parser{data_.from(ptr)};
+    i64 realPtr = static_cast<i64>(ptr) << alignPower_;
+    JPP_DCHECK_IN(realPtr, 0, data_.size());
+    util::CodedBufferParser parser{data_.from(realPtr)};
     i32 value = -1;
     parser.readInt(&value);
     return value;
   }
 
   i32 numCodepoints(i32 ptr) {
-    JPP_DCHECK_IN(ptr, 0, data_.size());
-    auto start = data_.from(ptr);
+    i64 realPtr = static_cast<i64>(ptr) << alignPower_;
+    JPP_DCHECK_IN(realPtr, 0, data_.size());
+    auto start = data_.from(realPtr);
     util::CodedBufferParser parser{start};
     StringPiece result;
     if (parser.readStringPiece(&result)) {
@@ -45,6 +50,8 @@ class StringStorageReader {
     }
     return -1;
   }
+
+  u32 alignPower() const { return alignPower_; }
 };
 
 class IntListTraversal {
@@ -202,19 +209,27 @@ class IntStorageReader {
 
 class StringStorageTraversal {
   util::CodedBufferParser parser_;
-  i32 position_ = 0;
+  i32 lastPosition_ = 0;
+  u32 alignPower_;
+  u32 alignment_;
 
  public:
-  explicit StringStorageTraversal(const StringPiece& data) noexcept
-      : parser_{data} {}
+  explicit StringStorageTraversal(const StringPiece& data,
+                                  u32 alignPower) noexcept
+      : parser_{data}, alignPower_{alignPower}, alignment_{1u << alignPower} {}
+  explicit StringStorageTraversal(const StringStorageReader& rdr) noexcept
+      : StringStorageTraversal(rdr.data(), rdr.alignPower()) {}
 
-  bool hasNext() const noexcept { return parser_.remaining() != 0; }
+  bool hasNext() const noexcept { return !parser_.atEnd(); }
 
-  i32 position() const noexcept { return position_; }
+  i32 position() const noexcept { return lastPosition_; }
 
   bool next(StringPiece* result) noexcept {
-    position_ = parser_.numReadBytes();
+    lastPosition_ = static_cast<i32>(parser_.numReadBytes() >> alignPower_);
     bool ret = parser_.readStringPiece(result);
+    if (JPP_LIKELY(ret)) {
+      parser_.alignPointer(alignment_);
+    }
     return ret;
   }
 };

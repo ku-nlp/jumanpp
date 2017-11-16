@@ -22,7 +22,7 @@ std::ostream& operator<<(std::ostream& o, FieldType ct);
 constexpr static i32 InvalidInt = std::numeric_limits<i32>::min();
 
 constexpr static u32 SpecMagic = 0xfeed0000;
-constexpr static u32 SpecFormatVersion = 0;
+constexpr static u32 SpecFormatVersion = 1;
 
 struct FieldDescriptor {
   /**
@@ -49,6 +49,7 @@ struct FieldDescriptor {
   std::string kvSeparator;
   i32 stringStorage = InvalidInt;
   i32 intStorage = InvalidInt;
+  i32 alignment = 0;
 };
 
 struct DictionarySpec {

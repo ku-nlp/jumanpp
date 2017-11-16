@@ -24,7 +24,7 @@ Status RnnIdResolver::loadFromDic(const dic::DictionaryHolder& dic,
 
   util::FlatMap<StringPiece, i32> str2int;
 
-  dic::impl::StringStorageTraversal sst{fld->strings.data()};
+  dic::impl::StringStorageTraversal sst{fld->strings};
   StringPiece data;
   while (sst.next(&data)) {
     str2int[data] = sst.position();

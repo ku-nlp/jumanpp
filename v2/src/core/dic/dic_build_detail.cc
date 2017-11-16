@@ -155,6 +155,9 @@ Status DictionaryBuilderStorage::initialize(const s::DictionarySpec& dicSpec) {
   for (int i = 0; i < dicSpec.fields.size(); ++i) {
     auto& column = dicSpec.fields[i];
     JPP_RETURN_IF_ERROR(importers.at(i).initialize(i, &column, storage));
+    if (column.stringStorage != spec::InvalidInt) {
+      storage[column.stringStorage].setAlignment(column.alignment);
+    }
     auto colIdx = column.position - 1;
     if (maxUsedCol < colIdx) {
       maxUsedCol = colIdx;

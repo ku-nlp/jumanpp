@@ -25,6 +25,7 @@ struct DictionaryField {
   impl::StringStorageReader strings;
   StringPiece emptyValue;
   i32 stringStorageIdx;
+  u32 alignPower;
   bool isSurfaceField;
 };
 

@@ -67,6 +67,8 @@ class StringStorage {
    */
   Mapping mapping_;
   util::CharBuffer<> contents_;
+  i32 alignmentPower = 0;
+  size_t alignment = 1;
 
  public:
   bool increaseFieldValueCount(StringPiece sp) {
@@ -89,6 +91,11 @@ class StringStorage {
       return -1;
     }
     return it->second;
+  }
+
+  void setAlignment(i32 power) {
+    alignmentPower = power;
+    alignment = static_cast<size_t>(1 << power);
   }
 
   size_t size() const { return mapping_.size(); }
