@@ -30,6 +30,7 @@ target_include_directories(jpp_jumandic PRIVATE ${jpp_jumandic_cg_INCLUDE})
 
 jpp_test_executable(jpp_jumandic_tests ${jumandic_tests})
 jpp_test_executable(jpp_bug_tests ${bug_test_sources})
+target_include_directories(jpp_jumandic_tests PRIVATE ${jpp_jumandic_cg_INCLUDE})
 
 add_executable(jpp_jumandic_bootstrap main/bootstrap.cc)
 add_executable(jumanpp_v2 main/jumanpp.cc main/jumanpp_args.cc)

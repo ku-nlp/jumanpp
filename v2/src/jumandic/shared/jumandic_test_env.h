@@ -12,6 +12,7 @@
 #include "jumandic/shared/jumandic_spec.h"
 #include "testing/test_analyzer.h"
 #include "util/lazy.h"
+#include "jumandic_spec.h"
 
 using namespace jumanpp;
 namespace {
