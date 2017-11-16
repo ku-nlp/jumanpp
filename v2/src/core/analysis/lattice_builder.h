@@ -62,7 +62,7 @@ struct BoundaryInfo {
 class LatticeConstructionContext {
  public:
   void addBos(LatticeBoundary* lb);
-  void addEos(LatticeBoundary* lb);
+  void addEos(LatticeBoundary* lb, LatticePosition position);
 };
 
 /**

@@ -69,10 +69,7 @@ Status AnalyzerImpl::initScorers(const ScorerDef& cfg) {
     scorers_.emplace_back(std::move(comp));
   }
 
-  cfg_.alwaysComputeEntries =
-      cfg_.alwaysComputeEntries || (!core_->features().patternStatic);
-  if (!cfg_.alwaysComputeEntries) {
-    latticeConfig_.dontStoreEntryData = true;
+  if (!cfg_.storeAllPatterns && core().features().patternStatic) {
     auto& fspec = core_->spec().features;
     latticeConfig_.numFeaturePatterns =
         static_cast<u32>(fspec.pattern.size() - fspec.numUniOnlyPats);
@@ -149,9 +146,9 @@ Status AnalyzerImpl::buildLattice() {
     JPP_RETURN_IF_ERROR(
         latticeBldr_.constructSingleBoundary(&lattice_, &bnd, boundary));
 
-    if (!latticeConfig_.dontStoreEntryData) {
+    if (noStaticPattern) {
       fc.importEntryData(bnd);
-      if (noStaticPattern && latticeBldr_.isAccessible(boundary)) {
+      if (latticeBldr_.isAccessible(boundary)) {
         fc.patternFeaturesDynamic(bnd);
       }
     }
@@ -212,6 +209,9 @@ Status AnalyzerImpl::computeScoresFull(const ScorerDef* sconf) {
       features::impl::PrimitiveFeatureContext pfc{
           &xtra_, dic().fields(), dic().entries(), input_.codepoints()};
       proc.computeT0All(boundary, sconf->feature, &pfc);
+      if (JPP_UNLIKELY(cfg_.storeAllPatterns)) {
+        proc.computeUniOnlyPatterns(boundary, &pfc);
+      }
     } else {
       proc.applyT0(boundary, sconf->feature);
     }
@@ -266,6 +266,9 @@ Status AnalyzerImpl::computeScoresGbeam(const ScorerDef* sconf) {
       features::impl::PrimitiveFeatureContext pfc{&xtra_, dic().fields(),
                                                   entries, input_.codepoints()};
       proc.computeT0All(boundary, sconf->feature, &pfc);
+      if (JPP_UNLIKELY(cfg_.storeAllPatterns)) {
+        proc.computeUniOnlyPatterns(boundary, &pfc);
+      }
     } else {
       proc.applyT0(boundary, sconf->feature);
     }

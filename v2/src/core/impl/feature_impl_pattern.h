@@ -49,6 +49,7 @@ class PatternDynamicApplyImpl final : public PatternFeatureApply {
   std::vector<std::unique_ptr<PrimitiveFeatureImpl>> primitive_;
   std::vector<std::unique_ptr<ComputeFeatureImpl>> compute_;
   std::vector<DynamicPatternFeatureImpl> patterns_;
+  u32 uniOnlyFirst_ = 0;
 
   friend class DynamicPatternFeatureImpl;
 
@@ -68,6 +69,24 @@ class PatternDynamicApplyImpl final : public PatternFeatureApply {
                   impl::PrimitiveFeatureData* data) const noexcept override {
     while (data->next()) {
       apply(pfc, data->nodeInfo(), data->entryData(), data->featureData());
+    }
+  }
+
+  void applyUniOnly(PrimitiveFeatureContext* pfc, const NodeInfo& info,
+                    util::ArraySlice<i32> nodeFeatures,
+                    util::MutableArraySlice<u64> result) const noexcept {
+    auto sz = patterns_.size();
+    for (u32 patIdx = uniOnlyFirst_; patIdx < sz; ++patIdx) {
+      auto& c = patterns_[patIdx];
+      c.apply(pfc, info, nodeFeatures, result);
+    }
+  }
+
+  void applyUniOnly(PrimitiveFeatureContext* pfc,
+                    impl::PrimitiveFeatureData* data) const noexcept override {
+    while (data->next()) {
+      applyUniOnly(pfc, data->nodeInfo(), data->entryData(),
+                   data->featureData());
     }
   }
 

@@ -36,6 +36,8 @@ Status PatternDynamicApplyImpl::initialize(FeatureConstructionContext *ctx,
     JPP_CAPTURE(f.index);
     JPP_RETURN_IF_ERROR(fi.initialize(this, f));
   }
+  uniOnlyFirst_ = static_cast<u32>(patterns_.size() - spec.numUniOnlyPats);
+  JPP_DCHECK_LE(uniOnlyFirst_, patterns_.size());
   return Status::Ok();
 }
 

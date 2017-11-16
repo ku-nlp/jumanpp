@@ -106,6 +106,7 @@ class ScoreProcessor {
   util::ArraySlice<ConnectionBeamElement> beamPtrs_;
   NgramScoreHolder scores_;
   features::FeatureBuffer featureBuffer_;
+  const features::PatternFeatureApply* patternDynamic_;
   const features::GeneratedPatternFeatureApply* patternStatic_;
   const features::PartialNgramFeatureApply* ngramApply_;
   Lattice* lattice_;
@@ -163,6 +164,8 @@ class ScoreProcessor {
                           FeatureScorer* scorer);
   void makeT0cutoffBeam(u32 fullAnalysis, u32 rightBeam);
   bool patternIsStatic() const { return patternStatic_ != nullptr; }
+  void computeUniOnlyPatterns(i32 bndIdx,
+                              features::impl::PrimitiveFeatureContext* pfc);
 };
 
 }  // namespace analysis

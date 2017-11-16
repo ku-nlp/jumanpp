@@ -67,9 +67,6 @@ struct LatticeConfig {
   u32 numFeaturePatterns;
   u32 beamSize;
   u32 scoreCnt;
-
-  // will be automatically set by AnalyzerImpl if the conditions are correct
-  bool dontStoreEntryData = false;
 };
 
 struct LatticeBoundaryConfig {

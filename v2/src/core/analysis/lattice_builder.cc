@@ -111,7 +111,9 @@ Status LatticeBuilder::makeEos(LatticeConstructionContext *ctx,
   LatticeBoundaryConfig eos{maxBoundaries_ + 2u,
                             (u32)boundaries_[maxBoundaries_ - 1].endCount, 1u};
   JPP_RETURN_IF_ERROR(lattice->makeBoundary(eos, &lb));
-  ctx->addEos(lb);
+  LatticePosition eosIdx = maxBoundaries_;
+  --eosIdx;
+  ctx->addEos(lb, eosIdx);
   return Status::Ok();
 }
 
@@ -176,8 +178,10 @@ void LatticeConstructionContext::addBos(LatticeBoundary *lb) {
   util::fill(features, bos);
 }
 
-void LatticeConstructionContext::addEos(LatticeBoundary *lb) {
+void LatticeConstructionContext::addEos(LatticeBoundary *lb,
+                                        LatticePosition position) {
   JPP_DCHECK_EQ(lb->localNodeCount(), 1);
+  lb->starts()->nodeInfo()[0] = NodeInfo{EntryPtr::EOS(), position, position};
 }
 
 void LatticeCompactor::computeHashes(util::ArraySlice<LatticeNodeSeed> seeds) {

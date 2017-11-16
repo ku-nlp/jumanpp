@@ -83,6 +83,9 @@ class PatternFeatureApply : public FeatureApply {
  public:
   virtual void applyBatch(impl::PrimitiveFeatureContext* pfc,
                           impl::PrimitiveFeatureData* data) const noexcept = 0;
+  virtual void applyUniOnly(impl::PrimitiveFeatureContext* pfc,
+                            impl::PrimitiveFeatureData* data) const
+      noexcept = 0;
 };
 
 class GeneratedPatternFeatureApply : public FeatureApply {
@@ -90,6 +93,7 @@ class GeneratedPatternFeatureApply : public FeatureApply {
   virtual void patternsAndUnigramsApply(
       ::jumanpp::core::features::impl::PrimitiveFeatureContext* ctx,
       ::jumanpp::util::ArraySlice<::jumanpp::core::NodeInfo> nodeInfos,
+      ::jumanpp::util::Sliceable<i32> entryFeatureBuffer,
       FeatureBuffer* fbuffer,
       ::jumanpp::util::Sliceable<::jumanpp::u64> patternMatrix,
       const ::jumanpp::core::analysis::FeatureScorer* scorer,

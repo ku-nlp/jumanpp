@@ -90,16 +90,13 @@ void LatticeBoundaryScores::importBeamScore(i32 left, i32 scorer, i32 beam,
 LatticeRightBoundary::LatticeRightBoundary(util::memory::PoolAlloc *alloc,
                                            const LatticeConfig &lc,
                                            const LatticeBoundaryConfig &lbc) {
-  nodeInfo_ = alloc->allocateBuf<NodeInfo>(lbc.beginNodes, 64);
+  auto rawNodes = alloc->allocateRawArray<NodeInfo>(lbc.beginNodes, 64);
+  nodeInfo_ = util::MutableArraySlice<NodeInfo>{rawNodes, lbc.beginNodes};
   featurePatterns =
       alloc->allocate2d<u64>(lbc.beginNodes, lc.numFeaturePatterns, 64);
   beam =
       alloc->allocate2d<ConnectionBeamElement>(lbc.beginNodes, lc.beamSize, 64);
-  if (lc.dontStoreEntryData) {
-    entryDataStorage = {};
-  } else {
-    entryDataStorage = alloc->allocate2d<i32>(lbc.beginNodes, lc.entrySize, 64);
-  }
+  entryDataStorage = alloc->allocate2d<i32>(lbc.beginNodes, lc.entrySize, 64);
 }
 
 LatticeLeftBoundary::LatticeLeftBoundary(util::memory::PoolAlloc *alloc,

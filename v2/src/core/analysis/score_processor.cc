@@ -66,6 +66,7 @@ ScoreProcessor::ScoreProcessor(AnalyzerImpl *analyzer)
   }
 
   patternStatic_ = analyzer->core().features().patternStatic.get();
+  patternDynamic_ = analyzer->core().features().patternDynamic.get();
 }
 
 void ScoreProcessor::copyFeatureScores(i32 left, i32 beam,
@@ -104,11 +105,12 @@ void ScoreProcessor::computeT0All(
     features::impl::PrimitiveFeatureContext *pfc) {
   auto bnd = lattice_->boundary(boundary)->starts();
   auto nodeInfo = bnd->nodeInfo();
+  auto nodeFeatures = bnd->entryData();
   auto scores = scores_.bufferT0();
   featureBuffer_.currentElems = static_cast<u32>(bnd->numEntries());
-  patternStatic_->patternsAndUnigramsApply(pfc, nodeInfo, &featureBuffer_,
-                                           bnd->patternFeatureData(), features,
-                                           scores);
+  patternStatic_->patternsAndUnigramsApply(
+      pfc, nodeInfo, nodeFeatures, &featureBuffer_, bnd->patternFeatureData(),
+      features, scores);
 }
 
 void ScoreProcessor::applyT1(i32 boundary, i32 position,
@@ -515,6 +517,14 @@ void ScoreProcessor::computeT0Prescores(util::ArraySlice<BeamCandidate> gbeam,
     ngramApply_->applyBiStep2(&featureBuffer_, t1, scorer, scores);
     ngramApply_->applyTriStep3(&featureBuffer_, t2, scorer, scores);
   }
+}
+
+void ScoreProcessor::computeUniOnlyPatterns(
+    i32 bndIdx, features::impl::PrimitiveFeatureContext *pfc) {
+  auto bnd = lattice_->boundary(bndIdx)->starts();
+  features::impl::PrimitiveFeatureData pfdata{bnd->nodeInfo(), bnd->entryData(),
+                                              bnd->patternFeatureData()};
+  patternDynamic_->applyUniOnly(pfc, &pfdata);
 }
 
 }  // namespace analysis
