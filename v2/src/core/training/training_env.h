@@ -73,7 +73,8 @@ class TrainingEnv {
  public:
   TrainingEnv(const TrainingArguments& args, JumanppEnv* env)
       : args_{args}, env_{env}, scw_{args.trainingConfig} {
-    aconf_.pageSize = 256 * 1024;
+    aconf_.pageSize = 128 * 1024;
+    aconf_.alwaysComputeEntries = true;
   }
 
   void warnOnNonMatchingFeatures(const spec::AnalysisSpec& spec);
