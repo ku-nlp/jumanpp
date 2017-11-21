@@ -3,8 +3,8 @@
 //
 
 #include "rnn_scorer_gbeam.h"
+#include "rnn/mikolov_rnn.h"
 #include "rnn_id_resolver.h"
-#include "util/memory.hpp"
 #include "util/stl_util.h"
 
 namespace jumanpp {
@@ -16,6 +16,9 @@ struct GbeamRnnFactoryState {
   jumanpp::rnn::mikolov::MikolovRnn rnn;
   util::ConstSliceable<float> embeddings;
   util::ConstSliceable<float> nceEmbeddings;
+  rnn::RnnInferenceConfig config;
+  jumanpp::rnn::mikolov::MikolovModelReader rnnReader;
+  util::CodedBuffer codedBuf_;
 
   u32 embedSize() const { return rnn.modelHeader().layerSize; }
 
@@ -25,6 +28,38 @@ struct GbeamRnnFactoryState {
 
   util::ArraySlice<float> nceEmbedOf(size_t idx) const {
     return nceEmbeddings.row(idx);
+  }
+
+  util::memory::Manager mgr{64 * 1024};
+  util::Sliceable<float> bosState{};
+
+  void computeBosState(i32 bosId) {
+    auto alloc = mgr.core();
+    auto zeros = alloc->allocate2d<float>(1, embedSize(), 64);
+    util::fill(zeros, 0);
+    bosState = alloc->allocate2d<float>(1, embedSize(), 64);
+    auto embed = embeddings.row(bosId);
+    util::ConstSliceable<float> embedSlice{embed, embedSize(), 1};
+    jumanpp::rnn::mikolov::ParallelContextData pcd{zeros, embedSlice, bosState};
+    rnn.computeNewParCtx(&pcd);
+  }
+
+  StringPiece rnnMatrix() const { return rnn.matrixAsStringpiece(); }
+
+  StringPiece embeddingData() const {
+    return StringPiece{
+        reinterpret_cast<StringPiece::pointer_t>(embeddings.begin()),
+        embeddings.size() * sizeof(float)};
+  }
+
+  StringPiece nceEmbedData() const {
+    return StringPiece{
+        reinterpret_cast<StringPiece::pointer_t>(nceEmbeddings.begin()),
+        nceEmbeddings.size() * sizeof(float)};
+  }
+
+  StringPiece maxentWeightData() const {
+    return rnn.maxentWeightsAsStringpiece();
   }
 };
 
@@ -56,6 +91,7 @@ struct GbeamRnnState {
     contextBuf = alloc->allocate2d<float>(gbeamSize, embedSize, 64);
     embBuf = alloc->allocate2d<float>(gbeamSize, embedSize, 64);
     scoreBuf = alloc->allocateBuf<float>(gbeamSize, 64);
+    contexts.at(1) = shared->bosState;
   }
 
   util::ArraySlice<i32> gatherIds(const rnn::RnnBoundary& rbnd) {
@@ -67,21 +103,6 @@ struct GbeamRnnState {
       JPP_INDEBUG(--count);
     }
     JPP_DCHECK_EQ(count, 0);
-    return subset;
-  }
-
-  util::ConstSliceable<i32> gatherPrevStateIds(const rnn::RnnBoundary& rbnd) {
-    auto subset = ctxIdBuf.topRows(rbnd.nodeCnt);
-    auto cnt = ctxIdBuf.rowSize();
-    for (auto node = rbnd.node; node != nullptr; node = node->nextInBnd) {
-      int idx = 0;
-      auto row = subset.row(node->idx);
-      auto prev = node->prev;
-      for (; idx < cnt; ++idx) {
-        JPP_DCHECK_NE(prev, nullptr);
-        row.at(idx) = prev->id;
-      }
-    }
     return subset;
   }
 
@@ -101,18 +122,10 @@ struct GbeamRnnState {
     auto subset = embBuf.topRows(ids.size());
     for (int i = 0; i < ids.size(); ++i) {
       auto embedId = ids[i];
+      if (embedId == -1) {
+        embedId = 0;
+      }
       auto embed = shared->embedOf(embedId);
-      auto target = subset.row(i);
-      util::copy_buffer(embed, target);
-    }
-    return subset;
-  }
-
-  util::ConstSliceable<float> gatherNceEmbeds(util::ArraySlice<i32> ids) {
-    auto subset = embBuf.topRows(ids.size());
-    for (int i = 0; i < ids.size(); ++i) {
-      auto embedId = ids[i];
-      auto embed = shared->nceEmbedOf(embedId);
       auto target = subset.row(i);
       util::copy_buffer(embed, target);
     }
@@ -123,12 +136,6 @@ struct GbeamRnnState {
     auto buf = alloc->allocate2d<float>(size, shared->embedSize(), 64);
     contexts.at(bndIdx) = buf;
     return buf;
-  }
-
-  util::MutableArraySlice<float> resizeScores(i32 size) {
-    size_t sz = static_cast<size_t>(size);
-    util::MutableArraySlice<float> res{scoreBuf, 0, sz};
-    return res;
   }
 
   Status computeContext(u32 bndIdx) {
@@ -147,17 +154,95 @@ struct GbeamRnnState {
     return Status::Ok();
   }
 
+  util::ArraySlice<i32> gatherScoreIds(const rnn::RnnBoundary& rbnd) {
+    size_t scoreCnt = static_cast<size_t>(rbnd.scoreCnt);
+    util::MutableArraySlice<i32> subset{rightIdBuf, 0, scoreCnt};
+    u32 scoreIdx = 0;
+    for (auto sc = rbnd.scores; sc != nullptr; sc = sc->next) {
+      auto node = sc->rnn;
+      subset.at(scoreIdx) = node->id;
+      scoreIdx += 1;
+    }
+    JPP_DCHECK_EQ(scoreIdx, scoreCnt);
+    return subset;
+  }
+
+  util::ConstSliceable<i32> gatherPrevStateIds(const rnn::RnnBoundary& rbnd) {
+    auto subset = ctxIdBuf.topRows(rbnd.scoreCnt);
+    auto cnt = ctxIdBuf.rowSize();
+    u32 scoreIdx = 0;
+    for (auto sc = rbnd.scores; sc != nullptr; sc = sc->next) {
+      auto node = sc->rnn;
+      int idx = 0;
+      auto row = subset.row(scoreIdx);
+      auto prev = node->prev;
+      for (; idx < cnt; ++idx) {
+        JPP_DCHECK_NE(prev, nullptr);
+        row.at(idx) = prev->id;
+      }
+      scoreIdx += 1;
+    }
+    JPP_DCHECK_EQ(scoreIdx, rbnd.scoreCnt);
+    return subset;
+  }
+
+  util::ConstSliceable<float> gatherScoreContext(const rnn::RnnBoundary& rbnd) {
+    auto subset = contextBuf.topRows(rbnd.scoreCnt);
+    u32 idx = 0;
+    for (auto sc = rbnd.scores; sc != nullptr; sc = sc->next) {
+      auto node = sc->rnn;
+      auto prev = node->prev;
+      JPP_DCHECK_NE(prev, nullptr);
+      auto ctxRow = subset.row(idx);
+      auto present = contexts.at(prev->boundary).row(prev->idx);
+      util::copy_buffer(present, ctxRow);
+      idx += 1;
+    }
+    JPP_DCHECK_EQ(idx, rbnd.scoreCnt);
+    return subset;
+  }
+
+  util::ConstSliceable<float> gatherNceEmbeds(util::ArraySlice<i32> ids) {
+    auto subset = embBuf.topRows(ids.size());
+    for (int i = 0; i < ids.size(); ++i) {
+      auto embedId = ids[i];
+      if (embedId == -1) {
+        embedId = 0;
+      }
+      auto embed = shared->nceEmbedOf(embedId);
+      auto target = subset.row(i);
+      util::copy_buffer(embed, target);
+    }
+    return subset;
+  }
+
+  util::MutableArraySlice<float> resizeScores(i32 size) {
+    size_t sz = static_cast<size_t>(size);
+    util::MutableArraySlice<float> res{scoreBuf, 0, sz};
+    return res;
+  }
+
   void copyScoresToLattice(util::MutableArraySlice<float> slice,
-                           const rnn::RnnBoundary& boundary, u32 bndIdx) {
+                           const rnn::RnnBoundary& rbnd, u32 bndIdx) {
     auto bnd = lat->boundary(bndIdx);
     auto scoreStorage = bnd->scores();
-    for (auto sc = boundary.scores; sc != nullptr; sc = sc->next) {
+    u32 scoreIdx = 0;
+    for (auto sc = rbnd.scores; sc != nullptr; sc = sc->next) {
       auto ptr = sc->latPtr;
       JPP_DCHECK_EQ(bndIdx, ptr->boundary);
       auto nodeScores = scoreStorage->nodeScores(ptr->right);
-      auto score = slice.at(sc->rnn->idx);
+      float score;
+      auto rnnId = sc->rnn->id;
+      if (rnnId == shared->resolver.unkId()) {
+        auto& cfg = shared->config;
+        score = cfg.unkConstantTerm + cfg.unkLengthPenalty * sc->rnn->length;
+      } else {
+        score = slice.at(scoreIdx);
+      }
+      scoreIdx += 1;
       nodeScores.beamLeft(ptr->beam, ptr->left).at(scorerIdx) = score;
     }
+    JPP_DCHECK_EQ(scoreIdx, rbnd.scoreCnt);
   }
 
   Status scoreBoundary(u32 bndIdx) {
@@ -166,11 +251,11 @@ struct GbeamRnnState {
       return Status::Ok();
     }
 
-    auto rnnIds = gatherIds(rbnd);
+    auto rnnIds = gatherScoreIds(rbnd);
     auto scores = resizeScores(rbnd.scoreCnt);
 
     jumanpp::rnn::mikolov::ParallelStepData psd{
-        gatherPrevStateIds(rbnd), rnnIds, gatherContext(rbnd),
+        gatherPrevStateIds(rbnd), rnnIds, gatherScoreContext(rbnd),
         gatherNceEmbeds(rnnIds), scores};
 
     shared->rnn.applyParallel(&psd);
@@ -185,11 +270,10 @@ struct GbeamRnnState {
     this->xtra = xtra;
     alloc->reset();
     auto numBnd = l->createdBoundaryCount() - 1;
-    container.reset(numBnd, l->config().globalBeamSize);
     allocateState();
     JPP_RETURN_IF_ERROR(
         shared->resolver.resolveIdsAtGbeam(&container, l, xtra));
-    for (u32 bndIdx = 1; bndIdx < numBnd; ++bndIdx) {
+    for (u32 bndIdx = 2; bndIdx < numBnd; ++bndIdx) {
       JPP_RIE_MSG(computeContext(bndIdx), "bnd=" << bndIdx);
     }
     for (u32 bndIdx = 2; bndIdx <= numBnd; ++bndIdx) {
@@ -211,16 +295,168 @@ RnnScorerGbeam::~RnnScorerGbeam() = default;
 
 RnnScorerGbeamFactory::RnnScorerGbeamFactory() = default;
 
-Status RnnScorerGbeamFactory::load(const model::ModelInfo& model) {
-  return Status::NotImplemented();
-}
-
 Status RnnScorerGbeamFactory::makeInstance(
     std::unique_ptr<ScoreComputer>* result) {
-  return Status::NotImplemented();
+  auto ptr = new RnnScorerGbeam;
+  result->reset(ptr);
+  ptr->state_.reset(new GbeamRnnState);
+  ptr->state_->shared = state_.get();
+  return Status::Ok();
+}
+
+Status RnnScorerGbeamFactory::make(StringPiece rnnModelPath,
+                                   const dic::DictionaryHolder& dic,
+                                   const rnn::RnnInferenceConfig& config) {
+  state_.reset(new GbeamRnnFactoryState);
+  setConfig(config);
+  JPP_RETURN_IF_ERROR(state_->rnnReader.open(rnnModelPath));
+  JPP_RETURN_IF_ERROR(state_->rnnReader.parse());
+  JPP_RETURN_IF_ERROR(
+      state_->resolver.build(dic, state_->config, state_->rnnReader.words()));
+  JPP_RETURN_IF_ERROR(state_->rnn.init(state_->rnnReader.header(),
+                                       state_->rnnReader.rnnMatrix(),
+                                       state_->rnnReader.maxentWeights()));
+  auto& h = state_->rnnReader.header();
+  state_->embeddings = {state_->rnnReader.embeddings(), h.layerSize,
+                        h.vocabSize};
+  state_->nceEmbeddings = {state_->rnnReader.nceEmbeddings(), h.layerSize,
+                           h.vocabSize};
+  if (h.layerSize > 64 * 1024) {
+    return JPPS_NOT_IMPLEMENTED << "we don't support embed sizes > 64k";
+  }
+  state_->computeBosState(0);
+  return Status::Ok();
+}
+
+const rnn::RnnInferenceConfig& RnnScorerGbeamFactory::config() const {
+  return state_->config;
+}
+
+void RnnScorerGbeamFactory::setConfig(const rnn::RnnInferenceConfig& config) {
+  JPP_DCHECK(state_);
+  state_->config.mergeWith(config);
+  if (!state_->config.nceBias.isDefault()) {
+    state_->rnn.setNceConstant(state_->config.nceBias);
+  }
+}
+
+struct RnnModelHeader {
+  rnn::RnnInferenceConfig& config;
+  i32 unkIdx;
+  std::vector<u32> fields;
+  jumanpp::rnn::mikolov::MikolovRnnModelHeader rnnHeader;
+};
+
+template <typename Arch>
+void Serialize(Arch& a, RnnModelHeader& o) {
+  a& o.config.nceBias;
+  a& o.config.unkConstantTerm;
+  a& o.config.unkLengthPenalty;
+  a& o.config.perceptronWeight;
+  a& o.config.rnnWeight;
+  a& o.config.eosSymbol;
+  a& o.config.unkSymbol;
+  a& o.config.rnnFields;
+  a& o.config.fieldSeparator;
+  a& o.unkIdx;
+  a& o.fields;
+  a& o.rnnHeader.layerSize;
+  a& o.rnnHeader.maxentOrder;
+  a& o.rnnHeader.maxentSize;
+  a& o.rnnHeader.vocabSize;
+  a& o.rnnHeader.nceLnz;
+}
+
+Status RnnScorerGbeamFactory::makeInfo(model::ModelInfo* info) {
+  if (!state_) {
+    return JPPS_INVALID_STATE << "RnnScorerGbeamFactory was not initialized";
+  }
+  RnnModelHeader header{
+      state_->config, state_->resolver.unkId(), {}, state_->rnn.modelHeader()};
+  util::copy_insert(state_->resolver.targets(), header.fields);
+  util::serialization::Saver s{&state_->codedBuf_};
+  s.save(header);
+
+  info->parts.emplace_back();
+  auto& part = info->parts.back();
+  part.kind = model::ModelPartKind::Rnn;
+  part.data.push_back(s.result());
+  part.data.push_back(state_->resolver.knownIndex());
+  part.data.push_back(state_->resolver.unkIndex());
+  part.data.push_back(state_->rnnMatrix());
+  part.data.push_back(state_->embeddingData());
+  part.data.push_back(state_->nceEmbedData());
+  part.data.push_back(state_->maxentWeightData());
+
+  return Status::Ok();
+}
+
+Status arr2d(StringPiece data, size_t nrows, size_t ncols,
+             util::ConstSliceable<float>* result) {
+  if (nrows * ncols * sizeof(float) < data.size()) {
+    return JPPS_INVALID_PARAMETER
+           << "failed to create ConstSliceable from memory buffer of "
+           << data.size() << " need at least " << nrows * ncols * sizeof(float);
+  }
+  util::ArraySlice<float> wrap{reinterpret_cast<const float*>(data.data()),
+                               nrows * ncols};
+  *result = util::ConstSliceable<float>{wrap, ncols, nrows};
+  return Status::Ok();
+}
+
+Status arr1d(StringPiece data, size_t expected,
+             util::ArraySlice<float>* result) {
+  if (expected * sizeof(float) < data.size()) {
+    return JPPS_INVALID_PARAMETER
+           << "failed to create ConstSliceable from memory buffer of "
+           << data.size() << " need at least " << expected * sizeof(float);
+  }
+  *result = util::ArraySlice<float>{reinterpret_cast<const float*>(data.data()),
+                                    expected};
+  return Status::Ok();
+}
+
+Status RnnScorerGbeamFactory::load(const model::ModelInfo& model) {
+  state_.reset(new GbeamRnnFactoryState);
+  auto p = model.firstPartOf(model::ModelPartKind::Rnn);
+  if (p == nullptr) {
+    return JPPS_INVALID_PARAMETER << "model file did not contain RNN";
+  }
+
+  RnnModelHeader header{state_->config, {}, {}, {}};
+
+  util::serialization::Loader l{p->data[0]};
+  if (!l.load(&header)) {
+    return JPPS_INVALID_PARAMETER << "failed to read RNN header";
+  }
+
+  JPP_RETURN_IF_ERROR(state_->resolver.setState(header.fields, p->data[1],
+                                                p->data[2], header.unkIdx));
+  auto& rnnhdr = header.rnnHeader;
+
+  util::ArraySlice<float> rnnMatrix;
+  util::ArraySlice<float> maxentWeights;
+
+  JPP_RIE_MSG(
+      arr1d(p->data[3], rnnhdr.layerSize * rnnhdr.vocabSize, &rnnMatrix),
+      "failed to read matrix");
+  JPP_RIE_MSG(arr2d(p->data[4], rnnhdr.vocabSize, rnnhdr.layerSize,
+                    &state_->embeddings),
+              "failed to read embeddings");
+  JPP_RIE_MSG(arr2d(p->data[5], rnnhdr.vocabSize, rnnhdr.layerSize,
+                    &state_->nceEmbeddings),
+              "failed to read NCE embeddings");
+  JPP_RIE_MSG(arr1d(p->data[6], rnnhdr.maxentSize, &maxentWeights),
+              "failed to read NCE embeddings");
+
+  JPP_RETURN_IF_ERROR(state_->rnn.init(rnnhdr, rnnMatrix, maxentWeights));
+  state_->computeBosState(0);
+
+  return Status::Ok();
 }
 
 RnnScorerGbeamFactory::~RnnScorerGbeamFactory() = default;
+
 }  // namespace analysis
 }  // namespace core
 }  // namespace jumanpp

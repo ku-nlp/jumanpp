@@ -27,11 +27,9 @@ Status JumanppExec::init() {
   }
 
   if (newRnn) {
-    JPP_RETURN_IF_ERROR(mikolovModel.open(conf.rnnModelFile));
-    JPP_RETURN_IF_ERROR(mikolovModel.parse());
-    JPP_RETURN_IF_ERROR(rnnHolder.init(conf.rnnConfig, mikolovModel,
-                                       env.coreHolder()->dic(), "surface"));
-    env.setRnnHolder(&rnnHolder);
+    JPP_RETURN_IF_ERROR(rnnFactory.make(
+        conf.rnnModelFile, env.coreHolder()->dic(), conf.rnnConfig));
+    env.setRnnHolder(&rnnFactory);
   }
 
   jumanpp_generated::JumandicStatic features;

@@ -190,9 +190,6 @@ Status AnalyzerImpl::bootstrapAnalysis() {
   auto& bos1Ref = beam1.at(0);
   bos1Ref = ConnectionBeamElement{{1, 0, 0, 0, &bosRef.ptr}, 0};
 
-  for (auto& s : scorers_) {
-    s->preScore(&lattice_, &xtra_);
-  }
   return Status::Ok();
 }
 
@@ -241,13 +238,6 @@ Status AnalyzerImpl::computeScoresFull(const ScorerDef* sconf) {
       }
     }
 
-    // use other scorers if any
-    i32 scorerIdx = 1;
-    for (auto& s : scorers_) {
-      s->scoreBoundary(scorerIdx, &lattice_, boundary);
-      scorerIdx += 1;
-    }
-
     // Finally, make beams
     proc.makeBeams(boundary, bnd, sconf);
   }
@@ -288,6 +278,16 @@ Status AnalyzerImpl::computeScoresGbeam(const ScorerDef* sconf) {
     proc.computeGbeamScores(boundary, gbeam, sconf->feature);
   }
 
+  if (!scorers_.empty()) {
+    u32 idx = 1;
+    for (auto& s : scorers_) {
+      s->scoreLattice(&lattice_, &xtra_, idx);
+      ++idx;
+    }
+    proc.adjustBeamScores(sconf->scoreWeights);
+    proc.remakeEosBeam(sconf->scoreWeights);
+  }
+
   return Status::Ok();
 }
 
@@ -306,6 +306,8 @@ bool AnalyzerImpl::setGlobalBeam(i32 leftBeam, i32 rightCheck, i32 rightBeam) {
   bool result = false;
   if (cfg_.globalBeamSize != leftBeam) {
     cfg_.globalBeamSize = leftBeam;
+    latticeConfig_.globalBeamSize = static_cast<u32>(leftBeam);
+    lattice_.updateConfig(latticeConfig_);
     result = true;
   }
   if (cfg_.rightGbeamSize != rightBeam) {

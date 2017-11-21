@@ -163,6 +163,9 @@ class MikolovRnn {
   void applyParallel(ParallelStepData* data) const;
   void computeNewParCtx(ParallelContextData* pcd) const;
   const MikolovRnnModelHeader& modelHeader() const { return header; }
+
+  StringPiece matrixAsStringpiece() const;
+  StringPiece maxentWeightsAsStringpiece() const;
 };
 
 }  // namespace mikolov

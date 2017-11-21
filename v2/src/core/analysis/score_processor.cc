@@ -539,6 +539,59 @@ void ScoreProcessor::computeUniOnlyPatterns(
   patternDynamic_->applyUniOnly(pfc, &pfdata);
 }
 
+void ScoreProcessor::adjustBeamScores(util::ArraySlice<float> scoreWeights) {
+  auto nbnd = lattice_->createdBoundaryCount();
+  // going through global beam, it is on end side
+  // so start iteration from the 3-rd boundary
+  for (u32 latBnd = 3; latBnd < nbnd; ++latBnd) {
+    auto end = lattice_->boundary(latBnd)->ends();
+    auto gbeam = end->globalBeam();
+    for (auto el : gbeam) {
+      auto elScores = lattice_->boundary(el->ptr.boundary)->scores();
+      auto nodeScores = elScores->nodeScores(el->ptr.right);
+      auto scores = nodeScores.beamLeft(el->ptr.beam, el->ptr.left);
+      float localScore = 0;
+      for (int i = 0; i < scoreWeights.size(); ++i) {
+        localScore += scores.at(i) * scoreWeights.at(i);
+      }
+      auto prevPtr = el->ptr.previous;
+      // underlying object IS ConnectionBeamElement
+      auto prevBeam = reinterpret_cast<const ConnectionBeamElement *>(prevPtr);
+      localScore += prevBeam->totalScore;
+      // underlying object is not const, so this is safe
+      auto mutEL = const_cast<ConnectionBeamElement *>(el);
+      mutEL->totalScore = localScore;
+    }
+  }
+}
+
+void ScoreProcessor::remakeEosBeam(util::ArraySlice<float> scoreWeights) {
+  auto nbnd = lattice_->createdBoundaryCount();
+  auto eosBnd = lattice_->boundary(nbnd - 1);
+  auto rawGbeamData = lattice_->lastGbeamRaw();
+  auto fullGbeam = eosBnd->ends()->globalBeam();
+  util::MutableArraySlice<BeamCandidate> lastGbeam{
+      reinterpret_cast<BeamCandidate *>(const_cast<u64 *>(rawGbeamData)),
+      fullGbeam.size()};
+  util::MutableArraySlice<Score> fullScores{gbeamScoreBuf_, 0,
+                                            fullGbeam.size()};
+  auto rawScores = eosBnd->scores()->nodeScores(0);
+  for (int i = 0; i < fullGbeam.size(); ++i) {
+    float localScore = 0;
+    auto gbeamCand = lastGbeam.at(i);
+    auto beamScore = fullGbeam.at(i)->totalScore;
+    lastGbeam.at(i) =
+        BeamCandidate{beamScore, gbeamCand.left(), gbeamCand.beam()};
+    auto localScoreData =
+        rawScores.beamLeft(gbeamCand.beam(), gbeamCand.left());
+    for (int j = 0; j < scoreWeights.size(); ++j) {
+      localScore += localScoreData.at(j) * scoreWeights.at(j);
+    }
+    fullScores.at(i) = localScore + beamScore;
+  }
+  makeT0Beam(nbnd - 1, 0, lastGbeam, fullScores);
+}
+
 }  // namespace analysis
 }  // namespace core
 }  // namespace jumanpp

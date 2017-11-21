@@ -64,9 +64,10 @@ TEST_CASE("can build a rnn") {
   auto alloc = mgr.core();
   core::analysis::rnn::RnnIdContainer2 cont{alloc.get()};
   core::analysis::rnn::RnnIdResolver2 res;
-  std::vector<std::string> fields{"a"};
-  REQUIRE(res.build(env.core().dic(), fields, ",", env.rnnRdr().words()));
-  CHECK(res.unkId() == -1);
+  core::analysis::rnn::RnnInferenceConfig ric;
+  ric.rnnFields = {"a"};
+  REQUIRE(res.build(env.core().dic(), ric, env.rnnRdr().words()));
+  CHECK(res.unkId() == 2);
   env.analyze("gusttestnowhere");
   cont.reset(env.analyzer()->lattice()->createdBoundaryCount(), 3);
   CHECK(res.resolveIdsAtGbeam(&cont, env.analyzer()->lattice(),

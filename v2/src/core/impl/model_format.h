@@ -21,6 +21,15 @@ struct ModelPart {
 
 struct ModelInfo {
   std::vector<ModelPart> parts;
+
+  const ModelPart* firstPartOf(ModelPartKind kind) const {
+    for (auto& p : parts) {
+      if (p.kind == kind) {
+        return &p;
+      }
+    }
+    return nullptr;
+  }
 };
 
 struct BlockPtr {

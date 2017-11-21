@@ -3,6 +3,8 @@
 //
 
 #include "lattice_types.h"
+#include "util/stl_util.h"
+
 #ifdef __SSE2__
 #include <emmintrin.h>
 #endif
@@ -108,6 +110,7 @@ LatticeLeftBoundary::LatticeLeftBoundary(util::memory::PoolAlloc *alloc,
   }
 }
 
+void NodeScores::fill(Score v) { util::fill(beamScores_, v); }
 }  // namespace analysis
 }  // namespace core
 }  // namespace jumanpp

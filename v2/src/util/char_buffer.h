@@ -84,7 +84,7 @@ class CharBuffer {
     }
   }
 
-  bool prepareMemory(StringPiece sp, util::MutableArraySlice<char>* res) {
+  bool prepareMemory(StringPiece sp, MutableArraySlice<char>* res) {
     auto psize = sp.size();
     JPP_RET_CHECK(ensure_size(sp.size()));
     auto begin = current_->data() + position_;
@@ -93,14 +93,14 @@ class CharBuffer {
     return true;
   }
 
-  bool importMutable(StringPiece sp, util::MutableArraySlice<char>* res) {
+  bool importMutable(StringPiece sp, MutableArraySlice<char>* res) {
     JPP_RET_CHECK(prepareMemory(sp, res));
     std::copy(sp.char_begin(), sp.char_end(), res->begin());
     return true;
   }
 
   bool import(StringPiece* sp) {
-    util::MutableArraySlice<char> as;
+    MutableArraySlice<char> as;
     JPP_RET_CHECK(importMutable(*sp, &as));
     *sp = StringPiece{as.begin(), as.end()};
     return true;

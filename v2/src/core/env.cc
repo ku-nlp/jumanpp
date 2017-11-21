@@ -56,7 +56,7 @@ bool JumanppEnv::hasRnnModel() const {
   return it != modelInfo_.parts.end();
 }
 
-void JumanppEnv::setRnnHolder(analysis::rnn::RnnHolder* holder) {
+void JumanppEnv::setRnnHolder(analysis::RnnScorerGbeamFactory* holder) {
   if (!hasRnnModel()) {
     if (scorers_.others.empty()) {
       scorers_.others.push_back(holder);

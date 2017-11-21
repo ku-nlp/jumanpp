@@ -86,6 +86,7 @@ class NodeScores {
   u32 beam() const { return static_cast<u32>(beamScores_.numRows()); }
   u32 left() const { return numLeft_; }
   u32 numScorers() const { return numScorers_; }
+  void fill(Score v);
 };
 
 class LatticeBoundaryScores final {

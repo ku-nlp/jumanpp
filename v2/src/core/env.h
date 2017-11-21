@@ -7,7 +7,7 @@
 
 #include "core/analysis/analyzer.h"
 #include "core/analysis/perceptron.h"
-#include "core/analysis/rnn_scorer.h"
+#include "core/analysis/rnn_scorer_gbeam.h"
 #include "core/impl/model_io.h"
 
 namespace jumanpp {
@@ -24,7 +24,7 @@ class JumanppEnv {
   analysis::AnalyzerConfig analyzerConfig_{};
 
   analysis::HashedFeaturePerceptron perceptron_;
-  analysis::rnn::RnnHolder rnnHolder_;
+  analysis::RnnScorerGbeamFactory rnnHolder_;
   analysis::ScorerDef scorers_;
 
  public:
@@ -39,7 +39,7 @@ class JumanppEnv {
 
   bool hasRnnModel() const;
   void setRnnConfig(const analysis::rnn::RnnInferenceConfig& rnnConf);
-  void setRnnHolder(analysis::rnn::RnnHolder* holder);
+  void setRnnHolder(analysis::RnnScorerGbeamFactory* holder);
 
   Status makeAnalyzer(analysis::Analyzer* result) const {
     if (!hasPerceptronModel()) {

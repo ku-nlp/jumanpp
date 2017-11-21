@@ -25,8 +25,7 @@ class JumanppExec {
   std::unique_ptr<core::OutputFormat> format;
 
   // rnn
-  rnn::mikolov::MikolovModelReader mikolovModel;
-  core::analysis::rnn::RnnHolder rnnHolder;
+  core::analysis::RnnScorerGbeamFactory rnnFactory;
 
   u64 numAnalyzed_ = 0;
 

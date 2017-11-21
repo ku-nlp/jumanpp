@@ -84,7 +84,7 @@ Status GraphVizBuilder::build(GraphVizFormat *format, int maxBeam) {
 detail::Renderable *GraphVizBuilder::makeHeader() {
   auto container = tag("tr");
   auto render = fn([](RenderOutput *out, RenderContext *ctx) {
-    auto w = ctx->walker();
+    auto &w = ctx->walker();
     auto ptr = ctx->curNode();
     out->lit(ptr.boundary).lit(" ").lit(ptr.position);
     if (w.remaining() != 0) {

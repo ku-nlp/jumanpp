@@ -9,142 +9,12 @@
 #include "util/csv_reader.h"
 #include "util/serialization.h"
 #include "util/serialization_flatmap.h"
+#include "util/stl_util.h"
 
 namespace jumanpp {
 namespace core {
 namespace analysis {
 namespace rnn {
-
-Status RnnIdResolver::loadFromDic(const dic::DictionaryHolder& dic,
-                                  StringPiece colName,
-                                  util::ArraySlice<StringPiece> rnnDic,
-                                  StringPiece unkToken) {
-  auto fld = dic.fieldByName(colName);
-  targetIdx_ = fld->index;
-  if (fld->columnType != spec::FieldType::String) {
-    return Status::InvalidState()
-           << "RNN import: field " << colName << " was not strings";
-  }
-
-  util::FlatMap<StringPiece, i32> str2int;
-
-  dic::impl::StringStorageTraversal sst{fld->strings};
-  StringPiece data;
-  while (sst.next(&data)) {
-    str2int[data] = sst.position();
-  }
-
-  for (u32 i = 0; i < rnnDic.size(); ++i) {
-    auto s = rnnDic[i];
-    if (s.size() < 1) {
-      continue;
-    }
-    if (s == unkToken) {
-      unkId_ = i;
-      continue;
-    }
-    auto it = str2int.find(s);
-    if (it != str2int.end()) {
-      intMap_[it->second] = i;
-    } else {
-      strMap_[s] = i;
-    }
-  }
-
-  return Status::Ok();
-}
-
-Status RnnIdResolver::resolveIds(RnnIdContainer* ids, Lattice* lat,
-                                 const ExtraNodesContext* xtra) const {
-  ids->reset();
-  ids->alloc(lat->createdBoundaryCount());
-
-  RnnIdAdder bos0_adder{ids, 0};
-  bos0_adder.add(0, 0);
-  bos0_adder.finish();
-  RnnIdAdder bos1_adder{ids, 1};
-  bos1_adder.add(0, 0);
-  bos1_adder.finish();
-
-  int bcnt = lat->createdBoundaryCount();
-  for (int i = 2; i < bcnt - 1; ++i) {
-    auto bnd = lat->boundary(i);
-    auto starts = bnd->starts();
-    auto entries = starts->entryData();
-    RnnIdAdder adder{ids, i};
-    for (int j = 0; j < entries.numRows(); ++j) {
-      auto myEntry = entries.row(j).at(targetIdx_);
-      auto rnnId = resolveId(myEntry, bnd, j, xtra);
-      auto surfaceLength = starts->nodeInfo().at(j).numCodepoints();
-      adder.add(rnnId, surfaceLength);
-    }
-    adder.finish();
-  }
-
-  RnnIdAdder eos_adder{ids, bcnt - 1};
-  eos_adder.add(0, 0);
-  eos_adder.finish();
-  RnnIdAdder guard{ids, bcnt};
-
-  return Status::Ok();
-}
-
-i32 RnnIdResolver::resolveId(i32 entry, LatticeBoundary* lb, int position,
-                             const ExtraNodesContext* xtra) const {
-  if (entry < 0) {
-    // We have an OOV
-    // But it can be present in RNN model
-    auto nodeInfo = lb->starts()->nodeInfo().at(position);
-    auto node = xtra->node(nodeInfo.entryPtr());
-    if (node->header.type == ExtraNodeType::Unknown) {
-      StringPiece sp = node->header.unk.surface;
-      if (sp.size() != 0) {
-        auto it = strMap_.find(sp);
-        if (it != strMap_.end()) {
-          return it->second;
-        }
-      }
-    }
-  } else {
-    // We have a regular word.
-    // Check in id mapping
-    auto i1 = intMap_.find(entry);
-    if (i1 != intMap_.end()) {
-      return i1->second;
-    }
-
-    // Otherwise it is a dictionary word which
-    // is not present in RNN model.
-  }
-  return -1;
-}
-
-void RnnIdResolver::serializeMaps(util::CodedBuffer* intBuffer,
-                                  util::CodedBuffer* stringBuffer) const {
-  util::serialization::Saver intSaver{intBuffer};
-  intSaver.save(intMap_);
-  util::serialization::Saver stringSaver{stringBuffer};
-  stringSaver.save(strMap_);
-}
-
-Status RnnIdResolver::loadFromBuffers(StringPiece intBuffer,
-                                      StringPiece stringBuffer, u32 targetIdx,
-                                      u32 unkId) {
-  util::serialization::Loader intLdr{intBuffer};
-  if (!intLdr.load(&intMap_)) {
-    return Status::InvalidState() << "RnnIdResolver: failed to load int map";
-  }
-
-  util::serialization::Loader stringLdr{stringBuffer};
-  if (!stringLdr.load(&strMap_)) {
-    return Status::InvalidState() << "RnnIdResolver: failed to load string map";
-  }
-
-  targetIdx_ = targetIdx;
-  unkId_ = unkId;
-
-  return Status::Ok();
-}
 
 namespace {
 struct RnnIdResolverBuilder {
@@ -246,7 +116,7 @@ struct RnnIdResolverBuilder {
 
     if (eosId == -1) {
       return JPPS_INVALID_PARAMETER
-             << "rnn dic file did not contain </s> marker";
+             << "rnn dic file did not contain BOS/EOS marker (" << eos << ")";
     }
 
     if (!unkToken.empty() && unkId == -1) {
@@ -266,14 +136,18 @@ struct RnnIdResolverBuilder {
 }  // namespace
 
 Status RnnIdResolver2::build(const dic::DictionaryHolder& dic,
-                             const std::vector<std::string>& fields,
-                             const std::string& separator,
+                             const RnnInferenceConfig& cfg,
                              util::ArraySlice<StringPiece> rnndic) {
   RnnIdResolverBuilder bldr;
-  bldr.separator = separator;
-  JPP_RETURN_IF_ERROR(bldr.resolveFields(fields, dic, &fields_));
+  bldr.separator = cfg.fieldSeparator;
+  bldr.unkToken = cfg.unkSymbol;
+  bldr.eos = cfg.eosSymbol;
+  JPP_RETURN_IF_ERROR(bldr.resolveFields(cfg.rnnFields, dic, &fields_));
   JPP_RETURN_IF_ERROR(bldr.loadData(rnndic));
   JPP_RETURN_IF_ERROR(bldr.makeIndices());
+  if (bldr.eosId != 0) {
+    return JPPS_NOT_IMPLEMENTED << "we don't support if EOS/BOS token is not 0";
+  }
   unkId_ = bldr.unkId;
   knownIndex_.plunder(&bldr.knownBuilder);
   unkIndex_.plunder(&bldr.unkBuilder);
@@ -299,8 +173,8 @@ StringPiece RnnIdResolver2::reprOf(RnnReprBuilder* bldr, EntryPtr eptr,
 Status RnnIdResolver2::resolveIdsAtGbeam(RnnIdContainer2* ids, Lattice* lat,
                                          const ExtraNodesContext* xtra) const {
   auto numBnds = lat->createdBoundaryCount();
+  ids->reset(numBnds, lat->config().globalBeamSize);
   auto last = lat->boundary(numBnds - 1);
-
   auto bos1 = lat->boundary(1);
   auto& bosBeam = bos1->starts()->beamData().at(0);
   ids->ptrCache_[&bosBeam.ptr] = ids->crdCache_[{1, 0, 0}];
@@ -321,16 +195,26 @@ Status RnnIdResolver2::resolveIdsAtGbeam(RnnIdContainer2* ids, Lattice* lat,
   return Status::Ok();
 }
 
+Status RnnIdResolver2::setState(util::ArraySlice<u32> fields, StringPiece known,
+                                StringPiece unknown, i32 unkid) {
+  util::copy_insert(fields, fields_);
+  unkId_ = unkid;
+  JPP_RETURN_IF_ERROR(knownIndex_.loadFromMemory(known));
+  JPP_RETURN_IF_ERROR(unkIndex_.loadFromMemory(unknown));
+  return Status::Ok();
+}
+
 std::pair<RnnNode*, RnnNode*> RnnIdContainer2::addPrevChain(
     const RnnIdResolver2* resolver, const Lattice* lat,
-    const ConnectionPtr* node, const ExtraNodesContext* xtra) {
-  auto prevPair = ptrCache_.emplace(node, nullptr);
+    const ConnectionPtr* cptr, const ExtraNodesContext* xtra) {
+  auto prevPair = ptrCache_.emplace(cptr, nullptr);
   if (prevPair.second) {
-    auto span = addPrevChain(resolver, lat, node->previous, xtra);  // recursion
+    auto span = addPrevChain(resolver, lat, cptr->previous, xtra);  // recursion
     auto prev = span.second;
     auto& nodePtr = prevPair.first->second;
-    auto& coord = resolveId(resolver, lat, node, xtra);
-    auto rnnIdU32 = static_cast<u32>(coord.rnnId);
+    auto& coord = resolveId(resolver, lat, cptr, xtra);
+    auto rnnIdU32 =
+        static_cast<u32>(coord.rnnId) | (static_cast<u64>(coord.length) << 32);
     auto hash = util::hashing::FastHash1{prev->hash}.mix(rnnIdU32).result();
     auto it = crdCache_.find(coord);
 
@@ -338,7 +222,10 @@ std::pair<RnnNode*, RnnNode*> RnnIdContainer2::addPrevChain(
       auto* cached = it->second;
       do {
         if (cached->hash == hash) {
+          // we can collapse a path in the RNN lattice
+          // but we still need to publish the score
           nodePtr = it->second;
+          addScore(nodePtr, cptr);
           return std::make_pair(nodePtr, nodePtr);
         }
         cached = cached->nextInBnd;
@@ -349,7 +236,8 @@ std::pair<RnnNode*, RnnNode*> RnnIdContainer2::addPrevChain(
     nodePtr->prev = prev;
     nodePtr->hash = hash;
     nodePtr->id = coord.rnnId;
-    nodePtr->boundary = node->boundary;
+    nodePtr->boundary = cptr->boundary;
+    nodePtr->length = coord.length;
     return std::make_pair(span.first, nodePtr);
   }
   return std::make_pair(prevPair.first->second, prevPair.first->second);
@@ -362,16 +250,6 @@ void RnnIdContainer2::addPath(const RnnIdResolver2* resolver,
   auto first = path.first;
   auto last = path.second;
 
-  auto makeScore = [&](RnnNode* rnnNode, const ConnectionPtr* node) {
-    auto score = this->alloc_->allocate<RnnScorePtr>();
-    score->latPtr = node;
-    score->rnn = rnnNode;
-    auto& bnd = this->boundaries_[rnnNode->boundary];
-    score->next = bnd.scores;
-    bnd.scores = score;
-    bnd.scoreCnt += 1;
-  };
-
   // publish found path (newly created nodes here)
   for (; first != last; last = last->prev) {
     auto& bnd = this->boundaries_[last->boundary];
@@ -379,11 +257,21 @@ void RnnIdContainer2::addPath(const RnnIdResolver2* resolver,
     last->nextInBnd = bnd.node;
     bnd.node = last;
     bnd.nodeCnt += 1;
-    makeScore(last, cptr);
+    addScore(last, cptr);
     auto& crd = resolveId(resolver, lat, cptr, xtra);
     crdCache_[crd] = last;
     cptr = cptr->previous;
   }
+}
+
+void RnnIdContainer2::addScore(RnnNode* rnnNode, const ConnectionPtr* node) {
+  auto score = this->alloc_->allocate<RnnScorePtr>();
+  score->latPtr = node;
+  score->rnn = rnnNode;
+  auto& bnd = this->boundaries_[rnnNode->boundary];
+  score->next = bnd.scores;
+  bnd.scores = score;
+  bnd.scoreCnt += 1;
 }
 
 const RnnCoordinate& RnnIdContainer2::resolveId(const RnnIdResolver2* resolver,
@@ -436,17 +324,23 @@ void RnnIdContainer2::reset(u32 numBoundaries, u32 beamSize) {
 }
 
 void RnnIdContainer2::addBos() {
-  auto node = alloc_->allocate<RnnNode>();
-  node->hash = 0xdeadbeef0000;
-  node->id = 0;
-  node->idx = 0;
-  node->boundary = 1;
-  node->nextInBnd = nullptr;
-  node->prev = nullptr;
-  boundaries_[1].node = node;
+  auto bos0 = alloc_->allocate<RnnNode>();
+  bos0->id = 0;
+  bos0->idx = 0;
+  bos0->boundary = 0;
+  bos0->prev = nullptr;
+  bos0->nextInBnd = nullptr;
+  auto bos1 = alloc_->allocate<RnnNode>();
+  bos1->hash = 0xdeadbeef0000;
+  bos1->id = 0;
+  bos1->idx = 0;
+  bos1->boundary = 1;
+  bos1->nextInBnd = nullptr;
+  bos1->prev = bos0;
+  boundaries_[1].node = bos1;
   boundaries_[1].nodeCnt = 1;
   RnnCoordinate bosCrd{1, 0, 0};
-  crdCache_[bosCrd] = node;
+  crdCache_[bosCrd] = bos1;
   nodeCache_[{1, 0}] = bosCrd;
 }
 

@@ -221,6 +221,18 @@ util::ArraySlice<float> MikolovModelReader::nceEmbeddings() const {
       data_->nceEmbeddingData.get(),
       data_->header.vocabSize * data_->header.layerSize};
 }
+
+StringPiece MikolovRnn::matrixAsStringpiece() const {
+  return StringPiece{reinterpret_cast<StringPiece::pointer_t>(weights.begin()),
+                     weights.size() * sizeof(float)};
+}
+
+StringPiece MikolovRnn::maxentWeightsAsStringpiece() const {
+  return StringPiece{
+      reinterpret_cast<StringPiece::pointer_t>(maxentWeights.begin()),
+      maxentWeights.size() * sizeof(float)};
+}
+
 }  // namespace mikolov
 }  // namespace rnn
 }  // namespace jumanpp

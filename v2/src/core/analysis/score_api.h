@@ -54,8 +54,8 @@ class FeatureScorer : public ScorerBase {
 class ScoreComputer {
  public:
   virtual ~ScoreComputer() = default;
-  virtual void preScore(Lattice* l, ExtraNodesContext* xtra) = 0;
-  virtual bool scoreBoundary(i32 scorerIdx, Lattice* l, i32 boundary) = 0;
+  virtual Status scoreLattice(Lattice* l, const ExtraNodesContext* xtra,
+                              u32 scorerIdx) = 0;
 };
 
 class ScorerFactory : public ScorerBase {

@@ -166,6 +166,8 @@ class ScoreProcessor {
   bool patternIsStatic() const { return patternStatic_ != nullptr; }
   void computeUniOnlyPatterns(i32 bndIdx,
                               features::impl::PrimitiveFeatureContext* pfc);
+  void adjustBeamScores(util::ArraySlice<float> scoreWeights);
+  void remakeEosBeam(util::ArraySlice<float> scoreWeights);
 };
 
 }  // namespace analysis

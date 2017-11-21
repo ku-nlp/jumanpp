@@ -253,25 +253,9 @@ int doTrainJpp(t::TrainingArguments& args, core::JumanppEnv& env) {
 int doEmbedRnn(t::TrainingArguments& args, core::JumanppEnv& env) {
   LOG_INFO() << "embedding the rnn into the model file";
 
-  rnn::mikolov::MikolovModelReader rnnReader;
-  Status s = rnnReader.open(args.rnnModelFilename);
-  if (!s) {
-    LOG_ERROR() << "failed to open rnn file: " << args.rnnModelFilename << "\n"
-                << s;
-    return 1;
-  }
-
-  s = rnnReader.parse();
-  if (!s) {
-    LOG_ERROR() << "failed to parse rnn model from file: "
-                << args.rnnModelFilename << "\n"
-                << s;
-    return 1;
-  }
-
-  core::analysis::rnn::RnnHolder rnnHolder;
-  s = rnnHolder.init(args.rnnConfig, rnnReader, env.coreHolder()->dic(),
-                     "surface");
+  core::analysis::RnnScorerGbeamFactory rnnHolder;
+  Status s = rnnHolder.make(args.rnnModelFilename, env.coreHolder()->dic(),
+                            args.rnnConfig);
   if (!s) {
     LOG_ERROR() << "failed to initialize rnn: " << s;
     return 1;
