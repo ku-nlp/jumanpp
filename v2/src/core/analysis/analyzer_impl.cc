@@ -73,9 +73,20 @@ Status AnalyzerImpl::initScorers(const ScorerDef& cfg) {
     auto& fspec = core_->spec().features;
     latticeConfig_.numFeaturePatterns =
         static_cast<u32>(fspec.pattern.size() - fspec.numUniOnlyPats);
-    lattice_.updateConfig(latticeConfig_);
   }
 
+  if (cfg_.globalBeamSize > 0) {
+    latticeConfig_.globalBeamSize = static_cast<u32>(cfg_.globalBeamSize);
+  }
+
+  if (!cfg.others.empty()) {
+    if (cfg_.globalBeamSize <= 0) {
+      return JPPS_INVALID_STATE << "additional scorers are supported only with "
+                                   "global beam enabled";
+    }
+  }
+
+  lattice_.updateConfig(latticeConfig_);
   return Status::Ok();
 }
 

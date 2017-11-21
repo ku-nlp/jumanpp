@@ -437,7 +437,8 @@ void PartialTrainer::handleEos() {
   }
 
   float score = 1.0f / beams;
-  loss_ += 1.0f * nodes / eos->ends()->arraySize() / l->createdBoundaryCount();
+  loss_ +=
+      1.0f * nodes / eos->ends()->nodePtrs().size() / l->createdBoundaryCount();
   NgramExampleFeatureCalculator nfc{l, analyzer_->core().features()};
   featureBuf_.resize(analyzer_->core().spec().features.ngram.size());
   util::MutableArraySlice<u32> buffer{&featureBuf_};

@@ -14,17 +14,28 @@ namespace jumanpp {
 namespace core {
 namespace analysis {
 
-class LatticeLeftBoundary final : public util::memory::StructOfArrays {
-  util::memory::SizedArrayField<LatticeNodePtr> endingNodes;
-
+class LatticeLeftBoundary {
+  util::MutableArraySlice<LatticeNodePtr> endingNodes_;
+  util::MutableArraySlice<const ConnectionBeamElement*> globalBeam_;
   friend class LatticeBoundary;
 
  public:
   LatticeLeftBoundary(util::memory::PoolAlloc* alloc, const LatticeConfig& lc,
                       const LatticeBoundaryConfig& lbc);
 
-  util::ArraySlice<LatticeNodePtr> nodePtrs() const {
-    return endingNodes.data();
+  util::ArraySlice<LatticeNodePtr> nodePtrs() const { return endingNodes_; }
+
+  util::MutableArraySlice<const ConnectionBeamElement*> globalBeam() {
+    return globalBeam_;
+  }
+
+  util::ArraySlice<const ConnectionBeamElement*> globalBeam() const {
+    return globalBeam_;
+  }
+
+  void setGlobalBeamSize(size_t size) {
+    globalBeam_ = util::MutableArraySlice<const ConnectionBeamElement*>{
+        globalBeam_, 0, size};
   }
 };
 
@@ -123,7 +134,7 @@ class LatticeBoundary {
   }
 
   bool endingsFilled() const {
-    return left_.endingNodes.data().size() == currentEnding_;
+    return left_.nodePtrs().size() == currentEnding_;
   }
 
   bool isActive() const { return cfg_.beginNodes != 0 && cfg_.endNodes != 0; }
@@ -147,6 +158,7 @@ class Lattice {
   util::memory::ManagedVector<LatticeBoundary*> boundaries;
   LatticeConfig lconf;
   util::memory::PoolAlloc* alloc;
+  const u64* lastGbeam_;
 
  public:
   Lattice(const Lattice&) = delete;
@@ -169,6 +181,8 @@ class Lattice {
   void reset();
   const LatticeConfig& config() { return lconf; }
   void updateConfig(const LatticeConfig& cfg) { lconf = cfg; }
+  const u64* lastGbeamRaw() const { return lastGbeam_; }
+  void setLastGbeam(const u64* ptr) { lastGbeam_ = ptr; }
 };
 
 }  // namespace analysis

@@ -86,6 +86,16 @@ Status MikolovRnn::init(const MikolovRnnModelHeader& header,
   return Status::Ok();
 }
 
+void MikolovRnn::applyParallel(ParallelStepData* data) const {
+  MikolovRnnImplParallel impl{*this};
+  impl.apply(data);
+}
+
+void MikolovRnn::computeNewParCtx(ParallelContextData* pcd) const {
+  MikolovRnnImplParallel impl{*this};
+  impl.computeNewContext(*pcd);
+}
+
 template <typename T>
 struct FreeDeleter {
   void operator()(T* o) { free(o); }

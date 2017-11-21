@@ -26,6 +26,8 @@ struct RnnInferenceConfig {
   float rnnWeight = 1.0f;
   std::string unkSymbol;
   u32 unkId = 0;
+  std::vector<std::string> rnnFields;
+  std::string fieldSeparator;
 
   bool operator==(const RnnInferenceConfig& other) const {
     return nceBias == other.nceBias &&

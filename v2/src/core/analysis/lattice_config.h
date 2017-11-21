@@ -67,6 +67,7 @@ struct LatticeConfig {
   u32 numFeaturePatterns;
   u32 beamSize;
   u32 scoreCnt;
+  u32 globalBeamSize = 0;
 };
 
 struct LatticeBoundaryConfig {

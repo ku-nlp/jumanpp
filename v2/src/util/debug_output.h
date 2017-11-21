@@ -32,6 +32,27 @@ std::ostream& operator<<(std::ostream& os, const VOutImpl<T>& v) {
 }
 
 template <typename T>
+struct MOutImpl {
+  util::ConstSliceable<T> wrapped;
+};
+
+template <typename T>
+std::ostream& operator<<(std::ostream& os, const MOutImpl<T>& v) {
+  auto& m = v.wrapped;
+  os << '[';
+  os << " nrows=" << m.numRows() << " ncols=" << m.rowSize();
+  for (int row = 0; row < m.numRows(); ++row) {
+    auto robj = m.row(row);
+    os << "\n";
+    for (int col = 0; col < m.rowSize(); ++col) {
+      os << robj.at(col) << ", ";
+    }
+  }
+  os << ']';
+  return os;
+}
+
+template <typename T>
 std::ostream& operator<<(std::ostream& os, const Sliceable<T>& s) {
   os << "\n[";
 
@@ -54,6 +75,12 @@ util::VOutImpl<typename C::value_type> VOut(const C& slice) {
   using T = typename C::value_type;
   util::ArraySlice<T> aslice{slice};
   return util::VOutImpl<T>{aslice};
+}
+
+template <typename C>
+util::MOutImpl<typename C::value_type> MOut(const C& slice) {
+  using T = typename C::value_type;
+  return util::MOutImpl<T>{slice};
 }
 
 template <typename It>

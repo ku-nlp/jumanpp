@@ -40,12 +40,11 @@ LatticeBoundary::LatticeBoundary(util::memory::PoolAlloc *alloc,
       currentEnding_{0} {}
 
 Status LatticeBoundary::initialize() {
-  JPP_RETURN_IF_ERROR(left_.initialize());
   return Status::Ok();
 }
 
 void LatticeBoundary::addEnd(LatticeNodePtr nodePtr) {
-  left_.endingNodes.data().at(currentEnding_) = nodePtr;
+  left_.endingNodes_.at(currentEnding_) = nodePtr;
   ++currentEnding_;
 }
 
@@ -101,8 +100,13 @@ LatticeRightBoundary::LatticeRightBoundary(util::memory::PoolAlloc *alloc,
 
 LatticeLeftBoundary::LatticeLeftBoundary(util::memory::PoolAlloc *alloc,
                                          const LatticeConfig &lc,
-                                         const LatticeBoundaryConfig &lbc)
-    : StructOfArrays(alloc, lbc.endNodes), endingNodes{this, 1} {}
+                                         const LatticeBoundaryConfig &lbc) {
+  endingNodes_ = alloc->allocateBuf<LatticeNodePtr>(lbc.endNodes);
+  if (lc.globalBeamSize > 0) {
+    globalBeam_ =
+        alloc->allocateBuf<const ConnectionBeamElement *>(lc.globalBeamSize);
+  }
+}
 
 }  // namespace analysis
 }  // namespace core

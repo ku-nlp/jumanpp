@@ -30,7 +30,7 @@ ScoreProcessor::ScoreProcessor(AnalyzerImpl *analyzer)
   for (u32 idx = 2; idx < lattice_->createdBoundaryCount(); ++idx) {
     auto bnd = lattice_->boundary(idx);
     maxNodes = std::max<u32>(maxNodes, bnd->localNodeCount());
-    maxEnds = std::max<u32>(maxEnds, bnd->ends()->arraySize());
+    maxEnds = std::max<u32>(maxEnds, bnd->ends()->nodePtrs().size());
   }
   this->runStats_.maxStarts = maxNodes;
   this->runStats_.maxEnds = maxEnds;
@@ -51,6 +51,8 @@ ScoreProcessor::ScoreProcessor(AnalyzerImpl *analyzer)
     t1PtrData_.reserve(globalBeamSize_);
     globalBeam_ =
         alloc->allocateBuf<BeamCandidate>(maxEnds * lcfg.beamSize, 64);
+    const u64 *gbeamPtr = reinterpret_cast<const u64 *>(globalBeam_.data());
+    lattice_->setLastGbeam(gbeamPtr);
     t1positions_ = alloc->allocateBuf<u32>(globalBeamSize_);
     t1patBuf_ = alloc->allocate2d<u64>(maxEnds, lcfg.numFeaturePatterns);
     t2patBuf_ =
@@ -291,6 +293,18 @@ util::ArraySlice<BeamCandidate> ScoreProcessor::makeGlobalBeam(i32 bndIdx,
   }
   util::MutableArraySlice<BeamCandidate> slice{globalBeam_, 0, count};
   auto res = processBeamCandidates(slice, maxElems);
+  auto gbptrs = ends->globalBeam();
+  if (gbptrs.size() > 0) {
+    JPP_DCHECK_LE(res.size(), gbptrs.size());
+    ends->setGlobalBeamSize(res.size());
+    for (int i = 0; i < res.size(); ++i) {
+      auto beamEl = res.at(i);
+      auto left = leftNodes.at(beamEl.left());
+      auto nodeBnd = lattice_->boundary(left.boundary);
+      auto beams = nodeBnd->starts()->beamData();
+      gbptrs.at(i) = &beams.row(left.position).at(beamEl.beam());
+    }
+  }
   return res;
 }
 
@@ -447,7 +461,8 @@ void ScoreProcessor::makeT0Beam(i32 bndIdx, i32 t0idx,
 
   auto start = lattice_->boundary(bndIdx)->starts();
   auto beam = start->beamData().row(t0idx);
-  auto prevPtrs = lattice_->boundary(bndIdx)->ends()->nodePtrs();
+  const auto ends = lattice_->boundary(bndIdx)->ends();
+  auto gbeamNodes = ends->globalBeam();
 
   u32 beamIdx = 0;
   for (auto it = idxes.begin(); it < itr; ++it) {
@@ -455,13 +470,10 @@ void ScoreProcessor::makeT0Beam(i32 bndIdx, i32 t0idx,
       break;
     }
     auto &prev = gbeam.at(*it);
+    auto prevPtr = gbeamNodes.at(*it);
     auto globalScore = scores.at(*it);
-    auto prevPtr = prevPtrs.at(prev.left());
-    auto prevBnd = lattice_->boundary(prevPtr.boundary)->starts();
-    auto &prevFullPtr =
-        prevBnd->beamData().row(prevPtr.position).at(prev.beam());
     ConnectionPtr cp{static_cast<u16>(bndIdx), prev.left(),
-                     static_cast<u16>(t0idx), prev.beam(), &prevFullPtr.ptr};
+                     static_cast<u16>(t0idx), prev.beam(), &prevPtr->ptr};
 
     ConnectionBeamElement cbe{cp, globalScore};
 

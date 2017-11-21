@@ -60,7 +60,7 @@ class ErasedAllocator {
   virtual ~ErasedAllocator() noexcept = default;
 };
 
-class PoolAlloc : public ErasedAllocator {
+class PoolAlloc final : public ErasedAllocator {
   Manager *mgr_;
   char *base_ = nullptr;
   size_t offset_ = 0;

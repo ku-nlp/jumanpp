@@ -173,6 +173,67 @@ class MyTester {
     return result;
   }
 
+  std::vector<MyContext> stepParallel(std::initializer_list<MyContext> ctxs,
+                                      std::initializer_list<StringPiece> data) {
+    REQUIRE(ctxs.size() == data.size());
+
+    std::vector<i32> words;
+    for (auto sp : data) {
+      words.push_back(s2i.at(sp));
+    }
+
+    auto& h = rdr.header();
+    util::MutableArraySlice<float> embedHack{
+        const_cast<float*>(rdr.embeddings().data()), rdr.embeddings().size()};
+    auto embeds = asSlice(embedHack, h.vocabSize);
+
+    util::MutableArraySlice<float> nceHack{
+        const_cast<float*>(rdr.nceEmbeddings().data()),
+        rdr.embeddings().size()};
+
+    auto nceSlice = asSlice(nceHack, h.vocabSize);
+
+    auto ctxData =
+        alloc->allocate2d<i32>(ctxs.size(), ctxs.begin()[0].prevWords.size());
+    auto ctxVecs = alloc->allocate2d<float>(ctxs.size(), h.layerSize, 64);
+    for (int j = 0; j < ctxs.size(); ++j) {
+      auto& ctx = ctxs.begin()[j];
+      auto result = ctxData.row(j);
+      util::copy_buffer(ctx.prevWords, result);
+      auto r2 = ctxVecs.row(j);
+      util::copy_buffer(ctx.context, r2);
+    }
+
+    auto nceVecs = alloc->allocate2d<float>(words.size(), h.layerSize, 64);
+    auto leftEmbeds = alloc->allocate2d<float>(words.size(), h.layerSize, 64);
+    for (int k = 0; k < words.size(); ++k) {
+      auto res = nceVecs.row(k);
+      util::copy_buffer(nceSlice.row(words[k]), res);
+      auto embBuf = leftEmbeds.row(k);
+      auto prevId = ctxs.begin()[k].prevWords.at(0);
+      util::copy_buffer(embeds.row(prevId), embBuf);
+    }
+
+    auto newCtxs = alloc->allocate2d<float>(ctxs.size(), h.layerSize, 64);
+    auto scoreData = alloc->allocateBuf<float>(words.size(), 64);
+    util::fill(scoreData, 0);
+
+    ParallelContextData pcd{ctxVecs, leftEmbeds, newCtxs};
+    rnn.computeNewParCtx(&pcd);
+
+    ParallelStepData psd{ctxData, words, newCtxs, nceVecs, scoreData};
+    rnn.applyParallel(&psd);
+    std::vector<MyContext> result;
+    for (u32 l = 0; l < ctxs.size(); ++l) {
+      result.push_back({changeState(ctxData.row(l), words.at(l)),  // state
+                        newCtxs.row(l),
+                        0.f,
+                        0.f,
+                        {scoreData, l, 1}});
+    }
+    return result;
+  }
+
   MyContext step(MyContext& ctx, StringPiece str) {
     int wordId = s2i.at(str);
 
@@ -307,4 +368,27 @@ TEST_CASE("repimplementation works in NxM mode") {
   CHECK(c1.nScore(0) == Approx(-2.4811f));
   CHECK(c1.nScore(1) == Approx(-6.68284f));
   CHECK(c1.nScore(2) == Approx(-3.62682f));
+}
+
+TEST_CASE("reimplementation works in parallel mode with a single arg") {
+  MyTester tstr;
+  auto z = tstr.zero();
+  auto a1 = tstr.step(z, "help");
+  auto b = tstr.stepParallel({a1}, {"me"});
+  auto b1a = tstr.step(a1, "me");
+  REQUIRE(b.size() == 1);
+  CHECK(b[0].nScore(0) == Approx(b1a.normalizedScore));
+}
+
+TEST_CASE("reimplementation works in parallel mode") {
+  MyTester tstr;
+  auto z = tstr.zero();
+  auto a1 = tstr.step(z, "help");
+  auto a2 = tstr.step(z, "save");
+  auto b = tstr.stepParallel({a1, a2}, {"me", "me"});
+  auto b1a = tstr.step(a1, "me");
+  auto b2a = tstr.step(a2, "me");
+  REQUIRE(b.size() == 2);
+  CHECK(b[0].nScore(0) == Approx(b1a.normalizedScore));
+  CHECK(b[1].nScore(0) == Approx(b2a.normalizedScore));
 }

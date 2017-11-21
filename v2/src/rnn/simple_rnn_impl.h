@@ -49,6 +49,14 @@ inline Matrix asMatrix(const util::Sliceable<FpType> &sl, size_t rows,
   return Matrix(ptr, rows, cols);
 }
 
+inline Matrix asMatrix(const util::ConstSliceable<FpType> &sl, size_t rows,
+                       size_t cols) {
+  FpType *ptr = const_cast<FpType *>(sl.data().data());
+  JPP_DCHECK_LE(cols * rows, sl.size());
+  JPP_DCHECK(isAligned(ptr, 64));
+  return Matrix(ptr, rows, cols);
+}
+
 }  // namespace impl
 }  // namespace rnn
 }  // namespace jumanpp

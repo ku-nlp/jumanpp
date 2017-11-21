@@ -43,6 +43,8 @@ struct PieceWithValue {
 
 }  // namespace impl
 
+class DoubleArray;
+
 class DoubleArrayBuilder {
   std::unique_ptr<impl::DoubleArrayCore> array_;
   std::vector<impl::PieceWithValue> immediate_;
@@ -60,10 +62,10 @@ class DoubleArrayBuilder {
     return StringPiece{storage, underlyingByteSize()};
   }
 
+  friend class DoubleArray;
+
   ~DoubleArrayBuilder();
 };
-
-class DoubleArray;
 
 enum class TraverseStatus {
   Ok,      // There was a leaf node in the trie
@@ -86,7 +88,6 @@ class DoubleArrayTraversal {
 
   i32 value() const { return value_; }
   TraverseStatus step(StringPiece data);
-  TraverseStatus step(StringPiece data, size_t &pos);
 
   bool operator==(const DoubleArrayTraversal &o) const {
     return base_ == o.base_ && node_pos_ == o.node_pos_ &&
@@ -99,6 +100,7 @@ class DoubleArray {
 
  public:
   Status loadFromMemory(StringPiece memory);
+  void plunder(DoubleArrayBuilder *bldr);
 
   DoubleArray();
   ~DoubleArray();
@@ -106,6 +108,9 @@ class DoubleArray {
   DoubleArrayTraversal traversal() const {
     return DoubleArrayTraversal(underlying_.get());
   }
+
+  StringPiece contents() const;
+  std::string describe() const;
 
   friend class DoubleArrayTraversal;
 };

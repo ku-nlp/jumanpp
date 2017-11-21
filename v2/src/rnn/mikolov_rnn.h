@@ -52,6 +52,25 @@ struct StepData {
   util::Sliceable<float> scores;       // rightSize x beam
 };
 
+struct ParallelContextData {
+  util::ConstSliceable<float> context;     // size x nvals
+  util::ConstSliceable<float> leftEmbeds;  // size x nvals
+  util::Sliceable<float> newContext;       // size x nvals
+};
+
+struct ParallelStepData {
+  // MaxEnt part
+  util::ConstSliceable<i32> contextIds;  // ctx - 1 x nvals
+  util::ArraySlice<i32> rightIds;        // nvals
+
+  // RNN part
+  util::ConstSliceable<float> context;    // size x nvals
+  util::ConstSliceable<float> nceEmbeds;  // size x nvals
+
+  // Output
+  util::MutableArraySlice<float> scores;  // nvals
+};
+
 struct ContextStepData {
   // INPUT: context vectors for each element in the beam
   util::Sliceable<float> prevContext;
@@ -131,6 +150,7 @@ class MikolovRnn {
   float rnnNceConstant;
 
   friend class MikolovRnnImpl;
+  friend class MikolovRnnImplParallel;
 
  public:
   Status init(const MikolovRnnModelHeader& header,
@@ -140,6 +160,9 @@ class MikolovRnn {
   void apply(StepData* data);
   void calcNewContext(const ContextStepData& csd);
   void calcScoresOn(const InferStepData& isd, i32 from, i32 count);
+  void applyParallel(ParallelStepData* data) const;
+  void computeNewParCtx(ParallelContextData* pcd) const;
+  const MikolovRnnModelHeader& modelHeader() const { return header; }
 };
 
 }  // namespace mikolov

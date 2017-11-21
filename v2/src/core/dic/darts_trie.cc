@@ -49,8 +49,7 @@ Status DoubleArrayBuilder::build(ProgressCallback *progress) {
                               values.data(), progress);
 
   if (retval != 0) {
-    return Status::InvalidState()
-           << "double array build failed, code=" << retval;
+    return JPPS_INVALID_STATE << "double array build failed, code=" << retval;
   }
 
   return Status::Ok();
@@ -82,9 +81,27 @@ DoubleArray::~DoubleArray() {}
 
 DoubleArray::DoubleArray() {}
 
-TraverseStatus DoubleArrayTraversal::step(StringPiece data, size_t &pos) {
+StringPiece DoubleArray::contents() const {
+  auto storage = reinterpret_cast<StringPiece::pointer_t>(underlying_->array());
+  return StringPiece{storage, underlying_->total_size()};
+}
+
+void DoubleArray::plunder(DoubleArrayBuilder *bldr) {
+  underlying_ = std::move(bldr->array_);
+}
+
+std::string DoubleArray::describe() const {
+  std::string description;
+  description += "size=";
+  description += std::to_string(underlying_->size());
+  description += " nonzero=";
+  description += std::to_string(underlying_->nonzero_size());
+  return description;
+}
+
+TraverseStatus DoubleArrayTraversal::step(StringPiece data) {
   key_pos_ = 0;
-  auto status = base_->traverse(data.begin(), pos, key_pos_, data.size());
+  auto status = base_->traverse(data.begin(), node_pos_, key_pos_, data.size());
 
   switch (status) {
     case -1:
@@ -95,10 +112,6 @@ TraverseStatus DoubleArrayTraversal::step(StringPiece data, size_t &pos) {
       value_ = status;
       return TraverseStatus::Ok;
   }
-}
-
-TraverseStatus DoubleArrayTraversal::step(StringPiece data) {
-  return step(data, node_pos_);
 }
 
 }  // namespace dic

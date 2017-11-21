@@ -20,6 +20,7 @@ jpp_core_files(core_srcs
   perceptron.cc
   rnn_id_resolver.cc
   rnn_scorer.cc
+  rnn_scorer_gbeam.cc
   score_processor.cc
   unk_nodes.cc
   unk_nodes_creator.cc
@@ -36,6 +37,7 @@ set(core_analysis_tsrc
   numeric_creator_test.cc
   onomatopoeia_creator_test.cc
   perceptron_test.cc
+  rnn_id_resolver_test.cc
   rnn_scorer_test.cc
   score_processor_test.cc
   unk_nodes_creator_test.cc
@@ -64,6 +66,7 @@ jpp_core_files(core_hdrs
   perceptron.h
   rnn_id_resolver.h
   rnn_scorer.h
+  rnn_scorer_gbeam.h
   rnn_serialization.h
   score_api.h
   score_processor.h

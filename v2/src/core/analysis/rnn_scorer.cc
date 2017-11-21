@@ -502,7 +502,7 @@ void RnnScorer::preScore(Lattice* l, ExtraNodesContext* xtra) {
 bool RnnScorer::scoreBoundary(i32 scorerIdx, Lattice* l, i32 boundary) {
   auto& s = *state_;
   auto lb = l->boundary(boundary);
-  auto endCnt = lb->ends()->arraySize();
+  auto endCnt = lb->ends()->nodePtrs().size();
   auto rbuf = s.gatherNceEmbeds(boundary);
 
   for (int leftNodeIdx = 0; leftNodeIdx < endCnt; ++leftNodeIdx) {
