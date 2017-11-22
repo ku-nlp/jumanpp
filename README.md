@@ -15,7 +15,7 @@ How to compile development version:
 
 - OS: Linux or MacOS X
 - Compiler: C++14 compatible (will [downgrade to C++11](https://github.com/ku-nlp/jumanpp/issues/20) later)
--- We test on GCC and clang
+ - We test on GCC and clang
 - CMake v3.1 or later
 
 ```bash
