@@ -62,8 +62,8 @@ TEST_CASE("can build a rnn") {
   RnnIdTestEnv env{dic};
   util::memory::Manager mgr{512 * 1024};
   auto alloc = mgr.core();
-  core::analysis::rnn::RnnIdContainer2 cont{alloc.get()};
-  core::analysis::rnn::RnnIdResolver2 res;
+  core::analysis::rnn::RnnIdContainer cont{alloc.get()};
+  core::analysis::rnn::RnnIdResolver res;
   core::analysis::rnn::RnnInferenceConfig ric;
   ric.rnnFields = {"a"};
   REQUIRE(res.build(env.core().dic(), ric, env.rnnRdr().words()));

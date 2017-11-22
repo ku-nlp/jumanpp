@@ -135,9 +135,9 @@ struct RnnIdResolverBuilder {
 };
 }  // namespace
 
-Status RnnIdResolver2::build(const dic::DictionaryHolder& dic,
-                             const RnnInferenceConfig& cfg,
-                             util::ArraySlice<StringPiece> rnndic) {
+Status RnnIdResolver::build(const dic::DictionaryHolder& dic,
+                            const RnnInferenceConfig& cfg,
+                            util::ArraySlice<StringPiece> rnndic) {
   RnnIdResolverBuilder bldr;
   bldr.separator = cfg.fieldSeparator;
   bldr.unkToken = cfg.unkSymbol;
@@ -154,9 +154,9 @@ Status RnnIdResolver2::build(const dic::DictionaryHolder& dic,
   return Status::Ok();
 }
 
-StringPiece RnnIdResolver2::reprOf(RnnReprBuilder* bldr, EntryPtr eptr,
-                                   util::ArraySlice<i32> features,
-                                   const ExtraNodesContext* xtra) const {
+StringPiece RnnIdResolver::reprOf(RnnReprBuilder* bldr, EntryPtr eptr,
+                                  util::ArraySlice<i32> features,
+                                  const ExtraNodesContext* xtra) const {
   bldr->reset();
   for (auto fld : fields_) {
     auto feature = features.at(fld);
@@ -170,8 +170,8 @@ StringPiece RnnIdResolver2::reprOf(RnnReprBuilder* bldr, EntryPtr eptr,
   return bldr->repr();
 }
 
-Status RnnIdResolver2::resolveIdsAtGbeam(RnnIdContainer2* ids, Lattice* lat,
-                                         const ExtraNodesContext* xtra) const {
+Status RnnIdResolver::resolveIdsAtGbeam(RnnIdContainer* ids, Lattice* lat,
+                                        const ExtraNodesContext* xtra) const {
   auto numBnds = lat->createdBoundaryCount();
   ids->reset(numBnds, lat->config().globalBeamSize);
   auto last = lat->boundary(numBnds - 1);
@@ -195,8 +195,8 @@ Status RnnIdResolver2::resolveIdsAtGbeam(RnnIdContainer2* ids, Lattice* lat,
   return Status::Ok();
 }
 
-Status RnnIdResolver2::setState(util::ArraySlice<u32> fields, StringPiece known,
-                                StringPiece unknown, i32 unkid) {
+Status RnnIdResolver::setState(util::ArraySlice<u32> fields, StringPiece known,
+                               StringPiece unknown, i32 unkid) {
   util::copy_insert(fields, fields_);
   unkId_ = unkid;
   JPP_RETURN_IF_ERROR(knownIndex_.loadFromMemory(known));
@@ -204,8 +204,8 @@ Status RnnIdResolver2::setState(util::ArraySlice<u32> fields, StringPiece known,
   return Status::Ok();
 }
 
-std::pair<RnnNode*, RnnNode*> RnnIdContainer2::addPrevChain(
-    const RnnIdResolver2* resolver, const Lattice* lat,
+std::pair<RnnNode*, RnnNode*> RnnIdContainer::addPrevChain(
+    const RnnIdResolver* resolver, const Lattice* lat,
     const ConnectionPtr* cptr, const ExtraNodesContext* xtra) {
   auto prevPair = ptrCache_.emplace(cptr, nullptr);
   if (prevPair.second) {
@@ -243,9 +243,9 @@ std::pair<RnnNode*, RnnNode*> RnnIdContainer2::addPrevChain(
   return std::make_pair(prevPair.first->second, prevPair.first->second);
 }
 
-void RnnIdContainer2::addPath(const RnnIdResolver2* resolver,
-                              const Lattice* lat, const ConnectionPtr* cptr,
-                              const ExtraNodesContext* xtra) {
+void RnnIdContainer::addPath(const RnnIdResolver* resolver, const Lattice* lat,
+                             const ConnectionPtr* cptr,
+                             const ExtraNodesContext* xtra) {
   auto path = this->addPrevChain(resolver, lat, cptr, xtra);
   auto first = path.first;
   auto last = path.second;
@@ -264,7 +264,7 @@ void RnnIdContainer2::addPath(const RnnIdResolver2* resolver,
   }
 }
 
-void RnnIdContainer2::addScore(RnnNode* rnnNode, const ConnectionPtr* node) {
+void RnnIdContainer::addScore(RnnNode* rnnNode, const ConnectionPtr* node) {
   auto score = this->alloc_->allocate<RnnScorePtr>();
   score->latPtr = node;
   score->rnn = rnnNode;
@@ -274,10 +274,10 @@ void RnnIdContainer2::addScore(RnnNode* rnnNode, const ConnectionPtr* node) {
   bnd.scoreCnt += 1;
 }
 
-const RnnCoordinate& RnnIdContainer2::resolveId(const RnnIdResolver2* resolver,
-                                                const Lattice* lat,
-                                                const ConnectionPtr* node,
-                                                const ExtraNodesContext* xtra) {
+const RnnCoordinate& RnnIdContainer::resolveId(const RnnIdResolver* resolver,
+                                               const Lattice* lat,
+                                               const ConnectionPtr* node,
+                                               const ExtraNodesContext* xtra) {
   auto iter = nodeCache_.emplace(node->latticeNodePtr(), RnnCoordinate{});
   if (iter.second) {
     auto bnd = lat->boundary(node->boundary);
@@ -307,7 +307,7 @@ const RnnCoordinate& RnnIdContainer2::resolveId(const RnnIdResolver2* resolver,
   return iter.first->second;
 }
 
-void RnnIdContainer2::reset(u32 numBoundaries, u32 beamSize) {
+void RnnIdContainer::reset(u32 numBoundaries, u32 beamSize) {
   new (&crdCache_)
       util::FlatMap<RnnCoordinate, RnnNode*, RnnCrdHasher, RnnCrdHasher>{
           alloc_, numBoundaries * beamSize};
@@ -323,7 +323,7 @@ void RnnIdContainer2::reset(u32 numBoundaries, u32 beamSize) {
   nodeCache_[{eosPos, 0}] = RnnCoordinate{eosPos, 0, 0};
 }
 
-void RnnIdContainer2::addBos() {
+void RnnIdContainer::addBos() {
   auto bos0 = alloc_->allocate<RnnNode>();
   bos0->id = 0;
   bos0->idx = 0;
@@ -344,7 +344,7 @@ void RnnIdContainer2::addBos() {
   nodeCache_[{1, 0}] = bosCrd;
 }
 
-ConnectionPtr* RnnIdContainer2::fakeConnection(
+ConnectionPtr* RnnIdContainer::fakeConnection(
     const LatticeNodePtr& nodePtr, const ConnectionBeamElement* pElement,
     const BeamCandidate& candidate) {
   auto cptr = alloc_->allocate<ConnectionPtr>();

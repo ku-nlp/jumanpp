@@ -12,7 +12,7 @@ namespace core {
 namespace analysis {
 
 struct GbeamRnnFactoryState {
-  rnn::RnnIdResolver2 resolver;
+  rnn::RnnIdResolver resolver;
   jumanpp::rnn::mikolov::MikolovRnn rnn;
   util::ConstSliceable<float> embeddings;
   util::ConstSliceable<float> nceEmbeddings;
@@ -67,7 +67,7 @@ struct GbeamRnnState {
   const GbeamRnnFactoryState* shared;
   util::memory::Manager manager{4 * 1024 * 1024};
   std::unique_ptr<util::memory::PoolAlloc> alloc{manager.core()};
-  rnn::RnnIdContainer2 container{alloc.get()};
+  rnn::RnnIdContainer container{alloc.get()};
 
   Lattice* lat;
   const ExtraNodesContext* xtra;

@@ -58,16 +58,6 @@ void MikolovRnn::apply(StepData* data) {
   impl.apply(data);
 }
 
-void MikolovRnn::calcNewContext(const ContextStepData& csd) {
-  MikolovRnnImpl impl{*this};
-  impl.computeNewContext(csd);
-}
-
-void MikolovRnn::calcScoresOn(const InferStepData& isd, i32 from, i32 count) {
-  MikolovRnnImpl impl{*this};
-  impl.inferScores(isd, from, count);
-}
-
 Status MikolovRnn::init(const MikolovRnnModelHeader& header,
                         const util::ArraySlice<float>& weights,
                         const util::ArraySlice<float>& maxentW) {

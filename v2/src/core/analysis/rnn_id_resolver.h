@@ -32,11 +32,9 @@ class RnnReprBuilder {
   StringPiece repr() const { return buffer_.contents(); }
 };
 
+class RnnIdContainer;
 
-
-class RnnIdContainer2;
-
-class RnnIdResolver2 {
+class RnnIdResolver {
   std::vector<u32> fields_;
   dic::DoubleArray knownIndex_;
   dic::DoubleArray unkIndex_;
@@ -48,7 +46,7 @@ class RnnIdResolver2 {
                      const ExtraNodesContext* xtra) const;
   Status setState(util::ArraySlice<u32> fields, StringPiece known,
                   StringPiece unknown, i32 unkid);
-  Status resolveIdsAtGbeam(RnnIdContainer2* ids, Lattice* lat,
+  Status resolveIdsAtGbeam(RnnIdContainer* ids, Lattice* lat,
                            const ExtraNodesContext* xtra) const;
   Status build(const dic::DictionaryHolder& dic, const RnnInferenceConfig& cfg,
                util::ArraySlice<StringPiece> rnndic);
@@ -59,7 +57,7 @@ class RnnIdResolver2 {
 
   StringPiece unkIndex() const { return unkIndex_.contents(); }
 
-  friend class RnnIdContainer2;
+  friend class RnnIdContainer;
 };
 
 struct RnnCoordinate {
@@ -124,7 +122,7 @@ struct RnnBoundary {
   i32 scoreCnt = 0;
 };
 
-class RnnIdContainer2 {
+class RnnIdContainer {
   util::memory::PoolAlloc* alloc_;
   util::FlatMap<RnnCoordinate, RnnNode*, RnnCrdHasher, RnnCrdHasher> crdCache_;
   util::FlatMap<const ConnectionPtr*, RnnNode*, ConnPtrHasher, ConnPtrHasher>
@@ -134,14 +132,14 @@ class RnnIdContainer2 {
   RnnReprBuilder reprBldr_;
 
  private:
-  std::pair<RnnNode*, RnnNode*> addPrevChain(const RnnIdResolver2* resolver,
+  std::pair<RnnNode*, RnnNode*> addPrevChain(const RnnIdResolver* resolver,
                                              const Lattice* lat,
                                              const ConnectionPtr* cptr,
                                              const ExtraNodesContext* xtra);
   void addScore(RnnNode* node, const ConnectionPtr* cptr);
-  void addPath(const RnnIdResolver2* resolver, const Lattice* lat,
+  void addPath(const RnnIdResolver* resolver, const Lattice* lat,
                const ConnectionPtr* cptr, const ExtraNodesContext* xtra);
-  const RnnCoordinate& resolveId(const RnnIdResolver2* resolver,
+  const RnnCoordinate& resolveId(const RnnIdResolver* resolver,
                                  const Lattice* lat, const ConnectionPtr* node,
                                  const ExtraNodesContext* xtra);
   void addBos();
@@ -150,14 +148,14 @@ class RnnIdContainer2 {
                                 const BeamCandidate& cand);
 
  public:
-  RnnIdContainer2(util::memory::PoolAlloc* alloc)
+  RnnIdContainer(util::memory::PoolAlloc* alloc)
       : alloc_{alloc}, boundaries_{alloc} {}
   void reset(u32 numBoundaries, u32 beamSize);
   const RnnBoundary& rnnBoundary(u32 bndIdx) const {
     JPP_DCHECK_IN(bndIdx, 0, boundaries_.size());
     return boundaries_[bndIdx];
   }
-  friend class RnnIdResolver2;
+  friend class RnnIdResolver;
 };
 
 }  // namespace rnn
