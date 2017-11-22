@@ -7,7 +7,6 @@ include(cmake/GitUpdate.cmake)
 include(cmake/GitVersion.cmake)
 
 set(JUMANPP_FULL_VERSION "${PROJECT_VERSION}${GIT_VERSION_STRING}")
-
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -17,7 +16,7 @@ execute_process(COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/dependencies.sh)
 include_directories("${CMAKE_SOURCE_DIR}/libs")
 
 option(JPP_TEST_REPORT_JUNIT OFF)
-option(ENABLE_BENCHMARKS "Enable benchmarks" OFF)
+option(JPP_ENABLE_BENCHMARKS "Enable benchmarks" OFF)
 option(JPP_ENABLE_DEV_TOOLS "Enable development-only binaries" OFF)
 option(JPP_PREFETCH_FEATURE_WEIGHTS "Prefetch linear model weights when computing features" ON)
 set(JPP_MAX_DIC_FIELDS 16 CACHE STRING "Maximum supported dictionary fields")
@@ -30,4 +29,5 @@ endif()
 find_package(Threads)
 
 add_subdirectory(libs)
-add_subdirectory(v2)
+add_subdirectory(test) #need to set variable here
+add_subdirectory(src)

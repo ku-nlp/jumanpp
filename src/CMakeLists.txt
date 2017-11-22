@@ -6,6 +6,31 @@ function(add_benchmark name source)
 endfunction(add_benchmark)
 
 set(JPP_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+include_directories("${JPP_SRC_DIR}")
+
+set(JPP_TEST_STANDALONE_HDRS
+        ${JPP_SRC_DIR}/testing/standalone_test.h)
+
+function(jpp_register_test executable)
+    if (JPP_TEST_REPORT_JUNIT)
+        set(CATCH_FLAGS -r junit "-#" --success "--out=${CMAKE_CURRENT_BINARY_DIR}/${executable}.report.xml")
+    else(JPP_TEST_REPORT_JUNIT)
+        set(CATCH_FLAGS "")
+    endif(JPP_TEST_REPORT_JUNIT)
+
+    add_test(
+            NAME ${executable}
+            COMMAND ${executable} ${CATCH_FLAGS}
+            WORKING_DIRECTORY ${JPP_TEST_RESOURCE_DIR}
+            )
+endfunction()
+
+function(jpp_test_executable executable_name)
+    set(TEST_SOURCES ${ARGN})
+    add_executable(${executable_name} ${TEST_SOURCES} ${JPP_TEST_STANDALONE_HDRS} ${libs3p_catch_header})
+    target_link_libraries(${executable_name} jpp_test_catch_main_lib)
+    jpp_register_test(${executable_name})
+endfunction()
 
 function(jpp_feature_codegen)
     set(options )
