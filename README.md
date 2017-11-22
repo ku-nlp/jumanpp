@@ -2,6 +2,8 @@
 -----
 A new morphological analyser that considers semantic plausibility of 
 word sequences by using a recurrent neural network language model (RNNLM).
+Version 2 has better accuracy and improved (>100x) performance than
+the original JUMAN++.
 
 # Notice
 
@@ -9,64 +11,21 @@ This is a branch for the Juman++ rewrite.
 The original version lives in the [master](https://github.com/ku-nlp/jumanpp/tree/master) branch.
 How to compile development version:
 
-### Requirements for v2
+### Requirements for JUMAN++ (v2)
 
 - OS: Linux or MacOS X
-- Compiler: C++14 compatible (will downgrade to C++11 later)
-- CMake (v3.1 or later, will probably downgrade)
-- Boost C++ libraries (needed only for old Juman++)
+- Compiler: C++14 compatible (will [downgrade to C++11](https://github.com/ku-nlp/jumanpp/issues/20) later)
+-- We test on GCC and clang
+- CMake v3.1 or later
 
 ```bash
-$ ./autogen.sh # Legacy Juman++ is still in the source tree. 
-$ ./configure  # Need to create config.h for it.
-
-# Previous two lines need to be run on the first build only
-
-$ mkdir build-dir # CMake does not support in-source builds
-$ cd build-dir
-$ cmake .. # -DBOOST_ROOT=... if you have boost installed
+$ mkdir cmake-build-dir # CMake does not support in-source builds
+$ cd cmake-build-dir
+$ cmake ..
 $ make
-
 ```
 
-
-## Installation (legacy)
-### Requirement
-- OS: Linux (tested on CentOS 6.7, Ubuntu 16.4) 
-- gcc (4.9 or later)
-- Boost C++ Libraries (1.57 or later)  
- http://www.boost.org/users/history/version_1_57_0.html
-[]( for unordered_map, interprocess(dynamic loading))
-- gperftool (optional)
- https://github.com/gperftools/gperftools
-    * libunwind (required by gperftool in 64bit environment) 
-    http://download.savannah.gnu.org/releases/libunwind/libunwind-0.99-beta.tar.gz
-[Note contains instruction for install libraries.](#markdown-header-note)
-
-### Build from git
-```
-% git clone git@github.com:ku-nlp/jumanpp.git
-% wget http://lotus.kuee.kyoto-u.ac.jp/nl-resource/jumanpp/jumanpp-1.01.tar.xz
-  (Since this repository does not include resource files, it needs to copy the files
-   from ditributed package.)
-% tar xJvf jumanpp-1.01.tar.xz
-% mv jumanpp-1.01/jumanpp-resource jumanpp/.
-% cd jumanpp
-% ./autogen.sh
-% ./configure 
-% make
-% sudo make install
-```
-
-### Build from package
-```
-% wget http://lotus.kuee.kyoto-u.ac.jp/nl-resource/jumanpp/jumanpp-1.01.tar.xz
-% tar xJvf jumanpp-1.01.tar.xz
-% cd jumanpp-1.01
-% ./configure 
-% make
-% sudo make install
-```
+Prelearned models are not yet available, but they will be very soon.
 
 ## Quick start
 ```
@@ -91,52 +50,26 @@ options:
 ```
 
 ## Input
-It receives utf-8 encoding text as an input.
-Lines beginning with `#` will be interpreted as comment line.
+JUMAN++ receives utf-8 encoding text as an input.
+Lines beginning with `# ` will be interpreted as comments.
 
 ## DEMO
-[DEMO cgi](http://tulip.kuee.kyoto-u.ac.jp/demo/jumanpp_lattice?text=%E5%A4%96%E5%9B%BD%E4%BA%BA%E5%8F%82%E6%94%BF%E6%A8%A9%E3%81%AB%E5%AF%BE%E3%81%99%E3%82%8B%E8%80%83%E3%81%88%E6%96%B9%E3%81%AE%E9%81%95%E3%81%84)
+You can play around our [web demo](http://tulip.kuee.kyoto-u.ac.jp/demo/jumanpp_lattice?text=%E5%A4%96%E5%9B%BD%E4%BA%BA%E5%8F%82%E6%94%BF%E6%A8%A9%E3%81%AB%E5%AF%BE%E3%81%99%E3%82%8B%E8%80%83%E3%81%88%E6%96%B9%E3%81%AE%E9%81%95%E3%81%84)
+which displays a lattice
 
 ## Model
-See ``Morphological Analysis for Unsegmented Languages using Recurrent Neural Network Language Model. Hajime Morita, Daisuke Kawahara, Sadao Kurohashi. EMNLP 2015''
-[link](http://aclweb.org/anthology/D/D15/D15-1276.pdf)
+
+See ``Morphological Analysis for Unsegmented Languages using Recurrent Neural Network Language Model. Hajime Morita, Daisuke Kawahara, Sadao Kurohashi. EMNLP 2015'' [link](http://aclweb.org/anthology/D/D15/D15-1276.pdf).
+
 
 ## Authors
+Arseny Tolmachev <arseny@kotonoha.ws>
 Hajime Morita <hmorita@i.kyoto-u.ac.jp>  
 Daisuke Kawahara <dk@i.kyoto-u.ac.jp>  
 Sadao Kurohashi <kuro@i.kyoto-u.ac.jp>
 
 ## Acknowledgement
-Juman++ uses the following open source software/codes:
-- [faster-rnnlm](https://github.com/yandex/faster-rnnlm) for training RNNLM and reading models.
-- [RNNLM-toolkit](http://rnnlm.org/) for reading RNNLMs.
-- [Darts](http://chasen.org/~taku/software/darts/) for Double-Array.
-- [tinycdb](http://www.corpit.ru/mjt/tinycdb.html) for reading CDB.
-- [cmdline](https://github.com/tanakh/cmdline) by Hideyuki Tanaka to parse command line options.
+The list of all libraries used by JUMAN++ is [here](libs/README.md).
 
-## Note 
 
-### Install Requirements
-#### libunwind
-```
-wget http://download.savannah.gnu.org/releases/libunwind/libunwind-0.99-beta.tar.gz
-tar xzf libunwind-0.99-beta.tar.gz
-cd libunwind-0.99-beta
-./configure --prefix=/somewhere/local/
-make 
-make install
-```
-#### gperftools
-```
-./configure --prefx=/somewhere/local/
-make
-# When ld try to link libunwind.so (and failed to build), 
-# please set an option "UNWIND_LIBS=-lunwind-x86_64" to make.
-make install
-```
-#### Boost Libraries 
-```
-sh bootstrap.sh
-./b2 install -j2 --prefix=/somewhere/local/
-```
 ----
