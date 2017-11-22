@@ -50,7 +50,7 @@ options:
 ```
 
 ## Input
-JUMAN++ receives utf-8 encoding text as an input.
+JUMAN++ can handle only utf-8 encoded text as an input.
 Lines beginning with `# ` will be interpreted as comments.
 
 ## DEMO
@@ -59,14 +59,14 @@ which displays a lattice
 
 ## Model
 
-See ``Morphological Analysis for Unsegmented Languages using Recurrent Neural Network Language Model. Hajime Morita, Daisuke Kawahara, Sadao Kurohashi. EMNLP 2015'' [link](http://aclweb.org/anthology/D/D15/D15-1276.pdf).
+See Morphological Analysis for Unsegmented Languages using Recurrent Neural Network Language Model. *Hajime Morita, Daisuke Kawahara, Sadao Kurohashi*. EMNLP 2015 [link](http://aclweb.org/anthology/D/D15/D15-1276.pdf).
 
 
 ## Authors
-Arseny Tolmachev <arseny@kotonoha.ws>
-Hajime Morita <hmorita@i.kyoto-u.ac.jp>  
-Daisuke Kawahara <dk@i.kyoto-u.ac.jp>  
-Sadao Kurohashi <kuro@i.kyoto-u.ac.jp>
+* Arseny Tolmachev <arseny@kotonoha.ws>
+* Hajime Morita <hmorita@i.kyoto-u.ac.jp>  
+* Daisuke Kawahara <dk@i.kyoto-u.ac.jp>  
+* Sadao Kurohashi <kuro@i.kyoto-u.ac.jp>
 
 ## Acknowledgement
 The list of all libraries used by JUMAN++ is [here](libs/README.md).
