@@ -18,7 +18,6 @@ Status MdicFormat::format(const core::analysis::Analyzer& analyzer,
 
   displayed_.clear();
   auto lat = ai->lattice();
-  auto xtra = ai->extraNodesContext();
 
   for (int bidx = 2; bidx < lat->createdBoundaryCount() - 1; ++bidx) {
     auto bnd = lat->boundary(bidx);
@@ -26,19 +25,8 @@ Status MdicFormat::format(const core::analysis::Analyzer& analyzer,
 
     for (int i = 0; i < ninfo.size(); ++i) {
       auto eptr = ninfo.at(i).entryPtr();
-      if (eptr.isSpecial()) {
-        auto node = xtra->node(eptr);
-        if (node->header.type == core::analysis::ExtraNodeType::Alias) {
-          for (auto& aliased : node->header.alias.dictionaryNodes) {
-            if (displayed_.count(aliased) == 0) {
-              JPP_RETURN_IF_ERROR(formatNode(aliased, om));
-            }
-          }
-        }
-      } else {
-        if (displayed_.count(eptr.rawValue()) == 0) {
-          JPP_RETURN_IF_ERROR(formatNode(eptr.rawValue(), om));
-        }
+      if (eptr.isDic() && displayed_.count(eptr.rawValue()) == 0) {
+        JPP_RETURN_IF_ERROR(formatNode(eptr.rawValue(), om));
       }
     }
   }
@@ -121,7 +109,7 @@ util::io::FastPrinter& printMaybeQuoteStringList(
         printer << ':';
         printQuoted(items.value());
       }
-      if (!items.hasNext()) {
+      if (items.hasNext()) {
         printer << ' ';
       }
     }
@@ -132,7 +120,7 @@ util::io::FastPrinter& printMaybeQuoteStringList(
       if (items.hasValue()) {
         printer << ':' << items.value();
       }
-      if (!items.hasNext()) {
+      if (items.hasNext()) {
         printer << ' ';
       }
     }
@@ -154,19 +142,21 @@ Status MdicFormat::formatNode(i32 nodeRawPtr,
 
   auto& f = flds_;
 
-  printMaybeQuoted(printer_, f.surface[walker]);
-  printer_ << ",0,0,0,";
-  printMaybeQuoted(printer_, f.pos[walker]) << ',';
-  printMaybeQuoted(printer_, f.subpos[walker]) << ',';
-  printMaybeQuoted(printer_, f.conjForm[walker]) << ',';
-  printMaybeQuoted(printer_, f.conjType[walker]) << ',';
-  printMaybeQuoted(printer_, f.baseform[walker]) << ',';
-  printMaybeQuoted(printer_, f.reading[walker]) << ',';
-  printMaybeQuoted(printer_, f.canonicForm[walker]) << ',';
+  while (walker.next()) {
+    printMaybeQuoted(printer_, f.surface[walker]);
+    printer_ << ",0,0,0,";
+    printMaybeQuoted(printer_, f.pos[walker]) << ',';
+    printMaybeQuoted(printer_, f.subpos[walker]) << ',';
+    printMaybeQuoted(printer_, f.conjForm[walker]) << ',';
+    printMaybeQuoted(printer_, f.conjType[walker]) << ',';
+    printMaybeQuoted(printer_, f.baseform[walker]) << ',';
+    printMaybeQuoted(printer_, f.reading[walker]) << ',';
+    printMaybeQuoted(printer_, f.canonicForm[walker]) << ',';
 
-  printMaybeQuoteStringList(printer_, f.features[walker]);
+    printMaybeQuoteStringList(printer_, f.features[walker]);
 
-  printer_ << '\n';
+    printer_ << '\n';
+  }
 
   return Status::Ok();
 }

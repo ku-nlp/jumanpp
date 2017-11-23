@@ -169,6 +169,9 @@ Status AnalyzerImpl::buildLattice() {
   }
 
   JPP_RETURN_IF_ERROR(latticeBldr_.makeEos(&lcc, &lattice_));
+  if (noStaticPattern) {
+    fc.patternFeaturesEos(&lattice_);
+  }
   JPP_RETURN_IF_ERROR(latticeBldr_.fillEnds(&lattice_));
   JPP_DCHECK_EQ(totalBnds + 3, lattice_.createdBoundaryCount());
 
