@@ -124,11 +124,12 @@ struct RnnBoundary {
 
 class RnnIdContainer {
   util::memory::PoolAlloc* alloc_;
-  util::FlatMap<RnnCoordinate, RnnNode*, RnnCrdHasher, RnnCrdHasher> crdCache_;
+  util::FlatMap<RnnCoordinate, RnnNode*, RnnCrdHasher, RnnCrdHasher> crdCache_{
+      alloc_};
   util::FlatMap<const ConnectionPtr*, RnnNode*, ConnPtrHasher, ConnPtrHasher>
-      ptrCache_;
-  util::FlatMap<LatticeNodePtr, RnnCoordinate> nodeCache_;
-  util::memory::ManagedVector<RnnBoundary> boundaries_;
+      ptrCache_{alloc_};
+  util::FlatMap<LatticeNodePtr, RnnCoordinate> nodeCache_{alloc_};
+  util::memory::ManagedVector<RnnBoundary> boundaries_{alloc_};
   RnnReprBuilder reprBldr_;
 
  private:
@@ -148,8 +149,7 @@ class RnnIdContainer {
                                 const BeamCandidate& cand);
 
  public:
-  RnnIdContainer(util::memory::PoolAlloc* alloc)
-      : alloc_{alloc}, boundaries_{alloc} {}
+  RnnIdContainer(util::memory::PoolAlloc* alloc) : alloc_{alloc} {}
   void reset(u32 numBoundaries, u32 beamSize);
   const RnnBoundary& rnnBoundary(u32 bndIdx) const {
     JPP_DCHECK_IN(bndIdx, 0, boundaries_.size());
