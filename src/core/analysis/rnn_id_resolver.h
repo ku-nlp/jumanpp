@@ -27,7 +27,7 @@ class RnnReprBuilder {
   void addInt(i32 value) { buffer_.writeVarint(static_cast<u32>(value)); }
   void addString(StringPiece value) {
     buffer_.writeStringDataWithoutLengthPrefix(value);
-    buffer_.writeVarint(0);
+    buffer_.writeVarint(1);
   }
   StringPiece repr() const { return buffer_.contents(); }
 };

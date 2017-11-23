@@ -139,7 +139,7 @@ Status copyArray(StringPiece data,
   if (*offset + fullSize > data.size()) {
     return JPPS_INVALID_PARAMETER
            << "can't copy rnn weight data, from offset=" << *offset
-           << " want to read " << fullSize << ", but rhere is only "
+           << " want to read " << fullSize << ", but there is only "
            << data.size() - *offset
            << " available, total length=" << data.size();
   }
