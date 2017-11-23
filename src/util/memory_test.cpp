@@ -57,6 +57,7 @@ TEST_CASE("allocator works with several pages") {
   CHECK(a3 != a4);
 }
 
+#if JUMANPP_USE_DEFAULT_ALLOCATION == 0
 TEST_CASE("allocator works with several pages and reset") {
   m::Manager mgr{1024};
   auto c = mgr.core();
@@ -84,6 +85,7 @@ TEST_CASE("allocator works with several pages and reset") {
   CHECK(a3 == b3);
   CHECK(a4 == b4);
 }
+#endif
 
 TEST_CASE("memory is aligned") {
   m::Manager mgr{1024};

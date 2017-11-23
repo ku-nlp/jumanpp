@@ -45,6 +45,10 @@ void Manager::reset() {
   pages_.clear();
 }
 
+bool Manager::supportHugePages() {
+  return false;
+}
+
 #else
 void* PoolAlloc::allocate_memory(size_t size, size_t alignment) {
   auto address = Align(offset_, alignment);
