@@ -23,6 +23,9 @@ bool OnomatopoeiaUnkMaker::spawnNodes(const AnalysisInput& input,
     LatticePosition nextstep = i;
     TraverseStatus status;
     auto pattern = FindOnomatopoeia(codepoints, i);
+    if (pattern == Pattern::None) {
+      continue;
+    }
     for (LatticePosition halfLen = 2; halfLen * 2 <= MaxOnomatopoeiaLength;
          ++halfLen) {
       if ((pattern & HalfLenToPattern(halfLen)) != Pattern::None) {
@@ -55,7 +58,7 @@ bool OnomatopoeiaUnkMaker::spawnNodes(const AnalysisInput& input,
 
 OnomatopoeiaUnkMaker::Pattern OnomatopoeiaUnkMaker::FindOnomatopoeia(
     const CodepointStorage& codepoints, LatticePosition start) const {
-  if (start + MinOnomatopoeiaLength < codepoints.size()) {
+  if ((start + MinOnomatopoeiaLength) >= codepoints.size()) {
     return Pattern::None;
   }
   JPP_DCHECK_IN(start, 0, codepoints.size());
