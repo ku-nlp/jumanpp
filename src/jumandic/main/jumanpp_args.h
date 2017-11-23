@@ -42,7 +42,7 @@ struct JumanppConf {
   util::Cfg<i32> globalBeam = 6;
   util::Cfg<i32> rightBeam = 5;
   util::Cfg<i32> rightCheck = 1;
-  util::Cfg<i32> logLevel = 3;
+  util::Cfg<i32> logLevel = 0;
 
   void mergeWith(const JumanppConf& o) {
     configFile.mergeWith(o.configFile);

@@ -29,7 +29,7 @@ struct JppArgsParser {
       general, "FILENAME", "Config file location", {'c', "config"}};
   args::ValueFlag<i32> logLevel{general,
                                 "LEVEL",
-                                "Log level (0 for off, 5 for trace), 3 default",
+                                "Log level (0 for off, 5 for trace), 0 default",
                                 {"log-level"}};
   args::Flag printVersion{
       general, "printVersion", "Just print version and exit", {'v', "version"}};
