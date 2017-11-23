@@ -137,8 +137,11 @@ Status copyArray(StringPiece data,
                  size_t size, size_t* offset) {
   auto fullSize = size * sizeof(float);
   if (*offset + fullSize > data.size()) {
-    return Status::InvalidParameter()
-           << "can't copy rnn weight data, sizes are wrong";
+    return JPPS_INVALID_PARAMETER
+           << "can't copy rnn weight data, from offset=" << *offset
+           << " want to read " << fullSize << ", but rhere is only "
+           << data.size() - *offset
+           << " available, total length=" << data.size();
   }
   memcpy(result.get(), data.begin() + *offset, fullSize);
   *offset += fullSize;
@@ -166,14 +169,18 @@ Status MikolovModelReader::parse() {
       allocAligned(data_->matrixData, hdr.layerSize * hdr.layerSize));
   JPP_RETURN_IF_ERROR(allocAligned(data_->maxentWeightData, hdr.maxentSize));
   size_t start = sizeof(MikolovRnnModePackedlHeader);
-  JPP_RETURN_IF_ERROR(copyArray(contents, data_->embeddingData,
-                                hdr.layerSize * hdr.vocabSize, &start));
-  JPP_RETURN_IF_ERROR(copyArray(contents, data_->nceEmbeddingData,
-                                hdr.layerSize * hdr.vocabSize, &start));
-  JPP_RETURN_IF_ERROR(copyArray(contents, data_->matrixData,
-                                hdr.layerSize * hdr.layerSize, &start));
-  JPP_RETURN_IF_ERROR(
-      copyArray(contents, data_->maxentWeightData, hdr.maxentSize, &start));
+  JPP_RIE_MSG(copyArray(contents, data_->embeddingData,
+                        hdr.layerSize * hdr.vocabSize, &start),
+              "embeds");
+  JPP_RIE_MSG(copyArray(contents, data_->nceEmbeddingData,
+                        hdr.layerSize * hdr.vocabSize, &start),
+              "nce embeds");
+  JPP_RIE_MSG(copyArray(contents, data_->matrixData,
+                        hdr.layerSize * hdr.layerSize, &start),
+              "matrix");
+  JPP_RIE_MSG(
+      copyArray(contents, data_->maxentWeightData, hdr.maxentSize, &start),
+      "maxent weights");
   if (start != contents.size()) {
     return Status::InvalidState() << "did not read rnn model file fully";
   }
