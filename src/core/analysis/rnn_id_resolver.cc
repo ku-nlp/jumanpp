@@ -308,16 +308,25 @@ const RnnCoordinate& RnnIdContainer::resolveId(const RnnIdResolver* resolver,
 }
 
 void RnnIdContainer::reset(u32 numBoundaries, u32 beamSize) {
-  new (&crdCache_)
-      util::FlatMap<RnnCoordinate, RnnNode*, RnnCrdHasher, RnnCrdHasher>{
-          alloc_, numBoundaries * beamSize};
-  new (&ptrCache_)
-      util::FlatMap<ConnectionPtr*, RnnNode*, ConnPtrHasher, ConnPtrHasher>{
-          alloc_, numBoundaries * beamSize / 2};
-  new (&nodeCache_) util::FlatMap<LatticeNodePtr, RnnCoordinate>{
-      alloc_, numBoundaries * beamSize / 2};
-  new (&boundaries_)
-      util::memory::ManagedVector<RnnBoundary>{numBoundaries, alloc_};
+  if (JUMANPP_USE_DEFAULT_ALLOCATION) {
+    crdCache_.clear_no_resize();
+    ptrCache_.clear_no_resize();
+    nodeCache_.clear_no_resize();
+    boundaries_.clear();
+    boundaries_.resize(numBoundaries);
+  } else {
+    new (&crdCache_)
+        util::FlatMap<RnnCoordinate, RnnNode*, RnnCrdHasher, RnnCrdHasher>{
+            alloc_, numBoundaries * beamSize};
+    new (&ptrCache_)
+        util::FlatMap<ConnectionPtr*, RnnNode*, ConnPtrHasher, ConnPtrHasher>{
+            alloc_, numBoundaries * beamSize / 2};
+    new (&nodeCache_) util::FlatMap<LatticeNodePtr, RnnCoordinate>{
+        alloc_, numBoundaries * beamSize / 2};
+    new (&boundaries_)
+        util::memory::ManagedVector<RnnBoundary>{numBoundaries, alloc_};
+  }
+
   addBos();
   u16 eosPos = static_cast<u16>(numBoundaries - 1);
   nodeCache_[{eosPos, 0}] = RnnCoordinate{eosPos, 0, 0};
