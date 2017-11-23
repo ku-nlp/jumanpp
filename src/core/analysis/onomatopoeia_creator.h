@@ -45,7 +45,8 @@ class OnomatopoeiaUnkMaker : public UnkMaker {
   using Pattern = OnomatopoeicPattern;
   using CodepointStorage = std::vector<jumanpp::chars::InputCodepoint>;
 
-  static const size_t MaxOnomatopoeiaLength = 8;
+  static constexpr size_t MaxOnomatopoeiaLength = 8;
+  static constexpr size_t MinOnomatopoeiaLength = 4;
 
  public:
   OnomatopoeiaUnkMaker(const dic::DictionaryEntries& entries_,

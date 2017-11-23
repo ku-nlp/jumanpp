@@ -55,11 +55,16 @@ bool OnomatopoeiaUnkMaker::spawnNodes(const AnalysisInput& input,
 
 OnomatopoeiaUnkMaker::Pattern OnomatopoeiaUnkMaker::FindOnomatopoeia(
     const CodepointStorage& codepoints, LatticePosition start) const {
+  if (start + MinOnomatopoeiaLength < codepoints.size()) {
+    return Pattern::None;
+  }
+  JPP_DCHECK_IN(start, 0, codepoints.size());
   auto& cp1 = codepoints[start];
   if (!cp1.hasClass(charClass_)) {
     return Pattern::None;
   }
   auto cp1Class = cp1.charClass;
+  JPP_DCHECK_IN(start + 1, 0, codepoints.size());
   if (!codepoints[start + 1].hasClass(cp1Class)) {
     return Pattern::None;
   }
@@ -68,6 +73,7 @@ OnomatopoeiaUnkMaker::Pattern OnomatopoeiaUnkMaker::FindOnomatopoeia(
   for (LatticePosition halfLen = 2; halfLen * 2 <= MaxOnomatopoeiaLength &&
                                     start + halfLen * 2 - 1 < codepoints.size();
        ++halfLen) {
+    JPP_DCHECK_IN(start + halfLen, 0, codepoints.size());
     auto& cp2 = codepoints[start + halfLen];
     if (!cp2.hasClass(cp1Class)) {
       // No more onomatopoeia starting with cp1.
