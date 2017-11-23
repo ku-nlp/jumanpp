@@ -269,13 +269,15 @@ class FeatureRef {
   StringPiece name() const { return name_; }
 };
 
-class FeatureCombinator {
+class FeatureCombinator : public DslOpBase {
   util::memory::ManagedVector<util::memory::ManagedVector<FeatureRef>> data;
   friend class ModelSpecBuilder;
   friend class spec::SpecCompiler;
 
  public:
   FeatureCombinator(util::memory::PoolAlloc* alloc) : data{alloc} {}
+
+  Status validate() const { return Status::Ok(); }
 };
 
 struct UnkProcFeature {
@@ -376,6 +378,7 @@ class ModelSpecBuilder : public DslOpBase {
   util::memory::ManagedVector<FeatureCombinator*> ngrams_;
   util::memory::ManagedVector<UnkProcBuilder*> unks_;
   util::memory::ManagedPtr<TrainExampleSpec> train_;
+  std::vector<DslOpBase*> garbage_;
 
   Status checkNoFeatureIsLeft() const;
 
@@ -390,26 +393,32 @@ class ModelSpecBuilder : public DslOpBase {
 
   ModelSpecBuilder(const ModelSpecBuilder& o) = delete;
 
+  ~ModelSpecBuilder();
+
   FieldBuilder& field(i32 csvColumn, StringPiece name) {
     auto ptr = alloc_->make<FieldBuilder>(csvColumn, name);
+    garbage_.push_back(ptr);
     fields_.emplace_back(ptr);
     return *ptr;
   }
 
   FeatureBuilder& feature(StringPiece name) {
     auto ptr = alloc_->make<FeatureBuilder>(name, alloc_.get());
+    garbage_.push_back(ptr);
     features_.emplace_back(ptr);
     return *ptr;
   }
 
   UnkProcBuilder& unk(StringPiece name, i32 pattern) {
     auto ptr = alloc_->make<UnkProcBuilder>(name, pattern);
+    garbage_.push_back(ptr);
     unks_.emplace_back(ptr);
     return *ptr;
   }
 
   void unigram(const std::initializer_list<FeatureRef>& t0) {
     auto cmb = alloc_->make<FeatureCombinator>(alloc_.get());
+    garbage_.push_back(cmb);
     auto& data = cmb->data;
     data.emplace_back(t0, alloc_.get());
     ngrams_.emplace_back(cmb);
@@ -418,6 +427,7 @@ class ModelSpecBuilder : public DslOpBase {
   void bigram(const std::initializer_list<FeatureRef>& t1,
               const std::initializer_list<FeatureRef>& t0) {
     auto cmb = alloc_->make<FeatureCombinator>(alloc_.get());
+    garbage_.push_back(cmb);
     auto& data = cmb->data;
     data.emplace_back(t0, alloc_.get());
     data.emplace_back(t1, alloc_.get());
@@ -428,6 +438,7 @@ class ModelSpecBuilder : public DslOpBase {
                const std::initializer_list<FeatureRef>& t1,
                const std::initializer_list<FeatureRef>& t0) {
     auto cmb = alloc_->make<FeatureCombinator>(alloc_.get());
+    garbage_.push_back(cmb);
     auto& data = cmb->data;
     data.emplace_back(t0, alloc_.get());
     data.emplace_back(t1, alloc_.get());

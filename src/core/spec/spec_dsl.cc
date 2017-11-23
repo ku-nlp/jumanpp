@@ -104,6 +104,12 @@ Status ModelSpecBuilder::validateUnks() const {
   return Status::Ok();
 }
 
+ModelSpecBuilder::~ModelSpecBuilder() {
+  for (auto g : garbage_) {
+    g->~DslOpBase();
+  }
+}
+
 Status FieldBuilder::validate() const {
   if (name_.size() == 0) {
     return Status::InvalidParameter() << "field name should not be empty";
