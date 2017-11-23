@@ -260,6 +260,9 @@ Status AnalyzerImpl::computeScoresGbeam(const ScorerDef* sconf) {
   for (i32 boundary = 2; boundary < bndCount; ++boundary) {
     JPP_CAPTURE(boundary);
     auto bnd = lattice_.boundary(boundary);
+    if (bnd->localNodeCount() == 0) {
+      continue;
+    }
     JPP_DCHECK(bnd->endingsFilled());
     proc.startBoundary(bnd->localNodeCount());
     if (proc.patternIsStatic()) {
