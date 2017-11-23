@@ -65,7 +65,10 @@ TEST_CASE("placeholder index of normalized is correct") {
   auto& spec = tenv.origDicBuilder.spec();
   for (auto& c : spec.unkCreators) {
     if (c.name == "normalize") {
-      CHECK(c.patternRow == jumandic::NormalizedPlaceholderIdx);
+      REQUIRE(c.features.size() == 1);
+      auto& f = c.features.front();
+      CHECK(f.featureType == spec::UnkFeatureType::NormalizedActions);
+      CHECK(f.targetPlaceholder == jumandic::NormalizedPlaceholderIdx);
     }
   }
 }

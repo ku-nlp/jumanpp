@@ -544,7 +544,11 @@ void ScoreProcessor::adjustBeamScores(util::ArraySlice<float> scoreWeights) {
   // going through global beam, it is on end side
   // so start iteration from the 3-rd boundary
   for (u32 latBnd = 3; latBnd < nbnd; ++latBnd) {
-    auto end = lattice_->boundary(latBnd)->ends();
+    auto curBnd = lattice_->boundary(latBnd);
+    if (curBnd->localNodeCount() == 0) {
+      continue;
+    }
+    auto end = curBnd->ends();
     auto gbeam = end->globalBeam();
     for (auto el : gbeam) {
       auto elScores = lattice_->boundary(el->ptr.boundary)->scores();

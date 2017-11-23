@@ -11,7 +11,7 @@
 namespace jumanpp {
 namespace jumandic {
 
-static constexpr i32 NormalizedPlaceholderIdx = 1;
+static constexpr i32 NormalizedPlaceholderIdx = 0;
 
 class SpecFactory {
  public:

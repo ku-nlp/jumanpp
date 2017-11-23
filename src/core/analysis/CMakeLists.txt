@@ -34,6 +34,7 @@ set(core_analysis_tsrc
   lattice_builder_test.cc
   lattice_compactor_test.cc
   lattice_types_test.cc
+  normalized_node_creator_test.cc
   numeric_creator_test.cc
   onomatopoeia_creator_test.cc
   perceptron_test.cc
