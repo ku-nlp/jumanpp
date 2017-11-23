@@ -24,7 +24,10 @@ TEST_CASE(
   REQUIRE_OK(fl.map(&frag, 0, fl.size()));
   tenv.importDic(frag.asStringPiece(), "codegen.mdic");
   float weights[] = {
-      0.1f, 0.2f, 0.3f, 0.4f, -0.1f, -0.2f, -0.3f, -0.4f,
+      0.1f,  0.2f,   0.3f,   0.4f,  -0.1f, -0.2f,  -0.3f,  -0.4f,
+      0.03f, -0.03f, -0.05f, 0.05f, 0.01f, -0.01f, 0.07f,  -0.07f,
+      -0.1f, -0.2f,  -0.3f,  -0.4f, 0.03f, -0.03f, -0.05f, 0.05f,
+      0.1f,  0.2f,   0.3f,   0.4f,  0.1f,  0.2f,   0.3f,   0.4f,
   };
   analysis::HashedFeaturePerceptron hfp{weights};
   analysis::ScorerDef sdef;
@@ -61,6 +64,22 @@ TEST_CASE(
       for (int feature = 0; feature < r1.size(); ++feature) {
         CAPTURE(feature);
         CHECK(r1.at(feature) == r2.at(feature));
+      }
+      auto b1 = s1->beamData().row(entry);
+      auto b2 = s2->beamData().row(entry);
+      for (int bidx = 0; bidx < tenv.beamSize; ++bidx) {
+        CAPTURE(bidx);
+        auto& be1 = b1.at(bidx);
+        auto& be2 = b2.at(bidx);
+        if (analysis::EntryBeam::isFake(be1) &&
+            analysis::EntryBeam::isFake(be2)) {
+          continue;
+        }
+        CHECK(be1.totalScore == Approx(be2.totalScore));
+        CHECK(be1.ptr == be2.ptr);
+        auto& pr1 = *be1.ptr.previous;
+        auto& pr2 = *be2.ptr.previous;
+        CHECK(pr1 == pr2);
       }
     }
   }

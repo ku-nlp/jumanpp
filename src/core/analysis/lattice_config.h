@@ -58,8 +58,7 @@ struct alignas(alignof(u64)) ConnectionPtr {
 
 inline bool operator==(const ConnectionPtr& p1, const ConnectionPtr& p2) {
   return p1.boundary == p2.boundary && p1.left == p2.left &&
-         p1.right == p2.right && p1.beam == p2.beam &&
-         p1.previous == p2.previous;
+         p1.right == p2.right && p1.beam == p2.beam;
 }
 
 struct LatticeConfig {
