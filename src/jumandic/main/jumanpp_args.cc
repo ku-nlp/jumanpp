@@ -23,12 +23,18 @@ struct JppArgsParser {
                                       "Input filename (- for stdin)", "-"};
 
   args::Group general{parser, "General Settings"};
+  args::Flag printHelp{
+      general, "printHelp", "Print this help meassage", {'h', "help"}};
   args::ValueFlag<std::string> configFile{
       general, "FILENAME", "Config file location", {'c', "config"}};
   args::ValueFlag<i32> logLevel{general,
                                 "LEVEL",
                                 "Log level (0 for off, 5 for trace), 3 default",
                                 {"log-level"}};
+  args::Flag printVersion{
+      general, "printVersion", "Just print version and exit", {'v', "version"}};
+  args::Flag printDicInfo{
+      general, "printModelInfo", "Print model info and exit", {"model-info"}};
 
   args::Group outputType{parser, "Output type"};
   args::Flag juman{
@@ -49,16 +55,6 @@ struct JppArgsParser {
       "DIRECTORY",
       "Directory for GraphViz .dot files output",
       {"graphviz-dir"}};
-  args::Flag printVersion{outputType,
-                          "printVersion",
-                          "Just print version and exit",
-                          {'v', "version"}};
-  args::Flag printDicInfo{outputType,
-                          "printModelInfo",
-                          "Print model info and exit",
-                          {"model-info"}};
-  args::Flag printHelp{
-      outputType, "printHelp", "Print this help meassage", {'h', "help"}};
 
   args::Group modelParams{parser, "Model parameters"};
   args::ValueFlag<std::string> modelFile{
@@ -86,11 +82,13 @@ struct JppArgsParser {
   RnnArgs rnnArgs{parser};
 
   JppArgsParser() {
+    parser.helpParams.gutter = 4;
 #if defined(TIOCGWINSZ)
     winsize winsz{0};
     if (ioctl(0, TIOCGWINSZ, &winsz) == 0) {
       parser.helpParams.width = std::max<unsigned>(80, winsz.ws_col);
-      parser.helpParams.helpindent = std::max<unsigned>(40, winsz.ws_col / 2);
+      parser.helpParams.helpindent = 35;
+      parser.helpParams.useColor = true;
     }
 #endif
   }

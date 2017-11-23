@@ -913,6 +913,7 @@ public:
     /** Show the positionals on the prog line when this is true
      */
     bool showProglinePositionals = true;
+    bool useColor = false;
   } helpParams;
   ArgumentParser(const std::string &description_, const std::string &epilog_ = std::string()) :
       Group("", Group::Validators::AllChildGroups),
@@ -1104,6 +1105,9 @@ public:
       const auto info = Wrap(std::get<1>(desc), helpParams.width - (helpParams.helpindent + groupindent));
 
       std::string::size_type flagssize = 0;
+      if (helpParams.useColor && !info.empty()) {
+        help << "\x1B[1;37m";
+      }
       for (auto flagsit = std::begin(flags); flagsit != std::end(flags); ++flagsit)
       {
         if (flagsit != std::begin(flags))
@@ -1112,6 +1116,9 @@ public:
         }
         help << std::string(groupindent + helpParams.flagindent, ' ') << *flagsit;
         flagssize = Glyphs(*flagsit);
+      }
+      if (helpParams.useColor && !info.empty()) {
+        help << "\x1B[0m";
       }
 
       auto infoit = std::begin(info);
