@@ -17,7 +17,7 @@ namespace analysis {
 namespace rnn {
 
 struct RnnInferenceConfig {
-  util::Cfg<float> nceBias = 0;
+  util::Cfg<float> nceBias = -9.0f;
   util::Cfg<float> unkConstantTerm = -6.0f;
   util::Cfg<float> unkLengthPenalty = -1.5f;
   util::Cfg<float> perceptronWeight = 1.0f;
@@ -25,7 +25,7 @@ struct RnnInferenceConfig {
   util::Cfg<std::string> eosSymbol{"</s>"};
   util::Cfg<std::string> unkSymbol{"<unk>"};
   util::Cfg<std::vector<std::string>> rnnFields;
-  util::Cfg<std::string> fieldSeparator{","};
+  util::Cfg<std::string> fieldSeparator{"_"};
 
   bool operator==(const RnnInferenceConfig& other) const;
   bool isDefault() const;

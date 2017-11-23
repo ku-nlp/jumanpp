@@ -4,6 +4,7 @@
 
 #include "jumanpp_args.h"
 #include <sys/ioctl.h>
+#include <unistd.h>
 #include <iostream>
 #include <regex>
 #include <util/logging.hpp>
@@ -83,12 +84,15 @@ struct JppArgsParser {
 
   JppArgsParser() {
     parser.helpParams.gutter = 4;
+    parser.helpParams.helpindent = 35;
 #if defined(TIOCGWINSZ)
     winsize winsz{0};
-    if (ioctl(0, TIOCGWINSZ, &winsz) == 0) {
-      parser.helpParams.width = std::max<unsigned>(80, winsz.ws_col);
-      parser.helpParams.helpindent = 35;
+    auto sterr_no = fileno(stderr);
+    if (ioctl(sterr_no, TIOCGWINSZ, &winsz) == 0 && isatty(sterr_no)) {
+      parser.helpParams.width = winsz.ws_col;
       parser.helpParams.useColor = true;
+    } else {
+      parser.helpParams.width = 10000;
     }
 #endif
   }
@@ -186,34 +190,44 @@ Status parseArgs(int argc, const char* argv[], JumanppConf* result) {
   util::logging::CurrentLogLevel =
       static_cast<util::logging::Level>(cmdline.logLevel.value());
 
-  std::string globalCfgName{core::JPP_DEFAULT_CONFIG_DIR};
-  globalCfgName += myName.str();
-  Status s = argsParser.parseFile(globalCfgName);
-  if (s) {
-    argsParser.fillResult(result);
-  }
-  LOG_DEBUG() << "tried to read global config from " << globalCfgName
-              << " error=" << s;
-  std::string userConfigPath(std::getenv("HOME"));
-  userConfigPath += "/.config/jumanpp";
-  userConfigPath += myName.str();
-  s = argsParser.parseFile(userConfigPath);
-  if (s) {
-    argsParser.fillResult(result);
-  }
-  LOG_DEBUG() << "tried to read user config from " << userConfigPath
-              << " error=" << s;
+  bool loadedConfig = false;
+  Status s = Status::Ok();
 
   if (!cmdline.configFile.value().empty()) {
     s = argsParser.parseFile(cmdline.configFile.value());
     if (s) {
       argsParser.fillResult(result);
+      loadedConfig = true;
     } else {
       return Status::InvalidParameter()
              << "failed to parse provided config at: " << cmdline.configFile
              << "\n"
              << s;
     }
+  }
+
+  if (!loadedConfig) {
+    std::string globalCfgName{core::JPP_DEFAULT_CONFIG_DIR};
+    globalCfgName += myName.str();
+    s = argsParser.parseFile(globalCfgName);
+    if (s) {
+      argsParser.fillResult(result);
+      loadedConfig = true;
+    }
+    LOG_DEBUG() << "tried to read global config from " << globalCfgName
+                << " error=" << s;
+  }
+
+  if (!loadedConfig) {
+    std::string userConfigPath(std::getenv("HOME"));
+    userConfigPath += "/.config/jumanpp";
+    userConfigPath += myName.str();
+    s = argsParser.parseFile(userConfigPath);
+    if (s) {
+      argsParser.fillResult(result);
+    }
+    LOG_DEBUG() << "tried to read user config from " << userConfigPath
+                << " error=" << s;
   }
 
   result->mergeWith(cmdline);

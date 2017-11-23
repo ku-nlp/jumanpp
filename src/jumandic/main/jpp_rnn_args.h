@@ -12,12 +12,11 @@ namespace jumanpp {
 class RnnArgs {
   const core::analysis::rnn::RnnInferenceConfig defaultConf{};
   args::Group rnnGrp{"RNN parameters"};
-  args::ValueFlag<float> nceBias{
-      rnnGrp,
-      "VALUE",
-      "RNN NCE bias, default: " + std::to_string(defaultConf.nceBias),
-      {"rnn-nce-bias"},
-      defaultConf.nceBias};
+  args::ValueFlag<float> nceBias{rnnGrp,
+                                 "VALUE",
+                                 "RNN NCE bias, default: from RNN model",
+                                 {"rnn-nce-bias"},
+                                 defaultConf.nceBias};
 
   args::ValueFlag<float> unkConstantTerm{
       rnnGrp,
@@ -57,6 +56,23 @@ class RnnArgs {
       {"rnn-unk"},
       defaultConf.unkSymbol};
 
+  args::ValueFlag<std::string> rnnEos{rnnGrp,
+                                      "EOS_TOKEN",
+                                      "RNN token for EOS symbol, default: </s>",
+                                      {"rnn-eos"}};
+
+  args::ValueFlag<std::string> rnnFields{
+      rnnGrp,
+      "FLD1,FLD2,...",
+      "Dic fields which are used in RNN, comma-separated",
+      {"rnn-fields"}};
+
+  args::ValueFlag<std::string> rnnFieldSeparator{
+      rnnGrp,
+      "SEP",
+      "Separator for field values in RNN dictionary (default _)",
+      {"rnn-separator"}};
+
  public:
   explicit RnnArgs(args::ArgumentParser& parser) { parser.Add(rnnGrp); }
 
@@ -68,6 +84,23 @@ class RnnArgs {
     copy.perceptronWeight.set(perceptronWeight);
     copy.rnnWeight.set(rnnWeight);
     copy.unkSymbol.set(rnnUnk);
+    copy.eosSymbol.set(rnnEos);
+    copy.fieldSeparator.set(rnnFieldSeparator);
+    if (rnnFields) {
+      std::vector<std::string> values;
+      auto& data = rnnFields.Get();
+      auto start = data.begin();
+      auto end = data.end();
+      auto it = std::find(start, end, ',');
+      while (it != end) {
+        values.emplace_back(start, it);
+        start = it;
+        ++start;
+        it = std::find(start, end, ',');
+      }
+      values.emplace_back(start, it);
+      copy.rnnFields = std::move(values);
+    }
     return copy;
   }
 };
