@@ -5,17 +5,30 @@
 #include "jumanpp_args.h"
 #include <sys/ioctl.h>
 #include <iostream>
+#include <regex>
+#include <util/logging.hpp>
 #include "args.h"
 #include "jpp_rnn_args.h"
+#include "util/mmap.h"
 
 namespace jumanpp {
 namespace jumandic {
 
-bool parseArgs(int argc, char* argv[], JumanppConf* result) {
+namespace {
+
+struct JppArgsParser {
   args::ArgumentParser parser{"Juman++ v2"};
 
   args::Positional<std::string> input{parser, "input",
                                       "Input filename (- for stdin)", "-"};
+
+  args::Group general{parser, "General Settings"};
+  args::ValueFlag<std::string> configFile{
+      general, "FILENAME", "Config file location", {'c', "config"}};
+  args::ValueFlag<i32> logLevel{general,
+                                "LEVEL",
+                                "Log level (0 for off, 5 for trace), 3 default",
+                                {"log-level"}};
 
   args::Group outputType{parser, "Output type"};
   args::Flag juman{
@@ -44,6 +57,8 @@ bool parseArgs(int argc, char* argv[], JumanppConf* result) {
                           "printModelInfo",
                           "Print model info and exit",
                           {"model-info"}};
+  args::Flag printHelp{
+      outputType, "printHelp", "Print this help meassage", {'h', "help"}};
 
   args::Group modelParams{parser, "Model parameters"};
   args::ValueFlag<std::string> modelFile{
@@ -68,86 +83,153 @@ bool parseArgs(int argc, char* argv[], JumanppConf* result) {
                            {"global-beam-pos"}};
 #endif
 
-#if defined(TIOCGWINSZ)
-  winsize winsz{0};
-  if (ioctl(0, TIOCGWINSZ, &winsz) == 0) {
-    parser.helpParams.width = std::max<unsigned>(80, winsz.ws_col);
-    parser.helpParams.helpindent = std::max<unsigned>(40, winsz.ws_col / 2);
-  }
-#endif
-
   RnnArgs rnnArgs{parser};
 
-  if (result == nullptr) {
-    std::cerr << parser;
-    exit(1);
+  JppArgsParser() {
+#if defined(TIOCGWINSZ)
+    winsize winsz{0};
+    if (ioctl(0, TIOCGWINSZ, &winsz) == 0) {
+      parser.helpParams.width = std::max<unsigned>(80, winsz.ws_col);
+      parser.helpParams.helpindent = std::max<unsigned>(40, winsz.ws_col / 2);
+    }
+#endif
   }
 
-  try {
-    parser.ParseCLI(argc, argv);
-  } catch (args::Help&) {
-    std::cerr << parser;
-    exit(1);
-  } catch (args::ParseError& e) {
-    std::cerr << e.what() << "\n";
-    std::cerr << parser;
-    exit(1);
-  } catch (...) {
-    return false;
+  Status parseCli(int argc, const char* argv[]) {
+    try {
+      parser.ParseCLI(argc, argv);
+    } catch (args::Help&) {
+      return Status::InvalidParameter() << parser;
+    } catch (args::ParseError& e) {
+      Status::InvalidParameter() << e.what() << "\n" << parser;
+    } catch (...) {
+      return Status::InvalidParameter();
+    }
+    return Status::Ok();
   }
 
-  result->outputType = OutputType::Juman;
-  if (juman) {
-    result->outputType = OutputType::Juman;
-  }
-  if (morph) {
-    result->outputType = OutputType::Morph;
-  }
-  if (fullMorph) {
-    result->outputType = OutputType::FullMorph;
-  }
-  if (dicSubset) {
-    result->outputType = OutputType::DicSubset;
-  }
-  if (lattice) {
-    result->outputType = OutputType::Lattice;
-    result->beamOutput = lattice.Get();
-  }
-  if (printVersion) {
-    result->printVersion = true;
+  std::regex separator{"[ \t\n\r]+"};
+
+  Status parseFile(StringPiece filename) {
+    util::FullyMappedFile file;
+    JPP_RETURN_IF_ERROR(file.open(filename));
+    auto data = file.contents();
+    auto wstart = data.begin();
+    std::regex_token_iterator<const char*> begin{wstart, data.end(), separator};
+    std::regex_token_iterator<const char*> end;
+    std::vector<std::string> parts;
+    for (; begin != end; ++begin) {
+      parts.emplace_back(wstart, begin->first);
+      wstart = begin->second;
+    }
+    if (wstart != data.end()) {
+      parts.emplace_back(wstart, data.end());
+    }
+    try {
+      parser.ParseArgs(parts);
+    } catch (args::Help&) {
+      return Status::InvalidParameter() << parser;
+    } catch (args::ParseError& e) {
+      Status::InvalidParameter() << e.what() << "\n" << parser;
+    } catch (...) {
+      return Status::InvalidParameter();
+    }
+    return Status::Ok();
   }
 
-  result->inputFile = input.Get();
+  void fillResult(JumanppConf* result) {
+    result->outputType.set(juman, OutputType::Juman);
+    result->outputType.set(morph, OutputType::Morph);
+    result->outputType.set(fullMorph, OutputType::FullMorph);
+    result->outputType.set(dicSubset, OutputType::DicSubset);
+    result->outputType.set(lattice, OutputType::Lattice);
+    result->beamOutput.set(lattice);
+    result->outputType.set(printDicInfo, OutputType::ModelInfo);
+    result->outputType.set(printVersion, OutputType::Version);
 
-  if (!modelFile) {
-    std::cerr << "model file is not specified\n";
-    return false;
-  }
-  result->modelFile = modelFile.Get();
-  result->rnnModelFile = rnnModelFile.Get();
-  result->rnnConfig = rnnArgs.config();
-  result->graphvizDir = graphvis.Get();
-  result->beamSize = std::max(beamSize.Get(), result->beamOutput);
+    result->rnnConfig.mergeWith(rnnArgs.config());
 
-  if (globalBeamSize) {
-    result->globalBeam = globalBeamSize.Get();
-  }
-  if (rightCheckBeam) {
-    result->rightCheck = rightCheckBeam.Get();
-  }
-  if (rightBeamSize) {
-    result->rightBeam = rightBeamSize.Get();
-  }
+    result->configFile.set(configFile);
+    result->logLevel.set(logLevel);
+    result->inputFile.set(input);
+    result->modelFile.set(modelFile);
+    result->rnnModelFile.set(rnnModelFile);
+    result->graphvizDir.set(graphvis);
 
-  result->printModelInfo = printDicInfo.Get();
+    result->beamSize.set(beamSize);
+    if (result->beamSize < result->beamOutput) {
+      result->beamSize = result->beamOutput.value();
+    }
+
+    result->globalBeam.set(globalBeamSize);
+    result->rightCheck.set(rightCheckBeam);
+    result->rightBeam.set(rightBeamSize);
 
 #ifdef JPP_ENABLE_DEV_TOOLS
-  if (globalBeamPos) {
-    result->outputType = OutputType::GlobalBeamPos;
-  }
+    result->outputType.set(globalBeamPos, OutputType::GlobalBeamPos);
 #endif
+    result->outputType.set(printHelp, OutputType::Help);
+  }
+};
 
-  return true;
+}  // namespace
+
+Status parseArgs(int argc, const char* argv[], JumanppConf* result) {
+  StringPiece myName{"/jumandic.config"};
+  JppArgsParser argsParser;
+  JumanppConf cmdline;
+  JPP_RETURN_IF_ERROR(argsParser.parseCli(argc, argv));
+  argsParser.fillResult(&cmdline);
+  if (cmdline.outputType == OutputType::Help) {
+    std::cerr << argsParser.parser;
+    std::exit(1);
+  }
+
+  util::logging::CurrentLogLevel =
+      static_cast<util::logging::Level>(cmdline.logLevel.value());
+
+  std::string globalCfgName{core::JPP_DEFAULT_CONFIG_DIR};
+  globalCfgName += myName.str();
+  Status s = argsParser.parseFile(globalCfgName);
+  if (s) {
+    argsParser.fillResult(result);
+  }
+  LOG_DEBUG() << "tried to read global config from " << globalCfgName
+              << " error=" << s;
+  std::string userConfigPath(std::getenv("HOME"));
+  userConfigPath += "/.config/jumanpp";
+  userConfigPath += myName.str();
+  s = argsParser.parseFile(userConfigPath);
+  if (s) {
+    argsParser.fillResult(result);
+  }
+  LOG_DEBUG() << "tried to read user config from " << userConfigPath
+              << " error=" << s;
+
+  if (!cmdline.configFile.value().empty()) {
+    s = argsParser.parseFile(cmdline.configFile.value());
+    if (s) {
+      argsParser.fillResult(result);
+    } else {
+      return Status::InvalidParameter()
+             << "failed to parse provided config at: " << cmdline.configFile
+             << "\n"
+             << s;
+    }
+  }
+
+  result->mergeWith(cmdline);
+
+  LOG_TRACE() << "Merged Config: " << *result;
+
+  if (result->modelFile.isDefault()) {
+    return Status::InvalidParameter() << "model file was not specified";
+  }
+
+  util::logging::CurrentLogLevel =
+      static_cast<util::logging::Level>(result->logLevel.value());
+
+  return Status::Ok();
 }
 
 }  // namespace jumandic

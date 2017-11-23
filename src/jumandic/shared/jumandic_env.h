@@ -42,7 +42,7 @@ class JumanppExec {
     try {
       JPP_RETURN_IF_ERROR(analyzer.analyze(data));
       JPP_RETURN_IF_ERROR(format->format(analyzer, comment))
-      if (conf.graphvizDir.size() > 0) {
+      if (!conf.graphvizDir.value().empty()) {
         writeGraphviz();
       }
       numAnalyzed_ += 1;

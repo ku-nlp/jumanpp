@@ -53,21 +53,21 @@ class RnnArgs {
   args::ValueFlag<std::string> rnnUnk{
       rnnGrp,
       "UNK_TOKEN",
-      "RNN token for UNK symbols, default: JPP_UNK",
+      "RNN token for UNK symbols, default: <unk>",
       {"rnn-unk"},
-      "JPP_UNK"};
+      defaultConf.unkSymbol};
 
  public:
   explicit RnnArgs(args::ArgumentParser& parser) { parser.Add(rnnGrp); }
 
   core::analysis::rnn::RnnInferenceConfig config() {
     auto copy = defaultConf;
-    copy.nceBias = nceBias.Get();
-    copy.unkConstantTerm = unkConstantTerm.Get();
-    copy.unkLengthPenalty = unkLengthPenalty.Get();
-    copy.perceptronWeight = perceptronWeight.Get();
-    copy.rnnWeight = rnnWeight.Get();
-    copy.unkSymbol = rnnUnk.Get();
+    copy.nceBias.set(nceBias);
+    copy.unkConstantTerm.set(unkConstantTerm);
+    copy.unkLengthPenalty.set(unkLengthPenalty);
+    copy.perceptronWeight.set(perceptronWeight);
+    copy.rnnWeight.set(rnnWeight);
+    copy.unkSymbol.set(rnnUnk);
     return copy;
   }
 };

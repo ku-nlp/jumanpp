@@ -16,11 +16,11 @@
 namespace jumanpp {
 namespace jumandic {
 Status JumanppExec::init() {
-  JPP_RETURN_IF_ERROR(env.loadModel(conf.modelFile));
+  JPP_RETURN_IF_ERROR(env.loadModel(conf.modelFile.value()));
   env.setBeamSize(conf.beamSize);
   env.setGlobalBeam(conf.globalBeam, conf.rightCheck, conf.rightBeam);
 
-  bool newRnn = !conf.rnnModelFile.empty();
+  bool newRnn = !conf.rnnModelFile.value().empty();
 
   if (!conf.rnnConfig.isDefault() && env.hasRnnModel() && !newRnn) {
     env.setRnnConfig(conf.rnnConfig);
@@ -28,7 +28,7 @@ Status JumanppExec::init() {
 
   if (newRnn) {
     JPP_RETURN_IF_ERROR(rnnFactory.make(
-        conf.rnnModelFile, env.coreHolder()->dic(), conf.rnnConfig));
+        conf.rnnModelFile.value(), env.coreHolder()->dic(), conf.rnnConfig));
     env.setRnnHolder(&rnnFactory);
   }
 
@@ -40,7 +40,7 @@ Status JumanppExec::init() {
 }
 
 Status JumanppExec::initOutput() {
-  switch (conf.outputType) {
+  switch (conf.outputType.value()) {
     case jumandic::OutputType::Juman: {
       auto jfmt = new jumandic::output::JumanFormat;
       format.reset(jfmt);
@@ -71,6 +71,11 @@ Status JumanppExec::initOutput() {
       JPP_RETURN_IF_ERROR(mfmt->initialize(analyzer.output()));
       break;
     }
+    case OutputType::Help:
+    case OutputType::Version:
+    case OutputType::ModelInfo:
+      JPP_DCHECK_NOT("should not reach here");
+      return Status::Ok();
 #ifdef JPP_ENABLE_DEV_TOOLS
     case OutputType::GlobalBeamPos: {
       auto mfmt = new core::output::GlobalBeamPositionFormat{conf.globalBeam};
@@ -95,7 +100,7 @@ Status JumanppExec::writeGraphviz() {
 
   char filename[512];
   filename[0] = 0;
-  snprintf(filename, 510, "%s/%08lld.dot", conf.graphvizDir.c_str(),
+  snprintf(filename, 510, "%s/%08lld.dot", conf.graphvizDir.value().c_str(),
            numAnalyzed_);
   std::ofstream of{filename};
   if (of) {
@@ -106,7 +111,7 @@ Status JumanppExec::writeGraphviz() {
 
 void JumanppExec::printModelInfo() const {
   core::model::FilesystemModel model;
-  model.open(this->conf.modelFile);
+  model.open(this->conf.modelFile.value());
   model.renderInfo();
 }
 

@@ -7,32 +7,37 @@
 #include <iostream>
 #include "core_version.h"
 #include "jumanpp_args.h"
+#include "util/logging.hpp"
 
 using namespace jumanpp;
 
-int main(int argc, char** argv) {
+int main(int argc, const char** argv) {
   std::istream* inputSrc;
   std::unique_ptr<std::ifstream> filePtr;
 
   jumandic::JumanppConf conf;
-  if (!jumandic::parseArgs(argc, argv, &conf)) {
-    jumandic::parseArgs(0, nullptr, nullptr);
+  Status s = jumandic::parseArgs(argc, argv, &conf);
+  if (!s) {
+    std::cerr << s << "\n";
     return 1;
   }
 
-  if (conf.printVersion) {
+  if (conf.outputType == jumandic::OutputType::Version) {
     std::cout << "Juman++ Version: " << core::JPP_VERSION_STRING << "\n";
     return 0;
   }
 
+  LOG_DEBUG() << "trying to create jumanppexec with model: "
+              << conf.modelFile.value()
+              << " and rnnmodel=" << conf.rnnModelFile.value();
   jumandic::JumanppExec exec{conf};
-  Status s = exec.init();
+  s = exec.init();
   if (!s.isOk()) {
     std::cerr << "failed to load model from disk: " << s;
     return 1;
   }
 
-  if (conf.printModelInfo) {
+  if (conf.outputType == jumandic::OutputType::ModelInfo) {
     exec.printModelInfo();
     return 0;
   }

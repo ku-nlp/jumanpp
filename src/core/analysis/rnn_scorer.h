@@ -5,6 +5,7 @@
 #ifndef JUMANPP_RNN_SCORER_H
 #define JUMANPP_RNN_SCORER_H
 
+#include <ostream>
 #include <string>
 #include <vector>
 #include "util/cfg.h"
@@ -39,6 +40,9 @@ struct RnnInferenceConfig {
     rnnFields.mergeWith(o.rnnFields);
     fieldSeparator.mergeWith(o.fieldSeparator);
   }
+
+  friend std::ostream &operator<<(std::ostream &os,
+                                  const RnnInferenceConfig &config);
 };
 
 }  // namespace rnn

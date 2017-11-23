@@ -13,6 +13,8 @@ constexpr size_t JPP_MAX_DIC_FIELDS = @JPP_MAX_DIC_FIELDS@;
 
 #cmakedefine JPP_ENABLE_DEV_TOOLS
 
+static constexpr char JPP_DEFAULT_CONFIG_DIR[]{"@JPP_DEFAULT_CONFIG_DIR@"};
+
 }
 }
 

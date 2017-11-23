@@ -46,11 +46,38 @@ class Cfg {
   }
 
   bool isDefault() const { return isDefault_; }
+  bool defined() const { return !isDefault_; }
   const T& value() const { return value_; }
   T& value() { return value_; }
   void reset(bool to = true) { isDefault_ = to; }
 
   bool operator==(const Cfg& c) const { return value_ == c.value_; }
+  bool operator==(const T& v) const { return value_ == v; }
+  bool operator!=(const T& v) { return value_ != v; }
+
+  template <typename Flag, typename Val>
+  void set(const Flag& f, Val&& v) {
+    if (f) {
+      *this = std::forward<Val>(v);
+    }
+  }
+
+  template <typename Flag>
+  void set(Flag& f) {
+    if (f) {
+      *this = f.Get();
+    }
+  }
+
+  friend std::ostream& operator<<(std::ostream& os, const Cfg& c) {
+    os << c.value_;
+    if (c.isDefault_) {
+      os << " (_)";
+    } else {
+      os << " (!)";
+    }
+    return os;
+  }
 };
 
 template <typename T>
