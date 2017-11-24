@@ -564,14 +564,17 @@ Status SpecCompiler::copyPrimitiveInfo(PrimitiveFeatureDescriptor* desc,
         desc->kind = PrimitiveFeatureKind::CodepointSize;
         desc->references.push_back(fld->dicIndex);
       }
+      break;
     }
     case dsl::FeatureType::Codepoint: {
       desc->kind = PrimitiveFeatureKind::Codepoint;
+      JPP_DCHECK_NE(fBldr.intParam_, spec::InvalidInt);
       desc->references.push_back(fBldr.intParam_);
       break;
     }
     case dsl::FeatureType::CodepointType: {
       desc->kind = PrimitiveFeatureKind::CodepointType;
+      JPP_DCHECK_NE(fBldr.intParam_, spec::InvalidInt);
       desc->references.push_back(fBldr.intParam_);
       break;
     }

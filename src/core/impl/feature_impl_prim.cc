@@ -140,6 +140,9 @@ Status CodepointTypeFeatureImpl::initialize(
 Status SurfaceCodepointLengthPrimFeatureImpl::initialize(
     FeatureConstructionContext *ctx,
     const spec::PrimitiveFeatureDescriptor &f) {
+  if (!f.references.empty()) {
+    return JPPS_INVALID_PARAMETER << "reference size should be empty";
+  }
   return Status::Ok();
 }
 

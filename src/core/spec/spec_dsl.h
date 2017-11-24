@@ -170,7 +170,7 @@ class FeatureBuilder : DslOpBase {
   util::memory::ManagedVector<StringPiece> fields_;
   util::memory::ManagedVector<FieldExpressionBldr> trueTransforms_;
   util::memory::ManagedVector<FieldExpressionBldr> falseTransforms_;
-  i32 intParam_;
+  i32 intParam_ = InvalidInt;
 
   void changeType(FeatureType target) {
     if (type_ == FeatureType::Initial) {
