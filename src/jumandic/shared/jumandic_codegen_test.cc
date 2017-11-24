@@ -176,6 +176,45 @@ TEST_CASE(
         CHECK(t2x1.row(row).at(col) == t2x2.row(row).at(col));
       }
     }
+
+    auto e1 = bnd1->ends();
+    for (int t1idx = 0; t1idx < e1->nodePtrs().size(); ++t1idx) {
+      CAPTURE(t1idx);
+      auto& t1node = e1->nodePtrs().at(t1idx);
+      proc1.applyT1(t1node.boundary, t1node.position, &hfp);
+      proc2.applyT1(t1node.boundary, t1node.position, &hfp);
+
+      auto t2y1 = fb1.t2Buf2(gen.ngramStats().num3Grams, nels);
+      auto t2y2 = fb2.t2Buf2(gen.ngramStats().num3Grams, nels);
+      for (int row = 0; row < t2y1.numRows(); ++row) {
+        for (int col = 0; col < t2y1.rowSize(); ++col) {
+          CHECK(t2y1.row(row).at(col) == t2y2.row(row).at(col));
+        }
+      }
+
+      auto t1s1 = proc1.scores_.bufferT1();
+      auto t1s2 = proc2.scores_.bufferT1();
+      for (int el = 0; el < nels; ++el) {
+        CAPTURE(el);
+        CHECK(t1s1.at(el) == Approx(t1s2.at(el)));
+      }
+      proc1.resolveBeamAt(t1node.boundary, t1node.position);
+      proc2.resolveBeamAt(t1node.boundary, t1node.position);
+
+      i32 abeam1 = proc1.activeBeamSize();
+      i32 abeam2 = proc2.activeBeamSize();
+      CHECK(abeam1 == abeam2);
+      for (int beamIdx = 0; beamIdx < abeam1; ++beamIdx) {
+        proc1.applyT2(beamIdx, &hfp);
+        proc2.applyT2(beamIdx, &hfp);
+        auto t2s1 = proc1.scores_.bufferT2();
+        auto t2s2 = proc1.scores_.bufferT2();
+        for (int el = 0; el < nels; ++el) {
+          CAPTURE(el);
+          CHECK(t2s1.at(el) == Approx(t2s2.at(el)));
+        }
+      }
+    }
   }
 }
 
