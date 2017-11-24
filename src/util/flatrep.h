@@ -78,10 +78,14 @@ class FlatRep {
 
   void clear_no_resize() {
     for (Bucket* b = array_; b != end_; b++) {
-      for (uint32 i = 0; i < kWidth; i++) {
-        if (b->marker[i] >= 2) {
-          b->Destroy(i);
-          b->marker[i] = kEmpty;
+      if (Bucket::trivially_destructable) {
+        std::memset(b->marker, kEmpty, sizeof(b->marker));
+      } else {
+        for (uint32 i = 0; i < kWidth; i++) {
+          if (b->marker[i] >= 2) {
+            b->Destroy(i);
+            b->marker[i] = kEmpty;
+          }
         }
       }
     }

@@ -350,6 +350,10 @@ class FlatMap {
       new (&storage.key[i]) Key(src->storage.key[src_index]);
       new (&storage.val[i]) Val(src->storage.val[src_index]);
     }
+
+    static constexpr bool trivially_destructable =
+      std::is_trivially_destructible<Key>::value &&
+      std::is_trivially_destructible<Val>::value;
   };
 
   template <typename Pair>

@@ -253,6 +253,9 @@ class FlatSet {
     void CopyFrom(uint32 i, Bucket* src, uint32 src_index) {
       new (&storage.key[i]) Key(src->storage.key[src_index]);
     }
+
+    static constexpr bool trivially_destructable =
+      std::is_trivially_destructible<Key>::value;
   };
 
   std::pair<iterator, bool> Insert(const Key& k) {
