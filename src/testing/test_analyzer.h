@@ -39,6 +39,9 @@ class TestAnalyzer : public core::analysis::AnalyzerImpl {
     JPP_RETURN_IF_ERROR(this->computeScores(sconf));
     return Status::Ok();
   }
+
+  ScoreProcessor& sproc() { return *sproc_; }
+  AnalysisInput& input() { return input_; }
 };
 
 class TestEnv {

@@ -101,7 +101,7 @@ struct BeamCandidate {
   }
 };
 
-class ScoreProcessor {
+struct ScoreProcessor {
   i32 beamSize_ = 0;
   util::ArraySlice<ConnectionBeamElement> beamPtrs_;
   NgramScoreHolder scores_;
@@ -128,7 +128,7 @@ class ScoreProcessor {
 
   explicit ScoreProcessor(AnalyzerImpl* analyzer);
 
- public:
+ public:  // functions below
   static std::pair<Status, ScoreProcessor*> make(AnalyzerImpl* impl);
 
   i32 activeBeamSize() const { return beamSize_; }
