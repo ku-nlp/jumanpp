@@ -167,10 +167,8 @@ u32 fillBeamCandidates(Lattice *l, LatticeBoundary *bnd, NodeScores scores,
   return activeBeams;
 }
 
-}  // namespace
-
 util::ArraySlice<BeamCandidate> processBeamCandidates(
-    util::MutableArraySlice<BeamCandidate> candidates, u32 maxBeam) {
+  util::MutableArraySlice<BeamCandidate> candidates, u32 maxBeam) {
   auto comp = std::greater<>();
   if (candidates.size() > maxBeam * 2) {
     u32 maxElems = maxBeam * 2;
@@ -183,6 +181,9 @@ util::ArraySlice<BeamCandidate> processBeamCandidates(
   auto size = std::min<u64>(maxBeam, candidates.size());
   return util::ArraySlice<BeamCandidate>{candidates, 0, size};
 }
+
+}  // namespace
+
 
 void ScoreProcessor::makeBeams(i32 boundary, LatticeBoundary *bnd,
                                const ScorerDef *sc) {
