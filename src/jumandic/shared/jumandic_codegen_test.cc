@@ -160,7 +160,7 @@ TEST_CASE(
 
     for (int el = 0; el < nels; ++el) {
       CAPTURE(el);
-      CHECK(t0s1.at(el) == t0s2.at(el));
+      CHECK(t0s1.at(el) == Approx(t0s2.at(el)));
     }
     auto t1x1 = fb1.t1Buf(gen.ngramStats().num2Grams, nels);
     auto t1x2 = fb2.t1Buf(gen.ngramStats().num2Grams, nels);
