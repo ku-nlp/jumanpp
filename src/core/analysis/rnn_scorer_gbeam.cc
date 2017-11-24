@@ -65,7 +65,7 @@ struct GbeamRnnFactoryState {
 
 struct GbeamRnnState {
   const GbeamRnnFactoryState* shared;
-  util::memory::Manager manager{4 * 1024 * 1024};
+  util::memory::Manager manager{2 * 1024 * 1024};  // 2M
   std::unique_ptr<util::memory::PoolAlloc> alloc{manager.core()};
   rnn::RnnIdContainer container{alloc.get()};
 
