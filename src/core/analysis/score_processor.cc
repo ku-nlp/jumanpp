@@ -146,73 +146,22 @@ u32 fillBeamCandidates(Lattice *l, LatticeBoundary *bnd, NodeScores scores,
   JPP_DCHECK_EQ(scores.numScorers(), weights.size());
   auto ends = bnd->ends();
   u32 activeBeams = 0;
-  switch (scores.numScorers()) {  // unroll loop for weights for common cases
-    case 2: {
-      auto w0 = weights[0];
-      auto w1 = weights[1];
-      for (u16 left = 0; left < scores.left(); ++left) {
-        auto leftPtr = ends->nodePtrs().at(left);
-        auto leftBeam = l->boundary(leftPtr.boundary)
-                            ->starts()
-                            ->beamData()
-                            .row(leftPtr.position);
-        for (u16 beam = 0; beam < scores.beam(); ++beam) {
-          auto &leftElm = leftBeam.at(beam);
-          if (EntryBeam::isFake(leftElm)) {
-            break;
-          }
-          auto s = scores.beamLeft(beam, left);
-          auto localScore = s.at(0) * w0 + s.at(1) + w1;
-          auto score = leftElm.totalScore + localScore;
-          cands.at(activeBeams) = BeamCandidate{score, left, beam};
-          activeBeams += 1;
-        }
+  for (u16 left = 0; left < scores.left(); ++left) {
+    auto leftPtr = ends->nodePtrs().at(left);
+    auto leftBeam = l->boundary(leftPtr.boundary)
+      ->starts()
+      ->beamData()
+      .row(leftPtr.position);
+    for (u16 beam = 0; beam < scores.beam(); ++beam) {
+      auto &leftElm = leftBeam.at(beam);
+      if (EntryBeam::isFake(leftElm)) {
+        break;
       }
-      break;
-    }
-    case 1: {
-      auto w0 = weights[0];
-      for (u16 left = 0; left < scores.left(); ++left) {
-        auto leftPtr = ends->nodePtrs().at(left);
-        auto leftBeam = l->boundary(leftPtr.boundary)
-                            ->starts()
-                            ->beamData()
-                            .row(leftPtr.position);
-        for (u16 beam = 0; beam < scores.beam(); ++beam) {
-          auto &leftElm = leftBeam.at(beam);
-          if (EntryBeam::isFake(leftElm)) {
-            break;
-          }
-          auto s = scores.beamLeft(beam, left);
-          auto localScore = s.at(0) * w0;
-          auto score = leftElm.totalScore + localScore;
-          cands.at(activeBeams) = BeamCandidate{score, left, beam};
-          activeBeams += 1;
-        }
-      }
-      break;
-    }
-    default: {
-      for (u16 left = 0; left < scores.left(); ++left) {
-        auto leftPtr = ends->nodePtrs().at(left);
-        auto leftBeam = l->boundary(leftPtr.boundary)
-                            ->starts()
-                            ->beamData()
-                            .row(leftPtr.position);
-        for (u16 beam = 0; beam < scores.beam(); ++beam) {
-          auto &leftElm = leftBeam.at(beam);
-          if (EntryBeam::isFake(leftElm)) {
-            break;
-          }
-          auto s = scores.beamLeft(beam, left);
-          Score score = leftElm.totalScore;
-          for (int i = 0; i < s.size(); ++i) {
-            score += s.at(i) * weights[i];
-          }
-          cands.at(activeBeams) = BeamCandidate{score, left, beam};
-          activeBeams += 1;
-        }
-      }
+      auto s = scores.beamLeft(beam, left);
+      auto localScore = s.at(0);
+      auto score = leftElm.totalScore + localScore;
+      cands.at(activeBeams) = BeamCandidate{score, left, beam};
+      activeBeams += 1;
     }
   }
   return activeBeams;
