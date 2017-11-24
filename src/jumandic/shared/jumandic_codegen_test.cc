@@ -150,11 +150,13 @@ TEST_CASE(
     auto nels = bnd1->localNodeCount();
     proc1.startBoundary(nels);
     proc2.startBoundary(nels);
+    auto t0s1 = proc1.scores_.bufferT0();
+    auto t0s2 = proc2.scores_.bufferT0();
+    util::fill(t0s1, 1000);
+    util::fill(t0s2, 1000);
     proc1.computeT0All(bndIdx, &hfp, &pfc);
     proc2.applyT0(bndIdx, &hfp);
 
-    auto t0s1 = proc1.scores_.bufferT0();
-    auto t0s2 = proc2.scores_.bufferT0();
     auto& fb1 = proc1.featureBuffer_;
     auto& fb2 = proc2.featureBuffer_;
 

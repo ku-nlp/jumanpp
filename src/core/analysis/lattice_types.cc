@@ -79,12 +79,12 @@ inline void nonTemporalStore4(void *dest, const void *src) {
 void LatticeBoundaryScores::importBeamScore(i32 left, i32 scorer, i32 beam,
                                             util::ArraySlice<Score> scores) {
   auto num = scores.size();
-  for (int i = 0; i < num; ++i) {
-    auto node = nodeScores(i);
+  for (int el = 0; el < num; ++el) {
+    auto node = nodeScores(el);
     auto svec = node.beamLeft(beam, left);
     static_assert(sizeof(Score) == 4, "");
     //nonTemporalStore4(&svec.at(scorer), &scores.at(i));
-    svec.at(scorer) = scores.at(i);
+    svec.at(scorer) = scores.at(el);
   }
 }
 
