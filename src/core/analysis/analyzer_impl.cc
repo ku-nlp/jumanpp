@@ -16,13 +16,8 @@ namespace analysis {
 
 Status AnalyzerImpl::resetForInput(StringPiece input) {
   reset();
-  return setNewInput(input);
-}
-
-Status AnalyzerImpl::setNewInput(StringPiece input) {
   JPP_RETURN_IF_ERROR(input_.reset(input));
   latticeBldr_.reset(input_.numCodepoints());
-
   return Status::Ok();
 }
 

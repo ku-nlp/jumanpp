@@ -110,6 +110,8 @@ class CharBuffer {
     npage = -1;
     position_ = page_size;
   }
+
+  bool empty() const { return npage == -1; }
 };
 
 }  // namespace util

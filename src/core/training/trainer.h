@@ -83,8 +83,7 @@ class OwningFullTrainer final : public ITrainer {
   }
 
   Status readExample(FullExampleReader* rdr) {
-    Status s = rdr->readFullExample(analyzer_.extraNodesContext(),
-                                    &trainer_.example());
+    Status s = rdr->readFullExample(&trainer_.example());
     trainer_.example().setInfo(rdr->filename(), rdr->lineNumber());
     return s;
   }

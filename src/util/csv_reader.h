@@ -87,6 +87,7 @@ class CsvReader {
   void reset() noexcept;
   i64 bytePosition() const { return static_cast<i64>(position_ - start_); }
   i64 byteSize() const { return static_cast<i64>(end_ - start_); }
+  bool rowHadQuoted() const { return !temp_.empty(); }
 };
 }  // namespace util
 }  // namespace jumanpp

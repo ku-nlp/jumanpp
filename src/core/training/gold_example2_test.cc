@@ -70,10 +70,10 @@ TEST_CASE("can read simple example with aliased node") {
   tdr.setTrainingIo(&tio);
   REQUIRE_OK(tdr.initDoubleCsv(ex));
   auto anaImpl = env.anaImpl();
-  REQUIRE_OK(tdr.readFullExample(anaImpl->extraNodesContext(), &exobj));
+  REQUIRE_OK(tdr.readFullExample(&exobj));
   CHECK(exobj.numNodes() == 3);
   TrainingExampleAdapter adapter{&tspec, anaImpl};
-  REQUIRE_OK(anaImpl->setNewInput(exobj.surface()));
+  REQUIRE_OK(anaImpl->resetForInput(exobj.surface()));
   CHECK(exobj.surface() == "ももももも");
   REQUIRE_OK(anaImpl->prepareNodeSeeds());
   GoldenPath gpath;
@@ -98,10 +98,10 @@ TEST_CASE("can read simple example with hidden node") {
   tdr.setTrainingIo(&tio);
   REQUIRE_OK(tdr.initDoubleCsv(ex));
   auto anaImpl = env.anaImpl();
-  REQUIRE_OK(tdr.readFullExample(anaImpl->extraNodesContext(), &exobj));
+  REQUIRE_OK(tdr.readFullExample(&exobj));
   CHECK(exobj.numNodes() == 3);
   TrainingExampleAdapter adapter{&tspec, anaImpl};
-  REQUIRE_OK(anaImpl->setNewInput(exobj.surface()));
+  REQUIRE_OK(anaImpl->resetForInput(exobj.surface()));
   CHECK(exobj.surface() == "ももももも");
   REQUIRE_OK(anaImpl->prepareNodeSeeds());
   GoldenPath gpath;

@@ -13,7 +13,7 @@ namespace training {
 Status Trainer::prepare() {
   auto latBldr = analyzer->latticeBldr();
 
-  JPP_RETURN_IF_ERROR(analyzer->setNewInput(example_.surface()));
+  JPP_RETURN_IF_ERROR(analyzer->resetForInput(example_.surface()));
   Status seedStatus = analyzer->prepareNodeSeeds();
 
   if (!seedStatus) {

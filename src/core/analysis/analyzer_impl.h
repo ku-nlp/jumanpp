@@ -63,7 +63,6 @@ class AnalyzerImpl {
    * and can not be used in training.
    */
   Status resetForInput(StringPiece input);
-  Status setNewInput(StringPiece input);
   Status prepareNodeSeeds();
   Status buildLattice();
   Status bootstrapAnalysis();

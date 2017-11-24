@@ -99,9 +99,9 @@ class FullExampleReader {
   std::vector<chars::InputCodepoint> codepts_;
   char doubleFldSep_;
   StringPiece filename_;
+  util::CharBuffer<> charBuffer_;
 
   Status readSingleExampleFragment(const util::CsvReader& csv,
-                                   analysis::ExtraNodesContext* xtra,
                                    FullyAnnotatedExample* result);
 
  public:
@@ -112,17 +112,15 @@ class FullExampleReader {
 
   Status initCsv(StringPiece data);
   bool finished() const { return finished_; }
-  Status readFullExampleDblCsv(analysis::ExtraNodesContext* xtra,
-                               FullyAnnotatedExample* result);
-  Status readFullExampleCsv(analysis::ExtraNodesContext* xtra,
-                            FullyAnnotatedExample* result);
-  Status readFullExample(analysis::ExtraNodesContext* xtra,
-                         FullyAnnotatedExample* result);
+  Status readFullExampleDblCsv(FullyAnnotatedExample* result);
+  Status readFullExampleCsv(FullyAnnotatedExample* result);
+  Status readFullExample(FullyAnnotatedExample* result);
 
   i64 lineNumber() const { return csv_.lineNumber(); }
 
   void resetInput(StringPiece data) {
     csv_.initFromMemory(data);
+    charBuffer_.reset();
     finished_ = false;
   }
 

@@ -30,8 +30,7 @@ class TrainerEnv : public GoldExampleEnv {
 
   void parseMrph(StringPiece data) {
     REQUIRE_OK(rdr.initDoubleCsv(data));
-    REQUIRE_OK(rdr.readFullExample(anaImpl()->extraNodesContext(),
-                                   &trainer.example()));
+    REQUIRE_OK(rdr.readFullExample(&trainer.example()));
   }
 
   std::unique_ptr<testing::TestAnalyzer> newAnalyzer(const ScorerDef* sconf) {

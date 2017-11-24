@@ -19,7 +19,7 @@ TEST_CASE("we can create a testing environment") {
   tdr.setTrainingIo(&tio);
   REQUIRE_OK(tdr.initCsv(ex));
   auto anaImpl = env.anaImpl();
-  REQUIRE_OK(tdr.readFullExample(anaImpl->extraNodesContext(), &exobj));
+  REQUIRE_OK(tdr.readFullExample(&exobj));
   CHECK(exobj.numNodes() == 3);
   TrainingExampleAdapter adapter{&spec.training, anaImpl};
   anaImpl->resetForInput(exobj.surface());
@@ -47,7 +47,7 @@ TEST_CASE("we can create a testing environment with merging nodes") {
   tdr.setTrainingIo(&tio);
   REQUIRE_OK(tdr.initCsv(ex));
   auto anaImpl = env.anaImpl();
-  REQUIRE_OK(tdr.readFullExample(anaImpl->extraNodesContext(), &exobj));
+  REQUIRE_OK(tdr.readFullExample(&exobj));
   CHECK(exobj.numNodes() == 3);
   TrainingExampleAdapter adapter{&spec.training, anaImpl};
   anaImpl->resetForInput(exobj.surface());
@@ -75,7 +75,7 @@ TEST_CASE("we can create a testing environment with unk nodes") {
   tdr.setTrainingIo(&tio);
   REQUIRE_OK(tdr.initCsv(ex));
   auto anaImpl = env.anaImpl();
-  REQUIRE_OK(tdr.readFullExample(anaImpl->extraNodesContext(), &exobj));
+  REQUIRE_OK(tdr.readFullExample(&exobj));
   CHECK(exobj.numNodes() == 3);
   TrainingExampleAdapter adapter{&spec.training, anaImpl};
   anaImpl->resetForInput(exobj.surface());
@@ -106,10 +106,10 @@ TEST_CASE(
   tdr.setTrainingIo(&tio);
   REQUIRE_OK(tdr.initCsv(ex));
   auto anaImpl = env.anaImpl();
-  REQUIRE_OK(tdr.readFullExample(anaImpl->extraNodesContext(), &exobj));
+  REQUIRE_OK(tdr.readFullExample(&exobj));
   CHECK(exobj.numNodes() == 3);
   TrainingExampleAdapter adapter{&spec.training, anaImpl};
-  REQUIRE_OK(anaImpl->setNewInput(exobj.surface()));
+  REQUIRE_OK(anaImpl->resetForInput(exobj.surface()));
   REQUIRE_FALSE(anaImpl->prepareNodeSeeds());
   CHECK_OK(env.anaImpl()->latticeBldr()->prepare());
   GoldenPath gpath;
