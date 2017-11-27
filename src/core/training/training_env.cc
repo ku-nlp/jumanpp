@@ -145,7 +145,7 @@ Status TrainingEnv::initOther() {
   auto& trainingSpec = env_->spec().training;  // make a copy here
   warnOnNonMatchingFeatures(env_->spec());
 
-  JPP_RETURN_IF_ERROR(trainingIo_.initialize(trainingSpec, *pHolder));
+  JPP_RETURN_IF_ERROR(trainingIo_.initialize(*pHolder));
   fullReader_.setTrainingIo(&trainingIo_);
   core::training::TrainerFullConfig conf{&aconf_, pHolder, &trainingSpec,
                                          &args_.trainingConfig};

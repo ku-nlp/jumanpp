@@ -66,7 +66,7 @@ TEST_CASE("can read partitial example") {
   StringPiece ex = "# test\nもも\nも\nもも\n\n";
   GoldExample2Env env{dic};
   t::TrainingIo tio;
-  REQUIRE_OK(tio.initialize(env.spec().training, env.core()));
+  REQUIRE_OK(tio.initialize(env.core()));
   t::PartialExampleReader rdr;
   REQUIRE_OK(rdr.setData(ex));
   REQUIRE_OK(rdr.initialize(&tio));
@@ -92,7 +92,7 @@ TEST_CASE("can read empty example") {
   StringPiece ex = "\n";
   GoldExample2Env env{dic};
   t::TrainingIo tio;
-  REQUIRE_OK(tio.initialize(env.spec().training, env.core()));
+  REQUIRE_OK(tio.initialize(env.core()));
   t::PartialExampleReader rdr;
   REQUIRE_OK(rdr.setData(ex));
   REQUIRE_OK(rdr.initialize(&tio));
@@ -113,7 +113,7 @@ TEST_CASE("can read example with a single element") {
   StringPiece ex = "もも\n\n";
   GoldExample2Env env{dic};
   t::TrainingIo tio;
-  REQUIRE_OK(tio.initialize(env.spec().training, env.core()));
+  REQUIRE_OK(tio.initialize(env.core()));
   t::PartialExampleReader rdr;
   REQUIRE_OK(rdr.setData(ex));
   REQUIRE_OK(rdr.initialize(&tio));
@@ -134,7 +134,7 @@ TEST_CASE("can read example with a single tagged element (0 tags)") {
   StringPiece ex = "\tもも\n\n";
   GoldExample2Env env{dic};
   t::TrainingIo tio;
-  REQUIRE_OK(tio.initialize(env.spec().training, env.core()));
+  REQUIRE_OK(tio.initialize(env.core()));
   t::PartialExampleReader rdr;
   REQUIRE_OK(rdr.setData(ex));
   REQUIRE_OK(rdr.initialize(&tio));
@@ -156,7 +156,7 @@ TEST_CASE("can read example with a single tagged element (1 tags)") {
   StringPiece ex = "\tもも\td:A\n\n";
   GoldExample2Env env{dic};
   t::TrainingIo tio;
-  REQUIRE_OK(tio.initialize(env.spec().training, env.core()));
+  REQUIRE_OK(tio.initialize(env.core()));
   t::PartialExampleReader rdr;
   REQUIRE_OK(rdr.setData(ex));
   REQUIRE_OK(rdr.initialize(&tio));
@@ -180,7 +180,7 @@ TEST_CASE("can read example with a single tagged element (3 tags)") {
   StringPiece ex = "\tもも\tb:b\td:1\tc:B\n\n";
   GoldExample2Env env{dic};
   t::TrainingIo tio;
-  REQUIRE_OK(tio.initialize(env.spec().training, env.core()));
+  REQUIRE_OK(tio.initialize(env.core()));
   t::PartialExampleReader rdr;
   REQUIRE_OK(rdr.setData(ex));
   REQUIRE_OK(rdr.initialize(&tio));
@@ -206,7 +206,7 @@ TEST_CASE("can read tagged and single example") {
   StringPiece ex = "も\n\tもも\n\n\tも\nも\n\tも\n\n";
   GoldExample2Env env{dic};
   t::TrainingIo tio;
-  REQUIRE_OK(tio.initialize(env.spec().training, env.core()));
+  REQUIRE_OK(tio.initialize(env.core()));
   t::PartialExampleReader rdr;
   REQUIRE_OK(rdr.setData(ex));
   REQUIRE_OK(rdr.initialize(&tio));
@@ -239,7 +239,7 @@ TEST_CASE("can read two examples to the same place") {
   StringPiece ex = "も\n\tもも\n\n\tも\nも\n\tも\n\n";
   GoldExample2Env env{dic};
   t::TrainingIo tio;
-  REQUIRE_OK(tio.initialize(env.spec().training, env.core()));
+  REQUIRE_OK(tio.initialize(env.core()));
   t::PartialExampleReader rdr;
   REQUIRE_OK(rdr.setData(ex));
   REQUIRE_OK(rdr.initialize(&tio));

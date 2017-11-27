@@ -8,6 +8,7 @@ namespace jumanpp {
 namespace core {
 namespace training {
 
+namespace {
 Status readStr2IdMap(const dic::DictionaryField &fld,
                      util::FlatMap<StringPiece, i32> *map) {
   auto &s2i = *map;
@@ -31,8 +32,10 @@ Status readStr2IdMap(const dic::DictionaryField &fld,
 
   return Status::Ok();
 }
-Status TrainingIo::initialize(const spec::TrainingSpec &spec,
-                              const CoreHolder &core) {
+}  // namespace
+
+Status TrainingIo::initialize(const CoreHolder &core) {
+  auto &spec = core.spec().training;
   storages_.resize(spec.fields.size());
   for (i32 i = 0; i < spec.fields.size(); ++i) {
     auto &tf = spec.fields[i];
@@ -49,6 +52,7 @@ Status TrainingIo::initialize(const spec::TrainingSpec &spec,
   surfaceFieldIdx_ = spec.fields[spec.surfaceIdx].number;
   return Status::Ok();
 }
+
 }  // namespace training
 }  // namespace core
 }  // namespace jumanpp

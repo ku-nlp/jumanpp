@@ -33,6 +33,19 @@ class GoldenPath {
   void reset() { goldPath.clear(); }
 };
 
+struct AllowedFieldInfo {
+  util::FlatMap<i32, i32> unkPatternToGoldIdx_;
+  i32 goldIdx_;
+};
+
+class UnkAllowedField {
+  std::vector<AllowedFieldInfo> fields_;
+
+ public:
+  UnkAllowedField(const CoreHolder &core);
+  bool isAllowed(const analysis::ExtraNode *xtra, const ExampleNode &ex) const;
+};
+
 class TrainingExampleAdapter {
   const spec::TrainingSpec *spec;
   analysis::Lattice *lattice;
@@ -40,15 +53,10 @@ class TrainingExampleAdapter {
   analysis::ExtraNodesContext *xtra;
   dic::DictionaryEntries entries;
   std::vector<i32> entryBuffer;
+  UnkAllowedField unkAllowed;
 
  public:
-  TrainingExampleAdapter(const spec::TrainingSpec *spec,
-                         analysis::AnalyzerImpl *impl)
-      : spec{spec},
-        lattice{impl->lattice()},
-        latticeBuilder{impl->latticeBldr()},
-        xtra{impl->extraNodesContext()},
-        entries{impl->dic().entries()} {}
+  TrainingExampleAdapter(analysis::AnalyzerImpl *impl);
 
   void reset() { entryBuffer.clear(); }
 

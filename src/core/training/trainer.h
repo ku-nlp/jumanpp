@@ -29,7 +29,7 @@ class Trainer {
   Trainer(analysis::AnalyzerImpl* analyzer, const spec::TrainingSpec* spec,
           const TrainingConfig& trconf)
       : analyzer{analyzer},
-        adapter_{spec, analyzer},
+        adapter_{analyzer},
         loss_{analyzer, spec},
         config_{trconf} {}
 
@@ -124,6 +124,8 @@ class OwningFullTrainer final : public ITrainer {
   analysis::Lattice* lattice() const override {
     return const_cast<analysis::AnalyzerImpl&>(analyzer_).lattice();
   }
+
+  const Trainer& trainer() const { return trainer_; }
 
   void setGlobalBeam(const GlobalBeamTrainConfig& cfg) override;
 };

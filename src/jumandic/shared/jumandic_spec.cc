@@ -185,7 +185,8 @@ void SpecFactory::fillSpec(core::spec::dsl::ModelSpecBuilder& bldr) {
       .field(pos, 1.0f)
       .field(subpos, 1.0f)
       .field(conjtype, 0.5f)
-      .field(conjform, 0.5f);
+      .field(conjform, 0.5f)
+      .allowGoldUnkWith(pos, features, "品詞推定");
 }
 
 }  // namespace jumandic

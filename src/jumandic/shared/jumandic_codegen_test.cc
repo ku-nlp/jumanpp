@@ -26,10 +26,14 @@ TEST_CASE(
   REQUIRE_OK(fl.map(&frag, 0, fl.size()));
   tenv.importDic(frag.asStringPiece(), "codegen.mdic");
   float weights[] = {
-      0.1f,  0.2f,   0.3f,   0.4f,  -0.1f, -0.2f,  -0.3f,  -0.4f,
-      0.03f, -0.03f, -0.05f, 0.05f, 0.01f, -0.01f, 0.07f,  -0.07f,
-      -0.1f, -0.2f,  -0.3f,  -0.4f, 0.03f, -0.03f, -0.05f, 0.05f,
-      0.1f,  0.2f,   0.3f,   0.4f,  0.1f,  0.2f,   0.3f,   0.4f,
+      0.11f,  0.2f,   0.32f,  0.41f, -0.18f, -0.23f, -0.301f, -0.41f,
+      0.03f,  -0.03f, -0.05f, 0.05f, 0.011f, -0.01f, 0.07f,   -0.07f,
+      -0.15f, -0.2f,  -0.3f,  -0.4f, 0.03f,  -0.03f, -0.05f,  0.05f,
+      0.13f,  0.2f,   0.3f,   0.4f,  0.17f,  0.21f,  0.33f,   0.4f,
+      0.03f,  -0.03f, -0.05f, 0.05f, 0.01f,  -0.01f, 0.07f,   -0.07f,
+      0.13f,  0.21f,  0.31f,  0.4f,  -0.1f,  -0.2f,  -0.31f,  -0.4f,
+      0.15f,  0.29f,  0.36f,  0.4f,  0.1f,   0.21f,  0.3f,    0.4f,
+      -0.1f,  -0.24f, -0.39f, -0.4f, 0.03f,  -0.03f, -0.05f,  0.05f,
   };
   analysis::HashedFeaturePerceptron hfp{weights};
   analysis::ScorerDef sdef;
@@ -109,10 +113,14 @@ TEST_CASE(
   REQUIRE_OK(fl.map(&frag, 0, fl.size()));
   tenv.importDic(frag.asStringPiece(), "codegen.mdic");
   float weights[] = {
-      0.1f,  0.2f,   0.3f,   0.4f,  -0.1f, -0.2f,  -0.3f,  -0.4f,
-      0.03f, -0.03f, -0.05f, 0.05f, 0.01f, -0.01f, 0.07f,  -0.07f,
-      -0.1f, -0.2f,  -0.3f,  -0.4f, 0.03f, -0.03f, -0.05f, 0.05f,
-      0.1f,  0.2f,   0.3f,   0.4f,  0.1f,  0.2f,   0.3f,   0.4f,
+      0.11f,  0.2f,   0.32f,  0.41f, -0.18f, -0.23f, -0.301f, -0.41f,
+      0.03f,  -0.03f, -0.05f, 0.05f, 0.011f, -0.01f, 0.07f,   -0.07f,
+      -0.15f, -0.2f,  -0.3f,  -0.4f, 0.03f,  -0.03f, -0.05f,  0.05f,
+      0.13f,  0.2f,   0.3f,   0.4f,  0.17f,  0.21f,  0.33f,   0.4f,
+      0.03f,  -0.03f, -0.05f, 0.05f, 0.01f,  -0.01f, 0.07f,   -0.07f,
+      0.13f,  0.21f,  0.31f,  0.4f,  -0.1f,  -0.2f,  -0.31f,  -0.4f,
+      0.15f,  0.29f,  0.36f,  0.4f,  0.1f,   0.21f,  0.3f,    0.4f,
+      -0.1f,  -0.24f, -0.39f, -0.4f, 0.03f,  -0.03f, -0.05f,  0.05f,
   };
   analysis::HashedFeaturePerceptron hfp{weights};
   analysis::ScorerDef sdef;
@@ -235,7 +243,14 @@ TEST_CASE("feature representation of gen/nongen is the same with global beam") {
   REQUIRE_OK(fl.map(&frag, 0, fl.size()));
   tenv.importDic(frag.asStringPiece(), "codegen.mdic");
   float weights[] = {
-      0.1f, 0.2f, 0.3f, 0.4f, -0.1f, -0.2f, -0.3f, -0.4f,
+      0.11f,  0.2f,   0.32f,  0.41f, -0.18f, -0.23f, -0.301f, -0.41f,
+      0.03f,  -0.03f, -0.05f, 0.05f, 0.011f, -0.01f, 0.07f,   -0.07f,
+      -0.15f, -0.2f,  -0.3f,  -0.4f, 0.03f,  -0.03f, -0.05f,  0.05f,
+      0.13f,  0.2f,   0.3f,   0.4f,  0.17f,  0.21f,  0.33f,   0.4f,
+      0.03f,  -0.03f, -0.05f, 0.05f, 0.01f,  -0.01f, 0.07f,   -0.07f,
+      0.13f,  0.21f,  0.31f,  0.4f,  -0.1f,  -0.2f,  -0.31f,  -0.4f,
+      0.15f,  0.29f,  0.36f,  0.4f,  0.1f,   0.21f,  0.3f,    0.4f,
+      -0.1f,  -0.24f, -0.39f, -0.4f, 0.03f,  -0.03f, -0.05f,  0.05f,
   };
   analysis::HashedFeaturePerceptron hfp{weights};
   analysis::ScorerDef sdef;

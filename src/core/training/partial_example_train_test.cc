@@ -22,7 +22,7 @@ class TrainerEnv : public GoldExampleEnv {
   core::training::PartialTrainer trainer;
   explicit TrainerEnv(StringPiece s, bool kataUnks = false)
       : GoldExampleEnv(s, kataUnks), trainer{anaImpl(), (1 << 12) - 1} {
-    REQUIRE_OK(tio.initialize(env.originalSpec.training, core()));
+    REQUIRE_OK(tio.initialize(core()));
     REQUIRE_OK(rdr.initialize(&tio));
   }
 

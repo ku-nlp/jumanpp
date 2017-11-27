@@ -359,13 +359,26 @@ class UnkProcBuilder : public DslOpBase {
   Status validate() const override;
 };
 
+struct GoldAlias {
+  StringPiece targetField;
+  StringPiece sourceField;
+  StringPiece key;
+};
+
 class TrainExampleSpec {
   std::vector<std::pair<FieldReference, float>> fields;
+  std::vector<GoldAlias> alias;
   friend class ::jumanpp::core::spec::SpecCompiler;
 
  public:
   TrainExampleSpec& field(FieldReference ref, float weight) {
     fields.push_back({ref, weight});
+    return *this;
+  }
+
+  TrainExampleSpec& allowGoldUnkWith(FieldReference target, FieldReference src,
+                                     StringPiece key) {
+    alias.push_back({target.name(), src.name(), key});
     return *this;
   }
 };
@@ -447,7 +460,9 @@ class ModelSpecBuilder : public DslOpBase {
   }
 
   TrainExampleSpec& train() {
-    train_ = alloc_->make_unique<TrainExampleSpec>();
+    if (!train_) {
+      train_ = alloc_->make_unique<TrainExampleSpec>();
+    }
     return *train_;
   }
 

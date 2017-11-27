@@ -139,9 +139,16 @@ void Serialize(Arch &a, TrainingField &o) {
 }
 
 template <typename Arch>
+void Serialize(Arch &a, AllowedUnkField &o) {
+  a &o.targetField;
+  a &o.sourceField;
+  a &o.sourceKey;
+}
+template <typename Arch>
 void Serialize(Arch &a, TrainingSpec &o) {
-  a &o.fields;
   a &o.surfaceIdx;
+  a &o.fields;
+  a &o.allowedUnk;
 }
 
 template <typename Arch>

@@ -24,7 +24,7 @@ class TrainerEnv : public GoldExampleEnv {
   TrainerEnv(StringPiece s, bool kataUnks = false)
       : GoldExampleEnv(s, kataUnks),
         trainer{anaImpl(), &env.originalSpec.training, testConf()} {
-    REQUIRE_OK(tio.initialize(env.originalSpec.training, core()));
+    REQUIRE_OK(tio.initialize(core()));
     rdr.setTrainingIo(&tio);
   }
 

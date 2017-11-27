@@ -22,7 +22,7 @@ std::ostream& operator<<(std::ostream& o, FieldType ct);
 constexpr static i32 InvalidInt = std::numeric_limits<i32>::min();
 
 constexpr static u32 SpecMagic = 0xfeed0000;
-constexpr static u32 SpecFormatVersion = 1;
+constexpr static u32 SpecFormatVersion = 2;
 
 struct FieldDescriptor {
   /**
@@ -185,9 +185,16 @@ struct TrainingField {
   float weight;
 };
 
+struct AllowedUnkField {
+  i32 targetField;
+  i32 sourceField;
+  std::string sourceKey;
+};
+
 struct TrainingSpec {
   i32 surfaceIdx;
   std::vector<TrainingField> fields;
+  std::vector<AllowedUnkField> allowedUnk;
 };
 
 struct AnalysisSpec {

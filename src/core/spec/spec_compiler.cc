@@ -615,6 +615,17 @@ Status SpecCompiler::createTrainSpec() {
     }
   }
 
+  for (auto& uf : tr.alias) {
+    auto tgt = fieldByName(uf.targetField);
+    auto src = fieldByName(uf.sourceField);
+    if (src->fieldType != spec::FieldType::StringKVList) {
+      return JPPS_INVALID_PARAMETER
+             << "only StringKVList is allowed for allowing UNK nodes: "
+             << uf.targetField << " " << uf.sourceField;
+    }
+    spec.allowedUnk.push_back({tgt->specIndex, src->specIndex, uf.key.str()});
+  }
+
   if (spec.surfaceIdx == -1) {
     return JPPS_INVALID_PARAMETER
            << "trie-indexed field was not selected for training";

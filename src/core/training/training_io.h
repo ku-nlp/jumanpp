@@ -42,7 +42,7 @@ class TrainingIo {
 
   i32 surfaceFieldIdx() const { return surfaceFieldIdx_; }
 
-  Status initialize(const spec::TrainingSpec& spec, const CoreHolder& core);
+  Status initialize(const CoreHolder& core);
 };
 
 }  // namespace training
