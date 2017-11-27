@@ -308,14 +308,14 @@ Status RnnScorerGbeamFactory::make(StringPiece rnnModelPath,
                                    const dic::DictionaryHolder& dic,
                                    const rnn::RnnInferenceConfig& config) {
   state_.reset(new GbeamRnnFactoryState);
-  setConfig(config);
   JPP_RETURN_IF_ERROR(state_->rnnReader.open(rnnModelPath));
   JPP_RETURN_IF_ERROR(state_->rnnReader.parse());
-  JPP_RETURN_IF_ERROR(
-      state_->resolver.build(dic, state_->config, state_->rnnReader.words()));
   JPP_RETURN_IF_ERROR(state_->rnn.init(state_->rnnReader.header(),
                                        state_->rnnReader.rnnMatrix(),
                                        state_->rnnReader.maxentWeights()));
+  setConfig(config);
+  JPP_RETURN_IF_ERROR(
+      state_->resolver.build(dic, state_->config, state_->rnnReader.words()));
   auto& h = state_->rnnReader.header();
   state_->embeddings = {state_->rnnReader.embeddings(), h.layerSize,
                         h.vocabSize};
