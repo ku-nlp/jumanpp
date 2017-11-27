@@ -26,6 +26,10 @@ Status LatticeFormatInfo::fillInfo(const core::analysis::Analyzer& an,
   auto maxN = std::min<i32>(eosBeam.size(), topN);
   for (int i = 0; i < maxN; ++i) {
     auto el = eosBeam.at(i);
+    if (core::analysis::EntryBeam::isFake(el)) {
+      break;
+    }
+
     auto ptr = el.ptr.previous;
 
     while (ptr->boundary >= 2) {
@@ -94,6 +98,9 @@ Status LatticeFormat::format(const core::analysis::Analyzer& analyzer,
 
     for (int i = 0; i < topN; ++i) {
       auto& bel = eosBeam.at(i);
+      if (core::analysis::EntryBeam::isFake(bel)) {
+        break;
+      }
       printer << "rank" << (i + 1) << ':' << bel.totalScore << ' ';
     }
     printer << '\n';
