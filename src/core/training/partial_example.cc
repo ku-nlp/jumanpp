@@ -36,7 +36,6 @@ void PartialTrainer::handleBoundaryConstraints() {
   const analysis::ConnectionPtr* nodeEnd = &top1.ptr;
   auto nodeStart = nodeEnd->previous;
   auto starts = l->boundary(nodeStart->boundary)->starts();
-  auto prevBnd = top1.ptr.boundary;
   while (nodeStart->boundary >= 2) {
     auto viol =
         example_.checkViolation(starts, nodeStart->boundary, nodeStart->right);
@@ -44,12 +43,12 @@ void PartialTrainer::handleBoundaryConstraints() {
       case PartialViolation::NoBreak:
       case PartialViolation::Break: {
         addBadNode(nodeStart, nearestValidBnd(nodeStart->boundary));
-        addBadNode(nodeStart, nearestValidBnd(prevBnd));
+        addBadNode(nodeStart, nearestValidBnd(nodeEnd->boundary));
         break;
       }
       case PartialViolation::Tag: {
         addBadNode(nodeStart, nodeStart->boundary);
-        addBadNode(nodeStart, prevBnd);
+        addBadNode(nodeStart, nodeEnd->boundary);
         break;
       }
       case PartialViolation::None:
@@ -58,7 +57,7 @@ void PartialTrainer::handleBoundaryConstraints() {
     if (viol != PartialViolation::None) {
       loss_ += 1.0f / top1_.totalNodes();
     }
-    prevBnd = nodeStart->boundary;
+    nodeEnd = nodeStart;
     nodeStart = nodeStart->previous;
     starts = l->boundary(nodeStart->boundary)->starts();
   }
