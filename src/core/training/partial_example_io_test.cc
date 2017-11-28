@@ -129,6 +129,29 @@ TEST_CASE("can read example with a single element") {
   CHECK(eof);
 }
 
+TEST_CASE("can read example with a single element and nobreak") {
+  StringPiece dic = "X,X,Y,Z\nもも,1,a,A\nも,2,b,B\n";
+  StringPiece ex = "も&も\n\n";
+  GoldExample2Env env{dic};
+  t::TrainingIo tio;
+  REQUIRE_OK(tio.initialize(env.core()));
+  t::PartialExampleReader rdr;
+  REQUIRE_OK(rdr.setData(ex));
+  REQUIRE_OK(rdr.initialize(&tio));
+  t::PartialExample pe;
+  bool eof = false;
+  REQUIRE_OK(rdr.readExample(&pe, &eof));
+  CHECK_FALSE(eof);
+  CHECK(pe.surface() == "もも");
+  CHECK(pe.nodes().empty());
+  CHECK(pe.boundaries().empty());
+  REQUIRE(pe.forbidBreak().size() == 1);
+  CHECK(pe.forbidBreak().at(0) == 3);
+  t::PartialExample pe2;
+  REQUIRE_OK(rdr.readExample(&pe2, &eof));
+  CHECK(eof);
+}
+
 TEST_CASE("can read example with a single tagged element (0 tags)") {
   StringPiece dic = "X,X,Y,Z\nもも,1,a,A\nも,2,b,B\n";
   StringPiece ex = "\tもも\n\n";

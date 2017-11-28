@@ -33,12 +33,15 @@ struct NodeConstraint {
   std::vector<TagConstraint> tags;
 };
 
+enum struct PartialViolation { None, Break, NoBreak, Tag };
+
 class PartialExample {
   std::string comment_;
   StringPiece file_;
   i64 line_;
   std::string surface_;
   std::vector<i32> boundaries_;
+  std::vector<i32> noBreak_;
   std::vector<NodeConstraint> nodes_;
 
  public:
@@ -47,6 +50,8 @@ class PartialExample {
   StringPiece surface() const { return surface_; }
 
   util::ArraySlice<i32> boundaries() const { return boundaries_; }
+
+  util::ArraySlice<i32> forbidBreak() const { return noBreak_; }
 
   util::ArraySlice<NodeConstraint> nodes() const { return nodes_; }
 
@@ -58,6 +63,11 @@ class PartialExample {
                      i32 position) const;
   bool doesNodeMatch(const analysis::LatticeRightBoundary* lr, i32 boundary,
                      i32 position) const;
+
+  PartialViolation checkViolation(const analysis::LatticeRightBoundary* rb,
+                                  i32 bnd, i32 pos) const;
+
+  bool validBoundary(i32 bndIdx) const;
 
   friend class PartialExampleReader;
 };
@@ -73,7 +83,6 @@ class PartialTrainer {
 
   void handleBoundaryConstraints();
   void handleEos();
-  void handleTagConstraints();
   void finalizeFeatures();
 
   friend class TrainerBatch;
@@ -88,10 +97,8 @@ class PartialTrainer {
   float loss() const { return loss_; }
   util::ArraySlice<ScoredFeature> featureDiff() const { return features_; }
 
-  void addBadNode(const analysis::ConnectionPtr* node, i32 boundary,
-                  i32 prevBoundary);
-  float addBadNode2(const analysis::ConnectionPtr* node, i32 boundary,
-                    i32 length, util::ArraySlice<TagConstraint> tagFilter);
+  i32 nearestValidBnd(i32 boundary);
+  i32 addBadNode(const analysis::ConnectionPtr* node, i32 boundary);
 
   ExampleInfo exampleInfo() const { return example_.exampleInfo(); }
 
@@ -151,10 +158,11 @@ class PartialExampleReader {
   util::FlatMap<StringPiece, const TrainingExampleField*> fields_;
   util::FullyMappedFile file_;
   util::CsvReader csv_{'\t', '\0'};
+  char32_t noBreakToken_ = U'&';
   std::vector<chars::InputCodepoint> codepts_;
 
  public:
-  Status initialize(TrainingIo* tio);
+  Status initialize(TrainingIo* tio, char32_t noBreakToken = U'&');
   Status readExample(PartialExample* result, bool* eof);
   Status openFile(StringPiece filename);
   Status setData(StringPiece data);

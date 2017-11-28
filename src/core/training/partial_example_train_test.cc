@@ -67,16 +67,18 @@ class TrainerEnv : public GoldExampleEnv {
 
 TEST_CASE("correctly computes matching nodes") {
   TrainerEnv env{"UNK,N,5\nもも,N,0\nも,PRT,1\nモ,PRT,2"};
-  env.parseMrph("\tもも\nも\n\tもも\n\tもも\nも\n\n");
+  env.parseMrph("\tもも\nも\n\tもも\n\tもも\nも\nも&も\n\n");
   CHECK(env.trainer.prepare());
   auto ex = env.trainer.example();
   auto l = env.anaImpl()->lattice();
   auto checkNode = [&](u16 bnd, u16 pos, StringPiece surface, bool result) {
     CAPTURE(bnd);
     CAPTURE(pos);
-    CHECK(ex.doesNodeMatch(l, bnd, pos) == result);
+    auto match = ex.doesNodeMatch(l, bnd, pos);
+    CHECK(match == result);
     CHECK(env.firstNode(LatticeNodePtr{bnd, pos}).a == surface);
   };
+  REQUIRE(l->createdBoundaryCount() == 13);
   checkNode(2, 0, "も", false);
   checkNode(2, 1, "もも", true);
   checkNode(3, 0, "も", false);
@@ -92,6 +94,10 @@ TEST_CASE("correctly computes matching nodes") {
   checkNode(8, 0, "も", false);
   checkNode(8, 1, "もも", false);
   checkNode(9, 0, "も", true);
+  checkNode(9, 1, "もも", false);
+  checkNode(10, 0, "も", false);
+  checkNode(10, 1, "もも", true);
+  checkNode(11, 0, "も", false);
 }
 
 TEST_CASE("can compute loss/features from a simple example bnds/words") {

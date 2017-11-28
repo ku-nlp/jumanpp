@@ -25,7 +25,6 @@ Status PartialTrainer::compute(const analysis::ScorerDef* sconf) {
   features_.clear();
   loss_ = 0;
   handleBoundaryConstraints();
-  handleTagConstraints();
   handleEos();
   finalizeFeatures();
   return Status::Ok();
@@ -37,72 +36,38 @@ void PartialTrainer::handleBoundaryConstraints() {
   auto top1 = eos->starts()->beamData().at(0);
   const analysis::ConnectionPtr* nodeEnd = &top1.ptr;
   auto nodeStart = nodeEnd->previous;
-  auto bnditer = example_.boundaries().rbegin();
-  auto end = example_.boundaries().rend();
-  while (nodeStart->boundary > 1 && bnditer != end) {
-    auto bndary = *bnditer;
-    if (nodeStart->boundary == bndary) {
-      // Boundaries match, GOOD!
-      ++bnditer;
-      nodeEnd = nodeStart;
-      nodeStart = nodeEnd->previous;
-    } else if (nodeStart->boundary < bndary && bndary < nodeEnd->boundary) {
-      // BAD: boundary constraint is violated
-      int nextBndary = 2;
-      auto nextIter = bnditer;
-      ++nextIter;
-      if (nextIter != example_.boundaries().rend()) {
-        nextBndary = *nextIter;
+  auto starts = l->boundary(nodeStart->boundary)->starts();
+  while (nodeStart->boundary >= 2) {
+    auto viol =
+        example_.checkViolation(starts, nodeStart->boundary, nodeStart->right);
+    switch (viol) {
+      case PartialViolation::NoBreak:
+      case PartialViolation::Break: {
+        addBadNode(nodeStart, nearestValidBnd(nodeStart->boundary));
+        break;
       }
-      addBadNode(nodeStart, bndary, nextBndary);
-      loss_ += 1.0f / top1_.totalNodes();
-      ++bnditer;
-    } else if (bndary >= nodeEnd->boundary) {
-      // boundary is after node, move it
-      ++bnditer;
-    } else {
-      // boundary is before node, move node
-      nodeEnd = nodeStart;
-      nodeStart = nodeEnd->previous;
+      case PartialViolation::Tag: {
+        addBadNode(nodeStart, nodeStart->boundary);
+        break;
+      }
+      case PartialViolation::None:
+        break;
     }
+    if (viol != PartialViolation::None) {
+      loss_ += 1.0f / top1_.totalNodes();
+    }
+    nodeStart = nodeStart->previous;
+    starts = l->boundary(nodeStart->boundary)->starts();
   }
 }
 
-void PartialTrainer::handleTagConstraints() {
-  auto l = analyzer_->lattice();
-  top1_.reset();
-  float nodeRatio = 1.0f / top1_.totalNodes();
-  for (auto& nodeConstraint : example_.nodes()) {
-    if (!top1_.moveToBoundary(nodeConstraint.boundary)) {
-      // There was nothing here
-      // Will be handled by boundary constraints
-      continue;
-    }
-    analysis::ConnectionPtr ptr;
-    while (top1_.nextNode(&ptr)) {
-      auto bnd = l->boundary(ptr.boundary);
-      auto& info = bnd->starts()->nodeInfo().at(ptr.right);
-      if (info.numCodepoints() != nodeConstraint.length) {
-        // Length is incorrect
-        loss_ +=
-            nodeRatio * addBadNode2(&ptr, ptr.boundary, nodeConstraint.length,
-                                    nodeConstraint.tags);
-        continue;
-      }
-
-      auto entryData = bnd->starts()->entryData().row(ptr.right);
-
-      for (auto& tag : nodeConstraint.tags) {
-        if (entryData[tag.field] != tag.value) {
-          // We have bad node here!
-          loss_ +=
-              nodeRatio * addBadNode2(&ptr, ptr.boundary, nodeConstraint.length,
-                                      nodeConstraint.tags);
-          break;
-        }
-      }
+i32 PartialTrainer::nearestValidBnd(i32 boundary) {
+  for (; boundary >= 2; --boundary) {
+    if (example_.validBoundary(boundary)) {
+      return boundary;
     }
   }
+  return 2;  // should be always valid
 }
 
 void PartialTrainer::finalizeFeatures() {
@@ -133,13 +98,12 @@ void PartialTrainer::finalizeFeatures() {
   features_.erase(features_.begin() + prev + 1, features_.end());
 }
 
-void PartialTrainer::addBadNode(const analysis::ConnectionPtr* node,
-                                i32 boundary, i32 prevBoundary) {
+i32 PartialTrainer::addBadNode(const analysis::ConnectionPtr* node,
+                               i32 boundary) {
   auto l = analyzer_->lattice();
   auto goodBnd = l->boundary(boundary);
-  auto endingNodes = goodBnd->ends()->nodePtrs();
-  float score =
-      1.0f / (endingNodes.size() * goodBnd->starts()->beamData().rowSize());
+  auto starts = goodBnd->starts();
+  float score = 1.0f / (starts->numEntries() * starts->beamData().rowSize());
 
   i32 count = 0;
 
@@ -148,23 +112,18 @@ void PartialTrainer::addBadNode(const analysis::ConnectionPtr* node,
   featureBuf_.resize(analyzer_->core().spec().features.ngram.size());
   util::MutableArraySlice<u32> buffer{&featureBuf_};
 
-  for (auto& end : endingNodes) {  // positive features
-    // a situation where a node spans through the previous
-    // boundary condition
-    // it's incorrect, so forbid it
-    if (end.boundary < prevBoundary) {
+  auto beams = starts->beamData();
+
+  for (int i = 0; i < goodBnd->localNodeCount(); ++i) {
+    if (!example_.doesNodeMatch(starts, boundary, i)) {
       continue;
     }
 
-    auto bnd = l->boundary(end.boundary);
-    auto beam = bnd->starts()->beamData().row(end.position);
-
-    // LOG_TRACE() << "Add boundary +features for [" << end.boundary << "," <<
-    // end.position << "]";
+    auto beam = beams.row(i);
 
     for (auto& beamEl : beam) {
       if (analysis::EntryBeam::isFake(beamEl)) {
-        continue;
+        break;
       }
 
       if (beamEl.ptr == *node) {
@@ -174,6 +133,11 @@ void PartialTrainer::addBadNode(const analysis::ConnectionPtr* node,
       auto t0 = beamEl.ptr;
       auto t1 = t0.previous;
       auto t2 = t1->previous;
+
+      if (!example_.doesNodeMatch(l, t1->boundary, t1->right) ||
+          !example_.doesNodeMatch(l, t2->boundary, t2->right)) {
+        continue;
+      }
 
       NgramFeatureRef ptrs{t2->latticeNodePtr(), t1->latticeNodePtr(),
                            t0.latticeNodePtr()};
@@ -185,6 +149,9 @@ void PartialTrainer::addBadNode(const analysis::ConnectionPtr* node,
         features_.push_back(ScoredFeature{f, score});
       }
     }
+  }
+  if (count == 0) {
+    return 0;
   }
 
   {
@@ -201,157 +168,78 @@ void PartialTrainer::addBadNode(const analysis::ConnectionPtr* node,
       features_.push_back(ScoredFeature{f, negFeature});
     }
   }
-}
-
-float PartialTrainer::addBadNode2(const analysis::ConnectionPtr* node,
-                                  i32 boundary, i32 length,
-                                  util::ArraySlice<TagConstraint> tagFilter) {
-  auto l = analyzer_->lattice();
-  auto goodBnd = l->boundary(boundary);
-  auto bndNodes = goodBnd->starts();
-
-  auto checkTags = [&](int pos) {
-    auto entries = bndNodes->entryData().row(pos);
-    for (auto& tag : tagFilter) {
-      if (entries.at(tag.field) != tag.value) {
-        return false;
-      }
-    }
-    return true;
-  };
-
-  i32 count = 0;
-  i32 nodes = 0;
-
-  // LOOP1: count good nodes
-  for (int i = 0; i < bndNodes->numEntries(); ++i) {
-    if (bndNodes->nodeInfo().at(i).numCodepoints() != length) {
-      continue;
-    }
-
-    if (!checkTags(i)) {
-      continue;
-    }
-
-    auto beam = bndNodes->beamData().row(i);
-    for (auto& beamEl : beam) {
-      if (analysis::EntryBeam::isFake(beamEl)) {
-        continue;
-      }
-      if (beamEl.ptr == *node) {
-        continue;
-      }
-      count += 1;
-    }
-    nodes += 1;
-  }
-
-  if (count == 0) {
-    // do anything if there are no good nodes
-    return 0;
-  }
-
-  float score = 1.0f / count;
-
-  NgramExampleFeatureCalculator nfc{l, analyzer_->core().features()};
-
-  featureBuf_.resize(analyzer_->core().spec().features.ngram.size());
-  util::MutableArraySlice<u32> buffer{&featureBuf_};
-
-  // PASS2: compute positive features
-  for (int i = 0; i < bndNodes->numEntries(); ++i) {
-    if (bndNodes->nodeInfo().at(i).numCodepoints() != length) {
-      continue;
-    }
-
-    if (!checkTags(i)) {
-      continue;
-    }
-
-    // LOG_TRACE() << "Add tag +features for [" << boundary << "," << i << "]";
-
-    auto beam = bndNodes->beamData().row(i);
-    for (auto& beamEl : beam) {
-      if (analysis::EntryBeam::isFake(beamEl)) {
-        continue;
-      }
-      if (beamEl.ptr == *node) {
-        continue;
-      }
-      auto t0 = beamEl.ptr;
-      auto t1 = t0.previous;
-      auto t2 = t1->previous;
-
-      NgramFeatureRef ptrs{t2->latticeNodePtr(), t1->latticeNodePtr(),
-                           t0.latticeNodePtr()};
-
-      nfc.calculateNgramFeatures(ptrs, buffer);
-      for (auto f : buffer) {
-        features_.push_back(ScoredFeature{f, score});
-      }
-    }
-  }
-
-  {
-    auto t0 = node;
-    auto t1 = t0->previous;
-    auto t2 = t1->previous;
-    // LOG_TRACE() << "Add tag -features for [" << t0->boundary << "," <<
-    // t0->right << "]";
-    NgramFeatureRef ref{t2->latticeNodePtr(), t1->latticeNodePtr(),
-                        t0->latticeNodePtr()};
-    nfc.calculateNgramFeatures(ref, buffer);
-    for (auto f : buffer) {  // add negative features
-      features_.push_back(ScoredFeature{f, -1});
-    }
-  }
-
-  return static_cast<float>(nodes) / bndNodes->numEntries();
+  return count;
 }
 
 bool PartialExample::doesNodeMatch(const analysis::Lattice* lr, i32 boundary,
                                    i32 position) const {
-  return doesNodeMatch(lr->boundary(boundary)->starts(), boundary, position);
+  auto bndStart = lr->boundary(boundary)->starts();
+  return doesNodeMatch(bndStart, boundary, position);
 }
 
 bool PartialExample::doesNodeMatch(const analysis::LatticeRightBoundary* lr,
                                    i32 boundary, i32 position) const {
-  auto iter =
-      std::lower_bound(boundaries_.begin(), boundaries_.end(), boundary);
-  if (iter == boundaries_.end()) {
-    return false;
+  return checkViolation(lr, boundary, position) == PartialViolation::None;
+}
+
+PartialViolation PartialExample::checkViolation(
+    const analysis::LatticeRightBoundary* lr, i32 boundary,
+    i32 position) const {
+  auto len = lr->nodeInfo().at(position).numCodepoints();
+  auto end = boundary + len;
+
+  for (auto bnd : noBreak_) {
+    // violation on non-breaking
+    if (bnd == boundary || bnd == end) {
+      return PartialViolation::Break;
+    }
+    if (bnd > end) {
+      break;
+    }
   }
 
-  if (*iter != boundary && boundary != 2) {
-    return false;
+  for (auto bnd : boundaries_) {
+    if (bnd <= boundary) {
+      continue;
+    }
+    if (bnd >= end) {
+      break;
+    }
+    return PartialViolation::NoBreak;
   }
 
   auto nodeIter = std::find_if(
       nodes_.begin(), nodes_.end(),
       [boundary](const NodeConstraint& n) { return n.boundary == boundary; });
 
-  auto len = lr->nodeInfo().at(position).numCodepoints();
   if (nodeIter == nodes_.end()) {
-    ++iter;
-    if (iter != boundaries_.end()) {
-      // A node violates length limitation -> bad
-      return len <= (*iter - boundary);
-    }
-    return true;
+    return PartialViolation::None;
   }
 
   auto& nodeCstrs = *nodeIter;
   if (len != nodeCstrs.length) {
-    return false;
+    return PartialViolation::Break;
   }
 
   auto data = lr->entryData().row(position);
   for (auto& tag : nodeCstrs.tags) {
     if (data.at(tag.field) != tag.value) {
-      return false;
+      return PartialViolation::Tag;
     }
   }
 
+  return PartialViolation::None;
+}
+
+bool PartialExample::validBoundary(i32 bndIdx) const {
+  for (auto chk : noBreak_) {
+    if (chk == bndIdx) {
+      return false;
+    }
+    if (chk > bndIdx) {
+      break;
+    }
+  }
   return true;
 }
 
@@ -371,112 +259,17 @@ void PartialTrainer::markGold(
 
 void PartialTrainer::handleEos() {
   auto l = analyzer_->lattice();
-  auto eos = l->boundary(l->createdBoundaryCount() - 1);
-  auto top1 = eos->starts()->beamData().at(0);
+  auto eosBnd = l->createdBoundaryCount() - 1;
+  auto eos = l->boundary(eosBnd);
+  auto eosBeam = eos->starts()->beamData();
+  auto top1 = eosBeam.at(0);
 
   auto prev = top1.ptr.previous;
-  auto prevLen = l->boundary(prev->boundary)
-                     ->starts()
-                     ->nodeInfo()
-                     .at(prev->right)
-                     .numCodepoints();
-  bool invalidNode = false;
-  auto prevStart = prev->boundary;
-  auto prevEnd = prevStart + prevLen;
-  for (auto b : example_.boundaries()) {
-    if (prevStart < b && b < prevEnd) {
-      invalidNode = true;
-    }
-  }
-
-  auto prevFields =
-      l->boundary(prev->boundary)->starts()->entryData().row(prev->right);
-  for (auto& n : example_.nodes()) {
-    if (n.boundary == prev->boundary) {
-      if (n.length != prevLen) {
-        invalidNode = true;
-        break;
-      }
-
-      for (auto& t : n.tags) {
-        if (prevFields[t.field] != t.value) {
-          invalidNode = true;
-          break;
-        }
-      }
-    }
-  }
-
-  if (!invalidNode) {
+  if (example_.doesNodeMatch(l, prev->boundary, prev->right)) {
     return;
   }
 
-  int nodes = 0;
-  int beams = 0;
-
-  for (auto& prevPtr : eos->ends()->nodePtrs()) {
-    auto starts = l->boundary(prevPtr.boundary)->starts();
-    if (example_.doesNodeMatch(starts, prevPtr.boundary, prevPtr.position)) {
-      if (prev->latticeNodePtr() == prevPtr) {
-        // we have prev node in gold
-        // do an early stop
-        return;
-      }
-      nodes += 1;
-      for (auto& beam : starts->beamData().row(prevPtr.position)) {
-        if (analysis::EntryBeam::isFake(beam)) {
-          break;
-        }
-        beams += 1;
-      }
-    }
-  }
-
-  if (nodes == 0) {
-    return;
-  }
-
-  float score = 1.0f / beams;
-  loss_ +=
-      1.0f * nodes / eos->ends()->nodePtrs().size() / l->createdBoundaryCount();
-  NgramExampleFeatureCalculator nfc{l, analyzer_->core().features()};
-  featureBuf_.resize(analyzer_->core().spec().features.ngram.size());
-  util::MutableArraySlice<u32> buffer{&featureBuf_};
-
-  analysis::LatticeNodePtr eosPtr{
-      static_cast<u16>(l->createdBoundaryCount() - 1), 0};
-
-  for (auto& prevPtr : eos->ends()->nodePtrs()) {
-    auto starts = l->boundary(prevPtr.boundary)->starts();
-    if (example_.doesNodeMatch(starts, prevPtr.boundary, prevPtr.position)) {
-      // LOG_TRACE() << "Add eos +features for [" << prevPtr.boundary << "," <<
-      // prevPtr.position << "]";
-      for (auto& beam : starts->beamData().row(prevPtr.position)) {
-        if (analysis::EntryBeam::isFake(beam)) {
-          break;
-        }
-        auto prev2 = beam.ptr.previous;
-        NgramFeatureRef ref{prev2->latticeNodePtr(), prev->latticeNodePtr(),
-                            eosPtr};
-        nfc.calculateNgramFeatures(ref, buffer);
-        for (auto feature : buffer) {
-          features_.push_back(ScoredFeature{feature, score});
-        }
-      }
-    }
-  }
-
-  auto top1prev = top1.ptr.previous;
-  auto top1prev2 = top1prev->previous;
-  NgramFeatureRef top1ref{top1prev2->latticeNodePtr(),
-                          top1prev->latticeNodePtr(),
-                          top1.ptr.latticeNodePtr()};
-  // LOG_TRACE() << "Add eos -features for [" << top1prev->boundary << "," <<
-  // top1prev->right << "]";
-  nfc.calculateNgramFeatures(top1ref, buffer);
-  for (auto feature : buffer) {
-    features_.push_back(ScoredFeature{feature, -1});
-  }
+  addBadNode(&top1.ptr, eosBnd);
 }
 
 Status OwningPartialTrainer::initialize(const TrainerFullConfig& cfg,
@@ -511,9 +304,11 @@ void OwningPartialTrainer::setGlobalBeam(const GlobalBeamTrainConfig& cfg) {
   }
 }
 
-Status PartialExampleReader::initialize(TrainingIo* tio) {
+Status PartialExampleReader::initialize(TrainingIo* tio,
+                                        char32_t noBreakToken) {
   tio_ = tio;
   fields_.clear();
+  noBreakToken_ = noBreakToken;
   for (auto& x : tio->fields()) {
     fields_.insert(std::make_pair(x.name, &x));
   }
@@ -553,8 +348,16 @@ Status PartialExampleReader::readExample(PartialExample* result, bool* eof) {
       codepts_.clear();
       JPP_RIE_MSG(chars::preprocessRawData(data, &codepts_),
                   "at " << filename_ << ":" << csv_.lineNumber());
-      result->surface_.append(data.begin(), data.size());
-      boundary += codepts_.size();
+
+      for (auto& codept : codepts_) {
+        if (codept.codepoint == noBreakToken_) {
+          result->noBreak_.push_back(boundary);
+        } else {
+          result->surface_.append(codept.bytes.begin(), codept.bytes.end());
+          boundary += 1;
+        }
+      }
+
       result->boundaries_.push_back(boundary);
       continue;
     }
@@ -573,6 +376,9 @@ Status PartialExampleReader::readExample(PartialExample* result, bool* eof) {
                 surface << " at " << filename_ << ":" << csv_.lineNumber());
     surface.assignTo(nc.surface);
     nc.length = static_cast<i32>(codepts_.size());
+    for (int i = 1; i < nc.length; ++i) {
+      result->noBreak_.push_back(boundary + i);
+    }
     nc.boundary = boundary;
     boundary += nc.length;
     result->surface_.append(nc.surface);
