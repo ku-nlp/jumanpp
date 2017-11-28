@@ -25,7 +25,6 @@ Status PartialTrainer::compute(const analysis::ScorerDef* sconf) {
   features_.clear();
   loss_ = 0;
   handleBoundaryConstraints();
-  handleEos();
   finalizeFeatures();
   return Status::Ok();
 }
@@ -37,6 +36,7 @@ void PartialTrainer::handleBoundaryConstraints() {
   const analysis::ConnectionPtr* nodeEnd = &top1.ptr;
   auto nodeStart = nodeEnd->previous;
   auto starts = l->boundary(nodeStart->boundary)->starts();
+  auto prevBnd = top1.ptr.boundary;
   while (nodeStart->boundary >= 2) {
     auto viol =
         example_.checkViolation(starts, nodeStart->boundary, nodeStart->right);
@@ -44,10 +44,12 @@ void PartialTrainer::handleBoundaryConstraints() {
       case PartialViolation::NoBreak:
       case PartialViolation::Break: {
         addBadNode(nodeStart, nearestValidBnd(nodeStart->boundary));
+        addBadNode(nodeStart, nearestValidBnd(prevBnd));
         break;
       }
       case PartialViolation::Tag: {
         addBadNode(nodeStart, nodeStart->boundary);
+        addBadNode(nodeStart, prevBnd);
         break;
       }
       case PartialViolation::None:
@@ -56,6 +58,7 @@ void PartialTrainer::handleBoundaryConstraints() {
     if (viol != PartialViolation::None) {
       loss_ += 1.0f / top1_.totalNodes();
     }
+    prevBnd = nodeStart->boundary;
     nodeStart = nodeStart->previous;
     starts = l->boundary(nodeStart->boundary)->starts();
   }
@@ -128,10 +131,6 @@ i32 PartialTrainer::addBadNode(const analysis::ConnectionPtr* node,
     for (auto& beamEl : beam) {
       if (analysis::EntryBeam::isFake(beamEl)) {
         break;
-      }
-
-      if (beamEl.ptr == *node) {
-        continue;
       }
 
       auto t0 = beamEl.ptr;
