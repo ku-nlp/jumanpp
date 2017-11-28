@@ -80,6 +80,7 @@ void PartialTrainer::finalizeFeatures() {
             });
   auto nfeatures = features_.size();
   if (nfeatures <= 1) {
+    loss_ = 0;
     return;
   }
   int prev = 0;
@@ -96,6 +97,9 @@ void PartialTrainer::finalizeFeatures() {
     }
   }
   features_.erase(features_.begin() + prev + 1, features_.end());
+  if (features_.size() == 0) {
+    loss_ = 0;
+  }
 }
 
 i32 PartialTrainer::addBadNode(const analysis::ConnectionPtr* node,
