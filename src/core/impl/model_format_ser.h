@@ -23,6 +23,7 @@ void Serialize(Arch& a, BlockPtr& o) {
 template <typename Arch>
 void Serialize(Arch& a, ModelPartRaw& o) {
   a& o.kind;
+  a& o.comment;
   a& o.data;
   a& o.start;
   a& o.end;

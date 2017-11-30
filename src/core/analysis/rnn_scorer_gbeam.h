@@ -31,7 +31,7 @@ class RnnScorerGbeamFactory : public ScorerFactory {
   Status make(StringPiece rnnModelPath, const dic::DictionaryHolder& dic,
               const rnn::RnnInferenceConfig& config);
   Status load(const model::ModelInfo& model) override;
-  Status makeInfo(model::ModelInfo* info);
+  Status makeInfo(model::ModelInfo* info, StringPiece comment);
   Status makeInstance(std::unique_ptr<ScoreComputer>* result) override;
   void setConfig(const rnn::RnnInferenceConfig& config);
   const rnn::RnnInferenceConfig& config() const;

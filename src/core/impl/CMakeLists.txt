@@ -22,6 +22,7 @@ jpp_core_files(core_tsrcs
   feature_test.cc
   graphviz_format_test.cc
   kvlist_test.cc
+  model_io_test.cc
 
   )
 

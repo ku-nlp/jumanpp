@@ -169,8 +169,9 @@ std::unique_ptr<analysis::Analyzer> TrainingEnv::makeAnalyzer(
   return ptr;
 }
 
-void TrainingEnv::exportScwParams(model::ModelInfo* pInfo) {
-  scw_.exportModel(pInfo);
+void TrainingEnv::exportScwParams(model::ModelInfo* pInfo,
+                                  StringPiece comment) {
+  scw_.exportModel(pInfo, comment);
 }
 
 void TrainingEnv::warnOnNonMatchingFeatures(const spec::AnalysisSpec& spec) {

@@ -367,7 +367,8 @@ void Serialize(Arch& a, RnnModelHeader& o) {
   a& o.rnnHeader.nceLnz;
 }
 
-Status RnnScorerGbeamFactory::makeInfo(model::ModelInfo* info) {
+Status RnnScorerGbeamFactory::makeInfo(model::ModelInfo* info,
+                                       StringPiece comment) {
   if (!state_) {
     return JPPS_INVALID_STATE << "RnnScorerGbeamFactory was not initialized";
   }
@@ -379,6 +380,7 @@ Status RnnScorerGbeamFactory::makeInfo(model::ModelInfo* info) {
 
   info->parts.emplace_back();
   auto& part = info->parts.back();
+  part.comment = comment.str();
   part.kind = model::ModelPartKind::Rnn;
   part.data.push_back(s.result());
   part.data.push_back(state_->resolver.knownIndex());

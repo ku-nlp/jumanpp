@@ -54,6 +54,7 @@ Status ModelSaver::save(const ModelInfo& info) {
     ModelPartRaw rawPart;
     rawPart.kind = part.kind;
     rawPart.start = offset;
+    rawPart.comment = part.comment;
 
     for (auto& buf : part.data) {
       util::MappedFileFragment frag;
@@ -64,7 +65,7 @@ Status ModelSaver::save(const ModelInfo& info) {
     }
 
     rawPart.end = offset;
-    raw.parts.push_back(rawPart);
+    raw.parts.push_back(std::move(rawPart));
   }
 
   util::serialization::Saver sv;
@@ -149,6 +150,7 @@ Status FilesystemModel::load(ModelInfo* info) {
     parts.emplace_back();
     auto& part = parts.back();
     part.kind = p.kind;
+    part.comment = p.comment;
     for (auto& raw : p.data) {
       ptrdiff_t start = static_cast<ptrdiff_t>(raw.offset);
       ptrdiff_t end = static_cast<ptrdiff_t>(start + raw.size);

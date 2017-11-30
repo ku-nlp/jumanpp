@@ -39,7 +39,6 @@ struct BuiltDictionary {
   std::vector<StringPiece> intStorages;
   i32 entryCount = spec::InvalidInt;
   spec::AnalysisSpec spec;
-  std::string comment;
   i64 timestamp = 0;
   Status restoreDictionary(const model::ModelInfo& info);
 };
@@ -58,7 +57,7 @@ class DictionaryBuilder {
   DictionaryBuilder();
   ~DictionaryBuilder();
 
-  Status fillModelPart(model::ModelPart* part);
+  Status fillModelPart(model::ModelPart* part, StringPiece comment = EMPTY_SP);
   Status importSpec(spec::AnalysisSpec* spec);
   Status importCsv(StringPiece name, StringPiece data);
   const BuiltDictionary& result() const { return *dic_; }

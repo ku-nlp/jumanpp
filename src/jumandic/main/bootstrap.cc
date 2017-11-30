@@ -3,6 +3,7 @@
 //
 
 #include <iostream>
+#include "args.h"
 #include "core/dic/dic_builder.h"
 #include "core/dic/dictionary.h"
 #include "core/dic/progress.h"
@@ -13,15 +14,19 @@
 
 using namespace jumanpp;
 
-Status importDictionary(StringPiece path, StringPiece target) {
+struct BootstrapArgs {
+  std::string rawDicPath;
+  std::string rawDicVersion;
+  std::string outputPath;
+};
+
+Status importDictionary(const BootstrapArgs& bargs) {
   core::spec::AnalysisSpec spec;
   JPP_RETURN_IF_ERROR(jumandic::SpecFactory::makeSpec(&spec));
   std::cout << "spec is valid!\n";
 
-  util::MappedFile file;
-  JPP_RETURN_IF_ERROR(file.open(path, util::MMapType::ReadOnly));
-  util::MappedFileFragment frag;
-  JPP_RETURN_IF_ERROR(file.map(&frag, 0, file.size()));
+  util::FullyMappedFile file;
+  JPP_RETURN_IF_ERROR(file.open(bargs.rawDicPath, util::MMapType::ReadOnly));
 
   std::string name;
   bool progressOk = true;
@@ -43,7 +48,7 @@ Status importDictionary(StringPiece path, StringPiece target) {
   core::dic::DictionaryBuilder builder;
   JPP_RETURN_IF_ERROR(builder.importSpec(&spec));
   builder.setProgress(&progress);
-  JPP_RETURN_IF_ERROR(builder.importCsv(path, frag.asStringPiece()));
+  JPP_RETURN_IF_ERROR(builder.importCsv(bargs.rawDicPath, file.contents()));
   std::cout << "\nimport done\n";
 
   core::dic::DictionaryHolder holder;
@@ -51,27 +56,59 @@ Status importDictionary(StringPiece path, StringPiece target) {
 
   core::model::ModelInfo minfo{};
   minfo.parts.emplace_back();
-  JPP_RETURN_IF_ERROR(builder.fillModelPart(&minfo.parts.back()));
+  JPP_RETURN_IF_ERROR(
+      builder.fillModelPart(&minfo.parts.back(), bargs.rawDicVersion));
 
   std::cout << "saving dictionary...";
   core::model::ModelSaver saver;
-  JPP_RETURN_IF_ERROR(saver.open(target));
+  JPP_RETURN_IF_ERROR(saver.open(bargs.outputPath));
   JPP_RETURN_IF_ERROR(saver.save(minfo))
   std::cout << "done!\n";
 
   return Status::Ok();
 }
 
-int main(int argc, char* argv[]) {
-  if (argc != 3) {
-    LOG_ERROR() << "invalid args, must provide dictionary as second, and "
-                   "target as third parameters";
+Status parseArgs(BootstrapArgs* bargs, int argc, const char* argv[]) {
+  args::ArgumentParser parser{"Juman++ Dictionary bootstrap binary"};
+  args::Positional<std::string> input{parser, "INPUT",
+                                      "Path of dictionary in CSV format"};
+  args::Positional<std::string> output{parser, "OUTPUT",
+                                       "Built dictionary will be saved here"};
+  args::ValueFlag<std::string> dicVersion{
+      parser,
+      "VERSION",
+      "Embed this version into built dictionary",
+      {"dic-version"},
+      ""};
+  args::HelpFlag help{parser, "HELP", "Print help", {"help", 'h'}};
+
+  try {
+    parser.ParseCLI(argc, argv);
+  } catch (args::Help&) {
+    std::cout << parser;
+    exit(1);
+  } catch (args::ParseError& e) {
+    Status::InvalidParameter() << e.what() << "\n" << parser;
+  } catch (...) {
+    return Status::InvalidParameter();
   }
 
-  auto filename = StringPiece::fromCString(argv[1]);
-  auto target = StringPiece::fromCString(argv[2]);
+  bargs->outputPath = output.Get();
+  bargs->rawDicPath = input.Get();
+  bargs->rawDicVersion = dicVersion.Get();
 
-  Status s = importDictionary(filename, target);
+  return Status::Ok();
+}
+
+int main(int argc, const char* argv[]) {
+  BootstrapArgs bargs;
+  Status s = parseArgs(&bargs, argc, argv);
+  if (!s) {
+    LOG_ERROR() << "Failed to parse command line: " << s;
+    return 1;
+  }
+
+  s = importDictionary(bargs);
   if (!s.isOk()) {
     LOG_ERROR() << s;
     return 1;

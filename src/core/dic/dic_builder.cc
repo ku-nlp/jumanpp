@@ -81,12 +81,12 @@ template <typename Arch>
 void Serialize(Arch& a, BuiltDictionary& o) {
   a& o.entryCount;
   a& o.fieldData;
-  a& o.comment;
   a& o.timestamp;
   a& o.spec;
 }
 
-Status DictionaryBuilder::fillModelPart(model::ModelPart* part) {
+Status DictionaryBuilder::fillModelPart(model::ModelPart* part,
+                                        StringPiece comment) {
   if (!dic_) {
     return Status::InvalidState() << "dictionary is not built yet";
   }
@@ -95,6 +95,7 @@ Status DictionaryBuilder::fillModelPart(model::ModelPart* part) {
   dicDataSaver.save(*dic_);
 
   part->kind = model::ModelPartKind::Dictionary;
+  part->comment = comment.str();
   part->data.push_back(storage_->builtDicData.contents());
   part->data.push_back(dic_->trieContent);
   part->data.push_back(dic_->entryPointers);

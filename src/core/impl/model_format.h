@@ -16,11 +16,21 @@ enum class ModelPartKind { Dictionary, Perceprton, Rnn, ScwDump };
 
 struct ModelPart {
   ModelPartKind kind;
+  std::string comment;
   std::vector<StringPiece> data;
 };
 
 struct ModelInfo {
   std::vector<ModelPart> parts;
+
+  ModelPart* firstPartOf(ModelPartKind kind) {
+    for (auto& p : parts) {
+      if (p.kind == kind) {
+        return &p;
+      }
+    }
+    return nullptr;
+  }
 
   const ModelPart* firstPartOf(ModelPartKind kind) const {
     for (auto& p : parts) {
@@ -39,6 +49,7 @@ struct BlockPtr {
 
 struct ModelPartRaw {
   ModelPartKind kind;
+  std::string comment;
   std::vector<BlockPtr> data;
   u64 start;
   u64 end;

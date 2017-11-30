@@ -46,12 +46,13 @@ class OkStatusMatcher
 
 class TempFile {
   std::string filename_;
-  INFO("temporary file name is: " << filename_);
 
  public:
   TempFile() {
     char buffer[L_tmpnam];
-// tmpnam is a security risk, but we use this for unit tests!
+// tmpnam is a security risk, but we use this ONLY for unit tests!
+// we actually need the access to file name and don't want to create
+// the file beforehand, or open it exclusively
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"

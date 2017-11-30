@@ -48,6 +48,7 @@ struct TrainingArguments {
   TrainingConfig trainingConfig;
   core::analysis::rnn::RnnInferenceConfig rnnConfig;
   GlobalBeamParams globalBeam;
+  std::string comment;
 };
 
 class TrainingEnv {
@@ -108,7 +109,7 @@ class TrainingEnv {
 
   std::unique_ptr<analysis::Analyzer> makeAnalyzer(i32 beamSize = -1) const;
 
-  void exportScwParams(model::ModelInfo* pInfo);
+  void exportScwParams(model::ModelInfo* pInfo, StringPiece comment = EMPTY_SP);
 
   void dumpScw(StringPiece dir, StringPiece prefix, i32 epoch) {
     scw_.dumpModel(dir, prefix, epoch);

@@ -53,6 +53,12 @@ Status parseArgs(int argc, const char** argv, t::TrainingArguments* args) {
                                              "Filename prefix for duming a SCW",
                                              {"scw-dump-prefix"},
                                              "scwdump"};
+  args::ValueFlag<std::string> corpusComment{
+      ioGroup,
+      "COMMENT",
+      "Comment to embed in SCW model about corpora",
+      {"corpus-comment"},
+      ""};
 
   args::Group trainingParams{parser, "Training parameters"};
   args::ValueFlag<u32> paramSizeExponent{
@@ -144,6 +150,7 @@ Status parseArgs(int argc, const char** argv, t::TrainingArguments* args) {
   args->globalBeam.maxRightBeam = maxRightGbeam.Get();
   args->globalBeam.minRightCheck = minRcheckGbeam.Get();
   args->globalBeam.maxRightCheck = maxRcheckGbeam.Get();
+  args->comment = corpusComment.Get();
 
   if (sizeExp > 31) {
     return Status::InvalidState() << "size exponent was too large: " << sizeExp
@@ -245,7 +252,7 @@ int doTrainJpp(t::TrainingArguments& args, core::JumanppEnv& env) {
   doTrain(exec, args);
 
   auto model = env.modelInfoCopy();
-  exec.exportScwParams(&model);
+  exec.exportScwParams(&model, args.comment);
 
   return saveModel(args, model);
 }
@@ -263,7 +270,7 @@ int doEmbedRnn(t::TrainingArguments& args, core::JumanppEnv& env) {
 
   auto info = env.modelInfoCopy();
 
-  s = rnnHolder.makeInfo(&info);
+  s = rnnHolder.makeInfo(&info, args.comment);
   if (!s) {
     LOG_ERROR() << "failed to add rnn info to the model: " << s;
     return 1;

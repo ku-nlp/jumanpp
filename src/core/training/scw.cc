@@ -126,7 +126,8 @@ struct ScwData {
   util::CodedBuffer cbuf;
 };
 
-void SoftConfidenceWeighted::exportModel(model::ModelInfo* model) {
+void SoftConfidenceWeighted::exportModel(model::ModelInfo* model,
+                                         StringPiece comment) {
   data_.reset(new ScwData);
   util::serialization::Saver svr{&data_->cbuf};
   PerceptronInfo pi;
@@ -136,6 +137,7 @@ void SoftConfidenceWeighted::exportModel(model::ModelInfo* model) {
 
   model::ModelPart part;
   part.kind = model::ModelPartKind::Perceprton;
+  part.comment = comment.str();
   part.data.push_back(data_->cbuf.contents());
 
   float* weightsPtr = usableWeights.data();

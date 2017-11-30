@@ -186,7 +186,7 @@ TEST_CASE("RNN holder serializes and deserializes and has the same score") {
   REQUIRE_OK(rnnHolder.make("rnn/testlm", env.jppEnv.coreHolder()->dic(), ric));
 
   core::model::ModelInfo modelInfo{};
-  REQUIRE_OK(rnnHolder.makeInfo(&modelInfo));
+  REQUIRE_OK(rnnHolder.makeInfo(&modelInfo, EMPTY_SP));
   a::RnnScorerGbeamFactory rnnHolder2;
   REQUIRE_OK(rnnHolder2.load(modelInfo));
 
@@ -237,7 +237,7 @@ TEST_CASE("RNN holder serializes and deserializes") {
   REQUIRE_OK(rnnHolder.make("rnn/testlm", env.jppEnv.coreHolder()->dic(), ric));
 
   core::model::ModelInfo modelInfo{};
-  REQUIRE_OK(rnnHolder.makeInfo(&modelInfo));
+  REQUIRE_OK(rnnHolder.makeInfo(&modelInfo, EMPTY_SP));
   a::RnnScorerGbeamFactory rnnHolder2;
   REQUIRE_OK(rnnHolder2.load(modelInfo));
 }
