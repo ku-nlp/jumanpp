@@ -268,6 +268,7 @@ struct GbeamRnnState {
   Status scoreLattice(Lattice* l, const ExtraNodesContext* xtra) {
     this->lat = l;
     this->xtra = xtra;
+    manager.reset();
     alloc->reset();
     auto numBnd = l->createdBoundaryCount() - 1;
     allocateState();
