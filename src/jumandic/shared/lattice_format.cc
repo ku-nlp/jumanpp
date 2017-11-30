@@ -148,7 +148,7 @@ Status LatticeFormat::format(const core::analysis::Analyzer& analyzer,
       printer << '\t';
       auto position = cptr.boundary - 2;  // we have 2 BOS
       printer << position << '\t';
-      printer << position + ninfo.numCodepoints() << '\t';
+      printer << position + ninfo.numCodepoints() - 1 << '\t';
       printer << f.surface[walker] << '\t';
       auto canFrm = f.canonicForm[walker];
       if (canFrm.size() > 0) {
