@@ -44,7 +44,7 @@ class JumanppEnv {
   Status makeAnalyzer(analysis::Analyzer* result) const {
     if (!hasPerceptronModel()) {
       return Status::InvalidState() << "loaded model (" << modelFile_.name()
-                                    << ") does not have was not trained";
+                                    << ") was not trained";
     }
     return result->initialize(coreHolder(), analyzerConfig_, scoringConf_,
                               &scorers_);
