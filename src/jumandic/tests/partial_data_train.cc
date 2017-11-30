@@ -31,6 +31,6 @@ TEST_CASE("can train with part and gbeam", "[gbeam]") {
   CHECK(env.trainEnv.value().numTrainers() == 11);
   auto loss = env.trainNepochsFrom("jumandic/train_mini_01.txt", 10);
 
-  env.dumpTrainers("/tmp/jpp-debug");
+  // env.dumpTrainers("/tmp/jpp-debug");
   CHECK(loss == Approx(0));
 }

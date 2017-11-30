@@ -3,7 +3,9 @@
 //
 
 #include <testing/test_analyzer.h>
+#include <fstream>
 #include "core/impl/feature_impl_prim.h"
+#include "core/impl/graphviz_format.h"
 #include "jpp_jumandic_cg.h"
 #include "jumandic_id_resolver.h"
 #include "jumandic_spec.h"
@@ -25,14 +27,15 @@ TEST_CASE(
   util::MappedFileFragment frag;
   REQUIRE_OK(fl.map(&frag, 0, fl.size()));
   tenv.importDic(frag.asStringPiece(), "codegen.mdic");
-  float weights[] = {
-      -0.115f, -0.047f, 0.488f,  -0.092f, 0.731f,  -0.229f, 0.247f,
-      -0.063f, 0.259f,  -0.944f, -0.126f, 0.109f,  -0.905f, -0.475f,
-      -0.870f, -0.259f, -0.449f, 0.157f,  -0.699f, -0.778f, 0.691f,
-      -0.335f, 0.884f,  0.926f,  -0.753f, 0.898f,  0.644f,  -0.561f,
-      -0.856f, -0.960f, 0.818f,  0.827f,  -0.438f, -0.609f, -0.203f,
-      0.213f,  0.141f,  -0.115f, 0.363f,  0.273f,  0.512f,  0.166f,
-      0.172f,  0.858f,  -0.890f, 0.914f,  -0.017f, 0.480f,  0.133f,
+  alignas(64) float weights[] = {
+      -0.002f, 0.025f,  -0.024f, 0.010f,  0.013f,  0.014f,  0.002f,  -0.004f,
+      -0.017f, 0.006f,  0.009f,  0.002f,  -0.021f, 0.005f,  -0.037f, -0.017f,
+      -0.006f, -0.005f, -0.022f, 0.001f,  -0.020f, 0.005f,  0.002f,  -0.015f,
+      0.009f,  0.021f,  0.007f,  0.014f,  -0.014f, -0.002f, 0.006f,  0.017f,
+      -0.003f, -0.012f, -0.007f, -0.000f, 0.003f,  -0.014f, -0.015f, 0.015f,
+      0.024f,  0.024f,  0.012f,  -0.006f, 0.011f,  0.007f,  -0.005f, 0.008f,
+      0.001f,  -0.022f, -0.013f, 0.007f,  -0.011f, 0.018f,  -0.010f, -0.006f,
+      -0.008f, -0.018f, 0.008f,  0.007f,  0.017f,  0.002f,  0.001f,  0.017f,
   };
   analysis::HashedFeaturePerceptron hfp{weights};
   analysis::ScorerDef sdef;
@@ -81,10 +84,6 @@ TEST_CASE(
           continue;
         }
         CHECK(be1.totalScore == Approx(be2.totalScore));
-        CHECK(be1.ptr == be2.ptr);
-        auto& pr1 = *be1.ptr.previous;
-        auto& pr2 = *be2.ptr.previous;
-        CHECK(pr1 == pr2);
       }
     }
   }
@@ -97,6 +96,22 @@ TEST_CASE(
     CAPTURE(i);
     CHECK(lbeam1.at(i).totalScore == Approx(lbeam2.at(i).totalScore));
   }
+
+#if 0
+  core::format::GraphVizBuilder gb;
+  gb.row({"canonic"});
+  gb.row({"surface"});
+  gb.row({"pos", "subpos"});
+  gb.row({"conjform", "conjtype"});
+  core::format::GraphVizFormat fmt;
+  gb.build(&fmt, 5);
+  fmt.initialize(gen.output());
+  fmt.render(gen.lattice());
+  core::analysis::Analyzer a;
+  a.initialize(&gen, &sdef);
+  std::ofstream of{"/tmp/jpp-dbg/01.dot"};
+  of << fmt.result();
+#endif
 }
 
 TEST_CASE(
@@ -111,14 +126,15 @@ TEST_CASE(
   util::MappedFileFragment frag;
   REQUIRE_OK(fl.map(&frag, 0, fl.size()));
   tenv.importDic(frag.asStringPiece(), "codegen.mdic");
-  float weights[] = {
-    -0.115f, -0.047f, 0.488f,  -0.092f, 0.731f,  -0.229f, 0.247f,
-    -0.063f, 0.259f,  -0.944f, -0.126f, 0.109f,  -0.905f, -0.475f,
-    -0.870f, -0.259f, -0.449f, 0.157f,  -0.699f, -0.778f, 0.691f,
-    -0.335f, 0.884f,  0.926f,  -0.753f, 0.898f,  0.644f,  -0.561f,
-    -0.856f, -0.960f, 0.818f,  0.827f,  -0.438f, -0.609f, -0.203f,
-    0.213f,  0.141f,  -0.115f, 0.363f,  0.273f,  0.512f,  0.166f,
-    0.172f,  0.858f,  -0.890f, 0.914f,  -0.017f, 0.480f,  0.133f,
+  alignas(64) float weights[] = {
+      -0.002f, 0.025f,  -0.024f, 0.010f,  0.013f,  0.014f,  0.002f,  -0.004f,
+      -0.017f, 0.006f,  0.009f,  0.002f,  -0.021f, 0.005f,  -0.037f, -0.017f,
+      -0.006f, -0.005f, -0.022f, 0.001f,  -0.020f, 0.005f,  0.002f,  -0.015f,
+      0.009f,  0.021f,  0.007f,  0.014f,  -0.014f, -0.002f, 0.006f,  0.017f,
+      -0.003f, -0.012f, -0.007f, -0.000f, 0.003f,  -0.014f, -0.015f, 0.015f,
+      0.024f,  0.024f,  0.012f,  -0.006f, 0.011f,  0.007f,  -0.005f, 0.008f,
+      0.001f,  -0.022f, -0.013f, 0.007f,  -0.011f, 0.018f,  -0.010f, -0.006f,
+      -0.008f, -0.018f, 0.008f,  0.007f,  0.017f,  0.002f,  0.001f,  0.017f,
   };
   analysis::HashedFeaturePerceptron hfp{weights};
   analysis::ScorerDef sdef;
@@ -240,14 +256,15 @@ TEST_CASE("feature representation of gen/nongen is the same with global beam") {
   util::MappedFileFragment frag;
   REQUIRE_OK(fl.map(&frag, 0, fl.size()));
   tenv.importDic(frag.asStringPiece(), "codegen.mdic");
-  float weights[] = {
-    -0.115f, -0.047f, 0.488f,  -0.092f, 0.731f,  -0.229f, 0.247f,
-    -0.063f, 0.259f,  -0.944f, -0.126f, 0.109f,  -0.905f, -0.475f,
-    -0.870f, -0.259f, -0.449f, 0.157f,  -0.699f, -0.778f, 0.691f,
-    -0.335f, 0.884f,  0.926f,  -0.753f, 0.898f,  0.644f,  -0.561f,
-    -0.856f, -0.960f, 0.818f,  0.827f,  -0.438f, -0.609f, -0.203f,
-    0.213f,  0.141f,  -0.115f, 0.363f,  0.273f,  0.512f,  0.166f,
-    0.172f,  0.858f,  -0.890f, 0.914f,  -0.017f, 0.480f,  0.133f,
+  alignas(64) float weights[] = {
+      -0.002f, 0.025f,  -0.024f, 0.010f,  0.013f,  0.014f,  0.002f,  -0.004f,
+      -0.017f, 0.006f,  0.009f,  0.002f,  -0.021f, 0.005f,  -0.037f, -0.017f,
+      -0.006f, -0.005f, -0.022f, 0.001f,  -0.020f, 0.005f,  0.002f,  -0.015f,
+      0.009f,  0.021f,  0.007f,  0.014f,  -0.014f, -0.002f, 0.006f,  0.017f,
+      -0.003f, -0.012f, -0.007f, -0.000f, 0.003f,  -0.014f, -0.015f, 0.015f,
+      0.024f,  0.024f,  0.012f,  -0.006f, 0.011f,  0.007f,  -0.005f, 0.008f,
+      0.001f,  -0.022f, -0.013f, 0.007f,  -0.011f, 0.018f,  -0.010f, -0.006f,
+      -0.008f, -0.018f, 0.008f,  0.007f,  0.017f,  0.002f,  0.001f,  0.017f,
   };
   analysis::HashedFeaturePerceptron hfp{weights};
   analysis::ScorerDef sdef;

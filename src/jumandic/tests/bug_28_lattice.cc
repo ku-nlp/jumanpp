@@ -24,7 +24,7 @@ TEST_CASE("lattice output works with gbeam", "[gbeam]") {
   env.trainArgs.batchSize = 100;
   env.trainArgs.trainingConfig.featureNumberExponent = 15;
   env.trainNepochsFrom("jumandic/bug-28-lattice.in", 3);
-  env.dumpTrainers("/tmp/jpp-dbg");
+  // env.dumpTrainers("/tmp/jpp-dbg");
   jumanpp::jumandic::output::LatticeFormat fmt{3};
   auto ana = env.trainEnv.value().makeAnalyzer(5);
   fmt.initialize(ana->output());
