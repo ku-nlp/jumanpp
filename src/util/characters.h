@@ -68,6 +68,7 @@ enum class CharacterClass : i32 {
   FAMILY_PROLONGABLE = KANJI | HIRAGANA | KATAKANA,
   FAMILY_FULL_KANA = HIRAGANA | KATAKANA,
   FAMILY_OTHERS = 0x00000000,
+  FAMILY_ANYTHING = 0x7fffffff,
 };
 
 struct CodePointInfo {

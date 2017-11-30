@@ -87,6 +87,13 @@ void SpecFactory::fillSpec(core::spec::dsl::ModelSpecBuilder& bldr) {
   bldr.unk("digits", 6)
       .numeric(chars::CharacterClass::FAMILY_DIGITS)
       .outputTo({surface, baseform, reading});
+  bldr.unk("onomatopoeia", 7)
+      .onomatopoeia(chars::CharacterClass::FAMILY_KANA)
+      .outputTo({surface, baseform, reading});
+  bldr.unk("notImpl", 8)
+      .single(chars::CharacterClass::FAMILY_ANYTHING)
+      .outputTo({surface, baseform, reading})
+      .lowPriority();
   bldr.unk("normalize", 1)  // 1 because of API
       .normalize()
       .outputTo({surface})
