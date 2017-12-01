@@ -8,6 +8,8 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
     include(cmake/GitUpdate.cmake)
     include(cmake/GitVersion.cmake)
     set(JUMANPP_FULL_VERSION "${PROJECT_VERSION}${GIT_VERSION_STRING}")
+else()
+    set(JUMANPP_FULL_VERSION "${PROJECT_VERSION}")
 endif()
 
 set(CMAKE_CXX_STANDARD 14)
