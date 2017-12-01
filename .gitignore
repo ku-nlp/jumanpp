@@ -6,10 +6,10 @@
 *.swm
 *.swn
 
-#CLion
 .idea/
 build-dir/
 cmake-build-*/
+release-stage-dir/
 
 #VScode
 .vscode/

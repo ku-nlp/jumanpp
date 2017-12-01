@@ -44,4 +44,4 @@ target_link_libraries(jpp_jumandic_bootstrap jpp_jumandic)
 target_link_libraries(jumanpp_v2 jpp_jumandic)
 target_link_libraries(jumanpp_v2_train jpp_jumandic jpp_core_train)
 
-install(PROGRAMS jumanpp_v2 RENAME jumanpp DESTINATION bin)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/jumanpp_v2 RENAME jumanpp DESTINATION bin)
