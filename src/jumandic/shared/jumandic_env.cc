@@ -145,10 +145,10 @@ StringPiece JumanppExec::emptyResult() const {
   switch (conf.outputType.value()) {
     case OutputType::Juman:
     case OutputType::Lattice:
-      return "# ERROR\nEOS\n";
+      return StringPiece{"# ERROR\nEOS\n"};
     case OutputType::Morph:
     case OutputType::FullMorph:
-      return "# ERROR\n";
+      return StringPiece{"# ERROR\n"};
     default:
       return EMPTY_SP;
   }
