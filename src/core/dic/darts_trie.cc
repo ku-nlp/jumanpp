@@ -72,7 +72,7 @@ Status DoubleArray::loadFromMemory(StringPiece memory) {
 
   // boo, this casts away const
   void *ptr = (void *)memory.begin();
-  arr.set_array(ptr, memory.size());
+  arr.set_array(ptr, memory.size() / arr.unit_size());
 
   return Status::Ok();
 }

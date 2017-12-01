@@ -16,7 +16,6 @@ namespace jumanpp {
 namespace jumandic {
 
 enum class OutputType {
-  Help,
   Version,
   ModelInfo,
   Juman,

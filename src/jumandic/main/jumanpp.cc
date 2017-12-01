@@ -5,7 +5,6 @@
 #include "jumanpp.h"
 #include <fstream>
 #include <iostream>
-#include "core_version.h"
 #include "jumanpp_args.h"
 #include "util/logging.hpp"
 
@@ -22,18 +21,34 @@ int main(int argc, const char** argv) {
     return 1;
   }
 
-  if (conf.outputType == jumandic::OutputType::Version) {
-    std::cout << "Juman++ Version: " << core::JPP_VERSION_STRING << "\n";
-    return 0;
-  }
-
   LOG_DEBUG() << "trying to create jumanppexec with model: "
               << conf.modelFile.value()
               << " and rnnmodel=" << conf.rnnModelFile.value();
+
   jumandic::JumanppExec exec{conf};
   s = exec.init();
   if (!s.isOk()) {
+    if (conf.outputType == jumandic::OutputType::Version) {
+      exec.printFullVersion();
+      return 1;
+    }
+
+    if (conf.modelFile.isDefault()) {
+      std::cerr << "Model file was not specified\n";
+      return 1;
+    }
+
+    if (conf.outputType == jumandic::OutputType::ModelInfo) {
+      exec.printModelInfo();
+      return 1;
+    }
+
     std::cerr << "failed to load model from disk: " << s;
+    return 1;
+  }
+
+  if (conf.outputType == jumandic::OutputType::Version) {
+    exec.printFullVersion();
     return 1;
   }
 
@@ -64,9 +79,12 @@ int main(int argc, const char** argv) {
     }
     Status st = exec.analyze(input, comment);
     if (!st) {
-      std::cerr << "error when analyzing sentence [ " << input << "] :" << st
-                << "\n";
-      std::cout << "EOS\n";
+      std::cerr << "error when analyzing sentence ";
+      if (!comment.empty()) {
+        std::cerr << "{" << comment << "} ";
+      }
+      std::cerr << "[ " << input << "]: " << st << "\n";
+      std::cout << exec.emptyResult();
     } else {
       std::cout << exec.output();
     }

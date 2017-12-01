@@ -60,6 +60,9 @@ class JumanppExec {
   virtual ~JumanppExec() = default;
 
   void printModelInfo() const;
+
+  void printFullVersion() const;
+  StringPiece emptyResult() const;
 };
 
 }  // namespace jumandic

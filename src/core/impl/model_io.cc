@@ -4,6 +4,7 @@
 
 #include "model_io.h"
 #include <core/analysis/perceptron.h>
+#include <core/dic/darts_trie.h>
 #include <util/printer.h>
 #include <cmath>
 #include <cstring>
@@ -171,7 +172,8 @@ StringPiece FilesystemModel::name() const {
 namespace i = util::io;
 
 inline void printDicInfo(i::Printer& p, const ModelPart& mp,
-                         const ModelPartRaw& mpr, const ModelInfo& info) {
+                         const ModelPartRaw& mpr, const ModelInfo& info,
+                         size_t totalSize) {
   core::dic::BuiltDictionary dic;
   auto s = dic.restoreDictionary(info);
   if (!s) {
@@ -179,29 +181,41 @@ inline void printDicInfo(i::Printer& p, const ModelPart& mp,
     return;
   }
 
-  auto hdr = mpr.data[0];
+  auto partInfo = [&](StringPiece name, const BlockPtr& part) {
+    float perc = part.size / float(totalSize) * 100;
+    p << "\n"
+      << name << ": [" << part.offset << "-" << part.offset + part.size << "], "
+      << part.size << " bytes (" << perc << "%)";
+  };
 
-  p << "\nHeader+Spec: [" << hdr.offset << ", " << hdr.size << "]";
+  partInfo("Header+Spec", mpr.data[0]);
+  partInfo("Double Array Trie", mpr.data[1]);
+  dic::DoubleArray da;
+  if (da.loadFromMemory(dic.trieContent)) {
+    p << "\n  " << da.describe();
+  }
 
-  auto trieIndex = mpr.data[1];
-  p << "\nTrie index: [" << trieIndex.offset << ", " << trieIndex.size << "]";
-
-  auto entryPtrs = mpr.data[2];
-  p << "\nEntry Pointers: [" << entryPtrs.offset << ", " << entryPtrs.size
-    << "]";
-
-  auto entryData = mpr.data[3];
-  p << "\nField Pointers: [" << entryData.offset << ", " << entryData.size
-    << "]";
+  partInfo("Entry Pointers", mpr.data[2]);
+  partInfo("Field Pointers", mpr.data[3]);
 
   int sstorNo = 0;
   for (; sstorNo < dic.stringStorages.size(); ++sstorNo) {
     auto& sstor = mpr.data[4 + sstorNo];
-    p << "\nString Storage: [" << sstor.offset << ", " << sstor.size << "]";
+    partInfo("String Storage", sstor);
     p << "\n  used by fields: ";
     for (auto& f : dic.spec.dictionary.fields) {
       if (f.stringStorage == sstorNo) {
         p << f.name << ", ";
+      }
+    }
+    for (auto& f : dic.fieldData) {
+      if (f.stringStorageIdx == sstorNo) {
+        p << "\n  unique strings: " << f.uniqueValues;
+        p << "\n  average item size: "
+          << static_cast<float>(sstor.size) / f.uniqueValues << " bytes";
+        auto alignment = dic.spec.dictionary.fields[f.specIndex].alignment;
+        p << "\n  alignment: " << alignment << " (" << (1 << alignment) << ")";
+        break;
       }
     }
   }
@@ -263,20 +277,22 @@ void FilesystemModel::renderInfo() {
 
       switch (mp.kind) {
         case ModelPartKind::Dictionary: {
-          p << "\nDictionary: [" << rawPart.start << "-" << rawPart.end << "]";
+          p << "\nDictionary: [" << rawPart.start << "-" << rawPart.end << "] "
+            << mp.comment;
           i::Indent id{p, 2};
-          printDicInfo(p, mp, rawPart, info);
+          printDicInfo(p, mp, rawPart, info, file_->fragment.size());
           break;
         }
         case ModelPartKind::Perceprton: {
           p << "\nLinear model: [" << rawPart.start << "-" << rawPart.end
-            << "]";
+            << "] " << mp.comment;
           i::Indent id{p, 2};
           printPerceptronInfo(p, mp, rawPart, info);
           break;
         }
         case ModelPartKind::Rnn: {
-          p << "\nRNN: [" << rawPart.start << "-" << rawPart.end << "]";
+          p << "\nRNN: [" << rawPart.start << "-" << rawPart.end << "] "
+            << mp.comment;
           break;
         }
         default: { p << "\nUnsupported Segment Type"; }

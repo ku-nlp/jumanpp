@@ -6,12 +6,15 @@
 #include "core/analysis/analyzer_impl.h"
 #include "core/impl/global_beam_position_fmt.h"
 #include "core/impl/graphviz_format.h"
+#include "core_version.h"
 #include "jpp_jumandic_cg.h"
 #include "jumandic/shared/lattice_format.h"
 #include "jumandic/shared/morph_format.h"
 #include "jumandic/shared/subset_format.h"
+#include "util/format.h"
 
 #include <fstream>
+#include <iostream>
 
 namespace jumanpp {
 namespace jumandic {
@@ -71,10 +74,8 @@ Status JumanppExec::initOutput() {
       JPP_RETURN_IF_ERROR(mfmt->initialize(analyzer.output()));
       break;
     }
-    case OutputType::Help:
     case OutputType::Version:
     case OutputType::ModelInfo:
-      JPP_DCHECK_NOT("should not reach here");
       return Status::Ok();
 #ifdef JPP_ENABLE_DEV_TOOLS
     case OutputType::GlobalBeamPos: {
@@ -98,10 +99,8 @@ Status JumanppExec::writeGraphviz() {
   JPP_RETURN_IF_ERROR(fmt.initialize(analyzer.output()));
   JPP_RETURN_IF_ERROR(fmt.render(analyzer.impl()->lattice()));
 
-  char filename[512];
-  filename[0] = 0;
-  snprintf(filename, 510, "%s/%08lld.dot", conf.graphvizDir.value().c_str(),
-           numAnalyzed_);
+  auto filename =
+      fmt::format("{0}/{1:08}.dot", conf.graphvizDir.value(), numAnalyzed_);
   std::ofstream of{filename};
   if (of) {
     of << fmt.result() << "\n";
@@ -113,6 +112,46 @@ void JumanppExec::printModelInfo() const {
   core::model::FilesystemModel model;
   model.open(this->conf.modelFile.value());
   model.renderInfo();
+}
+
+void JumanppExec::printFullVersion() const {
+  core::model::FilesystemModel model;
+  std::cout << "Juman++ Version: " << core::JPP_VERSION_STRING;
+  core::model::ModelInfo mi;
+  if (!model.open(conf.modelFile.value()) || !model.load(&mi)) {
+    std::cout << "\n";
+    return;
+  }
+
+  auto dic = mi.firstPartOf(core::model::ModelPartKind::Dictionary);
+  if (dic && !dic->comment.empty()) {
+    std::cout << " / Dictionary: " << dic->comment;
+  }
+
+  auto perc = mi.firstPartOf(core::model::ModelPartKind::Perceprton);
+  if (perc && !perc->comment.empty()) {
+    std::cout << " / LM: " << perc->comment;
+  }
+
+  auto rnn = mi.firstPartOf(core::model::ModelPartKind::Rnn);
+  if (rnn && !rnn->comment.empty()) {
+    std::cout << " / RNN:" << rnn->comment;
+  }
+
+  std::cout << "\n";
+}
+
+StringPiece JumanppExec::emptyResult() const {
+  switch (conf.outputType.value()) {
+    case OutputType::Juman:
+    case OutputType::Lattice:
+      return "# ERROR\nEOS\n";
+    case OutputType::Morph:
+    case OutputType::FullMorph:
+      return "# ERROR\n";
+    default:
+      return EMPTY_SP;
+  }
 }
 
 }  // namespace jumandic

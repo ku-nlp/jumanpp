@@ -24,8 +24,8 @@ struct JppArgsParser {
                                       "Input filename (- for stdin)", "-"};
 
   args::Group general{parser, "General Settings"};
-  args::Flag printHelp{
-      general, "printHelp", "Print this help meassage", {'h', "help"}};
+  args::HelpFlag helpFlag{
+      general, "HELP", "Prints this message", {'h', "help"}};
   args::ValueFlag<std::string> configFile{
       general, "FILENAME", "Config file location", {'c', "config"}};
   args::ValueFlag<i32> logLevel{general,
@@ -101,11 +101,12 @@ struct JppArgsParser {
     try {
       parser.ParseCLI(argc, argv);
     } catch (args::Help&) {
-      return Status::InvalidParameter() << parser;
+      std::cerr << parser;
+      exit(1);
     } catch (args::ParseError& e) {
       Status::InvalidParameter() << e.what() << "\n" << parser;
     } catch (...) {
-      return Status::InvalidParameter();
+      return Status::InvalidParameter() << "unknown exception happened";
     }
     return Status::Ok();
   }
@@ -170,7 +171,6 @@ struct JppArgsParser {
 #ifdef JPP_ENABLE_DEV_TOOLS
     result->outputType.set(globalBeamPos, OutputType::GlobalBeamPos);
 #endif
-    result->outputType.set(printHelp, OutputType::Help);
   }
 };
 
@@ -182,10 +182,6 @@ Status parseArgs(int argc, const char* argv[], JumanppConf* result) {
   JumanppConf cmdline;
   JPP_RETURN_IF_ERROR(argsParser.parseCli(argc, argv));
   argsParser.fillResult(&cmdline);
-  if (cmdline.outputType == OutputType::Help) {
-    std::cerr << argsParser.parser;
-    std::exit(1);
-  }
 
   util::logging::CurrentLogLevel =
       static_cast<util::logging::Level>(cmdline.logLevel.value());
@@ -233,10 +229,6 @@ Status parseArgs(int argc, const char* argv[], JumanppConf* result) {
   result->mergeWith(cmdline);
 
   LOG_TRACE() << "Merged Config: " << *result;
-
-  if (result->modelFile.isDefault()) {
-    return Status::InvalidParameter() << "model file was not specified";
-  }
 
   util::logging::CurrentLogLevel =
       static_cast<util::logging::Level>(result->logLevel.value());
