@@ -20,7 +20,7 @@ cp -r docs libs src test CMakeLists.txt \
     CONTRIBUTORS README.md README_ja.md \
     "release-stage-dir/jumanpp-${VERSION}"
 
-echo "set(PACKAGE_VERSION ${VERSION})" > "${OUT_DIR}/version.cmake"
+echo "set(PROJECT_VERSION ${VERSION})" > "${OUT_DIR}/version.cmake"
 
 cp -r model-template "${OUT_DIR}/model"
 
