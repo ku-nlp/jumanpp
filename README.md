@@ -1,31 +1,48 @@
-# JUMAN++
------
+# What is Juman++
+
 A new morphological analyser that considers semantic plausibility of 
 word sequences by using a recurrent neural network language model (RNNLM).
-Version 2 has better accuracy and improved (>100x) performance than
-the original JUMAN++.
+Version 2 has better accuracy and greatly improved (>100x) performance than
+the original Juman++.
 
-# Notice
+# Installation
 
-This is a branch for the Juman++ rewrite.
-The original version lives in the [master](https://github.com/ku-nlp/jumanpp/tree/master) branch.
-How to compile development version:
+## System Requirements
 
-### Requirements for JUMAN++ (v2)
-
-- OS: Linux or MacOS X
-- Compiler: C++14 compatible (will [downgrade to C++11](https://github.com/ku-nlp/jumanpp/issues/20) later)
- - We test on GCC and clang
+* OS: Linux or MacOS X. Windows is not supported ([yet?](https://github.com/ku-nlp/jumanpp/issues/31))
+* Compiler: C++14 compatible (will [downgrade to C++11](https://github.com/ku-nlp/jumanpp/issues/20) later)
+  * For, example gcc 5.1+, clang 3.4+
+  * We test on GCC and clang
 - CMake v3.1 or later
+
+## Building from package
+
+Dowload a package from [Releases](https://github.com/ku-nlp/jumanpp/releases)
+
+```bash
+$ tar xf jumanpp-<version>.tar.xz # decompress the package
+$ cd jumanpp-version # move into the directory
+$ mkdir bld # make a subdirectory for build
+$ cmake .. \
+  -DCMAKE_BUILD_TYPE=Release \ # you want to do this for performance
+  -DCMAKE_INSTALL_PREFIX=<prefix> # where to install Juman++
+$ make install -j<parallelism>
+```
+
+## Building from git
+
+Generally, the differences between package
+and this repository is the presence of prebuilt model
+and absense of some development scripts.
 
 ```bash
 $ mkdir cmake-build-dir # CMake does not support in-source builds
 $ cd cmake-build-dir
 $ cmake ..
-$ make
+$ make # -j
 ```
 
-Prelearned models are not yet available, but they will be very soon.
+# Usage
 
 ## Quick start
 ```
@@ -39,23 +56,36 @@ Prelearned models are not yet available, but they will be very soon.
 EOS
 ```
 
-## Option
+## Main options
 ```
 usage: jumanpp [options] 
-options:
   -s, --specifics              lattice format output (unsigned int [=5])
-  -B, --beam                   set beam width used in analysis (unsigned int [=5])
+  --beam <int>                 set beam width used in analysis (unsigned int [=5])
   -v, --version                print version
   -h, --help                   print this message
+  --model <file>               specify a model location
 ```
+
+More complete description of all options will come later.
 
 ## Input
 JUMAN++ can handle only utf-8 encoded text as an input.
 Lines beginning with `# ` will be interpreted as comments.
 
+# Other
+
 ## DEMO
-You can play around our [web demo](http://tulip.kuee.kyoto-u.ac.jp/demo/jumanpp_lattice?text=%E5%A4%96%E5%9B%BD%E4%BA%BA%E5%8F%82%E6%94%BF%E6%A8%A9%E3%81%AB%E5%AF%BE%E3%81%99%E3%82%8B%E8%80%83%E3%81%88%E6%96%B9%E3%81%AE%E9%81%95%E3%81%84)
-which displays a lattice
+You can play around our [web demo](https://tulip.kuee.kyoto-u.ac.jp/demo/jumanpp_lattice?text=%E5%A4%96%E5%9B%BD%E4%BA%BA%E5%8F%82%E6%94%BF%E6%A8%A9%E3%81%AB%E5%AF%BE%E3%81%99%E3%82%8B%E8%80%83%E3%81%88%E6%96%B9%E3%81%AE%E9%81%95%E3%81%84)
+which displays a subset of the whole lattice.
+The demo still uses v1 but, it will be updated to v2 soon.
+
+## Performance Notes
+
+To get the best performance, you need to build with extended instructuion sets.
+If you are planning to use Juman++ only locally,
+specify `-DCMAKE_CXX_FLAGS="-march=native"`.
+
+Works best on Intel Haswell and newer processors (because of FMA and BMI instruction set extensions).
 
 ## Model
 
@@ -71,5 +101,7 @@ See Morphological Analysis for Unsegmented Languages using Recurrent Neural Netw
 ## Acknowledgement
 The list of all libraries used by JUMAN++ is [here](libs/README.md).
 
+## Notice
 
-----
+This is a branch for the Juman++ rewrite.
+The original version lives in the [master](https://github.com/ku-nlp/jumanpp/tree/master) branch.
