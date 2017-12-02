@@ -81,7 +81,7 @@ The demo still uses v1 but, it will be updated to v2 soon.
 
 ## Performance Notes
 
-To get the best performance, you need to build with extended instructuion sets.
+To get the best performance, you need to build with [extended instructuion sets](https://gcc.gnu.org/onlinedocs/gcc/x86-Options.html).
 If you are planning to use Juman++ only locally,
 specify `-DCMAKE_CXX_FLAGS="-march=native"`.
 
