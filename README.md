@@ -104,4 +104,4 @@ The list of all libraries used by JUMAN++ is [here](libs/README.md).
 ## Notice
 
 This is a branch for the Juman++ rewrite.
-The original version lives in the [master](https://github.com/ku-nlp/jumanpp/tree/master) branch.
+The original version lives in the [legacy](https://github.com/ku-nlp/jumanpp/tree/legacy) branch.
