@@ -21,7 +21,7 @@ Dowload a package from [Releases](https://github.com/ku-nlp/jumanpp/releases)
 
 ```bash
 $ tar xf jumanpp-<version>.tar.xz # decompress the package
-$ cd jumanpp-version # move into the directory
+$ cd jumanpp-<version> # move into the directory
 $ mkdir bld # make a subdirectory for build
 $ cmake .. \
   -DCMAKE_BUILD_TYPE=Release \ # you want to do this for performance
