@@ -2,7 +2,7 @@
 
 A new morphological analyser that considers semantic plausibility of 
 word sequences by using a recurrent neural network language model (RNNLM).
-Version 2 has better accuracy and greatly improved (>100x) performance than
+Version 2 has better accuracy and greatly (>100x) improved analysis speed than
 the original Juman++.
 
 # Installation
