@@ -15,9 +15,9 @@ the original Juman++.
   * We test on GCC and clang
 - CMake v3.1 or later
 
-## Building from package
+## Building from a package
 
-Dowload a package from [Releases](https://github.com/ku-nlp/jumanpp/releases)
+Dowload the package from [Releases](https://github.com/ku-nlp/jumanpp/releases)
 
 ```bash
 $ tar xf jumanpp-<version>.tar.xz # decompress the package
@@ -32,8 +32,8 @@ $ make install -j<parallelism>
 
 ## Building from git
 
-Generally, the differences between package
-and this repository is the presence of prebuilt model
+Generally, the differences between the package
+and this repository is the presence of a prebuilt model
 and absense of some development scripts.
 
 ```bash
