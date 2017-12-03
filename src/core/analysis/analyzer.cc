@@ -18,16 +18,16 @@ Status Analyzer::initialize(const CoreHolder *core, const AnalyzerConfig &cfg,
                             const ScorerDef *scorer) {
   auto totalScorerSize = scorer->others.size() + 1;
   if (scoreConf.numScorers != totalScorerSize) {
-    return Status::InvalidParameter() << "number of scorers in core config "
-                                         "does not match actual scorer number";
+    return JPPS_INVALID_PARAMETER << "number of scorers in core config "
+                                     "does not match actual scorer number";
   }
 
   if (scorer->feature == nullptr) {
-    return Status::InvalidParameter() << "main scorer is not specified";
+    return JPPS_INVALID_PARAMETER << "main scorer is not specified";
   }
 
   if (scorer->scoreWeights.size() != totalScorerSize) {
-    return Status::InvalidParameter()
+    return JPPS_INVALID_PARAMETER
            << "total scorer size does not match size of score weights";
   }
 

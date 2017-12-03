@@ -46,8 +46,9 @@ class JumanppEnv {
       return Status::InvalidState() << "loaded model (" << modelFile_.name()
                                     << ") was not trained";
     }
-    return result->initialize(coreHolder(), analyzerConfig_, scoringConf_,
-                              &scorers_);
+    JPP_RETURN_IF_ERROR(result->initialize(coreHolder(), analyzerConfig_,
+                                           scoringConf_, &scorers_));
+    return Status::Ok();
   }
 
   model::ModelInfo modelInfoCopy() const { return modelInfo_; }

@@ -62,7 +62,7 @@ void JumanppEnv::setRnnHolder(analysis::RnnScorerGbeamFactory* holder) {
       scorers_.others.push_back(holder);
       scorers_.scoreWeights.push_back(1.0f);
     }
-    scoringConf_.numScorers += 1;
+    scoringConf_.numScorers = 2;
   }
   scorers_.others[0] = holder;
   if (scorers_.scoreWeights.size() == 2) {
@@ -74,12 +74,28 @@ void JumanppEnv::setRnnHolder(analysis::RnnScorerGbeamFactory* holder) {
 
 void JumanppEnv::setRnnConfig(
     const analysis::rnn::RnnInferenceConfig& rnnConf) {
+  if (rnnConf.rnnWeight.value() == 0) {
+    if (hasRnnModel()) {
+      scorers_.others.clear();
+      scorers_.scoreWeights.clear();
+      scorers_.scoreWeights.push_back(rnnConf.perceptronWeight);
+      scoringConf_.numScorers = 1;
+      return;  // disable rnn
+    }
+  }
   if (hasRnnModel()) {
     rnnHolder_.setConfig(rnnConf);
-  }
-  if (scorers_.scoreWeights.size() == 2) {
+    if (scorers_.others.empty()) {
+      scorers_.others.push_back(&rnnHolder_);
+    }
+    scorers_.scoreWeights.resize(2, 0);
     scorers_.scoreWeights[0] = rnnConf.perceptronWeight;
     scorers_.scoreWeights[1] = rnnConf.rnnWeight;
+    scoringConf_.numScorers = 2;
+  } else {
+    scorers_.scoreWeights.resize(1, 0);
+    scorers_.scoreWeights[0] = rnnConf.perceptronWeight;
+    scoringConf_.numScorers = 1;
   }
 }
 

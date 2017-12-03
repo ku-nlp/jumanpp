@@ -36,6 +36,8 @@ target_include_directories(jpp_jumandic_tests PRIVATE ${jpp_jumandic_cg_INCLUDE}
 add_executable(jpp_jumandic_bootstrap main/bootstrap.cc)
 add_executable(jumanpp_v2 main/jumanpp.cc main/jumanpp_args.cc)
 add_executable(jumanpp_v2_train main/jumanpp_train.cc main/jumanpp_train.h)
+add_executable(jpp_jumandic_pathdiff main/path_diff.cc)
+target_include_directories(jpp_jumandic_pathdiff PRIVATE ${jpp_jumandic_cg_INCLUDE})
 
 target_link_libraries(jpp_jumandic jpp_jumandic_spec)
 target_link_libraries(jpp_jumandic_tests jpp_jumandic jpp_core_train)
@@ -43,5 +45,6 @@ target_link_libraries(jpp_bug_tests jpp_jumandic jpp_core_train)
 target_link_libraries(jpp_jumandic_bootstrap jpp_jumandic)
 target_link_libraries(jumanpp_v2 jpp_jumandic)
 target_link_libraries(jumanpp_v2_train jpp_jumandic jpp_core_train)
+target_link_libraries(jpp_jumandic_pathdiff jpp_jumandic)
 
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/jumanpp_v2 RENAME jumanpp DESTINATION bin)
