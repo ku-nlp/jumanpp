@@ -120,6 +120,10 @@ struct DiffNode {
 
   std::ostream& render(std::ostream& o, RenderContext& leftCtx,
                        bool writeRight) const {
+    if (left.empty()) {
+      return o;
+    }
+
     if (isEqual) {
       o << "\n";
     }
@@ -287,19 +291,26 @@ int main(int argc, const char* argv[]) {
 
   std::ifstream ifs{pdc.inputFile};
 
+  std::string comment;
   std::string data;
   while (std::getline(ifs, data)) {
+    if (data.size() > 2 && data[0] == '#' && data[1] == ' ') {
+      comment.assign(data.begin() + 2, data.end());
+      continue;
+    }
+
     s = calc.computeDiff(data);
     if (!s) {
-      std::cerr << "failed to analyze [" << data << "]: " << s << "\n";
+      std::cerr << "failed to analyze " << comment << " [" << data << "]: " << s << "\n";
       continue;
     }
     if (!calc.nodes.empty()) {
-      std::cout << "# scores: " << calc.topLeft << " " << calc.topRight << " ";
+      std::cout << "# " << comment << " scores: " << calc.topLeft << " " << calc.topRight << " ";
       calc.renderInvalid(std::cout);
       calc.renderDiff(std::cout);
       std::cout << "\n\n";
     }
+    comment.clear();
   }
 
   return 0;
