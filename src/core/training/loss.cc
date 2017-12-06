@@ -268,13 +268,27 @@ void LossCalculator::computeFeatureDiff(u32 mask) {
     }
   }
 
-  float topWeight = 1.0f;
+  float weight = 1.0f;
+  bool updateTop = true;
   if (numTop != 0) {
-    topWeight = numGold / numTop;
+    weight = numGold / numTop;
   }
-  for (auto& s : scored) {
-    if (s.score < 0) {
-      s.score *= topWeight;
+  if (weight > 15 && numGold != 0) {
+    weight = numTop / numGold;
+    updateTop = false;
+  }
+
+  if (updateTop) {
+    for (auto& s : scored) {
+      if (s.score < 0) {
+        s.score *= weight;
+      }
+    }
+  } else {
+    for (auto& s : scored) {
+      if (s.score > 0) {
+        s.score *= weight;
+      }
     }
   }
 }

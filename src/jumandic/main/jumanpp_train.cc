@@ -116,6 +116,10 @@ Status parseArgs(int argc, const char** argv, t::TrainingArguments* args) {
       gbeam, "VALUE", "Right Check Min", {"gb-rcheck-min"}, -1};
   args::ValueFlag<i32> maxRcheckGbeam{
       gbeam, "VALUE", "Right Check Max", {"gb-rcheck-max"}, -1};
+  args::Flag firstIterFull{gbeam,
+                           "Fill first iter",
+                           "In each epoch, use full beam on first iteration",
+                           {"gb-first-full"}};
 
   try {
     parser.ParseCLI(argc, argv);
@@ -150,6 +154,7 @@ Status parseArgs(int argc, const char** argv, t::TrainingArguments* args) {
   args->globalBeam.maxRightBeam = maxRightGbeam.Get();
   args->globalBeam.minRightCheck = minRcheckGbeam.Get();
   args->globalBeam.maxRightCheck = maxRcheckGbeam.Get();
+  args->globalBeam.fullFirstIter = firstIterFull.Get();
   args->comment = corpusComment.Get();
 
   if (sizeExp > 31) {

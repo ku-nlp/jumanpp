@@ -23,8 +23,8 @@ Status TrainingEnv::trainOneEpoch() {
     }
     auto lastTrainer = firstTrainer + trainers_.totalTrainers() - 1;
 
-    for (u32 batchIter = 0; batchIter < args_.batchMaxIterations; ++batchIter) {
-      JPP_RETURN_IF_ERROR(trainOneBatch());
+    for (i32 batchIter = 0; batchIter < args_.batchMaxIterations; ++batchIter) {
+      JPP_RETURN_IF_ERROR(trainOneBatch(batchIter));
       auto normLoss =
           std::abs(lastLoss - batchLoss_) / trainers_.totalTrainers();
       lastLoss = batchLoss_;
@@ -51,7 +51,7 @@ Status TrainingEnv::trainOneEpoch() {
   return Status::Ok();
 }
 
-Status TrainingEnv::trainOneBatch() {
+Status TrainingEnv::trainOneBatch(i32 iterNum) {
   double curLoss = 0;
 
   auto totalTrainers = trainers_.totalTrainers();
@@ -63,7 +63,11 @@ Status TrainingEnv::trainOneBatch() {
     while (submittedTrainers < totalTrainers) {
       auto trainer = trainers_.trainer(submittedTrainers);
       if (globalBeamCfg_.isEnabled()) {
-        trainer->setGlobalBeam(globalBeamCfg_);
+        if (args_.globalBeam.fullFirstIter && iterNum == 0) {
+          trainer->setGlobalBeam({0, 0, 0});
+        } else {
+          trainer->setGlobalBeam(globalBeamCfg_);
+        }
       }
       if (executor_.submitNext(trainer)) {
         submittedTrainers += 1;

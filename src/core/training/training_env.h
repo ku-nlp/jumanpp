@@ -24,6 +24,7 @@ struct GlobalBeamParams {
   i32 maxRightBeam = -1;
   i32 minRightCheck = -1;
   i32 maxRightCheck = -1;
+  bool fullFirstIter = false;
 
   bool leftEnabled() const { return minLeftBeam > 0; }
 
@@ -97,7 +98,7 @@ class TrainingEnv {
   Status handleProcessedTrainer(TrainingExecutionResult result,
                                 double* curLoss);
 
-  Status trainOneBatch();
+  Status trainOneBatch(i32 iterNum);
 
   double batchLoss() const { return batchLoss_; }
   double epochLoss() const { return totalLoss_; }

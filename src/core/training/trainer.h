@@ -35,6 +35,10 @@ class Trainer {
 
   void reset() {
     example_.reset();
+    resetState();
+  }
+
+  void resetState() {
     analyzer->reset();
     loss_.goldPath().reset();
     adapter_.reset();
