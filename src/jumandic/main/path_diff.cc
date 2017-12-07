@@ -159,6 +159,8 @@ struct PathDiffCalculator {
   core::analysis::rnn::RnnInferenceConfig rnnConf;
 
   std::vector<DiffNode> nodes;
+  float topLeft;
+  float topRight;
 
   PathDiffCalculator() {
     rnnConf.rnnWeight = 0;
@@ -225,8 +227,19 @@ struct PathDiffCalculator {
     }
   }
 
-  float topLeft;
-  float topRight;
+  bool hasUnks(const core::analysis::ConnectionPtr* element,
+               const core::analysis::Lattice* lat) {
+    while (element->boundary > 1) {
+      auto bnd = lat->boundary(element->boundary)->starts();
+      auto& info = bnd->nodeInfo().at(element->right);
+      if (info.entryPtr().isSpecial()) {
+        return true;
+      }
+      element = element->previous;
+    }
+
+    return false;
+  }
 
   Status computeDiff(StringPiece sentence) {
     JPP_RETURN_IF_ERROR(full.analyze(sentence));
@@ -244,6 +257,11 @@ struct PathDiffCalculator {
                     .at(0);
 
     nodes.clear();
+
+    if (hasUnks(top1.ptr.previous, l1) || hasUnks(top2.ptr.previous, l2)) {
+      // unks should not be here
+      return Status::Ok();
+    }
 
     if (top2.totalScore > -0.1f) {
       return Status::Ok();  // known-ish example
