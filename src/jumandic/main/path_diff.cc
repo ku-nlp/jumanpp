@@ -142,7 +142,7 @@ struct DiffNode {
                               bool writeRight) const {
     for (auto it = right.rbegin(); it != right.rend(); ++it) {
       if (!isEqual) {
-        leftCtx.renderFull(o, it->ptr, "; ");
+        leftCtx.renderFull(o, it->ptr, "\n# ");
       }
     }
 
@@ -311,7 +311,9 @@ int main(int argc, const char* argv[]) {
 
   std::string comment;
   std::string data;
+  i64 line = 0;
   while (std::getline(ifs, data)) {
+    ++line;
     if (data.size() > 2 && data[0] == '#' && data[1] == ' ') {
       comment.assign(data.begin() + 2, data.end());
       continue;
@@ -323,8 +325,13 @@ int main(int argc, const char* argv[]) {
       continue;
     }
     if (!calc.nodes.empty()) {
-      std::cout << "# " << comment << " scores: " << calc.topLeft << " " << calc.topRight << " ";
+      std::cout << "# scores: " << calc.topLeft << " " << calc.topRight;
       calc.renderInvalid(std::cout);
+      if (!comment.empty()) {
+        std::cout << "\n# " << comment;
+      } else {
+        std::cout << "\n# line-" << line;
+      }
       calc.renderDiff(std::cout);
       std::cout << "\n\n";
     }

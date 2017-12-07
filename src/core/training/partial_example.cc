@@ -329,14 +329,14 @@ Status PartialExampleReader::readExample(PartialExample* result, bool* eof) {
     if (firstLine) {
       result->line_ = csv_.lineNumber();
       firstLine = false;
-      if (csv_.numFields() == 1) {
-        auto fld = csv_.field(0);
-        if (fld.size() > 2 && fld[0] == '#' && fld[1] == ' ') {
-          fld.from(2).assignTo(result->comment_);
-          continue;
-        }
-      }
     }
+
+    auto wholeLine = csv_.line();
+    if (wholeLine.size() > 2 && wholeLine[0] == '#' && wholeLine[1] == ' ') {
+      wholeLine.slice(2, wholeLine.size() - 1).assignTo(result->comment_);
+      continue;
+    }
+
     if (csv_.numFields() == 1) {
       auto data = csv_.field(0);
       if (data.empty()) {

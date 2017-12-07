@@ -18,6 +18,7 @@ Status CsvReader::open(const StringPiece &filename) {
 }
 
 bool CsvReader::nextLine() {
+  start_ = position_;
   auto end = end_;
   auto position = position_;
   if (position == end) return false;
@@ -197,11 +198,6 @@ bool CsvReader::handleQuote(const char *position, StringPiece *result) {
     ++position;
   }
   return false;
-}
-
-void CsvReader::reset() noexcept {
-  position_ = start_;
-  line_number_ = 0;
 }
 
 }  // namespace util

@@ -35,7 +35,7 @@ Status DictionaryBuilder::importCsv(StringPiece name, StringPiece data) {
   JPP_RETURN_IF_ERROR(storage_->makeStorage(progress_));
 
   // reinitialize csv for second pass
-  csv.reset();
+  JPP_RETURN_IF_ERROR(csv.initFromMemory(data));
 
   JPP_RETURN_IF_ERROR(storage_->initDicFeatures(spec_->features));
 

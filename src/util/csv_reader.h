@@ -84,10 +84,10 @@ class CsvReader {
   StringPiece field(i32 idx) const;
   i64 lineNumber() const { return line_number_; }
   char separator() const { return separator_; }
-  void reset() noexcept;
   i64 bytePosition() const { return static_cast<i64>(position_ - start_); }
   i64 byteSize() const { return static_cast<i64>(end_ - start_); }
   bool rowHadQuoted() const { return !temp_.empty(); }
+  StringPiece line() const { return StringPiece{start_, position_}; }
 };
 }  // namespace util
 }  // namespace jumanpp
