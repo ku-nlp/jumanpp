@@ -9,6 +9,7 @@ jpp_core_files(core_srcs
   global_beam_position_fmt.cc
   graphviz_format.cc
   model_io.cc
+  segmented_format.cc
 
   )
 
@@ -44,6 +45,7 @@ jpp_core_files(core_hdrs
   model_format_ser.h
   model_io.h
   perceptron_io.h
+  segmented_format.h
 
   )
 

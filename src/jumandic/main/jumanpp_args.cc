@@ -51,6 +51,12 @@ struct JppArgsParser {
                                "N",
                                "Lattice style (N-best)",
                                {'L', 's', "lattice", "specifics"}};
+  args::Flag segment{outputType, "segment", "Only segment", {"segment"}};
+  args::ValueFlag<std::string> segmentSeparator{
+      outputType,
+      "SEPARATOR",
+      "Separator for segmented output (default: space)",
+      {"segment-separator"}};
   args::ValueFlag<std::string> graphvis{
       outputType,
       "DIRECTORY",
@@ -142,6 +148,7 @@ struct JppArgsParser {
 
   void fillResult(JumanppConf* result) {
     result->outputType.set(juman, OutputType::Juman);
+    result->outputType.set(segment, OutputType::Segmentation);
     result->outputType.set(morph, OutputType::Morph);
     result->outputType.set(fullMorph, OutputType::FullMorph);
     result->outputType.set(dicSubset, OutputType::DicSubset);
@@ -158,6 +165,7 @@ struct JppArgsParser {
     result->modelFile.set(modelFile);
     result->rnnModelFile.set(rnnModelFile);
     result->graphvizDir.set(graphvis);
+    result->segmentSeparator.set(segmentSeparator);
 
     result->beamSize.set(beamSize);
     if (result->beamSize < result->beamOutput) {

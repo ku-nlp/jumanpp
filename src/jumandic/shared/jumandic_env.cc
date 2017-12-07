@@ -6,6 +6,7 @@
 #include "core/analysis/analyzer_impl.h"
 #include "core/impl/global_beam_position_fmt.h"
 #include "core/impl/graphviz_format.h"
+#include "core/impl/segmented_format.h"
 #include "core_version.h"
 #include "jpp_jumandic_cg.h"
 #include "jumandic/shared/lattice_format.h"
@@ -72,6 +73,13 @@ Status JumanppExec::initOutput() {
       auto mfmt = new jumandic::output::LatticeFormat{conf.beamOutput};
       format.reset(mfmt);
       JPP_RETURN_IF_ERROR(mfmt->initialize(analyzer.output()));
+      break;
+    }
+    case OutputType::Segmentation: {
+      auto mfmt = new core::output::SegmentedFormat{};
+      format.reset(mfmt);
+      JPP_RETURN_IF_ERROR(mfmt->initialize(analyzer.output(), *env.coreHolder(),
+                                           conf.segmentSeparator.value()));
       break;
     }
     case OutputType::Version:

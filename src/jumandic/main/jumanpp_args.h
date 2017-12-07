@@ -18,6 +18,7 @@ namespace jumandic {
 enum class OutputType {
   Version,
   ModelInfo,
+  Segmentation,
   Juman,
   Morph,
   FullMorph,
@@ -42,6 +43,7 @@ struct JumanppConf {
   util::Cfg<i32> rightBeam = 5;
   util::Cfg<i32> rightCheck = 1;
   util::Cfg<i32> logLevel = 0;
+  util::Cfg<std::string> segmentSeparator{" "};
 
   void mergeWith(const JumanppConf& o) {
     configFile.mergeWith(o.configFile);
@@ -57,6 +59,7 @@ struct JumanppConf {
     rightBeam.mergeWith(o.rightBeam);
     rightCheck.mergeWith(o.rightCheck);
     logLevel.mergeWith(o.logLevel);
+    segmentSeparator.mergeWith(o.segmentSeparator);
   }
 
   friend std::ostream& operator<<(std::ostream& os, const JumanppConf& conf) {
@@ -71,6 +74,7 @@ struct JumanppConf {
        << "\nglobalBeam: " << conf.globalBeam
        << "\nrightBeam: " << conf.rightBeam
        << "\nrightCheck: " << conf.rightCheck
+       << "\nsegmentSeparator: " << conf.segmentSeparator
        << "\nlogLevel: " << conf.logLevel;
     return os;
   }

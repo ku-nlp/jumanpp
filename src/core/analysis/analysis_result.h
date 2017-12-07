@@ -34,7 +34,7 @@ class AnalysisPath {
   bool nextBoundary() {
     currentChunk_ += 1;
     currentNode_ = -1;
-    return currentChunk_ < (i64)(offsets_.size()) - 1;
+    return currentChunk_ < numBoundaries();
   }
 
   i32 remainingNodesInChunk() const {
@@ -85,6 +85,8 @@ class AnalysisPath {
 
     return false;
   }
+
+  bool isLastBoundary() const { return currentChunk_ == numBoundaries(); }
 
   void moveToChunk(i32 pos) {
     JPP_DCHECK_IN(pos, 0, offsets_.size());
