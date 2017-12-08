@@ -4,12 +4,15 @@
 
 #include "partial_example.h"
 #include "core/analysis/unk_nodes_creator.h"
-#include "core/training/loss.h"
+#include "core/impl/feature_computer.h"
 #include "util/logging.hpp"
 
 namespace jumanpp {
 namespace core {
 namespace training {
+
+using core::features::NgramFeaturesComputer;
+using core::features::NgramFeatureRef;
 
 Status PartialTrainer::prepare() {
   JPP_RETURN_IF_ERROR(analyzer_->resetForInput(example_.surface()));
@@ -113,7 +116,7 @@ i32 PartialTrainer::addBadNode(const analysis::ConnectionPtr* node,
 
   i32 count = 0;
 
-  NgramExampleFeatureCalculator nfc{l, analyzer_->core().features()};
+  NgramFeaturesComputer nfc{l, analyzer_->core().features()};
 
   featureBuf_.resize(analyzer_->core().spec().features.ngram.size());
   util::MutableArraySlice<u32> buffer{&featureBuf_};

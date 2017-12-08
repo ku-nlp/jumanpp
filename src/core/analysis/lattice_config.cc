@@ -9,6 +9,11 @@ namespace jumanpp {
 namespace core {
 namespace analysis {
 
+std::ostream& operator<<(std::ostream& o, const LatticeNodePtr& cbe) {
+  o << '{' << cbe.boundary << ',' << cbe.position << '}';
+  return o;
+}
+
 std::ostream& operator<<(std::ostream& o, const ConnectionPtr& cbe) {
   o << "[";
 

@@ -80,6 +80,7 @@ struct ConnectionBeamElement {
   Score totalScore;
 };
 
+std::ostream& operator<<(std::ostream& o, const LatticeNodePtr& cbe);
 std::ostream& operator<<(std::ostream& o, const ConnectionPtr& cbe);
 std::ostream& operator<<(std::ostream& o, const ConnectionBeamElement& cbe);
 

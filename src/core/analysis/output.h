@@ -32,6 +32,7 @@ class NodeWalker {
   EntryPtr current_ = EntryPtr::Invalid();
 
   friend class OutputManager;
+  friend class StringField;
 
  public:
   NodeWalker() = default;
@@ -60,13 +61,21 @@ class NodeWalker {
   util::ArraySlice<i32> data() const { return buffer_.data(); }
 };
 
+class IntField {
+  i32 index_ = std::numeric_limits<i32>::min();
+
+  friend class OutputManager;
+
+ public:
+  IntField() = default;
+  i32 operator[](const NodeWalker& node) const;
+};
+
 class StringField {
   i32 index_;
-  const ExtraNodesContext* xtra_;
   util::Lazy<dic::impl::StringStorageReader> reader_;
 
-  void initialize(i32 index, const ExtraNodesContext* xtra,
-                  dic::impl::StringStorageReader reader);
+  void initialize(i32 index, dic::impl::StringStorageReader reader);
 
   friend class OutputManager;
 
@@ -173,6 +182,7 @@ class OutputManager {
   const Lattice* lattice_;
 
   friend class NodeWalker;
+  friend class StringField;
 
  public:
   OutputManager(const ExtraNodesContext* xtra,
@@ -181,6 +191,7 @@ class OutputManager {
   bool locate(LatticeNodePtr ptr, NodeWalker* result) const;
   bool locate(EntryPtr ptr, NodeWalker* result) const;
   NodeWalker nodeWalker() const;
+  Status intField(StringPiece name, IntField* result) const;
   Status stringField(StringPiece name, StringField* result) const;
   Status stringListField(StringPiece name, StringListField* result) const;
   Status kvListField(StringPiece name, KVListField* result) const;

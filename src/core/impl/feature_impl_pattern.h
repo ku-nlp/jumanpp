@@ -96,6 +96,11 @@ class PatternDynamicApplyImpl final : public PatternFeatureApply {
 
   Status initCompute(
       util::ArraySlice<spec::ComputationFeatureDescriptor> vector);
+
+  const PrimitiveFeatureImpl* primitive(i32 idx) const override {
+    JPP_DCHECK_IN(idx, 0, primitive_.size());
+    return primitive_[idx].get();
+  }
 };
 
 }  // namespace impl

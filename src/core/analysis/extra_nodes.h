@@ -86,10 +86,10 @@ class ExtraNodesContext {
     return extraNodes_[idx];
   }
 
-  i32 lengthOf(EntryPtr eptr) {
+  i32 lengthOf(EntryPtr eptr) const {
     JPP_DCHECK(eptr.isSpecial());
     auto n = node(eptr);
-    return n->header.unk.surface.size();
+    return static_cast<i32>(n->header.unk.surface.size());
   }
 
   void putPlaceholderData(EntryPtr ptr, i32 idx, i32 value) {

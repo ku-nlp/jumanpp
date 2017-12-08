@@ -9,9 +9,11 @@ namespace core {
 
 constexpr size_t JPP_MAX_DIC_FIELDS = @JPP_MAX_DIC_FIELDS@;
 
-#cmakedefine JPP_PREFETCH_FEATURE_WEIGHTS
+#cmakedefine JPP_PREFETCH_FEATURE_WEIGHTS 1
 
-#cmakedefine JPP_ENABLE_DEV_TOOLS
+#cmakedefine JPP_ENABLE_DEV_TOOLS 1
+
+#cmakedefine JPP_USE_PROTOBUF 1
 
 static constexpr char JPP_DEFAULT_CONFIG_DIR[]{"@JPP_DEFAULT_CONFIG_DIR@"};
 

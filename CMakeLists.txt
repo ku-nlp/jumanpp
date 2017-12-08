@@ -36,6 +36,8 @@ if(${JPP_ENABLE_TESTS})
 endif()
 
 find_package(Threads)
+set(Protobuf_USE_STATIC_LIBS ON)
+find_package(Protobuf)
 
 add_subdirectory(libs)
 add_subdirectory(test) #need to set variable here

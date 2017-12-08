@@ -48,7 +48,7 @@ class FeatureScorer : public ScorerBase {
   virtual void add(util::ArraySlice<float> source,
                    util::MutableArraySlice<float> result,
                    util::ConstSliceable<u32> features) const = 0;
-  virtual WeightBuffer weights() const = 0;
+  virtual const WeightBuffer& weights() const = 0;
 };
 
 class ScoreComputer {

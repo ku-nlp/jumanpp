@@ -44,6 +44,8 @@ class AnalysisInput {
     auto e = endc.bytes.end();
     return StringPiece{s, e};
   }
+
+  StringPiece surface() const { return raw_input_; }
 };
 
 }  // namespace analysis

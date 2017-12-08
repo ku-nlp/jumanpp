@@ -325,6 +325,23 @@ bool AnalyzerImpl::setGlobalBeam(i32 leftBeam, i32 rightCheck, i32 rightBeam) {
   return result;
 }
 
+bool AnalyzerImpl::setStoreAllPatterns(bool value) {
+  if (cfg_.storeAllPatterns == value) {
+    return false;
+  }
+  cfg_.storeAllPatterns = value;
+  if (!cfg_.storeAllPatterns && core().features().patternStatic) {
+    auto& fspec = core_->spec().features;
+    latticeConfig_.numFeaturePatterns =
+        static_cast<u32>(fspec.pattern.size() - fspec.numUniOnlyPats);
+  } else {
+    latticeConfig_.numFeaturePatterns =
+        static_cast<u32>(core_->spec().features.pattern.size());
+  }
+  lattice_.updateConfig(latticeConfig_);
+  return true;
+}
+
 }  // namespace analysis
 }  // namespace core
 }  // namespace jumanpp

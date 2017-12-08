@@ -10,6 +10,19 @@ namespace jumanpp {
 namespace core {
 namespace analysis {
 
+Status OutputManager::intField(StringPiece name, IntField *result) const {
+  auto fld = holder_->fieldByName(name);
+  if (fld == nullptr) {
+    return JPPS_INVALID_PARAMETER << "dictionary field with name " << name
+                                  << " was not found";
+  }
+  if (fld->columnType != spec::FieldType::Int) {
+    return JPPS_INVALID_PARAMETER << "field " << name << " was not int typed";
+  }
+  result->index_ = fld->idxInEntry;
+  return Status::Ok();
+}
+
 Status OutputManager::stringField(StringPiece name, StringField *result) const {
   auto fld = holder_->fieldByName(name);
   if (fld == nullptr) {
@@ -20,7 +33,7 @@ Status OutputManager::stringField(StringPiece name, StringField *result) const {
     return JPPS_INVALID_PARAMETER << "field " << name
                                   << " was not string typed";
   }
-  result->initialize(fld->idxInEntry, xtra_, fld->strings);
+  result->initialize(fld->idxInEntry, fld->strings);
   return Status::Ok();
 }
 
@@ -68,6 +81,14 @@ bool OutputManager::locate(EntryPtr ptr, NodeWalker *result) const {
 
   result->current_ = ptr;
   if (ptr.isSpecial()) {
+    if (ptr == EntryPtr::BOS() || ptr == EntryPtr::EOS()) {
+      result->buffer_.fillFeaturesWithValue(ptr.rawValue());
+      result->buffer_.fillDataWithValue(0);
+      return true;
+    } else if (ptr == EntryPtr::Invalid()) {
+      return false;
+    }
+
     auto node = xtra_->node(ptr);
     if (node == nullptr) {
       return false;
@@ -107,7 +128,8 @@ StringPiece StringField::operator[](const NodeWalker &node) const {
   i32 value = 0;
   if (node.valueOf(index_, &value)) {
     if (value < 0) {
-      return xtra_->node(node.eptr())->header.unk.surface;
+      auto xtra = node.mgr_->xtra_;
+      return xtra->node(node.eptr())->header.unk.surface;
     }
     StringPiece result;
     if (reader_.value().readAt(value, &result)) {
@@ -120,10 +142,8 @@ StringPiece StringField::operator[](const NodeWalker &node) const {
   return StringPiece{"-----STRING_FIELD_ERROR!!!----"};
 }
 
-void StringField::initialize(i32 index, const ExtraNodesContext *xtra,
-                             dic::impl::StringStorageReader reader) {
+void StringField::initialize(i32 index, dic::impl::StringStorageReader reader) {
   index_ = index;
-  xtra_ = xtra;
   reader_.initialize(reader);
 }
 
@@ -170,6 +190,12 @@ void KVListField::initialize(i32 index, const dic::impl::IntStorageReader &ints,
   this->strings_.initialize(strings);
 }
 
+i32 IntField::operator[](const NodeWalker &node) const {
+  i32 ptr;
+  auto status = node.valueOf(index_, &ptr);
+  JPP_DCHECK(status);
+  return ptr;
+}
 }  // namespace analysis
 }  // namespace core
 }  // namespace jumanpp

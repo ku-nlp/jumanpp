@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+package jumanpp;
+
+option cc_enable_arenas = true;
+
+message PathPointer {
+  int32 boundary = 1;
+  int32 node = 2;
+  int32 beam = 3;
+}
+
+message FeatureInstance {
+  int32 index = 1;
+  repeated int32 patterns = 2;
+  string repr = 3;
+  fixed32 raw_value = 4;
+  fixed32 masked_value = 5;
+  float weight = 6;
+}
+
+message LatticePathNode {
+  repeated float raw_scores = 3;
+  float cum_score = 4;
+  repeated int32 ranks = 5;
+  repeated PathPointer nodes = 10;
+  repeated FeatureInstance features = 11;
+}
+
+message KeyValue {
+  string key = 1;
+  string value = 2;
+}
+
+message KVList { repeated KeyValue values = 1; }
+
+message StringList { repeated string values = 1; }
+
+message FieldValue {
+  oneof value {
+    int32 int = 1;
+    string string = 2;
+    KVList kvlist = 3;
+    StringList string_list = 4;
+  }
+}
+
+message LatticeNode {
+  repeated int32 value_ptrs = 1;
+  repeated FieldValue values = 2;
+  // other values are filled only for the non-variant nodes
+  string surface = 3;
+  int32 length = 4;
+  repeated LatticeNode variants = 5;
+  int32 entry_ptr = 6;
+  repeated int32 ranks = 7;
+  repeated fixed64 patterns = 10;
+  repeated LatticePathNode beams = 11;
+}
+
+message LatticeBoundary { repeated LatticeNode nodes = 1; }
+
+message LatticeDump {
+  string surface = 1;
+  string comment = 2;
+  repeated LatticeBoundary boundaries = 3;
+  repeated string field_names = 4;
+  int32 surface_idx = 5;
+}

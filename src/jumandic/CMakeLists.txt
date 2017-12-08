@@ -24,6 +24,10 @@ jpp_feature_codegen(
   DEPEND shared/jumandic_spec.cc
 )
 
+if (${Protobuf_FOUND})
+  list(APPEND jumandic_tests shared/jumandic_debug_dump_test.cc)
+endif()
+
 message(${jpp_jumandic_cg_INCLUDE})
 
 add_library(jpp_jumandic ${jumandic_sources} ${jumandic_headers} ${jpp_jumandic_cg_SRC})

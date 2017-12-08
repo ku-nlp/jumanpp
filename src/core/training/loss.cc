@@ -6,30 +6,14 @@
 
 #include <numeric>
 #include "core/analysis/unk_nodes_creator.h"
-#include "core/impl/feature_impl_types.h"
+#include "core/impl/feature_computer.h"
 
 namespace jumanpp {
 namespace core {
 namespace training {
-void NgramExampleFeatureCalculator::calculateNgramFeatures(
-    const NgramFeatureRef& ptrs, util::MutableArraySlice<u32> result) {
-  util::Sliceable<u32> resSlice{result, result.size(), 1};
-  auto t2f = lattice->boundary(ptrs.t2.boundary)
-                 ->starts()
-                 ->patternFeatureData()
-                 .row(ptrs.t2.position);
-  auto t1f = lattice->boundary(ptrs.t1.boundary)
-                 ->starts()
-                 ->patternFeatureData()
-                 .row(ptrs.t1.position);
-  auto t0f = lattice->boundary(ptrs.t0.boundary)
-                 ->starts()
-                 ->patternFeatureData()
-                 .rows(ptrs.t0.position, ptrs.t0.position + 1);
 
-  features::impl::NgramFeatureData nfd{resSlice, t2f, t1f, t0f};
-  features.ngram->applyBatch(&nfd);
-}
+using core::features::NgramFeatureRef;
+using core::features::NgramFeaturesComputer;
 
 bool LossCalculator::findWorstTopNode(i32 goldPos, ComparisonStep* step) {
   analysis::ConnectionPtr conPtr;
@@ -303,7 +287,7 @@ void LossCalculator::mergeOne(u32 target, float score) {
 void LossCalculator::computeNgrams(std::vector<u32>* result, i32 boundary,
                                    i32 position) {
   auto lat = analyzer->lattice();
-  NgramExampleFeatureCalculator nfc{lat, analyzer->core().features()};
+  NgramFeaturesComputer nfc{lat, analyzer->core().features()};
   auto beam = lat->boundary(boundary)->starts()->beamData().row(position);
   auto rawPtr0 = &beam[0].ptr;
   auto rawPtr1 = rawPtr0->previous;
@@ -353,8 +337,7 @@ void LossCalculator::computeGoldNgrams(i32 position) {
 }
 
 Status LossCalculator::resolveGold() {
-  NgramExampleFeatureCalculator nefc{analyzer->lattice(),
-                                     analyzer->core().features()};
+  NgramFeaturesComputer nefc{analyzer->lattice(), analyzer->core().features()};
   auto goldNodes = gold.nodes();
   auto numNodes = goldNodes.size();
   auto withEos = numNodes + 1;

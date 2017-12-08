@@ -39,24 +39,9 @@ class InNodeFeatureComputer {
     return Status::Ok();
   }
 
-  void patternFeaturesDynamic(LatticeBoundary* lb) {
-    auto nodes = lb->starts();
-    auto ptrs = nodes->nodeInfo();
-    auto entries = nodes->entryData();
-    auto primFeature = nodes->patternFeatureData();
-    features::impl::PrimitiveFeatureData pfd{ptrs, entries, primFeature};
-    features_.patternDynamic->applyBatch(&pfc_, &pfd);
-  }
+  void patternFeaturesDynamic(LatticeBoundary* lb);
 
-  void patternFeaturesEos(Lattice* l) {
-    auto eosBnd = l->boundary(l->createdBoundaryCount() - 1);
-    auto nodes = eosBnd->starts();
-    auto eosSlice = nodes->entryData();
-    util::fill(eosSlice, EntryPtr::EOS().rawValue());
-    features::impl::PrimitiveFeatureData pfd{nodes->nodeInfo(), eosSlice,
-                                             nodes->patternFeatureData()};
-    features_.patternDynamic->applyBatch(&pfc_, &pfd);
-  }
+  void patternFeaturesEos(Lattice* l);
 };
 
 }  // namespace analysis

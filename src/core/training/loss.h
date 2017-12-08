@@ -15,33 +15,6 @@ namespace jumanpp {
 namespace core {
 namespace training {
 
-struct NgramFeatureRef {
-  analysis::LatticeNodePtr t2;
-  analysis::LatticeNodePtr t1;
-  analysis::LatticeNodePtr t0;
-
-  static NgramFeatureRef init(analysis::LatticeNodePtr ptr) {
-    return {{0, 0},  // BOS0
-            {1, 0},  // BOS1
-            ptr};
-  }
-
-  NgramFeatureRef next(analysis::LatticeNodePtr ptr) { return {t1, t0, ptr}; }
-};
-
-class NgramExampleFeatureCalculator {
-  analysis::Lattice* lattice;
-  const features::FeatureHolder& features;
-
- public:
-  NgramExampleFeatureCalculator(analysis::Lattice* lattice,
-                                const features::FeatureHolder& features)
-      : lattice(lattice), features(features) {}
-
-  void calculateNgramFeatures(const NgramFeatureRef& ptrs,
-                              util::MutableArraySlice<u32> result);
-};
-
 enum class ComparitionClass { Both, TopOnly, GoldOnly };
 
 struct ComparisonStep {

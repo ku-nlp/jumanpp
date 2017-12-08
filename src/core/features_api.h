@@ -32,6 +32,7 @@ class ComputeFeatureContext;
 class PrimitiveFeatureData;
 class PatternFeatureData;
 class NgramFeatureData;
+class PrimitiveFeatureImpl;
 class PatternDynamicApplyImpl;
 class NgramDynamicFeatureApply;
 class PartialNgramDynamicFeatureApply;
@@ -86,6 +87,8 @@ class PatternFeatureApply : public FeatureApply {
   virtual void applyUniOnly(impl::PrimitiveFeatureContext* pfc,
                             impl::PrimitiveFeatureData* data) const
       noexcept = 0;
+
+  virtual const impl::PrimitiveFeatureImpl* primitive(i32 idx) const = 0;
 };
 
 class GeneratedPatternFeatureApply : public FeatureApply {

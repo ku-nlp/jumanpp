@@ -118,6 +118,8 @@ class TrainingEnv {
 
   void changeGlobalBeam(float ratio);
   const GlobalBeamTrainConfig& globalBeam() const { return globalBeamCfg_; }
+
+  const analysis::ScorerDef* scorerDef() const { return scw_.scorers(); }
 };
 
 }  // namespace training

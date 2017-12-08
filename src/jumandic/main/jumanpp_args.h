@@ -24,8 +24,11 @@ enum class OutputType {
   FullMorph,
   DicSubset,
   Lattice,
-#ifdef JPP_ENABLE_DEV_TOOLS
-  GlobalBeamPos
+#if defined(JPP_ENABLE_DEV_TOOLS)
+  GlobalBeamPos,
+#if defined(JPP_USE_PROTOBUF)
+  FullLatticeDump
+#endif
 #endif
 };
 

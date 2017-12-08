@@ -84,6 +84,10 @@ struct JppArgsParser {
                            "globalBeamPos",
                            "Global beam position output",
                            {"global-beam-pos"}};
+#if defined(JPP_USE_PROTOBUF)
+  args::Flag fullDump{
+      outputType, "fullDump", "Full lattice dump (protobuf)", {"full-dump"}};
+#endif
 #endif
 
   RnnArgs rnnArgs{parser};
@@ -178,6 +182,9 @@ struct JppArgsParser {
 
 #ifdef JPP_ENABLE_DEV_TOOLS
     result->outputType.set(globalBeamPos, OutputType::GlobalBeamPos);
+#if defined(JPP_USE_PROTOBUF)
+    result->outputType.set(fullDump, OutputType::FullLatticeDump);
+#endif
 #endif
   }
 };

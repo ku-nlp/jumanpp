@@ -1,5 +1,6 @@
 jpp_core_files(core_srcs
 
+  feature_computer.cc
   feature_debug.cc
   feature_impl_combine.cc
   feature_impl_compute.cc
@@ -29,6 +30,7 @@ jpp_core_files(core_tsrcs
 
 jpp_core_files(core_hdrs
 
+  feature_computer.h
   feature_debug.h
   feature_impl_combine.h
   feature_impl_compute.h

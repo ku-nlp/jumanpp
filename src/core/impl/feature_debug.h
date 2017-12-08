@@ -9,6 +9,9 @@
 #include <vector>
 #include "core/analysis/output.h"
 #include "core/analysis/score_api.h"
+#include "core/impl/feature_computer.h"
+#include "core/impl/feature_impl_prim.h"
+#include "util/fast_printer.h"
 #include "util/types.hpp"
 
 namespace jumanpp {
@@ -20,9 +23,9 @@ class AnalyzerImpl;
 namespace features {
 
 struct DebugFeatureInstance {
-  u32 ngramIdx;
+  i32 ngramIdx;
   std::string repr;
-  u64 rawHashCode;
+  u32 rawHashCode;
   u32 maskedHashCode;
   float score;
 };
@@ -31,31 +34,33 @@ struct DebugFeatures {
   std::vector<DebugFeatureInstance> features;
 };
 
-struct StringAppender {
-  virtual ~StringAppender() = default;
-  virtual bool appendTo(std::string* resut,
-                        const analysis::NodeWalker& walker) = 0;
-};
-
-struct NodeTriple {
-  analysis::LatticeNodePtr t2;
-  analysis::LatticeNodePtr t1;
-  analysis::LatticeNodePtr t0;
+struct Display {
+  virtual ~Display() = default;
+  virtual bool appendTo(util::io::FastPrinter& p,
+                        const analysis::NodeWalker& walker, const NodeInfo& ni,
+                        impl::PrimitiveFeatureContext* ctx) = 0;
 };
 
 class FeaturesDebugger {
   const analysis::WeightBuffer* weights_;
-  const analysis::Lattice* lattice_;
-  std::vector<std::unique_ptr<StringAppender>> appenders_;
-  analysis::OutputManager output_;
+  std::vector<std::unique_ptr<Display>> combines_;
+  std::vector<std::unique_ptr<Display>> patterns_;
+  std::vector<u32> featureBuf_;
+  util::io::FastPrinter printer_;
+
+  Status makeCombine(const analysis::AnalyzerImpl* impl, i32 idx,
+                     std::unique_ptr<Display>& result);
+  Status makePrimitive(const analysis::AnalyzerImpl* impl, i32 idx,
+                       std::unique_ptr<Display>& result);
 
  public:
   Status initialize(const analysis::AnalyzerImpl* impl,
                     const analysis::WeightBuffer& buf);
-  Status fill(DebugFeatures* result, const NodeTriple& nodes);
-  Status fill(DebugFeatures* result,
-              const analysis::ConnectionBeamElement& beam);
-  Status fill(DebugFeatures* result, const analysis::ConnectionPtr& ptr);
+
+  Status fill(const analysis::AnalyzerImpl* impl, DebugFeatures* result,
+              const NgramFeatureRef& nodes);
+  Status fill(const analysis::AnalyzerImpl* impl, DebugFeatures* result,
+              const analysis::ConnectionPtr& ptr);
 };
 
 }  // namespace features

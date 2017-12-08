@@ -74,6 +74,7 @@ class AnalyzerImpl {
   const Lattice* lattice() const { return &lattice_; }
   LatticeBuilder* latticeBldr() { return &latticeBldr_; }
   ExtraNodesContext* extraNodesContext() { return &xtra_; }
+  const ExtraNodesContext* extraNodesContext() const { return &xtra_; }
   const dic::DictionaryHolder& dic() const { return core_->dic(); }
   const CoreHolder& core() const { return *core_; }
 
@@ -91,6 +92,8 @@ class AnalyzerImpl {
   const NgramStats& ngramStats() const { return ngramStats_; }
   const AnalyzerConfig& cfg() const { return cfg_; }
   bool setGlobalBeam(i32 leftBeam, i32 rightCheck, i32 rightBeam);
+  bool setStoreAllPatterns(bool value);
+  const AnalysisInput& input() const { return input_; }
 };
 
 }  // namespace analysis

@@ -12,7 +12,10 @@
 #include "jumandic/shared/lattice_format.h"
 #include "jumandic/shared/morph_format.h"
 #include "jumandic/shared/subset_format.h"
-#include "util/format.h"
+
+#if defined(JPP_USE_PROTOBUF)
+#include "core/proto/lattice_dump_output.h"
+#endif
 
 #include <fstream>
 #include <iostream>
@@ -90,7 +93,18 @@ Status JumanppExec::initOutput() {
       auto mfmt = new core::output::GlobalBeamPositionFormat{conf.globalBeam};
       format.reset(mfmt);
       JPP_RETURN_IF_ERROR(mfmt->initialize(analyzer));
+      break;
     }
+#if defined(JPP_USE_PROTOBUF)
+    case OutputType::FullLatticeDump: {
+      auto mfmt = new core::output::LatticeDumpOutput;
+      format.reset(mfmt);
+      JPP_RETURN_IF_ERROR(
+          mfmt->initialize(analyzer.impl(), &env.featureScorer()->weights()));
+      analyzer.impl()->setStoreAllPatterns(true);
+      break;
+    }
+#endif
 #endif
   }
   return Status::Ok();

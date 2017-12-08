@@ -78,13 +78,13 @@ class FeatureConstructionContext {
 };
 
 class PrimitiveFeatureContext {
-  analysis::ExtraNodesContext* extraCtx_;
+  const analysis::ExtraNodesContext* extraCtx_;
   const dic::DictionaryEntries entries_;
   const dic::FieldsHolder& fields_;
   util::ArraySlice<chars::InputCodepoint> codepts_;
 
  public:
-  PrimitiveFeatureContext(analysis::ExtraNodesContext* extraCtx,
+  PrimitiveFeatureContext(const analysis::ExtraNodesContext* extraCtx,
                           const dic::FieldsHolder& fields,
                           const dic::DictionaryEntries& entries,
                           util::ArraySlice<chars::InputCodepoint> codepts)

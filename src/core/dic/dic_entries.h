@@ -140,6 +140,13 @@ class DicEntryBuffer {
     }
     dataBuffer_[0] = 0;
   }
+
+  void fillDataWithValue(i32 value) {
+    for (int i = 0; i < numData_; ++i) {
+      featureBuffer_[numFeatures_ + i] = value;
+    }
+    dataBuffer_[0] = 1;
+  }
 };
 
 class IndexedEntries {

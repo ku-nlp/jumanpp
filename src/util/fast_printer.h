@@ -44,6 +44,20 @@ class FastPrinter {
 
 }  // namespace io
 }  // namespace util
+
+template <typename T>
+fmt::BasicWriter<T>& operator<<(fmt::BasicWriter<T>& f, const StringPiece& sp) {
+  f << fmt::BasicStringRef<char>{sp.begin(), sp.size()};
+  return f;
+}
+
+template <typename T, size_t N>
+fmt::BasicWriter<T>& operator<<(fmt::BasicWriter<T>& f, const char (&sp)[N]) {
+  constexpr StringPiece tmp{sp};
+  f << tmp;
+  return f;
+}
+
 }  // namespace jumanpp
 
 #endif  // JUMANPP_FAST_PRINTER_H
