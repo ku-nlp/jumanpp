@@ -53,7 +53,7 @@ fmt::BasicWriter<T>& operator<<(fmt::BasicWriter<T>& f, const StringPiece& sp) {
 
 template <typename T, size_t N>
 fmt::BasicWriter<T>& operator<<(fmt::BasicWriter<T>& f, const char (&sp)[N]) {
-  constexpr StringPiece tmp{sp};
+  StringPiece tmp{sp};
   f << tmp;
   return f;
 }
