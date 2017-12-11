@@ -55,7 +55,7 @@ struct ComparisonStep {
   }
 
   bool hasError() const {
-    return cmpClass != ComparitionClass::Both || violation > 0 ||
+    return cmpClass != ComparitionClass::Both || violation > 0.05f ||
            numMismatches > 0;
   }
 };
