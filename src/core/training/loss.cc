@@ -124,7 +124,7 @@ Status LossCalculator::computeComparison() {
       stepData.lastGoldScore = goldScore;
       stepData.boundary = curTopBnd;
       stepData.topPtr = ptr;
-      stepData.violation = goldScore - ptr->totalScore;
+      stepData.violation = ptr->totalScore - goldScore;
       comparison.push_back(stepData);
 
       hasNextTop = top1.nextBoundary();
