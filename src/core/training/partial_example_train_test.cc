@@ -5,7 +5,7 @@
 #include <fstream>
 #include "core/impl/graphviz_format.h"
 #include "core/training/scw.h"
-#include "partial_example.h"
+#include "partial_trainer.h"
 #include "training_test_common.h"
 #include "util/logging.hpp"
 
@@ -137,13 +137,13 @@ TEST_CASE("can decrease loss/features from a simple example with tags") {
   CHECK(env.trainer.compute(scw.scorers()));
   CHECK(env.trainer.loss() > 0);
   for (int iter = 0; iter < 30; ++iter) {
-    // LOG_DEBUG() << "LOSS: " << env.trainer.loss();
-    scw.update(env.trainer.loss(), env.trainer.featureDiff());
-    CHECK(env.trainer.compute(scw.scorers()));
-    // env.dumpTrainers("/tmp/jpp-dbg", iter);
+    //    LOG_DEBUG() << "LOSS: " << env.trainer.loss();
+    //    env.dumpTrainers("/tmp/jpp-dbg", iter);
     if (env.trainer.loss() == 0) {
       break;
     }
+    scw.update(env.trainer.loss(), env.trainer.featureDiff());
+    CHECK(env.trainer.compute(scw.scorers()));
   }
   auto sconf = scw.scorers();
   env.trainer.compute(sconf);

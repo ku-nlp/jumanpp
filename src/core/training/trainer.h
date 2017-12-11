@@ -8,7 +8,7 @@
 #include "core/analysis/perceptron.h"
 #include "core/training/gold_example.h"
 #include "core/training/loss.h"
-#include "core/training/partial_example.h"
+#include "core/training/partial_trainer.h"
 #include "core/training/training_io.h"
 #include "core/training/training_types.h"
 

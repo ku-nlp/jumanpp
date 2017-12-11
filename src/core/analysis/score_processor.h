@@ -51,6 +51,18 @@ class EntryBeam {
     }
   }
 
+  util::ArraySlice<ConnectionBeamElement> finalize() {
+    std::sort_heap(elements_.begin(), elements_.end(), compare);
+    for (size_t i = 0; i < elements_.size(); ++i) {
+      if (isFake(elements_[i])) {
+        return {elements_.data(), i};
+      }
+    }
+    return elements_;
+  }
+
+  bool isTopFake() const { return isFake(elements_[0]); }
+
   static bool isFake(const ConnectionBeamElement& e) {
     u64 el;
     std::memcpy(&el, &e.ptr, sizeof(u64));

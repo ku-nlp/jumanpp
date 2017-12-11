@@ -2,7 +2,7 @@
 // Created by Arseny Tolmachev on 2017/10/11.
 //
 
-#include "partial_example.h"
+#include "partial_trainer.h"
 #include "training_test_common.h"
 
 namespace {
