@@ -471,7 +471,7 @@ class ModelSpecBuilder : public DslOpBase {
   Status validateFeatures() const;
   Status validateUnks() const;
   virtual Status validate() const override;
-  Status build(AnalysisSpec* spec) const;
+  Status build(AnalysisSpec* spec);
 
   friend class ::jumanpp::core::spec::SpecCompiler;
 };

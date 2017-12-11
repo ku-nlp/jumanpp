@@ -65,8 +65,12 @@ Status ModelSpecBuilder::validateNames() const {
   return Status::Ok();
 }
 
-Status ModelSpecBuilder::build(AnalysisSpec* spec) const {
+Status ModelSpecBuilder::build(AnalysisSpec* spec) {
   JPP_RETURN_IF_ERROR(validate());
+  std::stable_sort(ngrams_.begin(), ngrams_.end(),
+                   [](FeatureCombinator* f1, FeatureCombinator* f2) {
+                     return f1->data.size() < f2->data.size();
+                   });
   SpecCompiler compiler{*this, spec};
   JPP_RETURN_IF_ERROR(compiler.build());
   JPP_RETURN_IF_ERROR(checkNoFeatureIsLeft());
