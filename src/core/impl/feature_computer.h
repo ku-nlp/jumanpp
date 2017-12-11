@@ -12,6 +12,15 @@ namespace jumanpp {
 namespace core {
 namespace features {
 
+enum class NgramSubset {
+  Unigrams = 1,
+  Bigrams = 2,
+  Trigrams = 4,
+  UniBi = Unigrams | Bigrams,
+  BiTri = Bigrams | Trigrams,
+  All = Unigrams | Bigrams | Trigrams
+};
+
 struct NgramFeatureRef {
   analysis::LatticeNodePtr t2;
   analysis::LatticeNodePtr t1;
@@ -38,6 +47,9 @@ class NgramFeaturesComputer {
 
   void calculateNgramFeatures(const NgramFeatureRef& ptrs,
                               util::MutableArraySlice<u32> result);
+
+  util::ArraySlice<u32> subset(util::ArraySlice<u32> original,
+                               NgramSubset what);
 };
 
 }  // namespace features

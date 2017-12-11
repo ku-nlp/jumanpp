@@ -143,6 +143,10 @@ class PartialNgramFeatureApply : public FeatureApply {
       util::ConstSliceable<u64> t1, util::ConstSliceable<u64> t2,
       util::ArraySlice<u32> t1idxes, analysis::FeatureScorer* scorer,
       util::MutableArraySlice<float> result) const noexcept = 0;
+
+  virtual u32 numUnigrams() const noexcept = 0;
+  virtual u32 numBigrams() const noexcept = 0;
+  virtual u32 numTrigrams() const noexcept = 0;
 };
 
 class StaticFeatureFactory : public FeatureApply {

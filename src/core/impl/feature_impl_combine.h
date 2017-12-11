@@ -155,7 +155,7 @@ class NgramFeatureApplyImpl : public NgramFeatureApply {
 
 class NgramDynamicFeatureApply
     : public NgramFeatureApplyImpl<NgramDynamicFeatureApply> {
-  std::vector<std::unique_ptr<DynamicNgramFeature>> children;
+  std::vector<std::unique_ptr<DynamicNgramFeature>> children_;
 
  public:
   Status addChild(const spec::NgramFeatureDescriptor &nf);
@@ -163,13 +163,13 @@ class NgramDynamicFeatureApply
   void apply(util::MutableArraySlice<u32> result,
              const util::ArraySlice<u64> &t2, const util::ArraySlice<u64> &t1,
              const util::ArraySlice<u64> &t0) const noexcept {
-    for (auto &c : children) {
+    for (auto &c : children_) {
       c->apply(result, t2, t1, t0);
     }
   }
 
   Status emitCode(util::codegen::MethodBody *cls) const {
-    for (auto &c : children) {
+    for (auto &c : children_) {
       JPP_RETURN_IF_ERROR(c->emitCode(cls));
     }
     return Status::Ok();

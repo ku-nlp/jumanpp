@@ -54,17 +54,17 @@ Status NgramDynamicFeatureApply::addChild(
     const spec::NgramFeatureDescriptor& nf) {
   switch (nf.references.size()) {
     case 1: {
-      children.emplace_back(
+      children_.emplace_back(
           new NgramFeatureDynamicAdapter<1>{nf.index, nf.references[0]});
       break;
     }
     case 2: {
-      children.emplace_back(new NgramFeatureDynamicAdapter<2>{
+      children_.emplace_back(new NgramFeatureDynamicAdapter<2>{
           nf.index, nf.references[0], nf.references[1]});
       break;
     }
     case 3: {
-      children.emplace_back(new NgramFeatureDynamicAdapter<3>{
+      children_.emplace_back(new NgramFeatureDynamicAdapter<3>{
           nf.index, nf.references[0], nf.references[1], nf.references[2]});
       break;
     }

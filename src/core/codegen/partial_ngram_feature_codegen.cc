@@ -349,6 +349,7 @@ void PartialNgramPrinter::outputApplyBiTriFullUnrolled(util::io::Printer& p) {
 }
 
 void PartialNgramPrinter::outputClassBody(util::io::Printer& p) {
+  (void)spec_;             // touch spec_
   p << "\nvoid uniStep0("  // args
     << JPP_TEXT(jumanpp::util::ArraySlice<jumanpp::u64>) << " patterns, "
     << JPP_TEXT(jumanpp::u32) << " mask, "
@@ -530,13 +531,13 @@ void PartialNgramPrinter::outputClassBody(util::io::Printer& p) {
   }
   p << "\n}\n";
 
-  p << "\n::jumanpp::u32 numUnigrams() const noexcept { "
+  p << "\n::jumanpp::u32 numUnigrams() const noexcept override { "
     << "return " << this->unigrams_.size() << "; }";
 
-  p << "\n::jumanpp::u32 numBigrams() const noexcept { "
+  p << "\n::jumanpp::u32 numBigrams() const noexcept override { "
     << "return " << this->bigrams_.size() << "; }";
 
-  p << "\n::jumanpp::u32 numTrigrams() const noexcept { "
+  p << "\n::jumanpp::u32 numTrigrams() const noexcept override { "
     << "return " << this->trigrams_.size() << "; }";
 
   outputBiApply2(p, this->bigrams_);

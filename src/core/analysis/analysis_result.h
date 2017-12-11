@@ -19,7 +19,7 @@ class AnalysisPath {
   // Pointers to beam elements from EOS to BOS order (!)
   // it is reversed morhpeme order!
   // Pointers to nodes with the same score are stored in beam order.
-  std::vector<ConnectionPtr> elems_;
+  std::vector<const ConnectionPtr*> elems_;
   // offsets to elements of previous array
   // begin[last] == offsets[0]
   // begin[last-1] == end[last] == offsets[1]
@@ -51,10 +51,19 @@ class AnalysisPath {
     auto beginIdx = offsets_.size() - currentChunk_ - 2;
     JPP_DCHECK_IN(beginIdx, 0, offsets_.size());
     auto begin = offsets_[beginIdx];
-    return elems_[begin].boundary;
+    return elems_[begin]->boundary;
   }
 
   bool nextNode(ConnectionPtr* result) {
+    auto ptr = nextNodePtr();
+    if (ptr != nullptr) {
+      *result = *ptr;
+      return true;
+    }
+    return false;
+  }
+
+  const ConnectionPtr* nextNodePtr() {
     currentNode_ += 1;
     bool status = remainingNodesInChunk() > 0;
     if (status) {
@@ -63,9 +72,14 @@ class AnalysisPath {
       auto begin = offsets_[beginIdx];
       auto idx = begin + currentNode_;
       JPP_DCHECK_IN(idx, 0, elems_.size());
-      *result = elems_[idx];
+      return elems_[idx];
     }
-    return status;
+    return nullptr;
+  }
+
+  const ConnectionBeamElement* nextBeamPtr() {
+    // this cast is safe because this guy is filled directly from Lattice
+    return reinterpret_cast<const ConnectionBeamElement*>(nextNodePtr());
   }
 
   i32 curNode() const { return currentNode_; }
@@ -78,7 +92,7 @@ class AnalysisPath {
 
   bool contains(ConnectionPtr step0, ConnectionPtr step1) const {
     for (auto& el : elems_) {
-      if (el == step1 && *el.previous == step0) {
+      if (*el == step1 && *el->previous == step0) {
         return true;
       }
     }

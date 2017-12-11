@@ -30,6 +30,28 @@ void NgramFeaturesComputer::calculateNgramFeatures(
   features.ngram->applyBatch(&nfd);
 }
 
+util::ArraySlice<u32> NgramFeaturesComputer::subset(
+    util::ArraySlice<u32> original, NgramSubset what) {
+  auto& x = features.ngramPartial;
+  JPP_DCHECK_EQ(original.size(),
+                x->numUnigrams() + x->numBigrams() + x->numTrigrams());
+  switch (what) {
+    case NgramSubset::Unigrams:
+      return {original, 0, x->numUnigrams()};
+    case NgramSubset::Bigrams:
+      return {original, x->numUnigrams(), x->numBigrams()};
+    case NgramSubset::Trigrams:
+      return {original, x->numUnigrams() + x->numBigrams(), x->numTrigrams()};
+    case NgramSubset::UniBi:
+      return {original, 0, x->numUnigrams() + x->numBigrams()};
+    case NgramSubset::BiTri:
+      return {original, x->numUnigrams(), x->numBigrams() + x->numTrigrams()};
+    default:
+      JPP_DCHECK_NOT("should not reach here");
+      return {};
+  }
+}
+
 }  // namespace features
 }  // namespace core
 }  // namespace jumanpp

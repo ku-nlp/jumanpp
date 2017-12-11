@@ -25,7 +25,7 @@ struct ComparisonStep {
   i32 numMismatches;
 
   i32 boundary;
-  i32 topPosition;
+  const analysis::ConnectionBeamElement* topPtr;
   i32 goldPosition;
   i32 numGold;
 
@@ -52,6 +52,11 @@ struct ComparisonStep {
     step.numMismatches = 0;
     step.violation = 0;
     return step;
+  }
+
+  bool hasError() const {
+    return cmpClass != ComparitionClass::Both || violation > 0 ||
+           numMismatches > 0;
   }
 };
 
@@ -137,8 +142,8 @@ class LossCalculator {
     return std::min(val + 2, sz - 1);
   }
 
-  void computeNgrams(std::vector<u32>* result, i32 boundary, i32 position);
-  void computeGoldNgrams(i32 numGold);
+  void computeNgrams(i32 cmpIdx);
+  void computeGoldNgrams(i32 cmpIdx, i32 numGold);
 
   float computeLoss(i32 till);
 

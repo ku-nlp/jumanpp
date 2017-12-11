@@ -44,8 +44,8 @@ struct alignas(alignof(u64)) ConnectionPtr {
   u16 left;
   // offset of starting node inside the boundary
   u16 right;
-  // beam index for getting additional context
-  // the context is stored in the current boundary
+  // beam index of *PREVIOUS* path node for getting additional context
+  // using this value to access current beam index is invalid
   u16 beam;
 
   // pointer to the previous entry

@@ -422,11 +422,13 @@ class PartialNgramDynamicFeatureApply
   void allocateBuffers(FeatureBuffer* buffer, const AnalysisRunStats& stats,
                        util::memory::PoolAlloc* alloc) const override;
 
-  u32 numUnigrams() const noexcept {
+  u32 numUnigrams() const noexcept override {
     return static_cast<u32>(unigrams_.size());
   }
-  u32 numBigrams() const noexcept { return static_cast<u32>(bigrams_.size()); }
-  u32 numTrigrams() const noexcept {
+  u32 numBigrams() const noexcept override {
+    return static_cast<u32>(bigrams_.size());
+  }
+  u32 numTrigrams() const noexcept override {
     return static_cast<u32>(trigrams_.size());
   }
 };

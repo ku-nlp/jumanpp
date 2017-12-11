@@ -53,9 +53,8 @@ Status AnalysisPath::fillIn(const Lattice *l) {
     auto bnd = l->boundary(topPtr->boundary);
     auto starts = bnd->starts();
     auto beamAtBnd = starts->beamData().row(topPtr->right);
-
     auto topItem = beamAtBnd.at(myBeam);
-    elems_.push_back(*topItem.ptr.previous);
+    elems_.push_back(topItem.ptr.previous);
 #if 0
     for (i32 id = myBeam + 1; id < beamAtBnd.size(); ++id) {
       auto nextItem = beamAtBnd.at(id);
