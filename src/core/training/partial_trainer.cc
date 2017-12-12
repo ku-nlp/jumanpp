@@ -43,6 +43,7 @@ void PartialTrainer::handleBoundaryConstraints() {
   auto eosBndIdx = l->createdBoundaryCount() - 1;
   auto eos = l->boundary(eosBndIdx);
   auto top1 = eos->starts()->beamData().at(0);
+  const analysis::ConnectionPtr* prev = nullptr;
   const analysis::ConnectionPtr* nodeEnd = &top1.ptr;
   auto nodeStart = nodeEnd->previous;
   while (nodeStart->boundary >= 2) {
@@ -53,22 +54,22 @@ void PartialTrainer::handleBoundaryConstraints() {
       case ViolationKind::NoBoundary: {
         auto cands =
             candidatesEndingOn(viol.parameter, viol.parameter, emptyBeam());
-        addFeatures(cands.finalize(), *nodeStart);
+        addFeatures(cands.finalize(), nodeStart, nodeEnd, prev);
         break;
       }
       case ViolationKind::WordStart: {
         auto list = findCandidatesSpanning(nodeStart->boundary);
-        addFeatures(list.finalize(), *nodeStart);
+        addFeatures(list.finalize(), nodeStart, nodeEnd, prev);
         break;
       }
       case ViolationKind::WordEnd: {
         auto list = findCandidatesSpanning(nodeEnd->boundary);
-        addFeatures(list.finalize(), *nodeStart);
+        addFeatures(list.finalize(), nodeStart, nodeEnd, prev);
         break;
       }
       case ViolationKind::Tag: {
         auto list = candidatesStartingOn(nodeStart->boundary, emptyBeam());
-        addFeatures(list.finalize(), *nodeStart);
+        addFeatures(list.finalize(), nodeStart, nodeEnd, prev);
         break;
       }
       case ViolationKind::None:
@@ -77,6 +78,7 @@ void PartialTrainer::handleBoundaryConstraints() {
     if (!viol.isNone()) {
       loss_ += 1.0f / top1_.totalNodes();
     }
+    prev = nodeEnd;
     nodeEnd = nodeStart;
     nodeStart = nodeStart->previous;
   }
@@ -164,7 +166,7 @@ void PartialTrainer::handleEos() {
   auto res = eb.finalize();
 
   if (res.size() != 0) {
-    addFeatures(res, top1.ptr);
+    addFeatures(res, &top1.ptr, nullptr, nullptr);
   }
 }
 
@@ -252,8 +254,10 @@ analysis::EntryBeam PartialTrainer::candidatesStartingOn(
   return eb;
 }
 
-void PartialTrainer::addFeatures(PartialTrainer::PtrList good,
-                                 const analysis::ConnectionPtr& bad) {
+void PartialTrainer::addFeatures(PtrList good,
+                                 const analysis::ConnectionPtr* bad,
+                                 const analysis::ConnectionPtr* badPrev,
+                                 const analysis::ConnectionPtr* badPrev2) {
   goodFeatures_.clear_no_resize();
   badFeatures_.clear_no_resize();
 
@@ -274,8 +278,12 @@ void PartialTrainer::addFeatures(PartialTrainer::PtrList good,
     return;
   }
 
+  if (!good.empty()) {
+    addBiTriCorrections(&good.at(0).ptr, bad, badPrev, badPrev2);
+  }
+
   {
-    auto& t0 = bad;
+    auto& t0 = *bad;
     auto& t1 = *t0.previous;
     auto& t2 = *t1.previous;
     NgramFeatureRef nfr{t2.latticeNodePtr(), t1.latticeNodePtr(),
@@ -366,6 +374,78 @@ analysis::EntryBeam PartialTrainer::makeUpCandidatesEndingOn(
   }
 
   return eb;
+}
+
+void PartialTrainer::addBiTriCorrections(
+    const analysis::ConnectionPtr* good, const analysis::ConnectionPtr* bad,
+    const analysis::ConnectionPtr* badPrev,
+    const analysis::ConnectionPtr* badPrev2) {
+  auto lat = analyzer_->lattice();
+  if (badPrev == nullptr ||
+      !example_.doesNodeMatch(lat, badPrev->boundary, badPrev->right)) {
+    return;
+  }
+
+  auto ends = lat->boundary(badPrev->boundary)->ends()->nodePtrs();
+
+  auto it = std::find_if(
+      ends.begin(), ends.end(), [good](const analysis::LatticeNodePtr& p) {
+        return p.boundary == good->boundary && p.position == good->right;
+      });
+
+  if (it == ends.end()) {
+    return;
+  }
+
+  NgramFeaturesComputer nfc{analyzer_->lattice(), analyzer_->core().features()};
+
+  {
+    NgramFeatureRef goodNfrBiTri{good->previous->latticeNodePtr(),
+                                 good->latticeNodePtr(),
+                                 badPrev->latticeNodePtr()};
+
+    nfc.calculateNgramFeatures(goodNfrBiTri, &featureBuf_);
+    for (auto f : featureBuf_) {
+      goodFeatures_.insert(f);
+    }
+  }
+
+  {
+    NgramFeatureRef badNfrBiTri{bad->previous->latticeNodePtr(),
+                                bad->latticeNodePtr(),
+                                badPrev->latticeNodePtr()};
+
+    nfc.calculateNgramFeatures(badNfrBiTri, &featureBuf_);
+    for (auto f : featureBuf_) {
+      badFeatures_.insert(f);
+    }
+  }
+
+  if (badPrev2 == nullptr ||
+      !example_.doesNodeMatch(lat, badPrev2->boundary, badPrev2->right)) {
+    return;
+  }
+
+  {
+    NgramFeatureRef goodNfrTri{good->latticeNodePtr(),
+                               badPrev->latticeNodePtr(),
+                               badPrev2->latticeNodePtr()};
+
+    nfc.calculateNgramFeatures(goodNfrTri, &featureBuf_);
+    for (auto& f : featureBuf_) {
+      goodFeatures_.insert(f);
+    }
+  }
+
+  {
+    NgramFeatureRef badNfrTri{bad->latticeNodePtr(), badPrev->latticeNodePtr(),
+                              badPrev2->latticeNodePtr()};
+
+    nfc.calculateNgramFeatures(badNfrTri, &featureBuf_);
+    for (auto& f : featureBuf_) {
+      badFeatures_.insert(f);
+    }
+  }
 }
 
 Status OwningPartialTrainer::initialize(const TrainerFullConfig& cfg,

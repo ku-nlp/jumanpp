@@ -48,7 +48,9 @@ class PartialTrainer {
                                            analysis::EntryBeam entryBeam);
   analysis::EntryBeam makeUpCandidatesEndingOn(i32 boundary, i32 beforeBoundary,
                                                analysis::EntryBeam entryBeam);
-  void addFeatures(PtrList good, const analysis::ConnectionPtr& bad);
+  void addFeatures(PtrList good, const analysis::ConnectionPtr* bad,
+                   const analysis::ConnectionPtr* badPrev,
+                   const analysis::ConnectionPtr* badPrev2);
 
   bool isValid(const analysis::ConnectionPtr& cptr) const;
 
@@ -73,6 +75,11 @@ class PartialTrainer {
                 analysis::Lattice* lattice) const;
 
   analysis::EntryBeam findCandidatesSpanning(i32 boundary);
+
+  void addBiTriCorrections(const analysis::ConnectionPtr* good,
+                           const analysis::ConnectionPtr* bad,
+                           const analysis::ConnectionPtr* badPrev,
+                           const analysis::ConnectionPtr* badPrev2);
 };
 
 class OwningPartialTrainer : public ITrainer {
