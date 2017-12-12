@@ -41,6 +41,10 @@ Status PartialTrainer::compute(const analysis::ScorerDef* sconf) {
 void PartialTrainer::handleBoundaryConstraints() {
   auto l = analyzer_->lattice();
   auto eosBndIdx = l->createdBoundaryCount() - 1;
+  if (eosBndIdx == 2) {
+    loss_ = 0;
+    return;
+  }
   auto eos = l->boundary(eosBndIdx);
   auto top1 = eos->starts()->beamData().at(0);
   const analysis::ConnectionPtr* prev = nullptr;
