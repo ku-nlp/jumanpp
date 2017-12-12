@@ -299,6 +299,7 @@ void LossCalculator::computeNgrams(i32 cmpIdx) {
   util::copy_insert(featureBuffer, top1Features);
 
   // and logic for handling ngrams for correct nodes
+#if defined(JPP_TRAIN_MID_NGRAMS)
 
   auto nextIdx = cmpIdx + 1;
   if (nextIdx >= comparison.size()) {
@@ -344,6 +345,7 @@ void LossCalculator::computeNgrams(i32 cmpIdx) {
   nfc.calculateNgramFeatures(nfr3, &featureBuffer);
   auto tri = nefc.subset(featureBuffer, features::NgramSubset::Trigrams);
   util::copy_insert(tri, top1Features);
+#endif  // JPP_TRAIN_MID_NGRAMS
 }
 
 float LossCalculator::computeLoss(i32 till) {
@@ -384,6 +386,7 @@ void LossCalculator::computeGoldNgrams(i32 cmpIdx, i32 position) {
   util::copy_insert(slice.row(position), goldFeatures);
 
   // and logic for handling ngrams for correct nodes
+#if defined(JPP_TRAIN_MID_NGRAMS)
 
   auto nextIdx = cmpIdx + 1;
   if (nextIdx >= comparison.size()) {
@@ -425,6 +428,7 @@ void LossCalculator::computeGoldNgrams(i32 cmpIdx, i32 position) {
   auto tri =
       nefc.subset(slice.row(cmpNext2.numGold), features::NgramSubset::Trigrams);
   util::copy_insert(tri, goldFeatures);
+#endif  // JPP_TRAIN_MID_NGRAMS
 }
 
 Status LossCalculator::resolveGold() {

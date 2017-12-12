@@ -55,7 +55,10 @@ struct ComparisonStep {
   }
 
   bool hasError() const {
-    return cmpClass != ComparitionClass::Both || violation > 0.05f ||
+    return cmpClass != ComparitionClass::Both ||
+#if defined(JPP_TRAIN_VIOLATION_INVALID)
+           violation > 0.05f ||
+#endif  // JPP_TRAIN_VIOLATION_INVALID
            numMismatches > 0;
   }
 };

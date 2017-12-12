@@ -30,6 +30,8 @@ set(JPP_MAX_DIC_FIELDS 16 CACHE STRING "Maximum supported dictionary fields")
 option(JPP_ENABLE_TESTS "Enable tests" ON)
 set(JPP_DEFAULT_CONFIG_DIR "${CMAKE_INSTALL_PREFIX}/libexec/jumanpp/"
   CACHE FILEPATH "Default Config Location")
+option(JPP_TRAIN_MID_NGRAMS OFF)
+option(JPP_TRAIN_VIOLATION_INVALID OFF)
 
 if(${JPP_ENABLE_TESTS})
     enable_testing()

@@ -15,6 +15,10 @@ constexpr size_t JPP_MAX_DIC_FIELDS = @JPP_MAX_DIC_FIELDS@;
 
 #cmakedefine JPP_USE_PROTOBUF 1
 
+#cmakedefine JPP_TRAIN_MID_NGRAMS 1
+
+#cmakedefine JPP_TRAIN_VIOLATION_INVALID 1
+
 static constexpr char JPP_DEFAULT_CONFIG_DIR[]{"@JPP_DEFAULT_CONFIG_DIR@"};
 
 }
