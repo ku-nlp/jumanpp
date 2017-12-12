@@ -7,6 +7,7 @@
 #include <numeric>
 #include "core/analysis/unk_nodes_creator.h"
 #include "core/impl/feature_computer.h"
+#include "util/logging.hpp"
 
 namespace jumanpp {
 namespace core {
@@ -258,7 +259,7 @@ void LossCalculator::computeFeatureDiff(u32 mask) {
   if (numTop != 0) {
     weight = numGold / numTop;
   }
-  if (weight > 15 && numGold != 0) {
+  if (weight > 2 && numGold != 0) {
     weight = numTop / numGold;
     updateTop = false;
   }
@@ -285,7 +286,7 @@ void LossCalculator::mergeOne(u32 target, float score) {
   scored.back().score += score;
 }
 
-void LossCalculator::computeNgrams(i32 cmpIdx) {
+void LossCalculator::addTopNgrams(i32 cmpIdx) {
   auto lat = analyzer->lattice();
   NgramFeaturesComputer nfc{lat, analyzer->core().features()};
   auto& cmp = comparison[cmpIdx];
@@ -359,27 +360,34 @@ float LossCalculator::computeLoss(i32 till) {
     if (cmp.cmpClass == ComparitionClass::GoldOnly) {
       loss += fullWeight;
       if (i < till) {
-        computeGoldNgrams(i, cmp.numGold);
+        addGoldNgrams(i, cmp.numGold);
       }
     } else if (cmp.cmpClass == ComparitionClass::TopOnly) {
       loss += fullWeight;
       if (i < till) {
-        computeNgrams(i);
+        addTopNgrams(i);
       }
     } else if (cmp.cmpClass == ComparitionClass::Both) {
       if (cmp.hasError()) {
         loss += cmp.mismatchWeight;
         if (i < till) {
-          computeGoldNgrams(i, cmp.numGold);
-          computeNgrams(i);
+          addGoldNgrams(i, cmp.numGold);
+          addTopNgrams(i);
         }
       }
     }
   }
-  return loss / (size * fullWeight);
+
+  auto lossValue = loss / (size * fullWeight);
+#if 0
+  if (lossValue > 0) {
+    LOG_TRACE() << "LOSS: " << lossValue << compDump();
+  }
+#endif
+  return lossValue;
 }
 
-void LossCalculator::computeGoldNgrams(i32 cmpIdx, i32 position) {
+void LossCalculator::addGoldNgrams(i32 cmpIdx, i32 position) {
   auto numNgrams = analyzer->core().spec().features.ngram.size();
   util::ConstSliceable<u32> slice{rawGoldFeatures, numNgrams,
                                   gold.nodes().size() + 1};
@@ -460,12 +468,46 @@ void LossCalculator::computeGoldScores(const analysis::ScorerDef* scores) {
   auto numGoldNodes = gold.nodes().size() + 1;  // EOS as well
   goldNodeScores.resize(numGoldNodes);
   goldScores.resize(numGoldNodes);
-  util::MutableArraySlice<float> scoreBuf{&goldNodeScores};
   auto numNgrams = analyzer->core().spec().features.ngram.size();
   util::Sliceable<u32> features{&rawGoldFeatures, numNgrams, numGoldNodes};
-  scores->feature->compute(scoreBuf, features);
+  scores->feature->compute(&goldNodeScores, features);
   std::partial_sum(goldNodeScores.begin(), goldNodeScores.end(),
                    goldScores.begin());
+}
+
+std::string LossCalculator::compDump() const {
+  std::stringstream ss;
+  for (auto& c: comparison) {
+    ss << "\n";
+    switch (c.cmpClass) {
+      case ComparitionClass::Both:
+        ss << "B: ";
+        break;
+      case ComparitionClass ::GoldOnly:
+        ss << "G: ";
+        break;
+      case ComparitionClass ::TopOnly:
+        ss << "T: ";
+        break;
+    }
+    ss << c.boundary
+       << " "
+       << c.numMismatches;
+    if (c.numMismatches != 0) {
+      ss << ":"
+           << c.mismatchWeight;
+    }
+    ss << " " << c.numGold << "*" << c.goldPosition;
+    if (c.topPtr) {
+      ss << " " << *c.topPtr;
+    } else {
+      ss << " null";
+    }
+
+
+    ss << "@" << c.violation << " " << c.goldInBeam;
+  }
+  return ss.str();
 }
 
 }  // namespace training

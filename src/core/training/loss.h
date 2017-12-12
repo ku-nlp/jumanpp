@@ -42,7 +42,9 @@ struct ComparisonStep {
     ComparisonStep step{ComparitionClass::TopOnly};
     step.mismatchWeight = 0;
     step.numMismatches = 0;
+    step.numGold = -1;
     step.goldInBeam = false;
+    step.goldPosition = -1;
     return step;
   }
 
@@ -51,13 +53,14 @@ struct ComparisonStep {
     step.mismatchWeight = 0;
     step.numMismatches = 0;
     step.violation = 0;
+    step.topPtr = nullptr;
     return step;
   }
 
   bool hasError() const {
     return cmpClass != ComparitionClass::Both ||
 #if defined(JPP_TRAIN_VIOLATION_INVALID)
-           violation > 0.05f ||
+           violation > 0.001f ||
 #endif  // JPP_TRAIN_VIOLATION_INVALID
            numMismatches > 0;
   }
@@ -109,6 +112,8 @@ class LossCalculator {
 
   i32 fullSize() const { return comparison.size(); }
 
+  std::string compDump() const;
+
   /**
    *
    * @return index of comparison position where golden example falls off the
@@ -145,8 +150,8 @@ class LossCalculator {
     return std::min(val + 2, sz - 1);
   }
 
-  void computeNgrams(i32 cmpIdx);
-  void computeGoldNgrams(i32 cmpIdx, i32 numGold);
+  void addTopNgrams(i32 cmpIdx);
+  void addGoldNgrams(i32 cmpIdx, i32 numGold);
 
   float computeLoss(i32 till);
 
