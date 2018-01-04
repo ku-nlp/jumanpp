@@ -5,11 +5,19 @@
 #ifndef JUMANPP_COMMON_HPP
 #define JUMANPP_COMMON_HPP
 
+#ifdef _MSC_VER
+#define JPP_ALWAYS_INLINE __forceinline
+#define JPP_NO_INLINE
+
+#define JPP_UNLIKELY(x) x
+#define JPP_LIKELY(x) x
+#else //GCC & Clang
 #define JPP_ALWAYS_INLINE __attribute__((always_inline))
 #define JPP_NO_INLINE __attribute__((noinline))
 
 #define JPP_UNLIKELY(x) __builtin_expect((x), 0)
 #define JPP_LIKELY(x) __builtin_expect(!!(x), 1)
+#endif //_MSC_VER
 
 namespace jumanpp {
 namespace util {
@@ -37,7 +45,7 @@ JPP_ALWAYS_INLINE void prefetch(const void* x);
 // Inline implementation
 // ---------------------------------------------------------------------------
 template <PrefetchHint hint>
-JPP_ALWAYS_INLINE inline void prefetch(const void* x) {
+inline JPP_ALWAYS_INLINE void prefetch(const void* x) {
 #if defined(__llvm__) || defined(__GNUC__)
   __builtin_prefetch(x, 0, hint);
 #else
