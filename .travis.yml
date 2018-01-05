@@ -11,8 +11,9 @@ matrix:
         packages:
           - g++-5
     env:
-      - CC=gcc-5 
-      - CXX=g++-5
+      - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
 script:
   - mkdir build
   - cd build && cmake .. && make -j && make test
+before_script:
+  - eval "${MATRIX_EVAL}"
