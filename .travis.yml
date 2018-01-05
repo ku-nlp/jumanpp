@@ -1,0 +1,10 @@
+language: cpp
+sudo: false
+dist: trusty
+install: true
+compiler:
+  - clang
+  - gcc
+script:
+  - mkdir build
+  - cd build && cmake .. && make -j && make test
