@@ -1,10 +1,17 @@
 language: cpp
 sudo: false
 dist: trusty
-install: true
-compiler:
-  - clang
-  - gcc
+matrix:
+  include:
+  - os: linux
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+        packages:
+          - g++-5
+    env:
+      - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
 script:
   - mkdir build
   - cd build && cmake .. && make -j && make test
