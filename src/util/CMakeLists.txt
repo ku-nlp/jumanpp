@@ -1,5 +1,10 @@
 set(jpp_util_sources mmap.cc memory.cpp logging.cpp string_piece.cc status.cpp
   csv_reader.cc coded_io.cc characters.cc soa.cc printer.cc codegen.cc assert.cc format.cc)
+
+if(MSVC)
+    set(jpp_util_sources ${jpp_util_sources} win32_utils.cc)
+endif()
+
 set(jpp_util_headers mmap.h status.hpp memory.hpp characters.h types.hpp logging.hpp common.hpp
   string_piece.h csv_reader.h coded_io.h flatrep.h flatset.h flatmap.h murmur_hash.h array_slice_internal.h
   array_slice.h inlined_vector.h soa.h stl_util.h hashing.h char_buffer.h serialization.h

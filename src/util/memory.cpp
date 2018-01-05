@@ -3,7 +3,6 @@
 //
 
 #include "memory.hpp"
-#include <sys/mman.h>
 #include <cassert>
 #include <cstddef>
 #include <cstdlib>
@@ -11,9 +10,37 @@
 #include <memory>
 #include "logging.hpp"
 
+#if defined(_MSC_VER)
+#include <malloc.h>
+#include <errno.h>
+#else
+#include <sys/mman.h>
+#endif
+
 namespace jumanpp {
 namespace util {
 namespace memory {
+
+#if defined(_MSC_VER)
+/**
+ * posix_memalign replacement for Windows platform.
+ *
+ * Uses _aligned_alloc underhood and due to that memory cannot be freed using normal free() call
+ */
+static int posix_memalign(void **dst, size_t alignment, size_t size) {
+  void *result = _aligned_malloc(size, alignment);
+
+  if (result == nullptr) {
+    return errno;
+  }
+
+  *dst = result;
+  return 0;
+}
+#define free_impl _aligned_free
+#else
+#define free_impl free
+#endif
 
 #if JUMANPP_USE_DEFAULT_ALLOCATION
 void *PoolAlloc::allocate_memory(size_t size, size_t alignment) {
@@ -34,13 +61,13 @@ void *Manager::allocate(size_t size, size_t align) {
 
 Manager::~Manager() {
   for (auto obj : pages_) {
-    free(obj.base);
+    free_impl(obj.base);
   }
 }
 
 void Manager::reset() {
   for (auto &page : pages_) {
-    free(page.base);
+    free_impl(page.base);
   }
   pages_.clear();
 }
@@ -121,7 +148,7 @@ void Manager::reset() { currentPage = 0; }
 
 Manager::~Manager() {
   for (auto page : pages_) {
-    std::free(page.base);
+    free_impl(page.base);
   }
 }
 
@@ -152,7 +179,7 @@ void *MallocEalloc::Allocate(size_t size, size_t align) {
   return result;
 }
 
-void MallocEalloc::Reclaim(void *pVoid) noexcept { free(pVoid); }
+void MallocEalloc::Reclaim(void *pVoid) noexcept { free_impl(pVoid); }
 
 MallocEalloc *defaultEalloc() {
   static MallocEalloc alloc;
