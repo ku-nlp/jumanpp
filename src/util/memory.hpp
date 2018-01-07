@@ -166,12 +166,17 @@ class Manager {
 template <typename T>
 class StlManagedAlloc {
   PoolAlloc *core_;
+  template<typename>
+  friend class StlManagedAlloc;
 
  public:
   using value_type = T;
   using pointer = value_type *;
 
   StlManagedAlloc(PoolAlloc *core) noexcept : core_{core} {}
+  StlManagedAlloc(const StlManagedAlloc& allocator) noexcept : core_{allocator.core_} {}
+  template <typename U>
+  StlManagedAlloc(const StlManagedAlloc<U>& allocator) noexcept : core_{allocator.core_} {}
 
   pointer allocate(size_t n) { return core_->allocateRawArray<T>(n); }
 
