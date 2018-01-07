@@ -47,8 +47,14 @@ class MappedFileFragment {
   }
 };
 
+#if defined(_MSC_VER)
+typedef void* fd_t;
+#else
+typedef int fd_t;
+#endif
+
 class MappedFile {
-  int fd_ = 0;
+  fd_t fd_ = 0;
   std::string filename_;
   MMapType type_;
   size_t size_ = 0;

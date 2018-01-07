@@ -5,6 +5,7 @@
 #ifndef JUMANPP_STRING_PIECE_H
 #define JUMANPP_STRING_PIECE_H
 
+#include <algorithm>
 #include <iosfwd>
 #include <string>
 #include "common.hpp"
