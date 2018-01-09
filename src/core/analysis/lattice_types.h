@@ -7,7 +7,9 @@
 
 #include "core/analysis/lattice_config.h"
 #include "core/core_types.h"
-#include "util/soa.h"
+#include "util/memory.hpp"
+#include "util/sliceable_array.h"
+#include "util/status.hpp"
 #include "util/types.hpp"
 
 namespace jumanpp {
