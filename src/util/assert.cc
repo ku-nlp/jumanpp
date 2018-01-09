@@ -8,9 +8,11 @@
 #include "logging.hpp"
 #include "util/common.hpp"
 
+#ifndef _MSC_VER
 #include <sys/sysctl.h>
 #include <sys/types.h>
 #include <unistd.h>
+#endif
 
 namespace jumanpp {
 namespace util {
@@ -20,7 +22,7 @@ void die() {
 #ifdef NDEBUG
   std::terminate();
 #else
-  __builtin_trap();
+  JPP_BREAK_TO_DEBUGGER_IF_ATTACHED();
 #endif
 }
 

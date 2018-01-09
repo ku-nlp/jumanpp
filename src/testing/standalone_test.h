@@ -5,7 +5,10 @@
 #ifndef JUMANPP_STANDALONE_TEST_H
 #define JUMANPP_STANDALONE_TEST_H
 
+#ifndef _MSC_VER
 #include <unistd.h>
+#endif
+
 #include <util/string_piece.h>
 #include <catch.hpp>
 #include <util/status.hpp>

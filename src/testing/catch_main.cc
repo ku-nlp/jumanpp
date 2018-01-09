@@ -7,6 +7,11 @@
 
 #include "test_config.h"
 
+#ifdef _MSC_VER
+#include <direct.h>
+#define chdir _chdir
+#endif
+
 int main(int argc, char* argv[]) {
   std::printf("using %s as test resource directory...", TEST_RESOURCE_DIR);
 

@@ -2,9 +2,12 @@
 // Created by Arseny Tolmachev on 2017/02/18.
 //
 
+#ifndef _MSC_VER
+#include <unistd.h>
+#endif
+
 #include <fcntl.h>
 #include <testing/standalone_test.h>
-#include <unistd.h>
 #include <fstream>
 
 #include "mmap.h"
