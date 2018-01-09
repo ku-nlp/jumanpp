@@ -19,11 +19,8 @@ namespace util {
 namespace asserts {
 
 void die() {
-#ifdef NDEBUG
-  std::terminate();
-#else
   JPP_BREAK_TO_DEBUGGER_IF_ATTACHED();
-#endif
+  std::terminate();
 }
 
 struct AssertData {
