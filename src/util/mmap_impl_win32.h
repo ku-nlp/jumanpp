@@ -1,6 +1,8 @@
 #ifndef JUMANPP_MMAP_IMPL_WIN32_HPP
 #define JUMANPP_MMAP_IMPL_WIN32_HPP
 
+#if defined(_MSC_VER)
+
 #define NOMINMAX
 #include <windows.h>
 
@@ -232,5 +234,7 @@ MappedFileFragment &MappedFileFragment::operator=(
 
 }  // namespace util
 }  // namespace jumanpp
+
+#endif // _MSC_VER
 
 #endif  // JUMANPP_MMAP_IMPL_WIN32_HPP
