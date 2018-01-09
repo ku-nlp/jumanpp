@@ -321,15 +321,17 @@ bool CharLattceTraversal::lookupCandidatesFrom(i32 start) {
       buffer_.push_back(s);
     }
     states2_.clear();
-    auto ptr = unique(states1_.begin(), states1_.end(),
+    //TODO: Function needs rewrite as it seems to rely on iterator being over pointers.
+    //And currently MSVC is not able to properly build it.
+    auto ptr = unique(states1_.data(), &*states1_.end(),
                       [](const TraverasalState* s1, const TraverasalState* s2) {
                         return s1->end == s2->end &&
                                s1->allFlags == s2->allFlags &&
                                s1->traversal == s2->traversal;
                       },
                       buffer_);
-    if (ptr != states1_.end()) {
-      states1_.erase(ptr, states1_.end());
+    if (ptr != &*states1_.end()) {
+      states1_.erase(states1_.begin() + (ptr - states1_.data()), states1_.end());
     }
   }
   for (auto& s : states1_) {

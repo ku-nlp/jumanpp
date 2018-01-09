@@ -35,7 +35,12 @@ void RenderCell::render(detail::RenderOutput *out, detail::RenderContext *ctx) {
 
 }  // namespace detail
 
-using namespace detail;
+//Use concrete imports to avoid ambigious reference to GraphVizBuilder
+using detail::RenderStringField;
+using detail::GraphVizConfig;
+using detail::RenderOutput;
+using detail::RenderContext;
+using detail::NodePtr;
 
 void GraphVizBuilder::row(std::initializer_list<StringPiece> fields,
                           std::initializer_list<detail::Attribute> attrs) {

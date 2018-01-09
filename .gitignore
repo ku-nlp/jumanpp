@@ -15,6 +15,7 @@ release-stage-dir/
 .vscode/
 
 # GTAGS
+*tags
 GPATH
 GRTAGS
 GTAGS
