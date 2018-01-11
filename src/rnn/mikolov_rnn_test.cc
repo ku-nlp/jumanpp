@@ -19,7 +19,9 @@ TEST_CASE("can read mikonov rnn header") {
   util::MappedFileFragment frag;
   REQUIRE_OK(file.map(&frag, 0, file.size()));
   MikolovRnnModelHeader header;
-  REQUIRE_OK(readHeader(frag.asStringPiece(), &header));
+  size_t offset = 0;
+  REQUIRE_OK(readHeader(frag.asStringPiece(), &header, &offset));
+  CHECK(offset != 0);
   CHECK(header.layerSize == 16);
   CHECK(header.nceLnz == 9);
   CHECK(header.maxentOrder == 3);

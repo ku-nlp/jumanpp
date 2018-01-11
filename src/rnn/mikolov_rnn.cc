@@ -12,7 +12,7 @@ namespace jumanpp {
 namespace rnn {
 namespace mikolov {
 
-struct JPP_PACKED MikolovRnnModePackedlHeader {
+struct PackedHeader {
   u64 sizeVersion;
   u64 maxEntTableSize;
   u32 maxentOrder;
@@ -24,31 +24,52 @@ struct JPP_PACKED MikolovRnnModePackedlHeader {
   u32 hsArity;
 };
 
-Status readHeader(StringPiece data, MikolovRnnModelHeader* header) {
-  auto packed =
-      reinterpret_cast<const MikolovRnnModePackedlHeader*>(data.begin());
-  auto sv = packed->sizeVersion;
+template <typename T, typename P>
+size_t toMember(P T::*ptr, T* base, const char* data, size_t offset) {
+  P* dst = &(base->*ptr);
+  std::memcpy(dst, data + offset, sizeof(P));  // unaligned read
+  return offset + sizeof(P);
+}
+
+Status readHeader(StringPiece data, MikolovRnnModelHeader* header,
+                  size_t* offset) {
+  PackedHeader packed;
+
+  std::memset(&packed, 0, sizeof(PackedHeader));
+  size_t off = 0;
+  off = toMember(&PackedHeader::sizeVersion, &packed, data.data(), off);
+  off = toMember(&PackedHeader::maxEntTableSize, &packed, data.data(), off);
+  off = toMember(&PackedHeader::maxentOrder, &packed, data.data(), off);
+  off = toMember(&PackedHeader::useNce, &packed, data.data(), off);
+  off = toMember(&PackedHeader::nceLnz, &packed, data.data(), off);
+  off = toMember(&PackedHeader::reversedSentence, &packed, data.data(), off);
+  off = toMember(&PackedHeader::layerType, &packed, data.data(), off);
+  off = toMember(&PackedHeader::layerCount, &packed, data.data(), off);
+  off = toMember(&PackedHeader::hsArity, &packed, data.data(), off);
+
+  auto sv = packed.sizeVersion;
   auto vers = sv / VersionStepSize;
   if (vers != 6) {
     return JPPS_INVALID_PARAMETER << "invalid rnn model version " << vers
                                   << " can handle only 6";
   }
 
-  if (!packed->useNce) {
+  if (!packed.useNce) {
     return JPPS_INVALID_PARAMETER
            << "model was trained without nce, we support only nce models";
   }
 
-  auto piece = StringPiece::fromCString(packed->layerType);
+  auto piece = StringPiece::fromCString(packed.layerType);
   if (piece != "sigmoid") {
     return JPPS_INVALID_PARAMETER
            << "only sigmoid activation is supported, model had " << piece;
   }
 
-  header->layerSize = (u32)(packed->sizeVersion % VersionStepSize);
-  header->nceLnz = packed->nceLnz;
-  header->maxentOrder = packed->maxentOrder;
-  header->maxentSize = packed->maxEntTableSize;
+  header->layerSize = static_cast<u32>(packed.sizeVersion % VersionStepSize);
+  header->nceLnz = packed.nceLnz;
+  header->maxentOrder = packed.maxentOrder;
+  header->maxentSize = packed.maxEntTableSize;
+  *offset = off;
 
   return Status::Ok();
 }
@@ -150,7 +171,8 @@ Status copyArray(StringPiece data,
 
 Status MikolovModelReader::parse() {
   auto contents = data_->modelFrag.asStringPiece();
-  JPP_RETURN_IF_ERROR(readHeader(contents, &data_->header));
+  size_t start = ~size_t{0};
+  JPP_RETURN_IF_ERROR(readHeader(contents, &data_->header, &start));
   util::CsvReader ssvReader{' '};
   JPP_RETURN_IF_ERROR(
       ssvReader.initFromMemory(data_->dictFrag.asStringPiece()));
@@ -168,7 +190,6 @@ Status MikolovModelReader::parse() {
   JPP_RETURN_IF_ERROR(
       allocAligned(data_->matrixData, hdr.layerSize * hdr.layerSize));
   JPP_RETURN_IF_ERROR(allocAligned(data_->maxentWeightData, hdr.maxentSize));
-  size_t start = sizeof(MikolovRnnModePackedlHeader);
   JPP_RIE_MSG(copyArray(contents, data_->embeddingData,
                         hdr.layerSize * hdr.vocabSize, &start),
               "embeds");

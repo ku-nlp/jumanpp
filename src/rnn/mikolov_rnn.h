@@ -27,8 +27,6 @@ const uint64_t PRIMES_SIZE = sizeof(PRIMES) / sizeof(PRIMES[0]);
 constexpr static size_t LayerNameMaxSize = 64;
 constexpr static u64 VersionStepSize = 10000;
 
-#define JPP_PACKED __attribute__((__packed__))
-
 struct MikolovRnnModelHeader {
   u32 layerSize;
   u32 maxentOrder;
@@ -71,7 +69,8 @@ struct ParallelStepData {
   util::MutableArraySlice<float> scores;  // nvals
 };
 
-Status readHeader(StringPiece data, MikolovRnnModelHeader* header);
+Status readHeader(StringPiece data, MikolovRnnModelHeader* header,
+                  size_t* offset);
 
 struct MikolovModelReaderData;
 
