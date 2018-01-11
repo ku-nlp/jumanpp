@@ -5,6 +5,7 @@
 #include "mikolov_rnn.h"
 #include "mikolov_rnn_impl.h"
 #include "util/csv_reader.h"
+#include "util/lazy.h"
 #include "util/memory.hpp"
 #include "util/mmap.h"
 
@@ -119,10 +120,12 @@ struct MikolovModelReaderData {
   util::MappedFileFragment dictFrag;
   MikolovRnnModelHeader header;
   std::vector<StringPiece> wordData;
-  std::unique_ptr<float, FreeDeleter<float>> matrixData;
-  std::unique_ptr<float, FreeDeleter<float>> embeddingData;
-  std::unique_ptr<float, FreeDeleter<float>> nceEmbeddingData;
-  std::unique_ptr<float, FreeDeleter<float>> maxentWeightData;
+  util::Lazy<util::memory::Manager> memmgr;
+  std::unique_ptr<util::memory::PoolAlloc> alloc;
+  util::MutableArraySlice<float> matrixData;
+  util::MutableArraySlice<float> embeddingData;
+  util::MutableArraySlice<float> nceEmbeddingData;
+  util::MutableArraySlice<float> maxentWeightData;
 };
 
 Status MikolovModelReader::open(StringPiece filename) {
@@ -142,19 +145,7 @@ MikolovModelReader::MikolovModelReader() {}
 
 MikolovModelReader::~MikolovModelReader() {}
 
-Status allocAligned(std::unique_ptr<float, FreeDeleter<float>>& result,
-                    size_t size) {
-  float* ptr;
-  if (posix_memalign((void**)&ptr, 64, size * sizeof(float)) != 0) {
-    return Status::InvalidState() << "could not allocate memory for matrix";
-  }
-  JPP_DCHECK(isAligned(ptr, 64));
-  result.reset(ptr);
-  return Status::Ok();
-}
-
-Status copyArray(StringPiece data,
-                 std::unique_ptr<float, FreeDeleter<float>>& result,
+Status copyArray(StringPiece data, util::MutableArraySlice<float> result,
                  size_t size, size_t* offset) {
   auto fullSize = size * sizeof(float);
   if (*offset + fullSize > data.size()) {
@@ -164,7 +155,7 @@ Status copyArray(StringPiece data,
            << data.size() - *offset
            << " available, total length=" << data.size();
   }
-  memcpy(result.get(), data.begin() + *offset, fullSize);
+  memcpy(result.data(), data.begin() + *offset, fullSize);
   *offset += fullSize;
   return Status::Ok();
 }
@@ -183,13 +174,21 @@ Status MikolovModelReader::parse() {
   auto& hdr = data_->header;
 
   hdr.vocabSize = wdata.size();
-  JPP_RETURN_IF_ERROR(
-      allocAligned(data_->embeddingData, hdr.layerSize * hdr.vocabSize));
-  JPP_RETURN_IF_ERROR(
-      allocAligned(data_->nceEmbeddingData, hdr.layerSize * hdr.vocabSize));
-  JPP_RETURN_IF_ERROR(
-      allocAligned(data_->matrixData, hdr.layerSize * hdr.layerSize));
-  JPP_RETURN_IF_ERROR(allocAligned(data_->maxentWeightData, hdr.maxentSize));
+  auto maxBlock = std::max<u64>({hdr.layerSize * hdr.vocabSize, hdr.maxentSize,
+                                 hdr.layerSize * hdr.layerSize});
+  // 3 comes from rounding to next value + sizeof(float)
+  auto pageSize = 1ULL << (static_cast<u32>(std::log2(maxBlock)) + 3);
+  data_->memmgr.initialize(pageSize);
+  data_->alloc = data_->memmgr.value().core();
+  auto& alloc = data_->alloc;
+  data_->embeddingData =
+      alloc->allocateBuf<float>(hdr.layerSize * hdr.vocabSize, 64);
+  data_->nceEmbeddingData =
+      alloc->allocateBuf<float>(hdr.layerSize * hdr.vocabSize, 64);
+  data_->matrixData =
+      alloc->allocateBuf<float>(hdr.layerSize * hdr.layerSize, 64);
+  data_->maxentWeightData = alloc->allocateBuf<float>(hdr.maxentSize, 64);
+
   JPP_RIE_MSG(copyArray(contents, data_->embeddingData,
                         hdr.layerSize * hdr.vocabSize, &start),
               "embeds");
@@ -218,26 +217,19 @@ const std::vector<StringPiece>& MikolovModelReader::words() const {
 }
 
 util::ArraySlice<float> MikolovModelReader::rnnMatrix() const {
-  return util::ArraySlice<float>{
-      data_->matrixData.get(),
-      data_->header.layerSize * data_->header.layerSize};
+  return data_->matrixData;
 }
 
 util::ArraySlice<float> MikolovModelReader::maxentWeights() const {
-  return util::ArraySlice<float>{data_->maxentWeightData.get(),
-                                 data_->header.maxentSize};
+  return data_->maxentWeightData;
 }
 
 util::ArraySlice<float> MikolovModelReader::embeddings() const {
-  return util::ArraySlice<float>{
-      data_->embeddingData.get(),
-      data_->header.vocabSize * data_->header.layerSize};
+  return data_->embeddingData;
 }
 
 util::ArraySlice<float> MikolovModelReader::nceEmbeddings() const {
-  return util::ArraySlice<float>{
-      data_->nceEmbeddingData.get(),
-      data_->header.vocabSize * data_->header.layerSize};
+  return data_->nceEmbeddingData;
 }
 
 StringPiece MikolovRnn::matrixAsStringpiece() const {
