@@ -47,7 +47,7 @@ class MappedFileFragment {
   }
 };
 
-#if defined(_MSC_VER)
+#if defined(_WIN32_WINNT)
 typedef void* fd_t;
 #else
 typedef int fd_t;

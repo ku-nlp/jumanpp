@@ -7,7 +7,7 @@
 
 #include "test_config.h"
 
-#ifdef _MSC_VER
+#ifdef _WIN32_WINNT
 #include <direct.h>
 #define chdir _chdir
 #endif

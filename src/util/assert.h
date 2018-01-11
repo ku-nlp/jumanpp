@@ -20,7 +20,7 @@
 #if defined(__clang__)
 #define JPP_BREAK_TO_DEBUGGER_IF_ATTACHED() \
   if (::jumanpp::util::asserts::isDebuggerAttached()) __builtin_debugtrap()
-#elif defined(_MSC_VER)
+#elif defined(_WIN32_WINNT)
 #define JPP_BREAK_TO_DEBUGGER_IF_ATTACHED() __debugbreak()
 #else
 #define JPP_BREAK_TO_DEBUGGER_IF_ATTACHED() __builtin_trap()

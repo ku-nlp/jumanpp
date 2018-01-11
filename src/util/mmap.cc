@@ -9,7 +9,7 @@
 #include "mmap.h"
 #include "util/memory.hpp"
 
-#if defined(_MSC_VER)
+#if defined(_WIN32_WINNT)
 #include "mmap_impl_win32.h"
 #else
 #include "mmap_impl_unix.h"

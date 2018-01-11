@@ -10,7 +10,7 @@
 #include <memory>
 #include "logging.hpp"
 
-#if defined(_MSC_VER)
+#if defined(_WIN32_WINNT)
 #include <malloc.h>
 #include <errno.h>
 #else
@@ -21,7 +21,7 @@ namespace jumanpp {
 namespace util {
 namespace memory {
 
-#if defined(_MSC_VER)
+#if defined(_WIN32_WINNT)
 /**
  * posix_memalign replacement for Windows platform.
  *

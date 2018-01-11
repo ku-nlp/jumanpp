@@ -194,6 +194,8 @@ inline void concat2(std::stringstream& ss, const T& o, const Args&... args) {
 
 }  // namespace detail
 
+class GraphVizBuilder;
+
 class GraphVizFormat {
   std::vector<std::unique_ptr<detail::Renderable>> resources_;
   const analysis::OutputManager* output_ = nullptr;

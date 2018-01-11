@@ -248,15 +248,15 @@ class FlatRep {
     while (N >= 0.8 * ((1 << lg) * kWidth)) {
       lg++;
     }
-    const size_t n = (1 << lg);
+    const size_t n = (1ULL << lg);
     void* memory = allocator_->Allocate(n * sizeof(Bucket), alignof(Bucket));
-    Bucket* array = new (memory) Bucket[n];
+    Bucket* array = static_cast<Bucket*>(memory);
     for (size_t i = 0; i < n; i++) {
       Bucket* b = &array[i];
       std::memset(b->marker, kEmpty, kWidth);
     }
     const size_t capacity = (1 << lg) * kWidth;
-    lglen_ = lg;
+    lglen_ = static_cast<uint8>(lg);
     mask_ = capacity - 1;
     array_ = array;
     end_ = array + n;

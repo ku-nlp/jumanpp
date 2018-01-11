@@ -8,10 +8,13 @@
 #include "logging.hpp"
 #include "util/common.hpp"
 
-#ifndef _MSC_VER
+#ifndef _WIN32_WINNT
 #include <sys/sysctl.h>
 #include <sys/types.h>
 #include <unistd.h>
+#else
+
+#include "win32_utils.h"
 #endif
 
 namespace jumanpp {
@@ -65,6 +68,8 @@ bool isDebuggerAttachedOsx() {
 bool isDebuggerAttached() {
 #ifdef __APPLE__
   return isDebuggerAttachedOsx();
+#elif defined(_WIN32_WINNT)
+  return IsDebuggerPresent() == TRUE;
 #else
   return false;
 #endif  // __APPLE__

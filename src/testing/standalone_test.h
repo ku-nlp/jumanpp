@@ -5,8 +5,11 @@
 #ifndef JUMANPP_STANDALONE_TEST_H
 #define JUMANPP_STANDALONE_TEST_H
 
-#ifndef _MSC_VER
+#ifndef _WIN32_WINNT
 #include <unistd.h>
+#else
+#include <util/win32_utils.h>
+#undef DELETE  // because FUCK YOU, WINDOWS
 #endif
 
 #include <util/string_piece.h>
@@ -51,6 +54,41 @@ class TempFile {
   std::string filename_;
 
  public:
+#ifdef _WIN32_WINNT
+  TempFile() {
+    wchar_t tmpDirPath[512];
+    wchar_t prefix[] = L"jpp";
+    auto length = GetTempPathW(512, tmpDirPath);
+    if (length == 0) {
+      throw std::runtime_error("failed to get a temporary directory");
+    }
+
+    wchar_t tmpPath[512];
+    auto result = GetTempFileNameW(tmpDirPath, prefix, 0, tmpPath);
+    if (result == 0) {
+      throw std::runtime_error("GetTempFileName call failed");
+    }
+
+    auto tmpBufLength =
+        WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, tmpPath, -1, nullptr,
+                            0, nullptr, nullptr);
+
+    if (tmpBufLength == 0) {
+      throw std::runtime_error(
+          "failed to get buffer length from WideCharToMultiByte");
+    }
+
+    filename_.resize(tmpBufLength, 0);
+    auto convResult =
+        WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, tmpPath, -1,
+                            &filename_[0], tmpBufLength, nullptr, nullptr);
+
+    if (convResult == 0) {
+      throw std::runtime_error(
+          "failed to convert buffer with WideCharToMultiByte");
+    }
+  }
+#else
   TempFile() {
     char buffer[L_tmpnam];
 // tmpnam is a security risk, but we use this ONLY for unit tests!
@@ -71,6 +109,7 @@ class TempFile {
 #endif
     filename_.assign(buffer);
   }
+#endif  //_WIN32_WINNT
 
   bool isOk() const { return filename_.size() > 0; }
 
