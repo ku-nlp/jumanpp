@@ -22,7 +22,7 @@ if (MSVC)
 endif()
 
 if (WIN32)
-    add_definitions("_WIN32_WINNT=0x0600") # VISTA
+    add_definitions("-D_WIN32_WINNT=0x0600") # VISTA
 endif()
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
