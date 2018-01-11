@@ -1,10 +1,7 @@
 #ifndef JUMANPP_MMAP_IMPL_WIN32_HPP
 #define JUMANPP_MMAP_IMPL_WIN32_HPP
 
-#if defined(_MSC_VER)
-
-#define NOMINMAX
-#include <windows.h>
+#if defined(_WIN32_WINNT)
 
 #include "win32_utils.h"
 
@@ -33,60 +30,50 @@ MappedFile &MappedFile::operator=(MappedFile &&o) noexcept {
 
 MappedFile::~MappedFile() {
   if (this->fd_ != nullptr) {
-      CloseHandle(this->fd_);
+    CloseHandle(this->fd_);
   }
 }
 
 Status MappedFile::open(const StringPiece &filename, MMapType type) {
   if (fd_ != nullptr) {
-    return Status::InvalidState()
-           << "mmap has already opened file " << this->filename_;
+    return JPPS_INVALID_STATE << "mmap has already opened file "
+                              << this->filename_;
   }
 
   this->filename_ = filename.str();
   this->type_ = type;
 
   DWORD access_mode = 0;
-  DWORD protect_mode = 0;
-  DWORD open_mode = OPEN_EXISTING;
+  DWORD open_mode = 0;
 
   switch (type) {
     case MMapType::ReadOnly:
       access_mode |= GENERIC_READ;
-      protect_mode |= PAGE_READONLY;
+      open_mode = OPEN_EXISTING;
       break;
     case MMapType::ReadWrite:
       access_mode |= GENERIC_READ;
       access_mode |= GENERIC_WRITE;
-      protect_mode |= PAGE_READWRITE;
-      open_mode = CREATE_NEW;
+      open_mode = CREATE_ALWAYS;
       break;
   }
 
-  auto fd = CreateFileW(to_wide_string(filename).c_str(),
-                        access_mode,
-                        0,
-                        NULL,
-                        open_mode,
-                        FILE_ATTRIBUTE_NORMAL,
-                        NULL);
+  auto fd = CreateFileW(to_wide_string(filename).c_str(), access_mode,
+                        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                        NULL, open_mode, FILE_ATTRIBUTE_NORMAL, NULL);
 
   if (fd == INVALID_HANDLE_VALUE) {
-      return Status::InvalidState()
-             << "could not access file: " << filename
-             << " errcode=" << GetLastError();
-  }
-  else {
-      LARGE_INTEGER size;
-      if (GetFileSizeEx(fd, &size)) {
-          //size.QuadPart is int64
-          this->size_ = static_cast<size_t>(size.QuadPart);
-      }
-      else {
-        return Status::InvalidState()
-               << "unable to get size of file: " << filename
-               << " errcode=" << GetLastError();
-      }
+    return JPPS_INVALID_STATE << "could not access file: " << filename
+                              << " errcode=" << GetLastError();
+  } else {
+    LARGE_INTEGER size;
+    if (GetFileSizeEx(fd, &size)) {
+      // size.QuadPart is int64
+      this->size_ = static_cast<size_t>(size.QuadPart);
+    } else {
+      return JPPS_INVALID_STATE << "unable to get size of file: " << filename
+                                << " errcode=" << GetLastError();
+    }
   }
 
   this->fd_ = fd;
@@ -101,15 +88,13 @@ inline static DWORD get_system_granuality() {
 }
 
 inline static bool set_file_len(void *handle, size_t size) {
-    LARGE_INTEGER info_size;
-    info_size.QuadPart = static_cast<__int64>(size);
-    FILE_END_OF_FILE_INFO info = {info_size};
+  LARGE_INTEGER info_size;
+  info_size.QuadPart = static_cast<__int64>(size);
+  FILE_END_OF_FILE_INFO info = {info_size};
 
-    //Makes minimum supported platform Windows Vista
-    return static_cast<bool>(SetFileInformationByHandle(handle,
-                                                        FileEndOfFileInfo,
-                                                        &info,
-                                                        sizeof(info)));
+  // Makes minimum supported platform Windows Vista
+  return static_cast<bool>(SetFileInformationByHandle(handle, FileEndOfFileInfo,
+                                                      &info, sizeof(info)));
 }
 
 Status MappedFile::map(MappedFileFragment *view, size_t offset, size_t size,
@@ -137,43 +122,40 @@ Status MappedFile::map(MappedFileFragment *view, size_t offset, size_t size,
     case MMapType::ReadWrite:
       if (file_end > size_) {
         if (!set_file_len(this->fd_, file_end)) {
-          return JPPS_INVALID_STATE << "could not extend file "
-                                    << filename_ << " to " << file_end
-                                    << "bytes";
+          return JPPS_INVALID_STATE << "could not extend file " << filename_
+                                    << " to " << file_end << "bytes";
         }
+        size_ = std::max(file_end, size_);
       }
-      map_access = FILE_MAP_WRITE; //read/write access
+      map_access = FILE_MAP_WRITE;  // read/write access
       protection = PAGE_READWRITE;
       break;
   }
 
-  const auto mapping = CreateFileMappingW(this->fd_, nullptr, protection,
-                                          0, 0, nullptr);
+  const auto mapping =
+      CreateFileMappingW(this->fd_, nullptr, protection, 0, 0, nullptr);
   if (mapping == NULL) {
-    return JPPS_INVALID_STATE << "Cannot open file mapping for "
-                              << filename_
+    return JPPS_INVALID_STATE << "Cannot open file mapping for " << filename_
                               << ". Error: " << GetLastError();
   }
 
-  const DWORD granuality = get_system_granuality();
+  DWORD granuality = get_system_granuality();
 
-  const size_t alignment = offset % static_cast<size_t>(get_system_granuality());
-  const size_t aligned_offset = offset - alignment;
-  const size_t aligned_len = size + alignment;
+  size_t alignment = offset % static_cast<size_t>(granuality);
+  size_t aligned_offset = offset - alignment;
+  size_t aligned_len = size + alignment;
 
-  const auto map_view = MapViewOfFile(mapping, map_access,
-                                      static_cast<DWORD>(aligned_offset >> 32),
-                                      static_cast<DWORD>(aligned_offset & 0xffffffff),
-                                      aligned_len);
+  auto map_view = MapViewOfFile(
+      mapping, map_access, static_cast<DWORD>(aligned_offset >> 32),
+      static_cast<DWORD>(aligned_offset & 0xffffffff), aligned_len);
   CloseHandle(mapping);
 
   if (map_view == NULL) {
-    return JPPS_INVALID_STATE << "Cannot open mapping view for "
-                              << filename_
+    return JPPS_INVALID_STATE << "Cannot open mapping view for " << filename_
                               << ". Error: " << GetLastError();
   }
 
-  view->address_ = static_cast<char*>(map_view) + alignment;
+  view->address_ = static_cast<char *>(map_view) + alignment;
   view->size_ = size;
 
   return Status::Ok();
@@ -197,9 +179,9 @@ MappedFileFragment::~MappedFileFragment() {
 }
 
 void MappedFileFragment::unmap() {
-  const size_t alignment = reinterpret_cast<size_t>(this->address_)
-                           % static_cast<size_t>(get_system_granuality());
-  const void *ptr = static_cast<char*>(this->address_) - alignment;
+  const size_t alignment = reinterpret_cast<size_t>(this->address_) %
+                           static_cast<size_t>(get_system_granuality());
+  const void *ptr = static_cast<char *>(this->address_) - alignment;
   UnmapViewOfFile(ptr);
   address_ = nullptr;
 }
@@ -207,7 +189,7 @@ void MappedFileFragment::unmap() {
 bool MappedFileFragment::isClean() { return address_ == nullptr; }
 
 Status MappedFileFragment::flush() {
-  if (FlushViewOfFile(this->address_, 0)) {
+  if (FlushViewOfFile(this->address_, 0) == 0) {
     return Status::InvalidState()
            << "could not flush mapped contents, error: " << GetLastError();
   }
@@ -235,6 +217,6 @@ MappedFileFragment &MappedFileFragment::operator=(
 }  // namespace util
 }  // namespace jumanpp
 
-#endif // _MSC_VER
+#endif  // _MSC_VER
 
 #endif  // JUMANPP_MMAP_IMPL_WIN32_HPP

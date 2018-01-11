@@ -15,8 +15,9 @@ set(jpp_util_test_srcs memory_test.cpp mmap_test.cc string_piece_test.cc
   seahash_test.cc fast_hash_test.cc stl_util_test.cc
   )
 
-if(MSVC)
+if(WIN32)
     list(APPEND jpp_util_sources win32_utils.cc)
+    list(APPEND jpp_util_headers win32_utils.h)
 endif()
 
 

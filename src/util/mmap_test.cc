@@ -2,7 +2,7 @@
 // Created by Arseny Tolmachev on 2017/02/18.
 //
 
-#ifndef _MSC_VER
+#ifndef _WIN32_WINNT
 #include <unistd.h>
 #endif
 
@@ -36,10 +36,10 @@ TEST_CASE("mmap correctly writes data", "[mmap]") {
 
   {
     u::MappedFile f;
-    CHECK_OK(f.open(fname, u::MMapType::ReadWrite));
+    REQUIRE(f.open(fname, u::MMapType::ReadWrite));
     u::MappedFileFragment v;
     std::string data = "testdata";
-    f.map(&v, 0, data.size());
+    REQUIRE(f.map(&v, 0, data.size()));
     std::copy(std::begin(data), std::end(data),
               reinterpret_cast<char *>(v.address()));
     CHECK_OK(v.flush());

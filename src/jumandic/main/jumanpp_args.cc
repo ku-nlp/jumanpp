@@ -3,8 +3,10 @@
 //
 
 #include "jumanpp_args.h"
+#ifdef __unix__
 #include <sys/ioctl.h>
 #include <unistd.h>
+#endif
 #include <iostream>
 #include <regex>
 #include <util/logging.hpp>

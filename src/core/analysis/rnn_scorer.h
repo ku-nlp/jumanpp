@@ -27,9 +27,9 @@ struct RnnInferenceConfig {
   util::Cfg<std::vector<std::string>> rnnFields;
   util::Cfg<std::string> fieldSeparator{"_"};
 
-  bool operator==(const RnnInferenceConfig& other) const;
+  bool operator==(const RnnInferenceConfig &other) const;
   bool isDefault() const;
-  void mergeWith(const RnnInferenceConfig& o) {
+  void mergeWith(const RnnInferenceConfig &o) {
     nceBias.mergeWith(o.nceBias);
     unkConstantTerm.mergeWith(o.unkConstantTerm);
     unkLengthPenalty.mergeWith(o.unkLengthPenalty);

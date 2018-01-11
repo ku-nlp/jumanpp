@@ -172,7 +172,8 @@ void InNodeComputationsCodegen::generate(i::Printer &p, StringPiece className) {
       << JPP_TEXT(::jumanpp::util::ArraySlice<::jumanpp::core::NodeInfo>)
       << " nodeInfos,";
     p << "\n"
-      << JPP_TEXT(::jumanpp::util::Sliceable<::jumanpp::i32>) << " entryFeatureBuffer,";
+      << JPP_TEXT(::jumanpp::util::Sliceable<::jumanpp::i32>)
+      << " entryFeatureBuffer,";
     p << "\n"
       << JPP_TEXT(::jumanpp::core::features::FeatureBuffer) << " *fbuffer,";
     p << "\n"

@@ -41,9 +41,7 @@ LatticeBoundary::LatticeBoundary(util::memory::PoolAlloc *alloc,
       scores_{alloc, lc, cfg_},
       currentEnding_{0} {}
 
-Status LatticeBoundary::initialize() {
-  return Status::Ok();
-}
+Status LatticeBoundary::initialize() { return Status::Ok(); }
 
 void LatticeBoundary::addEnd(LatticeNodePtr nodePtr) {
   left_.endingNodes_.at(currentEnding_) = nodePtr;
@@ -70,7 +68,8 @@ LatticeBoundaryScores::LatticeBoundaryScores(util::memory::PoolAlloc *alloc,
 
 inline void nonTemporalStore4(void *dest, const void *src) {
 #ifdef __SSE2__
-  _mm_stream_si32(reinterpret_cast<int*>(dest), *reinterpret_cast<const int*>(src));
+  _mm_stream_si32(reinterpret_cast<int *>(dest),
+                  *reinterpret_cast<const int *>(src));
 #else
   std::memcpy(dest, src, 4);
 #endif
@@ -83,7 +82,7 @@ void LatticeBoundaryScores::importBeamScore(i32 left, i32 scorer, i32 beam,
     auto node = nodeScores(el);
     auto svec = node.beamLeft(beam, left);
     static_assert(sizeof(Score) == 4, "");
-    //nonTemporalStore4(&svec.at(scorer), &scores.at(i));
+    // nonTemporalStore4(&svec.at(scorer), &scores.at(i));
     svec.at(scorer) = scores.at(el);
   }
 }

@@ -32,8 +32,8 @@ WriteInDestructorLoggerImpl::~WriteInDestructorLoggerImpl() {
 }
 
 #ifdef _MSC_VER
-inline static struct tm* localtime_r(const time_t *timep, struct tm *result) {
-    return localtime_s(result, timep) == 0 ? result : nullptr;
+inline static struct tm *localtime_r(const time_t *timep, struct tm *result) {
+  return localtime_s(result, timep) == 0 ? result : nullptr;
 }
 #endif
 

@@ -241,4 +241,3 @@ TEST_CASE("RNN holder serializes and deserializes") {
   a::RnnScorerGbeamFactory rnnHolder2;
   REQUIRE_OK(rnnHolder2.load(modelInfo));
 }
-

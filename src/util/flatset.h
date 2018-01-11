@@ -255,7 +255,7 @@ class FlatSet {
     }
 
     static constexpr bool trivially_destructable =
-      std::is_trivially_destructible<Key>::value;
+        std::is_trivially_destructible<Key>::value;
   };
 
   std::pair<iterator, bool> Insert(const Key& k) {

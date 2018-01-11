@@ -299,7 +299,7 @@ void LossCalculator::addTopNgrams(i32 cmpIdx) {
   nfc.calculateNgramFeatures(nfr, &featureBuffer);
   util::copy_insert(featureBuffer, top1Features);
 
-  // and logic for handling ngrams for correct nodes
+// and logic for handling ngrams for correct nodes
 #if defined(JPP_TRAIN_MID_NGRAMS)
 
   auto nextIdx = cmpIdx + 1;
@@ -393,7 +393,7 @@ void LossCalculator::addGoldNgrams(i32 cmpIdx, i32 position) {
                                   gold.nodes().size() + 1};
   util::copy_insert(slice.row(position), goldFeatures);
 
-  // and logic for handling ngrams for correct nodes
+// and logic for handling ngrams for correct nodes
 #if defined(JPP_TRAIN_MID_NGRAMS)
 
   auto nextIdx = cmpIdx + 1;
@@ -477,7 +477,7 @@ void LossCalculator::computeGoldScores(const analysis::ScorerDef* scores) {
 
 std::string LossCalculator::compDump() const {
   std::stringstream ss;
-  for (auto& c: comparison) {
+  for (auto& c : comparison) {
     ss << "\n";
     switch (c.cmpClass) {
       case ComparitionClass::Both:
@@ -490,12 +490,9 @@ std::string LossCalculator::compDump() const {
         ss << "T: ";
         break;
     }
-    ss << c.boundary
-       << " "
-       << c.numMismatches;
+    ss << c.boundary << " " << c.numMismatches;
     if (c.numMismatches != 0) {
-      ss << ":"
-           << c.mismatchWeight;
+      ss << ":" << c.mismatchWeight;
     }
     ss << " " << c.numGold << "*" << c.goldPosition;
     if (c.topPtr) {
@@ -503,7 +500,6 @@ std::string LossCalculator::compDump() const {
     } else {
       ss << " null";
     }
-
 
     ss << "@" << c.violation << " " << c.goldInBeam;
   }

@@ -17,9 +17,7 @@ bool findScore(util::ArraySlice<ConnectionBeamElement> data, Score s) {
   return it != data.end();
 }
 
-TEST_CASE("fake beam is fake") {
-  CHECK(EntryBeam::isFake(EntryBeam::fake()));
-}
+TEST_CASE("fake beam is fake") { CHECK(EntryBeam::isFake(EntryBeam::fake())); }
 
 TEST_CASE("entry beam has highest scored element") {
   std::vector<ConnectionBeamElement> elems;

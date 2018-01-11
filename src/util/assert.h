@@ -20,7 +20,7 @@
 #if defined(__clang__)
 #define JPP_BREAK_TO_DEBUGGER_IF_ATTACHED() \
   if (::jumanpp::util::asserts::isDebuggerAttached()) __builtin_debugtrap()
-#elif defined(_MSC_VER)
+#elif defined(_WIN32_WINNT)
 #define JPP_BREAK_TO_DEBUGGER_IF_ATTACHED() __debugbreak()
 #else
 #define JPP_BREAK_TO_DEBUGGER_IF_ATTACHED() __builtin_trap()
@@ -98,7 +98,7 @@ class AssertBuilder {
   // This overload has the lowest priority and should be selected
   // when it's impossible to convert an argument to a string
   template <size_t N, typename... Args>
-  void AddArg(const char (&name)[N], const Args &... ignored) {}
+  void AddArg(const char (&name)[N], const Args&... ignored) {}
 
   JPP_NO_INLINE void PrintStacktrace();
 

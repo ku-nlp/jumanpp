@@ -1,8 +1,5 @@
 #include "win32_utils.h"
 
-#define NOMINMAX
-#include <windows.h>
-
 namespace jumanpp {
 namespace util {
 

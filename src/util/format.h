@@ -1999,7 +1999,7 @@ IntFormatSpec<int, AlignTypeSpec<TYPE_CODE>, Char> pad(int value,
    */                                                                         \
   /* one that takes a fill character and one that doesn't. In the future this \
    */                                                                         \
-  /* can be replaced with one overload making the template argument Char */                                                                           \
+  /* can be replaced with one overload making the template argument Char */   \
   /* default to char (C++11). */                                              \
   template <char TYPE_CODE, typename Char>                                    \
   inline IntFormatSpec<TYPE, AlignTypeSpec<TYPE_CODE>, Char> pad(             \
@@ -2512,14 +2512,14 @@ inline uint64_t make_type(FMT_GEN15(FMT_ARG_TYPE_DEFAULT)) {
   }
 
 // Emulates a variadic function returning void on a pre-C++11 compiler.
-#define FMT_VARIADIC_VOID(func, arg_type)                               \
-  inline void func(arg_type arg) { func(arg, fmt::ArgList()); }         \
-  FMT_WRAP1(func, arg_type, 1)                                          \
-  FMT_WRAP1(func, arg_type, 2) FMT_WRAP1(func, arg_type, 3)             \
-      FMT_WRAP1(func, arg_type, 4) FMT_WRAP1(func, arg_type, 5)         \
-          FMT_WRAP1(func, arg_type, 6) FMT_WRAP1(func, arg_type, 7)     \
-              FMT_WRAP1(func, arg_type, 8) FMT_WRAP1(func, arg_type, 9) \
-                  FMT_WRAP1(func, arg_type, 10)
+#define FMT_VARIADIC_VOID(func, arg_type)                           \
+  inline void func(arg_type arg) { func(arg, fmt::ArgList()); }     \
+  FMT_WRAP1(func, arg_type, 1)                                      \
+  FMT_WRAP1(func, arg_type, 2)                                      \
+  FMT_WRAP1(func, arg_type, 3) FMT_WRAP1(func, arg_type, 4)         \
+      FMT_WRAP1(func, arg_type, 5) FMT_WRAP1(func, arg_type, 6)     \
+          FMT_WRAP1(func, arg_type, 7) FMT_WRAP1(func, arg_type, 8) \
+              FMT_WRAP1(func, arg_type, 9) FMT_WRAP1(func, arg_type, 10)
 
 #define FMT_CTOR(ctor, func, arg0_type, arg1_type, n)                          \
   template <FMT_GEN(n, FMT_MAKE_TEMPLATE_ARG)>                                 \

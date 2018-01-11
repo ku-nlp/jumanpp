@@ -35,14 +35,14 @@ void RenderCell::render(detail::RenderOutput *out, detail::RenderContext *ctx) {
 
 }  // namespace detail
 
-using namespace detail;
+namespace d = ::jumanpp::core::format::detail;
 
 void GraphVizBuilder::row(std::initializer_list<StringPiece> fields,
                           std::initializer_list<detail::Attribute> attrs) {
   auto container = tag("tr");
 
   for (auto &fldName : fields) {
-    auto fld = new RenderStringField{fldName};
+    auto fld = new d::RenderStringField{fldName};
     resources_.emplace_back(fld);
     auto cell = tag("td");
 
@@ -70,7 +70,7 @@ Status GraphVizBuilder::build(GraphVizFormat *format, int maxBeam) {
   }
   everything.child(footer);
 
-  GraphVizConfig config{};
+  d::GraphVizConfig config{};
   config.header = header;
   config.footer = footer;
   config.everything = everything;
@@ -83,7 +83,7 @@ Status GraphVizBuilder::build(GraphVizFormat *format, int maxBeam) {
 
 detail::Renderable *GraphVizBuilder::makeHeader() {
   auto container = tag("tr");
-  auto render = fn([](RenderOutput *out, RenderContext *ctx) {
+  auto render = fn([](d::RenderOutput *out, d::RenderContext *ctx) {
     auto &w = ctx->walker();
     auto ptr = ctx->curNode();
     out->lit(ptr.boundary).lit(" ").lit(ptr.position);
@@ -105,7 +105,7 @@ detail::Renderable *GraphVizBuilder::makeFooter(int maxBeam) {
   for (int i = 0; i < maxBeam; ++i) {
     auto row = tag("tr");
     auto col = tag("td").attr("port", str("beam_", i));
-    col.child(fn([i](RenderOutput *out, RenderContext *ctx) {
+    col.child(fn([i](d::RenderOutput *out, d::RenderContext *ctx) {
       auto lat = ctx->lattice();
       auto ptr = ctx->curNode();
       auto bnd = lat->boundary(ptr.boundary);
@@ -170,13 +170,13 @@ Status GraphVizFormat::renderNodes(detail::RenderOutput *out,
 
   auto walker = output_->nodeWalker();
 
-  RenderContext ctx{lat, &walker};
+  d::RenderContext ctx{lat, &walker};
 
   for (int i = 2; i < nbnd; ++i) {
     auto bnd = lat->boundary(i);
     auto nnodes = bnd->localNodeCount();
     for (int j = 0; j < nnodes; ++j) {
-      NodePtr ptr{(u16)i, (u16)j};
+      d::NodePtr ptr{(u16)i, (u16)j};
       if (!output_->locate(ptr, &walker)) {
         return Status::InvalidState()
                << "could not find a node: " << i << ", " << j;
