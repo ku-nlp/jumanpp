@@ -13,15 +13,16 @@ else()
 endif()
 
 set(CMAKE_CXX_STANDARD 14)
-#Ensures MSVC treats strings as UTF-8 at both compile/runtime time
 if (MSVC)
-	add_compile_options("/D_WIN32_WINNT=0x0600" "/wd4141" "/wd4018")
-    set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} /utf-8")
-    set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} /utf-8")
+	add_compile_options(
+    "/utf-8" #Ensures MSVC treats strings as UTF-8 at both compile/runtime time
+    "/wd4141" # double inline
+    "/wd4018" # comparing signed-unsigned types
+  )
 endif()
 
-if (MINGW)
-    add_compile_options("-D_WIN32_WINNT=0x0600")
+if (WIN32)
+    add_definitions("_WIN32_WINNT=0x0600") # VISTA
 endif()
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

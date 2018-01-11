@@ -81,7 +81,11 @@ class StringPiece {
                                        typename Cont::value_type>::type>::value,
                 size_t>::type>
   JPP_ALWAYS_INLINE constexpr StringPiece(const Cont& cont) noexcept
-      : begin_{cont.data()}, end_{cont.data() + static_cast<Sz>(cont.size())} {}
+      : begin_{cont.data()}, end_{cont.data() + static_cast<Sz>(cont.size())} {
+    // static_cast here is to make MSVC compute the second template parameter
+    // and SFINAE on bad things.
+    // It won't SFINAE otherwise. Bad MSVC.
+  }
 
   JPP_ALWAYS_INLINE constexpr pointer_t data() const noexcept { return begin_; }
   JPP_ALWAYS_INLINE constexpr iterator begin() const noexcept { return begin_; }

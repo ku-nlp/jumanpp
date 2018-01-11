@@ -88,17 +88,7 @@ inline static DWORD get_system_granuality() {
 }
 
 inline static bool set_file_len(void *handle, size_t size) {
-  BY_HANDLE_FILE_INFORMATION fileInfo = {0};
-  if (GetFileInformationByHandle(handle, &fileInfo) == 0) {
-    return false;
-  }
-
   LARGE_INTEGER info_size;
-  info_size.LowPart = fileInfo.nFileSizeLow;
-  info_size.HighPart = fileInfo.nFileSizeHigh;
-  if (info_size.QuadPart >= size) {
-    return true;
-  }
   info_size.QuadPart = static_cast<__int64>(size);
   FILE_END_OF_FILE_INFO info = {info_size};
 
