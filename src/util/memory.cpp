@@ -135,6 +135,7 @@ bool PoolAlloc::switchToNewPage(size_t size) {
   if (page.size < size) {
     LOG_ERROR() << "page size (" << page.size << " is lesser than object size ("
                 << size << "), please increase page size";
+		JPP_BREAK_TO_DEBUGGER_IF_ATTACHED();
     throw new std::bad_alloc();
   }
   base_ = reinterpret_cast<char*>(page.base);

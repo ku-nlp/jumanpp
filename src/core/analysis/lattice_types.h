@@ -158,7 +158,7 @@ class LatticeBoundary {
 };
 
 class Lattice {
-  util::memory::ManagedVector<LatticeBoundary*> boundaries;
+  std::vector<LatticeBoundary*> boundaries;
   LatticeConfig lconf;
   util::memory::PoolAlloc* alloc;
   const u64* lastGbeam_;
