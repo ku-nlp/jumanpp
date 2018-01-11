@@ -352,8 +352,8 @@ class FlatMap {
     }
 
     static constexpr bool trivially_destructable =
-      std::is_trivially_destructible<Key>::value &&
-      std::is_trivially_destructible<Val>::value;
+        std::is_trivially_destructible<Key>::value &&
+        std::is_trivially_destructible<Val>::value;
   };
 
   template <typename Pair>

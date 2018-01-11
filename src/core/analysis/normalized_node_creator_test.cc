@@ -2,9 +2,9 @@
 // Created by Arseny Tolmachev on 2017/11/23.
 //
 
+#include "charlattice.h"
 #include "testing/test_analyzer.h"
 #include "util/logging.hpp"
-#include "charlattice.h"
 
 using namespace jumanpp;
 using namespace jumanpp::core;
@@ -17,7 +17,7 @@ class NNodeTestEnv {
 
   dic::DictionaryEntries dic{tenv.dic.entries()};
 
-public:
+ public:
   NNodeTestEnv(StringPiece csvData) {
     tenv.spec([](spec::dsl::ModelSpecBuilder& specBldr) {
       auto& a = specBldr.field(1, "f1").strings().trieIndex();
@@ -59,7 +59,8 @@ public:
     CHECK_OK(tenv.analyzer->bootstrapAnalysis());
   }
 
-  charlattice::Modifiers contains(StringPiece str, i32 start, StringPiece strb) {
+  charlattice::Modifiers contains(StringPiece str, i32 start,
+                                  StringPiece strb) {
     CAPTURE(str);
     CAPTURE(start);
     auto& output = tenv.analyzer->output();
@@ -76,7 +77,8 @@ public:
           auto s1 = fld1[walker];
           auto s2 = fld2[walker];
           if (s1 == str && s2 == strb && seed.entryPtr.isSpecial()) {
-            auto val = tenv.analyzer->extraNodesContext()->placeholderData(seed.entryPtr, 0);
+            auto val = tenv.analyzer->extraNodesContext()->placeholderData(
+                seed.entryPtr, 0);
             return static_cast<charlattice::Modifiers>(val);
           }
         }

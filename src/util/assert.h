@@ -98,7 +98,7 @@ class AssertBuilder {
   // This overload has the lowest priority and should be selected
   // when it's impossible to convert an argument to a string
   template <size_t N, typename... Args>
-  void AddArg(const char (&name)[N], const Args &... ignored) {}
+  void AddArg(const char (&name)[N], const Args&... ignored) {}
 
   JPP_NO_INLINE void PrintStacktrace();
 

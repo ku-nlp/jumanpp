@@ -199,8 +199,10 @@ void PartialNgramPrinter::outputApplyBiTriLoop(util::io::Printer& p) {
     p << "\nconstexpr auto numTrigrams = " << trigrams_.size() << ";";
     p << "\nauto weights = scorer->weights();";
     p << "\nauto scbuf = buffers->scoreBuf(t1.numRows());";
-    p << "\nconst auto bistateBuf = buffers->t1Buf(numBigrams, buffers->currentElems);";
-    p << "\nconst auto tristateBuf = buffers->t2Buf1(numTrigrams, buffers->currentElems);";
+    p << "\nconst auto bistateBuf = buffers->t1Buf(numBigrams, "
+         "buffers->currentElems);";
+    p << "\nconst auto tristateBuf = buffers->t2Buf1(numTrigrams, "
+         "buffers->currentElems);";
 
     p << "\nauto buf1 = buffers->valBuf1(numBigrams);";
     p << "\nauto buf2 = buffers->valBuf2(numBigrams);";

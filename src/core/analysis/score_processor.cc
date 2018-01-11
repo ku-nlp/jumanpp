@@ -149,9 +149,9 @@ u32 fillBeamCandidates(Lattice *l, LatticeBoundary *bnd, NodeScores scores,
   for (u16 left = 0; left < scores.left(); ++left) {
     auto leftPtr = ends->nodePtrs().at(left);
     auto leftBeam = l->boundary(leftPtr.boundary)
-      ->starts()
-      ->beamData()
-      .row(leftPtr.position);
+                        ->starts()
+                        ->beamData()
+                        .row(leftPtr.position);
     for (u16 beam = 0; beam < scores.beam(); ++beam) {
       auto &leftElm = leftBeam.at(beam);
       if (EntryBeam::isFake(leftElm)) {
@@ -168,7 +168,7 @@ u32 fillBeamCandidates(Lattice *l, LatticeBoundary *bnd, NodeScores scores,
 }
 
 util::ArraySlice<BeamCandidate> processBeamCandidates(
-  util::MutableArraySlice<BeamCandidate> candidates, u32 maxBeam) {
+    util::MutableArraySlice<BeamCandidate> candidates, u32 maxBeam) {
   auto comp = std::greater<>();
   if (candidates.size() > maxBeam * 2) {
     u32 maxElems = maxBeam * 2;
@@ -183,7 +183,6 @@ util::ArraySlice<BeamCandidate> processBeamCandidates(
 }
 
 }  // namespace
-
 
 void ScoreProcessor::makeBeams(i32 boundary, LatticeBoundary *bnd,
                                const ScorerDef *sc) {
@@ -462,7 +461,8 @@ void ScoreProcessor::makeT0cutoffBeam(u32 fullAnalysis, u32 rightBeam) {
   auto comp = [&](u32 a, u32 b) {
     return cutoffScores.at(a) > cutoffScores.at(b);
   };
-  std::nth_element(idxBuf.begin(), idxBuf.begin() + rightBeam, idxBuf.end(), comp);
+  std::nth_element(idxBuf.begin(), idxBuf.begin() + rightBeam, idxBuf.end(),
+                   comp);
 }
 
 void ScoreProcessor::computeT0Prescores(util::ArraySlice<BeamCandidate> gbeam,

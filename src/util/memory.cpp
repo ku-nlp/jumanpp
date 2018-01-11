@@ -11,8 +11,8 @@
 #include "logging.hpp"
 
 #if defined(_WIN32_WINNT)
-#include <malloc.h>
 #include <errno.h>
+#include <malloc.h>
 #else
 #include <sys/mman.h>
 #endif
@@ -25,7 +25,8 @@ namespace memory {
 /**
  * posix_memalign replacement for Windows platform.
  *
- * Uses _aligned_alloc underhood and due to that memory cannot be freed using normal free() call
+ * Uses _aligned_alloc underhood and due to that memory cannot be freed using
+ * normal free() call
  */
 static int posix_memalign(void **dst, size_t alignment, size_t size) {
   void *result = _aligned_malloc(size, alignment);
@@ -72,9 +73,7 @@ void Manager::reset() {
   pages_.clear();
 }
 
-bool Manager::supportHugePages() {
-  return false;
-}
+bool Manager::supportHugePages() { return false; }
 
 #else
 void* PoolAlloc::allocate_memory(size_t size, size_t alignment) {

@@ -321,7 +321,8 @@ int main(int argc, const char* argv[]) {
 
     s = calc.computeDiff(data);
     if (!s) {
-      std::cerr << "failed to analyze " << comment << " [" << data << "]: " << s << "\n";
+      std::cerr << "failed to analyze " << comment << " [" << data << "]: " << s
+                << "\n";
       continue;
     }
     if (!calc.nodes.empty()) {
