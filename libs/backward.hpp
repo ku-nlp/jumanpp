@@ -2200,9 +2200,6 @@ public:
       SIGSEGV,    // Invalid memory reference
       SIGSYS,     // Bad argument to routine (SVr4)
       SIGTRAP,    // Trace/breakpoint trap
-#if !defined(BACKWARD_SYSTEM_DARWIN)
-      SIGUNUSED,  // Synonymous with SIGSYS
-#endif
       SIGXCPU,    // CPU time limit exceeded (4.2BSD)
       SIGXFSZ,    // File size limit exceeded (4.2BSD)
 #if defined(BACKWARD_SYSTEM_DARWIN)
