@@ -46,14 +46,20 @@
 // #define BACKWARD_SYSTEM_LINUX
 //	- specialization for linux
 //
+// #define BACKWARD_SYSTEM_DARWIN
+//	- specialization for Mac OS X 10.5 and later.
+//
 // #define BACKWARD_SYSTEM_UNKNOWN
 //	- placebo implementation, does nothing.
 //
 #if   defined(BACKWARD_SYSTEM_LINUX)
+#elif defined(BACKWARD_SYSTEM_DARWIN)
 #elif defined(BACKWARD_SYSTEM_UNKNOWN)
 #else
 #	if defined(__linux)
 #		define BACKWARD_SYSTEM_LINUX
+#	elif defined(__APPLE__)
+#		define BACKWARD_SYSTEM_DARWIN
 #	else
 #		define BACKWARD_SYSTEM_UNKNOWN
 #	endif
@@ -221,18 +227,55 @@ extern "C" uintptr_t _Unwind_GetIPInfo(_Unwind_Context*, int*);
 
 #endif // defined(BACKWARD_SYSTEM_LINUX)
 
+#if defined(BACKWARD_SYSTEM_DARWIN)
+// On Darwin, backtrace can back-trace or "walk" the stack using the following
+// libraries:
+//
+// #define BACKWARD_HAS_BACKTRACE == 1
+//  - backtrace is available by default, though it does not produce as much information
+//  as another library might.
+//
+// The default is:
+// #define BACKWARD_HAS_BACKTRACE == 1
+#	define BACKWARD_HAS_BACKTRACE 1
+
+// On Darwin, backward can extract detailed information about a stack trace
+// using one of the following libraries:
+//
+// #define BACKWARD_HAS_BACKTRACE_SYMBOL 1
+//  - backtrace provides minimal details for a stack trace:
+//    - object filename
+//    - function name
+//
+// The default is:
+// #define BACKWARD_HAS_BACKTRACE_SYMBOL == 1
+//
+#	define BACKWARD_HAS_BACKTRACE_SYMBOL 1
+
+#	include <cxxabi.h>
+#	include <fcntl.h>
+#	include <pthread.h>
+#	include <sys/stat.h>
+#	include <unistd.h>
+#	include <signal.h>
+
+#	if (BACKWARD_HAS_BACKTRACE == 1) || (BACKWARD_HAS_BACKTRACE_SYMBOL == 1)
+#		include <execinfo.h>
+#	endif
+#endif // defined(BACKWARD_SYSTEM_DARWIN)
+
 #ifdef BACKWARD_ATLEAST_CXX11
 #	include <unordered_map>
 #	include <utility> // for std::swap
-	namespace backward {
-	namespace details {
-		template <typename K, typename V>
-		struct hashtable {
-			typedef std::unordered_map<K, V> type;
-		};
-		using std::move;
-	} // namespace details
-	} // namespace backward
+namespace backward {
+namespace details {
+template <typename K, typename V>
+struct hashtable {
+  typedef std::unordered_map<K, V> type;
+};
+using std::move;
+} // namespace details
+} // namespace backward
 #else // NOT BACKWARD_ATLEAST_CXX11
 #	include <map>
 	namespace backward {
@@ -252,14 +295,17 @@ extern "C" uintptr_t _Unwind_GetIPInfo(_Unwind_Context*, int*);
 namespace backward {
 
 namespace system_tag {
-	struct linux_tag; // seems that I cannot call that "linux" because the name
-	// is already defined... so I am adding _tag everywhere.
-	struct unknown_tag;
+struct linux_tag; // seems that I cannot call that "linux" because the name
+// is already defined... so I am adding _tag everywhere.
+struct darwin_tag;
+struct unknown_tag;
 
 #if   defined(BACKWARD_SYSTEM_LINUX)
-	typedef linux_tag current_tag;
+typedef linux_tag current_tag;
+#elif defined(BACKWARD_SYSTEM_DARWIN)
+typedef darwin_tag current_tag;
 #elif defined(BACKWARD_SYSTEM_UNKNOWN)
-	typedef unknown_tag current_tag;
+typedef unknown_tag current_tag;
 #else
 #	error "May I please get my system defines?"
 #endif
@@ -267,8 +313,8 @@ namespace system_tag {
 
 
 namespace trace_resolver_tag {
-#ifdef BACKWARD_SYSTEM_LINUX
-	struct libdw;
+#if defined(BACKWARD_SYSTEM_LINUX)
+struct libdw;
 	struct libbfd;
 	struct backtrace_symbol;
 
@@ -281,66 +327,74 @@ namespace trace_resolver_tag {
 #	else
 #		error "You shall not pass, until you know what you want."
 #	endif
-#endif // BACKWARD_SYSTEM_LINUX
+#elif defined(BACKWARD_SYSTEM_DARWIN)
+struct backtrace_symbol;
+
+#	if BACKWARD_HAS_BACKTRACE_SYMBOL == 1
+typedef backtrace_symbol current;
+#	else
+#		error "You shall not pass, until you know what you want."
+#	endif
+#endif
 } // namespace trace_resolver_tag
 
 
 namespace details {
 
 template <typename T>
-	struct rm_ptr { typedef T type; };
+struct rm_ptr { typedef T type; };
 
 template <typename T>
-	struct rm_ptr<T*> { typedef T type; };
+struct rm_ptr<T*> { typedef T type; };
 
 template <typename T>
-	struct rm_ptr<const T*> { typedef const T type; };
+struct rm_ptr<const T*> { typedef const T type; };
 
 template <typename R, typename T, R (*F)(T)>
 struct deleter {
-	template <typename U>
-		void operator()(U& ptr) const {
-			(*F)(ptr);
-		}
+  template <typename U>
+  void operator()(U& ptr) const {
+    (*F)(ptr);
+  }
 };
 
 template <typename T>
 struct default_delete {
-	void operator()(T& ptr) const {
-		delete ptr;
-	}
+  void operator()(T& ptr) const {
+    delete ptr;
+  }
 };
 
 template <typename T, typename Deleter = deleter<void, void*, &::free> >
 class handle {
-	struct dummy;
-	T    _val;
-	bool _empty;
+  struct dummy;
+  T    _val;
+  bool _empty;
 
 #ifdef BACKWARD_ATLEAST_CXX11
-	handle(const handle&) = delete;
-	handle& operator=(const handle&) = delete;
+  handle(const handle&) = delete;
+  handle& operator=(const handle&) = delete;
 #endif
 
 public:
-	~handle() {
-		if (!_empty) {
-			Deleter()(_val);
-		}
-	}
+  ~handle() {
+    if (!_empty) {
+      Deleter()(_val);
+    }
+  }
 
-	explicit handle(): _val(), _empty(true) {}
-	explicit handle(T val): _val(val), _empty(false) { if(!_val) _empty = true; }
+  explicit handle(): _val(), _empty(true) {}
+  explicit handle(T val): _val(val), _empty(false) {}
 
 #ifdef BACKWARD_ATLEAST_CXX11
-	handle(handle&& from): _empty(true) {
-		swap(from);
-	}
-	handle& operator=(handle&& from) {
-		swap(from); return *this;
-	}
+  handle(handle&& from): _empty(true) {
+    swap(from);
+  }
+  handle& operator=(handle&& from) {
+    swap(from); return *this;
+  }
 #else
-	explicit handle(const handle& from): _empty(true) {
+  explicit handle(const handle& from): _empty(true) {
 		// some sort of poor man's move semantic.
 		swap(const_cast<handle&>(from));
 	}
@@ -350,141 +404,142 @@ public:
 	}
 #endif
 
-	void reset(T new_val) {
-		handle tmp(new_val);
-		swap(tmp);
-	}
-	operator const dummy*() const {
-		if (_empty) {
-			return 0;
-		}
-		return reinterpret_cast<const dummy*>(_val);
-	}
-	T get() {
-		return _val;
-	}
-	T release() {
-		_empty = true;
-		return _val;
-	}
-	void swap(handle& b) {
-		using std::swap;
-		swap(b._val, _val); // can throw, we are safe here.
-		swap(b._empty, _empty); // should not throw: if you cannot swap two
-		// bools without throwing... It's a lost cause anyway!
-	}
+  void reset(T new_val) {
+    handle tmp(new_val);
+    swap(tmp);
+  }
+  operator const dummy*() const {
+    if (_empty) {
+      return 0;
+    }
+    return reinterpret_cast<const dummy*>(_val);
+  }
+  T get() {
+    return _val;
+  }
+  T release() {
+    _empty = true;
+    return _val;
+  }
+  void swap(handle& b) {
+    using std::swap;
+    swap(b._val, _val); // can throw, we are safe here.
+    swap(b._empty, _empty); // should not throw: if you cannot swap two
+    // bools without throwing... It's a lost cause anyway!
+  }
 
-	T operator->() { return _val; }
-	const T operator->() const { return _val; }
+  T operator->() { return _val; }
+  const T operator->() const { return _val; }
 
-	typedef typename rm_ptr<T>::type& ref_t;
-	typedef const typename rm_ptr<T>::type& const_ref_t;
-	ref_t operator*() { return *_val; }
-	const_ref_t operator*() const { return *_val; }
-	ref_t operator[](size_t idx) { return _val[idx]; }
+  typedef typename rm_ptr<T>::type& ref_t;
+  typedef const typename rm_ptr<T>::type& const_ref_t;
+  ref_t operator*() { return *_val; }
+  const_ref_t operator*() const { return *_val; }
+  ref_t operator[](size_t idx) { return _val[idx]; }
 
-	// Watch out, we've got a badass over here
-	T* operator&() {
-		_empty = false;
-		return &_val;
-	}
+  // Watch out, we've got a badass over here
+  T* operator&() {
+    _empty = false;
+    return &_val;
+  }
 };
 
 // Default demangler implementation (do nothing).
 template <typename TAG>
 struct demangler_impl {
-	static std::string demangle(const char* funcname) {
-		return funcname;
-	}
+  static std::string demangle(const char* funcname) {
+    return funcname;
+  }
 };
 
-#ifdef BACKWARD_SYSTEM_LINUX
+#if defined(BACKWARD_SYSTEM_LINUX) || defined(BACKWARD_SYSTEM_DARWIN)
 
 template <>
 struct demangler_impl<system_tag::current_tag> {
-	demangler_impl(): _demangle_buffer_length(0) {}
+  demangler_impl(): _demangle_buffer_length(0) {}
 
-	std::string demangle(const char* funcname) {
-		using namespace details;
-		char* result = abi::__cxa_demangle(funcname,
-			_demangle_buffer.release(), &_demangle_buffer_length, 0);
-		if(result) {
-			_demangle_buffer.reset(result);
-			return result;
-		}
-		return funcname;
-	}
+  std::string demangle(const char* funcname) {
+    using namespace details;
+    _demangle_buffer.reset(
+      abi::__cxa_demangle(funcname, _demangle_buffer.release(),
+                          &_demangle_buffer_length, 0)
+    );
+    if (_demangle_buffer) {
+      return _demangle_buffer.get();
+    }
+    return funcname;
+  }
 
 private:
-	details::handle<char*> _demangle_buffer;
-	size_t                 _demangle_buffer_length;
+  details::handle<char*> _demangle_buffer;
+  size_t                 _demangle_buffer_length;
 };
 
-#endif // BACKWARD_SYSTEM_LINUX
+#endif // BACKWARD_SYSTEM_LINUX || BACKWARD_SYSTEM_DARWIN
 
 struct demangler:
-	public demangler_impl<system_tag::current_tag> {};
+  public demangler_impl<system_tag::current_tag> {};
 
 } // namespace details
 
 /*************** A TRACE ***************/
 
 struct Trace {
-	void*    addr;
-	size_t   idx;
+  void*    addr;
+  unsigned idx;
 
-	Trace():
-		addr(0), idx(0) {}
+  Trace():
+    addr(0), idx(0) {}
 
-	explicit Trace(void* _addr, size_t _idx):
-		addr(_addr), idx(_idx) {}
+  explicit Trace(void* _addr, size_t _idx):
+    addr(_addr), idx(_idx) {}
 };
 
 struct ResolvedTrace: public Trace {
 
-	struct SourceLoc {
-		std::string function;
-		std::string filename;
-		unsigned    line;
-		unsigned    col;
+  struct SourceLoc {
+    std::string function;
+    std::string filename;
+    unsigned    line;
+    unsigned    col;
 
-		SourceLoc(): line(0), col(0) {}
+    SourceLoc(): line(0), col(0) {}
 
-		bool operator==(const SourceLoc& b) const {
-			return function == b.function
-				&& filename == b.filename
-				&& line == b.line
-				&& col == b.col;
-		}
+    bool operator==(const SourceLoc& b) const {
+      return function == b.function
+             && filename == b.filename
+             && line == b.line
+             && col == b.col;
+    }
 
-		bool operator!=(const SourceLoc& b) const {
-			return !(*this == b);
-		}
-	};
+    bool operator!=(const SourceLoc& b) const {
+      return !(*this == b);
+    }
+  };
 
-	// In which binary object this trace is located.
-	std::string                    object_filename;
+  // In which binary object this trace is located.
+  std::string                    object_filename;
 
-	// The function in the object that contain the trace. This is not the same
-	// as source.function which can be an function inlined in object_function.
-	std::string                    object_function;
+  // The function in the object that contain the trace. This is not the same
+  // as source.function which can be an function inlined in object_function.
+  std::string                    object_function;
 
-	// The source location of this trace. It is possible for filename to be
-	// empty and for line/col to be invalid (value 0) if this information
-	// couldn't be deduced, for example if there is no debug information in the
-	// binary object.
-	SourceLoc                      source;
+  // The source location of this trace. It is possible for filename to be
+  // empty and for line/col to be invalid (value 0) if this information
+  // couldn't be deduced, for example if there is no debug information in the
+  // binary object.
+  SourceLoc                      source;
 
-	// An optionals list of "inliners". All the successive sources location
-	// from where the source location of the trace (the attribute right above)
-	// is inlined. It is especially useful when you compiled with optimization.
-	typedef std::vector<SourceLoc> source_locs_t;
-	source_locs_t                  inliners;
+  // An optionals list of "inliners". All the successive sources location
+  // from where the source location of the trace (the attribute right above)
+  // is inlined. It is especially useful when you compiled with optimization.
+  typedef std::vector<SourceLoc> source_locs_t;
+  source_locs_t                  inliners;
 
-	ResolvedTrace():
-		Trace() {}
-	ResolvedTrace(const Trace& mini_trace):
-		Trace(mini_trace) {}
+  ResolvedTrace():
+    Trace() {}
+  ResolvedTrace(const Trace& mini_trace):
+    Trace(mini_trace) {}
 };
 
 /*************** STACK TRACE ***************/
@@ -493,12 +548,12 @@ struct ResolvedTrace: public Trace {
 template <typename TAG>
 class StackTraceImpl {
 public:
-	size_t size() const { return 0; }
-	Trace operator[](size_t) { return Trace(); }
-	size_t load_here(size_t=0) { return 0; }
-	size_t load_from(void*, size_t=0) { return 0; }
-	size_t thread_id() const { return 0; }
-	void skip_n_firsts(size_t) { }
+  size_t size() const { return 0; }
+  Trace operator[](size_t) { return Trace(); }
+  size_t load_here(size_t=0) { return 0; }
+  size_t load_from(void*, size_t=0) { return 0; }
+  unsigned thread_id() const { return 0; }
+  void skip_n_firsts(size_t) { }
 };
 
 #ifdef BACKWARD_SYSTEM_LINUX
@@ -507,7 +562,7 @@ class StackTraceLinuxImplBase {
 public:
 	StackTraceLinuxImplBase(): _thread_id(0), _skip(0) {}
 
-	size_t thread_id() const {
+	unsigned thread_id() const {
 		return _thread_id;
 	}
 
@@ -515,7 +570,7 @@ public:
 
 protected:
 	void load_thread_info() {
-		_thread_id = (size_t)syscall(SYS_gettid);
+		_thread_id = syscall(SYS_gettid);
 		if (_thread_id == (size_t) getpid()) {
 			// If the thread is the main one, let's hide that.
 			// I like to keep little secret sometimes.
@@ -535,13 +590,13 @@ public:
 	size_t size() const {
 		return _stacktrace.size() ? _stacktrace.size() - skip_n_firsts() : 0;
 	}
-	Trace operator[](size_t idx) const {
+	Trace operator[](size_t idx) {
 		if (idx >= size()) {
 			return Trace();
 		}
 		return Trace(_stacktrace[idx + skip_n_firsts()], idx);
 	}
-	void* const* begin() const {
+	void** begin() {
 		if (size()) {
 			return &_stacktrace[skip_n_firsts()];
 		}
@@ -691,8 +746,92 @@ public:
 #endif // BACKWARD_HAS_UNWIND
 #endif // BACKWARD_SYSTEM_LINUX
 
+#ifdef BACKWARD_SYSTEM_DARWIN
+
+class StackTraceDarwinImplBase {
+public:
+  StackTraceDarwinImplBase(): _thread_id(0), _skip(0) {}
+
+  unsigned thread_id() const {
+    return _thread_id;
+  }
+
+  void skip_n_firsts(size_t n) { _skip = n; }
+
+protected:
+  void load_thread_info() {
+    uint64_t tid;
+    pthread_threadid_np(NULL, &tid);
+
+    _thread_id = static_cast<unsigned>(tid);
+  }
+
+  size_t skip_n_firsts() const { return _skip; }
+
+private:
+  size_t _thread_id;
+  size_t _skip;
+};
+
+class StackTraceDarwinImplHolder: public StackTraceDarwinImplBase {
+public:
+  size_t size() const {
+    return _stacktrace.size() ? _stacktrace.size() - skip_n_firsts() : 0;
+  }
+  Trace operator[](size_t idx) {
+    if (idx >= size()) {
+      return Trace();
+    }
+    return Trace(_stacktrace[idx + skip_n_firsts()], idx);
+  }
+  void** begin() {
+    if (size()) {
+      return &_stacktrace[skip_n_firsts()];
+    }
+    return 0;
+  }
+
+protected:
+  std::vector<void*> _stacktrace;
+};
+
+template <>
+class StackTraceImpl<system_tag::darwin_tag>: public StackTraceDarwinImplHolder {
+public:
+  __attribute__ ((noinline)) // TODO use some macro
+  size_t load_here(size_t depth=32) {
+    load_thread_info();
+    if (depth == 0) {
+      return 0;
+    }
+    _stacktrace.resize(depth + 1);
+    size_t trace_cnt = backtrace(&_stacktrace[0], _stacktrace.size());
+    _stacktrace.resize(trace_cnt);
+    skip_n_firsts(1);
+    return size();
+  }
+
+  size_t load_from(void* addr, size_t depth=32) {
+    load_here(depth + 8);
+
+    for (size_t i = 0; i < _stacktrace.size(); ++i) {
+      if (_stacktrace[i] == addr) {
+        skip_n_firsts(i);
+        _stacktrace[i] = (void*)( (uintptr_t)_stacktrace[i] + 1);
+        break;
+      }
+    }
+
+    _stacktrace.resize(std::min(_stacktrace.size(),
+                                skip_n_firsts() + depth));
+    return size();
+  }
+};
+
+#endif // BACKWARD_SYSTEM_DARWIN
+
 class StackTrace:
-	public StackTraceImpl<system_tag::current_tag> {};
+  public StackTraceImpl<system_tag::current_tag> {};
 
 /*************** TRACE RESOLVER ***************/
 
@@ -741,7 +880,7 @@ public:
 				return;
 			}
 			_symbols.reset(
-					backtrace_symbols(st.begin(), (int)st.size())
+					backtrace_symbols(st.begin(), st.size())
 					);
 		}
 
@@ -777,26 +916,6 @@ private:
 template <>
 class TraceResolverLinuxImpl<trace_resolver_tag::libbfd>:
 	public TraceResolverLinuxImplBase {
-	static std::string read_symlink(std::string const & symlink_path) {
-		std::string path;
-		path.resize(100);
-
-		while(true) {
-			ssize_t len = ::readlink(symlink_path.c_str(), &*path.begin(), path.size());
-			if(len < 0) {
-				return "";
-			}
-			if ((size_t)len == path.size()) {
-				path.resize(path.size() * 2);
-			}
-			else {
-				path.resize(len);
-				break;
-			}
-		}
-
-		return path;
-	}
 public:
 	TraceResolverLinuxImpl(): _bfd_loaded(false) {}
 
@@ -811,17 +930,6 @@ public:
 		// The loaded object can be yourself btw.
 		if (!dladdr(trace.addr, &symbol_info)) {
 			return trace; // dat broken trace...
-		}
-
-		std::string argv0;
-		{
-			std::ifstream ifs("/proc/self/cmdline");
-			std::getline(ifs, argv0, '\0');
-		}
-		std::string tmp;
-		if(symbol_info.dli_fname == argv0) {
-			tmp = read_symlink("/proc/self/exe");
-			symbol_info.dli_fname = tmp.c_str();
 		}
 
 		// Now we get in symbol_info:
@@ -1375,8 +1483,8 @@ private:
 								&attr_mem), &line);
 					dwarf_formudata(dwarf_attr(die, DW_AT_call_column,
 								&attr_mem), &col);
-					sloc.line = (unsigned)line;
-					sloc.col = (unsigned)col;
+					sloc.line = line;
+					sloc.col = col;
 
 					trace.inliners.push_back(sloc);
 					break;
@@ -1520,107 +1628,194 @@ class TraceResolverImpl<system_tag::linux_tag>:
 
 #endif // BACKWARD_SYSTEM_LINUX
 
+#ifdef BACKWARD_SYSTEM_DARWIN
+
+class TraceResolverDarwinImplBase {
+protected:
+  std::string demangle(const char* funcname) {
+    return _demangler.demangle(funcname);
+  }
+
+private:
+  details::demangler _demangler;
+};
+
+template <typename STACKTRACE_TAG>
+class TraceResolverDarwinImpl;
+
+template <>
+class TraceResolverDarwinImpl<trace_resolver_tag::backtrace_symbol>:
+  public TraceResolverDarwinImplBase {
+public:
+  template <class ST>
+  void load_stacktrace(ST& st) {
+    using namespace details;
+    if (st.size() == 0) {
+      return;
+    }
+    _symbols.reset(
+      backtrace_symbols(st.begin(), st.size())
+    );
+  }
+
+  ResolvedTrace resolve(ResolvedTrace trace) {
+    // parse:
+    // <n>  <file>  <addr>  <mangled-name> + <offset>
+    char* filename = _symbols[trace.idx];
+
+    // skip "<n>  "
+    while(*filename && *filename != ' ') filename++;
+    while(*filename == ' ') filename++;
+
+    // find start of <mangled-name> from end (<file> may contain a space)
+    char* p = filename + strlen(filename) - 1;
+    // skip to start of " + <offset>"
+    while(p > filename && *p != ' ') p--;
+    while(p > filename && *p == ' ') p--;
+    while(p > filename && *p != ' ') p--;
+    while(p > filename && *p == ' ') p--;
+    char *funcname_end = p + 1;
+
+    // skip to start of "<manged-name>"
+    while(p > filename && *p != ' ') p--;
+    char *funcname = p + 1;
+
+    // skip to start of "  <addr>  "
+    while(p > filename && *p == ' ') p--;
+    while(p > filename && *p != ' ') p--;
+    while(p > filename && *p == ' ') p--;
+
+    // skip "<file>", handling the case where it contains a
+    char* filename_end = p + 1;
+    if (p == filename) {
+      // something went wrong, give up
+      filename_end = filename + strlen(filename);
+      funcname = filename_end;
+    }
+    trace.object_filename.assign(filename, filename_end); // ok even if filename_end is the ending \0 (then we assign entire string)
+
+    if (*funcname) { // if it's not end of string
+      *funcname_end = '\0';
+
+      trace.object_function = this->demangle(funcname);
+      trace.object_function += " ";
+      trace.object_function += (funcname_end + 1);
+      trace.source.function = trace.object_function; // we cannot do better.
+    }
+    return trace;
+  }
+
+private:
+  details::handle<char**> _symbols;
+};
+
+template<>
+class TraceResolverImpl<system_tag::darwin_tag>:
+  public TraceResolverDarwinImpl<trace_resolver_tag::current> {};
+
+#endif // BACKWARD_SYSTEM_DARWIN
+
 class TraceResolver:
-	public TraceResolverImpl<system_tag::current_tag> {};
+  public TraceResolverImpl<system_tag::current_tag> {};
 
 /*************** CODE SNIPPET ***************/
 
 class SourceFile {
 public:
-	typedef std::vector<std::pair<unsigned, std::string> > lines_t;
+  typedef std::vector<std::pair<unsigned, std::string> > lines_t;
 
-	SourceFile() {}
-	SourceFile(const std::string& path): _file(new std::ifstream(path.c_str())) {}
-	bool is_open() const { return _file->is_open(); }
+  SourceFile() {}
+  SourceFile(const std::string& path): _file(new std::ifstream(path.c_str())) {}
+  bool is_open() const { return _file->is_open(); }
 
-	lines_t& get_lines(unsigned line_start, unsigned line_count, lines_t& lines) {
-		using namespace std;
-		// This function make uses of the dumbest algo ever:
-		//	1) seek(0)
-		//	2) read lines one by one and discard until line_start
-		//	3) read line one by one until line_start + line_count
-		//
-		// If you are getting snippets many time from the same file, it is
-		// somewhat a waste of CPU, feel free to benchmark and propose a
-		// better solution ;)
+  lines_t& get_lines(unsigned line_start, unsigned line_count, lines_t& lines) {
+    using namespace std;
+    // This function make uses of the dumbest algo ever:
+    //	1) seek(0)
+    //	2) read lines one by one and discard until line_start
+    //	3) read line one by one until line_start + line_count
+    //
+    // If you are getting snippets many time from the same file, it is
+    // somewhat a waste of CPU, feel free to benchmark and propose a
+    // better solution ;)
 
-		_file->clear();
-		_file->seekg(0);
-		string line;
-		unsigned line_idx;
+    _file->clear();
+    _file->seekg(0);
+    string line;
+    unsigned line_idx;
 
-		for (line_idx = 1; line_idx < line_start; ++line_idx) {
-			std::getline(*_file, line);
-			if (!*_file) {
-				return lines;
-			}
-		}
+    for (line_idx = 1; line_idx < line_start; ++line_idx) {
+      std::getline(*_file, line);
+      if (!*_file) {
+        return lines;
+      }
+    }
 
-		// think of it like a lambda in C++98 ;)
-		// but look, I will reuse it two times!
-		// What a good boy am I.
-		struct isspace {
-			bool operator()(char c) {
-				return std::isspace(c);
-			}
-		};
+    // think of it like a lambda in C++98 ;)
+    // but look, I will reuse it two times!
+    // What a good boy am I.
+    struct isspace {
+      bool operator()(char c) {
+        return std::isspace(c);
+      }
+    };
 
-		bool started = false;
-		for (; line_idx < line_start + line_count; ++line_idx) {
-			getline(*_file, line);
-			if (!*_file) {
-				return lines;
-			}
-			if (!started) {
-				if (std::find_if(line.begin(), line.end(),
-							not_isspace()) == line.end())
-					continue;
-				started = true;
-			}
-			lines.push_back(make_pair(line_idx, line));
-		}
+    bool started = false;
+    for (; line_idx < line_start + line_count; ++line_idx) {
+      getline(*_file, line);
+      if (!*_file) {
+        return lines;
+      }
+      if (!started) {
+        if (std::find_if(line.begin(), line.end(),
+                         not_isspace()) == line.end())
+          continue;
+        started = true;
+      }
+      lines.push_back(make_pair(line_idx, line));
+    }
 
-		lines.erase(
-				std::find_if(lines.rbegin(), lines.rend(),
-					not_isempty()).base(), lines.end()
-				);
-		return lines;
-	}
+    lines.erase(
+      std::find_if(lines.rbegin(), lines.rend(),
+                   not_isempty()).base(), lines.end()
+    );
+    return lines;
+  }
 
-	lines_t get_lines(unsigned line_start, unsigned line_count) {
-		lines_t lines;
-		return get_lines(line_start, line_count, lines);
-	}
+  lines_t get_lines(unsigned line_start, unsigned line_count) {
+    lines_t lines;
+    return get_lines(line_start, line_count, lines);
+  }
 
-	// there is no find_if_not in C++98, lets do something crappy to
-	// workaround.
-	struct not_isspace {
-		bool operator()(char c) {
-			return !std::isspace(c);
-		}
-	};
-	// and define this one here because C++98 is not happy with local defined
-	// struct passed to template functions, fuuuu.
-	struct not_isempty {
-		bool operator()(const lines_t::value_type& p) {
-			return !(std::find_if(p.second.begin(), p.second.end(),
-						not_isspace()) == p.second.end());
-		}
-	};
+  // there is no find_if_not in C++98, lets do something crappy to
+  // workaround.
+  struct not_isspace {
+    bool operator()(char c) {
+      return !std::isspace(c);
+    }
+  };
+  // and define this one here because C++98 is not happy with local defined
+  // struct passed to template functions, fuuuu.
+  struct not_isempty {
+    bool operator()(const lines_t::value_type& p) {
+      return !(std::find_if(p.second.begin(), p.second.end(),
+                            not_isspace()) == p.second.end());
+    }
+  };
 
-	void swap(SourceFile& b) {
-		_file.swap(b._file);
-	}
+  void swap(SourceFile& b) {
+    _file.swap(b._file);
+  }
 
 #ifdef BACKWARD_ATLEAST_CXX11
-	SourceFile(SourceFile&& from): _file(0) {
-		swap(from);
-	}
-	SourceFile& operator=(SourceFile&& from) {
-		swap(from); return *this;
-	}
+  SourceFile(SourceFile&& from): _file(0) {
+    swap(from);
+  }
+  SourceFile& operator=(SourceFile&& from) {
+    swap(from); return *this;
+  }
 #else
-	explicit SourceFile(const SourceFile& from) {
+  explicit SourceFile(const SourceFile& from) {
 		// some sort of poor man's move semantic.
 		swap(const_cast<SourceFile&>(from));
 	}
@@ -1631,115 +1826,115 @@ public:
 #endif
 
 private:
-	details::handle<std::ifstream*,
-		details::default_delete<std::ifstream*>
-			> _file;
+  details::handle<std::ifstream*,
+    details::default_delete<std::ifstream*>
+  > _file;
 
 #ifdef BACKWARD_ATLEAST_CXX11
-	SourceFile(const SourceFile&) = delete;
-	SourceFile& operator=(const SourceFile&) = delete;
+  SourceFile(const SourceFile&) = delete;
+  SourceFile& operator=(const SourceFile&) = delete;
 #endif
 };
 
 class SnippetFactory {
 public:
-	typedef SourceFile::lines_t lines_t;
+  typedef SourceFile::lines_t lines_t;
 
-	lines_t get_snippet(const std::string& filename,
-			unsigned line_start, unsigned context_size) {
+  lines_t get_snippet(const std::string& filename,
+                      unsigned line_start, unsigned context_size) {
 
-		SourceFile& src_file = get_src_file(filename);
-		unsigned start = line_start - context_size / 2;
-		return src_file.get_lines(start, context_size);
-	}
+    SourceFile& src_file = get_src_file(filename);
+    unsigned start = line_start - context_size / 2;
+    return src_file.get_lines(start, context_size);
+  }
 
-	lines_t get_combined_snippet(
-			const std::string& filename_a, unsigned line_a,
-			const std::string& filename_b, unsigned line_b,
-			unsigned context_size) {
-		SourceFile& src_file_a = get_src_file(filename_a);
-		SourceFile& src_file_b = get_src_file(filename_b);
+  lines_t get_combined_snippet(
+    const std::string& filename_a, unsigned line_a,
+    const std::string& filename_b, unsigned line_b,
+    unsigned context_size) {
+    SourceFile& src_file_a = get_src_file(filename_a);
+    SourceFile& src_file_b = get_src_file(filename_b);
 
-		lines_t lines = src_file_a.get_lines(line_a - context_size / 4,
-				context_size / 2);
-		src_file_b.get_lines(line_b - context_size / 4, context_size / 2,
-				lines);
-		return lines;
-	}
+    lines_t lines = src_file_a.get_lines(line_a - context_size / 4,
+                                         context_size / 2);
+    src_file_b.get_lines(line_b - context_size / 4, context_size / 2,
+                         lines);
+    return lines;
+  }
 
-	lines_t get_coalesced_snippet(const std::string& filename,
-			unsigned line_a, unsigned line_b, unsigned context_size) {
-		SourceFile& src_file = get_src_file(filename);
+  lines_t get_coalesced_snippet(const std::string& filename,
+                                unsigned line_a, unsigned line_b, unsigned context_size) {
+    SourceFile& src_file = get_src_file(filename);
 
-		using std::min; using std::max;
-		unsigned a = min(line_a, line_b);
-		unsigned b = max(line_a, line_b);
+    using std::min; using std::max;
+    unsigned a = min(line_a, line_b);
+    unsigned b = max(line_a, line_b);
 
-		if ((b - a) < (context_size / 3)) {
-			return src_file.get_lines((a + b - context_size + 1) / 2,
-					context_size);
-		}
+    if ((b - a) < (context_size / 3)) {
+      return src_file.get_lines((a + b - context_size + 1) / 2,
+                                context_size);
+    }
 
-		lines_t lines = src_file.get_lines(a - context_size / 4,
-				context_size / 2);
-		src_file.get_lines(b - context_size / 4, context_size / 2, lines);
-		return lines;
-	}
+    lines_t lines = src_file.get_lines(a - context_size / 4,
+                                       context_size / 2);
+    src_file.get_lines(b - context_size / 4, context_size / 2, lines);
+    return lines;
+  }
 
 
 private:
-	typedef details::hashtable<std::string, SourceFile>::type src_files_t;
-	src_files_t _src_files;
+  typedef details::hashtable<std::string, SourceFile>::type src_files_t;
+  src_files_t _src_files;
 
-	SourceFile& get_src_file(const std::string& filename) {
-		src_files_t::iterator it = _src_files.find(filename);
-		if (it != _src_files.end()) {
-			return it->second;
-		}
-		SourceFile& new_src_file = _src_files[filename];
-		new_src_file = SourceFile(filename);
-		return new_src_file;
-	}
+  SourceFile& get_src_file(const std::string& filename) {
+    src_files_t::iterator it = _src_files.find(filename);
+    if (it != _src_files.end()) {
+      return it->second;
+    }
+    SourceFile& new_src_file = _src_files[filename];
+    new_src_file = SourceFile(filename);
+    return new_src_file;
+  }
 };
 
 /*************** PRINTER ***************/
 
 namespace ColorMode {
-	enum type {
-		automatic,
-		never,
-		always
-	};
+enum type {
+  automatic,
+  never,
+  always
+};
 }
 
 class cfile_streambuf: public std::streambuf {
 public:
-	cfile_streambuf(FILE *_sink): sink(_sink) {}
-	int_type underflow() { return traits_type::eof(); }
-	int_type overflow(int_type ch) {
-		if (traits_type::not_eof(ch) && fwrite(&ch, sizeof ch, 1, sink) == 1) {
-				return ch;
-		}
-		return traits_type::eof();
-	}
+  cfile_streambuf(FILE *_sink): sink(_sink) {}
+  int_type underflow() { return traits_type::eof(); }
+  int_type overflow(int_type ch) {
+    if (traits_type::not_eof(ch) && fwrite(&ch, sizeof ch, 1, sink) == 1) {
+      return ch;
+    }
+    return traits_type::eof();
+  }
 
-	std::streamsize xsputn(const char_type* s, std::streamsize count) {
-		return fwrite(s, sizeof *s, count, sink);
-	}
+  std::streamsize xsputn(const char_type* s, std::streamsize count) {
+    return fwrite(s, sizeof *s, count, sink);
+  }
 
 #ifdef BACKWARD_ATLEAST_CXX11
 public:
-	cfile_streambuf(const cfile_streambuf&) = delete;
-	cfile_streambuf& operator=(const cfile_streambuf&) = delete;
+  cfile_streambuf(const cfile_streambuf&) = delete;
+  cfile_streambuf& operator=(const cfile_streambuf&) = delete;
 #else
-private:
+  private:
 	cfile_streambuf(const cfile_streambuf &);
 	cfile_streambuf &operator= (const cfile_streambuf &);
 #endif
 
 private:
-	FILE *sink;
-	std::vector<char> buffer;
+  FILE *sink;
+  std::vector<char> buffer;
 };
 
 #ifdef BACKWARD_SYSTEM_LINUX
@@ -1793,19 +1988,19 @@ private:
 #else // ndef BACKWARD_SYSTEM_LINUX
 
 namespace Color {
-	enum type {
-		yellow = 0,
-		purple = 0,
-		reset  = 0
-	};
+enum type {
+  yellow = 0,
+  purple = 0,
+  reset  = 0
+};
 } // namespace Color
 
 class Colorize {
 public:
-	Colorize(std::ostream&) {}
-	void activate(ColorMode::type) {}
-	void activate(ColorMode::type, FILE*) {}
-	void set_color(Color::type) {}
+  Colorize(std::ostream&) {}
+  void activate(ColorMode::type) {}
+  void activate(ColorMode::type, FILE*) {}
+  void set_color(Color::type) {}
 };
 
 #endif // BACKWARD_SYSTEM_LINUX
@@ -1813,293 +2008,294 @@ public:
 class Printer {
 public:
 
-	bool snippet;
-	ColorMode::type color_mode;
-	bool address;
-	bool object;
-	int inliner_context_size;
-	int trace_context_size;
+  bool snippet;
+  ColorMode::type color_mode;
+  bool address;
+  bool object;
+  int inliner_context_size;
+  int trace_context_size;
 
-	Printer():
-		snippet(true),
-		color_mode(ColorMode::automatic),
-		address(false),
-		object(false),
-		inliner_context_size(5),
-		trace_context_size(7)
-		{}
+  Printer():
+    snippet(true),
+    color_mode(ColorMode::automatic),
+    address(false),
+    object(false),
+    inliner_context_size(5),
+    trace_context_size(7)
+  {}
 
-	template <typename ST>
-		FILE* print(ST& st, FILE* fp = stderr) {
-			cfile_streambuf obuf(fp);
-			std::ostream os(&obuf);
-			Colorize colorize(os);
-			colorize.activate(color_mode, fp);
-			print_stacktrace(st, os, colorize);
-			return fp;
-		}
+  template <typename ST>
+  FILE* print(ST& st, FILE* fp = stderr) {
+    cfile_streambuf obuf(fp);
+    std::ostream os(&obuf);
+    Colorize colorize(os);
+    colorize.activate(color_mode, fp);
+    print_stacktrace(st, os, colorize);
+    return fp;
+  }
 
-	template <typename ST>
-		std::ostream& print(ST& st, std::ostream& os) {
-			Colorize colorize(os);
-			colorize.activate(color_mode);
-			print_stacktrace(st, os, colorize);
-			return os;
-		}
+  template <typename ST>
+  std::ostream& print(ST& st, std::ostream& os) {
+    Colorize colorize(os);
+    colorize.activate(color_mode);
+    print_stacktrace(st, os, colorize);
+    return os;
+  }
 
-	template <typename IT>
-		FILE* print(IT begin, IT end, FILE* fp = stderr, size_t thread_id = 0) {
-			cfile_streambuf obuf(fp);
-			std::ostream os(&obuf);
-			Colorize colorize(os);
-			colorize.activate(color_mode, fp);
-			print_stacktrace(begin, end, os, thread_id, colorize);
-			return fp;
-		}
+  template <typename IT>
+  FILE* print(IT begin, IT end, FILE* fp = stderr, size_t thread_id = 0) {
+    cfile_streambuf obuf(fp);
+    std::ostream os(&obuf);
+    Colorize colorize(os);
+    colorize.activate(color_mode, fp);
+    print_stacktrace(begin, end, os, thread_id, colorize);
+    return fp;
+  }
 
-	template <typename IT>
-		std::ostream& print(IT begin, IT end, std::ostream& os, size_t thread_id = 0) {
-			Colorize colorize(os);
-			colorize.activate(color_mode);
-			print_stacktrace(begin, end, os, thread_id, colorize);
-			return os;
-		}
+  template <typename IT>
+  std::ostream& print(IT begin, IT end, std::ostream& os, size_t thread_id = 0) {
+    Colorize colorize(os);
+    colorize.activate(color_mode);
+    print_stacktrace(begin, end, os, thread_id, colorize);
+    return os;
+  }
 
 private:
-	TraceResolver  _resolver;
-	SnippetFactory _snippets;
+  TraceResolver  _resolver;
+  SnippetFactory _snippets;
 
-	template <typename ST>
-		void print_stacktrace(ST& st, std::ostream& os, Colorize& colorize) {
-			print_header(os, st.thread_id());
-			_resolver.load_stacktrace(st);
-			for (size_t trace_idx = st.size(); trace_idx > 0; --trace_idx) {
-				print_trace(os, _resolver.resolve(st[trace_idx-1]), colorize);
-			}
-		}
+  template <typename ST>
+  void print_stacktrace(ST& st, std::ostream& os, Colorize& colorize) {
+    print_header(os, st.thread_id());
+    _resolver.load_stacktrace(st);
+    for (size_t trace_idx = st.size(); trace_idx > 0; --trace_idx) {
+      print_trace(os, _resolver.resolve(st[trace_idx-1]), colorize);
+    }
+  }
 
-	template <typename IT>
-		void print_stacktrace(IT begin, IT end, std::ostream& os, size_t thread_id, Colorize& colorize) {
-			print_header(os, thread_id);
-			for (; begin != end; ++begin) {
-				print_trace(os, *begin, colorize);
-			}
-		}
+  template <typename IT>
+  void print_stacktrace(IT begin, IT end, std::ostream& os, size_t thread_id, Colorize& colorize) {
+    print_header(os, thread_id);
+    for (; begin != end; ++begin) {
+      print_trace(os, *begin, colorize);
+    }
+  }
 
-	void print_header(std::ostream& os, size_t thread_id) {
-		os << "Stack trace (most recent call last)";
-		if (thread_id) {
-			os << " in thread " << thread_id;
-		}
-		os << ":\n";
-	}
+  void print_header(std::ostream& os, unsigned thread_id) {
+    os << "Stack trace (most recent call last)";
+    if (thread_id) {
+      os << " in thread " << thread_id;
+    }
+    os << ":\n";
+  }
 
-	void print_trace(std::ostream& os, const ResolvedTrace& trace,
-			Colorize& colorize) {
-		os << "#"
-		   << std::left << std::setw(2) << trace.idx
-		   << std::right;
-		bool already_indented = true;
+  void print_trace(std::ostream& os, const ResolvedTrace& trace,
+                   Colorize& colorize) {
+    os << "#"
+       << std::left << std::setw(2) << trace.idx
+       << std::right;
+    bool already_indented = true;
 
-		if (!trace.source.filename.size() || object) {
-			os << "   Object \""
-			   << trace.object_filename
-			   << ", at "
-			   << trace.addr
-			   << ", in "
-			   << trace.object_function
-			   << "\n";
-			already_indented = false;
-		}
+    if (!trace.source.filename.size() || object) {
+      os << "   Object \""
+         << trace.object_filename
+         << "\", at "
+         << trace.addr
+         << ", in "
+         << trace.object_function
+         << "\n";
+      already_indented = false;
+    }
 
-		for (size_t inliner_idx = trace.inliners.size();
-				inliner_idx > 0; --inliner_idx) {
-			if (!already_indented) {
-				os << "   ";
-			}
-			const ResolvedTrace::SourceLoc& inliner_loc
-				= trace.inliners[inliner_idx-1];
-			print_source_loc(os, " | ", inliner_loc);
-			if (snippet) {
-				print_snippet(os, "    | ", inliner_loc,
-						colorize, Color::purple, inliner_context_size);
-			}
-			already_indented = false;
-		}
+    for (size_t inliner_idx = trace.inliners.size();
+         inliner_idx > 0; --inliner_idx) {
+      if (!already_indented) {
+        os << "   ";
+      }
+      const ResolvedTrace::SourceLoc& inliner_loc
+        = trace.inliners[inliner_idx-1];
+      print_source_loc(os, " | ", inliner_loc);
+      if (snippet) {
+        print_snippet(os, "    | ", inliner_loc,
+                      colorize, Color::purple, inliner_context_size);
+      }
+      already_indented = false;
+    }
 
-		if (trace.source.filename.size()) {
-			if (!already_indented) {
-				os << "   ";
-			}
-			print_source_loc(os, "   ", trace.source, trace.addr);
-			if (snippet) {
-				print_snippet(os, "      ", trace.source,
-						colorize, Color::yellow, trace_context_size);
-			}
-		}
-	}
+    if (trace.source.filename.size()) {
+      if (!already_indented) {
+        os << "   ";
+      }
+      print_source_loc(os, "   ", trace.source, trace.addr);
+      if (snippet) {
+        print_snippet(os, "      ", trace.source,
+                      colorize, Color::yellow, trace_context_size);
+      }
+    }
+  }
 
-	void print_snippet(std::ostream& os, const char* indent,
-			const ResolvedTrace::SourceLoc& source_loc,
-			Colorize& colorize, Color::type color_code,
-			int context_size)
-	{
-		using namespace std;
-		typedef SnippetFactory::lines_t lines_t;
+  void print_snippet(std::ostream& os, const char* indent,
+                     const ResolvedTrace::SourceLoc& source_loc,
+                     Colorize& colorize, Color::type color_code,
+                     int context_size)
+  {
+    using namespace std;
+    typedef SnippetFactory::lines_t lines_t;
 
-		lines_t lines = _snippets.get_snippet(source_loc.filename,
-				source_loc.line, context_size);
+    lines_t lines = _snippets.get_snippet(source_loc.filename,
+                                          source_loc.line, context_size);
 
-		for (lines_t::const_iterator it = lines.begin();
-				it != lines.end(); ++it) {
-			if (it-> first == source_loc.line) {
-				colorize.set_color(color_code);
-				os << indent << ">";
-			} else {
-				os << indent << " ";
-			}
-			os << std::setw(4) << it->first
-			   << ": "
-			   << it->second
-			   << "\n";
-			if (it-> first == source_loc.line) {
-				colorize.set_color(Color::reset);
-			}
-		}
-	}
+    for (lines_t::const_iterator it = lines.begin();
+         it != lines.end(); ++it) {
+      if (it-> first == source_loc.line) {
+        colorize.set_color(color_code);
+        os << indent << ">";
+      } else {
+        os << indent << " ";
+      }
+      os << std::setw(4) << it->first
+         << ": "
+         << it->second
+         << "\n";
+      if (it-> first == source_loc.line) {
+        colorize.set_color(Color::reset);
+      }
+    }
+  }
 
-	void print_source_loc(std::ostream& os, const char* indent,
-			const ResolvedTrace::SourceLoc& source_loc,
-			void* addr=0) {
-		os << indent
-		   << "Source \""
-		   << source_loc.filename
-		   << "\", line "
-		   << source_loc.line
-		   << ", in "
-		   << source_loc.function;
+  void print_source_loc(std::ostream& os, const char* indent,
+                        const ResolvedTrace::SourceLoc& source_loc,
+                        void* addr=0) {
+    os << indent
+       << "Source \""
+       << source_loc.filename
+       << "\", line "
+       << source_loc.line
+       << ", in "
+       << source_loc.function;
 
-		if (address && addr != 0) {
-			os << " [" << addr << "]";
-		}
-		os << "\n";
-	}
+    if (address && addr != 0) {
+      os << " [" << addr << "]";
+    }
+    os << "\n";
+  }
 };
 
 /*************** SIGNALS HANDLING ***************/
 
-#ifdef BACKWARD_SYSTEM_LINUX
+#if defined(BACKWARD_SYSTEM_LINUX) || defined(BACKWARD_SYSTEM_DARWIN)
 
 
 class SignalHandling {
 public:
-   static std::vector<int> make_default_signals() {
-       const int posix_signals[] = {
-		// Signals for which the default action is "Core".
-		SIGABRT,    // Abort signal from abort(3)
-		SIGBUS,     // Bus error (bad memory access)
-		SIGFPE,     // Floating point exception
-		SIGILL,     // Illegal Instruction
-		SIGIOT,     // IOT trap. A synonym for SIGABRT
-		SIGQUIT,    // Quit from keyboard
-		SIGSEGV,    // Invalid memory reference
-		SIGSYS,     // Bad argument to routine (SVr4)
-		SIGTRAP,    // Trace/breakpoint trap
-		SIGXCPU,    // CPU time limit exceeded (4.2BSD)
-		SIGXFSZ,    // File size limit exceeded (4.2BSD)
-	};
-        return std::vector<int>(posix_signals, posix_signals + sizeof posix_signals / sizeof posix_signals[0] );
-   }
+  static std::vector<int> make_default_signals() {
+    const int posix_signals[] = {
+      // Signals for which the default action is "Core".
+      SIGABRT,    // Abort signal from abort(3)
+      SIGBUS,     // Bus error (bad memory access)
+      SIGFPE,     // Floating point exception
+      SIGILL,     // Illegal Instruction
+      SIGIOT,     // IOT trap. A synonym for SIGABRT
+      SIGQUIT,    // Quit from keyboard
+      SIGSEGV,    // Invalid memory reference
+      SIGSYS,     // Bad argument to routine (SVr4)
+      SIGTRAP,    // Trace/breakpoint trap
+      SIGXCPU,    // CPU time limit exceeded (4.2BSD)
+      SIGXFSZ,    // File size limit exceeded (4.2BSD)
+#if defined(BACKWARD_SYSTEM_DARWIN)
+      SIGEMT,     // emulation instruction executed
+#endif
+    };
+    return std::vector<int>(posix_signals, posix_signals + sizeof posix_signals / sizeof posix_signals[0] );
+  }
 
   SignalHandling(const std::vector<int>& posix_signals = make_default_signals()):
-	  _loaded(false) {
-		bool success = true;
+    _loaded(false) {
+    bool success = true;
 
-		const size_t stack_size = 1024 * 1024 * 8;
-		_stack_content.reset((char*)malloc(stack_size));
-		if (_stack_content) {
-			stack_t ss;
-			ss.ss_sp = _stack_content.get();
-			ss.ss_size = stack_size;
-			ss.ss_flags = 0;
-			if (sigaltstack(&ss, 0) < 0) {
-				success = false;
-			}
-		} else {
-			success = false;
-		}
+    const size_t stack_size = 1024 * 1024 * 8;
+    _stack_content.reset((char*)malloc(stack_size));
+    if (_stack_content) {
+      stack_t ss;
+      ss.ss_sp = _stack_content.get();
+      ss.ss_size = stack_size;
+      ss.ss_flags = 0;
+      if (sigaltstack(&ss, 0) < 0) {
+        success = false;
+      }
+    } else {
+      success = false;
+    }
 
-		for (size_t i = 0; i < posix_signals.size(); ++i) {
-			struct sigaction action;
-			memset(&action, 0, sizeof action);
-			action.sa_flags = (SA_SIGINFO | SA_ONSTACK | SA_NODEFER |
-					SA_RESETHAND);
-			sigfillset(&action.sa_mask);
-			sigdelset(&action.sa_mask, posix_signals[i]);
-			action.sa_sigaction = &sig_handler;
+    for (size_t i = 0; i < posix_signals.size(); ++i) {
+      struct sigaction action;
+      memset(&action, 0, sizeof action);
+      action.sa_flags = (SA_SIGINFO | SA_ONSTACK | SA_NODEFER |
+                         SA_RESETHAND);
+      sigfillset(&action.sa_mask);
+      sigdelset(&action.sa_mask, posix_signals[i]);
+      action.sa_sigaction = &sig_handler;
 
-			int r = sigaction(posix_signals[i], &action, 0);
-			if (r < 0) success = false;
-		}
+      int r = sigaction(posix_signals[i], &action, 0);
+      if (r < 0) success = false;
+    }
 
-		_loaded = success;
-	}
+    _loaded = success;
+  }
 
-	bool loaded() const { return _loaded; }
+  bool loaded() const { return _loaded; }
 
-	static void handleSignal(int, siginfo_t* info, void* _ctx) {
-		ucontext_t *uctx = (ucontext_t*) _ctx;
+private:
+  details::handle<char*> _stack_content;
+  bool                   _loaded;
 
-		StackTrace st;
-		void* error_addr = 0;
+#ifdef __GNUC__
+  __attribute__((noreturn))
+#endif
+  static void sig_handler(int, siginfo_t* info, void* _ctx) {
+    ucontext_t *uctx = (ucontext_t*) _ctx;
+
+    StackTrace st;
+    void* error_addr = 0;
 #ifdef REG_RIP // x86_64
-		error_addr = reinterpret_cast<void*>(uctx->uc_mcontext.gregs[REG_RIP]);
+    error_addr = reinterpret_cast<void*>(uctx->uc_mcontext.gregs[REG_RIP]);
 #elif defined(REG_EIP) // x86_32
-		error_addr = reinterpret_cast<void*>(uctx->uc_mcontext.gregs[REG_EIP]);
+    error_addr = reinterpret_cast<void*>(uctx->uc_mcontext.gregs[REG_EIP]);
 #elif defined(__arm__)
-		error_addr = reinterpret_cast<void*>(uctx->uc_mcontext.arm_pc);
+    error_addr = reinterpret_cast<void*>(uctx->uc_mcontext.arm_pc);
 #elif defined(__aarch64__)
-		error_addr = reinterpret_cast<void*>(uctx->uc_mcontext.pc);
+    error_addr = reinterpret_cast<void*>(uctx->uc_mcontext.pc);
 #elif defined(__ppc__) || defined(__powerpc) || defined(__powerpc__) || defined(__POWERPC__)
-		error_addr = reinterpret_cast<void*>(uctx->uc_mcontext.regs->nip);
+    error_addr = reinterpret_cast<void*>(uctx->uc_mcontext.regs->nip);
+#elif defined(__APPLE__) && defined(__x86_64__)
+    error_addr = reinterpret_cast<void*>(uctx->uc_mcontext->__ss.__rip);
 #else
 #	warning ":/ sorry, ain't know no nothing none not of your architecture!"
 #endif
-		if (error_addr) {
-			st.load_from(error_addr, 32);
-		} else {
-			st.load_here(32);
-		}
+    if (error_addr) {
+      st.load_from(error_addr, 32);
+    } else {
+      st.load_here(32);
+    }
 
-		Printer printer;
-		printer.address = true;
-		printer.print(st, stderr);
+    Printer printer;
+    printer.address = true;
+    printer.print(st, stderr);
 
 #if _XOPEN_SOURCE >= 700 || _POSIX_C_SOURCE >= 200809L
-		psiginfo(info, 0);
+    psiginfo(info, 0);
 #endif
-	}
 
-private:
-	details::handle<char*> _stack_content;
-	bool                   _loaded;
+    // try to forward the signal.
+    raise(info->si_signo);
 
-#ifdef __GNUC__
-	__attribute__((noreturn))
-#endif
-	static void sig_handler(int signo, siginfo_t* info, void* _ctx) {
-		handleSignal(signo, info, _ctx);
-
-		// try to forward the signal.
-		raise(info->si_signo);
-
-		// terminate the process immediately.
-		puts("watf? exit");
-		_exit(EXIT_FAILURE);
-	}
+    // terminate the process immediately.
+    puts("watf? exit");
+    _exit(EXIT_FAILURE);
+  }
 };
 
-#endif // BACKWARD_SYSTEM_LINUX
+#endif // BACKWARD_SYSTEM_LINUX || BACKWARD_SYSTEM_DARWIN
 
 #ifdef BACKWARD_SYSTEM_UNKNOWN
 
