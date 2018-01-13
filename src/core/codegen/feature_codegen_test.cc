@@ -134,7 +134,7 @@ TEST_CASE("partial ngram feature computation produces the same values") {
   features::FeatureBuffer fb2;
   features::AnalysisRunStats ars;
   ars.maxStarts = NumExamples;
-	ars.maxEnds = NumExamples;
+  ars.maxEnds = NumExamples;
 
   util::ArraySlice<float> weights{
       1.0f, 5.0f, 10.0f, 50.0f, 100.0f, 500.0f, 0.1f, 0.5f,

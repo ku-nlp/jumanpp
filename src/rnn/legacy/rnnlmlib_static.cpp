@@ -71,7 +71,7 @@ void CRnnLM_stat::ReadFRHeader(FILE *file) { /*{{{*/
   }
 
   // direct
-	int64_t maxent_hash_size;
+  int64_t maxent_hash_size;
   FreadAllOrDie(&maxent_hash_size, sizeof(int64_t), 1, file, error_message);
   unsigned int maxent_order;
   FreadAllOrDie(&maxent_order, sizeof(int), 1, file, error_message);

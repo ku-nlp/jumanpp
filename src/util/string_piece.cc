@@ -14,7 +14,7 @@ std::ostream &operator<<(std::ostream &str, const StringPiece &sp) {
 }
 
 bool operator==(const StringPiece &l, const StringPiece &r) {
-  if (l.size() != r.size()) return false;	
+  if (l.size() != r.size()) return false;
   return std::strncmp(l.char_begin(), r.char_begin(), l.size()) == 0;
 }
 

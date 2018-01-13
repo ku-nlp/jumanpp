@@ -48,7 +48,7 @@ TEST_CASE("StringPiece can be constexpr") {
   constexpr StringPiece sp{"merge"};
   CHECK(sp == "merge");
 }
-#endif 
+#endif
 
 TEST_CASE("StringPiece constructs from CString") {
   auto sp = StringPiece::fromCString("test");
