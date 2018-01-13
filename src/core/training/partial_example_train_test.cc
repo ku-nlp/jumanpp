@@ -130,15 +130,15 @@ TEST_CASE("can compute loss/features from a simple example with tags") {
 }
 
 TEST_CASE("can decrease loss/features from a simple example with tags") {
-  TrainerEnv env{"UNK,N,5\nもも,N,0\nも,PRT,1\nモ,PRT,2"};
-  env.parseMrph("\tもも\nも\n\tもも\n\tもも\nモ\n\n");
+  TrainerEnv env{"UNK,N,5\nもも,N,0\nも,PRT,1\nも,V,1\nモ,PRT,2"};
+  env.parseMrph("\tもも\n\tも\tb:V\n\tもも\n\tもも\n\tも\tb:PRT\nモ\n\n");
   CHECK(env.trainer.prepare());
   SoftConfidenceWeighted scw{TrainerEnv::testConf()};
   CHECK(env.trainer.compute(scw.scorers()));
   CHECK(env.trainer.loss() > 0);
   for (int iter = 0; iter < 30; ++iter) {
-    //    LOG_DEBUG() << "LOSS: " << env.trainer.loss();
-    //    env.dumpTrainers("/tmp/jpp-dbg", iter);
+    // LOG_DEBUG() << "LOSS: " << env.trainer.loss();
+    // env.dumpTrainers("c:/tmp/jpp-dbg", iter);
     if (env.trainer.loss() == 0) {
       break;
     }

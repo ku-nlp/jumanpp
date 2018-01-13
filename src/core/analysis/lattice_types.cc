@@ -14,7 +14,7 @@ namespace core {
 namespace analysis {
 
 Lattice::Lattice(util::memory::PoolAlloc *alloc, const LatticeConfig &lc)
-    : boundaries{alloc}, lconf{lc}, alloc{alloc} {}
+    : lconf{lc}, alloc{alloc} {}
 
 Status Lattice::makeBoundary(const LatticeBoundaryConfig &lbc,
                              LatticeBoundary **ptr) {
@@ -27,7 +27,6 @@ Status Lattice::makeBoundary(const LatticeBoundaryConfig &lbc,
 
 void Lattice::reset() {
   boundaries.clear();
-  boundaries.shrink_to_fit();
 }
 
 void Lattice::hintSize(u32 size) { boundaries.reserve(size); }

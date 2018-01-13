@@ -43,10 +43,12 @@ TEST_CASE("stringpiece has working std::hash and std::equal_to impls") {
   CHECK_FALSE(equalFn("test5", "test3"));
 }
 
+#ifndef _MSC_VER
 TEST_CASE("StringPiece can be constexpr") {
-  constexpr StringPiece sp{"test"};
-  CHECK(sp == "test");
+  constexpr StringPiece sp{"merge"};
+  CHECK(sp == "merge");
 }
+#endif
 
 TEST_CASE("StringPiece constructs from CString") {
   auto sp = StringPiece::fromCString("test");

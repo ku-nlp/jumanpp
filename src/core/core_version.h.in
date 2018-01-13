@@ -7,7 +7,7 @@
 namespace jumanpp {
 namespace core {
 
-constexpr const StringPiece JPP_VERSION_STRING { "@JUMANPP_FULL_VERSION@" };
+static const StringPiece JPP_VERSION_STRING { "@JUMANPP_FULL_VERSION@" };
 
 }
 }
