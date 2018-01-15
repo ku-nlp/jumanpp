@@ -105,5 +105,11 @@ void JumanppEnv::setGlobalBeam(i32 globalBeam, i32 rightCheck, i32 rightBeam) {
   analyzerConfig_.rightGbeamSize = rightBeam;
 }
 
+void JumanppEnv::setAutoBeam(i32 base, i32 step, i32 max) {
+  analyzerConfig_.autoBeamBase = base;
+  analyzerConfig_.autoBeamStep = step;
+  analyzerConfig_.autoBeamMax = max;
+}
+
 }  // namespace core
 }  // namespace jumanpp

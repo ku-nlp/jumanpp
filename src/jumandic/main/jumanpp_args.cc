@@ -19,6 +19,26 @@ namespace jumandic {
 
 namespace {
 
+template <typename T, typename Iter>
+T to_int10(Iter start, Iter end) {
+  T result = T{0};
+  while (start != end) {
+    auto c = *start;
+    auto diff = c - '0';
+    result += diff;
+    ++start;
+    if (start != end) {
+      result *= 10;
+    }
+  }
+  return result;
+}
+
+template <typename T, typename Pair>
+T to_int10(const Pair& p) {
+  return to_int10<T>(p.first, p.second);
+}
+
 struct JppArgsParser {
   args::ArgumentParser parser{"Juman++ v2"};
 
@@ -80,6 +100,11 @@ struct JppArgsParser {
       analysisParams, "N", "Right check size", {"right-check"}};
   args::ValueFlag<i32> rightBeamSize{
       analysisParams, "N", "Right beam size", {"right-beam"}};
+  args::ValueFlag<std::string> autoBeam{
+      analysisParams,
+      "BASE:STEP:MAX",
+      "Automatic beam size (from length). Sets local and global left beams.",
+      {"auto-nbest"}};
 #ifdef JPP_ENABLE_DEV_TOOLS
   args::Group devParams{parser, "Dev options"};
   args::Flag globalBeamPos{devParams,
@@ -181,6 +206,17 @@ struct JppArgsParser {
     result->globalBeam.set(globalBeamSize);
     result->rightCheck.set(rightCheckBeam);
     result->rightBeam.set(rightBeamSize);
+
+    if (autoBeam) {
+      std::regex autoBeamRegex("^(\\d+):(\\d+):(\\d+)$");
+      std::smatch results;
+      auto& s = autoBeam.Get();
+      if (std::regex_search(s, results, autoBeamRegex)) {
+        result->beamSize = to_int10<i32>(results[1]);
+        result->autoStep = to_int10<i32>(results[2]);
+        result->globalBeam = to_int10<i32>(results[3]);
+      }
+    }
 
 #ifdef JPP_ENABLE_DEV_TOOLS
     result->outputType.set(globalBeamPos, OutputType::GlobalBeamPos);

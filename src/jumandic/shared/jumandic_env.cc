@@ -26,6 +26,9 @@ Status JumanppExec::init() {
   JPP_RETURN_IF_ERROR(env.loadModel(conf.modelFile.value()));
   env.setBeamSize(conf.beamSize);
   env.setGlobalBeam(conf.globalBeam, conf.rightCheck, conf.rightBeam);
+  if (conf.autoStep.defined()) {
+    env.setAutoBeam(conf.beamSize, conf.autoStep, conf.globalBeam);
+  }
 
   bool newRnn = !conf.rnnModelFile.value().empty();
 
@@ -117,7 +120,11 @@ Status JumanppExec::writeGraphviz() {
   gb.row({"pos", "subpos"});
   gb.row({"conjform", "conjtype"});
   core::format::GraphVizFormat fmt;
-  JPP_RETURN_IF_ERROR(gb.build(&fmt, conf.beamSize));
+  auto beamSize = analyzer.impl()->autoBeamSizes();
+  if (beamSize == 0) {
+    beamSize = conf.beamSize;
+  }
+  JPP_RETURN_IF_ERROR(gb.build(&fmt, beamSize));
   JPP_RETURN_IF_ERROR(fmt.initialize(analyzer.output()));
   JPP_RETURN_IF_ERROR(fmt.render(analyzer.impl()->lattice()));
 

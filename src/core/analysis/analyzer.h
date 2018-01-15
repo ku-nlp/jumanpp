@@ -20,6 +20,9 @@ struct AnalyzerConfig {
   i32 rightGbeamCheck = 0;
   i32 rightGbeamSize = 0;
   bool storeAllPatterns = false;
+  i32 autoBeamStep = 0;
+  i32 autoBeamBase = 0;
+  i32 autoBeamMax = 0;
 };
 
 /**

@@ -18,6 +18,7 @@ Status AnalyzerImpl::resetForInput(StringPiece input) {
   reset();
   JPP_RETURN_IF_ERROR(input_.reset(input));
   latticeBldr_.reset(input_.numCodepoints());
+  autoBeamSizes();
   return Status::Ok();
 }
 
@@ -275,7 +276,7 @@ Status AnalyzerImpl::computeScoresGbeam(const ScorerDef* sconf) {
       proc.applyT0(boundary, sconf->feature);
     }
 
-    auto gbeam = proc.makeGlobalBeam(boundary, cfg().globalBeamSize);
+    auto gbeam = proc.makeGlobalBeam(boundary, latticeConfig_.globalBeamSize);
     proc.computeGbeamScores(boundary, gbeam, sconf->feature);
   }
 
@@ -340,6 +341,19 @@ bool AnalyzerImpl::setStoreAllPatterns(bool value) {
   }
   lattice_.updateConfig(latticeConfig_);
   return true;
+}
+
+i32 AnalyzerImpl::autoBeamSizes() {
+  if (cfg_.autoBeamStep == 0) {
+    return 0;
+  }
+  auto inputSize = input_.numCodepoints();
+  auto addedBeam = inputSize / cfg_.autoBeamStep;
+  i32 beamSize = std::min<i32>(cfg_.autoBeamBase + addedBeam, cfg_.autoBeamMax);
+  latticeConfig_.beamSize = static_cast<u32>(beamSize);
+  latticeConfig_.globalBeamSize = static_cast<u32>(beamSize);
+  lattice_.updateConfig(latticeConfig_);
+  return beamSize;
 }
 
 }  // namespace analysis

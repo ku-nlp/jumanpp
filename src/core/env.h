@@ -54,6 +54,7 @@ class JumanppEnv {
   model::ModelInfo modelInfoCopy() const { return modelInfo_; }
 
   void setGlobalBeam(i32 globalBeam, i32 rightCheck, i32 rightBeam);
+  void setAutoBeam(i32 base, i32 step, i32 max);
 
   const analysis::FeatureScorer* featureScorer() const { return &perceptron_; }
 };

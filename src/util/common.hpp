@@ -7,7 +7,7 @@
 
 #ifdef _MSC_VER
 #define JPP_ALWAYS_INLINE __forceinline
-#define JPP_NO_INLINE
+#define JPP_NO_INLINE __declspec(noinline)
 
 #define JPP_UNLIKELY(x) x
 #define JPP_LIKELY(x) x
@@ -18,6 +18,10 @@
 #define JPP_UNLIKELY(x) __builtin_expect((x), 0)
 #define JPP_LIKELY(x) __builtin_expect(!!(x), 1)
 #endif  //_MSC_VER
+
+#if __APPLE__ && __MACH__
+#define __unix__ 1
+#endif
 
 namespace jumanpp {
 namespace util {

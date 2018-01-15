@@ -46,6 +46,7 @@ struct JumanppConf {
   util::Cfg<i32> rightBeam = 5;
   util::Cfg<i32> rightCheck = 1;
   util::Cfg<i32> logLevel = 0;
+  util::Cfg<i32> autoStep = 0;
   util::Cfg<std::string> segmentSeparator{" "};
 
   void mergeWith(const JumanppConf& o) {
@@ -62,6 +63,7 @@ struct JumanppConf {
     rightBeam.mergeWith(o.rightBeam);
     rightCheck.mergeWith(o.rightCheck);
     logLevel.mergeWith(o.logLevel);
+    autoStep.mergeWith(o.autoStep);
     segmentSeparator.mergeWith(o.segmentSeparator);
   }
 
@@ -78,7 +80,7 @@ struct JumanppConf {
        << "\nrightBeam: " << conf.rightBeam
        << "\nrightCheck: " << conf.rightCheck
        << "\nsegmentSeparator: " << conf.segmentSeparator
-       << "\nlogLevel: " << conf.logLevel;
+       << "\nautoStep: " << conf.autoStep << "\nlogLevel: " << conf.logLevel;
     return os;
   }
 };

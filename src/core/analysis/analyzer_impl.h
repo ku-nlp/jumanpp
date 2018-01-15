@@ -94,6 +94,7 @@ class AnalyzerImpl {
   bool setGlobalBeam(i32 leftBeam, i32 rightCheck, i32 rightBeam);
   bool setStoreAllPatterns(bool value);
   const AnalysisInput& input() const { return input_; }
+  i32 autoBeamSizes();
 };
 
 }  // namespace analysis
