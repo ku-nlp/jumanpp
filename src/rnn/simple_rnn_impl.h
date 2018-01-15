@@ -5,7 +5,7 @@
 #ifndef JUMANPP_SIMPLE_RNN_IMPL_H
 #define JUMANPP_SIMPLE_RNN_IMPL_H
 
-#include <eigen3/Eigen/Core>
+#include <Eigen/Core>
 #include "util/memory.hpp"
 #include "util/sliceable_array.h"
 
