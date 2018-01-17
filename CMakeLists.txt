@@ -28,10 +28,6 @@ endif()
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dependencies.sh)
-    execute_process(COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/dependencies.sh)
-endif()
-
 include_directories("${CMAKE_SOURCE_DIR}/libs")
 
 option(JPP_TEST_REPORT_JUNIT OFF)
