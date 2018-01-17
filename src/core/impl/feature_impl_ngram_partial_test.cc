@@ -68,7 +68,7 @@ TEST_CASE("partial and full trigram features produce the same result") {
   NgramDynamicFeatureApply full;
   PartialNgramDynamicFeatureApply part;
   util::ArraySlice<float> fake{nullptr, fullMask + size_t{1}};
-  jumanpp::core::analysis::HashedFeaturePerceptron perc{fake};
+
   int idx = 0;
   auto add = [&](std::initializer_list<i32> data) {
     auto f = nf(idx++, data);

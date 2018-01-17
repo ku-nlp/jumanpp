@@ -34,8 +34,9 @@ TEST_CASE("function api works") {
 }
 
 TEST_CASE("indexed seq api works") {
-  auto seq = util::ArraySlice<i32>{7, 5, 0, 6, 2, 3};
-  auto idxes = util::ArraySlice<i32>{1, 3};
-  auto v = hashIndexedSeq(1, seq, idxes);
+  i32 seq[] = {7, 5, 0, 6, 2, 3};
+  i32 idxes[] = {1, 3};
+  auto idxSlice = util::ArraySlice<i32>{idxes};
+  auto v = hashIndexedSeq(1, seq, idxSlice);
   CHECK(v == 0x9ff35a5bb291c46fULL);
 }

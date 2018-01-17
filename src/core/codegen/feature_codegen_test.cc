@@ -204,7 +204,7 @@ TEST_CASE("partial ngram joint biTri produces the same values") {
   ars.maxStarts = NumExamples;
   ars.maxEnds = NumExamples;
 
-  util::ArraySlice<float> weights{
+  float weights[] = {
       1.0f, 5.0f, 10.0f, 50.0f, 100.0f, 500.0f, 0.1f, 0.5f,
       1.0f, 5.0f, 10.0f, 50.0f, 100.0f, 500.0f, 0.1f, 0.5f,
   };
@@ -220,7 +220,7 @@ TEST_CASE("partial ngram joint biTri produces the same values") {
 
   util::ConstSliceable<u64> sl0{inp.t0, NumFeatures, NumExamples};
   auto subset = sl0.rows(2, 5);
-  util::ArraySlice<u32> idxes{
+  u32 idxes[] = {
       0, 2, 1, 2, 1, 0, 0, 1, 0, 0,
   };
 
