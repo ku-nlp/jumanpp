@@ -55,3 +55,7 @@ add_subdirectory(src)
 if (IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/model)
     add_subdirectory(model)
 endif()
+
+if (JPP_USE_CPACK)
+    include(cmake/CPackJpp.cmake)
+endif()
