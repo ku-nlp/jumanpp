@@ -80,7 +80,12 @@ Status LatticeFormat::format(const core::analysis::Analyzer& analyzer,
     return Status::Ok();
   }
 
-  JPP_RETURN_IF_ERROR(latticeInfo.fillInfo(analyzer, topN));
+  i32 outputN = this->topN;
+  if (analyzer.impl()->cfg().autoBeamStep > 0) {
+    outputN = analyzer.impl()->autoBeamSizes();
+  }
+
+  JPP_RETURN_IF_ERROR(latticeInfo.fillInfo(analyzer, outputN));
 
   latticeInfo.publishResult(&infoView);
 
@@ -96,7 +101,7 @@ Status LatticeFormat::format(const core::analysis::Analyzer& analyzer,
     auto eos = lat->boundary(lat->createdBoundaryCount() - 1);
     auto eosBeam = eos->starts()->beamData();
 
-    for (int i = 0; i < topN; ++i) {
+    for (int i = 0; i < outputN; ++i) {
       auto& bel = eosBeam.at(i);
       if (core::analysis::EntryBeam::isFake(bel)) {
         break;
