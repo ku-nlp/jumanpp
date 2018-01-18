@@ -1,7 +1,5 @@
 set(jpp_core_cfg_dir ${CMAKE_CURRENT_BINARY_DIR}/cfg)
 
-set(JPP_USE_PROTOBUF ${Protobuf_FOUND})
-
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/core_config.h.in
   ${jpp_core_cfg_dir}/core_config.h
@@ -25,7 +23,7 @@ set(core_tsrcs)
 set(core_hdrs)
 
 
-if (${Protobuf_FOUND})
+if (${JPP_USE_PROTOBUF})
   protobuf_generate_cpp(core_srcs core_hdrs proto/lattice_dump.proto)
   add_subdirectory(proto)
 endif()
@@ -70,7 +68,7 @@ target_include_directories(jpp_core PUBLIC ${jpp_core_cfg_dir})
 target_link_libraries(jpp_core jpp_util jpp_rnn)
 target_link_libraries(jpp_core_tests jpp_core jpp_core_train)
 
-if (${Protobuf_FOUND})
+if (${JPP_USE_PROTOBUF})
   target_include_directories(jpp_core PRIVATE ${Protobuf_INCLUDE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
   target_link_libraries(jpp_core ${Protobuf_LIBRARY})
 endif()

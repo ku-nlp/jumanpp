@@ -24,7 +24,7 @@ jpp_feature_codegen(
   DEPEND shared/jumandic_spec.cc
 )
 
-if (${Protobuf_FOUND})
+if (${JPP_USE_PROTOBUF})
   list(APPEND jumandic_tests shared/jumandic_debug_dump_test.cc)
 endif()
 
