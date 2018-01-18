@@ -54,8 +54,6 @@ class StringPiece {
   JPP_ALWAYS_INLINE StringPiece& operator=(const StringPiece& other) noexcept =
       default;
 
-#ifndef _MSC_VER
-
   /**
    * This constructor accepts only string literals.
    * It ignores null byte at the end if there is one.
@@ -63,17 +61,14 @@ class StringPiece {
    * @param array
    */
   template <size_t array_size>
-  JPP_ALWAYS_INLINE constexpr StringPiece(
-      const char (&array)[array_size]) noexcept
-      : begin_{array}, end_{array + array_size - 1} {}
-
-#else
-
-  StringPiece(const char* data) : begin_{data} {
-    end_ = begin_ + std::strlen(data);
+  JPP_ALWAYS_INLINE
+  //MSVC has a bug with constexpr here :|
+#ifndef _MSC_VER
+      constexpr
+#endif
+      StringPiece(const char (&array)[array_size]) noexcept
+      : begin_{array}, end_{array + array_size - 1} {
   }
-
-#endif  // _MSC_VER
 
   /**
    * Constructor for everything that has .data(), .size() and its type can be
