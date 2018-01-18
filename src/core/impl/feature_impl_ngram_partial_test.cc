@@ -81,11 +81,11 @@ TEST_CASE("partial and full trigram features produce the same result") {
   add({1, 0});
   add({1, 1, 1});
   add({0, 0, 0});
-  util::ArraySlice<u64> t0data{
+  u64 t0data[] = {
       0, 1, 2, 0, 1, 2,
   };
-  util::ArraySlice<u64> t1data{5, 2};
-  util::ArraySlice<u64> t2data{
+  u64 t1data[] = {5, 2};
+  u64 t2data[] = {
       2, 1,
   };
   u32 resultFullBuf[6 * 3];
