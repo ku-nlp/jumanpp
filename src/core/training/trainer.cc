@@ -135,7 +135,7 @@ void TrainerBatch::shuffleData(bool usePartial) {
   numShuffles_ += 1;
 }
 
-Status TrainerBatch::readPartialExamples(PartialExampleReader *reader) {
+Status TrainerBatch::readPartialExamples(input::PartialExampleReader *reader) {
   std::unique_ptr<OwningPartialTrainer> trainer;
   trainer.reset(new OwningPartialTrainer);
   bool eof = true;

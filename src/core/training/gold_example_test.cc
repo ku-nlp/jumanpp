@@ -14,7 +14,7 @@ TEST_CASE("we can create a testing environment") {
   CHECK(spec.training.fields.size() == 2);
   FullyAnnotatedExample exobj;
   FullExampleReader tdr;
-  TrainingIo tio;
+  TrainFieldsIndex tio;
   REQUIRE_OK(tio.initialize(env.core()));
   tdr.setTrainingIo(&tio);
   REQUIRE_OK(tdr.initCsv(ex));
@@ -42,7 +42,7 @@ TEST_CASE("we can create a testing environment with merging nodes") {
   CHECK(spec.training.fields.size() == 2);
   FullyAnnotatedExample exobj;
   FullExampleReader tdr;
-  TrainingIo tio;
+  TrainFieldsIndex tio;
   REQUIRE_OK(tio.initialize(env.core()));
   tdr.setTrainingIo(&tio);
   REQUIRE_OK(tdr.initCsv(ex));
@@ -70,7 +70,7 @@ TEST_CASE("we can create a testing environment with unk nodes") {
   CHECK(spec.training.fields.size() == 2);
   FullyAnnotatedExample exobj;
   FullExampleReader tdr;
-  TrainingIo tio;
+  TrainFieldsIndex tio;
   REQUIRE_OK(tio.initialize(env.core()));
   tdr.setTrainingIo(&tio);
   REQUIRE_OK(tdr.initCsv(ex));
@@ -101,7 +101,7 @@ TEST_CASE(
   CHECK(spec.training.fields.size() == 2);
   FullyAnnotatedExample exobj;
   FullExampleReader tdr;
-  TrainingIo tio;
+  TrainFieldsIndex tio;
   REQUIRE_OK(tio.initialize(env.core()));
   tdr.setTrainingIo(&tio);
   REQUIRE_OK(tdr.initCsv(ex));

@@ -4,6 +4,7 @@
 
 #include <fstream>
 #include "core/impl/graphviz_format.h"
+#include "core/input/partial_example_io.h"
 #include "core/training/scw.h"
 #include "partial_trainer.h"
 #include "training_test_common.h"
@@ -17,8 +18,8 @@ class TrainerEnv : public GoldExampleEnv {
     tc.featureNumberExponent = 12;
     return tc;
   }
-  core::training::TrainingIo tio;
-  core::training::PartialExampleReader rdr;
+  core::training::TrainFieldsIndex tio;
+  core::input::PartialExampleReader rdr;
   core::training::PartialTrainer trainer;
   explicit TrainerEnv(StringPiece s, bool kataUnks = false)
       : GoldExampleEnv(s, kataUnks), trainer{anaImpl(), (1 << 12) - 1} {

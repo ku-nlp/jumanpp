@@ -15,8 +15,6 @@ namespace jumanpp {
 namespace core {
 namespace analysis {
 
-class LatticePlugin;
-
 using LatticePosition = u16;
 using Score = float;
 

@@ -10,6 +10,7 @@
 #include "core/analysis/extra_nodes.h"
 #include "core/analysis/lattice_builder.h"
 #include "core/analysis/lattice_types.h"
+#include "core/analysis/score_plugin.h"
 #include "core/analysis/score_processor.h"
 
 namespace jumanpp {
@@ -32,6 +33,7 @@ class AnalyzerImpl {
   std::vector<std::unique_ptr<ScoreComputer>> scorers_;
   LatticeCompactor compactor_;
   NgramStats ngramStats_;
+  ScorePlugin* plugin_ = nullptr;
 
  public:
   AnalyzerImpl(const AnalyzerImpl&) = delete;
@@ -49,6 +51,7 @@ class AnalyzerImpl {
     memMgr_.reset();
     alloc_->reset();
     sproc_ = nullptr;
+    plugin_ = nullptr;
   }
 
   // This set of functions is internal
@@ -95,6 +98,8 @@ class AnalyzerImpl {
   bool setStoreAllPatterns(bool value);
   const AnalysisInput& input() const { return input_; }
   i32 autoBeamSizes();
+  ScorePlugin* plugin() const { return plugin_; }
+  void setPlugin(ScorePlugin* plugin) { plugin_ = plugin; }
 };
 
 }  // namespace analysis

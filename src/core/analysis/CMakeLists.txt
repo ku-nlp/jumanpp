@@ -70,6 +70,7 @@ jpp_core_files(core_hdrs
   rnn_scorer_gbeam.h
   rnn_serialization.h
   score_api.h
+  score_plugin.h
   score_processor.h
   unk_maker_types.h
   unk_nodes.h

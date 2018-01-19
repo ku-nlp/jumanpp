@@ -6,6 +6,7 @@
 #define JUMANPP_TRAINING_ENV_H
 
 #include "core/analysis/rnn_scorer.h"
+#include "core/input/partial_example_io.h"
 #include "core/training/scw.h"
 #include "core/training/trainer.h"
 #include "core/training/training_executor.h"
@@ -56,9 +57,9 @@ class TrainingEnv {
   const TrainingArguments& args_;
   core::JumanppEnv* env_;
   core::analysis::AnalyzerConfig aconf_{};
-  TrainingIo trainingIo_;
+  TrainFieldsIndex trainingIo_;
   FullExampleReader fullReader_;
-  PartialExampleReader partReader_;
+  input::PartialExampleReader partReader_;
   TrainerBatch trainers_;
   SoftConfidenceWeighted scw_;
   TrainingExecutor executor_;

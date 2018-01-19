@@ -7,7 +7,7 @@
 
 #include <string>
 #include "core/analysis/extra_nodes.h"
-#include "core/training/training_io.h"
+#include "core/input/training_io.h"
 #include "util/characters.h"
 #include "util/csv_reader.h"
 #include "util/sliceable_array.h"
@@ -16,6 +16,9 @@
 namespace jumanpp {
 namespace core {
 namespace training {
+
+using core::input::ExampleInfo;
+using core::input::TrainFieldsIndex;
 
 struct ExampleNode {
   StringPiece surface;
@@ -91,7 +94,7 @@ class FullyAnnotatedExample {
 enum class DataReaderMode { SimpleCsv, DoubleCsv };
 
 class FullExampleReader {
-  const TrainingIo* tio_;
+  const TrainFieldsIndex* tio_;
   DataReaderMode mode_;
   util::CsvReader csv_;
   util::CsvReader csv2_;
@@ -105,7 +108,7 @@ class FullExampleReader {
                                    FullyAnnotatedExample* result);
 
  public:
-  void setTrainingIo(const TrainingIo* io) { tio_ = io; }
+  void setTrainingIo(const TrainFieldsIndex* io) { tio_ = io; }
 
   Status initDoubleCsv(StringPiece data, char tokenSep = ' ',
                        char fieldSep = '_');

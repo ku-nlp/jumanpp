@@ -6,7 +6,7 @@
 
 namespace jumanpp {
 namespace core {
-namespace training {
+namespace input {
 
 namespace {
 Status readStr2IdMap(const dic::DictionaryField &fld,
@@ -34,7 +34,7 @@ Status readStr2IdMap(const dic::DictionaryField &fld,
 }
 }  // namespace
 
-Status TrainingIo::initialize(const CoreHolder &core) {
+Status TrainFieldsIndex::initialize(const CoreHolder &core) {
   auto &spec = core.spec().training;
   storages_.resize(spec.fields.size());
   for (i32 i = 0; i < spec.fields.size(); ++i) {
@@ -53,6 +53,6 @@ Status TrainingIo::initialize(const CoreHolder &core) {
   return Status::Ok();
 }
 
-}  // namespace training
+}  // namespace input
 }  // namespace core
 }  // namespace jumanpp

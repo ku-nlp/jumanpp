@@ -2,8 +2,8 @@
 // Created by Arseny Tolmachev on 2017/10/11.
 //
 
-#include "partial_trainer.h"
-#include "training_test_common.h"
+#include "core/input/partial_example_io.h"
+#include "core/training/training_test_common.h"
 
 namespace {
 
@@ -58,14 +58,14 @@ class GoldExample2Env {
 
 }  // namespace
 
-namespace t = jumanpp::core::training;
+namespace t = jumanpp::core::input;
 namespace a = jumanpp::core::analysis;
 
 TEST_CASE("can read partitial example") {
   StringPiece dic = "X,X,Y,Z\nもも,1,a,A\nも,2,b,B\n";
   StringPiece ex = "# test\nもも\nも\nもも\n\n";
   GoldExample2Env env{dic};
-  t::TrainingIo tio;
+  t::TrainFieldsIndex tio;
   REQUIRE_OK(tio.initialize(env.core()));
   t::PartialExampleReader rdr;
   REQUIRE_OK(rdr.setData(ex));
@@ -91,7 +91,7 @@ TEST_CASE("can read empty example") {
   StringPiece dic = "X,X,Y,Z\nもも,1,a,A\nも,2,b,B\n";
   StringPiece ex = "\n";
   GoldExample2Env env{dic};
-  t::TrainingIo tio;
+  t::TrainFieldsIndex tio;
   REQUIRE_OK(tio.initialize(env.core()));
   t::PartialExampleReader rdr;
   REQUIRE_OK(rdr.setData(ex));
@@ -112,7 +112,7 @@ TEST_CASE("can read example with a single element") {
   StringPiece dic = "X,X,Y,Z\nもも,1,a,A\nも,2,b,B\n";
   StringPiece ex = "もも\n\n";
   GoldExample2Env env{dic};
-  t::TrainingIo tio;
+  t::TrainFieldsIndex tio;
   REQUIRE_OK(tio.initialize(env.core()));
   t::PartialExampleReader rdr;
   REQUIRE_OK(rdr.setData(ex));
@@ -133,7 +133,7 @@ TEST_CASE("can read example with a single element and nobreak") {
   StringPiece dic = "X,X,Y,Z\nもも,1,a,A\nも,2,b,B\n";
   StringPiece ex = "も&も\n\n";
   GoldExample2Env env{dic};
-  t::TrainingIo tio;
+  t::TrainFieldsIndex tio;
   REQUIRE_OK(tio.initialize(env.core()));
   t::PartialExampleReader rdr;
   REQUIRE_OK(rdr.setData(ex));
@@ -156,7 +156,7 @@ TEST_CASE("can read example with a single tagged element (0 tags)") {
   StringPiece dic = "X,X,Y,Z\nもも,1,a,A\nも,2,b,B\n";
   StringPiece ex = "\tもも\n\n";
   GoldExample2Env env{dic};
-  t::TrainingIo tio;
+  t::TrainFieldsIndex tio;
   REQUIRE_OK(tio.initialize(env.core()));
   t::PartialExampleReader rdr;
   REQUIRE_OK(rdr.setData(ex));
@@ -178,7 +178,7 @@ TEST_CASE("can read example with a single tagged element (1 tags)") {
   StringPiece dic = "X,X,Y,Z\nもも,1,a,A\nも,2,b,B\nL,2,b,B\n";
   StringPiece ex = "\tもも\td:A\n\n";
   GoldExample2Env env{dic};
-  t::TrainingIo tio;
+  t::TrainFieldsIndex tio;
   REQUIRE_OK(tio.initialize(env.core()));
   t::PartialExampleReader rdr;
   REQUIRE_OK(rdr.setData(ex));
@@ -202,7 +202,7 @@ TEST_CASE("can read example with a single tagged element (3 tags)") {
   StringPiece dic = "X,X,Y,Z\nもも,1,a,A\nも,2,b,B\nL,2,b,B\n";
   StringPiece ex = "\tもも\tb:b\td:1\tc:B\n\n";
   GoldExample2Env env{dic};
-  t::TrainingIo tio;
+  t::TrainFieldsIndex tio;
   REQUIRE_OK(tio.initialize(env.core()));
   t::PartialExampleReader rdr;
   REQUIRE_OK(rdr.setData(ex));
@@ -228,7 +228,7 @@ TEST_CASE("can read tagged and single example") {
   StringPiece dic = "X,X,Y,Z\nもも,1,a,A\nも,2,b,B\n";
   StringPiece ex = "も\n\tもも\n\n\tも\nも\n\tも\n\n";
   GoldExample2Env env{dic};
-  t::TrainingIo tio;
+  t::TrainFieldsIndex tio;
   REQUIRE_OK(tio.initialize(env.core()));
   t::PartialExampleReader rdr;
   REQUIRE_OK(rdr.setData(ex));
@@ -261,7 +261,7 @@ TEST_CASE("can read two examples to the same place") {
   StringPiece dic = "X,X,Y,Z\nもも,1,a,A\nも,2,b,B\n";
   StringPiece ex = "も\n\tもも\n\n\tも\nも\n\tも\n\n";
   GoldExample2Env env{dic};
-  t::TrainingIo tio;
+  t::TrainFieldsIndex tio;
   REQUIRE_OK(tio.initialize(env.core()));
   t::PartialExampleReader rdr;
   REQUIRE_OK(rdr.setData(ex));

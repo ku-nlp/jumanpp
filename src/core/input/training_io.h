@@ -13,7 +13,7 @@
 
 namespace jumanpp {
 namespace core {
-namespace training {
+namespace input {
 
 struct ExampleInfo {
   StringPiece file;
@@ -28,7 +28,11 @@ struct TrainingExampleField {
   i32 exampleFieldIdx;
 };
 
-class TrainingIo {
+/**
+ * Allows access to int values of fields marked for training.
+ * But the initialization is costly.
+ */
+class TrainFieldsIndex {
   std::vector<util::FlatMap<StringPiece, i32>> storages_;
   std::vector<TrainingExampleField> fields_;
   i32 surfaceFieldIdx_;
@@ -45,7 +49,7 @@ class TrainingIo {
   Status initialize(const CoreHolder& core);
 };
 
-}  // namespace training
+}  // namespace input
 }  // namespace core
 }  // namespace jumanpp
 

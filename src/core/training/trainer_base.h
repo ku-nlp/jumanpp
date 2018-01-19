@@ -7,12 +7,14 @@
 
 #include "core/analysis/analyzer.h"
 #include "core/analysis/score_api.h"
-#include "core/training/training_io.h"
+#include "core/input/training_io.h"
 #include "core/training/training_types.h"
 
 namespace jumanpp {
 namespace core {
 namespace training {
+
+using core::input::ExampleInfo;
 
 struct ScoredFeature {
   u32 feature;

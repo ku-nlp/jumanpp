@@ -6,7 +6,7 @@
 #define JUMANPP_PARTIAL_EXAMPLE_H
 
 #include "core/analysis/lattice_config.h"
-#include "core/training/training_io.h"
+#include "core/input/training_io.h"
 #include "util/array_slice.h"
 #include "util/string_piece.h"
 
@@ -15,7 +15,7 @@ namespace core {
 namespace analysis {
 class LatticeRightBoundary;
 }
-namespace training {
+namespace input {
 
 struct TagConstraint {
   i32 field;
@@ -75,7 +75,7 @@ class PartialExample {
   friend class PartialExampleReader;
 };
 
-}  // namespace training
+}  // namespace input
 }  // namespace core
 }  // namespace jumanpp
 

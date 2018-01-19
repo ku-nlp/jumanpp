@@ -33,6 +33,7 @@ add_subdirectory(api)
 add_subdirectory(codegen)
 add_subdirectory(dic)
 add_subdirectory(impl)
+add_subdirectory(input)
 add_subdirectory(spec)
 add_subdirectory(training)
 

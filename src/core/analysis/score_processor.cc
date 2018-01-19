@@ -69,11 +69,28 @@ ScoreProcessor::ScoreProcessor(AnalyzerImpl *analyzer)
 
   patternStatic_ = analyzer->core().features().patternStatic.get();
   patternDynamic_ = analyzer->core().features().patternDynamic.get();
+  plugin_ = analyzer->plugin();
 }
 
 void ScoreProcessor::copyFeatureScores(i32 left, i32 beam,
                                        LatticeBoundaryScores *bndconn) {
   bndconn->importBeamScore(left, 0, beam, scores_.bufferT2());
+}
+
+void ScoreProcessor::applyPluginToFullBeam(i32 bndNum, i32 left, i32 beam) {
+  if (!plugin_) {
+    return;
+  }
+
+  auto &prev = beamPtrs_.at(beam);
+  auto score = scores_.bufferT2();
+
+  for (u16 t0 = 0; t0 < score.size(); ++t0) {
+    ConnectionPtr ptr{static_cast<u16>(bndNum), static_cast<u16>(left), t0,
+                      static_cast<u16>(beam), &prev.ptr};
+
+    plugin_->updateScore(lattice_, ptr, &score.at(t0));
+  }
 }
 
 void ScoreProcessor::resolveBeamAt(i32 boundary, i32 position) {
@@ -271,15 +288,13 @@ void ScoreProcessor::computeGbeamScores(i32 bndIdx,
 
   if (cfg_->rightGbeamCheck > 0) {
     // we cut off right elements as well
-    computeT0Prescores(gbeam, features);
+
     auto size = static_cast<size_t>(cfg_->rightGbeamCheck);
     auto fullBeamApplySize =
         std::min<size_t>({size, bnd->localNodeCount(), gbeam.size()});
-    auto toKeep = std::min<i32>(cfg_->rightGbeamSize, bnd->localNodeCount());
-    makeT0cutoffBeam(fullBeamApplySize, toKeep);
-
-    u32 remainingItems =
-        (u32)std::max<i32>(gbeam.size() - fullBeamApplySize, 0);
+    auto toKeep = std::min<u32>(static_cast<u32>(cfg_->rightGbeamSize),
+                                bnd->localNodeCount());
+    u32 remainingItems = std::max<u32>(gbeam.size() - fullBeamApplySize, 0);
     auto t1PtrTail =
         util::ArraySlice<u32>{t1Ptrs, fullBeamApplySize, remainingItems};
     auto t2Tail = t2data.rows(fullBeamApplySize, t2data.numRows());
@@ -288,6 +303,10 @@ void ScoreProcessor::computeGbeamScores(i32 bndIdx,
     util::ArraySlice<BeamCandidate> gbeamHead{gbeam, 0, fullBeamApplySize};
     util::ArraySlice<BeamCandidate> gbeamTail{gbeam, fullBeamApplySize,
                                               remainingItems};
+
+    computeT0Prescores(gbeam, features);
+    applyPluginToPrescores(bndIdx, gbeamHead);
+    makeT0cutoffBeam(static_cast<u32>(fullBeamApplySize), toKeep);
 
     auto t0pos = 0;
     // first, we process elements which require feature/score computation
@@ -302,6 +321,7 @@ void ScoreProcessor::computeGbeamScores(i32 bndIdx,
         auto t0Score = scores_.bufferT0().at(t0idx);
         ngramApply_->applyBiTri(&featureBuffer_, t0idx, t0, t1data, t2Tail,
                                 t1PtrTail, features, resultTail);
+        applyPluginToGbeam(bndIdx, t0idx, gbeamTail, resultTail);
         copyT0Scores(bndIdx, t0idx, gbeamTail, resultTail, t0Score);
       }
       makeT0Beam(bndIdx, t0idx, gbeam, result);
@@ -325,6 +345,7 @@ void ScoreProcessor::computeGbeamScores(i32 bndIdx,
       ngramApply_->applyBiTri(&featureBuffer_, t0idx, t0, t1data, t2data,
                               t1Ptrs, features, result);
       auto t0Score = scores_.bufferT0().at(t0idx);
+      applyPluginToGbeam(bndIdx, t0idx, gbeam, result);
       copyT0Scores(bndIdx, t0idx, gbeam, result, t0Score);
       makeT0Beam(bndIdx, t0idx, gbeam, result);
     }
@@ -544,6 +565,43 @@ void ScoreProcessor::remakeEosBeam(util::ArraySlice<float> scoreWeights) {
     fullScores.at(i) = localScore + beamScore;
   }
   makeT0Beam(nbnd - 1, 0, lastGbeam, fullScores);
+}
+
+void ScoreProcessor::applyPluginToPrescores(
+    i32 bndIdx, util::ArraySlice<BeamCandidate> gbeam) {
+  if (plugin_) {
+    auto bnd = lattice_->boundary(bndIdx);
+    auto t0num = bnd->localNodeCount();
+    for (u32 t1i = 0; t1i < gbeam.size(); ++t1i) {
+      auto scores = t0prescores_.row(t1i);
+      auto &t1bc = gbeam.at(t1i);
+      auto &t1nptr = bnd->ends()->nodePtrs().at(t1bc.left());
+      auto t1bnd = lattice_->boundary(t1nptr.boundary)->starts();
+      auto &t1beam = t1bnd->beamData().row(t1nptr.position).at(t1bc.beam());
+      for (int t0 = 0; t0 < t0num; ++t0) {
+        ConnectionPtr ptr{static_cast<u16>(bndIdx), t1bc.left(),
+                          static_cast<u16>(t0), t1bc.beam(), &t1beam.ptr};
+        plugin_->updateScore(lattice_, ptr, &scores.at(t0));
+      }
+    }
+  }
+}
+
+void ScoreProcessor::applyPluginToGbeam(i32 bndIdx, i32 t0idx,
+                                        util::ArraySlice<BeamCandidate> gbeam,
+                                        util::MutableArraySlice<Score> scores) {
+  if (plugin_) {
+    auto bnd = lattice_->boundary(bndIdx);
+    for (u32 t1i = 0; t1i < gbeam.size(); ++t1i) {
+      auto &t1bc = gbeam.at(t1i);
+      auto &t1nptr = bnd->ends()->nodePtrs().at(t1bc.left());
+      auto t1bnd = lattice_->boundary(t1nptr.boundary)->starts();
+      auto &t1beam = t1bnd->beamData().row(t1nptr.position).at(t1bc.beam());
+      ConnectionPtr ptr{static_cast<u16>(bndIdx), t1bc.left(),
+                        static_cast<u16>(t0idx), t1bc.beam(), &t1beam.ptr};
+      plugin_->updateScore(lattice_, ptr, &scores.at(t1i));
+    }
+  }
 }
 
 }  // namespace analysis

@@ -9,6 +9,7 @@
 #include "core/analysis/lattice_config.h"
 #include "core/analysis/ngram_computations.h"
 #include "core/analysis/score_api.h"
+#include "core/analysis/score_plugin.h"
 #include "core/features_api.h"
 #include "util/memory.hpp"
 
@@ -124,6 +125,7 @@ struct ScoreProcessor {
   Lattice* lattice_;
   features::AnalysisRunStats runStats_;
   util::MutableArraySlice<BeamCandidate> beamCandidates_;
+  ScorePlugin* plugin_;
 
   const AnalyzerConfig* cfg_;
   i32 globalBeamSize_;
@@ -180,6 +182,12 @@ struct ScoreProcessor {
                               features::impl::PrimitiveFeatureContext* pfc);
   void adjustBeamScores(util::ArraySlice<float> scoreWeights);
   void remakeEosBeam(util::ArraySlice<float> scoreWeights);
+  void applyPluginToPrescores(i32 bndIdx,
+                              util::ArraySlice<BeamCandidate> gbeam);
+  void applyPluginToGbeam(i32 bndIdx, i32 t0idx,
+                          util::ArraySlice<BeamCandidate> gbeam,
+                          util::MutableArraySlice<Score> scores);
+  void applyPluginToFullBeam(i32 bndNum, i32 left, i32 beam);
 };
 
 }  // namespace analysis

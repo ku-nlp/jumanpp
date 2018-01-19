@@ -6,10 +6,10 @@
 #define JUMANPP_TRAINER_H
 
 #include "core/analysis/perceptron.h"
+#include "core/input/partial_example_io.h"
 #include "core/training/gold_example.h"
 #include "core/training/loss.h"
 #include "core/training/partial_trainer.h"
-#include "core/training/training_io.h"
 #include "core/training/training_types.h"
 
 namespace jumanpp {
@@ -150,7 +150,7 @@ class TrainerBatch {
                     const analysis::ScorerDef* sconf, i32 numTrainers);
 
   Status readFullBatch(FullExampleReader* rdr);
-  Status readPartialExamples(PartialExampleReader* reader);
+  Status readPartialExamples(input::PartialExampleReader* reader);
 
   void cleanParital() { partialTrainerts_.clear(); }
 

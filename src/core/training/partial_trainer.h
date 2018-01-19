@@ -9,9 +9,9 @@
 #include <vector>
 #include "core/analysis/analysis_result.h"
 #include "core/analysis/analyzer_impl.h"
-#include "core/training/partial_example.h"
+#include "core/input/partial_example.h"
+#include "core/input/training_io.h"
 #include "core/training/trainer_base.h"
-#include "training_io.h"
 #include "util/characters.h"
 #include "util/common.hpp"
 #include "util/csv_reader.h"
@@ -21,6 +21,10 @@
 namespace jumanpp {
 namespace core {
 namespace training {
+
+using core::input::TrainingExampleField;
+using core::input::TrainFieldsIndex;
+using core::input::PartialExample;
 
 class PartialTrainer {
   PartialExample example_;
@@ -123,22 +127,6 @@ class OwningPartialTrainer : public ITrainer {
       std::function<void(analysis::LatticeNodePtr)> callback) const override;
   analysis::Lattice* lattice() const override;
   void setGlobalBeam(const GlobalBeamTrainConfig& cfg) override;
-};
-
-class PartialExampleReader {
-  std::string filename_;
-  TrainingIo* tio_;
-  util::FlatMap<StringPiece, const TrainingExampleField*> fields_;
-  util::FullyMappedFile file_;
-  util::CsvReader csv_{'\t', '\0'};
-  char32_t noBreakToken_ = U'&';
-  std::vector<chars::InputCodepoint> codepts_;
-
- public:
-  Status initialize(TrainingIo* tio, char32_t noBreakToken = U'&');
-  Status readExample(PartialExample* result, bool* eof);
-  Status openFile(StringPiece filename);
-  Status setData(StringPiece data);
 };
 
 }  // namespace training

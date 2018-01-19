@@ -18,7 +18,7 @@ class TrainerEnv : public GoldExampleEnv {
     tc.featureNumberExponent = 12;
     return tc;
   }
-  core::training::TrainingIo tio;
+  core::training::TrainFieldsIndex tio;
   core::training::FullExampleReader rdr;
   Trainer trainer;
   TrainerEnv(StringPiece s, bool kataUnks = false)

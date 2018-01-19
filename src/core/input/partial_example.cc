@@ -7,7 +7,7 @@
 
 namespace jumanpp {
 namespace core {
-namespace training {
+namespace input {
 
 bool PartialExample::doesNodeMatch(const analysis::Lattice* lr, i32 boundary,
                                    i32 position) const {
@@ -84,6 +84,6 @@ bool PartialExample::validBoundary(i32 bndIdx) const {
   return true;
 }
 
-}  // namespace training
+}  // namespace input
 }  // namespace core
 }  // namespace jumanpp

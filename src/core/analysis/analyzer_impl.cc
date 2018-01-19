@@ -234,6 +234,7 @@ Status AnalyzerImpl::computeScoresFull(const ScorerDef* sconf) {
         JPP_CAPTURE(beamIdx);
         proc.applyT2(beamIdx, sconf->feature);
         proc.copyFeatureScores(t1idx, beamIdx, scores);
+        proc.applyPluginToFullBeam(boundary, t1idx, beamIdx);
       }
     }
 

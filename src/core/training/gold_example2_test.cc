@@ -65,7 +65,7 @@ TEST_CASE("can read simple example with aliased node") {
   CHECK(tspec.fields.size() == 4);
   FullyAnnotatedExample exobj;
   FullExampleReader tdr;
-  TrainingIo tio;
+  TrainFieldsIndex tio;
   REQUIRE_OK(tio.initialize(env.core()));
   tdr.setTrainingIo(&tio);
   REQUIRE_OK(tdr.initDoubleCsv(ex));
@@ -93,7 +93,7 @@ TEST_CASE("can read simple example with hidden node") {
   auto tspec = spec.training;
   FullyAnnotatedExample exobj;
   FullExampleReader tdr;
-  TrainingIo tio;
+  TrainFieldsIndex tio;
   REQUIRE_OK(tio.initialize(env.core()));
   tdr.setTrainingIo(&tio);
   REQUIRE_OK(tdr.initDoubleCsv(ex));
