@@ -100,7 +100,7 @@ class AnalysisPath {
     return false;
   }
 
-  bool isLastBoundary() const { return currentChunk_ == numBoundaries(); }
+  bool isLastBoundary() const { return currentChunk_ == numBoundaries() - 1; }
 
   void moveToChunk(i32 pos) {
     JPP_DCHECK_IN(pos, 0, offsets_.size());
