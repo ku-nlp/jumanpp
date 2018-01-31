@@ -44,7 +44,7 @@ Status JumanppExec::init() {
 
   jumanpp_generated::JumandicStatic features;
   JPP_RETURN_IF_ERROR(env.initFeatures(&features));
-  JPP_RETURN_IF_ERROR(env.makeAnalyzer(&analyzer));
+  JPP_RETURN_IF_ERROR(env.makeAnalyzer(&analyzer_));
   JPP_RETURN_IF_ERROR(initOutput());
   return Status::Ok();
 }
@@ -53,38 +53,39 @@ Status JumanppExec::initOutput() {
   switch (conf.outputType.value()) {
     case jumandic::OutputType::Juman: {
       auto jfmt = new jumandic::output::JumanFormat;
-      format.reset(jfmt);
-      JPP_RETURN_IF_ERROR(jfmt->initialize(analyzer.output()));
+      format_.reset(jfmt);
+      JPP_RETURN_IF_ERROR(jfmt->initialize(analyzer_.output()));
       break;
     }
     case jumandic::OutputType::Morph: {
       auto mfmt = new jumandic::output::MorphFormat(false);
-      format.reset(mfmt);
-      JPP_RETURN_IF_ERROR(mfmt->initialize(analyzer.output()));
+      format_.reset(mfmt);
+      JPP_RETURN_IF_ERROR(mfmt->initialize(analyzer_.output()));
       break;
     }
     case jumandic::OutputType::FullMorph: {
       auto mfmt = new jumandic::output::MorphFormat(true);
-      format.reset(mfmt);
-      JPP_RETURN_IF_ERROR(mfmt->initialize(analyzer.output()));
+      format_.reset(mfmt);
+      JPP_RETURN_IF_ERROR(mfmt->initialize(analyzer_.output()));
       break;
     }
     case OutputType::DicSubset: {
       auto mfmt = new jumandic::output::SubsetFormat{};
-      format.reset(mfmt);
-      JPP_RETURN_IF_ERROR(mfmt->initialize(analyzer.output()));
+      format_.reset(mfmt);
+      JPP_RETURN_IF_ERROR(mfmt->initialize(analyzer_.output()));
       break;
     }
     case OutputType::Lattice: {
       auto mfmt = new jumandic::output::LatticeFormat{conf.beamOutput};
-      format.reset(mfmt);
-      JPP_RETURN_IF_ERROR(mfmt->initialize(analyzer.output()));
+      format_.reset(mfmt);
+      JPP_RETURN_IF_ERROR(mfmt->initialize(analyzer_.output()));
       break;
     }
     case OutputType::Segmentation: {
       auto mfmt = new core::output::SegmentedFormat{};
-      format.reset(mfmt);
-      JPP_RETURN_IF_ERROR(mfmt->initialize(analyzer.output(), *env.coreHolder(),
+      format_.reset(mfmt);
+      JPP_RETURN_IF_ERROR(mfmt->initialize(analyzer_.output(),
+                                           *env.coreHolder(),
                                            conf.segmentSeparator.value()));
       break;
     }
@@ -94,17 +95,17 @@ Status JumanppExec::initOutput() {
 #ifdef JPP_ENABLE_DEV_TOOLS
     case OutputType::GlobalBeamPos: {
       auto mfmt = new core::output::GlobalBeamPositionFormat{conf.globalBeam};
-      format.reset(mfmt);
-      JPP_RETURN_IF_ERROR(mfmt->initialize(analyzer));
+      format_.reset(mfmt);
+      JPP_RETURN_IF_ERROR(mfmt->initialize(analyzer_));
       break;
     }
 #if defined(JPP_USE_PROTOBUF)
     case OutputType::FullLatticeDump: {
       auto mfmt = new core::output::LatticeDumpOutput;
-      format.reset(mfmt);
+      format_.reset(mfmt);
       JPP_RETURN_IF_ERROR(
-          mfmt->initialize(analyzer.impl(), &env.featureScorer()->weights()));
-      analyzer.impl()->setStoreAllPatterns(true);
+          mfmt->initialize(analyzer_.impl(), &env.featureScorer()->weights()));
+      analyzer_.impl()->setStoreAllPatterns(true);
       break;
     }
 #endif
@@ -120,13 +121,13 @@ Status JumanppExec::writeGraphviz() {
   gb.row({"pos", "subpos"});
   gb.row({"conjform", "conjtype"});
   core::format::GraphVizFormat fmt;
-  auto beamSize = analyzer.impl()->autoBeamSizes();
+  auto beamSize = analyzer_.impl()->autoBeamSizes();
   if (beamSize == 0) {
     beamSize = conf.beamSize;
   }
   JPP_RETURN_IF_ERROR(gb.build(&fmt, beamSize));
-  JPP_RETURN_IF_ERROR(fmt.initialize(analyzer.output()));
-  JPP_RETURN_IF_ERROR(fmt.render(analyzer.impl()->lattice()));
+  JPP_RETURN_IF_ERROR(fmt.initialize(analyzer_.output()));
+  JPP_RETURN_IF_ERROR(fmt.render(analyzer_.impl()->lattice()));
 
   auto filename =
       fmt::format("{0}/{1:08}.dot", conf.graphvizDir.value(), numAnalyzed_);

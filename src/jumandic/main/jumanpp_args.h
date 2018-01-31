@@ -32,11 +32,15 @@ enum class OutputType {
 #endif
 };
 
+enum class InputType { Raw, PartiallyAnnotated };
+
 struct JumanppConf {
   util::Cfg<std::string> configFile;
   util::Cfg<std::string> modelFile;
   util::Cfg<OutputType> outputType = OutputType::Juman;
-  util::Cfg<std::string> inputFile{"-"};
+  util::Cfg<InputType> inputType = InputType::Raw;
+  util::Cfg<std::string> outputFile{"-"};
+  util::Cfg<std::vector<std::string>> inputFiles{};
   util::Cfg<std::string> rnnModelFile;
   core::analysis::rnn::RnnInferenceConfig rnnConfig{};
   util::Cfg<std::string> graphvizDir;
@@ -53,7 +57,9 @@ struct JumanppConf {
     configFile.mergeWith(o.configFile);
     modelFile.mergeWith(o.modelFile);
     outputType.mergeWith(o.outputType);
-    inputFile.mergeWith(o.inputFile);
+    outputFile.mergeWith(o.outputFile);
+    inputType.mergeWith(o.inputType);
+    inputFiles.mergeWith(o.inputFiles);
     rnnModelFile.mergeWith(o.rnnModelFile);
     rnnConfig.mergeWith(o.rnnConfig);
     graphvizDir.mergeWith(o.graphvizDir);
@@ -67,22 +73,7 @@ struct JumanppConf {
     segmentSeparator.mergeWith(o.segmentSeparator);
   }
 
-  friend std::ostream& operator<<(std::ostream& os, const JumanppConf& conf) {
-    os << "\nconfigFile: " << conf.configFile
-       << "\nmodelFile: " << conf.modelFile
-       << "\noutputType: " << static_cast<int>(conf.outputType.value())
-       << "\ninputFile: " << conf.inputFile
-       << "\nrnnModelFile: " << conf.rnnModelFile
-       << "\nrnnConfig: " << conf.rnnConfig
-       << "\ngraphvizDir: " << conf.graphvizDir
-       << "\nbeamSize: " << conf.beamSize << "\nbeamOutput: " << conf.beamOutput
-       << "\nglobalBeam: " << conf.globalBeam
-       << "\nrightBeam: " << conf.rightBeam
-       << "\nrightCheck: " << conf.rightCheck
-       << "\nsegmentSeparator: " << conf.segmentSeparator
-       << "\nautoStep: " << conf.autoStep << "\nlogLevel: " << conf.logLevel;
-    return os;
-  }
+  friend std::ostream& operator<<(std::ostream& os, const JumanppConf& conf);
 };
 
 Status parseArgs(int argc, const char* argv[], JumanppConf* result);

@@ -13,7 +13,7 @@ namespace analysis {
 
 class ScorePlugin {
  public:
-  virtual ~ScorePlugin() = 0;
+  virtual ~ScorePlugin() = default;
   virtual bool updateScore(const Lattice* l, const ConnectionPtr& ptr,
                            float* score) const = 0;
 };

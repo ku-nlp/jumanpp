@@ -21,8 +21,8 @@ class JumanppExec {
  protected:
   jumandic::JumanppConf conf;
   core::JumanppEnv env;
-  core::analysis::Analyzer analyzer;
-  std::unique_ptr<core::OutputFormat> format;
+  core::analysis::Analyzer analyzer_;
+  std::unique_ptr<core::OutputFormat> format_;
 
   // rnn
   core::analysis::RnnScorerGbeamFactory rnnFactory;
@@ -40,8 +40,8 @@ class JumanppExec {
 
   Status analyze(StringPiece data, StringPiece comment = EMPTY_SP) {
     try {
-      JPP_RETURN_IF_ERROR(analyzer.analyze(data));
-      JPP_RETURN_IF_ERROR(format->format(analyzer, comment))
+      JPP_RETURN_IF_ERROR(analyzer_.analyze(data));
+      JPP_RETURN_IF_ERROR(format_->format(analyzer_, comment))
       if (!conf.graphvizDir.value().empty()) {
         writeGraphviz();
       }
@@ -53,7 +53,7 @@ class JumanppExec {
     }
   }
 
-  StringPiece output() const { return format->result(); }
+  StringPiece output() const { return format_->result(); }
 
   u64 numAnalyzed() const { return numAnalyzed_; }
 
@@ -63,6 +63,9 @@ class JumanppExec {
 
   void printFullVersion() const;
   StringPiece emptyResult() const;
+  core::analysis::Analyzer* analyzerPtr() { return &analyzer_; }
+  core::OutputFormat* format() { return format_.get(); }
+  const core::CoreHolder& core() const { return *env.coreHolder(); }
 };
 
 }  // namespace jumandic

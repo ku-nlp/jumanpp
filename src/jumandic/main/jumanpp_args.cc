@@ -12,6 +12,7 @@
 #include <util/logging.hpp>
 #include "args.h"
 #include "jpp_rnn_args.h"
+#include "util/debug_output.h"
 #include "util/mmap.h"
 
 namespace jumanpp {
@@ -42,14 +43,19 @@ T to_int10(const Pair& p) {
 struct JppArgsParser {
   args::ArgumentParser parser{"Juman++ v2"};
 
-  args::Positional<std::string> input{parser, "input",
-                                      "Input filename (- for stdin)", "-"};
+  args::PositionalList<std::string> input{parser, "FILENAME", "Input files"};
 
   args::Group general{parser, "General Settings"};
   args::HelpFlag helpFlag{
       general, "HELP", "Prints this message", {'h', "help"}};
   args::ValueFlag<std::string> configFile{
       general, "FILENAME", "Config file location", {'c', "config"}};
+  args::ValueFlag<std::string> outputFile{
+      general,
+      "FILENAME",
+      "Output to this file instead of stdout",
+      {'o', "output"},
+      "-"};
   args::ValueFlag<i32> logLevel{general,
                                 "LEVEL",
                                 "Log level (0 for off, 5 for trace), 0 default",
@@ -58,6 +64,10 @@ struct JppArgsParser {
       general, "printVersion", "Just print version and exit", {'v', "version"}};
   args::Flag printDicInfo{
       general, "printModelInfo", "Print model info and exit", {"model-info"}};
+  args::Flag partialInput{general,
+                          "partianInput",
+                          "Input is partially-annotated",
+                          {"partial-input"}};
 
   args::Group outputType{parser, "Output type"};
   args::Flag juman{
@@ -119,7 +129,7 @@ struct JppArgsParser {
 
   RnnArgs rnnArgs{parser};
 
-  JppArgsParser() {
+  JppArgsParser(bool root = true) {
     parser.helpParams.gutter = 4;
     parser.helpParams.helpindent = 35;
 #if defined(TIOCGWINSZ)
@@ -192,7 +202,8 @@ struct JppArgsParser {
 
     result->configFile.set(configFile);
     result->logLevel.set(logLevel);
-    result->inputFile.set(input);
+    result->inputFiles.set(input);
+    result->outputFile.set(outputFile);
     result->modelFile.set(modelFile);
     result->rnnModelFile.set(rnnModelFile);
     result->graphvizDir.set(graphvis);
@@ -289,5 +300,21 @@ Status parseArgs(int argc, const char* argv[], JumanppConf* result) {
   return Status::Ok();
 }
 
+std::ostream& operator<<(std::ostream& os, const JumanppConf& conf) {
+  os << "\nconfigFile: " << conf.configFile << "\nmodelFile: " << conf.modelFile
+     << "\noutputType: " << static_cast<int>(conf.outputType.value())
+     << "\ninputType: " << static_cast<int>(conf.inputType.value())
+     << "\noutputFile: " << conf.outputFile
+     << "\ninputFiles: " << VOut(conf.inputFiles.value())
+     << "\nrnnModelFile: " << conf.rnnModelFile
+     << "\nrnnConfig: " << conf.rnnConfig
+     << "\ngraphvizDir: " << conf.graphvizDir << "\nbeamSize: " << conf.beamSize
+     << "\nbeamOutput: " << conf.beamOutput
+     << "\nglobalBeam: " << conf.globalBeam << "\nrightBeam: " << conf.rightBeam
+     << "\nrightCheck: " << conf.rightCheck
+     << "\nsegmentSeparator: " << conf.segmentSeparator
+     << "\nautoStep: " << conf.autoStep << "\nlogLevel: " << conf.logLevel;
+  return os;
+}
 }  // namespace jumandic
 }  // namespace jumanpp

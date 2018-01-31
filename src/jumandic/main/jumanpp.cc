@@ -5,13 +5,90 @@
 #include "jumanpp.h"
 #include <fstream>
 #include <iostream>
+#include "core/input/pex_stream_reader.h"
 #include "jumanpp_args.h"
 #include "util/logging.hpp"
 
 using namespace jumanpp;
 
+struct InputOutput {
+  std::unique_ptr<core::input::StreamReader> streamReader_;
+  std::unique_ptr<std::ifstream> fileInput_;
+  int currentInFile_ = 0;
+  const std::vector<std::string>* inFiles_;
+  StringPiece currentInputFilename_;
+  std::istream* input_;
+
+  std::unique_ptr<std::ofstream> fileOutput_;
+  std::ostream* output_;
+
+  Status nextInput() {
+    if (*input_) {
+      JPP_RETURN_IF_ERROR(streamReader_->readExample(input_));
+    }
+
+    if (input_->fail()) {
+      return JPPS_INVALID_STATE << "failed when reading from file: "
+                                << currentInputFilename_;
+    }
+
+    return JPPS_NOT_IMPLEMENTED << "should not reach here, it is a bug";
+  }
+
+  Status initialize(const jumandic::JumanppConf& conf,
+                    const core::CoreHolder& cholder) {
+    inFiles_ = &conf.inputFiles.value();
+    if (!inFiles_->empty()) {
+      auto& fn = (*inFiles_)[currentInFile_];
+      fileInput_.reset(new std::ifstream{fn});
+      if (fileInput_->bad()) {
+        return JPPS_INVALID_PARAMETER << "failed to open output file: " << fn;
+      }
+      input_ = fileInput_.get();
+      currentInputFilename_ = fn;
+      currentInFile_ += 1;
+    } else {
+      input_ = &std::cin;
+      currentInputFilename_ = "<stdin>";
+    }
+
+    if (conf.outputFile == "-") {
+      output_ = &std::cout;
+    } else {
+      fileOutput_.reset(new std::ofstream{conf.outputFile});
+      output_ = fileOutput_.get();
+    }
+
+    auto inType = conf.inputType.value();
+    if (inType == jumandic::InputType::Raw) {
+      auto rdr = new core::input::PlainStreamReader{};
+      streamReader_.reset(rdr);
+      rdr->setMaxSizes(65535, 1024);
+    } else {
+      auto rdr = new core::input::PexStreamReader{};
+      streamReader_.reset(rdr);
+      rdr->initialize(cholder, '&');
+    }
+
+    return Status::Ok();
+  }
+
+  explicit operator bool() {
+    while (input_->eof() && currentInFile_ < inFiles_->size()) {
+      auto& fn = (*inFiles_)[currentInFile_];
+      fileInput_.reset(new std::ifstream{fn});
+      if (fileInput_->bad()) {
+        LOG_ERROR() << "failed to open input file: " << fn;
+      }
+      input_ = fileInput_.get();
+      currentInputFilename_ = fn;
+      currentInFile_ += 1;
+    }
+    return static_cast<bool>(*input_);
+  }
+};
+
 int main(int argc, const char** argv) {
-  std::istream* inputSrc;
   std::unique_ptr<std::ifstream> filePtr;
 
   jumandic::JumanppConf conf;
@@ -57,37 +134,40 @@ int main(int argc, const char** argv) {
     return 0;
   }
 
-  if (conf.inputFile == "-") {
-    inputSrc = &std::cin;
-  } else {
-    filePtr.reset(new std::ifstream{conf.inputFile});
-    if (!*filePtr) {
-      std::cerr << "could not open file " << conf.inputFile << " for reading";
-      return 1;
-    }
-    inputSrc = filePtr.get();
+  InputOutput io;
+
+  s = io.initialize(conf, exec.core());
+  if (!s) {
+    std::cerr << "Failed to initialize I/O: " << s;
+    return 1;
   }
 
-  std::string input;
-  std::string comment;
-  while (std::getline(*inputSrc, input)) {
-    if (input.size() > 2 && input[0] == '#' && input[1] == ' ') {
-      comment.clear();
-      comment.append(input.begin() + 2, input.end());
-      input.clear();
-      std::getline(*inputSrc, input);
+  int result = 0;
+
+  while (io) {
+    s = io.nextInput();
+    if (!s) {
+      std::cerr << "failed to read an example: " << s;
+      result = 1;
+      continue;
     }
-    Status st = exec.analyze(input, comment);
-    if (!st) {
-      std::cerr << "error when analyzing sentence ";
-      if (!comment.empty()) {
-        std::cerr << "{" << comment << "} ";
-      }
-      std::cerr << "[ " << input << "]: " << st << "\n";
-      std::cout << exec.emptyResult();
+
+    result = 0;
+
+    s = io.streamReader_->analyzeWith(exec.analyzerPtr());
+    if (!s) {
+      std::cerr << s;
+      *io.output_ << exec.emptyResult();
+      continue;
+    }
+
+    s = exec.format()->format(*exec.analyzerPtr(), io.streamReader_->comment());
+    if (!s) {
+      std::cerr << s;
     } else {
-      std::cout << exec.output();
+      *io.output_ << exec.format()->result();
     }
   }
-  return 0;
+
+  return result;
 }
