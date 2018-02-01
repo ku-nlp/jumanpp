@@ -22,9 +22,22 @@ struct InputOutput {
   std::unique_ptr<std::ofstream> fileOutput_;
   std::ostream* output_;
 
+  Status moveToNextFile() {
+    auto& fn = (*inFiles_)[currentInFile_];
+    fileInput_.reset(new std::ifstream{fn});
+    if (fileInput_->bad()) {
+      return JPPS_INVALID_PARAMETER << "failed to open output file: " << fn;
+    }
+    input_ = fileInput_.get();
+    currentInputFilename_ = fn;
+    currentInFile_ += 1;
+    return Status::Ok();
+  }
+
   Status nextInput() {
     if (*input_) {
       JPP_RETURN_IF_ERROR(streamReader_->readExample(input_));
+      return Status::Ok();
     }
 
     if (input_->fail()) {
@@ -39,14 +52,7 @@ struct InputOutput {
                     const core::CoreHolder& cholder) {
     inFiles_ = &conf.inputFiles.value();
     if (!inFiles_->empty()) {
-      auto& fn = (*inFiles_)[currentInFile_];
-      fileInput_.reset(new std::ifstream{fn});
-      if (fileInput_->bad()) {
-        return JPPS_INVALID_PARAMETER << "failed to open output file: " << fn;
-      }
-      input_ = fileInput_.get();
-      currentInputFilename_ = fn;
-      currentInFile_ += 1;
+      JPP_RETURN_IF_ERROR(moveToNextFile());
     } else {
       input_ = &std::cin;
       currentInputFilename_ = "<stdin>";
@@ -73,18 +79,21 @@ struct InputOutput {
     return Status::Ok();
   }
 
-  explicit operator bool() {
-    while (input_->eof() && currentInFile_ < inFiles_->size()) {
-      auto& fn = (*inFiles_)[currentInFile_];
-      fileInput_.reset(new std::ifstream{fn});
-      if (fileInput_->bad()) {
-        LOG_ERROR() << "failed to open input file: " << fn;
+  bool hasNext() {
+    if (input_->good()) {
+      auto ch = input_->peek();
+      if (ch == std::char_traits<char>::eof()) {
+        return false;
       }
-      input_ = fileInput_.get();
-      currentInputFilename_ = fn;
-      currentInFile_ += 1;
     }
-    return static_cast<bool>(*input_);
+    while (input_->eof() && currentInFile_ < inFiles_->size()) {
+      auto s = moveToNextFile();
+      if (!s) {
+        LOG_ERROR() << s.message();
+      }
+    }
+    auto isOk = !input_->eof();
+    return isOk;
   }
 };
 
@@ -144,7 +153,7 @@ int main(int argc, const char** argv) {
 
   int result = 0;
 
-  while (io) {
+  while (io.hasNext()) {
     s = io.nextInput();
     if (!s) {
       std::cerr << "failed to read an example: " << s;
