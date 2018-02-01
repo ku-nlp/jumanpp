@@ -197,6 +197,7 @@ struct JppArgsParser {
     result->beamOutput.set(lattice);
     result->outputType.set(printDicInfo, OutputType::ModelInfo);
     result->outputType.set(printVersion, OutputType::Version);
+    result->inputType.set(partialInput, InputType::PartiallyAnnotated);
 
     result->rnnConfig.mergeWith(rnnArgs.config());
 

@@ -26,6 +26,7 @@ Status PartialExampleReader::readExample(PartialExample* result, bool* eof) {
   bool firstLine = true;
   i32 boundary = 2;
   result->boundaries_.clear();
+  result->noBreak_.clear();
   result->surface_.clear();
   result->nodes_.clear();
   while (csv_.nextLine()) {

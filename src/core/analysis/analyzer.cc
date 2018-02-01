@@ -42,8 +42,9 @@ Status Analyzer::initialize(AnalyzerImpl *impl, const ScorerDef *scorer) {
   return Status::Ok();
 }
 
-Status Analyzer::analyze(StringPiece input) {
+Status Analyzer::analyze(StringPiece input, ScorePlugin *plugin) {
   JPP_RETURN_IF_ERROR(ptr_->resetForInput(input));
+  ptr_->setPlugin(plugin);
   JPP_RETURN_IF_ERROR(ptr_->prepareNodeSeeds());
   JPP_RETURN_IF_ERROR(ptr_->buildLattice());
   JPP_RETURN_IF_ERROR(ptr_->bootstrapAnalysis());

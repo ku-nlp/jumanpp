@@ -32,6 +32,8 @@ struct AnalyzerConfig {
  */
 class AnalyzerImpl;
 
+class ScorePlugin;
+
 struct ScorerDef;
 
 class Analyzer {
@@ -47,7 +49,7 @@ class Analyzer {
   Status initialize(const CoreHolder* core, const AnalyzerConfig& cfg,
                     const ScoringConfig& sconf, const ScorerDef* scorer);
   Status initialize(AnalyzerImpl* impl, const ScorerDef* scorer);
-  Status analyze(StringPiece input);
+  Status analyze(StringPiece input, ScorePlugin* plugin = nullptr);
   const OutputManager& output() const;
 
   const ScorerDef* scorer() const { return scorer_; }

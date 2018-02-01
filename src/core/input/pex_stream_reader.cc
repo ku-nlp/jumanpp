@@ -34,10 +34,11 @@ Status PexStreamReader::readExample(std::istream *stream) {
   auto &buf = impl_->buffer_;
   buf.clear();
   while (std::getline(*stream, tmp)) {
-    if (tmp.size() == 1 && tmp[0] == '\n') {
+    if (tmp.size() == 0) {
       break;
     }
     buf.append(tmp);
+    buf.push_back('\n');
   }
   impl_->reader_.setData(buf);
   bool eof = false;
@@ -50,7 +51,10 @@ Status PexStreamReader::readExample(std::istream *stream) {
 }
 
 Status PexStreamReader::analyzeWith(analysis::Analyzer *an) {
-  return Status::NotImplemented();
+  auto surface = impl_->example_.surface();
+  auto plugin = impl_.get();
+  JPP_RETURN_IF_ERROR(an->analyze(surface, plugin));
+  return Status::Ok();
 }
 
 StringPiece PexStreamReader::comment() {
