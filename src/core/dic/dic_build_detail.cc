@@ -100,7 +100,7 @@ Status DictionaryBuilderStorage::computeStats(StringPiece name,
 
 Status DictionaryBuilderStorage::makeStorage(ProgressCallback* callback) {
   for (int i = 0; i < storage.size(); ++i) {
-    storage[i].makeStorage(&stringBuffers[i]);
+    JPP_RETURN_IF_ERROR(storage[i].makeStorage(&stringBuffers[i]));
     if (callback != nullptr) {
       callback->report(static_cast<u64>(i), storage.size());
     }

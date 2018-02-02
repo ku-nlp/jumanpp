@@ -57,7 +57,7 @@ class UnkMakerFactory {
       auto eptr = EntryPtr{x.patternPtr};
       UnkNodeConfig cfg{rdr.readEntry(eptr), eptr};
       util::copy_insert(x.replaceFields, cfg.replaceWithSurface);
-      handlePrefixIndex(x, &cfg);
+      JPP_RETURN_IF_ERROR(handlePrefixIndex(x, &cfg));
       cfg.fillPatternFields();
 
       // resolve processor itself

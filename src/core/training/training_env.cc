@@ -125,9 +125,9 @@ void TrainingEnv::resetInput() {
 Status TrainingEnv::loadInputData(StringPiece data) {
   auto format = this->args_.trainingConfig.inputFormat;
   if (format == InputFormat::Csv) {
-    this->fullReader_.initCsv(data);
+    JPP_RETURN_IF_ERROR(fullReader_.initCsv(data));
   } else if (format == InputFormat::Morph) {
-    this->fullReader_.initDoubleCsv(data);
+    JPP_RETURN_IF_ERROR(fullReader_.initDoubleCsv(data));
   } else {
     return Status::InvalidState() << "unsupported input format";
   }

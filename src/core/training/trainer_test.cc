@@ -38,7 +38,7 @@ class TrainerEnv : public GoldExampleEnv {
         env.core.get(),
         {this->env.beamSize, (i32)sconf->scoreWeights.size()},
         env.aconf}};
-    ptr->initScorers(*sconf);
+    REQUIRE(ptr->initScorers(*sconf));
     return ptr;
   }
 

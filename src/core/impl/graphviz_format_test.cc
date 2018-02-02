@@ -26,11 +26,11 @@ TEST_CASE("graphviz has working builder") {
   training::SoftConfidenceWeighted scw{tc};
   REQUIRE_OK(env.anaImpl()->initScorers(*scw.scorers()));
   REQUIRE_OK(fmt.initialize(env.anaImpl()->output()));
-  env.anaImpl()->resetForInput("bacababa");
-  env.anaImpl()->prepareNodeSeeds();
-  env.anaImpl()->buildLattice();
+  REQUIRE(env.anaImpl()->resetForInput("bacababa"));
+  REQUIRE(env.anaImpl()->prepareNodeSeeds());
+  REQUIRE(env.anaImpl()->buildLattice());
   REQUIRE_OK(env.anaImpl()->bootstrapAnalysis());
-  env.anaImpl()->computeScores(scw.scorers());
+  REQUIRE(env.anaImpl()->computeScores(scw.scorers()));
   fmt.markGold({5, 0});
   CHECK_OK(fmt.render(env.anaImpl()->lattice()));
   CHECK(fmt.result().size() > 0);

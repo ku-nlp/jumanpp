@@ -84,7 +84,7 @@ TEST_CASE("RNN computes scores") {
   REQUIRE_OK(rnnHolder.make("rnn/testlm", env.jppEnv.coreHolder()->dic(), ric));
   scorerDef.others.push_back(&rnnHolder);
   REQUIRE_OK(ana.initScorers(scorerDef));
-  ana.resetForInput("bac");
+  REQUIRE(ana.resetForInput("bac"));
   REQUIRE_OK(ana.prepareNodeSeeds());
   REQUIRE_OK(ana.buildLattice());
   REQUIRE_OK(ana.bootstrapAnalysis());
@@ -116,7 +116,7 @@ TEST_CASE("RNN computes scores with unks") {
   REQUIRE_OK(rnnHolder.make("rnn/testlm", env.jppEnv.coreHolder()->dic(), ric));
   scorerDef.others.push_back(&rnnHolder);
   REQUIRE_OK(ana.initScorers(scorerDef));
-  ana.resetForInput("newsanapple");
+  REQUIRE(ana.resetForInput("newsanapple"));
   REQUIRE_OK(ana.prepareNodeSeeds());
   REQUIRE_OK(ana.buildLattice());
   REQUIRE_OK(ana.bootstrapAnalysis());
@@ -150,7 +150,7 @@ TEST_CASE("RNN computes scores with and collapsibles") {
   REQUIRE_OK(rnnHolder.make("rnn/testlm", env.jppEnv.coreHolder()->dic(), ric));
   scorerDef.others.push_back(&rnnHolder);
   REQUIRE_OK(ana.initScorers(scorerDef));
-  ana.resetForInput("newsanapple");
+  REQUIRE(ana.resetForInput("newsanapple"));
   REQUIRE_OK(ana.prepareNodeSeeds());
   REQUIRE_OK(ana.buildLattice());
   REQUIRE_OK(ana.bootstrapAnalysis());
@@ -206,13 +206,13 @@ TEST_CASE("RNN holder serializes and deserializes and has the same score") {
   a::AnalyzerImpl impl2{env.jppEnv.coreHolder(), env.scoreCfg, env.anaCfg};
   REQUIRE_OK(impl2.initScorers(scorerDef2));
 
-  impl1.resetForInput("newsanapple");
+  REQUIRE(impl1.resetForInput("newsanapple"));
   REQUIRE_OK(impl1.prepareNodeSeeds());
   REQUIRE_OK(impl1.buildLattice());
   REQUIRE_OK(impl1.bootstrapAnalysis());
   REQUIRE_OK(impl1.computeScores(&scorerDef1));
 
-  impl2.resetForInput("newsanapple");
+  REQUIRE(impl2.resetForInput("newsanapple"));
   REQUIRE_OK(impl2.prepareNodeSeeds());
   REQUIRE_OK(impl2.buildLattice());
   REQUIRE_OK(impl2.bootstrapAnalysis());

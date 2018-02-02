@@ -23,6 +23,12 @@
 #define __unix__ 1
 #endif
 
+#ifdef __clang__
+#define JPP_NODISCARD __attribute__((warn_unused_result))
+#else
+#define JPP_NODISCARD
+#endif
+
 namespace jumanpp {
 namespace util {
 

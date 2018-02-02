@@ -140,8 +140,10 @@ Status JumanppExec::writeGraphviz() {
 
 void JumanppExec::printModelInfo() const {
   core::model::FilesystemModel model;
-  model.open(this->conf.modelFile.value());
-  model.renderInfo();
+  Status s = model.open(this->conf.modelFile.value());
+  if (s) {
+    model.renderInfo();
+  }
 }
 
 void JumanppExec::printFullVersion() const {

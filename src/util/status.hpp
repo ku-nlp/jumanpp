@@ -76,7 +76,7 @@ class StatusOps {
 };
 }  // namespace status_impl
 
-class Status {
+class JPP_NODISCARD Status {
  private:
   status_impl::StatusDataImpl *data_;
   Status() noexcept : data_{nullptr} {}

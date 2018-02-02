@@ -102,7 +102,7 @@ class PrimFeatureTestEnv {
     analyze(str);
     REQUIRE_OK(tenv.analyzer->bootstrapAnalysis());
     CHECK_OK(tenv.analyzer->computeScores(&sconf));
-    top1.fillIn(tenv.analyzer->lattice());
+    CHECK_OK(top1.fillIn(tenv.analyzer->lattice()));
   }
 
   size_t numNodeSeeds() const {

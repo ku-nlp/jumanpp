@@ -110,7 +110,7 @@ TEST_CASE("string list field processes input") {
   util::CodedBuffer stringData;
   CHECK_OK(imp.makeStorage(&stringData));
   std::vector<i32> pointers;
-  csv.initFromMemory(testdata);
+  REQUIRE(csv.initFromMemory(testdata));
   while (csv.nextLine()) {
     pointers.push_back(imp.fieldPointer(csv));
   }
@@ -132,7 +132,7 @@ TEST_CASE("string storage makes aligned data") {
   ss.increaseFieldValueCount("testtestt");
   ss.increaseFieldValueCount("heart");
   util::CodedBuffer buf;
-  ss.makeStorage(&buf);
+  REQUIRE(ss.makeStorage(&buf));
   util::CodedBufferParser parser{};
   StringPiece sp;
   parser.reset(buf.contents().from(8));

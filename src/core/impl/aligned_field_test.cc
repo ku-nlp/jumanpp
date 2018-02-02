@@ -23,7 +23,7 @@ TEST_CASE("analyzer with three differently aligned fields work") {
   CHECK(flds[2].alignment == 4);
   AnalyzerMethods am;
   REQUIRE(am.initialize(env.analyzer.get()));
-  env.analyzer->resetForInput("acfp");
+  REQUIRE(env.analyzer->resetForInput("acfp"));
   REQUIRE(env.analyzer->prepareNodeSeeds());
   REQUIRE(env.analyzer->buildLattice());
   auto n1 = am.firstNode({2, 0});
@@ -52,7 +52,7 @@ TEST_CASE("analyzer with shared and aligned fields work") {
   CHECK(flds[2].alignment == 2);
   AnalyzerMethods am;
   REQUIRE(am.initialize(env.analyzer.get()));
-  env.analyzer->resetForInput("acfp");
+  REQUIRE(env.analyzer->resetForInput("acfp"));
   REQUIRE(env.analyzer->prepareNodeSeeds());
   REQUIRE(env.analyzer->buildLattice());
   auto n1 = am.firstNode({2, 0});

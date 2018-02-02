@@ -23,7 +23,7 @@ TEST_CASE("generated pattern features are equal to provided") {
   core::analysis::HashedFeaturePerceptron hfp{weights};
   sdef.feature = &hfp;
   REQUIRE(env.analyzer->initScorers(sdef));
-  env.analyzer->resetForInput("a");
+  REQUIRE(env.analyzer->resetForInput("a"));
   REQUIRE(env.analyzer->prepareNodeSeeds());
   REQUIRE(env.analyzer->buildLattice());
   REQUIRE(env.analyzer->bootstrapAnalysis());
@@ -36,7 +36,7 @@ TEST_CASE("generated pattern features are equal to provided") {
   ScoringConfig scoreConf{env.beamSize, 1};
   AnalyzerImpl impl2{jenv1.coreHolder(), scoreConf, env.aconf};
   REQUIRE(impl2.initScorers(sdef));
-  impl2.resetForInput("a");
+  REQUIRE(impl2.resetForInput("a"));
   REQUIRE(impl2.prepareNodeSeeds());
   REQUIRE(impl2.buildLattice());
   REQUIRE(impl2.bootstrapAnalysis());

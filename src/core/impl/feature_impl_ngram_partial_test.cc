@@ -72,8 +72,8 @@ TEST_CASE("partial and full trigram features produce the same result") {
   int idx = 0;
   auto add = [&](std::initializer_list<i32> data) {
     auto f = nf(idx++, data);
-    full.addChild(f);
-    part.addChild(f);
+    REQUIRE(full.addChild(f));
+    REQUIRE(part.addChild(f));
   };
   add({0});
   add({1});

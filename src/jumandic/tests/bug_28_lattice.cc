@@ -12,9 +12,9 @@ TEST_CASE("lattice output works") {
   env.trainNepochsFrom("jumandic/bug-28-lattice.in", 3);
   jumanpp::jumandic::output::LatticeFormat fmt{3};
   auto ana = env.trainEnv.value().makeAnalyzer(5);
-  fmt.initialize(ana->output());
+  REQUIRE(fmt.initialize(ana->output()));
   CHECK_OK(ana->analyze("見ぬふりをする"));
-  fmt.format(*ana, "");
+  REQUIRE(fmt.format(*ana, ""));
   CHECK_THAT(fmt.result().str(), Catch::Contains("1;2;3"));
 }
 
@@ -27,8 +27,8 @@ TEST_CASE("lattice output works with gbeam", "[gbeam]") {
   // env.dumpTrainers("/tmp/jpp-dbg");
   jumanpp::jumandic::output::LatticeFormat fmt{3};
   auto ana = env.trainEnv.value().makeAnalyzer(5);
-  fmt.initialize(ana->output());
+  REQUIRE(fmt.initialize(ana->output()));
   CHECK_OK(ana->analyze("見ぬふりをする"));
-  fmt.format(*ana, "");
+  REQUIRE(fmt.format(*ana, ""));
   CHECK_THAT(fmt.result().str(), Catch::Contains("1;2;3"));
 }

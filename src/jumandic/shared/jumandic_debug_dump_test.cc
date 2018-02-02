@@ -17,10 +17,10 @@ TEST_CASE("debug dump works with jumandic and full beam") {
   core::ScoringConfig sconf;
   sconf.numScorers = 1;
   sconf.beamSize = 5;
-  an.initialize(env.jppEnv.coreHolder(), analyzerConfig, sconf,
-                env.trainEnv.value().scorerDef());
+  REQUIRE(an.initialize(env.jppEnv.coreHolder(), analyzerConfig, sconf,
+                        env.trainEnv.value().scorerDef()));
   an.impl()->setStoreAllPatterns(true);
-  an.analyze("５５１年もガラフケマペが兵をつの〜ってたな！");
+  REQUIRE(an.analyze("５５１年もガラフケマペが兵をつの〜ってたな！"));
   core::output::LatticeDumpOutput output;
   auto& weights = env.trainEnv.value().scorerDef()->feature->weights();
   REQUIRE(output.initialize(an.impl(), &weights));

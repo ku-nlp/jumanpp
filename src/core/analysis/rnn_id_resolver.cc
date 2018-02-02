@@ -59,7 +59,7 @@ struct RnnIdResolverBuilder {
   }
 
   Status buildRepr(StringPiece word, bool* known) {
-    csv.initFromMemory(word);
+    JPP_RETURN_IF_ERROR(csv.initFromMemory(word));
     if (!csv.nextLine()) {
       return JPPS_INVALID_STATE << "failed to parse line: " << word;
     }

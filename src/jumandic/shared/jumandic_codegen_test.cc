@@ -51,8 +51,10 @@ TEST_CASE(
   testing::TestAnalyzer gen{&core2, sconf, tenv.aconf};
   REQUIRE(gen.initScorers(sdef));
 
-  nogen.fullAnalyze("５５１年もガラフケマペが兵をつの〜ってたな！", &sdef);
-  gen.fullAnalyze("５５１年もガラフケマペが兵をつの〜ってたな！", &sdef);
+  REQUIRE(
+      nogen.fullAnalyze("５５１年もガラフケマペが兵をつの〜ってたな！", &sdef));
+  REQUIRE(
+      gen.fullAnalyze("５５１年もガラフケマペが兵をつの〜ってたな！", &sdef));
 
   auto nbnd = nogen.lattice()->createdBoundaryCount();
 
@@ -150,8 +152,10 @@ TEST_CASE(
   testing::TestAnalyzer gen{&core2, sconf, tenv.aconf};
   REQUIRE(gen.initScorers(sdef));
 
-  nogen.fullAnalyze("５５１年もガラフケマペが兵をつの〜ってたな！", &sdef);
-  gen.fullAnalyze("５５１年もガラフケマペが兵をつの〜ってたな！", &sdef);
+  REQUIRE(
+      nogen.fullAnalyze("５５１年もガラフケマペが兵をつの〜ってたな！", &sdef));
+  REQUIRE(
+      gen.fullAnalyze("５５１年もガラフケマペが兵をつの〜ってたな！", &sdef));
 
   auto l2 = nogen.lattice();
   auto l1 = gen.lattice();
@@ -280,8 +284,10 @@ TEST_CASE("feature representation of gen/nongen is the same with global beam") {
   testing::TestAnalyzer gen{&core2, sconf, tenv.aconf};
   REQUIRE(gen.initScorers(sdef));
 
-  nogen.fullAnalyze("５５１年もガラフケマペが兵をつの〜ってたな！", &sdef);
-  gen.fullAnalyze("５５１年もガラフケマペが兵をつの〜ってたな！", &sdef);
+  REQUIRE(
+      nogen.fullAnalyze("５５１年もガラフケマペが兵をつの〜ってたな！", &sdef));
+  REQUIRE(
+      gen.fullAnalyze("５５１年もガラフケマペが兵をつの〜ってたな！", &sdef));
 
   auto nbnd = nogen.lattice()->createdBoundaryCount();
 

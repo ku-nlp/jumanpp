@@ -50,7 +50,7 @@ class GoldExampleEnv {
     ScorerDef scorers{};
     scorers.scoreWeights.push_back(1.0f);
     REQUIRE_OK(env.analyzer->initScorers(scorers));
-    am.initialize(env.analyzer.get());
+    REQUIRE(am.initialize(env.analyzer.get()));
   }
 
   const core::spec::AnalysisSpec& spec() const { return env.originalSpec; }

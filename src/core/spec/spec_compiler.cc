@@ -67,7 +67,7 @@ Status SpecCompiler::buildFields() {
     auto* col = &cols.back();
     col->specIndex = (i32)i;
     StringPiece storName;
-    f->fill(col, &storName);
+    JPP_RETURN_IF_ERROR(f->fill(col, &storName));
     JPP_RETURN_IF_ERROR(sa.assign(col, storName));
     if (f->isTrieIndex()) {
       spec->indexColumn = (i32)i;
@@ -362,7 +362,8 @@ DicImportDescriptor& SpecCompiler::complexImportCommonInit(
   }
 
   util::CsvReader csv{'\0', '\1'};
-  csv.initFromMemory(f->matchData_);
+  auto s = csv.initFromMemory(f->matchData_);
+  JPP_DCHECK(s);
   while (csv.nextLine()) {
     v.data.push_back(csv.field(0).str());
   }

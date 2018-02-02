@@ -154,7 +154,7 @@ Status AnalyzerImpl::buildLattice() {
         latticeBldr_.constructSingleBoundary(&lattice_, &bnd, boundary));
 
     if (noStaticPattern) {
-      fc.importEntryData(bnd);
+      JPP_RETURN_IF_ERROR(fc.importEntryData(bnd));
       if (latticeBldr_.isAccessible(boundary)) {
         fc.patternFeaturesDynamic(bnd);
       }
@@ -284,7 +284,7 @@ Status AnalyzerImpl::computeScoresGbeam(const ScorerDef* sconf) {
   if (!scorers_.empty()) {
     u32 idx = 1;
     for (auto& s : scorers_) {
-      s->scoreLattice(&lattice_, &xtra_, idx);
+      JPP_RETURN_IF_ERROR(s->scoreLattice(&lattice_, &xtra_, idx));
       ++idx;
     }
     proc.adjustBeamScores(sconf->scoreWeights);

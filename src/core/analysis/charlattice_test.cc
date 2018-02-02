@@ -73,7 +73,7 @@ class NNodeEnv {
 
     auto seeds = tenv.analyzer->latticeBuilder().seeds();
     std::vector<chars::InputCodepoint> cp;
-    chars::preprocessRawData(str, &cp);
+    REQUIRE(chars::preprocessRawData(str, &cp));
     i32 end = start + cp.size();
     for (auto& seed : seeds) {
       if (seed.codepointStart == start && seed.codepointEnd == end) {
@@ -97,7 +97,7 @@ class NNodeEnv {
 
     auto seeds = tenv.analyzer->latticeBuilder().seeds();
     std::vector<chars::InputCodepoint> cp;
-    chars::preprocessRawData(str, &cp);
+    REQUIRE(chars::preprocessRawData(str, &cp));
     i32 end = start + cp.size();
     for (auto& seed : seeds) {
       if (seed.codepointStart == start && seed.codepointEnd == end) {

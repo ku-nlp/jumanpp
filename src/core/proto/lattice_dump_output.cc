@@ -154,7 +154,7 @@ struct LatticeDumpOutputImpl {
 
   Status fillNodeValues(const analysis::NodeWalker& walker, LatticeNode* node) {
     for (auto& conv : converters_) {
-      conv->append(walker, node);
+      JPP_RETURN_IF_ERROR(conv->append(walker, node));
     }
     for (auto f : walker.features()) {
       node->add_value_ptrs(f);

@@ -28,7 +28,7 @@ class TrainerEnv : public GoldExampleEnv {
   }
 
   void parseMrph(StringPiece data) {
-    rdr.setData(data);
+    REQUIRE(rdr.setData(data));
     bool eof = false;
     REQUIRE_OK(rdr.readExample(&trainer.example(), &eof));
     REQUIRE_FALSE(eof);
@@ -39,7 +39,7 @@ class TrainerEnv : public GoldExampleEnv {
         env.core.get(),
         {this->env.beamSize, (i32)sconf->scoreWeights.size()},
         env.aconf}};
-    ptr->initScorers(*sconf);
+    REQUIRE(ptr->initScorers(*sconf));
     return ptr;
   }
 
@@ -147,6 +147,6 @@ TEST_CASE("can decrease loss/features from a simple example with tags") {
     CHECK(env.trainer.compute(scw.scorers()));
   }
   auto sconf = scw.scorers();
-  env.trainer.compute(sconf);
+  REQUIRE(env.trainer.compute(sconf));
   CHECK(env.trainer.loss() == Approx(0));
 }

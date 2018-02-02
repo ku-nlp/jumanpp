@@ -21,7 +21,9 @@ struct NumericData {
     std::initializer_list<StringPiece> params = {StringPiece{vals}...};
     for (auto &elem : params) {
       CodepointStorage pattern;
-      preprocessRawData(elem, &pattern);
+      // status is ignored here
+      auto s = preprocessRawData(elem, &pattern);
+      JPP_DCHECK(s);
       result.emplace_back(std::move(pattern));
     }
     return result;

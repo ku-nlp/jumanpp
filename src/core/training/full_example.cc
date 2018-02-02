@@ -57,7 +57,7 @@ Status FullExampleReader::readFullExampleCsv(FullyAnnotatedExample *result) {
       return Status::Ok();
     }
 
-    readSingleExampleFragment(csv_, result);
+    JPP_RETURN_IF_ERROR(readSingleExampleFragment(csv_, result));
   }
   finished_ = true;
   return Status::Ok();

@@ -146,10 +146,8 @@ void MatchListDicFeatureImpl::apply(util::MutableArraySlice<i32> featureData,
 
 bool MatchListDicFeatureImpl::contains(StringPiece data) const {
   util::CsvReader r{dataSep_};
-  r.initFromMemory(data);
-  if (!r.nextLine()) {
-    return false;
-  }
+  JPP_RET_CHECK(r.initFromMemory(data));
+  JPP_RET_CHECK(r.nextLine());
 
   for (int fldnum = 0; fldnum < r.numFields(); ++fldnum) {
     auto v = r.field(fldnum);

@@ -73,7 +73,7 @@ struct InputOutput {
     } else {
       auto rdr = new core::input::PexStreamReader{};
       streamReader_.reset(rdr);
-      rdr->initialize(cholder, '&');
+      JPP_RETURN_IF_ERROR(rdr->initialize(cholder, '&'));
     }
 
     return Status::Ok();

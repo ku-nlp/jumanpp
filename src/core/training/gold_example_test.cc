@@ -22,7 +22,7 @@ TEST_CASE("we can create a testing environment") {
   REQUIRE_OK(tdr.readFullExample(&exobj));
   CHECK(exobj.numNodes() == 3);
   TrainingExampleAdapter adapter{anaImpl};
-  anaImpl->resetForInput(exobj.surface());
+  REQUIRE(anaImpl->resetForInput(exobj.surface()));
   REQUIRE_OK(anaImpl->prepareNodeSeeds());
   GoldenPath gpath;
   adapter.ensureNodes(exobj, &gpath);
@@ -50,7 +50,7 @@ TEST_CASE("we can create a testing environment with merging nodes") {
   REQUIRE_OK(tdr.readFullExample(&exobj));
   CHECK(exobj.numNodes() == 3);
   TrainingExampleAdapter adapter{anaImpl};
-  anaImpl->resetForInput(exobj.surface());
+  REQUIRE(anaImpl->resetForInput(exobj.surface()));
   REQUIRE_OK(anaImpl->prepareNodeSeeds());
   GoldenPath gpath;
   CHECK_FALSE(adapter.ensureNodes(exobj, &gpath));
@@ -78,7 +78,7 @@ TEST_CASE("we can create a testing environment with unk nodes") {
   REQUIRE_OK(tdr.readFullExample(&exobj));
   CHECK(exobj.numNodes() == 3);
   TrainingExampleAdapter adapter{anaImpl};
-  anaImpl->resetForInput(exobj.surface());
+  REQUIRE(anaImpl->resetForInput(exobj.surface()));
   REQUIRE_OK(anaImpl->prepareNodeSeeds());
   GoldenPath gpath;
   CHECK(adapter.ensureNodes(exobj, &gpath));

@@ -107,7 +107,8 @@ int main(int argc, char* argv[]) {
   }
 
   core::dic::DictionaryHolder holder;
-  holder.load(dic);
+  s = holder.load(dic);
+  JPP_DCHECK(s);
 
   AlignmentStatus alignStatus;
 

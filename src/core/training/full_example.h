@@ -122,7 +122,8 @@ class FullExampleReader {
   i64 lineNumber() const { return csv_.lineNumber(); }
 
   void resetInput(StringPiece data) {
-    csv_.initFromMemory(data);
+    Status s = csv_.initFromMemory(data);
+    JPP_DCHECK(s);
     charBuffer_.reset();
     finished_ = false;
   }

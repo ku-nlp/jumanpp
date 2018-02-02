@@ -43,7 +43,7 @@ class JumanppExec {
       JPP_RETURN_IF_ERROR(analyzer_.analyze(data));
       JPP_RETURN_IF_ERROR(format_->format(analyzer_, comment))
       if (!conf.graphvizDir.value().empty()) {
-        writeGraphviz();
+        JPP_RETURN_IF_ERROR(writeGraphviz());
       }
       numAnalyzed_ += 1;
       return Status::Ok();

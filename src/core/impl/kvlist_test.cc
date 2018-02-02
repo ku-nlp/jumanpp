@@ -104,9 +104,9 @@ class KVListTestEnv {
 
   void analyze2(StringPiece str) {
     analyze(str);
-    REQUIRE_OK(tenv.analyzer->bootstrapAnalysis());
-    CHECK_OK(tenv.analyzer->computeScores(&sconf));
-    top1.fillIn(tenv.analyzer->lattice());
+    REQUIRE(tenv.analyzer->bootstrapAnalysis());
+    REQUIRE(tenv.analyzer->computeScores(&sconf));
+    REQUIRE(top1.fillIn(tenv.analyzer->lattice()));
   }
 
   const DictionaryHolder& dic() { return tenv.analyzer->dic(); }
