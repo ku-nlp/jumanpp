@@ -40,9 +40,9 @@ Status PexStreamReader::readExample(std::istream *stream) {
     buf.append(tmp);
     buf.push_back('\n');
   }
-  impl_->reader_.setData(buf);
+  JPP_RETURN_IF_ERROR(impl_->reader_.setData(buf));
   bool eof = false;
-  impl_->reader_.readExample(&impl_->example_, &eof);
+  JPP_RETURN_IF_ERROR(impl_->reader_.readExample(&impl_->example_, &eof));
   if (!eof) {
     return Status::InvalidState() << "Could not parse full example: [\n"
                                   << buf << "\n]";
