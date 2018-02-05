@@ -10,9 +10,30 @@
 #include "jumandic/shared/jumandic_env.h"
 
 struct PathDiffConf {
+  bool posAreOk;
   std::string modelFile;
   std::string inputFile;
   std::string outputFile;
+
+  static PathDiffConf parse(int argc, const char* argv[]) {
+    args::ArgumentParser parser{"Path Differ"};
+    args::Positional<std::string> model{parser, "model", "model"};
+    args::Positional<std::string> input{parser, "input", "input"};
+    args::Flag negativeOnly{parser, "output pos", "output positive", {"pos"}};
+
+    try {
+      parser.ParseCLI(argc, argv);
+    } catch (std::exception& e) {
+      std::cerr << e.what();
+      exit(1);
+    }
+
+    PathDiffConf inst;
+    inst.modelFile = model.Get();
+    inst.inputFile = input.Get();
+    inst.posAreOk = negativeOnly.Get();
+    return inst;
+  }
 };
 
 using namespace jumanpp;
@@ -155,6 +176,7 @@ struct PathDiffCalculator {
   jumanpp::core::analysis::Analyzer full;
   jumanpp::core::analysis::Analyzer gbeam;
   RenderContext leftCtx;
+  bool outputPos;
 
   core::analysis::rnn::RnnInferenceConfig rnnConf;
 
@@ -180,6 +202,7 @@ struct PathDiffCalculator {
     JPP_RETURN_IF_ERROR(env.makeAnalyzer(&gbeam));
 
     JPP_RETURN_IF_ERROR(leftCtx.init(*env.coreHolder(), full.output()));
+    outputPos = conf.posAreOk;
 
     return Status::Ok();
   }
@@ -263,7 +286,7 @@ struct PathDiffCalculator {
       return Status::Ok();
     }
 
-    if (top2.totalScore > -0.1f) {
+    if (outputPos && top2.totalScore > -0.1f) {
       return Status::Ok();  // known-ish example
     }
 
@@ -292,22 +315,16 @@ struct PathDiffCalculator {
 };
 
 int main(int argc, const char* argv[]) {
-  if (argc != 3) {
-    return 1;
-  }
-
-  PathDiffConf pdc;
-  pdc.modelFile = argv[1];
-  pdc.inputFile = argv[2];
+  auto conf = PathDiffConf::parse(argc, argv);
 
   PathDiffCalculator calc;
-  Status s = calc.init(pdc);
+  Status s = calc.init(conf);
   if (!s) {
     std::cerr << s;
     return 1;
   }
 
-  std::ifstream ifs{pdc.inputFile};
+  std::ifstream ifs{conf.inputFile};
 
   std::string comment;
   std::string data;
