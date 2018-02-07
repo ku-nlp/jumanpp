@@ -43,5 +43,10 @@ target_compile_features(jpp_util PUBLIC
   cxx_unrestricted_unions
   cxx_uniform_initialization
 
-  cxx_relaxed_constexpr # only C++14 feature we use now
   )
+
+if (NOT MSVC)
+    target_compile_features(jpp_util PUBLIC
+      cxx_relaxed_constexpr # only C++14 feature we use now
+  )
+endif()
