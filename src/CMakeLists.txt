@@ -6,7 +6,6 @@ function(add_benchmark name source)
 endfunction(add_benchmark)
 
 set(JPP_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-include_directories("${JPP_SRC_DIR}")
 
 set(JPP_TEST_STANDALONE_HDRS
         ${JPP_SRC_DIR}/testing/standalone_test.h)

@@ -70,7 +70,7 @@ target_link_libraries(jpp_core jpp_util jpp_rnn)
 target_link_libraries(jpp_core_tests jpp_core jpp_core_train)
 
 if (${JPP_USE_PROTOBUF})
-  target_include_directories(jpp_core PRIVATE ${Protobuf_INCLUDE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
+  target_include_directories(jpp_core PUBLIC ${Protobuf_INCLUDE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
   target_link_libraries(jpp_core ${Protobuf_LIBRARY})
 endif()
 

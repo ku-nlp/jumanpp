@@ -220,7 +220,7 @@ struct JppArgsParser {
     result->rightBeam.set(rightBeamSize);
 
     if (autoBeam) {
-      std::regex autoBeamRegex("^(\\d+):(\\d+):(\\d+)$");
+      std::regex autoBeamRegex(R"(^(\d+):(\d+):(\d+)$)");
       std::smatch results;
       auto& s = autoBeam.Get();
       if (std::regex_search(s, results, autoBeamRegex)) {
@@ -240,6 +240,22 @@ struct JppArgsParser {
 };
 
 }  // namespace
+
+Status parseCfgFile(StringPiece filename, JumanppConf* conf,
+                    i32 recursionDepth) {
+  JppArgsParser parser;
+  JumanppConf myConf;
+  JPP_RETURN_IF_ERROR(parser.parseFile(filename));
+  parser.fillResult(&myConf);
+  if (recursionDepth > 0 && myConf.configFile.defined()) {
+    JumanppConf internal;
+    JPP_RETURN_IF_ERROR(
+        parseCfgFile(myConf.configFile.value(), &internal, recursionDepth - 1));
+    conf->mergeWith(internal);
+  }
+  conf->mergeWith(myConf);
+  return Status::Ok();
+}
 
 Status parseArgs(int argc, const char* argv[], JumanppConf* result) {
   StringPiece myName{"/jumandic.config"};

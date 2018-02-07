@@ -6,4 +6,4 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/test_config.h.in ${CMAKE_CURRENT_BINA
 
 add_library(jpp_test_catch_main_lib catch_main.cc)
 
-target_include_directories(jpp_test_catch_main_lib PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+target_include_directories(jpp_test_catch_main_lib PRIVATE ${CMAKE_CURRENT_BINARY_DIR} PUBLIC ${JPP_LIBS_DIR})

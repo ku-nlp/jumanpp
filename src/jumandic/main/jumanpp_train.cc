@@ -5,7 +5,7 @@
 #include "jumanpp_train.h"
 #include "args.h"
 #include "core/training/training_env.h"
-#include "jpp_rnn_args.h"
+#include "jumandic/shared/jpp_rnn_args.h"
 #include "jumandic/shared/jumandic_env.h"
 #include "util/logging.hpp"
 

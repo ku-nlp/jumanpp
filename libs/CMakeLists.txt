@@ -2,6 +2,7 @@ set(libs3p_catch_header ${CMAKE_CURRENT_SOURCE_DIR}/catch.hpp PARENT_SCOPE)
 file(GLOB pegtl_headers_raw ${CMAKE_CURRENT_SOURCE_DIR}/pegtl/*.hh ${CMAKE_CURRENT_SOURCE_DIR}/pegtl/*/*.hh)
 set(libs3p_pegtl_headers ${pegtl_headers_raw} PARENT_SCOPE)
 set(BACKWARD_headers ${CMAKE_CURRENT_SOURCE_DIR}/backward.hpp PARENT_SCOPE)
+set(JPP_LIBS_DIR ${CMAKE_CURRENT_SOURCE_DIR} PARENT_SCOPE)
 
 set(EIGEN_VERSION "3.3.4")
 set(EIGEN_HASH "dd254beb0bafc695d0f62ae1a222ff85b52dbaa3a16f76e781dce22d0d20a4a6")

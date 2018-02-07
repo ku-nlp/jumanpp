@@ -1,0 +1,28 @@
+syntax = "proto2";
+
+package jumanpp;
+
+import "juman.proto";
+
+message LatticeNode {
+  required uint32 nodeId = 1;
+  repeated uint32 prevNodes = 2 [ packed = true ];
+  required uint32 startIndex = 3;
+  required uint32 endIndex = 4;
+  required string surface = 5;
+  required string canonic = 6;
+  required string reading = 7;
+  required string midasi = 8;
+  required JumanPos pos = 9;
+  optional float feature_score = 10;
+  optional float lm_score = 11;
+  optional float morph_analysis_score = 12;
+  repeated uint32 rank = 13 [ packed = true ];
+  repeated JumanFeature features = 14;
+  optional JumanStringPos string_pos = 15;
+}
+
+message Lattice {
+  optional string comment = 1;
+  repeated LatticeNode nodes = 2;
+}

@@ -85,7 +85,8 @@ struct LatticeDumpOutputImpl {
   std::vector<std::unique_ptr<ValueConverter>> converters_;
   core::features::DebugFeatures debugFeatures_;
   std::string buffer_;
-  google::protobuf::io::StringOutputStream os_{&buffer_};
+  bool fillFeatures_;
+  bool fillBuffer_;
 
   Status fillBeams(const analysis::AnalyzerImpl& ai,
                    analysis::LatticeRightBoundary* bnd, LatticeNode* node,
@@ -132,20 +133,22 @@ struct LatticeDumpOutputImpl {
         path->add_raw_scores(s);
       }
 
-      debugFeatures_.features.clear();
-      JPP_RETURN_IF_ERROR(debugger_.fill(&ai, &debugFeatures_, el.ptr));
-      for (int ngram = 0; ngram < nspec.size(); ++ngram) {
-        auto& ndef = nspec[ngram];
-        auto& nres = debugFeatures_.features[ngram];
-        auto inst = path->add_features();
-        inst->set_index(ngram);
-        for (auto ref : ndef.references) {
-          inst->add_patterns(ref);
+      if (fillFeatures_) {
+        debugFeatures_.features.clear();
+        JPP_RETURN_IF_ERROR(debugger_.fill(&ai, &debugFeatures_, el.ptr));
+        for (int ngram = 0; ngram < nspec.size(); ++ngram) {
+          auto& ndef = nspec[ngram];
+          auto& nres = debugFeatures_.features[ngram];
+          auto inst = path->add_features();
+          inst->set_index(ngram);
+          for (auto ref : ndef.references) {
+            inst->add_patterns(ref);
+          }
+          inst->set_repr(std::move(nres.repr));
+          inst->set_raw_value(nres.rawHashCode);
+          inst->set_masked_value(nres.maskedHashCode);
+          inst->set_weight(nres.score);
         }
-        inst->set_repr(std::move(nres.repr));
-        inst->set_raw_value(nres.rawHashCode);
-        inst->set_masked_value(nres.maskedHashCode);
-        inst->set_weight(nres.score);
       }
     }
 
@@ -272,7 +275,7 @@ struct LatticeDumpOutputImpl {
     JPP_RETURN_IF_ERROR(fillBoundaries(analyzer));
     JPP_RETURN_IF_ERROR(fillFieldNames());
 
-    {
+    if (fillBuffer_) {
       buffer_.clear();
       google::protobuf::io::StringOutputStream os{&buffer_};
       google::protobuf::io::CodedOutputStream cos{&os};
@@ -336,7 +339,8 @@ struct LatticeDumpOutputImpl {
 
 LatticeDumpOutput::~LatticeDumpOutput() = default;
 
-LatticeDumpOutput::LatticeDumpOutput() = default;
+LatticeDumpOutput::LatticeDumpOutput(bool fillFeatures, bool fillBuffer)
+    : fillFeatures_{fillFeatures}, fillBuffer_{fillBuffer} {}
 
 Status LatticeDumpOutput::format(const core::analysis::Analyzer& analyzer,
                                  StringPiece comment) {
@@ -349,9 +353,13 @@ StringPiece LatticeDumpOutput::result() const { return impl_->buffer_; }
 Status LatticeDumpOutput::initialize(const analysis::AnalyzerImpl* impl,
                                      const analysis::WeightBuffer* weights) {
   impl_.reset(new LatticeDumpOutputImpl);
+  impl_->fillFeatures_ = fillFeatures_;
+  impl_->fillBuffer_ = fillBuffer_;
   JPP_RETURN_IF_ERROR(impl_->initialize(impl, weights));
   return Status::Ok();
 }
+
+const LatticeDump* LatticeDumpOutput::objectPtr() const { return impl_->obj_; }
 
 }  // namespace output
 }  // namespace core

@@ -76,6 +76,8 @@ struct JumanppConf {
   friend std::ostream& operator<<(std::ostream& os, const JumanppConf& conf);
 };
 
+Status parseCfgFile(StringPiece filename, JumanppConf* conf,
+                    i32 recursionDepth = 0);
 Status parseArgs(int argc, const char* argv[], JumanppConf* result);
 
 }  // namespace jumandic

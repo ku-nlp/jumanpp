@@ -10,8 +10,8 @@
 #include "core/analysis/score_api.h"
 #include "core/env.h"
 #include "core/impl/model_io.h"
-#include "jumandic/main/jumanpp_args.h"
 #include "jumandic/shared/juman_format.h"
+#include "jumandic/shared/jumanpp_args.h"
 #include "rnn/mikolov_rnn.h"
 
 namespace jumanpp {
@@ -32,9 +32,15 @@ class JumanppExec {
   Status writeGraphviz();
 
  public:
+  JumanppExec() = default;
   explicit JumanppExec(const jumandic::JumanppConf& conf) : conf{conf} {}
 
   virtual Status initOutput();
+
+  virtual Status init(const jumandic::JumanppConf& conf) {
+    this->conf.mergeWith(conf);
+    return init();
+  }
 
   virtual Status init();
 
@@ -66,6 +72,7 @@ class JumanppExec {
   core::analysis::Analyzer* analyzerPtr() { return &analyzer_; }
   core::OutputFormat* format() { return format_.get(); }
   const core::CoreHolder& core() const { return *env.coreHolder(); }
+  Status initAnalyzer(core::analysis::Analyzer* result);
 };
 
 }  // namespace jumandic

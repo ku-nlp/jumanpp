@@ -1,0 +1,37 @@
+syntax = "proto2";
+
+package jumanpp;
+
+message JumanSentence {
+  optional string comment = 2;
+  repeated JumanLexeme lexemes = 1;
+}
+
+message JumanLexeme {
+  required string surface = 1;
+  required string reading = 2;
+  required string baseform = 3;
+  required JumanPos posInfo = 4;
+  repeated JumanFeature features = 5;
+  optional JumanStringPos stringPos = 6;
+  repeated JumanLexeme variants = 20;
+}
+
+message JumanPos {
+  required uint32 pos = 1;
+  required uint32 subpos = 2;
+  required uint32 conjType = 3;
+  required uint32 conjForm = 4;
+}
+
+message JumanStringPos {
+  required string pos = 1;
+  required string subpos = 2;
+  required string conjType = 3;
+  required string conjForm = 4;
+}
+
+message JumanFeature {
+  required string key = 1;
+  optional string value = 2;
+}

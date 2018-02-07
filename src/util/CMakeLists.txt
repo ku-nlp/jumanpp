@@ -24,3 +24,24 @@ endif()
 add_library(jpp_util ${jpp_util_sources} ${jpp_util_headers} ${BACKWARD_headers})
 jpp_test_executable(jpp_util_test ${jpp_util_test_srcs} ${jpp_util_headers})
 target_link_libraries(jpp_util_test jpp_util)
+target_include_directories(jpp_util PUBLIC ${JPP_LIBS_DIR} ${JPP_SRC_DIR})
+target_compile_features(jpp_util PUBLIC
+  cxx_constexpr
+  cxx_variadic_templates
+  cxx_alias_templates
+  cxx_alignas
+  cxx_alignof
+  cxx_auto_type
+  cxx_decltype
+  cxx_defaulted_functions
+  cxx_final
+  cxx_lambdas
+  cxx_noexcept
+  cxx_nullptr
+  cxx_range_for
+  cxx_strong_enums
+  cxx_unrestricted_unions
+  cxx_uniform_initialization
+
+  cxx_relaxed_constexpr # only C++14 feature we use now
+  )

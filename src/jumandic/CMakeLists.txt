@@ -1,10 +1,11 @@
-set(jumandic_headers shared/juman_format.h main/jumanpp.h main/jumanpp_args.h
-  shared/jumandic_env.h shared/morph_format.h shared/jumandic_ids.h shared/jumandic_id_resolver.h main/jpp_rnn_args.h
+set(jumandic_headers shared/juman_format.h main/jumanpp.h shared/jumanpp_args.h
+  shared/jumandic_env.h shared/morph_format.h shared/jumandic_ids.h shared/jumandic_id_resolver.h shared/jpp_rnn_args.h
   shared/mdic_format.h shared/subset_format.h shared/lattice_format.h)
+
 set(jumandic_sources shared/juman_format.cc
   shared/jumandic_env.cc shared/jumandic_test_env.h shared/morph_format.cc shared/jumandic_ids.cc
   shared/jumandic_id_resolver.cc shared/mdic_format.cc shared/subset_format.cc
-  shared/lattice_format.cc)
+  shared/lattice_format.cc shared/jumanpp_args.cc)
 
 set(jumandic_tests shared/jumandic_spec_test.cc shared/mini_dic_test.cc shared/training_test.cc
   shared/mdic_format_test.cc tests/partial_data_train.cc shared/jumandic_codegen_test.cc
@@ -26,19 +27,29 @@ jpp_feature_codegen(
 
 if (${JPP_USE_PROTOBUF})
   list(APPEND jumandic_tests shared/jumandic_debug_dump_test.cc)
-endif()
+  list(APPEND jumandic_headers ${jumandic_pb_hdrs})
+  list(APPEND jumandic_sources ${jumandic_pb_srcs})
+endif ()
 
 message(${jpp_jumandic_cg_INCLUDE})
 
 add_library(jpp_jumandic ${jumandic_sources} ${jumandic_headers} ${jpp_jumandic_cg_SRC})
 target_include_directories(jpp_jumandic PRIVATE ${jpp_jumandic_cg_INCLUDE})
+if (${JPP_USE_PROTOBUF})
+  target_include_directories(jpp_jumandic PUBLIC ${Protobuf_INCLUDE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
+  target_link_libraries(jpp_jumandic ${Protobuf_LIBRARIES})
+  set_target_properties(jpp_jumandic
+    PROPERTIES PROTOBUF_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/proto;${JPP_SRC_DIR}/core/proto"
+  )
+endif ()
+
 
 jpp_test_executable(jpp_jumandic_tests ${jumandic_tests})
 jpp_test_executable(jpp_bug_tests ${bug_test_sources})
 target_include_directories(jpp_jumandic_tests PRIVATE ${jpp_jumandic_cg_INCLUDE})
 
 add_executable(jpp_jumandic_bootstrap main/bootstrap.cc)
-add_executable(jumanpp_v2 main/jumanpp.cc main/jumanpp_args.cc)
+add_executable(jumanpp_v2 main/jumanpp.cc)
 add_executable(jumanpp_v2_train main/jumanpp_train.cc main/jumanpp_train.h)
 add_executable(jpp_jumandic_pathdiff main/path_diff.cc)
 target_include_directories(jpp_jumandic_pathdiff PRIVATE ${jpp_jumandic_cg_INCLUDE})

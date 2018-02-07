@@ -101,7 +101,7 @@ Status JumanppExec::initOutput() {
     }
 #if defined(JPP_USE_PROTOBUF)
     case OutputType::FullLatticeDump: {
-      auto mfmt = new core::output::LatticeDumpOutput;
+      auto mfmt = new core::output::LatticeDumpOutput{true, true};
       format_.reset(mfmt);
       JPP_RETURN_IF_ERROR(
           mfmt->initialize(analyzer_.impl(), &env.featureScorer()->weights()));
@@ -184,6 +184,10 @@ StringPiece JumanppExec::emptyResult() const {
     default:
       return EMPTY_SP;
   }
+}
+
+Status JumanppExec::initAnalyzer(core::analysis::Analyzer *result) {
+  return env.makeAnalyzer(result);
 }
 
 }  // namespace jumandic

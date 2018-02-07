@@ -6,7 +6,7 @@
 #include <fstream>
 #include <iostream>
 #include "core/input/pex_stream_reader.h"
-#include "jumanpp_args.h"
+#include "jumandic/shared/jumanpp_args.h"
 #include "util/logging.hpp"
 
 using namespace jumanpp;
