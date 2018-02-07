@@ -21,7 +21,7 @@ TEST_CASE("debug dump works with jumandic and full beam") {
                         env.trainEnv.value().scorerDef()));
   an.impl()->setStoreAllPatterns(true);
   REQUIRE(an.analyze("５５１年もガラフケマペが兵をつの〜ってたな！"));
-  core::output::LatticeDumpOutput output;
+  core::output::LatticeDumpOutput output{true, true};
   auto& weights = env.trainEnv.value().scorerDef()->feature->weights();
   REQUIRE(output.initialize(an.impl(), &weights));
   REQUIRE(output.format(an, "test"));

@@ -8,3 +8,5 @@ add_library(jumanpp_rnn_legacy legacy/rnnlmlib.h legacy/rnnlmlib_static.h legacy
 jpp_test_executable(jpp_rnn_tests ${jpp_rnn_tests})
 target_link_libraries(jpp_rnn jpp_util)
 target_link_libraries(jpp_rnn_tests jpp_rnn jumanpp_rnn_legacy)
+
+target_link_libraries(jumanpp_rnn_legacy jpp_util)

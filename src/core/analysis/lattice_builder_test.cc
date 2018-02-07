@@ -31,7 +31,7 @@ class LatticeBldrTestEnv {
     REQUIRE_OK(tenv.analyzer->output().stringField("a", &flda));
     REQUIRE_OK(tenv.analyzer->output().stringField("b", &fldb));
     scorerDef.scoreWeights.push_back(1.0f);
-    tenv.analyzer->initScorers(scorerDef);
+    REQUIRE(tenv.analyzer->initScorers(scorerDef));
   }
 
   void analyze(StringPiece str, bool doBuild) {
