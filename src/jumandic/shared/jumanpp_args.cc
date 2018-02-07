@@ -295,8 +295,9 @@ Status parseArgs(int argc, const char* argv[], JumanppConf* result) {
                 << " error=" << s;
   }
 
-  if (!loadedConfig) {
-    std::string userConfigPath(std::getenv("HOME"));
+  auto homePtr = std::getenv("HOME");
+  if (!loadedConfig && homePtr) {
+    std::string userConfigPath(homePtr);
     userConfigPath += "/.config/jumanpp";
     userConfigPath += myName.str();
     s = argsParser.parseFile(userConfigPath);
