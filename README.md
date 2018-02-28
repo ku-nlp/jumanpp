@@ -19,7 +19,7 @@ the original Juman++.
 
 ## Building from a package
 
-Dowload the package from [Releases](https://github.com/ku-nlp/jumanpp/releases)
+Download the package from [Releases](https://github.com/ku-nlp/jumanpp/releases)
 
 ```bash
 $ tar xf jumanpp-<version>.tar.xz # decompress the package
