@@ -1,6 +1,6 @@
 --model=${CMAKE_INSTALL_PREFIX}/libexec/jumanpp/jumandic.jppmdl
---rnn-nce-bias=6
---rnn-unk-constant=-5
---rnn-unk-length=-3
+--rnn-nce-bias=5.62844432562
+--rnn-unk-constant=-3.4748115191
+--rnn-unk-length=-2.92994951022
 --feature-weight-perceptron=1
---feature-weight-rnn=0.007
+--feature-weight-rnn=0.0176
