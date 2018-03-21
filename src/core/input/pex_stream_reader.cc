@@ -2,6 +2,8 @@
 // Created by Arseny Tolmachev on 2018/01/19.
 //
 
+#include <memory>
+
 #include "pex_stream_reader.h"
 #include "core/analysis/score_plugin.h"
 #include "core/input/partial_example.h"
@@ -12,7 +14,7 @@ namespace core {
 namespace input {
 
 struct PexStreamReaderImpl : public analysis::ScorePlugin {
-  TrainFieldsIndex tfi_;
+  std::shared_ptr<TrainFieldsIndex> tfi_;
   PartialExample example_;
   PartialExampleReader reader_;
   std::string buffer_;
@@ -64,8 +66,15 @@ StringPiece PexStreamReader::comment() {
 PexStreamReader::PexStreamReader() { impl_.reset(new PexStreamReaderImpl); }
 
 Status PexStreamReader::initialize(const CoreHolder &core, char32_t noBreak) {
-  JPP_RETURN_IF_ERROR(impl_->tfi_.initialize(core));
-  JPP_RETURN_IF_ERROR(impl_->reader_.initialize(&impl_->tfi_, noBreak));
+  impl_->tfi_ = std::make_shared<TrainFieldsIndex>();
+  JPP_RETURN_IF_ERROR(impl_->tfi_->initialize(core));
+  JPP_RETURN_IF_ERROR(impl_->reader_.initialize(impl_->tfi_.get(), noBreak));
+  return Status::Ok();
+}
+
+Status PexStreamReader::initialize(const PexStreamReader &other) {
+  impl_->tfi_ = other.impl_->tfi_; //have a copy of field index (this is fast)
+  JPP_RETURN_IF_ERROR(impl_->reader_.initialize(impl_->tfi_.get(), other.impl_->reader_.noBreakToken()));
   return Status::Ok();
 }
 

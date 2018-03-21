@@ -28,6 +28,8 @@ class LatticeDumpOutput : public OutputFormat {
                 StringPiece comment) override;
   StringPiece result() const override;
   const LatticeDump* objectPtr() const;
+
+  bool wasInitialized() const { return static_cast<bool>(impl_); }
 };
 
 }  // namespace output

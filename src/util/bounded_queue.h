@@ -43,9 +43,9 @@ class bounded_queue {
     capa_ = max_size;
   }
 
-  bool offer(T&& item) noexcept(std::is_nothrow_move_assignable<T>::value) {
+  bool offer(T&& item, unsigned int reserve = 0) noexcept(std::is_nothrow_move_assignable<T>::value) {
     lock_t lock(mutex_);
-    if (remaining() == 0) {
+    if (remaining() <= reserve) {
       return false;
     }
     items_[head_ % capa_] = std::move(item);

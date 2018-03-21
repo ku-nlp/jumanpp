@@ -190,5 +190,9 @@ Status JumanppExec::initAnalyzer(core::analysis::Analyzer *result) {
   return env.makeAnalyzer(result);
 }
 
+const core::features::StaticFeatureFactory *jumandicStaticFeatures() {
+  static jumanpp_generated::JumandicStatic factory;
+  return &factory;
+}
 }  // namespace jumandic
 }  // namespace jumanpp

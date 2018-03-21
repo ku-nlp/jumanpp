@@ -34,6 +34,7 @@ class JumanppEnv {
   void setBeamSize(u32 size);
 
   const CoreHolder* coreHolder() const { return core_.get(); }
+  const analysis::ScorerDef* scorers() const { return &scorers_; }
   const spec::AnalysisSpec& spec() const { return dicBldr_.spec; }
   bool hasPerceptronModel() const;
 

@@ -75,6 +75,8 @@ class JumanppExec {
   Status initAnalyzer(core::analysis::Analyzer* result);
 };
 
+const core::features::StaticFeatureFactory* jumandicStaticFeatures();
+
 }  // namespace jumandic
 }  // namespace jumanpp
 

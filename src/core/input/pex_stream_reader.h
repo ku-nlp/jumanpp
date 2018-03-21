@@ -23,6 +23,7 @@ class PexStreamReader : public StreamReader {
   PexStreamReader();
   ~PexStreamReader() override;
   Status initialize(const CoreHolder &core, char32_t noBreak = U'&');
+  Status initialize(const PexStreamReader& other);
   Status readExample(std::istream *stream) override;
   Status analyzeWith(analysis::Analyzer *an) override;
   StringPiece comment() override;

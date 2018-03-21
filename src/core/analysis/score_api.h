@@ -67,6 +67,8 @@ struct ScorerDef {
   FeatureScorer* feature;
   std::vector<ScorerFactory*> others;
   std::vector<Score> scoreWeights;
+
+  i32 numScorers() const { return static_cast<i32>(1 + others.size()); }
 };
 
 }  // namespace analysis

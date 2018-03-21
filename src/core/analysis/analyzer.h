@@ -44,7 +44,6 @@ class Analyzer {
  public:
   Analyzer();
   Analyzer(const Analyzer&) = delete;
-  Analyzer(Analyzer&&) = delete;
 
   Status initialize(const CoreHolder* core, const AnalyzerConfig& cfg,
                     const ScoringConfig& sconf, const ScorerDef* scorer);
@@ -54,6 +53,7 @@ class Analyzer {
 
   const ScorerDef* scorer() const { return scorer_; }
   AnalyzerImpl* impl() const { return ptr_; }
+  const CoreHolder& core() const;
   ~Analyzer();
 };
 

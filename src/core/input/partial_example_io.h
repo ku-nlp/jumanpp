@@ -26,6 +26,7 @@ class PartialExampleReader {
   Status readExample(PartialExample* result, bool* eof);
   Status openFile(StringPiece filename);
   Status setData(StringPiece data);
+  char32_t noBreakToken() const { return noBreakToken_; }
 };
 
 }  // namespace input
