@@ -45,7 +45,7 @@ set(core_analysis_tsrc
 
   )
 
-jpp_core_files(core_hdrs
+set(core_analysis_hdrs
 
   analysis_input.h
   analysis_result.h
@@ -77,6 +77,10 @@ jpp_core_files(core_hdrs
   unk_nodes_creator.h
 
   )
+install(FILES ${core_analysis_hdrs}
+  DESTINATION "${JPP_INSTALL_INCLUDE_DIR}/core/analysis")
+
+jpp_core_files(core_hdrs ${core_analysis_hdrs})
 
 
 jpp_test_executable(jpp_core_analysis_tests ${core_analysis_tsrc})

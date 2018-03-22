@@ -15,7 +15,7 @@ set(core_spec_tsrc
 
   )
 
-jpp_core_files(core_hdrs
+set(core_spec_hdrs
 
   spec_compiler.h
   spec_dsl.h
@@ -25,7 +25,9 @@ jpp_core_files(core_hdrs
   spec_types.h
 
   )
-
+install(FILES ${core_spec_hdrs}
+  DESTINATION "${JPP_INSTALL_INCLUDE_DIR}/core/spec")
+jpp_core_files(core_hdrs ${core_spec_hdrs})
 
 jpp_test_executable(jpp_core_spec_tests ${core_spec_tsrc})
 target_link_libraries(jpp_core_spec_tests jpp_core)

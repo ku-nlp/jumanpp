@@ -17,7 +17,7 @@ jpp_core_files(core_tsrcs
 
   )
 
-jpp_core_files(core_hdrs
+set(core_dic_hdrs
   darts.h
   darts_trie.h
   dic_build_detail.h
@@ -30,4 +30,6 @@ jpp_core_files(core_hdrs
   field_reader.h
   progress.h
   )
-
+install(FILES ${core_dic_hdrs}
+  DESTINATION "${JPP_INSTALL_INCLUDE_DIR}/core/dic")
+jpp_core_files(core_hdrs ${core_dic_hdrs})

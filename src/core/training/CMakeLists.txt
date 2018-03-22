@@ -36,9 +36,15 @@ set(core_train_hdrs
   training_types.h
 
   )
+install(FILES ${core_train_hdrs}
+  DESTINATION "${JPP_INSTALL_INCLUDE_DIR}/core/train")
 
 
 add_library(jpp_core_train ${core_train_src} ${core_train_hdrs})
+install(TARGETS jpp_core_train
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 jpp_test_executable(jpp_core_train_tests ${core_train_tsrc})
 
 target_link_libraries(jpp_core_train jpp_core ${CMAKE_THREAD_LIBS_INIT})

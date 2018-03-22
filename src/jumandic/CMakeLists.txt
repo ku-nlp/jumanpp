@@ -14,6 +14,10 @@ set(jumandic_tests shared/jumandic_spec_test.cc shared/mini_dic_test.cc shared/t
 set(bug_test_sources tests/bug_950111-003_test.cc tests/bug_28_lattice.cc)
 
 add_library(jpp_jumandic_spec shared/jumandic_spec.cc shared/jumandic_spec_lexdata.cc shared/jumandic_spec.h)
+install(TARGETS jpp_jumandic_spec
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 target_link_libraries(jpp_jumandic_spec jpp_core)
 
 jpp_feature_codegen(
@@ -31,9 +35,16 @@ if (${JPP_USE_PROTOBUF})
   list(APPEND jumandic_sources ${jumandic_pb_srcs})
 endif ()
 
+install(FILES ${jumandic_headers}
+  DESTINATION "${JPP_INSTALL_INCLUDE_DIR}/jumandic/shared")
+
 message(${jpp_jumandic_cg_INCLUDE})
 
 add_library(jpp_jumandic ${jumandic_sources} ${jumandic_headers} ${jpp_jumandic_cg_SRC})
+install(TARGETS jpp_jumandic
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 target_include_directories(jpp_jumandic PRIVATE ${jpp_jumandic_cg_INCLUDE})
 if (${JPP_USE_PROTOBUF})
   target_include_directories(jpp_jumandic PUBLIC ${Protobuf_INCLUDE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
@@ -62,4 +73,4 @@ target_link_libraries(jumanpp_v2 jpp_jumandic)
 target_link_libraries(jumanpp_v2_train jpp_jumandic jpp_core_train)
 target_link_libraries(jpp_jumandic_pathdiff jpp_jumandic)
 
-install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/jumanpp_v2 RENAME jumanpp DESTINATION bin)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/jumanpp_v2 RENAME jumanpp DESTINATION ${CMAKE_INSTALL_BINDIR})

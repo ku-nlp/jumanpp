@@ -56,6 +56,9 @@ else()
     message("Using Protobuf-based components... " ${Protobuf_VERSION})
 endif()
 
+include(GNUInstallDirs)
+set(JPP_INSTALL_INCLUDE_DIR "${CMAKE_INSTALL_INCLUDEDIR}/jumanpp")
+
 add_subdirectory(libs)
 add_subdirectory(test) #need to set variable here
 add_subdirectory(src)
