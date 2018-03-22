@@ -28,7 +28,7 @@ jpp_core_files(core_tsrcs
 
   )
 
-jpp_core_files(core_hdrs
+set(core_impl_hdrs
 
   feature_computer.h
   feature_debug.h
@@ -50,4 +50,6 @@ jpp_core_files(core_hdrs
   segmented_format.h
 
   )
-
+install(FILES ${core_impl_hdrs}
+  DESTINATION "${JPP_INSTALL_INCLUDE_DIR}/core/impl")
+jpp_core_files(core_hdrs ${core_impl_hdrs})

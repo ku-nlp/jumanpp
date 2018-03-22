@@ -7,7 +7,7 @@ jpp_core_files(core_srcs
   training_io.cc
   )
 
-jpp_core_files(core_hdrs
+set(core_input_hdrs
 
   partial_example.h
   partial_example_io.h
@@ -15,6 +15,9 @@ jpp_core_files(core_hdrs
   stream_reader.h
   training_io.h
   )
+install(FILES ${core_input_hdrs}
+  DESTINATION "${JPP_INSTALL_INCLUDE_DIR}/core/input")
+jpp_core_files(core_hdrs ${core_input_hdrs})
 
 jpp_core_files(core_tsrcs
   partial_example_io_test.cc

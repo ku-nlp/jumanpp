@@ -20,8 +20,14 @@ if(WIN32)
     list(APPEND jpp_util_headers win32_utils.h)
 endif()
 
+install(FILES ${jpp_util_headers}
+  DESTINATION "${JPP_INSTALL_INCLUDE_DIR}/util")
 
 add_library(jpp_util ${jpp_util_sources} ${jpp_util_headers} ${BACKWARD_headers})
+install(TARGETS jpp_util
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 jpp_test_executable(jpp_util_test ${jpp_util_test_srcs} ${jpp_util_headers})
 target_link_libraries(jpp_util_test jpp_util)
 target_include_directories(jpp_util PUBLIC ${JPP_LIBS_DIR} ${JPP_SRC_DIR})

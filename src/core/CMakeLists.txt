@@ -18,10 +18,24 @@ macro(jpp_core_files NAME)
 endmacro()
 
 
-set(core_srcs)
-set(core_tsrcs)
-set(core_hdrs)
+set(core_srcs
+  core.cc
+  env.cc
+  features_api.cc
+  )
 
+set(core_tsrcs)
+
+set(core_hdrs
+  ${jpp_core_cfg_dir}/core_config.h
+  ${jpp_core_cfg_dir}/core_version.h
+  core.h
+  core_types.h
+  env.h
+  features_api.h
+  )
+install(FILES ${core_hdrs}
+  DESTINATION "${JPP_INSTALL_INCLUDE_DIR}/core")
 
 if (${JPP_USE_PROTOBUF})
   protobuf_generate_cpp(core_srcs core_hdrs proto/lattice_dump.proto)
@@ -37,23 +51,6 @@ add_subdirectory(input)
 add_subdirectory(spec)
 add_subdirectory(training)
 
-set(core_srcs
-  core.cc
-  env.cc
-  features_api.cc
-  ${core_srcs}
-  )
-
-set(core_hdrs
-  ${jpp_core_cfg_dir}/core_config.h
-  ${jpp_core_cfg_dir}/core_version.h
-  core.h
-  core_types.h
-  env.h
-  features_api.h
-  ${core_hdrs}
-  )
-
 set(core_test_srcs
   ${core_test_srcs}
   ${core_tsrcs}
@@ -62,6 +59,10 @@ set(core_test_srcs
   )
 
 add_library(jpp_core ${core_srcs} ${core_hdrs} ${libs3p_pegtl_headers})
+install(TARGETS jpp_core
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 jpp_test_executable(jpp_core_tests ${core_test_srcs})
 
 target_include_directories(jpp_core PUBLIC ${jpp_core_cfg_dir})

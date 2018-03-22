@@ -20,6 +20,8 @@ set(jpp_codegen_hdrs
   partial_ngram_feature_codegen.h
   pattern_feature_codegen.h
   )
+install(FILES ${jpp_codegen_hdrs}
+  DESTINATION "${JPP_INSTALL_INCLUDE_DIR}/core/codegen")
 
 set(jpp_codegen_tsrcs
   feature_codegen_test.cc
