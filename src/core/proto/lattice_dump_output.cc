@@ -202,14 +202,19 @@ struct LatticeDumpOutputImpl {
     node->set_entry_ptr(ni.entryPtr().rawValue());
     auto rankit = ranks_.find(analysis::LatticeNodePtr::make(bndIdx, nodeIdx));
     if (rankit != ranks_.end()) {
-      for (auto rank : rankit->second) {
+      auto& localRanks = rankit->second;
+      for (auto rank : localRanks) {
         node->add_ranks(rank);
       }
     }
-    auto patv = bnd->patternFeatureData().row(nodeIdx);
-    for (auto pat : patv) {
-      node->add_patterns(pat);
+
+    if (fillFeatures_) {
+      auto patv = bnd->patternFeatureData().row(nodeIdx);
+      for (auto pat : patv) {
+        node->add_patterns(pat);
+      }
     }
+
     JPP_RETURN_IF_ERROR(fillBeams(ai, bnd, node, nodeIdx));
 
     return Status::Ok();
@@ -250,7 +255,7 @@ struct LatticeDumpOutputImpl {
       while (ptr->boundary >= 2) {
         pathRanks_[*ptr].push_back(rank);
         auto& nodeRanks = ranks_[ptr->latticeNodePtr()];
-        if (!nodeRanks.empty() && nodeRanks.back() != rank) {
+        if (nodeRanks.empty() || nodeRanks.back() != rank) {
           nodeRanks.push_back(rank);
         }
         ptr = ptr->previous;
