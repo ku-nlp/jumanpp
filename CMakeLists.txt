@@ -54,6 +54,7 @@ if ((NOT ${Protobuf_FOUND}) OR (${Protobuf_VERSION} VERSION_LESS "3.1.0") OR (NO
     message("Not using Protobuf-based components")
 else()
     message("Using Protobuf-based components... " ${Protobuf_VERSION})
+    include(cmake/ProtobufCompile.cmake)
 endif()
 
 add_subdirectory(libs)

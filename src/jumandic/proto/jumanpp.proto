@@ -4,25 +4,78 @@ package jumanpp;
 
 import "juman.proto";
 
+// Represents a morpheme inside the
+// lattice of the analyzer
 message LatticeNode {
   required uint32 nodeId = 1;
+
+  // contain ids of previously connected nodes
+  // could be multiple, if there are multiple possible nodes
   repeated uint32 prevNodes = 2 [ packed = true ];
+
+  // node surface offset, in Unicode codepoints,
+  // of the input string
   required uint32 startIndex = 3;
+
+  // Index of 1 character after the last, in Unicode codepoints,
+  // of the input string
   required uint32 endIndex = 4;
+
+  // A part of raw input string which correspond
+  // to the current morpheme
   required string surface = 5;
+
+  // canonic representation.
+  // like 代表表記 in JUMAN, but applied to every node
   required string canonic = 6;
+
+  // reading information. Provided on best-effort basis.
   required string reading = 7;
-  required string midasi = 8;
+
+  // base dictionary form
+  required string dicform = 8;
+
+  // numeric POS
   required JumanPos pos = 9;
-  optional float feature_score = 10;
-  optional float lm_score = 11;
-  optional float morph_analysis_score = 12;
+
+  required NodeScores scores = 10;
+
+  // Index of a path through the lattice in EOS.
+  // E.g. if rank contains 2, that means that this node
+  // is contained in top-2 analysis result.
+  // The field is always sorted from 1 to top N.
   repeated uint32 rank = 13 [ packed = true ];
+
   repeated JumanFeature features = 14;
+
+  // POS string representations
   optional JumanStringPos string_pos = 15;
 }
 
+message NodeScores {
+  // Parallel with rank.
+  // Sum of scores through the path from the beginning.
+  repeated float cumulative_scores = 1 [packed = true];
+
+  // parallel with rank
+  repeated ScoreDetail score_details = 2;
+}
+
+// node-local score (not cumulative)
+// also, the score is not multiplied by linear/RNN model parameters
+message ScoreDetail {
+  // linear model score
+  required float linear = 1;
+  // other scores (usually biased RNN log-probability)
+  repeated float additional = 2;
+}
+
 message Lattice {
+  // Comment, which is usually passed at analysis time
   optional string comment = 1;
+
   repeated LatticeNode nodes = 2;
+
+  // beam scores at EOS node
+  repeated float scores = 3;
 }
