@@ -16,12 +16,12 @@ namespace {
 
 struct ValueConverter {
   virtual ~ValueConverter() = default;
-  virtual Status append(const analysis::NodeWalker& nw, LatticeNode* node) = 0;
+  virtual Status append(const analysis::NodeWalker& nw, LatticeDumpNode* node) = 0;
 };
 
 struct IntValueConverter : public ValueConverter {
   analysis::IntField fld_;
-  Status append(const analysis::NodeWalker& nw, LatticeNode* node) override {
+  Status append(const analysis::NodeWalker& nw, LatticeDumpNode* node) override {
     auto v = fld_[nw];
     node->add_values()->set_int_(v);
     return Status::Ok();
@@ -30,7 +30,7 @@ struct IntValueConverter : public ValueConverter {
 
 struct StringValueConverter : public ValueConverter {
   analysis::StringField fld_;
-  Status append(const analysis::NodeWalker& nw, LatticeNode* node) override {
+  Status append(const analysis::NodeWalker& nw, LatticeDumpNode* node) override {
     if (nw.eptr() == EntryPtr::EOS()) {
       node->add_values()->set_string("EOS");
     } else {
@@ -44,7 +44,7 @@ struct StringValueConverter : public ValueConverter {
 
 struct StringListValueConverter : public ValueConverter {
   analysis::StringListField fld_;
-  Status append(const analysis::NodeWalker& nw, LatticeNode* node) override {
+  Status append(const analysis::NodeWalker& nw, LatticeDumpNode* node) override {
     auto iter = fld_[nw];
     StringPiece v;
     auto res = node->add_values()->mutable_string_list();
@@ -57,7 +57,7 @@ struct StringListValueConverter : public ValueConverter {
 
 struct KVListValueConverter : public ValueConverter {
   analysis::KVListField fld_;
-  Status append(const analysis::NodeWalker& nw, LatticeNode* node) override {
+  Status append(const analysis::NodeWalker& nw, LatticeDumpNode* node) override {
     auto iter = fld_[nw];
     auto res = node->add_values()->mutable_kvlist();
     while (iter.next()) {
@@ -89,7 +89,7 @@ struct LatticeDumpOutputImpl {
   bool fillBuffer_;
 
   Status fillBeams(const analysis::AnalyzerImpl& ai,
-                   analysis::LatticeRightBoundary* bnd, LatticeNode* node,
+                   analysis::LatticeRightBoundary* bnd, LatticeDumpNode* node,
                    i32 nodeIdx) {
     auto beams = bnd->beamData().row(nodeIdx);
     auto& nspec = ai.core().spec().features.ngram;
@@ -155,7 +155,7 @@ struct LatticeDumpOutputImpl {
     return Status::Ok();
   }
 
-  Status fillNodeValues(const analysis::NodeWalker& walker, LatticeNode* node) {
+  Status fillNodeValues(const analysis::NodeWalker& walker, LatticeDumpNode* node) {
     for (auto& conv : converters_) {
       JPP_RETURN_IF_ERROR(conv->append(walker, node));
     }
@@ -168,7 +168,7 @@ struct LatticeDumpOutputImpl {
     return Status::Ok();
   }
 
-  Status fillNode(const analysis::AnalyzerImpl& ai, LatticeNode* node,
+  Status fillNode(const analysis::AnalyzerImpl& ai, LatticeDumpNode* node,
                   analysis::LatticeRightBoundary* bnd, i32 bndIdx,
                   i32 nodeIdx) {
     auto& om = ai.output();
