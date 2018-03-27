@@ -22,9 +22,9 @@ namespace jumanpp {
 namespace core {
 namespace training {
 
-using core::input::TrainingExampleField;
-using core::input::TrainFieldsIndex;
 using core::input::PartialExample;
+using core::input::TrainFieldsIndex;
+using core::input::TrainingExampleField;
 
 class PartialTrainer {
   PartialExample example_;

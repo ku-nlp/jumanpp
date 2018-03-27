@@ -62,7 +62,7 @@ class StringPiece {
    */
   template <size_t array_size>
   JPP_ALWAYS_INLINE
-  //MSVC has a bug with constexpr here :|
+  // MSVC has a bug with constexpr here :|
 #ifndef _MSC_VER
       constexpr
 #endif

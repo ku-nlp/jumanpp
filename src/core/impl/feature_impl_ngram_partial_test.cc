@@ -86,7 +86,8 @@ TEST_CASE("partial and full trigram features produce the same result") {
   };
   u64 t1data[] = {5, 2};
   u64 t2data[] = {
-      2, 1,
+      2,
+      1,
   };
   u32 resultFullBuf[6 * 3];
   u32 resultPartBuf[2 * 3];

@@ -14,9 +14,9 @@ namespace spec {
 namespace parser {
 
 namespace p = pegtl;
-using p::plus;
-using p::opt;
 using p::istring;
+using p::opt;
+using p::plus;
 using p::seq;
 
 struct qstring {

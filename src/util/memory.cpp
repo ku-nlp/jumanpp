@@ -185,6 +185,6 @@ MallocEalloc *defaultEalloc() {
   static MallocEalloc alloc;
   return &alloc;
 }
-}
+}  // namespace memory
 }  // namespace util
 }  // namespace jumanpp

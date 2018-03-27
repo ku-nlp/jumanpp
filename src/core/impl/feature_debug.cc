@@ -268,7 +268,8 @@ Status FeaturesDebugger::fill(const analysis::AnalyzerImpl* impl,
                               DebugFeatures* result,
                               const analysis::ConnectionPtr& ptr) {
   NgramFeatureRef tple{
-      ptr.previous->previous->latticeNodePtr(), ptr.previous->latticeNodePtr(),
+      ptr.previous->previous->latticeNodePtr(),
+      ptr.previous->latticeNodePtr(),
       ptr.latticeNodePtr(),
   };
   return fill(impl, result, tple);

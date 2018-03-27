@@ -74,7 +74,7 @@ class AssertException : public std::exception {
       std::fputs(what(), stderr);
       JPP_BREAK_TO_DEBUGGER_IF_ATTACHED();
     } else {
-      throw * this;
+      throw *this;
     }
   }
 };
@@ -176,7 +176,7 @@ JPP_NORETURN void die();
 #define JPP_CAPTURE(x)                                                       \
   ::jumanpp::util::asserts::UnwindPrinter JPP_CAPTURE_NAME(__LINE__,         \
                                                            __COUNTER__) {    \
-    #x, ::jumanpp::util::asserts::make_stringify(x), __FILE__, __FUNCTION__, \
+#x, ::jumanpp::util::asserts::make_stringify(x), __FILE__, __FUNCTION__, \
         __LINE__                                                             \
   }
 

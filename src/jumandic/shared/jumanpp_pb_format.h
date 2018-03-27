@@ -19,15 +19,18 @@ struct JumanppProtobufOutputImpl;
 
 class JumanppProtobufOutput : public core::OutputFormat {
   std::unique_ptr<JumanppProtobufOutputImpl> impl_;
-public:
-  Status initialize(const core::analysis::OutputManager &om, const JumandicIdResolver* resolver, int topN, bool fill);
-  Status format(const core::analysis::Analyzer &analyzer, StringPiece comment) override;
+
+ public:
+  Status initialize(const core::analysis::OutputManager& om,
+                    const JumandicIdResolver* resolver, int topN, bool fill);
+  Status format(const core::analysis::Analyzer& analyzer,
+                StringPiece comment) override;
   StringPiece result() const override;
   const Lattice* objectPtr() const;
   bool isInitialized() const { return impl_ != nullptr; }
 };
 
-} // namespace jumandic
-} // namespace jumanpp
+}  // namespace jumandic
+}  // namespace jumanpp
 
-#endif //JUMANPP_GRPC_JUMANPP_PB_FORMAT_H
+#endif  // JUMANPP_GRPC_JUMANPP_PB_FORMAT_H

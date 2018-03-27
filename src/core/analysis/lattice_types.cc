@@ -25,9 +25,7 @@ Status Lattice::makeBoundary(const LatticeBoundaryConfig &lbc,
   return Status::Ok();
 }
 
-void Lattice::reset() {
-  boundaries.clear();
-}
+void Lattice::reset() { boundaries.clear(); }
 
 void Lattice::hintSize(u32 size) { boundaries.reserve(size); }
 

@@ -10,10 +10,10 @@ namespace jumanpp {
 namespace core {
 namespace training {
 
-using core::features::NgramFeaturesComputer;
 using core::features::NgramFeatureRef;
-using core::input::ViolationKind;
+using core::features::NgramFeaturesComputer;
 using core::input::TrainFieldsIndex;
+using core::input::ViolationKind;
 
 Status PartialTrainer::prepare() {
   JPP_RETURN_IF_ERROR(analyzer_->resetForInput(example_.surface()));

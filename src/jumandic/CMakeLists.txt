@@ -37,8 +37,8 @@ if (${JPP_USE_PROTOBUF})
   JPP_PROTOBUF_COMPILE_CPP(jpp_proto_srcs jpp_proto_hdrs
     OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/gen
     proto/juman.proto proto/jumanpp.proto)
-  list(APPEND jumandic_sources ${jpp_proto_srcs} shared/jumanpp_pb_format.cc)
-  list(APPEND jumandic_headers ${jpp_proto_hdrs} shared/jumanpp_pb_format.h)
+  list(APPEND jumandic_sources ${jpp_proto_srcs} shared/jumanpp_pb_format.cc shared/juman_pb_format.cc)
+  list(APPEND jumandic_headers ${jpp_proto_hdrs} shared/jumanpp_pb_format.h shared/juman_pb_format.h)
 endif()
 
 add_library(jpp_jumandic ${jumandic_sources} ${jumandic_headers} ${jpp_jumandic_cg_SRC})

@@ -4,10 +4,10 @@
 
 #include <memory>
 
-#include "pex_stream_reader.h"
 #include "core/analysis/score_plugin.h"
 #include "core/input/partial_example.h"
 #include "core/input/partial_example_io.h"
+#include "pex_stream_reader.h"
 
 namespace jumanpp {
 namespace core {
@@ -73,8 +73,9 @@ Status PexStreamReader::initialize(const CoreHolder &core, char32_t noBreak) {
 }
 
 Status PexStreamReader::initialize(const PexStreamReader &other) {
-  impl_->tfi_ = other.impl_->tfi_; //have a copy of field index (this is fast)
-  JPP_RETURN_IF_ERROR(impl_->reader_.initialize(impl_->tfi_.get(), other.impl_->reader_.noBreakToken()));
+  impl_->tfi_ = other.impl_->tfi_;  // have a copy of field index (this is fast)
+  JPP_RETURN_IF_ERROR(impl_->reader_.initialize(
+      impl_->tfi_.get(), other.impl_->reader_.noBreakToken()));
   return Status::Ok();
 }
 

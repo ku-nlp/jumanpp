@@ -54,9 +54,7 @@ Status Analyzer::analyze(StringPiece input, ScorePlugin *plugin) {
 
 Analyzer::Analyzer() {}
 
-const CoreHolder &Analyzer::core() const {
-  return ptr_->core();
-}
+const CoreHolder &Analyzer::core() const { return ptr_->core(); }
 
 }  // namespace analysis
 }  // namespace core
