@@ -156,5 +156,9 @@ Status JumanPbFormat::format(const core::analysis::Analyzer &analyzer,
   return impl_->format(analyzer, comment);
 }
 
+JumanPbFormat::JumanPbFormat() noexcept {}
+
+JumanPbFormat::~JumanPbFormat() {}
+
 }  // namespace jumandic
 }  // namespace jumanpp

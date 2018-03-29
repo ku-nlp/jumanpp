@@ -18,7 +18,7 @@ struct JumanPbFormatImpl;
 
 class JumanPbFormat : public core::OutputFormat {
   std::unique_ptr<JumanPbFormatImpl> impl_;
-
+public:
   Status initialize(const core::analysis::OutputManager& om,
                     const JumandicIdResolver* resolver, bool fill);
   Status format(const core::analysis::Analyzer& analyzer,
@@ -26,6 +26,8 @@ class JumanPbFormat : public core::OutputFormat {
   StringPiece result() const override;
   const JumanSentence* objectPtr() const;
   bool isInitialized() const { return impl_ != nullptr; }
+  JumanPbFormat() noexcept;
+  ~JumanPbFormat() override;
 };
 
 }  // namespace jumandic

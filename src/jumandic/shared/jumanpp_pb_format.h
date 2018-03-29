@@ -21,8 +21,12 @@ class JumanppProtobufOutput : public core::OutputFormat {
   std::unique_ptr<JumanppProtobufOutputImpl> impl_;
 
  public:
+  JumanppProtobufOutput() noexcept;
+  ~JumanppProtobufOutput() override;
+
   Status initialize(const core::analysis::OutputManager& om,
                     const JumandicIdResolver* resolver, int topN, bool fill);
+  void setTopN(int topN);
   Status format(const core::analysis::Analyzer& analyzer,
                 StringPiece comment) override;
   StringPiece result() const override;

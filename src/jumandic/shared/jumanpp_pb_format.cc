@@ -244,5 +244,17 @@ Status JumanppProtobufOutput::initialize(
   impl_.reset(new JumanppProtobufOutputImpl);
   return impl_->initialize(om, resolver, topN, fill);
 }
+
+JumanppProtobufOutput::JumanppProtobufOutput() noexcept {
+
+}
+
+JumanppProtobufOutput::~JumanppProtobufOutput() {
+
+}
+
+void JumanppProtobufOutput::setTopN(int topN) {
+  impl_->maxN_ = topN;
+}
 }  // namespace jumandic
 }  // namespace jumanpp
