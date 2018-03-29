@@ -79,11 +79,11 @@ function(JPP_PROTOBUF_COMPILE_CPP SRCS HDRS)
       OUTPUT "${_protobuf_protoc_src}"
       "${_protobuf_protoc_hdr}"
       ${_protobuf_protoc_desc}
-      COMMAND  protobuf::protoc
+      COMMAND  ${Protobuf_PROTOC_EXECUTABLE}
       "--cpp_out=${DLL_EXPORT_DECL}${protobuf_OUTPUT_DIR}"
       ${_protobuf_protoc_flags}
       ${_protobuf_include_path} ${ABS_FIL}
-      DEPENDS ${ABS_FIL} protobuf::protoc
+      DEPENDS ${ABS_FIL} ${Protobuf_PROTOC_EXECUTABLE}
       COMMENT "Running C++ protocol buffer compiler on ${FIL}"
       VERBATIM )
   endforeach()
