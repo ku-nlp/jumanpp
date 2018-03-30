@@ -2,9 +2,9 @@ syntax = "proto2";
 
 package jumanpp;
 
-message JumanSentence {
-  optional string comment = 2;
+message JumanSentence {  
   repeated JumanMorpheme morphemes = 1;
+  optional string comment = 2;
 }
 
 message JumanMorpheme {
