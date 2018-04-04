@@ -1,4 +1,4 @@
-if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git/HEAD)
+if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
     execute_process(
             COMMAND git log --oneline --date=format:%Y%m%d --format=%ad-%h --max-count=1 HEAD
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}

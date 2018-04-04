@@ -3,6 +3,7 @@
 //
 
 #include "env.h"
+#include "core_version.h"
 
 namespace jumanpp {
 namespace core {
@@ -109,6 +110,26 @@ void JumanppEnv::setAutoBeam(i32 base, i32 step, i32 max) {
   analyzerConfig_.autoBeamBase = base;
   analyzerConfig_.autoBeamStep = step;
   analyzerConfig_.autoBeamMax = max;
+}
+
+void JumanppEnv::fillVersion(VersionInfo *result) const {
+  result->binary = JPP_VERSION_STRING.str();
+  using model::ModelPartKind;
+  auto dic = modelInfo_.firstPartOf(ModelPartKind::Dictionary);
+  result->dictionary.clear();
+  if (dic) {
+    result->dictionary = dic->comment;
+  }
+  auto model = modelInfo_.firstPartOf(ModelPartKind::Perceprton);
+  result->model.clear();
+  if (model) {
+    result->model = model->comment;
+  }
+  auto rnn = modelInfo_.firstPartOf(ModelPartKind::Rnn);
+  result->rnn.clear();
+  if (rnn) {
+    result->rnn = rnn->comment;
+  }
 }
 
 }  // namespace core

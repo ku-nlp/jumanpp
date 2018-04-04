@@ -13,6 +13,13 @@
 namespace jumanpp {
 namespace core {
 
+struct VersionInfo {
+  std::string binary;
+  std::string dictionary;
+  std::string model;
+  std::string rnn;
+};
+
 class JumanppEnv {
   ScoringConfig scoringConf_{1, 0};
   model::FilesystemModel modelFile_;
@@ -58,6 +65,9 @@ class JumanppEnv {
   void setAutoBeam(i32 base, i32 step, i32 max);
 
   const analysis::FeatureScorer* featureScorer() const { return &perceptron_; }
+
+  // Works even for non-initialized models or models with failed initialization
+  void fillVersion(VersionInfo* result) const;
 };
 
 class OutputFormat {
