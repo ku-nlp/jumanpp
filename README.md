@@ -94,7 +94,7 @@ Works best on Intel Haswell and newer processors (because of FMA and BMI instruc
 
 * About the model itself: *Morphological Analysis for Unsegmented Languages using Recurrent Neural Network Language Model*. Hajime Morita, Daisuke Kawahara, Sadao Kurohashi. EMNLP 2015 [link](http://aclweb.org/anthology/D/D15/D15-1276.pdf).
 
-* V2 Improvments: *Juman++ v2: A Practical and Modern Morphological Analyzer*. Arseny Tolmachev and Kurohashi Sadao. The Proceedings of the Twenty-fourth Annual Meeting of the Association for Natural Language Processing. March 2018, Okayama, Japan. (pdf is coming later) [slides](https://www.slideshare.net/eiennohito/juman-v2-a-practical-and-modern-morphological-analyzer)
+* V2 Improvments: *Juman++ v2: A Practical and Modern Morphological Analyzer*. Arseny Tolmachev and Kurohashi Sadao. The Proceedings of the Twenty-fourth Annual Meeting of the Association for Natural Language Processing. March 2018, Okayama, Japan. ([pdf](http://www.anlp.jp/proceedings/annual_meeting/2018/pdf_dir/A5-2.pdf), [slides](https://www.slideshare.net/eiennohito/juman-v2-a-practical-and-modern-morphological-analyzer)
 
 * Morphological Analysis Workshop in ANLP2018 Slides: 形態素解析システムJuman++. 河原 大輔, Arseny Tolmachev. (in Japanese) [slides](https://drive.google.com/file/d/1DVnrsWw4skRgC8jU6_RkeofOQEHFwctc/view?usp=sharing).
 
