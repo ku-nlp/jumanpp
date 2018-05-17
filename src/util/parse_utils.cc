@@ -13,7 +13,7 @@ bool parseU64(StringPiece sp, u64* result) {
   }
 
   u64 val = 0;
-  for (const char *c = sp.char_begin(); c < sp.char_end(); ++c) {
+  for (const char* c = sp.char_begin(); c < sp.char_end(); ++c) {
     char x = *c;
     if (x >= '0' && x <= '9') {
       val = (val * 10) + (x - '0');
@@ -25,5 +25,5 @@ bool parseU64(StringPiece sp, u64* result) {
   return true;
 }
 
-} // namespace util
-} // namespace jumanpp
+}  // namespace util
+}  // namespace jumanpp

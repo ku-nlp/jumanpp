@@ -2,8 +2,8 @@
 // Created by Arseny Tolmachev on 2018/05/16.
 //
 
-#include "testing/standalone_test.h"
 #include "spec_parser_impl.h"
+#include "testing/standalone_test.h"
 
 #include <pegtl/parse.hpp>
 #include <pegtl/parse_error.hpp>
@@ -19,7 +19,7 @@ template <typename Rule>
 void parse(StringPiece data, p::SpecParserImpl& sp, bool target = true) {
   bool success = false;
   CAPTURE(pt::internal::demangle<Rule>());
-  struct theRule: pt::must<Rule, pt::eof> {};
+  struct theRule : pt::must<Rule, pt::eof> {};
   try {
     pt::memory_input<> input(data.char_begin(), data.char_end(), "test");
     success = pt::parse<theRule, p::SpecAction>(input, sp);
@@ -148,7 +148,8 @@ TEST_CASE("spec parser parses feature declaration") {
     parse<p::ngram_uni>("unigram [f1, a]", spi);
     auto spec = build(spi);
     CHECK(spec.features.primitive.size() == 2);
-    CHECK(spec.features.primitive[0].kind == s::PrimitiveFeatureKind::SurfaceCodepointSize);
+    CHECK(spec.features.primitive[0].kind ==
+          s::PrimitiveFeatureKind::SurfaceCodepointSize);
   }
 
   SECTION("numCodepoints non-surface") {
@@ -156,7 +157,8 @@ TEST_CASE("spec parser parses feature declaration") {
     parse<p::ngram_uni>("unigram [f1, a]", spi);
     auto spec = build(spi);
     CHECK(spec.features.primitive.size() == 3);
-    CHECK(spec.features.primitive[0].kind == s::PrimitiveFeatureKind::CodepointSize);
+    CHECK(spec.features.primitive[0].kind ==
+          s::PrimitiveFeatureKind::CodepointSize);
   }
 
   SECTION("length") {
@@ -164,7 +166,7 @@ TEST_CASE("spec parser parses feature declaration") {
     parse<p::ngram_uni>("unigram [f1, a]", spi);
     auto spec = build(spi);
     CHECK(spec.features.primitive.size() == 2);
-    CHECK(spec.features.primitive[0].kind == s::PrimitiveFeatureKind::ByteLength);
+    CHECK(spec.features.primitive[0].kind ==
+          s::PrimitiveFeatureKind::ByteLength);
   }
-
 }

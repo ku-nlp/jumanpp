@@ -24,7 +24,7 @@ using p::seq;
 struct qstring {
   using analyze_t = p::analysis::generic<p::analysis::rule_type::ANY>;
 
-  template< typename Input >
+  template <typename Input>
   static bool match(Input& in) {
     if (in.size() < 2) return false;
     auto ptr = in.current();
@@ -38,8 +38,8 @@ struct qstring {
     for (; ptr < in.end(); ++ptr) {
       if (*ptr == '"') {
         auto nextChar = ptr + 1;
-        if ((nextChar == in.end()) ||          // we are at the end of input
-            (*nextChar != '"')) {              // or next symbol is not quote
+        if ((nextChar == in.end()) ||            // we are at the end of input
+            (*nextChar != '"')) {                // or next symbol is not quote
           auto strlen = ptr - in.current() + 1;  // +1 for the second quote
           in.bump(strlen);
           return true;
@@ -57,9 +57,6 @@ struct qstring {
 #else
 #define lit_string(x) TAO_PEGTL_ISTRING(x)
 #endif
-
-
-
 
 struct whitespace : plus<p::blank> {};
 struct opt_whitespace : p::star<p::blank> {};
@@ -87,31 +84,33 @@ struct kw_match : lit_string("match") {};
 struct kw_output : lit_string("output") {};
 struct kw_template : lit_string("template") {};
 
-struct comment: seq<p::one<'#'>, p::until<p::eol>> {};
+struct comment : seq<p::one<'#'>, p::until<p::eol>> {};
 struct sep : p::pad_opt<comment, whitespace> {};
-struct sep_pad: p::sor<whitespace, comment> {};
+struct sep_pad : p::sor<whitespace, comment> {};
 
 struct strparam : ident {};
 struct qstring_param : qstring {};
 
 struct fld_flag_index : lit_string("trie_index") {};
 struct fld_flag_empty_kw : lit_string("empty") {};
-struct fld_flag_empty
-    : p::if_must<fld_flag_empty_kw, sep, qstring_param> {};
+struct fld_flag_empty : p::if_must<fld_flag_empty_kw, sep, qstring_param> {};
 struct fld_flag_storage_kw : lit_string("storage") {};
-struct fld_flag_storage: p::if_must<fld_flag_storage_kw, sep, strparam> {};
-struct fld_flag_align_kw: lit_string("align") {};
-struct fld_flag_align_data: number {};
-struct fld_flag_align: p::if_must<fld_flag_align_kw, sep, fld_flag_align_data> {};
-struct fld_flag_sep: p::if_must<lit_string("list_sep"), sep, qstring_param> {};
-struct fld_flag_kvsep: p::if_must<lit_string("kv_sep"), sep, qstring_param> {};
-struct fld_flag : p::sor<fld_flag_empty, fld_flag_index, fld_flag_storage, fld_flag_align, fld_flag_sep, fld_flag_kvsep> {};
+struct fld_flag_storage : p::if_must<fld_flag_storage_kw, sep, strparam> {};
+struct fld_flag_align_kw : lit_string("align") {};
+struct fld_flag_align_data : number {};
+struct fld_flag_align
+    : p::if_must<fld_flag_align_kw, sep, fld_flag_align_data> {};
+struct fld_flag_sep : p::if_must<lit_string("list_sep"), sep, qstring_param> {};
+struct fld_flag_kvsep : p::if_must<lit_string("kv_sep"), sep, qstring_param> {};
+struct fld_flag : p::sor<fld_flag_empty, fld_flag_index, fld_flag_storage,
+                         fld_flag_align, fld_flag_sep, fld_flag_kvsep> {};
 struct fld_flags : p::star<sep, fld_flag> {};
 struct fld_tp_slist : lit_string("string_list") {};
 struct fld_tp_kvlist : lit_string("kv_list") {};
 struct fld_tp_string : lit_string("string") {};
 struct fld_tp_int : lit_string("int") {};
-struct fld_type : p::sor<fld_tp_slist, fld_tp_kvlist, fld_tp_string, fld_tp_int> {};
+struct fld_type
+    : p::sor<fld_tp_slist, fld_tp_kvlist, fld_tp_string, fld_tp_int> {};
 struct fld_column : number {};
 struct fld_name : ident {};
 struct fld_data : p::seq<fld_column, sep, fld_name, sep, fld_type, fld_flags> {
@@ -119,35 +118,41 @@ struct fld_data : p::seq<fld_column, sep, fld_name, sep, fld_type, fld_flags> {
 
 struct fld_stmt : p::if_must<kw_field, sep, fld_data> {};
 
-struct fieldparam: ident {};
-struct snumparam: p::seq<p::opt<p::one<'-'>>, number> {};
+struct fieldparam : ident {};
+struct snumparam : p::seq<p::opt<p::one<'-'>>, number> {};
 
-struct ft_codepoint: p::if_must<lit_string("codepoint"), sep, snumparam> {};
-struct ft_codepoint_type: p::if_must<lit_string("codepoint_type"), sep, snumparam> {};
-struct ft_num_codepts: p::if_must<lit_string("num_codepoints"), sep, fieldparam> {};
-struct ft_placeholder: lit_string("placeholder") {};
-struct ft_byte_length: p::if_must<lit_string("num_bytes"), sep, fieldparam> {};
+struct ft_codepoint : p::if_must<lit_string("codepoint"), sep, snumparam> {};
+struct ft_codepoint_type
+    : p::if_must<lit_string("codepoint_type"), sep, snumparam> {};
+struct ft_num_codepts
+    : p::if_must<lit_string("num_codepoints"), sep, fieldparam> {};
+struct ft_placeholder : lit_string("placeholder") {};
+struct ft_byte_length : p::if_must<lit_string("num_bytes"), sep, fieldparam> {};
 
+struct mt_lhs_litem : p::seq<fieldparam> {};
+struct mt_lhs_list
+    : p::if_must<lbrak, sep, p::list<mt_lhs_litem, comma, sep_pad>, sep,
+                 rbrak> {};
+struct mt_lhs : p::sor<mt_lhs_litem, mt_lhs_list> {};
+struct mt_rhs_inline : qstring {};
+struct mt_rhs_file : p::seq<lit_string("file"), sep, qstring> {};
+struct mt_rhs : p::sor<mt_rhs_inline, mt_rhs_file> {};
+struct mt_cond : p::seq<mt_lhs, sep, lit_string("with"), sep, mt_rhs> {};
+struct mt_then_body : p::seq<lit_string("then"), sep, mt_lhs_list> {};
+struct mt_else_body : p::seq<lit_string("else"), sep, mt_lhs_list> {};
+struct ft_match : p::if_must<lit_string("match"), sep, mt_cond,
+                             p::opt<sep, mt_then_body, sep, mt_else_body>> {};
 
-struct mt_lhs_litem: p::seq<fieldparam> {};
-struct mt_lhs_list: p::if_must<lbrak, sep, p::list<mt_lhs_litem, comma, sep_pad>, sep, rbrak> {};
-struct mt_lhs: p::sor<mt_lhs_litem, mt_lhs_list> {};
-struct mt_rhs_inline: qstring {};
-struct mt_rhs_file: p::seq<lit_string("file"), sep, qstring> {};
-struct mt_rhs: p::sor<mt_rhs_inline, mt_rhs_file> {};
-struct mt_cond: p::seq<mt_lhs, sep, lit_string("with"), sep, mt_rhs> {};
-struct mt_then_body: p::seq<lit_string("then"), sep, mt_lhs_list> {};
-struct mt_else_body: p::seq<lit_string("else"), sep, mt_lhs_list> {};
-struct ft_match: p::if_must<lit_string("match"), sep, mt_cond, p::opt<sep, mt_then_body, sep, mt_else_body>> {};
+struct feature_body : p::sor<ft_codepoint_type, ft_codepoint, ft_num_codepts,
+                             ft_placeholder, ft_byte_length, ft_match> {};
+struct feature_name : ident {};
+struct feature_stmt : p::if_must<lit_string("feature"), sep, feature_name,
+                                 p::pad_opt<eq, sep_pad>, feature_body> {};
 
-struct feature_body: p::sor<ft_codepoint_type, ft_codepoint, ft_num_codepts, ft_placeholder, ft_byte_length, ft_match> {};
-struct feature_name: ident {};
-struct feature_stmt: p::if_must<lit_string("feature"), sep, feature_name, p::pad_opt<eq, sep_pad>, feature_body> {};
-
-struct fref_item: ident {};
-struct fref_list: p::if_must<lbrak, sep, p::list<fref_item, comma, sep_pad>, sep, rbrak> {};
-struct ngram_uni: p::if_must<lit_string("unigram"), sep, fref_list> {};
-
+struct fref_item : ident {};
+struct fref_list
+    : p::if_must<lbrak, sep, p::list<fref_item, comma, sep_pad>, sep, rbrak> {};
+struct ngram_uni : p::if_must<lit_string("unigram"), sep, fref_list> {};
 
 struct arg_name : ident {};
 struct arg_op : p::sor<eq, add> {};

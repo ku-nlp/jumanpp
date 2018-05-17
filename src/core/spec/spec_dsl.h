@@ -227,8 +227,7 @@ class FeatureBuilder : DslOpBase {
   }
 
   template <typename C>
-  FeatureBuilder& matchAnyRowOfCsv(
-    StringPiece csv, const C& fields) {
+  FeatureBuilder& matchAnyRowOfCsv(StringPiece csv, const C& fields) {
     for (auto& fld : fields) {
       fields_.push_back(fld.name());
     }
@@ -251,7 +250,7 @@ class FeatureBuilder : DslOpBase {
   }
 
   FeatureBuilder& ifFalse(
-    std::initializer_list<FieldExpressionBldr> transforms) {
+      std::initializer_list<FieldExpressionBldr> transforms) {
     return ifFalse<decltype(transforms)>(transforms);
   }
 
@@ -298,7 +297,7 @@ class FeatureCombinator : public DslOpBase {
   void append(util::memory::PoolAlloc* alloc, const C& obj) {
     data.emplace_back(alloc);
     auto& v = data.back();
-    for (auto& ref: obj) {
+    for (auto& ref : obj) {
       v.push_back(ref);
     }
   }

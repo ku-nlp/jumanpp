@@ -2,8 +2,8 @@
 // Created by Arseny Tolmachev on 2018/05/16.
 //
 
-#include "testing/standalone_test.h"
 #include "parse_utils.h"
+#include "testing/standalone_test.h"
 
 namespace u = jumanpp::util;
 using jumanpp::StringPiece;

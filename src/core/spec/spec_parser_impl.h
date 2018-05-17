@@ -7,9 +7,9 @@
 
 #include "spec_dsl.h"
 #include "spec_grammar.h"
+#include "util/char_buffer.h"
 #include "util/flatmap.h"
 #include "util/parse_utils.h"
-#include "util/char_buffer.h"
 #include "util/stl_util.h"
 
 namespace jumanpp {
@@ -30,7 +30,7 @@ struct SpecParserImpl {
   i32 intParam_;
   StringPiece stringParam_;
 
-  //field data
+  // field data
   dsl::FieldBuilder* curFld_ = nullptr;
   dsl::FeatureBuilder* curFeature_ = nullptr;
 
@@ -42,7 +42,7 @@ struct SpecParserImpl {
 };
 
 template <typename Rule>
-struct SpecAction: p::nothing<Rule> {};
+struct SpecAction : p::nothing<Rule> {};
 
 struct StoreToIntParam {
   template <typename Input>
@@ -72,8 +72,6 @@ struct StoreToSIntParam {
   }
 };
 
-
-
 struct StoreToStringParam {
   template <typename Input>
   static void apply(const Input& in, SpecParserImpl& sp) {
@@ -84,7 +82,7 @@ struct StoreToStringParam {
 struct StoreQuotedStringParam {
   template <typename Input>
   static void apply(const Input& in, SpecParserImpl& sp) {
-    auto quoted = StringPiece{in.begin() + 1, in.end() - 1}; // ignore quotes
+    auto quoted = StringPiece{in.begin() + 1, in.end() - 1};  // ignore quotes
 
     bool hasQuotes = false;
     for (auto c : quoted) {
@@ -106,7 +104,7 @@ struct StoreQuotedStringParam {
 
     int start = 0;
     auto end = chars.size();
-    for(; start < end; ++start) {
+    for (; start < end; ++start) {
       if (chars[start] == '"') {
         break;
       }
@@ -128,10 +126,10 @@ struct StoreQuotedStringParam {
 };
 
 template <>
-struct SpecAction<fld_column>: StoreToIntParam {};
+struct SpecAction<fld_column> : StoreToIntParam {};
 
 template <>
-struct SpecAction<snumparam>: StoreToSIntParam {};
+struct SpecAction<snumparam> : StoreToSIntParam {};
 
 template <>
 struct SpecAction<fld_name> {
@@ -142,7 +140,8 @@ struct SpecAction<fld_name> {
     sp.curFld_ = &fld;
     auto result = sp.fields_.insert({name, sp.curFld_});
     if (!result.second) {
-      throw p::parse_error("a field with name " + name.str() + " was already defined", in);
+      throw p::parse_error(
+          "a field with name " + name.str() + " was already defined", in);
     }
   }
 };
@@ -188,7 +187,7 @@ struct SpecAction<fld_flag_index> {
 };
 
 template <>
-struct SpecAction<fld_flag_align_data>: StoreToIntParam {};
+struct SpecAction<fld_flag_align_data> : StoreToIntParam {};
 
 template <>
 struct SpecAction<fld_flag_align> {
@@ -219,7 +218,8 @@ struct SpecAction<fld_flag_storage> {
     auto name = sp.stringParam_;
     auto it = sp.fields_.find(name);
     if (it == sp.fields_.end()) {
-      throw p::parse_error(std::string("field [") + name.str() + "] does not exist", in);
+      throw p::parse_error(
+          std::string("field [") + name.str() + "] does not exist", in);
     }
     sp.curFld_->stringStorage(*it->second);
   }
@@ -281,7 +281,9 @@ struct SpecAction<mt_lhs_litem> {
   template <typename Input>
   static void apply(const Input& in, SpecParserImpl& sp) {
     if (sp.curFld_ == nullptr) {
-      throw p::parse_error("current field was nullptr, spec parser error, report this as a bug!", in);
+      throw p::parse_error(
+          "current field was nullptr, spec parser error, report this as a bug!",
+          in);
     }
     sp.fieldRefs_.push_back(*sp.curFld_);
     sp.curFld_ = nullptr;
@@ -351,7 +353,7 @@ struct SpecAction<mt_then_body> {
   static void apply(const Input& in, SpecParserImpl& sp) {
     auto& vals = sp.fieldRefs_;
     std::vector<dsl::FieldExpressionBldr> transfs;
-    for (auto& f: vals) {
+    for (auto& f : vals) {
       transfs.push_back(sp.fields_[f.name()]->value());
     }
     sp.curFeature_->ifTrue(transfs);
@@ -365,7 +367,7 @@ struct SpecAction<mt_else_body> {
   static void apply(const Input& in, SpecParserImpl& sp) {
     auto& vals = sp.fieldRefs_;
     std::vector<dsl::FieldExpressionBldr> transfs;
-    for (auto& f: vals) {
+    for (auto& f : vals) {
       transfs.push_back(sp.fields_[f.name()]->value());
     }
     sp.curFeature_->ifFalse(transfs);
@@ -380,7 +382,6 @@ struct SpecAction<feature_stmt> {
     sp.curFeature_ = nullptr;
   }
 };
-
 
 // NGRAMS
 
@@ -399,7 +400,8 @@ struct SpecAction<fref_item> {
       sp.featureRefs_.push_back(*it2->second);
       return;
     }
-    throw p::parse_error("there was no field nor feature with name: " + name.str(), in);
+    throw p::parse_error(
+        "there was no field nor feature with name: " + name.str(), in);
   }
 };
 
@@ -411,10 +413,9 @@ struct SpecAction<ngram_uni> {
   }
 };
 
+}  // namespace parser
+}  // namespace spec
+}  // namespace core
+}  // namespace jumanpp
 
-} // namespace parser
-} // namespace spec
-} // namespace core
-} // namespace jumanpp
-
-#endif //JUMANPP_SPEC_PARSER_IMPL_H
+#endif  // JUMANPP_SPEC_PARSER_IMPL_H

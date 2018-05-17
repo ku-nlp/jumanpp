@@ -3,10 +3,10 @@
 //
 
 #include "core/spec/spec_grammar.h"
-#include <pegtl/parse.hpp>
-#include <pegtl/tracking_mode.hpp>
 #include <pegtl/analyze.hpp>
 #include <pegtl/contrib/tracer.hpp>
+#include <pegtl/parse.hpp>
+#include <pegtl/tracking_mode.hpp>
 #include "testing/standalone_test.h"
 #include "util/string_piece.h"
 

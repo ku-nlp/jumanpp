@@ -4,7 +4,6 @@
 
 #include "spec_parser_impl.h"
 
-
 namespace jumanpp {
 namespace core {
 namespace spec {
@@ -15,7 +14,7 @@ Status SpecParserImpl::buildSpec(AnalysisSpec *result) {
   return Status::Ok();
 }
 
-} // namespace pasrser
-} // namespace spec
-} // namespace core
-} // namespace jumanpp
+}  // namespace parser
+}  // namespace spec
+}  // namespace core
+}  // namespace jumanpp

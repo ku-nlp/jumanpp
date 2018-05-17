@@ -40,7 +40,7 @@ message LatticeNode {
 
   // Parallel with rank.
   // Sum of scores through the path from the beginning.
-  repeated float cumulative_scores = 10 [packed = true];
+  repeated float cumulative_scores = 10 [ packed = true ];
 
   // parallel with rank
   repeated ScoreDetail score_details = 11;
