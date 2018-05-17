@@ -3,40 +3,49 @@
 //
 
 #include "core/spec/spec_grammar.h"
-#include <pegtl/parse.hh>
-#include <pegtl/trace.hh>
+#include <pegtl/parse.hpp>
+#include <pegtl/tracking_mode.hpp>
+#include <pegtl/analyze.hpp>
+#include <pegtl/contrib/tracer.hpp>
 #include "testing/standalone_test.h"
 #include "util/string_piece.h"
 
 using namespace jumanpp;
 namespace p = jumanpp::core::spec::parser;
+namespace pt = jumanpp::core::spec::parser::p;
+
+template <typename T>
+void analyzeRule() {
+  const size_t numIssues = pt::analyze<T>(true);
+  REQUIRE(numIssues == 0);
+}
 
 template <typename T>
 void shouldParse(StringPiece data) {
-  struct full_grammar : pegtl::seq<T, pegtl::eof> {};
-  pegtl::input input(0, 0, data.char_begin(), data.char_end(), "test");
+  struct full_grammar : pt::must<T, pt::eof> {};
+  pt::memory_input<> input(data.char_begin(), data.char_end(), "test");
   bool success = false;
   try {
-    success = pegtl::parse_input<full_grammar>(input, "test");
-  } catch (pegtl::parse_error& e) {
+    success = pt::parse<full_grammar>(input);
+  } catch (pt::parse_error& e) {
     success = false;
   }
 
   CAPTURE(data);
-  CHECK(success);
   if (!success) {
-    pegtl::trace_input<full_grammar>(input);
+    input.restart();
+    REQUIRE(pt::parse<full_grammar, pt::nothing, pt::tracer>(input));
   }
 }
 
 template <typename T>
 void failParse(StringPiece data) {
-  struct full_grammar : pegtl::seq<T, pegtl::eof> {};
-  pegtl::input input(0, 0, data.char_begin(), data.char_end(), "test");
+  struct full_grammar : pt::must<T, pt::eof> {};
+  pt::memory_input<> input(data.char_begin(), data.char_end(), "test");
   auto result = false;
   try {
-    result = pegtl::parse_input<full_grammar>(input, "test");
-  } catch (...) {
+    result = pt::parse<full_grammar>(input);
+  } catch (pt::parse_error& e) {
     result = false;
   }
   CAPTURE(data);
@@ -44,6 +53,7 @@ void failParse(StringPiece data) {
 }
 
 TEST_CASE("grammar supports identifier") {
+  analyzeRule<p::ident>();
   shouldParse<p::ident>("test");
   shouldParse<p::ident>("test_with_separators");
   failParse<p::ident>("test test2");
@@ -90,6 +100,7 @@ TEST_CASE("quotes string parses") {
 }
 
 TEST_CASE("field content parses") {
+  analyzeRule<p::fld_data>();
   shouldParse<p::fld_data>("1 name string");
   shouldParse<p::fld_data>("1 name string_list");
   shouldParse<p::fld_data>("1 name int");
@@ -98,6 +109,14 @@ TEST_CASE("field content parses") {
   shouldParse<p::fld_data>("1 name int empty \"nil\" trie_index");
   shouldParse<p::fld_data>("1 name int trie_index empty \"nil\"");
   failParse<p::fld_data>("1 name int empty trie_index \"nil\"");
+}
+
+TEST_CASE("full field parses") {
+  analyzeRule<p::fld_stmt>();
+  shouldParse<p::fld_stmt>("field 1 name string");
+  shouldParse<p::fld_stmt>("field 1 name string_list");
+  shouldParse<p::fld_stmt>("field 1 name int");
+  shouldParse<p::fld_stmt>("field 1 name kv_list");
 }
 
 TEST_CASE("can parse argument") {
@@ -142,11 +161,30 @@ TEST_CASE("can parse unk spec") {
   failParse<p::unk_data>("unknown a template z feature[z]");
 }
 
-TEST_CASE("can parse match") {
-  shouldParse<p::mtch>("x match \"y\"");
-  shouldParse<p::mtch>("x match [a]");
-  shouldParse<p::mtch>("x match[a]");
-  shouldParse<p::mtch>("x match\"a\"");
+TEST_CASE("can parse match condition") {
+  analyzeRule<p::mt_cond>();
+  shouldParse<p::mt_cond>("x with \"y\"");
+  shouldParse<p::mt_cond>("[z, x] with \"y\"");
+  shouldParse<p::mt_cond>("[ z , x ] with \"y\"");
+  shouldParse<p::mt_cond>("[z,x]with\"y\"");
+  shouldParse<p::mt_cond>("[z,x] with file \"y\"");
+  shouldParse<p::mt_cond>("[z,x] with file\"y\"");
+}
+
+TEST_CASE("can parse match expression") {
+  analyzeRule<p::ft_match>();
+  shouldParse<p::ft_match>("match x with \"y\"");
+  shouldParse<p::ft_match>("match x with \"y\" then [a] else [b]");
+  failParse<p::ft_match>("match x with \"y\" then [a]");
+}
+
+TEST_CASE("can parse unigram combiner") {
+  analyzeRule<p::ngram_uni>();
+  shouldParse<p::ngram_uni>("unigram [a]");
+  shouldParse<p::ngram_uni>("unigram [a,b]");
+  shouldParse<p::ngram_uni>("unigram [f1, a]");
+  shouldParse<p::ngram_uni>("unigram [ a, b ]");
+  shouldParse<p::ngram_uni>("unigram[f1,b]");
 }
 
 TEST_CASE("can parse condition of if expression") {

@@ -20,6 +20,10 @@ namespace spec {
 
 class SpecCompiler;
 
+namespace parser {
+struct SpecParserImpl;
+}
+
 namespace dsl {
 
 class DslOpBase {
@@ -219,6 +223,12 @@ class FeatureBuilder : DslOpBase {
 
   FeatureBuilder& matchAnyRowOfCsv(
       StringPiece csv, std::initializer_list<FieldReference> fields) {
+    return matchAnyRowOfCsv<decltype(fields)>(csv, fields);
+  }
+
+  template <typename C>
+  FeatureBuilder& matchAnyRowOfCsv(
+    StringPiece csv, const C& fields) {
     for (auto& fld : fields) {
       fields_.push_back(fld.name());
     }
@@ -229,8 +239,26 @@ class FeatureBuilder : DslOpBase {
 
   FeatureBuilder& ifTrue(
       std::initializer_list<FieldExpressionBldr> transforms) {
+    return ifTrue<decltype(transforms)>(transforms);
+  }
+
+  template <typename C>
+  FeatureBuilder& ifTrue(const C& transforms) {
     for (auto&& o : transforms) {
       trueTransforms_.emplace_back(o);
+    }
+    return *this;
+  }
+
+  FeatureBuilder& ifFalse(
+    std::initializer_list<FieldExpressionBldr> transforms) {
+    return ifFalse<decltype(transforms)>(transforms);
+  }
+
+  template <typename C>
+  FeatureBuilder& ifFalse(const C& transforms) {
+    for (auto&& o : transforms) {
+      falseTransforms_.emplace_back(o);
     }
     return *this;
   }
@@ -244,14 +272,6 @@ class FeatureBuilder : DslOpBase {
   FeatureBuilder& codepoint(i32 offset) {
     intParam_ = offset;
     changeType(FeatureType::Codepoint);
-    return *this;
-  }
-
-  FeatureBuilder& ifFalse(
-      std::initializer_list<FieldExpressionBldr> transforms) {
-    for (auto&& o : transforms) {
-      falseTransforms_.emplace_back(o);
-    }
     return *this;
   }
 
@@ -274,9 +294,17 @@ class FeatureCombinator : public DslOpBase {
   friend class ModelSpecBuilder;
   friend class spec::SpecCompiler;
 
+  template <typename C>
+  void append(util::memory::PoolAlloc* alloc, const C& obj) {
+    data.emplace_back(alloc);
+    auto& v = data.back();
+    for (auto& ref: obj) {
+      v.push_back(ref);
+    }
+  }
+
  public:
   FeatureCombinator(util::memory::PoolAlloc* alloc) : data{alloc} {}
-
   Status validate() const { return Status::Ok(); }
 };
 
@@ -430,10 +458,14 @@ class ModelSpecBuilder : public DslOpBase {
   }
 
   void unigram(const std::initializer_list<FeatureRef>& t0) {
+    unigram<decltype(t0)>(t0);
+  }
+
+  template <typename C0>
+  void unigram(const C0& t0) {
     auto cmb = alloc_->make<FeatureCombinator>(alloc_.get());
     garbage_.push_back(cmb);
-    auto& data = cmb->data;
-    data.emplace_back(t0, alloc_.get());
+    cmb->append(alloc_.get(), t0);
     ngrams_.emplace_back(cmb);
   }
 
@@ -474,6 +506,7 @@ class ModelSpecBuilder : public DslOpBase {
   Status build(AnalysisSpec* spec);
 
   friend class ::jumanpp::core::spec::SpecCompiler;
+  friend struct ::jumanpp::core::spec::parser::SpecParserImpl;
 };
 }  // namespace dsl
 }  // namespace spec
