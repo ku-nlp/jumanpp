@@ -134,9 +134,8 @@ struct mt_lhs_list
     : p::if_must<lbrak, sep, p::list<mt_lhs_litem, comma, sep_pad>, sep,
                  rbrak> {};
 struct mt_lhs : p::sor<mt_lhs_litem, mt_lhs_list> {};
-struct mt_rhs_inline : qstring {};
-struct mt_rhs_file : p::seq<lit_string("file"), sep, qstring> {};
-struct mt_rhs : p::sor<mt_rhs_inline, mt_rhs_file> {};
+struct mt_rhs_file : p::seq<lit_string("file"), sep, qstring_param> {};
+struct mt_rhs : p::sor<qstring_param, mt_rhs_file> {};
 struct mt_cond : p::seq<mt_lhs, sep, lit_string("with"), sep, mt_rhs> {};
 struct mt_then_body : p::seq<lit_string("then"), sep, mt_lhs_list> {};
 struct mt_else_body : p::seq<lit_string("else"), sep, mt_lhs_list> {};

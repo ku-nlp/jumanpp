@@ -33,7 +33,7 @@ void parse(StringPiece data, p::SpecParserImpl& sp, bool target = true) {
 }
 
 TEST_CASE("spec parser parses field declaration") {
-  p::SpecParserImpl spi{};
+  p::SpecParserImpl spi{"test.spec"};
 
   SECTION("simple string param") {
     parse<p::fld_stmt>("field 66 testxa string", spi);
@@ -128,7 +128,7 @@ s::AnalysisSpec build(p::SpecParserImpl& impl) {
 }
 
 TEST_CASE("spec parser parses feature declaration") {
-  p::SpecParserImpl spi{};
+  p::SpecParserImpl spi{"test.spec"};
   parse<p::fld_stmt>("field 1 a string trie_index", spi);
   parse<p::fld_stmt>("field 2 b string", spi);
   parse<p::fld_stmt>("field 3 c string", spi);
@@ -168,5 +168,38 @@ TEST_CASE("spec parser parses feature declaration") {
     CHECK(spec.features.primitive.size() == 2);
     CHECK(spec.features.primitive[0].kind ==
           s::PrimitiveFeatureKind::ByteLength);
+  }
+
+  SECTION("codepoint") {
+    parse<p::feature_stmt>("feature f1 = codepoint -2", spi);
+    parse<p::ngram_uni>("unigram [f1, a]", spi);
+    auto spec = build(spi);
+    CHECK(spec.features.primitive.size() == 2);
+    CHECK(spec.features.primitive[0].kind ==
+          s::PrimitiveFeatureKind::Codepoint);
+    REQUIRE(spec.features.primitive[0].references.at(0) == -2);
+  }
+
+  SECTION("codepointType") {
+    parse<p::feature_stmt>("feature f1 = codepoint_type -2", spi);
+    parse<p::ngram_uni>("unigram [f1, a]", spi);
+    auto spec = build(spi);
+    CHECK(spec.features.primitive.size() == 2);
+    CHECK(spec.features.primitive[0].kind ==
+          s::PrimitiveFeatureKind::CodepointType);
+    REQUIRE(spec.features.primitive[0].references.at(0) == -2);
+  }
+
+  SECTION("match condition (a)") {
+    parse<p::feature_stmt>("feature f1 = match b with \"x\"", spi);
+    parse<p::ngram_uni>("unigram [f1, a]", spi);
+    auto spec = build(spi);
+    CHECK(spec.features.primitive.size() == 3);
+    CHECK(spec.features.primitive[0].kind ==
+          s::PrimitiveFeatureKind::SingleBit);
+    CHECK(spec.features.primitive[0].references.at(0) == 2);
+    CHECK(spec.features.primitive[0].references.at(1) == 0);
+    CHECK(spec.features.dictionary[2].kind == s::DicImportKind::MatchFields);
+    CHECK(spec.features.dictionary[2].data.at(0) == "x");
   }
 }

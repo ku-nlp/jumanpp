@@ -1,0 +1,12 @@
+*.so
+*.o
+*.test
+*.a
+build/
+crossbuild/
+doc/
+test/foo
+test/libpathie.dll
+test/sysroot
+test/*.txt
+test/testsettings.conf

@@ -22,6 +22,7 @@ struct Resource : public dsl::DslOpBase {
 };
 
 struct SpecParserImpl {
+  std::string basename_;
   dsl::ModelSpecBuilder builder_;
   util::FlatMap<StringPiece, dsl::FieldBuilder*> fields_;
   util::FlatMap<StringPiece, dsl::FeatureBuilder*> features_;
@@ -37,8 +38,10 @@ struct SpecParserImpl {
   std::vector<dsl::FieldReference> fieldRefs_;
   std::vector<dsl::FeatureRef> featureRefs_;
 
-  Resource* fileResourece(StringPiece name);
+  Resource* fileResourece(StringPiece name, p::position pos);
   Status buildSpec(spec::AnalysisSpec* result);
+
+  SpecParserImpl(StringPiece basename): basename_{basename.str()} {}
 };
 
 template <typename Rule>
