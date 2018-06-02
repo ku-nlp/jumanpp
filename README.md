@@ -63,13 +63,13 @@ EOS
 ```
 usage: jumanpp [options] 
   -s, --specifics              lattice format output (unsigned int [=5])
-  --beam <int>                 set beam width used in analysis (unsigned int [=5])
+  --beam <int>                 set local beam width used in analysis (unsigned int [=5])
   -v, --version                print version
   -h, --help                   print this message
   --model <file>               specify a model location
 ```
 
-More complete description of all options will come later.
+Use `--help` to see more options.
 
 ## Input
 JUMAN++ can handle only utf-8 encoded text as an input.
@@ -81,6 +81,29 @@ Lines beginning with `# ` will be interpreted as comments.
 You can play around our [web demo](https://tulip.kuee.kyoto-u.ac.jp/demo/jumanpp_lattice?text=%E5%A4%96%E5%9B%BD%E4%BA%BA%E5%8F%82%E6%94%BF%E6%A8%A9%E3%81%AB%E5%AF%BE%E3%81%99%E3%82%8B%E8%80%83%E3%81%88%E6%96%B9%E3%81%AE%E9%81%95%E3%81%84)
 which displays a subset of the whole lattice.
 The demo still uses v1 but, it will be updated to v2 soon.
+
+## Extracting diffs caused by beam configurations
+
+You can see sentences in which two different beam configutaions produce different analyses.
+A `src/jumandic/jpp_jumandic_pathdiff` binary [(source)](https://github.com/ku-nlp/jumanpp/blob/master/src/jumandic/main/path_diff.cc) 
+(relative to a compilation root) does it.
+The only Jumandic-specific thing here is the usage of [code-generated linear model inference](https://github.com/ku-nlp/jumanpp/blob/master/src/jumandic/main/path_diff.cc#L195).
+
+Use the binary as `jpp_jumandic_pathdiff <model> <input> > <output>`.
+
+Outputs would be in the partial annotation format with a full beam results being the actual tags and trimmed beam results being written as comments.
+
+Example: 
+```
+# scores: -0.602687 -1.20004
+# 子がい        pos:名詞        subpos:普通名詞 <------- trimmed beam result
+# S-ID:w201007-0080605751-6 COUNT:2
+熊本選抜にはマリノス、アントラーズのユースに行く
+        子      pos:名詞        subpos:普通名詞 <------- full beam result
+        が      pos:助詞        subpos:格助詞
+        い      baseform:いる   conjtype:母音動詞       pos:動詞        conjform:基本連用形
+ます
+```
 
 ## Performance Notes
 
