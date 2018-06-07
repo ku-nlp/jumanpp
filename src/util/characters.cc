@@ -296,5 +296,16 @@ i32 numCodepoints(StringPiece utf8) {
   return count;
 }
 
+std::ostream &operator<<(std::ostream &os, CharacterClass cc) {
+  auto flags = os.flags(std::ios::hex | std::ios::right);
+  auto width = os.width(8);
+  auto fill = os.fill('0');
+  os << static_cast<i32>(cc);
+  os.flags(flags);
+  os.fill(fill);
+  os.width(width);
+  return os;
+}
+
 }  // namespace chars
 }  // namespace jumanpp

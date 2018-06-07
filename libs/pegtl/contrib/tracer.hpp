@@ -37,7 +37,7 @@ namespace tao
             auto toOut = std::min<std::size_t>(sz, 10);
 
             std::cerr << in.position() << "  start   [";
-            std::cerr.write(in.begin(), toOut);
+            std::cerr.write(in.current(), toOut);
             std::cerr << "] " <<  internal::demangle< Rule >() << std::endl;
          }
 

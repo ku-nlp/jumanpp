@@ -34,15 +34,20 @@ struct SpecParserImpl {
   // field data
   dsl::FieldBuilder* curFld_ = nullptr;
   dsl::FeatureBuilder* curFeature_ = nullptr;
+  dsl::UnkProcBuilder* curUnk_ = nullptr;
 
   std::vector<dsl::FieldReference> fieldRefs_;
   std::vector<dsl::FeatureRef> featureRefs_;
+  std::vector<std::vector<dsl::FeatureRef>> featureRefRefs_;
+  std::vector<chars::CharacterClass> charClassStack_;
 
   Resource* fileResourece(StringPiece name, p::position pos);
   Status buildSpec(spec::AnalysisSpec* result);
 
   SpecParserImpl(StringPiece basename): basename_{basename.str()} {}
 };
+
+chars::CharacterClass charClassByName(StringPiece name);
 
 template <typename Rule>
 struct SpecAction : p::nothing<Rule> {};
@@ -280,7 +285,7 @@ struct SpecAction<fieldparam> {
 };
 
 template <>
-struct SpecAction<mt_lhs_litem> {
+struct SpecAction<fldref_litem> {
   template <typename Input>
   static void apply(const Input& in, SpecParserImpl& sp) {
     if (sp.curFld_ == nullptr) {
@@ -336,12 +341,23 @@ struct SpecAction<ft_byte_length> {
 };
 
 template <>
+struct SpecAction<mt_rhs_file> {
+  template <typename Input>
+  static void apply(const Input& in, SpecParserImpl& sp) {
+    auto filename = sp.stringParam_;
+    auto res = sp.fileResourece(filename, in.position());
+    sp.stringParam_ = res->data();
+  }
+};
+
+template <>
 struct SpecAction<mt_cond> {
   template <typename Input>
   static void apply(const Input& in, SpecParserImpl& sp) {
     auto& vals = sp.fieldRefs_;
     auto csvData = sp.stringParam_;
-    if (vals.size() == 1 && !util::contains(csvData, ',')) {
+    if (vals.size() == 1 &&
+        !(util::contains(csvData, ',') || util::contains(csvData, '\n'))) {
       sp.curFeature_->matchData(vals[0], csvData);
     } else {
       sp.curFeature_->matchAnyRowOfCsv(csvData, vals);
@@ -409,10 +425,154 @@ struct SpecAction<fref_item> {
 };
 
 template <>
-struct SpecAction<ngram_uni> {
+struct SpecAction<fref_list> {
   template <typename Input>
   static void apply(const Input& in, SpecParserImpl& sp) {
-    sp.builder_.unigram(sp.featureRefs_);
+    if (sp.featureRefs_.empty()) {
+      throw p::parse_error("feature reference list can't be empty",
+                           in.position());
+    }
+
+    sp.featureRefRefs_.emplace_back(std::move(sp.featureRefs_));
+    sp.featureRefs_.clear();
+  }
+};
+
+template <>
+struct SpecAction<ngram> {
+  template <typename Input>
+  static void apply(const Input& in, SpecParserImpl& sp) {
+    auto ngramOrder = sp.featureRefRefs_.size();
+    switch (ngramOrder) {
+      case 1:
+        sp.builder_.unigram(sp.featureRefRefs_[0]);
+        break;
+      case 2:
+        sp.builder_.bigram(sp.featureRefRefs_[0], sp.featureRefRefs_[1]);
+        break;
+      case 3:
+        sp.builder_.trigram(sp.featureRefRefs_[0], sp.featureRefRefs_[1],
+                            sp.featureRefRefs_[2]);
+        break;
+      default:
+        throw p::parse_error(
+            "unsupported ngram order: " + std::to_string(ngramOrder),
+            in.position());
+    }
+    sp.featureRefRefs_.clear();
+  }
+};
+
+// UNKS
+
+template <>
+struct SpecAction<char_type_lit> {
+  template <typename Input>
+  static void apply(const Input& in, SpecParserImpl& sp) {
+    auto name = StringPiece(in.begin(), in.end());
+    auto clazz = charClassByName(name);
+    if (clazz == chars::CharacterClass::FAMILY_OTHERS) {
+      throw p::parse_error("invalid/unsupported character class: " + name.str(),
+                           in.position());
+    }
+    sp.charClassStack_.push_back(clazz);
+  }
+};
+
+template <>
+struct SpecAction<char_type_or> {
+  template <typename Input>
+  static void apply(const Input& in, SpecParserImpl& sp) {
+    if (sp.charClassStack_.size() < 2) {
+      throw p::parse_error("internal error: char class stack lt 2 ",
+                           in.position());
+    }
+    auto v1 = sp.charClassStack_.back();
+    sp.charClassStack_.pop_back();
+    auto& v2 = sp.charClassStack_.back();
+    v2 = v1 | v2;
+  }
+};
+
+template <>
+struct SpecAction<unk_ft_out> {
+  template <typename Input>
+  static void apply(const Input& in, SpecParserImpl& sp) {
+    sp.curUnk_->writeFeatureTo(sp.featureRefs_[0]);
+    sp.featureRefs_.clear();
+  }
+};
+
+template <>
+struct SpecAction<unk_srf_out> {
+  template <typename Input>
+  static void apply(const Input& in, SpecParserImpl& sp) {
+    sp.curUnk_->outputTo(sp.fieldRefs_);
+    sp.fieldRefs_.clear();
+  }
+};
+
+template <>
+struct SpecAction<unk_hdr> {
+  template <typename Input>
+  static void apply(const Input& in, SpecParserImpl& sp) {
+    sp.curUnk_ = &sp.builder_.unk(sp.stringParam_, sp.intParam_);
+  }
+};
+
+template <>
+struct SpecAction<unk_def> {
+  template <typename Input>
+  static void apply(const Input& in, SpecParserImpl& sp) {
+    sp.curUnk_ = nullptr;
+  }
+};
+
+template <>
+struct SpecAction<unk_cls_single> {
+  template <typename Input>
+  static void apply(const Input& in, SpecParserImpl& sp) {
+    JPP_DCHECK_GT(sp.charClassStack_.size(), 0);
+    sp.curUnk_->single(sp.charClassStack_[0]);
+    sp.charClassStack_.clear();
+  }
+};
+
+template <>
+struct SpecAction<unk_cls_chunking> {
+  template <typename Input>
+  static void apply(const Input& in, SpecParserImpl& sp) {
+    JPP_DCHECK_GT(sp.charClassStack_.size(), 0);
+    sp.curUnk_->chunking(sp.charClassStack_[0]);
+    sp.charClassStack_.clear();
+  }
+};
+
+template <>
+struct SpecAction<unk_cls_onoma> {
+  template <typename Input>
+  static void apply(const Input& in, SpecParserImpl& sp) {
+    JPP_DCHECK_GT(sp.charClassStack_.size(), 0);
+    sp.curUnk_->onomatopoeia(sp.charClassStack_[0]);
+    sp.charClassStack_.clear();
+  }
+};
+
+template <>
+struct SpecAction<unk_cls_numeric> {
+  template <typename Input>
+  static void apply(const Input& in, SpecParserImpl& sp) {
+    JPP_DCHECK_GT(sp.charClassStack_.size(), 0);
+    sp.curUnk_->numeric(sp.charClassStack_[0]);
+    sp.charClassStack_.clear();
+  }
+};
+
+template <>
+struct SpecAction<unk_cls_normalize> {
+  template <typename Input>
+  static void apply(const Input& in, SpecParserImpl& sp) {
+    sp.curUnk_->normalize();
   }
 };
 

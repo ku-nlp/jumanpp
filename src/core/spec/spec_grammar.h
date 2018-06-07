@@ -63,6 +63,7 @@ struct opt_whitespace : p::star<p::blank> {};
 struct lbrak : p::one<'['> {};
 struct rbrak : p::one<']'> {};
 struct comma : p::one<','> {};
+struct bar : p::one<'|'> {};
 struct lparen : p::one<'('> {};
 struct rparen : p::one<')'> {};
 struct eq : p::one<'='> {};
@@ -129,16 +130,17 @@ struct ft_num_codepts
 struct ft_placeholder : lit_string("placeholder") {};
 struct ft_byte_length : p::if_must<lit_string("num_bytes"), sep, fieldparam> {};
 
-struct mt_lhs_litem : p::seq<fieldparam> {};
-struct mt_lhs_list
-    : p::if_must<lbrak, sep, p::list<mt_lhs_litem, comma, sep_pad>, sep,
+// seq for the internal level action to be called before this action
+struct fldref_litem : p::seq<fieldparam> {};
+struct fldref_list
+    : p::if_must<lbrak, sep, p::list<fldref_litem, comma, sep_pad>, sep,
                  rbrak> {};
-struct mt_lhs : p::sor<mt_lhs_litem, mt_lhs_list> {};
+struct mt_lhs : p::sor<fldref_litem, fldref_list> {};
 struct mt_rhs_file : p::seq<lit_string("file"), sep, qstring_param> {};
 struct mt_rhs : p::sor<qstring_param, mt_rhs_file> {};
 struct mt_cond : p::seq<mt_lhs, sep, lit_string("with"), sep, mt_rhs> {};
-struct mt_then_body : p::seq<lit_string("then"), sep, mt_lhs_list> {};
-struct mt_else_body : p::seq<lit_string("else"), sep, mt_lhs_list> {};
+struct mt_then_body : p::seq<lit_string("then"), sep, fldref_list> {};
+struct mt_else_body : p::seq<lit_string("else"), sep, fldref_list> {};
 struct ft_match : p::if_must<lit_string("match"), sep, mt_cond,
                              p::opt<sep, mt_then_body, sep, mt_else_body>> {};
 
@@ -151,57 +153,51 @@ struct feature_stmt : p::if_must<lit_string("feature"), sep, feature_name,
 struct fref_item : ident {};
 struct fref_list
     : p::if_must<lbrak, sep, p::list<fref_item, comma, sep_pad>, sep, rbrak> {};
-struct ngram_uni : p::if_must<lit_string("unigram"), sep, fref_list> {};
+struct fref_lists : p::rep_min_max<1, 3, fref_list, sep> {};
+struct ngram : p::if_must<lit_string("ngram"), sep, fref_lists> {};
 
-struct arg_name : ident {};
-struct arg_op : p::sor<eq, add> {};
-struct arg_par : p::sor<number, qstring> {};
-struct arg_action : p::if_must<arg_op, sep, arg_par> {};
-struct arg : p::seq<arg_name, sep, opt<arg_action>> {};
+struct char_type_lit : ident {};
+struct char_type_expr;
+struct char_type_or : p::seq<char_type_lit, sep, bar, sep, char_type_expr> {};
+struct char_type_expr : p::sor<char_type_or, p::disable<char_type_lit>> {};
 
-struct arglist_content : p::list_must<arg, comma, p::blank> {};
-struct arglist : p::if_must<lbrak, sep, arglist_content, sep, rbrak> {};
+struct unk_ft_out : p::if_must<lit_string("feature to"), sep, fref_item> {};
+struct unk_srf_out : p::if_must<lit_string("surface to"), sep, fldref_list> {};
 
-struct unk_f_out_data : arglist {};
-struct unk_f_out : p::if_must<kw_output, sep, unk_f_out_data> {};
-struct unk_f_feat_data : arglist {};
-struct unk_f_feat : p::if_must<kw_feature, sep, unk_f_feat_data> {};
-struct unk_tmpl_num : number {};
-struct unk_name : ident {};
-struct unk_data : p::if_must<kw_unk, sep, unk_name, sep, kw_template, sep,
-                             unk_tmpl_num, sep, unk_f_out, sep, unk_f_feat> {};
+struct unk_cls_single : p::if_must<lit_string("single"), sep, char_type_expr> {
+};
+struct unk_cls_chunking
+    : p::if_must<lit_string("chunking"), sep, char_type_expr> {};
+struct unk_cls_onoma
+    : p::if_must<lit_string("onomatopeia"), sep, char_type_expr> {};
+struct unk_cls_numeric
+    : p::if_must<lit_string("numeric"), sep, char_type_expr> {};
+struct unk_cls_normalize : p::if_must<lit_string("normalize")> {};
+struct unk_cls : p::sor<unk_cls_single, unk_cls_chunking, unk_cls_onoma,
+                        unk_cls_numeric, unk_cls_normalize> {};
 
-struct mtch_lhs : ident {};
-struct mtch_arglist : arglist {};
-struct mtch_str : qstring {};
-struct mtch_rhs : p::sor<mtch_str, mtch_arglist> {};
-struct mtch : p::must<mtch_lhs, sep, kw_match, sep, mtch_rhs> {};
+struct unk_hdr : p::seq<strparam, sep, lit_string("template row"), sep,
+                        snumparam, opt<sep, p::one<':'>>> {};
+struct unk_flags : p::star<p::sor<unk_ft_out, unk_srf_out>, sep> {};
+struct unk_def : p::if_must<lit_string("unk"), sep, unk_hdr, sep, unk_cls, sep,
+                            unk_flags> {};
 
-struct if_cond_body : mtch {};
-struct if_cond : p::if_must<lparen, sep, if_cond_body, sep, rparen> {};
-struct if_true : arglist {};
-struct if_false : arglist {};
-struct if_expr : p::if_must<kw_if, sep, if_cond, sep, if_true, sep, kw_else,
-                            sep, if_false> {};
+struct floatconst : p::seq<p::opt<p::one<'-', '+'>>, p::plus<p::digit>,
+                           p::opt<p::one<'.'>, p::plus<p::digit>>> {};
 
-struct feat_bdy_if : if_expr {};
-struct feat_bdy_eq : arg {};
-struct feat_bdy : p::sor<feat_bdy_if, feat_bdy_eq> {};
-struct feat_name : ident {};
-struct feat_data : p::if_must<kw_feature, sep, feat_name, sep, feat_bdy> {};
+struct train_field : p::seq<fref_item, sep, floatconst> {};
+struct train_fields : p::list<train_field, comma, sep_pad> {};
+struct train_gold_unk
+    : p::if_must<lit_string("unk_gold_if"), sep, fldref_litem, sep, lbrak, sep,
+                 qstring_param, sep, rbrak, sep, eq, eq, sep, fldref_litem> {};
 
-struct uni_lst : arglist {};
-struct uni_data : p::if_must<kw_unigram, sep, uni_lst> {};
+struct train_stmt
+    : p::if_must<lit_string("train"), p::opt<sep, lit_string("loss")>, sep,
+                 train_fields, p::opt<sep, train_gold_unk>> {};
 
-struct bi_lst_1 : arglist {};
-struct bi_lst_2 : arglist {};
-struct bi_data : p::if_must<kw_bigram, sep, bi_lst_1, sep, bi_lst_2> {};
+struct spec_stmt : p::sor<fld_stmt, feature_stmt, unk_def, train_stmt, sep> {};
 
-struct tri_list_1 : arglist {};
-struct tri_list_2 : arglist {};
-struct tri_list_3 : arglist {};
-struct tri_data : p::if_must<kw_trigram, sep, tri_list_1, sep, tri_list_2, sep,
-                             tri_list_3> {};
+struct full_spec : p::star<spec_stmt, p::discard> {};
 
 #undef lit_string
 

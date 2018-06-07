@@ -119,48 +119,6 @@ TEST_CASE("full field parses") {
   shouldParse<p::fld_stmt>("field 1 name kv_list");
 }
 
-TEST_CASE("can parse argument") {
-  shouldParse<p::arg>("dicform");
-  shouldParse<p::arg>("dicform=1");
-  shouldParse<p::arg>("dicform+=1");
-  shouldParse<p::arg>("dicform+=\"1\"");
-  shouldParse<p::arg>("dicform=\"1\"");
-  shouldParse<p::arg>("dicform =\"1\"");
-  shouldParse<p::arg>("dicform = \"1\"");
-  shouldParse<p::arg>("dicform += 1");
-  failParse<p::arg>("dicform += ");
-  failParse<p::arg>("dicform = ");
-}
-
-TEST_CASE("can parse arglist") {
-  shouldParse<p::arglist>("[a]");
-  shouldParse<p::arglist>("[a ]");
-  shouldParse<p::arglist>("[ a]");
-  shouldParse<p::arglist>("[a,b]");
-  shouldParse<p::arglist>("[a ,b]");
-  shouldParse<p::arglist>("[a, b]");
-  shouldParse<p::arglist>("[a , b]");
-  shouldParse<p::arglist>("[a,b,c,d]");
-  shouldParse<p::arglist>("[a,b,c=2,d]");
-  shouldParse<p::arglist>("[a ,b,c=2,d]");
-  shouldParse<p::arglist>("[a ,b,c=2,d ]");
-  shouldParse<p::arglist>("[a ,b,c= 2,d ]");
-  shouldParse<p::arglist>("[a ,b+=\"1\",c= 2,d ]");
-}
-
-TEST_CASE("can parse unk spec") {
-  shouldParse<p::unk_data>("unknown a template 1 output[c] feature[z]");
-  shouldParse<p::unk_data>(
-      "unknown a template 1 output[c,a] feature[z,a=5,b+=7]");
-  failParse<p::unk_data>("unknown a template z output[c] feature[z]");
-  failParse<p::unk_data>("unknown a template z output[c]");
-  failParse<p::unk_data>("unknown a template z");
-  failParse<p::unk_data>("unknown a template z");
-  failParse<p::unk_data>("unknown a template z fea");
-  failParse<p::unk_data>("unknown a template z feature");
-  failParse<p::unk_data>("unknown a template z feature[z]");
-}
-
 TEST_CASE("can parse match condition") {
   analyzeRule<p::mt_cond>();
   shouldParse<p::mt_cond>("x with \"y\"");
@@ -179,53 +137,57 @@ TEST_CASE("can parse match expression") {
 }
 
 TEST_CASE("can parse unigram combiner") {
-  analyzeRule<p::ngram_uni>();
-  shouldParse<p::ngram_uni>("unigram [a]");
-  shouldParse<p::ngram_uni>("unigram [a,b]");
-  shouldParse<p::ngram_uni>("unigram [f1, a]");
-  shouldParse<p::ngram_uni>("unigram [ a, b ]");
-  shouldParse<p::ngram_uni>("unigram[f1,b]");
+  analyzeRule<p::ngram>();
+  shouldParse<p::ngram>("ngram [a]");
+  shouldParse<p::ngram>("ngram [a,b]");
+  shouldParse<p::ngram>("ngram [f1, a]");
+  shouldParse<p::ngram>("ngram [ a, b ]");
+  shouldParse<p::ngram>("ngram[f1,b]");
+  shouldParse<p::ngram>("ngram[f1,b][f2]");
+  shouldParse<p::ngram>("ngram[f1,b][f2] [f3]");
+  shouldParse<p::ngram>("ngram[f1,b][ f2] [f3]");
+  failParse<p::ngram>("ngram[f1,b][f2] [f3][f4]");
+  failParse<p::ngram>("ngram");
 }
 
-TEST_CASE("can parse condition of if expression") {
-  shouldParse<p::if_cond>("(x match [a])");
-  shouldParse<p::if_cond>("(x match [a] )");
-  shouldParse<p::if_cond>("( x match [a] )");
+TEST_CASE("can parse char type expression") {
+  analyzeRule<p::char_type_expr>();
+  shouldParse<p::char_type_expr>("a");
+  shouldParse<p::char_type_expr>("a | b");
+  shouldParse<p::char_type_expr>("a | b|c");
 }
 
-TEST_CASE("can parse if expression") {
-  shouldParse<p::if_expr>("if (a match [b]) [c] else [d]");
-  shouldParse<p::if_expr>("if(a match[b])[c]else[d]");
+TEST_CASE("can parse unk handlers") {
+  analyzeRule<p::unk_def>();
+  shouldParse<p::unk_def>(
+      "unk kata template row 1: single katakana surface to [surface]");
+  shouldParse<p::unk_def>(
+      "unk kata template row 1: chunking katakana surface to [surface]");
+  shouldParse<p::unk_def>(
+      "unk kata template row 1: onomatopeia katakana surface to [surface]");
+  shouldParse<p::unk_def>(
+      "unk kata template row 1: numeric katakana surface to [surface]");
+  shouldParse<p::unk_def>(
+      "unk kata template row 1: normalize surface to [surface]");
+  shouldParse<p::unk_def>(
+      "unk aaabbb template row 1: normalize surface to [surface] feature to "
+      "test");
+  shouldParse<p::unk_def>(
+      "unk alphabet template row 5: chunking FAMILY_ALPH surface to [surface, "
+      "baseform, reading] feature to notPrefix");
 }
 
-TEST_CASE("can parse feature") {
-  shouldParse<p::feat_data>("feature x a=2");
-  shouldParse<p::feat_data>("feature x a=\"2\"");
-  shouldParse<p::feat_data>("feature x if(a match[b])[c]else[d]");
+TEST_CASE("can parse floating point constants") {
+  analyzeRule<p::floatconst>();
+  shouldParse<p::floatconst>("0");
+  shouldParse<p::floatconst>("01");
+  shouldParse<p::floatconst>("01.151");
+  shouldParse<p::floatconst>("021.151");
+  shouldParse<p::floatconst>("+021.151");
+  shouldParse<p::floatconst>("-021.151");
 }
 
-TEST_CASE("can parse unigram feature combination") {
-  shouldParse<p::uni_data>("unigram [x]");
-  shouldParse<p::uni_data>("unigram[x]");
-  failParse<p::uni_data>("unigram[x][y]");
-}
-
-TEST_CASE("can parse bigram feature combination") {
-  shouldParse<p::bi_data>("bigram [x][y]");
-  shouldParse<p::bi_data>("bigram [x] [y]");
-  shouldParse<p::bi_data>("bigram[x] [y]");
-  failParse<p::bi_data>("bigram[x]");
-  failParse<p::bi_data>("bigram[x][y][z]");
-}
-
-TEST_CASE("can parse trigram feature combination") {
-  shouldParse<p::tri_data>("trigram [x][y][z]");
-  shouldParse<p::tri_data>("trigram [x][y] [z]");
-  shouldParse<p::tri_data>("trigram [x] [y] [z]");
-  shouldParse<p::tri_data>("trigram[x] [y] [z]");
-  shouldParse<p::tri_data>("trigram[x] [y][z]");
-  shouldParse<p::tri_data>("trigram[x][y][z]");
-  shouldParse<p::tri_data>("trigram[x][y] [z]");
-  failParse<p::tri_data>("trigram[x][y]");
-  failParse<p::tri_data>("trigram[x]");
+TEST_CASE("can parse unk_gold_if") {
+  analyzeRule<p::train_gold_unk>();
+  shouldParse<p::train_gold_unk>("unk_gold_if features[\"品詞推定\"] == pos");
 }

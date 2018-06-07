@@ -319,7 +319,7 @@ class UnkProcBuilder : public DslOpBase {
   i32 pattern_ = -1;
   i32 priority_ = 0;
   std::vector<UnkProcFeature> sideFeatures_;
-  std::vector<FieldExpressionBldr> output_;
+  std::vector<FieldReference> output_;
 
   friend class ::jumanpp::core::spec::SpecCompiler;
 
@@ -369,11 +369,16 @@ class UnkProcBuilder : public DslOpBase {
     return *this;
   }
 
-  UnkProcBuilder& outputTo(std::initializer_list<FieldExpressionBldr> field) {
-    for (auto& x : field) {
+  template <typename C>
+  UnkProcBuilder& outputTo(const C& fields) {
+    for (auto& x : fields) {
       output_.push_back(x);
     }
     return *this;
+  }
+
+  UnkProcBuilder& outputTo(std::initializer_list<FieldReference> field) {
+    return outputTo<decltype(field)>(field);
   }
 
   UnkProcBuilder& lowPriority() {
@@ -470,23 +475,31 @@ class ModelSpecBuilder : public DslOpBase {
 
   void bigram(const std::initializer_list<FeatureRef>& t1,
               const std::initializer_list<FeatureRef>& t0) {
+    bigram<decltype(t1), decltype(t0)>(t1, t0);
+  }
+
+  template <typename C1, typename C0>
+  void bigram(const C1& t1, const C0& t0) {
     auto cmb = alloc_->make<FeatureCombinator>(alloc_.get());
     garbage_.push_back(cmb);
-    auto& data = cmb->data;
-    data.emplace_back(t0, alloc_.get());
-    data.emplace_back(t1, alloc_.get());
+    cmb->append(alloc_.get(), t0);
+    cmb->append(alloc_.get(), t1);
     ngrams_.emplace_back(cmb);
   }
 
   void trigram(const std::initializer_list<FeatureRef>& t2,
                const std::initializer_list<FeatureRef>& t1,
                const std::initializer_list<FeatureRef>& t0) {
+    trigram<decltype(t2), decltype(t1), decltype(t0)>(t2, t1, t0);
+  }
+
+  template <typename C2, typename C1, typename C0>
+  void trigram(const C2& t2, const C1& t1, const C0& t0) {
     auto cmb = alloc_->make<FeatureCombinator>(alloc_.get());
     garbage_.push_back(cmb);
-    auto& data = cmb->data;
-    data.emplace_back(t0, alloc_.get());
-    data.emplace_back(t1, alloc_.get());
-    data.emplace_back(t2, alloc_.get());
+    cmb->append(alloc_.get(), t0);
+    cmb->append(alloc_.get(), t1);
+    cmb->append(alloc_.get(), t2);
     ngrams_.emplace_back(cmb);
   }
 
