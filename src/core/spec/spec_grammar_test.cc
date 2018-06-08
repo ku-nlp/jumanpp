@@ -200,3 +200,5 @@ TEST_CASE("can parse unk_gold_if") {
   analyzeRule<p::train_gold_unk>();
   shouldParse<p::train_gold_unk>("unk_gold_if features[\"品詞推定\"] == pos");
 }
+
+TEST_CASE("analyze full grammar") { analyzeRule<p::full_spec>(); }

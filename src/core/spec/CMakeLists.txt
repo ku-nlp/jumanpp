@@ -2,6 +2,7 @@ jpp_core_files(core_srcs
 
   spec_compiler.cc
   spec_dsl.cc
+  spec_parser.cc
   spec_parser_impl.cc
   spec_serialization.cc
   spec_types.cc
@@ -22,6 +23,7 @@ jpp_core_files(core_hdrs
   spec_compiler.h
   spec_dsl.h
   spec_grammar.h
+  spec_parser.h
   spec_parser_impl.h
   spec_ser.h
   spec_serialization.h

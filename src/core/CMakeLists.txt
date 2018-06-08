@@ -35,6 +35,7 @@ add_subdirectory(dic)
 add_subdirectory(impl)
 add_subdirectory(input)
 add_subdirectory(spec)
+add_subdirectory(tool)
 add_subdirectory(training)
 
 set(core_srcs

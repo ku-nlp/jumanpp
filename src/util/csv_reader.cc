@@ -18,7 +18,7 @@ Status CsvReader::open(const StringPiece &filename) {
 }
 
 bool CsvReader::nextLine() {
-  start_ = position_;
+  lineStart_ = position_;
   auto end = end_;
   auto position = position_;
   if (position == end) return false;
@@ -119,7 +119,7 @@ StringPiece CsvReader::field(i32 idx) const {
 }
 
 Status CsvReader::initFromMemory(const StringPiece &data) {
-  start_ = position_ = data.char_begin();
+  start_ = lineStart_ = position_ = data.char_begin();
   end_ = data.char_end();
   line_number_ = 0;
   return Status::Ok();

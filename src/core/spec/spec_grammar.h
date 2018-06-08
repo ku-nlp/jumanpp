@@ -197,9 +197,10 @@ struct train_stmt
     : p::if_must<lit_string("train"), p::opt<sep, lit_string("loss")>, sep,
                  train_fields, p::star<sep, train_gold_unk>> {};
 
-struct spec_stmt : p::sor<fld_stmt, feature_stmt, unk_def, train_stmt, sep> {};
+struct spec_stmt
+    : p::sor<fld_stmt, feature_stmt, unk_def, train_stmt, sep_pad> {};
 
-struct full_spec : p::star<spec_stmt, p::discard> {};
+struct full_spec : p::seq<p::star<spec_stmt, p::discard>, p::eof> {};
 
 #undef lit_string
 

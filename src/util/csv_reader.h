@@ -63,6 +63,7 @@ class CsvReader {
   char separator_;
   char quote_;
   const char* start_;
+  const char* lineStart_;
   const char* position_;
   const char* end_;
   i64 line_number_;
@@ -87,7 +88,7 @@ class CsvReader {
   i64 bytePosition() const { return static_cast<i64>(position_ - start_); }
   i64 byteSize() const { return static_cast<i64>(end_ - start_); }
   bool rowHadQuoted() const { return !temp_.empty(); }
-  StringPiece line() const { return StringPiece{start_, position_}; }
+  StringPiece line() const { return StringPiece{lineStart_, position_}; }
 };
 }  // namespace util
 }  // namespace jumanpp
