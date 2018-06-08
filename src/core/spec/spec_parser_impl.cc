@@ -95,12 +95,12 @@ chars::CharacterClass charClassByName(StringPiece name) {
       // clang-format on
   };
 
-  std::string name_lower;
+  std::string name_upper;
   for (auto c : name) {
-    name_lower.push_back(static_cast<char>(std::toupper(static_cast<char>(c))));
+    name_upper.push_back(static_cast<char>(std::toupper(static_cast<char>(c))));
   }
 
-  auto it = classes.find(name_lower);
+  auto it = classes.find(name_upper);
   if (it != classes.end()) {
     return it->second;
   }
