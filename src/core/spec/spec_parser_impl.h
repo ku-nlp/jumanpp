@@ -7,9 +7,9 @@
 
 #include "spec_dsl.h"
 #include "spec_grammar.h"
+#include "util/char_buffer.h"
 #include "util/flatmap.h"
 #include "util/parse_utils.h"
-#include "util/char_buffer.h"
 #include "util/stl_util.h"
 
 namespace jumanpp {
@@ -22,6 +22,7 @@ struct Resource : public dsl::DslOpBase {
 };
 
 struct SpecParserImpl {
+  std::string basename_;
   dsl::ModelSpecBuilder builder_;
   util::FlatMap<StringPiece, dsl::FieldBuilder*> fields_;
   util::FlatMap<StringPiece, dsl::FeatureBuilder*> features_;
@@ -29,20 +30,28 @@ struct SpecParserImpl {
 
   i32 intParam_;
   StringPiece stringParam_;
+  float floatParam_;
 
-  //field data
+  // field data
   dsl::FieldBuilder* curFld_ = nullptr;
   dsl::FeatureBuilder* curFeature_ = nullptr;
+  dsl::UnkProcBuilder* curUnk_ = nullptr;
 
   std::vector<dsl::FieldReference> fieldRefs_;
   std::vector<dsl::FeatureRef> featureRefs_;
+  std::vector<std::vector<dsl::FeatureRef>> featureRefRefs_;
+  std::vector<chars::CharacterClass> charClassStack_;
 
-  Resource* fileResourece(StringPiece name);
+  Resource* fileResourece(StringPiece name, p::position pos);
   Status buildSpec(spec::AnalysisSpec* result);
+
+  SpecParserImpl(StringPiece basename): basename_{basename.str()} {}
 };
 
+chars::CharacterClass charClassByName(StringPiece name);
+
 template <typename Rule>
-struct SpecAction: p::nothing<Rule> {};
+struct SpecAction : p::nothing<Rule> {};
 
 struct StoreToIntParam {
   template <typename Input>
@@ -72,8 +81,6 @@ struct StoreToSIntParam {
   }
 };
 
-
-
 struct StoreToStringParam {
   template <typename Input>
   static void apply(const Input& in, SpecParserImpl& sp) {
@@ -84,7 +91,7 @@ struct StoreToStringParam {
 struct StoreQuotedStringParam {
   template <typename Input>
   static void apply(const Input& in, SpecParserImpl& sp) {
-    auto quoted = StringPiece{in.begin() + 1, in.end() - 1}; // ignore quotes
+    auto quoted = StringPiece{in.begin() + 1, in.end() - 1};  // ignore quotes
 
     bool hasQuotes = false;
     for (auto c : quoted) {
@@ -106,7 +113,7 @@ struct StoreQuotedStringParam {
 
     int start = 0;
     auto end = chars.size();
-    for(; start < end; ++start) {
+    for (; start < end; ++start) {
       if (chars[start] == '"') {
         break;
       }
@@ -128,10 +135,10 @@ struct StoreQuotedStringParam {
 };
 
 template <>
-struct SpecAction<fld_column>: StoreToIntParam {};
+struct SpecAction<fld_column> : StoreToIntParam {};
 
 template <>
-struct SpecAction<snumparam>: StoreToSIntParam {};
+struct SpecAction<snumparam> : StoreToSIntParam {};
 
 template <>
 struct SpecAction<fld_name> {
@@ -142,7 +149,8 @@ struct SpecAction<fld_name> {
     sp.curFld_ = &fld;
     auto result = sp.fields_.insert({name, sp.curFld_});
     if (!result.second) {
-      throw p::parse_error("a field with name " + name.str() + " was already defined", in);
+      throw p::parse_error(
+          "a field with name " + name.str() + " was already defined", in);
     }
   }
 };
@@ -188,7 +196,7 @@ struct SpecAction<fld_flag_index> {
 };
 
 template <>
-struct SpecAction<fld_flag_align_data>: StoreToIntParam {};
+struct SpecAction<fld_flag_align_data> : StoreToIntParam {};
 
 template <>
 struct SpecAction<fld_flag_align> {
@@ -219,7 +227,8 @@ struct SpecAction<fld_flag_storage> {
     auto name = sp.stringParam_;
     auto it = sp.fields_.find(name);
     if (it == sp.fields_.end()) {
-      throw p::parse_error(std::string("field [") + name.str() + "] does not exist", in);
+      throw p::parse_error(
+          std::string("field [") + name.str() + "] does not exist", in);
     }
     sp.curFld_->stringStorage(*it->second);
   }
@@ -277,11 +286,13 @@ struct SpecAction<fieldparam> {
 };
 
 template <>
-struct SpecAction<mt_lhs_litem> {
+struct SpecAction<fldref_litem> {
   template <typename Input>
   static void apply(const Input& in, SpecParserImpl& sp) {
     if (sp.curFld_ == nullptr) {
-      throw p::parse_error("current field was nullptr, spec parser error, report this as a bug!", in);
+      throw p::parse_error(
+          "current field was nullptr, spec parser error, report this as a bug!",
+          in);
     }
     sp.fieldRefs_.push_back(*sp.curFld_);
     sp.curFld_ = nullptr;
@@ -331,12 +342,23 @@ struct SpecAction<ft_byte_length> {
 };
 
 template <>
+struct SpecAction<mt_rhs_file> {
+  template <typename Input>
+  static void apply(const Input& in, SpecParserImpl& sp) {
+    auto filename = sp.stringParam_;
+    auto res = sp.fileResourece(filename, in.position());
+    sp.stringParam_ = res->data();
+  }
+};
+
+template <>
 struct SpecAction<mt_cond> {
   template <typename Input>
   static void apply(const Input& in, SpecParserImpl& sp) {
     auto& vals = sp.fieldRefs_;
     auto csvData = sp.stringParam_;
-    if (vals.size() == 1 && !util::contains(csvData, ',')) {
+    if (vals.size() == 1 &&
+        !(util::contains(csvData, ',') || util::contains(csvData, '\n'))) {
       sp.curFeature_->matchData(vals[0], csvData);
     } else {
       sp.curFeature_->matchAnyRowOfCsv(csvData, vals);
@@ -351,7 +373,7 @@ struct SpecAction<mt_then_body> {
   static void apply(const Input& in, SpecParserImpl& sp) {
     auto& vals = sp.fieldRefs_;
     std::vector<dsl::FieldExpressionBldr> transfs;
-    for (auto& f: vals) {
+    for (auto& f : vals) {
       transfs.push_back(sp.fields_[f.name()]->value());
     }
     sp.curFeature_->ifTrue(transfs);
@@ -365,7 +387,7 @@ struct SpecAction<mt_else_body> {
   static void apply(const Input& in, SpecParserImpl& sp) {
     auto& vals = sp.fieldRefs_;
     std::vector<dsl::FieldExpressionBldr> transfs;
-    for (auto& f: vals) {
+    for (auto& f : vals) {
       transfs.push_back(sp.fields_[f.name()]->value());
     }
     sp.curFeature_->ifFalse(transfs);
@@ -380,7 +402,6 @@ struct SpecAction<feature_stmt> {
     sp.curFeature_ = nullptr;
   }
 };
-
 
 // NGRAMS
 
@@ -399,22 +420,195 @@ struct SpecAction<fref_item> {
       sp.featureRefs_.push_back(*it2->second);
       return;
     }
-    throw p::parse_error("there was no field nor feature with name: " + name.str(), in);
+    throw p::parse_error(
+        "there was no field nor feature with name: " + name.str(), in);
   }
 };
 
 template <>
-struct SpecAction<ngram_uni> {
+struct SpecAction<fref_list> {
   template <typename Input>
   static void apply(const Input& in, SpecParserImpl& sp) {
-    sp.builder_.unigram(sp.featureRefs_);
+    if (sp.featureRefs_.empty()) {
+      throw p::parse_error("feature reference list can't be empty",
+                           in.position());
+    }
+
+    sp.featureRefRefs_.emplace_back(std::move(sp.featureRefs_));
+    sp.featureRefs_.clear();
   }
 };
 
+template <>
+struct SpecAction<ngram> {
+  template <typename Input>
+  static void apply(const Input& in, SpecParserImpl& sp) {
+    auto ngramOrder = sp.featureRefRefs_.size();
+    switch (ngramOrder) {
+      case 1:
+        sp.builder_.unigram(sp.featureRefRefs_[0]);
+        break;
+      case 2:
+        sp.builder_.bigram(sp.featureRefRefs_[0], sp.featureRefRefs_[1]);
+        break;
+      case 3:
+        sp.builder_.trigram(sp.featureRefRefs_[0], sp.featureRefRefs_[1],
+                            sp.featureRefRefs_[2]);
+        break;
+      default:
+        throw p::parse_error(
+            "unsupported ngram order: " + std::to_string(ngramOrder),
+            in.position());
+    }
+    sp.featureRefRefs_.clear();
+  }
+};
 
-} // namespace parser
-} // namespace spec
-} // namespace core
-} // namespace jumanpp
+// UNKS
 
-#endif //JUMANPP_SPEC_PARSER_IMPL_H
+template <>
+struct SpecAction<char_type_lit> {
+  template <typename Input>
+  static void apply(const Input& in, SpecParserImpl& sp) {
+    auto name = StringPiece(in.begin(), in.end());
+    auto clazz = charClassByName(name);
+    if (clazz == chars::CharacterClass::FAMILY_OTHERS) {
+      throw p::parse_error("invalid/unsupported character class: " + name.str(),
+                           in.position());
+    }
+    sp.charClassStack_.push_back(clazz);
+  }
+};
+
+template <>
+struct SpecAction<char_type_or> {
+  template <typename Input>
+  static void apply(const Input& in, SpecParserImpl& sp) {
+    if (sp.charClassStack_.size() < 2) {
+      throw p::parse_error("internal error: char class stack lt 2 ",
+                           in.position());
+    }
+    auto v1 = sp.charClassStack_.back();
+    sp.charClassStack_.pop_back();
+    auto& v2 = sp.charClassStack_.back();
+    v2 = v1 | v2;
+  }
+};
+
+template <>
+struct SpecAction<unk_ft_out> {
+  template <typename Input>
+  static void apply(const Input& in, SpecParserImpl& sp) {
+    sp.curUnk_->writeFeatureTo(sp.featureRefs_[0]);
+    sp.featureRefs_.clear();
+  }
+};
+
+template <>
+struct SpecAction<unk_srf_out> {
+  template <typename Input>
+  static void apply(const Input& in, SpecParserImpl& sp) {
+    sp.curUnk_->outputTo(sp.fieldRefs_);
+    sp.fieldRefs_.clear();
+  }
+};
+
+template <>
+struct SpecAction<unk_hdr> {
+  template <typename Input>
+  static void apply(const Input& in, SpecParserImpl& sp) {
+    sp.curUnk_ = &sp.builder_.unk(sp.stringParam_, sp.intParam_);
+  }
+};
+
+template <>
+struct SpecAction<unk_def> {
+  template <typename Input>
+  static void apply(const Input& in, SpecParserImpl& sp) {
+    sp.curUnk_ = nullptr;
+  }
+};
+
+template <>
+struct SpecAction<unk_cls_single> {
+  template <typename Input>
+  static void apply(const Input& in, SpecParserImpl& sp) {
+    JPP_DCHECK_GT(sp.charClassStack_.size(), 0);
+    sp.curUnk_->single(sp.charClassStack_[0]);
+    sp.charClassStack_.clear();
+  }
+};
+
+template <>
+struct SpecAction<unk_cls_chunking> {
+  template <typename Input>
+  static void apply(const Input& in, SpecParserImpl& sp) {
+    JPP_DCHECK_GT(sp.charClassStack_.size(), 0);
+    sp.curUnk_->chunking(sp.charClassStack_[0]);
+    sp.charClassStack_.clear();
+  }
+};
+
+template <>
+struct SpecAction<unk_cls_onoma> {
+  template <typename Input>
+  static void apply(const Input& in, SpecParserImpl& sp) {
+    JPP_DCHECK_GT(sp.charClassStack_.size(), 0);
+    sp.curUnk_->onomatopoeia(sp.charClassStack_[0]);
+    sp.charClassStack_.clear();
+  }
+};
+
+template <>
+struct SpecAction<unk_cls_numeric> {
+  template <typename Input>
+  static void apply(const Input& in, SpecParserImpl& sp) {
+    JPP_DCHECK_GT(sp.charClassStack_.size(), 0);
+    sp.curUnk_->numeric(sp.charClassStack_[0]);
+    sp.charClassStack_.clear();
+  }
+};
+
+template <>
+struct SpecAction<unk_cls_normalize> {
+  template <typename Input>
+  static void apply(const Input& in, SpecParserImpl& sp) {
+    sp.curUnk_->normalize();
+  }
+};
+
+template <>
+struct SpecAction<floatconst> {
+  template <typename Input>
+  static void apply(const Input& in, SpecParserImpl& sp) {
+    sp.floatParam_ = std::stof(std::string(in.begin(), in.end()));
+  }
+};
+
+template <>
+struct SpecAction<train_field> {
+  template <typename Input>
+  static void apply(const Input& in, SpecParserImpl& sp) {
+    JPP_DCHECK_NE(sp.curFld_, nullptr);
+    sp.builder_.train().field(*sp.curFld_, sp.floatParam_);
+    sp.curFld_ = nullptr;
+  }
+};
+
+template <>
+struct SpecAction<train_gold_unk> {
+  template <typename Input>
+  static void apply(const Input& in, SpecParserImpl& sp) {
+    JPP_DCHECK_EQ(sp.fieldRefs_.size(), 2);
+    sp.builder_.train().allowGoldUnkWith(sp.fieldRefs_[1], sp.fieldRefs_[0],
+                                         sp.stringParam_);
+    sp.fieldRefs_.clear();
+  }
+};
+
+}  // namespace parser
+}  // namespace spec
+}  // namespace core
+}  // namespace jumanpp
+
+#endif  // JUMANPP_SPEC_PARSER_IMPL_H

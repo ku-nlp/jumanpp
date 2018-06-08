@@ -12,7 +12,7 @@ namespace util {
 
 bool parseU64(StringPiece sp, u64* result);
 
-} // namespace util
-} // namespace jumanpp
+}  // namespace util
+}  // namespace jumanpp
 
-#endif //JUMANPP_PARSE_UTILS_H
+#endif  // JUMANPP_PARSE_UTILS_H

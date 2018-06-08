@@ -71,6 +71,8 @@ enum class CharacterClass : i32 {
   FAMILY_ANYTHING = 0x7fffffff,
 };
 
+std::ostream& operator<<(std::ostream& os, CharacterClass cc);
+
 struct CodePointInfo {
   char32_t codepoint;
   int utf8Length;

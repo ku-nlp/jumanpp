@@ -1,0 +1,10 @@
+https://stackoverflow.com/questions/109449/getting-a-file-from-a-stdfstream
+https://stackoverflow.com/questions/2746168/how-to-construct-a-c-fstream-from-a-posix-file-descriptor
+http://cboard.cprogramming.com/cplusplus-programming/107187-create-fstream-raw-file-descriptor.html
+
+http://msdn.microsoft.com/en-us/library/zek0beca.aspx
+https://gcc.gnu.org/onlinedocs/gcc-4.9.2/libstdc++/api/a00054.html
+
+
+→→→→→
+https://stackoverflow.com/questions/23969094/c-ifstream-long-full-path-not-working/23969243#23969243

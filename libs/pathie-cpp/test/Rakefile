@@ -1,0 +1,164 @@
+# -*- mode: ruby; coding: utf-8 -*-
+# This file is part of Pathie.
+#
+# Copyright © 2015, 2017 Marvin Gülker
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# “AS IS” AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+require "rake/clean"
+
+if ENV["CROSSTEST"]
+  CC = ENV["CC"] || "i686-pc-mingw32-gcc"
+  CXX = ENV["CXX"] || "i686-pc-mingw32-g++"
+  LD = ENV["LD"] || CXX
+  CFLAGS = "-Wall -g " + ENV["CLFAGS"].to_s
+  CXXFLAGS = "-Wall -std=c++11 -g -I../include -I../crossbuild " + ENV["CXXFLAGS"].to_s
+  LDFLAGS = "-Wall -std=c++11 -g -L../crossbuild " + ENV["LDFLAGS"].to_s
+  LIBS = "-lpathie -lshlwapi"
+else
+  CC = ENV["CC"] || "cc"
+  CXX = ENV["CXX"] || "c++"
+  LD  = ENV["LD"] || CXX
+  CFLAGS = "-Wall -fPIC -g " + ENV["CFLAGS"].to_s
+  CXXFLAGS = "-Wall -std=c++11 -g -fPIC -I../include -I../build " + ENV["CXXFLAGS"].to_s
+  LDFLAGS = "-Wall -std=c++11 -g -fPIC -L../build " + ENV["LDFLAGS"].to_s
+  LIBS = "-lpathie"
+end
+
+CLEAN.include("*.o", "foo")
+CLOBBER.include("*.test", "libpathie.dll", "testfile.txt", "tästfile.txt".encode(Encoding.find("filesystem")))
+
+SOURCES = Dir["*.cpp"].map{|str| str.sub(/\.cpp$/, ".test")}
+SOURCES.delete("encodings.test") # Not available on Windows
+
+# ../build is a normal CMake build directory
+rule '.test' => ["%n.cpp", "testhelpers.hpp", "../build", *FileList["../src/*.cpp"].to_a, *FileList["../src/*.hpp"].to_a] do |t|
+  sh "#{CXX} #{CXXFLAGS} #{LDFLAGS} #{t.source} #{LIBS} -o #{t.name}"
+end
+
+task :build => SOURCES do
+  if ENV["CROSSTEST"]
+    cp "../crossbuild/libpathie.dll", "."
+  elsif RUBY_PLATFORM =~ /mingw|mswin/
+    cp "C:/msys32/mingw32/bin/libgcc_s_dw2-1.dll", "."
+    cp "C:/msys32/mingw32/bin/libstdc++-6.dll", "."
+    cp "../build/libpathie.dll", "."
+  end
+end
+
+task :testfiles do
+  unicode_filename = "tästfile.txt"
+
+  # On some systems (notably FreeBSD), Ruby doesn’t automatically
+  # use the correct pathname encoding, although it actually knows
+  # it.
+  fsencoding = Encoding.find("filesystem")
+  unicode_filename.encode!(fsencoding)
+
+  puts "Creating testfiles"
+  File.open("testfile.txt", "w"){|f| f.puts("There is some testtext\nin this file.")}
+  File.open(unicode_filename, "w"){|f| f.puts("Thäre is ßöme testtext\nin this file.")}
+end
+
+task :test => [:build, :testfiles] do
+  unless File.file?("testsettings.conf")
+    puts "testsettings.conf is missing. Generate one with $ rake testsettings"
+    puts "and adapt it to the local paths."
+    raise "testsettings.conf missing"
+  end
+
+  SOURCES.sort.each do |file|
+    puts "--- #{file} ---"
+    if ENV["CROSSTEST"]
+      sh "wine #{file}"
+    elsif RUBY_PLATFORM =~ /mingw|mswin/
+      sh "./#{file}"
+    else
+      sh "LD_LIBRARY_PATH=#{File.expand_path(File.join(File.expand_path(File.dirname(__FILE__)), "..", "build"))} ./#{file}"
+    end
+  end
+end
+
+desc "Generate a sample test settings file."
+task :testsettings do
+  File.open("testsettings.conf", "w") do |file|
+    file.puts "# -*- coding: utf-8 -*-"
+    file.puts "# testsettings.conf"
+    file.puts "# This file defines the paths Pathie should be able to figure"
+    file.puts "# out on your system. Without relying on its own methods, this"
+    file.puts "# isn't possible, so information about these paths is required"
+    file.puts "# from an external source. This allows to test whether the path"
+    file.puts "# finding methods work as expected and retrieve the correct"
+    file.puts "# directories. Always use forward slashes / as the path separator,"
+    file.puts "# even on Windows."
+    file.puts "#"
+    file.puts "# Refer to the XDG specifications on UNIX systems:"
+    file.puts "# http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html"
+    file.puts "# http://www.freedesktop.org/wiki/Software/xdg-user-dirs/"
+    file.puts "# On Windows, refer to MSDN:"
+    file.puts "# http://msdn.microsoft.com/en-us/library/windows/desktop/bb762494%28v=vs.85%29.aspx"
+    file.puts "#"
+    file.puts "# The program parsing this file is not very sophisticated. Do not leave whitespace"
+    file.puts "# at the beginning of lines or around equal signs (=)."
+    file.puts "#"
+    file.puts "# Ensure this file is encoded in UTF-8. This should be a readable"
+    file.puts "# Unicode char: ß"
+    file.puts ""
+    file.puts "username=nobody"
+
+    if RUBY_PLATFORM =~ /mingw|mswin/
+      file.puts "homedir=C:/Users/nobody"
+      file.puts "datadir=C:/Users/nobody/AppData/Roaming"
+      file.puts "configdir=C:/Users/nobody/AppData/Roaming"
+      file.puts "cachedir=C:/Users/nobody/AppData/Local"
+      file.puts "tempdir=C:/Users/nobody/AppData/Local/Temp"
+      file.puts ""
+      file.puts "desktopdir=C:/Users/nobody/Desktop"
+      file.puts "documentsdir=C:/Users/nobody/Documents"
+      file.puts "downloaddir=C:/Users/nobody/Downloads"
+      file.puts "templatesdir=C:/Users/nobody/AppData/Roaming/Microsoft/Windows/Templates"
+      file.puts "publicsharedir=C:/Users/nobody/AppData/Roaming/Microsoft/Windows/Network Shortcuts"
+      file.puts "musicdir=C:/Users/nobody/Music"
+      file.puts "picturesdir=C:/Users/nobody/Pictures"
+      file.puts "videosdir=C:/Users/nobody/Videos"
+    else
+      file.puts "homedir=/home/nobody"
+      file.puts "datadir=/home/nobody/.local/share"
+      file.puts "configdir=/home/nobody/.config"
+      file.puts "cachedir=/home/nobody/.cache"
+      file.puts "tempdir=/tmp"
+      file.puts ""
+      file.puts "desktopdir=/home/nobody/Desktop"
+      file.puts "documentsdir=/home/nobody/Documents"
+      file.puts "downloaddir=/home/nobody/Downloads"
+      file.puts "templatesdir=/home/nobody/Templates"
+      file.puts "publicsharedir=/home/nobody/Public"
+      file.puts "musicdir=/home/nobody/Music"
+      file.puts "picturesdir=/home/nobody/Pictures"
+      file.puts "videosdir=/home/nobody/Videos"
+    end
+  end
+end
+
+task :default => :test

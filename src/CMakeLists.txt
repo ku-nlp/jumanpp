@@ -1,5 +1,5 @@
 function(add_benchmark name source)
-    if (${ENABLE_BENCHMARKS})
+    if (${JPP_ENABLE_BENCHMARKS})
         add_executable(${name} ${source})
         target_link_libraries(${name} ${ARGN})
     endif()
@@ -58,7 +58,7 @@ function(jpp_feature_codegen)
     ")
     add_custom_command(
             COMMAND ${CG_EXEC}
-            ARGS ${CG_BASE} ${CG_CLASS} ${CG_OUT_DIR} ${CG_DIC_FILE}
+            ARGS ${CG_BASE} ${CG_CLASS} ${CG_OUT_DIR}
             DEPENDS ${CG_DEPEND} jpp_core_codegen
             OUTPUT ${CG_OUT_SRC} ${CG_OUT_HDR}
     )

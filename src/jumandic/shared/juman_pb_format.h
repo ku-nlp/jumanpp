@@ -18,7 +18,8 @@ struct JumanPbFormatImpl;
 
 class JumanPbFormat : public core::OutputFormat {
   std::unique_ptr<JumanPbFormatImpl> impl_;
-public:
+
+ public:
   Status initialize(const core::analysis::OutputManager& om,
                     const JumandicIdResolver* resolver, bool fill);
   Status format(const core::analysis::Analyzer& analyzer,

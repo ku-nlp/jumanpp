@@ -184,7 +184,7 @@ void SpecCompiler::gatherFeatureInfo() {
       registerFeature(f.ref.name());
     }
     for (auto& replace : unk->output_) {
-      registerFeature(replace.fieldName);
+      registerFeature(replace.name());
     }
   }
 
@@ -671,7 +671,7 @@ Status SpecCompiler::buildUnkProcessors() {
     }
 
     for (auto& x : u->output_) {
-      auto fld = fieldByName(x.fieldName);
+      auto fld = fieldByName(x.name());
       if (fld->fieldType != FieldType::String) {
         return JPPS_INVALID_PARAMETER
                << "unk: " << u->name() << " "
