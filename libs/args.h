@@ -1,16 +1,16 @@
 /* Copyright (c) 2016-2017 Taylor C. Richberger <taywee@gmx.com> and Pavel
  * Belikov
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
  * deal in the Software without restriction, including without limitation the
  * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
  * sell copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -2940,6 +2940,9 @@ public:
       const auto info = Wrap(std::get<1>(desc), helpParams.width - (helpParams.helpindent + groupindent));
 
       std::string::size_type flagssize = 0;
+      if (helpParams.useColor && !info.empty()) {
+        help_ << "\x1B[1;37m";
+      }
       for (auto flagsit = std::begin(flags); flagsit != std::end(flags); ++flagsit)
       {
         if (flagsit != std::begin(flags))
@@ -2948,6 +2951,9 @@ public:
         }
         help_ << std::string(groupindent + helpParams.flagindent, ' ') << *flagsit;
         flagssize = Glyphs(*flagsit);
+      }
+      if (helpParams.useColor && !info.empty()) {
+        help_ << "\x1B[0m";
       }
 
       auto infoit = std::begin(info);
@@ -3279,7 +3285,7 @@ struct ValueReader
 };
 
 /** An argument-accepting flag class
- * 
+ *
  * \tparam T the type to extract the argument as
  * \tparam Reader The functor type used to read the argument, taking the name, value, and destination reference with operator(), and returning a bool (if ARGS_NOEXCEPT is defined)
  */
@@ -3504,7 +3510,7 @@ public:
 };
 
 /** An argument-accepting flag class that pushes the found values into a list
- * 
+ *
  * \tparam T the type to extract the argument as
  * \tparam List the list type that houses the values
  * \tparam Reader The functor type used to read the argument, taking the name, value, and destination reference with operator(), and returning a bool (if ARGS_NOEXCEPT is defined)
@@ -3609,7 +3615,7 @@ public:
 };
 
 /** A mapping value flag class
- * 
+ *
  * \tparam K the type to extract the argument as
  * \tparam T the type to store the result as
  * \tparam Reader The functor type used to read the argument, taking the name, value, and destination reference with operator(), and returning a bool (if ARGS_NOEXCEPT is defined)
@@ -3689,7 +3695,7 @@ public:
 };
 
 /** A mapping value flag list class
- * 
+ *
  * \tparam K the type to extract the argument as
  * \tparam T the type to store the result as
  * \tparam List the list type that houses the values
@@ -3864,7 +3870,7 @@ public:
 };
 
 /** A positional argument class that pushes the found values into a list
- * 
+ *
  * \tparam T the type to extract the argument as
  * \tparam List the list type that houses the values
  * \tparam Reader The functor type used to read the argument, taking the name, value, and destination reference with operator(), and returning a bool (if ARGS_NOEXCEPT is defined)
@@ -3970,7 +3976,7 @@ public:
 };
 
 /** A positional argument mapping class
- * 
+ *
  * \tparam K the type to extract the argument as
  * \tparam T the type to store the result as
  * \tparam Reader The functor type used to read the argument, taking the name, value, and destination reference with operator(), and returning a bool (if ARGS_NOEXCEPT is defined)
@@ -4043,7 +4049,7 @@ public:
 };
 
 /** A positional argument mapping list class
- * 
+ *
  * \tparam K the type to extract the argument as
  * \tparam T the type to store the result as
  * \tparam List the list type that houses the values
