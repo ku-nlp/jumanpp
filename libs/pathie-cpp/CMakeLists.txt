@@ -36,15 +36,16 @@ set(PATHIE_VERSION_MAJOR 0)
 set(PATHIE_VERSION_MINOR 1)
 set(PATHIE_VERSION_PATCH 0)
 
-execute_process(COMMAND git rev-parse --short HEAD
-  WORKING_DIRECTORY ${Pathie_SOURCE_DIR}
-  OUTPUT_VARIABLE PATHIE_VERSION_GIT
-  OUTPUT_STRIP_TRAILING_WHITESPACE)
+#execute_process(COMMAND git rev-parse --short HEAD
+#  WORKING_DIRECTORY ${Pathie_SOURCE_DIR}
+#  OUTPUT_VARIABLE PATHIE_VERSION_GIT
+#  OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 # If git was not available, unset empty variable
-if (NOT(PATHIE_VERSION_GIT))
-  unset(PATHIE_VERSION_GIT)
-endif()
+#if (NOT(PATHIE_VERSION_GIT))
+#  unset(PATHIE_VERSION_GIT)
+#endif()
+set(PATHIE_VERSION_GIT "jumanpp")
 
 ########################################
 # Flags & Options
