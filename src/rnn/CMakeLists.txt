@@ -1,5 +1,5 @@
 set(jpp_rnn_sources mikolov_rnn.cc)
-set(jpp_rnn_includes mikolov_rnn.h simple_rnn_impl.h mikolov_rnn_impl.h)
+set(jpp_rnn_includes mikolov_rnn.h simple_rnn_impl.h mikolov_rnn_impl.h rnn_arg_parse.h)
 set(jpp_rnn_tests mikolov_rnn_test.cc)
 
 add_library(jpp_rnn ${jpp_rnn_sources} ${jpp_rnn_includes} )

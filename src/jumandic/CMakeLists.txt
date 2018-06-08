@@ -1,5 +1,5 @@
 set(jumandic_headers shared/juman_format.h main/jumanpp.h shared/jumanpp_args.h
-  shared/jumandic_env.h shared/morph_format.h shared/jumandic_ids.h shared/jumandic_id_resolver.h shared/jpp_rnn_args.h
+  shared/jumandic_env.h shared/morph_format.h shared/jumandic_ids.h shared/jumandic_id_resolver.h
   shared/mdic_format.h shared/subset_format.h shared/lattice_format.h)
 
 set(jumandic_sources shared/juman_format.cc

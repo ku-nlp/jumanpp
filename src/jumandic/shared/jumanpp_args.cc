@@ -11,7 +11,7 @@
 #include <regex>
 #include <util/logging.hpp>
 #include "args.h"
-#include "jpp_rnn_args.h"
+#include "rnn/rnn_arg_parse.h"
 #include "util/debug_output.h"
 #include "util/mmap.h"
 

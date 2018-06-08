@@ -5,12 +5,13 @@
 #ifndef JUMANPP_JPP_RNN_ARGS_H
 #define JUMANPP_JPP_RNN_ARGS_H
 
-#include "args.h"
+#include <args.h>
 #include "core/analysis/rnn_scorer.h"
 
 namespace jumanpp {
 class RnnArgs {
   const core::analysis::rnn::RnnInferenceConfig defaultConf{};
+
   args::Group rnnGrp{"RNN parameters"};
   args::ValueFlag<float> nceBias{rnnGrp,
                                  "VALUE",
