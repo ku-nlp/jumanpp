@@ -98,16 +98,15 @@ void entry_iterator::open_native_handle()
     throw(Pathie::ErrnoError(errno));
   }
 #elif defined(_WIN32)
-  std::wstring utf16 = utf8_to_utf16(m_path + "/*");
+  std::wstring utf16 = mp_directory->native() + L"/*";
   WIN32_FIND_DATAW finddata;
 
   mp_cur = FindFirstFileW(utf16.c_str(), &finddata);
-  if (static_cast<HANDLE>(findhandle) == INVALID_HANDLE_VALUE) {
+  if (static_cast<HANDLE>(mp_cur) == INVALID_HANDLE_VALUE) {
     DWORD err = GetLastError();
     mp_cur = NULL;
     throw(Pathie::WindowsError(err));
-  }
-  else {
+  } else {
     *mp_cur_path = utf16_to_utf8(finddata.cFileName);
   }
 #else

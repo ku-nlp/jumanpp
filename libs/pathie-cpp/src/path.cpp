@@ -1460,7 +1460,8 @@ bool Path::exists() const
     return true;
 #elif defined(_WIN32)
   std::wstring utf16 = utf8_to_utf16(m_path);
-  if (_waccess(utf16.c_str(), F_OK) == -1) {
+  // https://msdn.microsoft.com/en-us/library/1w06ktdy.aspx 00 = existence only
+  if (_waccess(utf16.c_str(), 00) == -1) {
     int errsav = errno;
     if (errsav == ENOENT) {
       return false;
@@ -1468,8 +1469,7 @@ bool Path::exists() const
     else {
       throw(Pathie::ErrnoError(errsav));
     }
-  }
-  else
+  } else
     return true;
 #else
 #error Unsupported system.

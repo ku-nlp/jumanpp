@@ -6,6 +6,8 @@
 #include "util/mmap.h"
 #include "path.hpp"
 
+#include <cctype>
+
 namespace jumanpp {
 namespace core {
 namespace spec {
