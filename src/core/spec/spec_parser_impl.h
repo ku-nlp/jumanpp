@@ -30,6 +30,7 @@ struct SpecParserImpl {
 
   i32 intParam_;
   StringPiece stringParam_;
+  float floatParam_;
 
   // field data
   dsl::FieldBuilder* curFld_ = nullptr;
@@ -573,6 +574,35 @@ struct SpecAction<unk_cls_normalize> {
   template <typename Input>
   static void apply(const Input& in, SpecParserImpl& sp) {
     sp.curUnk_->normalize();
+  }
+};
+
+template <>
+struct SpecAction<floatconst> {
+  template <typename Input>
+  static void apply(const Input& in, SpecParserImpl& sp) {
+    sp.floatParam_ = std::stof(std::string(in.begin(), in.end()));
+  }
+};
+
+template <>
+struct SpecAction<train_field> {
+  template <typename Input>
+  static void apply(const Input& in, SpecParserImpl& sp) {
+    JPP_DCHECK_NE(sp.curFld_, nullptr);
+    sp.builder_.train().field(*sp.curFld_, sp.floatParam_);
+    sp.curFld_ = nullptr;
+  }
+};
+
+template <>
+struct SpecAction<train_gold_unk> {
+  template <typename Input>
+  static void apply(const Input& in, SpecParserImpl& sp) {
+    JPP_DCHECK_EQ(sp.fieldRefs_.size(), 2);
+    sp.builder_.train().allowGoldUnkWith(sp.fieldRefs_[1], sp.fieldRefs_[0],
+                                         sp.stringParam_);
+    sp.fieldRefs_.clear();
   }
 };
 

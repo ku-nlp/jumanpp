@@ -177,6 +177,15 @@ TEST_CASE("can parse unk handlers") {
       "baseform, reading] feature to notPrefix");
 }
 
+TEST_CASE("can parse train field definitions") {
+  analyzeRule<p::train_field>();
+  shouldParse<p::train_field>("a 1");
+  shouldParse<p::train_field>("a:1");
+  shouldParse<p::train_field>("a :1");
+  shouldParse<p::train_field>("a: 1");
+  shouldParse<p::train_field>("a: 1.5121");
+}
+
 TEST_CASE("can parse floating point constants") {
   analyzeRule<p::floatconst>();
   shouldParse<p::floatconst>("0");

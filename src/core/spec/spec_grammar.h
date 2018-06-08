@@ -68,6 +68,7 @@ struct lparen : p::one<'('> {};
 struct rparen : p::one<')'> {};
 struct eq : p::one<'='> {};
 struct add : lit_string("+=") {};
+struct colon : p::one<':'> {};
 
 struct ident : p::identifier {};
 struct number : p::rep_min_max<1, 5, p::digit> {};
@@ -185,7 +186,8 @@ struct unk_def : p::if_must<lit_string("unk"), sep, unk_hdr, sep, unk_cls, sep,
 struct floatconst : p::seq<p::opt<p::one<'-', '+'>>, p::plus<p::digit>,
                            p::opt<p::one<'.'>, p::plus<p::digit>>> {};
 
-struct train_field : p::seq<fref_item, sep, floatconst> {};
+struct train_field
+    : p::seq<fieldparam, p::pad_opt<colon, sep_pad>, floatconst> {};
 struct train_fields : p::list<train_field, comma, sep_pad> {};
 struct train_gold_unk
     : p::if_must<lit_string("unk_gold_if"), sep, fldref_litem, sep, lbrak, sep,
@@ -193,7 +195,7 @@ struct train_gold_unk
 
 struct train_stmt
     : p::if_must<lit_string("train"), p::opt<sep, lit_string("loss")>, sep,
-                 train_fields, p::opt<sep, train_gold_unk>> {};
+                 train_fields, p::star<sep, train_gold_unk>> {};
 
 struct spec_stmt : p::sor<fld_stmt, feature_stmt, unk_def, train_stmt, sep> {};
 

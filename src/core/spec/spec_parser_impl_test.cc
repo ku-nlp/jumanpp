@@ -312,3 +312,49 @@ TEST_CASE("spec parser parses unk declaration") {
     CHECK(spec.unkCreators[0].features.size() == 0);
   }
 }
+
+TEST_CASE("spec parser parses training declaration") {
+  p::SpecParserImpl spi{"test.spec"};
+  parse<p::fld_stmt>("field 1 a string trie_index", spi);
+  parse<p::fld_stmt>("field 2 b string", spi);
+  parse<p::fld_stmt>("field 3 c string", spi);
+  parse<p::fld_stmt>("field 5 e kv_list", spi);
+
+  SECTION("a simple one") {
+    parse<p::ngram>("ngram [a]", spi);
+    parse<p::train_stmt>("train loss a:1.412121", spi);
+    auto spec = build(spi);
+    CHECK(spec.training.surfaceIdx == 0);
+    CHECK(spec.training.fields.size() == 1);
+    CHECK(spec.training.fields[0].weight == 1.412121f);
+    CHECK(spec.training.fields[0].number == 0);
+    CHECK(spec.training.fields[0].dicIdx == 0);
+    CHECK(spec.training.fields[0].fieldIdx == 0);
+  }
+
+  SECTION("with two fields") {
+    parse<p::ngram>("ngram [a, b]", spi);
+    parse<p::train_stmt>("train loss a:5, b 7", spi);
+    auto spec = build(spi);
+    CHECK(spec.training.surfaceIdx == 0);
+    CHECK(spec.training.fields.size() == 2);
+    CHECK(spec.training.fields[0].weight == 5.f);
+    CHECK(spec.training.fields[1].weight == 7.f);
+  }
+
+  SECTION("with field and alias") {
+    parse<p::ngram>("ngram [a, b]", spi);
+    parse<p::train_stmt>("train loss a:55, b 17 unk_gold_if e[\"x\"] == b",
+                         spi);
+    auto spec = build(spi);
+    CHECK(spec.training.surfaceIdx == 0);
+    CHECK(spec.training.fields.size() == 2);
+    CHECK(spec.training.fields[0].weight == 55.f);
+    CHECK(spec.training.fields[1].weight == 17.f);
+    auto& au = spec.training.allowedUnk;
+    REQUIRE(au.size() == 1);
+    CHECK(au[0].sourceField == 3);
+    CHECK(au[0].targetField == 1);
+    CHECK(au[0].sourceKey == "x");
+  }
+}
