@@ -10,9 +10,11 @@ Right now the full list is:
 * args (https://github.com/Taywee/args) -- Argument parser library
 * benchpress (https://github.com/cjgdev/benchpress) -- Benchmarking library
 * backward (https://github.com/bombela/backward-cpp) -- stack trace library for C++
+* Pathie (https://github.com/Quintus/pathie-cpp) -- A library for Unicode path management
 
 Also, JUMAN++ internally uses:
 
 * fmt (https://github.com/fmtlib/fmt) -- formatting library for C++ (lies in jumanpp/util)
+* Darts trie implementation by Taku Kudo
 * Some files from Protobuf
 * Some files from TensorFlow
