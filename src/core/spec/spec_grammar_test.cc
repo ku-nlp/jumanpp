@@ -137,17 +137,17 @@ TEST_CASE("can parse match expression") {
 }
 
 TEST_CASE("can parse unigram combiner") {
-  analyzeRule<p::ngram>();
-  shouldParse<p::ngram>("ngram [a]");
-  shouldParse<p::ngram>("ngram [a,b]");
-  shouldParse<p::ngram>("ngram [f1, a]");
-  shouldParse<p::ngram>("ngram [ a, b ]");
-  shouldParse<p::ngram>("ngram[f1,b]");
-  shouldParse<p::ngram>("ngram[f1,b][f2]");
-  shouldParse<p::ngram>("ngram[f1,b][f2] [f3]");
-  shouldParse<p::ngram>("ngram[f1,b][ f2] [f3]");
-  failParse<p::ngram>("ngram[f1,b][f2] [f3][f4]");
-  failParse<p::ngram>("ngram");
+  analyzeRule<p::ngram_stmt>();
+  shouldParse<p::ngram_stmt>("ngram [a]");
+  shouldParse<p::ngram_stmt>("ngram [a,b]");
+  shouldParse<p::ngram_stmt>("ngram [f1, a]");
+  shouldParse<p::ngram_stmt>("ngram [ a, b ]");
+  shouldParse<p::ngram_stmt>("ngram[f1,b]");
+  shouldParse<p::ngram_stmt>("ngram[f1,b][f2]");
+  shouldParse<p::ngram_stmt>("ngram[f1,b][f2] [f3]");
+  shouldParse<p::ngram_stmt>("ngram[f1,b][ f2] [f3]");
+  failParse<p::ngram_stmt>("ngram[f1,b][f2] [f3][f4]");
+  failParse<p::ngram_stmt>("ngram");
 }
 
 TEST_CASE("can parse char type expression") {
@@ -202,3 +202,7 @@ TEST_CASE("can parse unk_gold_if") {
 }
 
 TEST_CASE("analyze full grammar") { analyzeRule<p::full_spec>(); }
+
+TEST_CASE("analyze full grammar: two ngrams") {
+  shouldParse<p::full_spec>("ngram [a]\nngram[b]");
+}

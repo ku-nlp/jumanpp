@@ -137,7 +137,7 @@ TEST_CASE("spec parser parses feature declaration") {
 
   SECTION("placeholder") {
     parse<p::feature_stmt>("feature f1 = placeholder", spi);
-    parse<p::ngram>("ngram [f1, a]", spi);
+    parse<p::ngram_stmt>("ngram [f1, a]", spi);
     auto spec = build(spi);
     CHECK(spec.features.primitive.size() == 2);
     CHECK(spec.features.primitive[0].kind == s::PrimitiveFeatureKind::Provided);
@@ -145,7 +145,7 @@ TEST_CASE("spec parser parses feature declaration") {
 
   SECTION("numCodepoints") {
     parse<p::feature_stmt>("feature f1 = num_codepoints a", spi);
-    parse<p::ngram>("ngram [f1, a]", spi);
+    parse<p::ngram_stmt>("ngram [f1, a]", spi);
     auto spec = build(spi);
     CHECK(spec.features.primitive.size() == 2);
     CHECK(spec.features.primitive[0].kind ==
@@ -154,7 +154,7 @@ TEST_CASE("spec parser parses feature declaration") {
 
   SECTION("numCodepoints non-surface") {
     parse<p::feature_stmt>("feature f1 = num_codepoints b", spi);
-    parse<p::ngram>("ngram [f1, a]", spi);
+    parse<p::ngram_stmt>("ngram [f1, a]", spi);
     auto spec = build(spi);
     CHECK(spec.features.primitive.size() == 3);
     CHECK(spec.features.primitive[0].kind ==
@@ -163,7 +163,7 @@ TEST_CASE("spec parser parses feature declaration") {
 
   SECTION("length") {
     parse<p::feature_stmt>("feature f1 = num_bytes a", spi);
-    parse<p::ngram>("ngram [f1, a]", spi);
+    parse<p::ngram_stmt>("ngram [f1, a]", spi);
     auto spec = build(spi);
     CHECK(spec.features.primitive.size() == 2);
     CHECK(spec.features.primitive[0].kind ==
@@ -172,7 +172,7 @@ TEST_CASE("spec parser parses feature declaration") {
 
   SECTION("codepoint") {
     parse<p::feature_stmt>("feature f1 = codepoint -2", spi);
-    parse<p::ngram>("ngram [f1, a]", spi);
+    parse<p::ngram_stmt>("ngram [f1, a]", spi);
     auto spec = build(spi);
     CHECK(spec.features.primitive.size() == 2);
     CHECK(spec.features.primitive[0].kind ==
@@ -182,7 +182,7 @@ TEST_CASE("spec parser parses feature declaration") {
 
   SECTION("codepointType") {
     parse<p::feature_stmt>("feature f1 = codepoint_type -2", spi);
-    parse<p::ngram>("ngram [f1, a]", spi);
+    parse<p::ngram_stmt>("ngram [f1, a]", spi);
     auto spec = build(spi);
     CHECK(spec.features.primitive.size() == 2);
     CHECK(spec.features.primitive[0].kind ==
@@ -192,7 +192,7 @@ TEST_CASE("spec parser parses feature declaration") {
 
   SECTION("match condition (a)") {
     parse<p::feature_stmt>("feature f1 = match b with \"x\"", spi);
-    parse<p::ngram>("ngram [f1, a]", spi);
+    parse<p::ngram_stmt>("ngram [f1, a]", spi);
     auto spec = build(spi);
     CHECK(spec.features.primitive.size() == 3);
     CHECK(spec.features.primitive[0].kind ==
@@ -206,7 +206,7 @@ TEST_CASE("spec parser parses feature declaration") {
   SECTION("match file condition (a)") {
     parse<p::feature_stmt>(
         "feature f1 = match [a, b] with file \"csv/small.csv\"", spi);
-    parse<p::ngram>("ngram [f1, a]", spi);
+    parse<p::ngram_stmt>("ngram [f1, a]", spi);
     auto spec = build(spi);
     CHECK(spec.features.primitive.size() == 3);
     CHECK(spec.features.primitive[0].kind ==
@@ -228,7 +228,7 @@ TEST_CASE("spec parser parses unk declaration") {
 
   SECTION("single katakana") {
     parse<p::unk_def>("unk kata template row 1 single katakana", spi);
-    parse<p::ngram>("ngram [a, f]", spi);
+    parse<p::ngram_stmt>("ngram [a, f]", spi);
     auto spec = build(spi);
     REQUIRE(spec.unkCreators.size() == 1);
     CHECK(spec.unkCreators[0].name == "kata");
@@ -242,7 +242,7 @@ TEST_CASE("spec parser parses unk declaration") {
   SECTION("single katakana & hira") {
     parse<p::unk_def>("unk kata template row 1 single katakana | hiragana",
                       spi);
-    parse<p::ngram>("ngram [a, f]", spi);
+    parse<p::ngram_stmt>("ngram [a, f]", spi);
     auto spec = build(spi);
     REQUIRE(spec.unkCreators.size() == 1);
     CHECK(spec.unkCreators[0].name == "kata");
@@ -258,7 +258,7 @@ TEST_CASE("spec parser parses unk declaration") {
     parse<p::unk_def>(
         "unk kata template row 1 single katakana surface to [a] feature to f",
         spi);
-    parse<p::ngram>("ngram [a, f]", spi);
+    parse<p::ngram_stmt>("ngram [a, f]", spi);
     auto spec = build(spi);
     REQUIRE(spec.unkCreators.size() == 1);
     CHECK(spec.unkCreators[0].name == "kata");
@@ -274,7 +274,7 @@ TEST_CASE("spec parser parses unk declaration") {
 
   SECTION("chunking kanji") {
     parse<p::unk_def>("unk knji template row 1 chunking kanji", spi);
-    parse<p::ngram>("ngram [a, f]", spi);
+    parse<p::ngram_stmt>("ngram [a, f]", spi);
     auto spec = build(spi);
     REQUIRE(spec.unkCreators.size() == 1);
     CHECK(spec.unkCreators[0].name == "knji");
@@ -287,7 +287,7 @@ TEST_CASE("spec parser parses unk declaration") {
 
   SECTION("onomatopea digits") {
     parse<p::unk_def>("unk onmp template row 1 onomatopeia figure_digit", spi);
-    parse<p::ngram>("ngram [a, f]", spi);
+    parse<p::ngram_stmt>("ngram [a, f]", spi);
     auto spec = build(spi);
     REQUIRE(spec.unkCreators.size() == 1);
     CHECK(spec.unkCreators[0].name == "onmp");
@@ -300,7 +300,7 @@ TEST_CASE("spec parser parses unk declaration") {
 
   SECTION("normalized") {
     parse<p::unk_def>("unk nrm template row 5 normalize", spi);
-    parse<p::ngram>("ngram [a, f]", spi);
+    parse<p::ngram_stmt>("ngram [a, f]", spi);
     auto spec = build(spi);
     REQUIRE(spec.unkCreators.size() == 1);
     CHECK(spec.unkCreators[0].name == "nrm");
@@ -321,7 +321,7 @@ TEST_CASE("spec parser parses training declaration") {
   parse<p::fld_stmt>("field 5 e kv_list", spi);
 
   SECTION("a simple one") {
-    parse<p::ngram>("ngram [a]", spi);
+    parse<p::ngram_stmt>("ngram [a]", spi);
     parse<p::train_stmt>("train loss a:1.412121", spi);
     auto spec = build(spi);
     CHECK(spec.training.surfaceIdx == 0);
@@ -333,7 +333,7 @@ TEST_CASE("spec parser parses training declaration") {
   }
 
   SECTION("with two fields") {
-    parse<p::ngram>("ngram [a, b]", spi);
+    parse<p::ngram_stmt>("ngram [a, b]", spi);
     parse<p::train_stmt>("train loss a:5, b 7", spi);
     auto spec = build(spi);
     CHECK(spec.training.surfaceIdx == 0);
@@ -343,7 +343,7 @@ TEST_CASE("spec parser parses training declaration") {
   }
 
   SECTION("with field and alias") {
-    parse<p::ngram>("ngram [a, b]", spi);
+    parse<p::ngram_stmt>("ngram [a, b]", spi);
     parse<p::train_stmt>("train loss a:55, b 17 unk_gold_if e[\"x\"] == b",
                          spi);
     auto spec = build(spi);

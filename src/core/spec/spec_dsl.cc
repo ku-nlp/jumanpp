@@ -23,15 +23,15 @@ Status ModelSpecBuilder::validateFields() const {
     if (fieldIdx.count(f.getCsvColumn()) == 0) {
       fieldIdx.insert(f.getCsvColumn());
     } else {
-      return Status::InvalidParameter()
-             << "coulmn indexes should be unique FAIL: " << f.name();
+      return JPPS_INVALID_PARAMETER << "coulmn indexes should be unique FAIL: "
+                                    << f.name();
     }
     if (f.isTrieIndex()) {
       indexCount += 1;
     }
   }
   if (indexCount != 1) {
-    return Status::InvalidParameter()
+    return JPPS_INVALID_PARAMETER
            << "there should exist exactly one indexed field";
   }
   return Status::Ok();

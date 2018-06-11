@@ -58,8 +58,9 @@ struct qstring {
 #define lit_string(x) TAO_PEGTL_ISTRING(x)
 #endif
 
-struct whitespace : plus<p::blank> {};
-struct opt_whitespace : p::star<p::blank> {};
+struct ws_char : p::one<' ', '\t', '\n', '\r'> {};
+struct whitespace : plus<ws_char> {};
+struct opt_whitespace : p::star<ws_char> {};
 struct lbrak : p::one<'['> {};
 struct rbrak : p::one<']'> {};
 struct comma : p::one<','> {};
@@ -155,7 +156,7 @@ struct fref_item : ident {};
 struct fref_list
     : p::if_must<lbrak, sep, p::list<fref_item, comma, sep_pad>, sep, rbrak> {};
 struct fref_lists : p::rep_min_max<1, 3, fref_list, sep> {};
-struct ngram : p::if_must<lit_string("ngram"), sep, fref_lists> {};
+struct ngram_stmt : p::if_must<lit_string("ngram"), sep, fref_lists> {};
 
 struct char_type_lit : ident {};
 struct char_type_expr;
@@ -198,9 +199,10 @@ struct train_stmt
                  train_fields, p::star<sep, train_gold_unk>> {};
 
 struct spec_stmt
-    : p::sor<fld_stmt, feature_stmt, unk_def, train_stmt, sep_pad> {};
+    : p::sor<fld_stmt, feature_stmt, unk_def, ngram_stmt, train_stmt, sep_pad> {
+};
 
-struct full_spec : p::seq<p::star<spec_stmt, p::discard>, p::eof> {};
+struct full_spec : p::must<p::bof, p::star<spec_stmt, p::discard>, p::eof> {};
 
 #undef lit_string
 

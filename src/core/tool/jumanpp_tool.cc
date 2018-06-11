@@ -45,7 +45,6 @@ namespace t = ::jumanpp::core::training;
 struct JumanppToolArgs {
   std::string specFile;
   std::string dictFile;
-  std::string outModelFile;
   std::string comment;
 
   t::TrainingArguments trainArgs;
@@ -55,10 +54,16 @@ struct JumanppToolArgs {
   static Status parseArgs(int argc, const char* argv[],
                           JumanppToolArgs* result) {
     args::ArgumentParser parser{"Juman++ Model Development Tool"};
-    args::HelpFlag help{parser, "Help", "Show this message", {"help", 'h'}};
+    parser.helpParams.showCommandChildren = true;
+
+    args::Group globalParams{parser, "Global Parameters",
+                             args::Group::Validators::DontCare,
+                             args::Options::Global};
     args::Group commandGroup{parser, "Available commands"};
-    args::Command index{commandGroup, "index",
-                        "Index a raw dictionary into a seed model"};
+    args::Command index{
+        commandGroup, "index",
+        "Index a raw dictionary into a seed model. "
+        "You need to specify dictionary, spec and model output parameters."};
     args::Command train{commandGroup, "train",
                         "Train a linear model weights using a seed model"};
     args::Command embedRnn{commandGroup, "embed-rnn",
@@ -66,26 +71,32 @@ struct JumanppToolArgs {
     args::Command staticFeatures{commandGroup, "static-features",
                                  "Generate a C++ code for feature processing"};
 
-    args::Group flagGroup{parser, "Parameters"};
+    args::HelpFlag help{globalParams,
+                        "Help",
+                        "Show this message or flags for subcommands",
+                        {"help", 'h'}};
+
+    args::ValueFlag<std::string> dictFile{
+        index, "FILE", "A raw dictionary file to index", {"dict-file"}};
 
     args::ValueFlag<std::string> specFile{
-        flagGroup, "FILE", "Analysis Spec file", {"spec"}};
-    args::ValueFlag<std::string> outModel{
-        flagGroup, "FILE", "Output File", {"out-file"}};
-    args::ValueFlag<std::string> comment{
-        flagGroup, "STRING", "Comment to embed in model", {"comment"}};
+        globalParams, "FILE", "Analysis Spec file", {"spec"}};
 
-    args::Group ioGroup{parser, "Input/Output"};
+    args::ValueFlag<std::string> comment{
+        globalParams, "STRING", "Comment to embed in model", {"comment"}};
+    args::ValueFlag<std::string> modelOutput{globalParams,
+                                             "FILE",
+                                             "Output results here",
+                                             {"model-output", "output"}};
+
+    args::Group ioGroup{train, "Input/Output",
+                        args::Group::Validators::DontCare,
+                        args::Options::Global};
     args::ValueFlag<std::string> modelFile{
         ioGroup,
         "FILENAME",
         "Filename of preprocessed dictionary",
         {"model-input"}};
-    args::ValueFlag<std::string> modelOutput{
-        ioGroup,
-        "FILENAME",
-        "Model will be written to this file",
-        {"model-output"}};
     args::ValueFlag<std::string> corpusFile{
         ioGroup,
         "FILENAME",
@@ -98,13 +109,6 @@ struct JumanppToolArgs {
         "Filename of partially annotated corpus",
         {"partial-corpus"}};
 
-    args::ValueFlag<std::string> rnnFile{
-        ioGroup,
-        "FILENAME",
-        "Filename of fasterrnn trained model. It will be embedded inside the "
-        "Juman++ model. RNN parameters will be embedded as well.",
-        {"rnn-model"}};
-
     args::ValueFlag<std::string> scwDumpDir{
         ioGroup, "DIRECTORY", "Directory to dump SCW into", {"scw-dump-dir"}};
 
@@ -114,20 +118,21 @@ struct JumanppToolArgs {
         "Filename prefix for duming a SCW",
         {"scw-dump-prefix"},
         "scwdump"};
-    args::ValueFlag<std::string> corpusComment{
-        ioGroup,
-        "COMMENT",
-        "Comment to embed in SCW model about corpora",
-        {"corpus-comment"},
-        ""};
 
-    args::Group trainingParams{parser, "Training parameters"};
+    args::Flag trainFormatCsv{ioGroup,
+                              "CSV",
+                              "Training corpus is in csv format",
+                              {"csv-corpus-format"}};
+
+    args::Group trainingParams{train, "Training parameters"};
+
     args::ValueFlag<u32> paramSizeExponent{
         trainingParams,
         "SIZE",
         "Param size will be 2^SIZE, 15 (32k) default",
         {"size"},
         15};
+
     args::ValueFlag<u32> randomSeed{trainingParams,
                                     "SEED",
                                     "RNG seed, 0xdeadbeef default",
@@ -165,7 +170,7 @@ struct JumanppToolArgs {
                                    {"epsilon"},
                                    1e-3f};
 
-    args::Group gbeam{parser, "Boundary (Global) Beam Settings"};
+    args::Group gbeam{train, "Boundary (Global) Beam Settings"};
     args::ValueFlag<i32> minLeftGbeam{
         gbeam, "VALUE", "Left Min", {"gb-left-min"}, -1};
     args::ValueFlag<i32> maxLeftGbeam{
@@ -183,7 +188,13 @@ struct JumanppToolArgs {
                              "In each epoch, use full beam on first iteration",
                              {"gb-first-full"}};
 
-    RnnArgs rnnArgs{parser};
+    args::ValueFlag<std::string> rnnFile{
+        embedRnn,
+        "FILENAME",
+        "Filename of fasterrnn trained model. It will be embedded inside the "
+        "Juman++ model. RNN parameters will be embedded as well.",
+        {"rnn-model"}};
+    RnnArgs rnnArgs{embedRnn};
 
     parser.helpParams.gutter = 4;
     parser.helpParams.helpindent = 35;
@@ -212,11 +223,14 @@ struct JumanppToolArgs {
     copyValue(result->mode, staticFeatures, ToolMode::StaticFeatures);
 
     copyValue(result->specFile, specFile);
-    copyValue(result->outModelFile, outModel);
+    copyValue(result->dictFile, dictFile);
     copyValue(result->comment, comment);
 
     auto trg = &result->trainArgs;
     trg->trainingConfig.beamSize = beamSize.Get();
+    if (trainFormatCsv) {
+      trg->trainingConfig.inputFormat = core::training::InputFormat::Csv;
+    }
     trg->batchSize = batchSize.Get();
     trg->numThreads = numThreads.Get();
     trg->modelFilename = modelFile.Get();
@@ -301,8 +315,8 @@ void invokeTool(const JumanppToolArgs& args) {
       std::cout << "\n";
 
       dieOnError(tool.indexDictionary(args.specFile, args.dictFile));
-      std::cout << "\nSaving the model to: " << args.outModelFile;
-      dieOnError(tool.saveModel(args.outModelFile, args.comment));
+      std::cout << "\nSaving the model to: " << args.trainArgs.outputFilename;
+      dieOnError(tool.saveModel(args.trainArgs.outputFilename, args.comment));
       std::cout << "\nSuccess!\n";
       break;
     }

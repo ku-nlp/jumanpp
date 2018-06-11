@@ -25,7 +25,11 @@ Status parseFromFile(StringPiece name, AnalysisSpec* result) {
   std::string filenameString = name.str();
   p::memory_input<> input{data.char_begin(), data.char_end(), filenameString};
   try {
-    p::parse<parser::full_spec, parser::SpecAction>(input, impl);
+    bool status = p::parse<parser::full_spec, parser::SpecAction>(input, impl);
+    if (!status) {
+      return JPPS_INVALID_PARAMETER << "failed to parse spec at: "
+                                    << input.position();
+    }
   } catch (p::parse_error& e) {
     return JPPS_INVALID_PARAMETER << "failed to parse spec:\n" << e.what();
   }

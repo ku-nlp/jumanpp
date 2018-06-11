@@ -75,7 +75,7 @@ class RnnArgs {
       {"rnn-separator"}};
 
  public:
-  explicit RnnArgs(args::ArgumentParser& parser) { parser.Add(rnnGrp); }
+  explicit RnnArgs(args::Group& parent) { parent.Add(rnnGrp); }
 
   core::analysis::rnn::RnnInferenceConfig config() {
     auto copy = defaultConf;

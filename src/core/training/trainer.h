@@ -87,8 +87,9 @@ class OwningFullTrainer final : public ITrainer {
   }
 
   Status readExample(FullExampleReader* rdr) {
+    auto num = rdr->lineNumber();
     Status s = rdr->readFullExample(&trainer_.example());
-    trainer_.example().setInfo(rdr->filename(), rdr->lineNumber());
+    trainer_.example().setInfo(rdr->filename(), num);
     return s;
   }
 

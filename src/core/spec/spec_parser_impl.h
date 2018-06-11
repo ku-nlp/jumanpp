@@ -440,7 +440,7 @@ struct SpecAction<fref_list> {
 };
 
 template <>
-struct SpecAction<ngram> {
+struct SpecAction<ngram_stmt> {
   template <typename Input>
   static void apply(const Input& in, SpecParserImpl& sp) {
     auto ngramOrder = sp.featureRefRefs_.size();

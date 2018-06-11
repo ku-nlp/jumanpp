@@ -51,10 +51,22 @@ Status FullExampleReader::initDoubleCsv(StringPiece data, char tokenSep,
   return csv_.initFromMemory(data);
 }
 
+bool startsWith(StringPiece s1, StringPiece s2) {
+  if (s2.size() > s1.size()) return false;
+  return s1.take(s2.size()) == s2;
+}
+
 Status FullExampleReader::readFullExampleCsv(FullyAnnotatedExample *result) {
   while (csv_.nextLine()) {
-    if (csv_.numFields() == 1 && csv_.field(0).size() == 0) {
+    if (csv_.numFields() == 1 &&
+        (csv_.field(0).empty() || csv_.field(0) == "EOS")) {
       return Status::Ok();
+    }
+
+    auto line = csv_.line();
+    if (startsWith(line, "# ")) {
+      line.slice(0, line.size() - 1).assignTo(result->comment_);
+      continue;
     }
 
     JPP_RETURN_IF_ERROR(readSingleExampleFragment(csv_, result));
