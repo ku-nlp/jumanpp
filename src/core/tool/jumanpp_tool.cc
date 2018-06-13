@@ -15,6 +15,7 @@
 
 #include <chrono>
 #include "core/dic/progress.h"
+#include "core/tool/codegen_cmd.h"
 #include "core/tool/index_cmd.h"
 #include "core/tool/train_cmd.h"
 #include "core/training/training_env.h"
@@ -55,6 +56,7 @@ struct JumanppToolArgs {
                           JumanppToolArgs* result) {
     args::ArgumentParser parser{"Juman++ Model Development Tool"};
     parser.helpParams.showCommandChildren = true;
+    parser.helpParams.showProglineOptions = true;
 
     args::Group globalParams{parser, "Global Parameters",
                              args::Group::Validators::DontCare,
@@ -196,6 +198,13 @@ struct JumanppToolArgs {
         {"rnn-model"}};
     RnnArgs rnnArgs{embedRnn};
 
+    args::ValueFlag<std::string> cgClassName{
+        staticFeatures,
+        "NAME",
+        "Generated class name for static feature code generation. "
+        "It will be in a jumanpp_cg namespace.",
+        {"class-name"}};
+
     parser.helpParams.gutter = 4;
     parser.helpParams.helpindent = 35;
 #if defined(TIOCGWINSZ)
@@ -225,6 +234,7 @@ struct JumanppToolArgs {
     copyValue(result->specFile, specFile);
     copyValue(result->dictFile, dictFile);
     copyValue(result->comment, comment);
+    copyValue(result->comment, cgClassName);
 
     auto trg = &result->trainArgs;
     trg->trainingConfig.beamSize = beamSize.Get();
@@ -322,6 +332,11 @@ void invokeTool(const JumanppToolArgs& args) {
     }
     case ToolMode::Train:
       invokeTrain(args.trainArgs);
+      return;
+    case ToolMode::StaticFeatures:
+      dieOnError(core::tool::generateStaticFeatures(
+          args.specFile, args.trainArgs.outputFilename, args.comment));
+      return;
     default:
       std::cerr << "The tool is not implemented\n";
       exit(5);
