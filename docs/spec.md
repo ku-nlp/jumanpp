@@ -220,7 +220,7 @@ The rules are applied before the dictionary lookup.
 * Convert prolongation to the actual character: かーさん → かあさん. 
 Prolongation marks are ー or 〜 in all their variations.
 We do this only if the previous character was hiragana or katakana.
-See [source](../src/util/characters.cc#168).
+See [source](../src/util/characters.cc#L168).
 * Convert small hiragana/katakata to their normal variations: かぁさん → かあさん
 * Remove prolongation: 痛いー → 痛い. 
 The condition is one of
