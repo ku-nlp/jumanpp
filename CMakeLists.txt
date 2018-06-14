@@ -30,11 +30,15 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 include_directories("${CMAKE_SOURCE_DIR}/libs")
 
+if (NOT JPP_MAX_DIC_FIELDS)
+set(JPP_MAX_DIC_FIELDS 16)
+endif()
+
 option(JPP_TEST_REPORT_JUNIT OFF)
 option(JPP_ENABLE_BENCHMARKS "Enable benchmarks" OFF)
 option(JPP_ENABLE_DEV_TOOLS "Enable development-only binaries" OFF)
 option(JPP_PREFETCH_FEATURE_WEIGHTS "Prefetch linear model weights when computing features" ON)
-set(JPP_MAX_DIC_FIELDS 16 CACHE STRING "Maximum supported dictionary fields")
+set(JPP_MAX_DIC_FIELDS ${JPP_MAX_DIC_FIELDS} CACHE STRING "Maximum supported dictionary fields")
 option(JPP_ENABLE_TESTS "Enable tests" ON)
 set(JPP_DEFAULT_CONFIG_DIR "${CMAKE_INSTALL_PREFIX}/libexec/jumanpp/"
   CACHE FILEPATH "Default Config Location")

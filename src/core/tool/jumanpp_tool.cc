@@ -280,7 +280,7 @@ struct StdoutProgressReporter : public core::ProgressCallback {
 
   void report(u64 current, u64 total) override {
     if (current == total) {
-      std::cout << "\r" << part << " done!" << std::endl;
+      std::cout << "\r" << part << "... done!" << std::endl;
       return;
     }
 
