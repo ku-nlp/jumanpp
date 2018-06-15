@@ -69,7 +69,6 @@ class Trainer {
 class OwningFullTrainer final : public ITrainer {
   analysis::AnalyzerImpl analyzer_;
   Trainer trainer_;
-  bool wasPrepared = false;
 
  public:
   explicit OwningFullTrainer(const TrainerFullConfig& conf)
@@ -78,7 +77,6 @@ class OwningFullTrainer final : public ITrainer {
         trainer_{&analyzer_, conf.trainingSpec, *conf.trainingConfig} {}
 
   void reset() {
-    wasPrepared = false;
     trainer_.reset();
   }
 
@@ -94,8 +92,7 @@ class OwningFullTrainer final : public ITrainer {
   }
 
   Status prepare() override {
-    if (wasPrepared) return Status::Ok();
-    wasPrepared = true;
+    trainer_.resetState();
     return trainer_.prepare();
   }
 

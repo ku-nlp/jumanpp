@@ -116,7 +116,7 @@ EntryPtr TrainingExampleAdapter::makeUnkTrainingNode(const ExampleNode &node) {
   auto contHash = analysis::hashUnkString(node.surface);
   for (int i = 0; i < node.data.size(); ++i) {
     auto nodeVal = node.data[i];
-    auto idx = spec->fields[i].fieldIdx;
+    auto idx = spec->fields[i].dicIdx;
     if (nodeVal >= 0) {
       nodeData.at(idx) = nodeVal;
     } else {

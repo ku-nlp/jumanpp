@@ -170,7 +170,6 @@ ITrainer *TrainerBatch::trainer(i32 idx) const {
 
 void OwningFullTrainer::setGlobalBeam(const GlobalBeamTrainConfig &cfg) {
   if (analyzer_.setGlobalBeam(cfg.leftBeam, cfg.rightCheck, cfg.rightBeam)) {
-    wasPrepared = false;
     trainer_.resetState();
   }
 }

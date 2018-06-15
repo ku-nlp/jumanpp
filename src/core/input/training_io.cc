@@ -36,18 +36,19 @@ Status readStr2IdMap(const dic::DictionaryField &fld,
 
 Status TrainFieldsIndex::initialize(const CoreHolder &core) {
   auto &spec = core.spec().training;
-  storages_.resize(spec.fields.size());
+  storages_.resize(core.spec().dictionary.numStringStorage);
   for (i32 i = 0; i < spec.fields.size(); ++i) {
     auto &tf = spec.fields[i];
-    auto &dicFld = core.dic().fields().at(tf.fieldIdx);
-    auto &str2int = storages_[dicFld.stringStorageIdx];
+    auto &fldSpec = core.spec().dictionary.fields[tf.fieldIdx];
+    auto dicFld = core.dic().fields().byName(fldSpec.name);
+    auto &str2int = storages_[dicFld->stringStorageIdx];
 
     if (str2int.size() == 0) {
       // string storage was not read yet
-      JPP_RETURN_IF_ERROR(readStr2IdMap(dicFld, &str2int));
+      JPP_RETURN_IF_ERROR(readStr2IdMap(*dicFld, &str2int));
     }
 
-    fields_.push_back({dicFld.name, &str2int, tf.fieldIdx, i});
+    fields_.push_back({dicFld->name, &str2int, tf.dicIdx, i});
   }
   surfaceFieldIdx_ = spec.fields[spec.surfaceIdx].number;
   return Status::Ok();

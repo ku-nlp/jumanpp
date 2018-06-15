@@ -87,7 +87,6 @@ class PartialTrainer {
 };
 
 class OwningPartialTrainer : public ITrainer {
-  bool isPrepared_ = false;
   util::Lazy<PartialTrainer> trainer_;
   util::Lazy<analysis::AnalyzerImpl> analyzer_;
 
@@ -98,15 +97,11 @@ class OwningPartialTrainer : public ITrainer {
                     const analysis::ScorerDef& scorerDef);
 
   Status prepare() override {
-    if (!isPrepared_) {
-      auto s = trainer_.value().prepare();
-      isPrepared_ = true;
-      return s;
-    }
-    return Status::Ok();
+    auto s = trainer_.value().prepare();
+    return s;
   }
 
-  void reset() { isPrepared_ = false; }
+  void reset() {}
 
   Status compute(const analysis::ScorerDef* sconf) override {
     return trainer_.value().compute(sconf);

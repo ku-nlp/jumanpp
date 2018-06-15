@@ -252,7 +252,7 @@ util::ArraySlice<BeamCandidate> ScoreProcessor::makeGlobalBeam(i32 bndIdx,
       if (EntryBeam::isFake(el)) {
         break;
       }
-      globalBeam_[count] = BeamCandidate{el.totalScore, left, beamIdx};
+      globalBeam_.at(count) = BeamCandidate{el.totalScore, left, beamIdx};
       ++count;
       ++beamIdx;
     }

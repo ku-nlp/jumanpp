@@ -460,7 +460,6 @@ Status OwningPartialTrainer::initialize(const TrainerFullConfig& cfg,
   JPP_RETURN_IF_ERROR(analyzer_.value().initScorers(scorerDef));
   u32 numFeatures = 1u << cfg.trainingConfig->featureNumberExponent;
   trainer_.initialize(&analyzer_.value(), numFeatures - 1);
-  isPrepared_ = false;
   return Status::Ok();
 }
 
@@ -480,7 +479,6 @@ analysis::Lattice* OwningPartialTrainer::lattice() const {
 void OwningPartialTrainer::setGlobalBeam(const GlobalBeamTrainConfig& cfg) {
   if (analyzer_.value().setGlobalBeam(cfg.leftBeam, cfg.rightCheck,
                                       cfg.rightBeam)) {
-    isPrepared_ = false;
     analyzer_.value().reset();
   }
 }
