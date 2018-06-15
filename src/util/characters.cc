@@ -235,9 +235,13 @@ CharacterClass getCodeType(char32_t input) noexcept {
       return CharacterClass::KANJI_FIGURE | CharacterClass::FIGURE_DIGIT;
   }
   /* ALPHABET (A-Z, a-z, Umlaut etc., Ａ-Ｚ, ａ-ｚ) */
-  else if ((code > 0x40 && code < 0x5b) || (code > 0x60 && code < 0x7b) ||
-           (code > 0xbf && code < 0x0100) || (code > 0xff20 && code < 0xff3b) ||
-           (code > 0xff40 && code < 0xff5b)) {
+  else if ((code >= 0x40 && code <= 0x5b) || (code >= 0x60 && code <= 0x7b) ||
+           (code >= 0xbf && code <= 0x0100) ||
+           (code >= 0xff20 && code <= 0xff3b) ||
+           (code >= 0xff40 && code <= 0xff5b) ||
+           (code >= 0x370 && code <= 0x3ff) ||  // greek
+           (code >= 0x400 && code <= 0x4ff)     // cyrillic
+  ) {
     return CharacterClass::ALPH;
   }
   /* CJK Unified Ideographs and "々" and "〇"*/
