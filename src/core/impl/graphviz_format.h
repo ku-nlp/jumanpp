@@ -37,7 +37,8 @@ class RenderContext {
   NodePtr curNode_;
 
  public:
-  RenderContext(const analysis::Lattice* lattice_, analysis::NodeWalker* walker_)
+  RenderContext(const analysis::Lattice* lattice_,
+                analysis::NodeWalker* walker_)
       : lattice_(lattice_), walker_(walker_) {}
 
   void changeCurrent(NodePtr ptr) { curNode_ = ptr; }

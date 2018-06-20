@@ -3,8 +3,8 @@
 //
 
 #include "graphviz_format.h"
-#include "core/analysis/score_processor.h"
 #include "core/analysis/analyzer_impl.h"
+#include "core/analysis/score_processor.h"
 
 namespace jumanpp {
 namespace core {
