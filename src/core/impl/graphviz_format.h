@@ -32,12 +32,12 @@ struct GraphVizEdge {
 };
 
 class RenderContext {
-  analysis::Lattice* lattice_;
+  const analysis::Lattice* lattice_;
   analysis::NodeWalker* walker_;
   NodePtr curNode_;
 
  public:
-  RenderContext(analysis::Lattice* lattice_, analysis::NodeWalker* walker_)
+  RenderContext(const analysis::Lattice* lattice_, analysis::NodeWalker* walker_)
       : lattice_(lattice_), walker_(walker_) {}
 
   void changeCurrent(NodePtr ptr) { curNode_ = ptr; }
@@ -46,7 +46,7 @@ class RenderContext {
 
   NodePtr curNode() const { return curNode_; }
 
-  analysis::Lattice* lattice() const { return lattice_; }
+  const analysis::Lattice* lattice() const { return lattice_; }
 };
 
 class RenderOutput {
@@ -208,8 +208,8 @@ class GraphVizFormat {
 
   friend class GraphVizBuilder;
 
-  Status renderNodes(detail::RenderOutput* out, analysis::Lattice* lat);
-  Status renderEdges(detail::RenderOutput* out, analysis::Lattice* lat);
+  Status renderNodes(detail::RenderOutput* out, const analysis::Lattice* lat);
+  Status renderEdges(detail::RenderOutput* out, const analysis::Lattice* lat);
   bool isGold(detail::NodePtr nodePtr) const;
 
  public:
@@ -225,7 +225,8 @@ class GraphVizFormat {
 
   void markGold(analysis::LatticeNodePtr nodePtr) { gold_.push_back(nodePtr); }
 
-  Status render(analysis::Lattice* lat);
+  Status render(const analysis::Analyzer& ana);
+  Status render(const analysis::Lattice* lat);
   StringPiece result() const { return printer_.result(); }
 };
 

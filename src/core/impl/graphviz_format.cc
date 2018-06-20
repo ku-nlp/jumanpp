@@ -4,6 +4,7 @@
 
 #include "graphviz_format.h"
 #include "core/analysis/score_processor.h"
+#include "core/analysis/analyzer_impl.h"
 
 namespace jumanpp {
 namespace core {
@@ -137,7 +138,7 @@ detail::Renderable *GraphVizBuilder::makeFooter(int maxBeam) {
   return outer;
 }
 
-Status GraphVizFormat::render(analysis::Lattice *lat) {
+Status GraphVizFormat::render(const analysis::Lattice *lat) {
   if (output_ == nullptr) {
     return Status::InvalidState() << "graphviz: output was not initialized";
   }
@@ -162,7 +163,7 @@ Status GraphVizFormat::render(analysis::Lattice *lat) {
 }
 
 Status GraphVizFormat::renderNodes(detail::RenderOutput *out,
-                                   analysis::Lattice *lat) {
+                                   const analysis::Lattice *lat) {
   auto nbnd = lat->createdBoundaryCount() - 1;
 
   out->lit("// BOS node").line();
@@ -214,7 +215,7 @@ Status GraphVizFormat::renderNodes(detail::RenderOutput *out,
 }
 
 Status GraphVizFormat::renderEdges(detail::RenderOutput *out,
-                                   analysis::Lattice *lat) {
+                                   const analysis::Lattice *lat) {
   auto nbnd = lat->createdBoundaryCount();
   for (int i = 2; i < nbnd; ++i) {
     out->line();
@@ -257,6 +258,10 @@ Status GraphVizFormat::renderEdges(detail::RenderOutput *out,
 
 bool GraphVizFormat::isGold(detail::NodePtr nodePtr) const {
   return std::find(gold_.begin(), gold_.end(), nodePtr) != gold_.end();
+}
+
+Status GraphVizFormat::render(const analysis::Analyzer &ana) {
+  return render(ana.impl()->lattice());
 }
 
 }  // namespace format
