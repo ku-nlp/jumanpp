@@ -173,8 +173,8 @@ void SpecFactory::fillSpec(core::spec::dsl::ModelSpecBuilder& bldr) {
   bldr.bigram({surface}, {auxWord});
   bldr.bigram({auxWord}, {surface});
   bldr.bigram({subpos}, {subpos});
-  bldr.bigram({conjform}, {conjform});  // check with morita-san
   bldr.bigram({subpos}, {pos});
+  bldr.bigram({pos, conjform}, {pos, conjform});
   bldr.bigram({pos}, {subpos});
   bldr.bigram({conjform}, {pos});
   bldr.bigram({pos}, {conjform});
