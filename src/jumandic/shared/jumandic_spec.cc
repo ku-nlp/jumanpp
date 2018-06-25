@@ -185,9 +185,18 @@ void SpecFactory::fillSpec(core::spec::dsl::ModelSpecBuilder& bldr) {
                {pos, subpos, conjform});
   bldr.trigram({lexicalized}, {lexicalized}, {lexicalized});
 
+  // reading
+
+  bldr.unigram({reading});
+  bldr.unigram({baseform, reading});
+  bldr.unigram({baseform, reading, pos, subpos});
+  bldr.bigram({baseform, reading}, {baseform, reading});
+  bldr.bigram({lexicalized}, {baseform, reading});
+  bldr.bigram({baseform, reading}, {lexicalized});
+
   bldr.train()
       .field(surface, 1.0f)
-      .field(reading, 0)  // reading is ignored
+      .field(reading, 1.0f)  // reading is ignored
       .field(baseform, 0.5f)
       .field(pos, 1.0f)
       .field(subpos, 1.0f)

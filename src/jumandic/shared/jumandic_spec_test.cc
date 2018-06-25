@@ -13,6 +13,6 @@ TEST_CASE("jumandic spec is valid") {
   // 9 fields + 1 extra from conditions
   CHECK(spec.dictionary.fields.size() == 10);
   CHECK(spec.dictionary.indexColumn == 0);
-  CHECK(spec.features.ngram.size() == 67);
+  CHECK(spec.features.ngram.size() == 73);
   CHECK(spec.unkCreators.size() == 9);
 }
