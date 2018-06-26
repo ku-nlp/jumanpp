@@ -113,6 +113,16 @@ specify `-DCMAKE_CXX_FLAGS="-march=native"`.
 
 Works best on Intel Haswell and newer processors (because of FMA and BMI instruction set extensions).
 
+## Using Juman++ to create your own Morphological Analyzer
+
+Juman++ is a general tool. 
+It does not depend on Jumandic or Japanese Language 
+(albeit there are some Japanese-specific functionality).
+See [this tutorial project](https://github.com/eiennohito/jumanpp-t9)
+which shows how to implement a something similar to a 
+[T9 text input](https://en.wikipedia.org/wiki/T9_(predictive_text))
+for the case when there are no word boundaries in the input text.
+
 ## Publications and Slides
 
 * About the model itself: *Morphological Analysis for Unsegmented Languages using Recurrent Neural Network Language Model*. Hajime Morita, Daisuke Kawahara, Sadao Kurohashi. EMNLP 2015 [link](http://aclweb.org/anthology/D/D15/D15-1276.pdf).
