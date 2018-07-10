@@ -17,6 +17,8 @@ the original Juman++.
   * We test on GCC and clang on Linux/MacOS, mingw64-gcc and MSVC2017 on Windows
 - CMake v3.1 or later
 
+Read [this document](docs/building.md) for CentOS and RHEL derivatives.
+
 ## Building from a package
 
 Download the package from [Releases](https://github.com/ku-nlp/jumanpp/releases)
