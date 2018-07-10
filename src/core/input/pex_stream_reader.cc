@@ -7,6 +7,7 @@
 #include "core/analysis/score_plugin.h"
 #include "core/input/partial_example.h"
 #include "core/input/partial_example_io.h"
+#include "core/analysis/lattice_types.h"
 #include "pex_stream_reader.h"
 
 namespace jumanpp {
@@ -23,11 +24,18 @@ struct PexStreamReaderImpl : public analysis::ScorePlugin {
   bool updateScore(const analysis::Lattice *l,
                    const analysis::ConnectionPtr &ptr,
                    float *score) const override {
-    if (!example_.doesNodeMatch(l, ptr.boundary, ptr.right)) {
-      *score -= 10000.f;
-      return true;
+    auto rightBnd = l->boundary(ptr.boundary)->starts();
+    auto violation = example_.checkViolation(rightBnd, ptr.boundary, ptr.right);
+    switch (violation.kind) {
+      case ViolationKind::None:
+        return false;
+      case ViolationKind::Tag:
+        *score -= 1000.f;
+        return true;
+      default:
+        *score -= 10000.f;
+        return true;
     }
-    return false;
   }
 };
 
@@ -77,6 +85,14 @@ Status PexStreamReader::initialize(const PexStreamReader &other) {
   JPP_RETURN_IF_ERROR(impl_->reader_.initialize(
       impl_->tfi_.get(), other.impl_->reader_.noBreakToken()));
   return Status::Ok();
+}
+
+analysis::ScorePlugin *PexStreamReader::getPlugin() const {
+  return impl_.get();
+}
+
+StringPiece PexStreamReader::surface() const {
+  return impl_->example_.surface();
 }
 
 PexStreamReader::~PexStreamReader() = default;
