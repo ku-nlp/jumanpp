@@ -61,7 +61,7 @@ Status DictionaryBuilder::importCsv(StringPiece name, StringPiece data) {
   return Status::Ok();
 }
 
-Status DictionaryBuilder::importSpec(spec::AnalysisSpec* spec) {
+Status DictionaryBuilder::importSpec(spec::AnalysisSpec *spec) {
   this->spec_ = spec;
   return Status::Ok();
 }
@@ -71,21 +71,21 @@ DictionaryBuilder::~DictionaryBuilder() {}
 DictionaryBuilder::DictionaryBuilder() {}
 
 template <typename Arch>
-void Serialize(Arch& a, BuiltField& o) {
-  a& o.dicIndex;
-  a& o.specIndex;
-  a& o.uniqueValues;
+void Serialize(Arch &a, BuiltField &o) {
+  a &o.dicIndex;
+  a &o.specIndex;
+  a &o.uniqueValues;
 }
 
 template <typename Arch>
-void Serialize(Arch& a, BuiltDictionary& o) {
-  a& o.entryCount;
-  a& o.fieldData;
-  a& o.timestamp;
-  a& o.spec;
+void Serialize(Arch &a, BuiltDictionary &o) {
+  a &o.entryCount;
+  a &o.fieldData;
+  a &o.timestamp;
+  a &o.spec;
 }
 
-Status DictionaryBuilder::fillModelPart(model::ModelPart* part,
+Status DictionaryBuilder::fillModelPart(model::ModelPart *part,
                                         StringPiece comment) {
   if (!dic_) {
     return Status::InvalidState() << "dictionary is not built yet";
@@ -100,10 +100,10 @@ Status DictionaryBuilder::fillModelPart(model::ModelPart* part,
   part->data.push_back(dic_->trieContent);
   part->data.push_back(dic_->entryPointers);
   part->data.push_back(dic_->entryData);
-  for (auto& sb : storage_->builtStrings) {
+  for (auto &sb : storage_->builtStrings) {
     part->data.push_back(sb);
   }
-  for (auto& ib : storage_->builtInts) {
+  for (auto &ib : storage_->builtInts) {
     part->data.push_back(ib);
   }
 
@@ -117,15 +117,42 @@ void DictionaryBuilder::newProgressStep(StringPiece name) {
   }
 }
 
-inline Status fixupDictionary(const model::ModelPart& dicInfo,
-                              BuiltDictionary* dic) {
+inline Status fixupDictionary(const model::ModelPart &dicInfo,
+                              BuiltDictionary *dic) {
   auto spec_ = &dic->spec;
   i32 expectedCount =
       spec_->dictionary.numStringStorage + spec_->dictionary.numIntStorage + 4;
   if (expectedCount != dicInfo.data.size()) {
-    return Status::InvalidParameter()
+    return JPPS_INVALID_PARAMETER
            << "model file did not have all dictionary chunks";
   }
+
+  i32 entryFldCnt = 0;
+  i32 infoFldCnt = 0;
+  for (const auto &f : spec_->dictionary.fields) {
+    if (f.dicIndex < 0) {
+      infoFldCnt += 1;
+    } else {
+      entryFldCnt += 1;
+    }
+  }
+
+  if (entryFldCnt > JPP_MAX_DIC_FIELDS) {
+    return JPPS_INVALID_STATE
+           << "Currently compiled Juman++ supports only " << JPP_MAX_DIC_FIELDS
+           << " fields, but the loaded model requires " << entryFldCnt
+           << ". Please recompile Juman++ with "
+           << "-DJPP_MAX_DIC_FIELDS at least " << entryFldCnt;
+  }
+
+  if (infoFldCnt > JPP_MAX_DIC_FIELDS) {
+    return JPPS_INVALID_STATE
+           << "Currently compiled Juman++ supports only " << JPP_MAX_DIC_FIELDS
+           << " fields, but the loaded model requires " << infoFldCnt
+           << ". Please recompile Juman++ with "
+           << "-DJPP_MAX_DIC_FIELDS at least " << infoFldCnt;
+  }
+
   dic->trieContent = dicInfo.data[1];
   dic->entryPointers = dicInfo.data[2];
   dic->entryData = dicInfo.data[3];
@@ -139,12 +166,12 @@ inline Status fixupDictionary(const model::ModelPart& dicInfo,
     ++cnt;
   }
   if (dic->fieldData.size() != spec_->dictionary.fields.size()) {
-    return Status::InvalidParameter() << "number of columns in spec was not "
-                                         "equal to loaded number of columns";
+    return JPPS_INVALID_PARAMETER << "number of columns in spec was not "
+                                     "equal to loaded number of columns";
   }
   for (int j = 0; j < dic->fieldData.size(); ++j) {
-    auto& f = dic->fieldData[j];
-    auto& fd = spec_->dictionary.fields[f.specIndex];
+    auto &f = dic->fieldData[j];
+    auto &fd = spec_->dictionary.fields[f.specIndex];
     if (f.dicIndex != fd.dicIndex) {
       return JPPS_INVALID_PARAMETER << "something went wrong and built field "
                                        "dicIndex !=  spec field dicIndex: "
@@ -161,10 +188,10 @@ inline Status fixupDictionary(const model::ModelPart& dicInfo,
   return Status::Ok();
 }
 
-Status BuiltDictionary::restoreDictionary(const model::ModelInfo& info) {
+Status BuiltDictionary::restoreDictionary(const model::ModelInfo &info) {
   i32 dicInfoIdx = -1;
   for (i32 i = 0; i < info.parts.size(); ++i) {
-    auto& part = info.parts[i];
+    auto &part = info.parts[i];
     if (part.kind == model::ModelPartKind::Dictionary) {
       if (dicInfoIdx != -1) {
         return JPPS_INVALID_PARAMETER
@@ -179,7 +206,7 @@ Status BuiltDictionary::restoreDictionary(const model::ModelInfo& info) {
            << "there was no dictionary information in saved model";
   }
 
-  auto& dicInfo = info.parts[dicInfoIdx];
+  auto &dicInfo = info.parts[dicInfoIdx];
 
   if (dicInfo.data.size() < 2) {
     return Status::InvalidParameter() << "dictionary info must have at least "
