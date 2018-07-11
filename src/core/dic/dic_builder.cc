@@ -137,20 +137,14 @@ inline Status fixupDictionary(const model::ModelPart &dicInfo,
     }
   }
 
+  entryFldCnt = std::max(entryFldCnt, infoFldCnt);
+
   if (entryFldCnt > JPP_MAX_DIC_FIELDS) {
     return JPPS_INVALID_STATE
            << "Currently compiled Juman++ supports only " << JPP_MAX_DIC_FIELDS
            << " fields, but the loaded model requires " << entryFldCnt
            << ". Please recompile Juman++ with "
            << "-DJPP_MAX_DIC_FIELDS at least " << entryFldCnt;
-  }
-
-  if (infoFldCnt > JPP_MAX_DIC_FIELDS) {
-    return JPPS_INVALID_STATE
-           << "Currently compiled Juman++ supports only " << JPP_MAX_DIC_FIELDS
-           << " fields, but the loaded model requires " << infoFldCnt
-           << ". Please recompile Juman++ with "
-           << "-DJPP_MAX_DIC_FIELDS at least " << infoFldCnt;
   }
 
   dic->trieContent = dicInfo.data[1];
