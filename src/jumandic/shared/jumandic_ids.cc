@@ -687,6 +687,7 @@ const JumandicTuple conjInfo[] = {
   {StringPiece{"助動詞く型"}, StringPiece{"基本形"}, 30, 2},
   {StringPiece{"助動詞く型"}, StringPiece{"基本連用形"}, 30, 3},
   {StringPiece{"助動詞く型"}, StringPiece{"文語連体形"}, 30, 4},
+  {StringPiece{"助動詞く型"}, StringPiece{"文語未然形"}, 30, 5},
   {StringPiece{"動詞性接尾辞ます型"}, StringPiece{"*"}, 31, 0},
   {StringPiece{"動詞性接尾辞ます型"}, StringPiece{"語幹"}, 31, 1},
   {StringPiece{"動詞性接尾辞ます型"}, StringPiece{"基本形"}, 31, 2},
@@ -704,7 +705,7 @@ const JumandicTuple conjInfo[] = {
   {StringPiece{"動詞性接尾辞うる型"}, StringPiece{"基本条件形"}, 32, 3},
 };
 
-const u32 conjInfoCount = 637U;
+const u32 conjInfoCount = 638U;
 
 } // namespace jumandic
 } // namespace jumanpp
