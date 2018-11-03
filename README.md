@@ -107,6 +107,10 @@ Example:
 ます
 ```
 
+## Partial Annotation Tool
+
+We also have a partial annotation tool. Please see https://github.com/eiennohito/nlp-tools-demo for details.
+
 ## Performance Notes
 
 To get the best performance, you need to build with [extended instructuion sets](https://gcc.gnu.org/onlinedocs/gcc/x86-Options.html).
