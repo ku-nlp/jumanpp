@@ -137,6 +137,8 @@ for the case when there are no word boundaries in the input text.
 
 * Morphological Analysis Workshop in ANLP2018 Slides: 形態素解析システムJuman++. 河原 大輔, Arseny Tolmachev. (in Japanese) [slides](https://drive.google.com/file/d/1DVnrsWw4skRgC8jU6_RkeofOQEHFwctc/view?usp=sharing).
 
+* *Juman++: A Morphological Analysis Toolkit for Scriptio Continua.* Arseny Tolmachev, Daisuke Kawahara and Sadao Kurohashi. EMNLP 2018, Brussels. [pdf](http://aclweb.org/anthology/D18-2010), [poster](https://drive.google.com/file/d/1SeiYP2z4Hb1Q0IhIe_3ydSIjCMhxnKIS/view?usp=sharing).
+
 ## Authors
 * Arseny Tolmachev <arseny **at** kotonoha.ws>
 * Hajime Morita <hmorita  **at** i.kyoto-u.ac.jp>  
