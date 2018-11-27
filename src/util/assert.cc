@@ -8,14 +8,13 @@
 #include "logging.hpp"
 #include "util/common.hpp"
 
-#ifndef _WIN32_WINNT
+#if defined(__APPLE__)
 #include <sys/sysctl.h>
 #include <sys/types.h>
-#include <unistd.h>
-#else
-
+#elif defined(_WIN32)
 #include "win32_utils.h"
 #endif
+#include <unistd.h>
 
 namespace jumanpp {
 namespace util {
