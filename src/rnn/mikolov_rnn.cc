@@ -177,29 +177,33 @@ Status MikolovModelReader::parse() {
   auto maxBlock = std::max<u64>({hdr.layerSize * hdr.vocabSize, hdr.maxentSize,
                                  hdr.layerSize * hdr.layerSize});
   // 3 comes from rounding to next value + sizeof(float)
-  auto pageSize = 1ULL << (static_cast<u32>(std::log2(maxBlock)) + 3);
+  auto pageSize = static_cast<size_t>(1) << (static_cast<u32>(std::log2(maxBlock)) + 3);
   data_->memmgr.initialize(pageSize);
   data_->alloc = data_->memmgr.value().core();
   auto& alloc = data_->alloc;
+
+  const auto embedding_size = static_cast<size_t>(hdr.layerSize) * static_cast<size_t>(hdr.vocabSize);
+  const auto matrix_size = static_cast<size_t>(hdr.layerSize) * static_cast<size_t>(hdr.layerSize);
+
   data_->embeddingData =
-      alloc->allocateBuf<float>(hdr.layerSize * hdr.vocabSize, 64);
+      alloc->allocateBuf<float>(embedding_size, 64);
   data_->nceEmbeddingData =
-      alloc->allocateBuf<float>(hdr.layerSize * hdr.vocabSize, 64);
+      alloc->allocateBuf<float>(embedding_size, 64);
   data_->matrixData =
-      alloc->allocateBuf<float>(hdr.layerSize * hdr.layerSize, 64);
-  data_->maxentWeightData = alloc->allocateBuf<float>(hdr.maxentSize, 64);
+      alloc->allocateBuf<float>(matrix_size, 64);
+  data_->maxentWeightData = alloc->allocateBuf<float>(static_cast<size_t>(hdr.maxentSize), 64);
 
   JPP_RIE_MSG(copyArray(contents, data_->embeddingData,
-                        hdr.layerSize * hdr.vocabSize, &start),
+                        embedding_size, &start),
               "embeds");
   JPP_RIE_MSG(copyArray(contents, data_->nceEmbeddingData,
-                        hdr.layerSize * hdr.vocabSize, &start),
+                        embedding_size, &start),
               "nce embeds");
   JPP_RIE_MSG(copyArray(contents, data_->matrixData,
-                        hdr.layerSize * hdr.layerSize, &start),
+                        matrix_size, &start),
               "matrix");
   JPP_RIE_MSG(
-      copyArray(contents, data_->maxentWeightData, hdr.maxentSize, &start),
+      copyArray(contents, data_->maxentWeightData, static_cast<size_t>(hdr.maxentSize), &start),
       "maxent weights");
   if (start != contents.size()) {
     return Status::InvalidState() << "did not read rnn model file fully";

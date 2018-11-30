@@ -319,9 +319,9 @@ Status RnnScorerGbeamFactory::make(StringPiece rnnModelPath,
       state_->resolver.build(dic, state_->config, state_->rnnReader.words()));
   auto& h = state_->rnnReader.header();
   state_->embeddings = {state_->rnnReader.embeddings(), h.layerSize,
-                        h.vocabSize};
+                        static_cast<jumanpp::size_t>(h.vocabSize)};
   state_->nceEmbeddings = {state_->rnnReader.nceEmbeddings(), h.layerSize,
-                           h.vocabSize};
+                           static_cast<jumanpp::size_t>(h.vocabSize)};
   if (h.layerSize > 64 * 1024) {
     return JPPS_NOT_IMPLEMENTED << "we don't support embed sizes > 64k";
   }
