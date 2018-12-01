@@ -17,7 +17,7 @@ the original Juman++.
   * We test on GCC and clang on Linux/MacOS, mingw64-gcc and MSVC2017 on Windows
 - CMake v3.1 or later
 
-Read [this document](docs/building.md) for CentOS and RHEL derivatives.
+Read [this document](docs/building.md) for CentOS and RHEL derivatives or non-CMake alternatives.
 
 ## Building from a package
 
@@ -33,12 +33,11 @@ $ cmake .. \
   -DCMAKE_INSTALL_PREFIX=<prefix> # where to install Juman++
 $ make install -j<parallelism>
 ```
-
 ## Building from git
 
 Generally, the differences between the package
 and this repository is the presence of a prebuilt model
-and absense of some development scripts.
+and absence of some development scripts.
 
 ```bash
 $ mkdir cmake-build-dir # CMake does not support in-source builds
