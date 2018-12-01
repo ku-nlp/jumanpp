@@ -195,7 +195,7 @@ util::ArraySlice<BeamCandidate> processBeamCandidates(
     candidates = util::MutableArraySlice<BeamCandidate>{candidates, 0, sz};
   }
   std::sort(candidates.begin(), candidates.end(), comp);
-  auto size = std::min<u64>(maxBeam, candidates.size());
+  auto size = std::min<jumanpp::size_t>(maxBeam, candidates.size());
   return util::ArraySlice<BeamCandidate>{candidates, 0, size};
 }
 
