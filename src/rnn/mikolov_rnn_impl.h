@@ -29,28 +29,28 @@ class MikolovScoreCalculator {
       : indices(indices), weights(weights), hashMax(hashMax) {}
 
   inline float calcScores1(i32 word) const {
-    auto idx0 = (indices[0] + word) % hashMax;
+    auto idx0 = static_cast<size_t>((indices[0] + word) % hashMax);
     return weights[idx0];
   }
 
   inline float calcScores2(i32 word) const {
-    auto idx0 = (indices[0] + word) % hashMax;
-    auto idx1 = (indices[1] + word) % hashMax;
+    auto idx0 = static_cast<size_t>((indices[0] + word) % hashMax);
+    auto idx1 = static_cast<size_t>((indices[1] + word) % hashMax);
     return weights[idx0] + weights[idx1];
   }
 
   inline float calcScores3(i32 word) const {
-    auto idx0 = (indices[0] + word) % hashMax;
-    auto idx1 = (indices[1] + word) % hashMax;
-    auto idx2 = (indices[2] + word) % hashMax;
+    auto idx0 = static_cast<size_t>((indices[0] + word) % hashMax);
+    auto idx1 = static_cast<size_t>((indices[1] + word) % hashMax);
+    auto idx2 = static_cast<size_t>((indices[2] + word) % hashMax);
     return weights[idx0] + weights[idx1] + weights[idx2];
   }
 
   inline float calcScores4(i32 word) const {
-    auto idx0 = (indices[0] + word) % hashMax;
-    auto idx1 = (indices[1] + word) % hashMax;
-    auto idx2 = (indices[2] + word) % hashMax;
-    auto idx3 = (indices[3] + word) % hashMax;
+    auto idx0 = static_cast<size_t>((indices[0] + word) % hashMax);
+    auto idx1 = static_cast<size_t>((indices[1] + word) % hashMax);
+    auto idx2 = static_cast<size_t>((indices[2] + word) % hashMax);
+    auto idx3 = static_cast<size_t>((indices[3] + word) % hashMax);
     return weights[idx0] + weights[idx1] + weights[idx2] + weights[idx3];
   }
 

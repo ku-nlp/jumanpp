@@ -146,7 +146,7 @@ Status MappedFile::map(MappedFileFragment *view, size_t offset, size_t size,
   size_t aligned_len = size + alignment;
 
   auto map_view = MapViewOfFile(
-      mapping, map_access, static_cast<DWORD>(aligned_offset >> 32),
+      mapping, map_access, static_cast<DWORD>(aligned_offset >> 16 >> 16),
       static_cast<DWORD>(aligned_offset & 0xffffffff), aligned_len);
   CloseHandle(mapping);
 

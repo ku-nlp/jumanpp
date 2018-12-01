@@ -24,14 +24,14 @@ class StringStorageReader {
   StringPiece data() const noexcept { return data_; }
 
   bool readAt(i32 ptr, StringPiece* ret) const noexcept {
-    i64 realPtr = static_cast<i64>(ptr) << alignPower_;
+    ptrdiff_t realPtr = static_cast<ptrdiff_t>(ptr) << alignPower_;
     JPP_DCHECK_IN(realPtr, 0, data_.size());
     util::CodedBufferParser parser{data_.from(realPtr)};
     return parser.readStringPiece(ret);
   }
 
   i32 lengthOf(i32 ptr) {
-    i64 realPtr = static_cast<i64>(ptr) << alignPower_;
+    ptrdiff_t realPtr = static_cast<ptrdiff_t>(ptr) << alignPower_;
     JPP_DCHECK_IN(realPtr, 0, data_.size());
     util::CodedBufferParser parser{data_.from(realPtr)};
     i32 value = -1;
@@ -40,7 +40,7 @@ class StringStorageReader {
   }
 
   i32 numCodepoints(i32 ptr) {
-    i64 realPtr = static_cast<i64>(ptr) << alignPower_;
+    ptrdiff_t realPtr = static_cast<ptrdiff_t>(ptr) << alignPower_;
     JPP_DCHECK_IN(realPtr, 0, data_.size());
     auto start = data_.from(realPtr);
     util::CodedBufferParser parser{start};
