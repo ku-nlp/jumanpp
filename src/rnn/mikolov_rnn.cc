@@ -182,25 +182,25 @@ Status MikolovModelReader::parse() {
   data_->alloc = data_->memmgr.value().core();
   auto& alloc = data_->alloc;
 
-  const auto embedding_size = static_cast<size_t>(hdr.layerSize) * static_cast<size_t>(hdr.vocabSize);
-  const auto matrix_size = static_cast<size_t>(hdr.layerSize) * static_cast<size_t>(hdr.layerSize);
+  const auto embedding_matrix_size = static_cast<size_t>(hdr.layerSize) * static_cast<size_t>(hdr.vocabSize);
+  const auto transition_matrix_size = static_cast<size_t>(hdr.layerSize) * static_cast<size_t>(hdr.layerSize);
 
   data_->embeddingData =
-      alloc->allocateBuf<float>(embedding_size, 64);
+      alloc->allocateBuf<float>(embedding_matrix_size, 64);
   data_->nceEmbeddingData =
-      alloc->allocateBuf<float>(embedding_size, 64);
+      alloc->allocateBuf<float>(embedding_matrix_size, 64);
   data_->matrixData =
-      alloc->allocateBuf<float>(matrix_size, 64);
+      alloc->allocateBuf<float>(transition_matrix_size, 64);
   data_->maxentWeightData = alloc->allocateBuf<float>(static_cast<size_t>(hdr.maxentSize), 64);
 
   JPP_RIE_MSG(copyArray(contents, data_->embeddingData,
-                        embedding_size, &start),
+                        embedding_matrix_size, &start),
               "embeds");
   JPP_RIE_MSG(copyArray(contents, data_->nceEmbeddingData,
-                        embedding_size, &start),
+                        embedding_matrix_size, &start),
               "nce embeds");
   JPP_RIE_MSG(copyArray(contents, data_->matrixData,
-                        matrix_size, &start),
+                        transition_matrix_size, &start),
               "matrix");
   JPP_RIE_MSG(
       copyArray(contents, data_->maxentWeightData, static_cast<size_t>(hdr.maxentSize), &start),
