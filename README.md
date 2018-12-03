@@ -138,6 +138,8 @@ for the case when there are no word boundaries in the input text.
 
 * *Juman++: A Morphological Analysis Toolkit for Scriptio Continua.* Arseny Tolmachev, Daisuke Kawahara and Sadao Kurohashi. EMNLP 2018, Brussels. [pdf](http://aclweb.org/anthology/D18-2010), [poster](https://drive.google.com/file/d/1SeiYP2z4Hb1Q0IhIe_3ydSIjCMhxnKIS/view?usp=sharing).
 
+If you use Juman++ V1 in academic setting, then please cite the first work (EMNLP2015). If you use Juman++ V2, then please cite both the first and the fourth (EMNLP2018) papers. 
+
 ## Authors
 * Arseny Tolmachev <arseny **at** kotonoha.ws>
 * Hajime Morita <hmorita  **at** i.kyoto-u.ac.jp>  
