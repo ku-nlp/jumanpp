@@ -141,12 +141,12 @@ Status MappedFile::map(MappedFileFragment *view, size_t offset, size_t size,
 
   DWORD granuality = get_system_granuality();
 
-  size_t alignment = offset % static_cast<size_t>(granuality);
-  size_t aligned_offset = offset - alignment;
-  size_t aligned_len = size + alignment;
+  uint64_t alignment = offset % static_cast<uint64_t>(granuality);
+  uint64_t aligned_offset = offset - alignment;
+  uint64_t aligned_len = size + alignment;
 
   auto map_view = MapViewOfFile(
-      mapping, map_access, static_cast<DWORD>(aligned_offset >> 16 >> 16),
+      mapping, map_access, static_cast<DWORD>(aligned_offset >> 32),
       static_cast<DWORD>(aligned_offset & 0xffffffff), aligned_len);
   CloseHandle(mapping);
 
