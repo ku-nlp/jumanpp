@@ -1885,7 +1885,7 @@ void Path::touch() const
   }
 
   if (SetFileTime(filehandle, NULL, &newtime, &newtime) == 0) {
-    int errsav = GetLastError();
+    DWORD errsav = GetLastError();
     CloseHandle(filehandle);
     throw(Pathie::WindowsError(errsav));
   }

@@ -73,7 +73,8 @@ struct RnnCrdHasher {
     v ^= 0xfeadbeed1235;
     v *= 0x12312f12aff1ULL;
     v ^= (v >> 33);
-    return v;
+    //TODO: Can algorithm support u32?
+    return static_cast<size_t>(v);
   }
 
   bool operator()(const RnnCoordinate& p1, const RnnCoordinate& p2) const
@@ -90,7 +91,7 @@ struct ConnPtrHasher {
     v ^= 0xfeadbeed1235;
     v *= 0x12312f12aff1ULL;
     v ^= (v >> 33);
-    return v;
+    return static_cast<size_t>(v);
   }
 
   bool operator()(const ConnectionPtr* p1, const ConnectionPtr* p2) const

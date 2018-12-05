@@ -1918,7 +1918,7 @@ public:
     return traits_type::eof();
   }
 
-  std::streamsize xsputn(const char_type* s, std::streamsize count) {
+  std::size_t xsputn(const char_type* s, std::size_t count) {
     return fwrite(s, sizeof *s, count, sink);
   }
 
