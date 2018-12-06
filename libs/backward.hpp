@@ -1918,8 +1918,9 @@ public:
     return traits_type::eof();
   }
 
-  std::size_t xsputn(const char_type* s, std::size_t count) {
-    return fwrite(s, sizeof *s, count, sink);
+  std::streamsize xsputn(const char_type* s, std::streamsize count) {
+    auto written = fwrite(s, sizeof *s, static_cast<std::size_t>(count), sink);
+    return static_cast<std::streamsize>(written);
   }
 
 #ifdef BACKWARD_ATLEAST_CXX11
