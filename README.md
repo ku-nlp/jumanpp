@@ -23,7 +23,7 @@ Read [this document](docs/building.md) for CentOS and RHEL derivatives or non-CM
 
 Download the package from [Releases](https://github.com/ku-nlp/jumanpp/releases)
 
-**Important**: The download should be around 300 MB. If it is not you have probably downloaded a source snapshot.
+**Important**: The download should be around 300 MB. If it is not you have probably downloaded a source snapshot which does not contain a model.
 
 ```bash
 $ tar xf jumanpp-<version>.tar.xz # decompress the package
