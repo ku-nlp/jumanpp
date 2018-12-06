@@ -32,5 +32,5 @@ add_library(jpp_core_codegen ${jpp_codegen_srcs} ${jpp_codegen_hdrs})
 
 jpp_test_executable(jpp_codegen_tests ${jpp_codegen_tsrcs})
 target_include_directories(jpp_codegen_tests PRIVATE ${cgtest02_INCLUDE})
-target_link_libraries(jpp_core_codegen pthread jpp_core)
-target_link_libraries(jpp_codegen_tests pthread jpp_core_codegen)
+target_link_libraries(jpp_core_codegen jpp_core ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(jpp_codegen_tests jpp_core_codegen ${CMAKE_THREAD_LIBS_INIT})
