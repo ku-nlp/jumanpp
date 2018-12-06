@@ -23,6 +23,8 @@ Read [this document](docs/building.md) for CentOS and RHEL derivatives or non-CM
 
 Download the package from [Releases](https://github.com/ku-nlp/jumanpp/releases)
 
+**Important**: Only the package version contains a pretrained model and can be used for analysis. And be careful when mixing versions.
+
 ```bash
 $ tar xf jumanpp-<version>.tar.xz # decompress the package
 $ cd jumanpp-<version> # move into the directory
