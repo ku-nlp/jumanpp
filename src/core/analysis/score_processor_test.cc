@@ -60,7 +60,7 @@ TEST_CASE("beam candidate is valid") {
   CHECK(bc0.beam() == 0);
 }
 
-TEST_CASE("beam candidates are compared corectly") {
+TEST_CASE("beam candidates are compared corectly by score") {
   BeamCandidate bc0{0, 0, 0};
   BeamCandidate bc{-1.5f, 5, 15};
   BeamCandidate bc2{-0.1f, 5, 15};
@@ -86,4 +86,28 @@ TEST_CASE("beam candidates are compared corectly") {
   CHECK(bc0 > bc2);
   CHECK(bc3 > bc0);
   CHECK(bc4 > bc0);
+}
+
+TEST_CASE("beam candidates are compared correctly by coordinates") {
+  BeamCandidate bc0(0.836f, 0, 0);
+  BeamCandidate bc1(0.836f, 0, 2);
+  BeamCandidate bc2(0.836f, 0, 3);
+  BeamCandidate bc3(0.836f, 1, 0);
+  BeamCandidate bc4(0.836f, 1, 3);
+  CHECK(bc0 < bc1);
+  CHECK(bc0 < bc2);
+  CHECK(bc0 < bc3);
+  CHECK(bc0 < bc4);
+  CHECK(bc1 > bc0);
+  CHECK(bc1 < bc2);
+  CHECK(bc1 < bc3);
+  CHECK(bc1 < bc4);
+  CHECK(bc2 > bc0);
+  CHECK(bc2 > bc1);
+  CHECK(bc2 < bc3);
+  CHECK(bc2 < bc4);
+  CHECK(bc3 > bc0);
+  CHECK(bc3 > bc1);
+  CHECK(bc3 > bc2);
+  CHECK(bc3 < bc4);
 }

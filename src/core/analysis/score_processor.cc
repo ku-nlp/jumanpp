@@ -197,11 +197,11 @@ util::ArraySlice<BeamCandidate> processBeamCandidates(
     u32 maxElems = maxBeam * 2;
     auto iter = util::partition(candidates.begin(), candidates.end(), comp,
                                 maxBeam, maxElems);
-    u32 sz = static_cast<u32>(iter - candidates.begin());
+    auto sz = static_cast<size_t>(std::distance(candidates.begin(), iter));
     candidates = util::MutableArraySlice<BeamCandidate>{candidates, 0, sz};
   }
   std::sort(candidates.begin(), candidates.end(), comp);
-  auto size = std::min<jumanpp::size_t>(maxBeam, candidates.size());
+  auto size = std::min<size_t>(maxBeam, candidates.size());
   return util::ArraySlice<BeamCandidate>{candidates, 0, size};
 }
 
@@ -265,7 +265,7 @@ util::ArraySlice<BeamCandidate> ScoreProcessor::makeGlobalBeam(i32 bndIdx,
   }
   util::MutableArraySlice<BeamCandidate> slice{globalBeam_, 0, count};
   auto res = processBeamCandidates(slice, maxElems);
-  // LOG_DEBUG() << maxElems << ":" << VOut(slice);
+  // std::cerr << maxElems << ":" << VOut(slice) << "\n";
   auto gbptrs = ends->globalBeam();
   if (gbptrs.size() > 0) {
     JPP_DCHECK_LE(res.size(), gbptrs.size());
@@ -299,9 +299,10 @@ void ScoreProcessor::computeGbeamScores(i32 bndIdx,
     auto size = static_cast<size_t>(cfg_->rightGbeamCheck);
     auto fullBeamApplySize =
         std::min<size_t>({size, bnd->localNodeCount(), gbeam.size()});
-    auto toKeep = std::min<u32>(static_cast<u32>(cfg_->rightGbeamSize),
-                                bnd->localNodeCount());
-    u32 remainingItems = std::max<u32>(gbeam.size() - fullBeamApplySize, 0);
+    auto toKeep = std::min<size_t>(static_cast<u32>(cfg_->rightGbeamSize),
+                                   bnd->localNodeCount());
+    size_t remainingItems =
+        std::max<size_t>(gbeam.size() - fullBeamApplySize, 0);
     auto t1PtrTail =
         util::ArraySlice<u32>{t1Ptrs, fullBeamApplySize, remainingItems};
     auto t2Tail = t2data.rows(fullBeamApplySize, t2data.numRows());
