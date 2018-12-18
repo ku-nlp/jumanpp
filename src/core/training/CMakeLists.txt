@@ -41,5 +41,5 @@ set(core_train_hdrs
 add_library(jpp_core_train ${core_train_src} ${core_train_hdrs})
 jpp_test_executable(jpp_core_train_tests ${core_train_tsrc})
 
-target_link_libraries(jpp_core_train jpp_core ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(jpp_core_train jpp_core)
 target_link_libraries(jpp_core_train_tests jpp_core_train)
