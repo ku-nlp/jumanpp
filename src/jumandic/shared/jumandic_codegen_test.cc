@@ -10,10 +10,30 @@
 #include "jumandic_id_resolver.h"
 #include "jumandic_spec.h"
 #include "testing/test_analyzer.h"
+#include "util/logging.hpp"
 #include "util/mmap.h"
 
 using namespace jumanpp::core;
 using namespace jumanpp;
+
+namespace {
+
+void dumpJumandicLattice(std::string dst,
+                         const core::analysis::AnalyzerImpl& ai) {
+  core::format::GraphVizBuilder gb;
+  gb.row({"canonic"});
+  gb.row({"surface"});
+  gb.row({"pos", "subpos"});
+  gb.row({"conjform", "conjtype"});
+  core::format::GraphVizFormat fmt;
+  REQUIRE(gb.build(&fmt, 5));
+  REQUIRE(fmt.initialize(ai.output()));
+  REQUIRE(fmt.render(ai.lattice()));
+  std::ofstream of(dst);
+  of << fmt.result();
+}
+
+}  // namespace
 
 TEST_CASE(
     "feature representation of gen/nongen is the same with full lattice") {
@@ -98,22 +118,6 @@ TEST_CASE(
     CAPTURE(i);
     CHECK(lbeam1.at(i).totalScore == Approx(lbeam2.at(i).totalScore));
   }
-
-#if 0
-  core::format::GraphVizBuilder gb;
-  gb.row({"canonic"});
-  gb.row({"surface"});
-  gb.row({"pos", "subpos"});
-  gb.row({"conjform", "conjtype"});
-  core::format::GraphVizFormat fmt;
-  gb.build(&fmt, 5);
-  fmt.initialize(gen.output());
-  fmt.render(gen.lattice());
-  core::analysis::Analyzer a;
-  a.initialize(&gen, &sdef);
-  std::ofstream of{"/tmp/jpp-dbg/01.dot"};
-  of << fmt.result();
-#endif
 }
 
 TEST_CASE(
@@ -265,9 +269,9 @@ TEST_CASE("feature representation of gen/nongen is the same with global beam") {
       -0.017f, 0.006f,  0.009f,  0.002f,  -0.021f, 0.005f,  -0.037f, -0.017f,
       -0.006f, -0.005f, -0.022f, 0.001f,  -0.020f, 0.005f,  0.002f,  -0.015f,
       0.009f,  0.021f,  0.007f,  0.014f,  -0.014f, -0.002f, 0.006f,  0.017f,
-      -0.003f, -0.012f, -0.007f, -0.000f, 0.003f,  -0.014f, -0.015f, 0.015f,
+      -0.003f, -0.012f, -0.007f, -0.053f, 0.003f,  -0.014f, -0.015f, 0.015f,
       0.024f,  0.024f,  0.012f,  -0.006f, 0.011f,  0.007f,  -0.005f, 0.008f,
-      0.001f,  -0.022f, -0.013f, 0.007f,  -0.011f, 0.018f,  -0.010f, -0.006f,
+      0.001f,  -0.022f, -0.013f, 0.024f,  -0.011f, 0.018f,  -0.010f, -0.006f,
       -0.008f, -0.018f, 0.008f,  0.007f,  0.017f,  0.002f,  0.001f,  0.017f,
   };
   analysis::HashedFeaturePerceptron hfp{weights};
@@ -308,6 +312,28 @@ TEST_CASE("feature representation of gen/nongen is the same with global beam") {
         CAPTURE(feature);
         CHECK(r1.at(feature) == r2.at(feature));
       }
+      auto b1 = s1->beamData().row(entry);
+      auto b2 = s2->beamData().row(entry);
+      for (u32 beam = 0; beam < b1.size(); ++beam) {
+        auto& be1 = b1.at(beam);
+        auto& be2 = b2.at(beam);
+
+        bool fake1 = core::analysis::EntryBeam::isFake(be1);
+        bool fake2 = core::analysis::EntryBeam::isFake(be2);
+        if (fake1 && fake2) {
+          continue;
+        }
+
+        if ((!fake1 && fake2) || (fake1 && !fake2)) {
+          INFO(fake1);
+          INFO(fake2);
+          FAIL("one of beams are bad");
+        }
+
+        CAPTURE(beam);
+        CHECK(be1.totalScore == Approx(be2.totalScore));
+        CHECK(be1.ptr == be2.ptr);
+      }
     }
   }
 
@@ -318,5 +344,10 @@ TEST_CASE("feature representation of gen/nongen is the same with global beam") {
   for (int i = 0; i < tenv.beamSize; ++i) {
     CAPTURE(i);
     CHECK(lbeam1.at(i).totalScore == Approx(lbeam2.at(i).totalScore));
+    // LOG_WARN() << lbeam1.at(i).totalScore;
+    // LOG_WARN() << lbeam2.at(i).totalScore;
   }
+
+  // dumpJumandicLattice("/tmp/jpp/gen.dot", gen);
+  // dumpJumandicLattice("/tmp/jpp/nogen.dot", nogen);
 }

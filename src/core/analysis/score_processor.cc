@@ -7,6 +7,7 @@
 #include "core/analysis/analyzer_impl.h"
 #include "core/analysis/lattice_types.h"
 #include "core/impl/feature_impl_types.h"
+#include "util/debug_output.h"
 #include "util/logging.hpp"
 
 namespace jumanpp {
@@ -154,6 +155,11 @@ void ScoreProcessor::applyT2(i32 beamIdx, FeatureScorer *features) {
   ngramApply_->applyTriStep3(&featureBuffer_, item, features, result);
 }
 
+std::ostream &operator<<(std::ostream &os, BeamCandidate bc) {
+  os << bc.left() << ':' << bc.beam() << '=' << bc.score();
+  return os;
+}
+
 namespace {
 
 u32 fillBeamCandidates(Lattice *l, LatticeBoundary *bnd, NodeScores scores,
@@ -259,6 +265,7 @@ util::ArraySlice<BeamCandidate> ScoreProcessor::makeGlobalBeam(i32 bndIdx,
   }
   util::MutableArraySlice<BeamCandidate> slice{globalBeam_, 0, count};
   auto res = processBeamCandidates(slice, maxElems);
+  // LOG_DEBUG() << maxElems << ":" << VOut(slice);
   auto gbptrs = ends->globalBeam();
   if (gbptrs.size() > 0) {
     JPP_DCHECK_LE(res.size(), gbptrs.size());

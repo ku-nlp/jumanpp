@@ -114,6 +114,8 @@ struct BeamCandidate {
   }
 };
 
+std::ostream& operator<<(std::ostream& os, BeamCandidate bc);
+
 struct ScoreProcessor {
   i32 beamSize_ = 0;
   util::ArraySlice<ConnectionBeamElement> beamPtrs_;
