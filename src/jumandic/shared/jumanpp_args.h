@@ -16,6 +16,7 @@ namespace jumanpp {
 namespace jumandic {
 
 enum class OutputType {
+  Invalid,
   Version,
   ModelInfo,
   Segmentation,
@@ -24,11 +25,13 @@ enum class OutputType {
   FullMorph,
   DicSubset,
   Lattice,
-#if defined(JPP_ENABLE_DEV_TOOLS)
-  GlobalBeamPos,
 #if defined(JPP_USE_PROTOBUF)
+  JumanPb,
+  LatticePb,
   FullLatticeDump
 #endif
+#if defined(JPP_ENABLE_DEV_TOOLS)
+      GlobalBeamPos,
 #endif
 };
 

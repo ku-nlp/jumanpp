@@ -18,6 +18,15 @@ bool operator==(const StringPiece &l, const StringPiece &r) {
   return std::strncmp(l.char_begin(), r.char_begin(), l.size()) == 0;
 }
 
+bool operator<(StringPiece l, StringPiece r) {
+  auto min_size = std::min(l.size(), r.size());
+  int res = std::strncmp(l.char_begin(), r.char_begin(), min_size);
+  if (res == 0) {
+    return l.size() < r.size();
+  }
+  return res < 0;
+}
+
 //
 // StringPiece::StringPiece<void>(StringPiece::char_ptr ptr) noexcept
 //    : StringPiece(ptr, ptr + std::strlen(ptr)) {}

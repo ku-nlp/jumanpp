@@ -15,7 +15,11 @@
 #include "util/logging.hpp"
 
 #if defined(JPP_USE_PROTOBUF)
+
 #include "core/proto/lattice_dump_output.h"
+#include "jumandic/shared/juman_pb_format.h"
+#include "jumandic/shared/jumanpp_pb_format.h"
+
 #endif
 
 #include <fstream>
@@ -42,6 +46,8 @@ Status JumanppExec::init() {
         conf.rnnModelFile.value(), env.coreHolder()->dic(), conf.rnnConfig));
     env.setRnnHolder(&rnnFactory);
   }
+
+  JPP_RETURN_IF_ERROR(idResolver_.initialize(core().dic()));
 
   jumanpp_generated::JumandicStatic features;
   JPP_RETURN_IF_ERROR(env.initFeatures(&features));
@@ -99,13 +105,6 @@ Status JumanppExec::initOutput() {
     case OutputType::Version:
     case OutputType::ModelInfo:
       return Status::Ok();
-#ifdef JPP_ENABLE_DEV_TOOLS
-    case OutputType::GlobalBeamPos: {
-      auto mfmt = new core::output::GlobalBeamPositionFormat{conf.globalBeam};
-      format_.reset(mfmt);
-      JPP_RETURN_IF_ERROR(mfmt->initialize(analyzer_));
-      break;
-    }
 #if defined(JPP_USE_PROTOBUF)
     case OutputType::FullLatticeDump: {
       auto mfmt = new core::output::LatticeDumpOutput{true, true};
@@ -115,8 +114,37 @@ Status JumanppExec::initOutput() {
       analyzer_.impl()->setStoreAllPatterns(true);
       break;
     }
+    case OutputType::JumanPb: {
+      auto mfmt = new jumandic::JumanPbFormat();
+      format_.reset(mfmt);
+      JPP_RETURN_IF_ERROR(
+          mfmt->initialize(analyzer_.output(), &idResolver_, true));
+      break;
+    }
+    case OutputType::LatticePb: {
+      auto mfmt = new jumandic::JumanppProtobufOutput();
+      format_.reset(mfmt);
+      i32 numOutput = conf.beamOutput;
+      if (numOutput == -1) {
+        LOG_TRACE() << "Using beam width for lattice output format instead of "
+                       "default value";
+        numOutput = conf.beamSize;
+      }
+      JPP_RETURN_IF_ERROR(
+          mfmt->initialize(analyzer_.output(), &idResolver_, numOutput, true));
+      break;
+    }
 #endif
+#ifdef JPP_ENABLE_DEV_TOOLS
+    case OutputType::GlobalBeamPos: {
+      auto mfmt = new core::output::GlobalBeamPositionFormat{conf.globalBeam};
+      format_.reset(mfmt);
+      JPP_RETURN_IF_ERROR(mfmt->initialize(analyzer_));
+      break;
+    }
 #endif
+    case OutputType::Invalid:
+      return Status::InvalidParameter() << "Invalid Output Format";
   }
   return Status::Ok();
 }

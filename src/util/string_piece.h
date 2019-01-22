@@ -165,6 +165,7 @@ bool operator==(const StringPiece& l, const StringPiece& r);
 inline bool operator!=(const StringPiece& l, const StringPiece& r) {
   return !(l == r);
 }
+bool operator<(StringPiece s1, StringPiece s2);
 
 namespace util {
 namespace impl {

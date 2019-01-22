@@ -11,6 +11,7 @@
 #include "core/env.h"
 #include "core/impl/model_io.h"
 #include "jumandic/shared/juman_format.h"
+#include "jumandic/shared/jumandic_id_resolver.h"
 #include "jumandic/shared/jumanpp_args.h"
 #include "rnn/mikolov_rnn.h"
 
@@ -23,6 +24,7 @@ class JumanppExec {
   core::JumanppEnv env;
   core::analysis::Analyzer analyzer_;
   std::unique_ptr<core::OutputFormat> format_;
+  jumandic::JumandicIdResolver idResolver_;
 
   // rnn
   core::analysis::RnnScorerGbeamFactory rnnFactory;

@@ -13,6 +13,7 @@
 #include "args.h"
 #include "rnn/rnn_arg_parse.h"
 #include "util/debug_output.h"
+#include "util/flatmap.h"
 #include "util/mmap.h"
 
 namespace jumanpp {
@@ -41,6 +42,24 @@ T to_int10(const Pair& p) {
 }
 
 struct JppArgsParser {
+  static const util::FlatMap<std::string, OutputType>& format_map() {
+    static util::FlatMap<std::string, OutputType> instance;
+    if (instance.empty()) {
+      instance["segment"] = OutputType::Segmentation;
+      instance["juman"] = OutputType::Juman;
+      instance["lattice"] = OutputType::Lattice;
+      instance["morph"] = OutputType::Morph;
+      instance["full-morph"] = OutputType::FullMorph;
+      instance["dic-subset"] = OutputType::DicSubset;
+#if defined(JPP_USE_PROTOBUF)
+      instance["juman-pb"] = OutputType::JumanPb;
+      instance["lattice-pb"] = OutputType::LatticePb;
+      instance["lattice-dump"] = OutputType::FullLatticeDump;
+#endif
+    }
+    return instance;
+  }
+
   args::ArgumentParser parser{"Juman++ v2"};
 
   args::PositionalList<std::string> input{parser, "FILENAME", "Input files"};
@@ -69,7 +88,12 @@ struct JppArgsParser {
                           "Input is partially-annotated",
                           {"partial-input"}};
 
-  args::Group outputType{parser, "Output type"};
+  args::Group outputType{parser, "Output format"};
+  args::MapFlag<std::string, OutputType, args::ValueReader, util::FlatMap>
+      format{outputType, "format",     "Named format",
+             {"format"}, format_map(), OutputType::Invalid};
+  args::Flag availableFormats{
+      outputType, "formats", "Show available formats", {"available-formats"}};
   args::Flag juman{
       outputType, "juman", "Juman style (default)", {'j', "juman"}};
   args::Flag morph{outputType, "morph", "Morph style", {'M', "morph"}};
@@ -122,10 +146,6 @@ struct JppArgsParser {
                            "globalBeamPos",
                            "Global beam position output",
                            {"global-beam-pos"}};
-#if defined(JPP_USE_PROTOBUF)
-  args::Flag fullDump{
-      outputType, "fullDump", "Full lattice dump (protobuf)", {"full-dump"}};
-#endif
 #endif
 
   RnnArgs rnnArgs{parser};
@@ -188,7 +208,27 @@ struct JppArgsParser {
     return Status::Ok();
   }
 
+  static void printAvailableFormats() {
+    std::vector<StringPiece> formats;
+    for (auto& pair : format_map()) {
+      formats.push_back(pair.first);
+    }
+    sort(formats.begin(), formats.end());
+    std::cout << "Available formats (--format=...):\n";
+    for (auto fmt : formats) {
+      std::cout << "* " << fmt << "\n";
+    }
+    std::cout << "Refer to "
+                 "https://github.com/ku-nlp/jumanpp/blob/master/docs/output.md "
+                 "for more information\n";
+  }
+
   void fillResult(JumanppConf* result) {
+    if (availableFormats) {
+      printAvailableFormats();
+      exit(1);
+    }
+
     result->outputType.set(juman, OutputType::Juman);
     result->outputType.set(segment, OutputType::Segmentation);
     result->outputType.set(morph, OutputType::Morph);
@@ -198,6 +238,9 @@ struct JppArgsParser {
     result->beamOutput.set(lattice);
     result->outputType.set(printDicInfo, OutputType::ModelInfo);
     result->outputType.set(printVersion, OutputType::Version);
+    if (format) {
+      result->outputType.set(format);
+    }
     result->inputType.set(partialInput, InputType::PartiallyAnnotated);
 
     result->rnnConfig.mergeWith(rnnArgs.config());
