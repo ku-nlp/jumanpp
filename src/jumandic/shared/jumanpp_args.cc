@@ -82,7 +82,8 @@ struct JppArgsParser {
   args::ValueFlag<i32> lattice{outputType,
                                "N",
                                "Lattice style (N-best)",
-                               {'L', 's', "lattice", "specifics"}};
+                               {'L', 's', "lattice", "specifics"},
+                               -1};
   args::Flag segment{outputType, "segment", "Only segment", {"segment"}};
   args::ValueFlag<std::string> segmentSeparator{
       outputType,

@@ -4,6 +4,7 @@
 
 #include "lattice_format.h"
 #include "core/analysis/analyzer_impl.h"
+#include "util/logging.hpp"
 
 namespace jumanpp {
 namespace jumandic {
@@ -234,6 +235,7 @@ Status LatticeFormat::format(const core::analysis::Analyzer& analyzer,
 StringPiece LatticeFormat::result() const { return printer.result(); }
 
 Status LatticeFormat::initialize(const core::analysis::OutputManager& om) {
+  LOG_TRACE() << "Initializing Lattce format, topn=" << topN;
   JPP_RETURN_IF_ERROR(flds.initialize(om));
   JPP_RETURN_IF_ERROR(idResolver.initialize(om.dic()));
   return Status::Ok();

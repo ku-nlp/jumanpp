@@ -12,6 +12,7 @@
 #include "jumandic/shared/lattice_format.h"
 #include "jumandic/shared/morph_format.h"
 #include "jumandic/shared/subset_format.h"
+#include "util/logging.hpp"
 
 #if defined(JPP_USE_PROTOBUF)
 #include "core/proto/lattice_dump_output.h"
@@ -76,7 +77,13 @@ Status JumanppExec::initOutput() {
       break;
     }
     case OutputType::Lattice: {
-      auto mfmt = new jumandic::output::LatticeFormat{conf.beamOutput};
+      i32 numOutput = conf.beamOutput;
+      if (numOutput == -1) {
+        LOG_TRACE() << "Using beam width for lattice output format instead of "
+                       "default value";
+        numOutput = conf.beamSize;
+      }
+      auto mfmt = new jumandic::output::LatticeFormat{numOutput};
       format_.reset(mfmt);
       JPP_RETURN_IF_ERROR(mfmt->initialize(analyzer_.output()));
       break;
