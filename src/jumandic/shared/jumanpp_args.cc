@@ -276,9 +276,6 @@ struct JppArgsParser {
 
 #ifdef JPP_ENABLE_DEV_TOOLS
     result->outputType.set(globalBeamPos, OutputType::GlobalBeamPos);
-#if defined(JPP_USE_PROTOBUF)
-    result->outputType.set(fullDump, OutputType::FullLatticeDump);
-#endif
 #endif
   }
 };
