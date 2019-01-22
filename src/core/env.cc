@@ -112,7 +112,7 @@ void JumanppEnv::setAutoBeam(i32 base, i32 step, i32 max) {
   analyzerConfig_.autoBeamMax = max;
 }
 
-void JumanppEnv::fillVersion(VersionInfo *result) const {
+void JumanppEnv::fillVersion(VersionInfo* result) const {
   result->binary = JPP_VERSION_STRING.str();
   using model::ModelPartKind;
   auto dic = modelInfo_.firstPartOf(ModelPartKind::Dictionary);

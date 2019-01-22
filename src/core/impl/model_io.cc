@@ -295,7 +295,9 @@ void FilesystemModel::renderInfo() {
             << mp.comment;
           break;
         }
-        default: { p << "\nUnsupported Segment Type"; }
+        default: {
+          p << "\nUnsupported Segment Type";
+        }
       }
     }
     p << "\n";

@@ -177,34 +177,36 @@ Status MikolovModelReader::parse() {
   auto maxBlock = std::max<u64>({hdr.layerSize * hdr.vocabSize, hdr.maxentSize,
                                  hdr.layerSize * hdr.layerSize});
   // 3 comes from rounding to next value + sizeof(float)
-  auto pageSize = static_cast<size_t>(1) << (static_cast<u32>(std::log2(maxBlock)) + 3);
+  auto pageSize = static_cast<size_t>(1)
+                  << (static_cast<u32>(std::log2(maxBlock)) + 3);
   data_->memmgr.initialize(pageSize);
   data_->alloc = data_->memmgr.value().core();
   auto& alloc = data_->alloc;
 
-  const auto embedding_matrix_size = static_cast<size_t>(hdr.layerSize) * static_cast<size_t>(hdr.vocabSize);
-  const auto transition_matrix_size = static_cast<size_t>(hdr.layerSize) * static_cast<size_t>(hdr.layerSize);
+  const auto embedding_matrix_size =
+      static_cast<size_t>(hdr.layerSize) * static_cast<size_t>(hdr.vocabSize);
+  const auto transition_matrix_size =
+      static_cast<size_t>(hdr.layerSize) * static_cast<size_t>(hdr.layerSize);
 
-  data_->embeddingData =
-      alloc->allocateBuf<float>(embedding_matrix_size, 64);
+  data_->embeddingData = alloc->allocateBuf<float>(embedding_matrix_size, 64);
   data_->nceEmbeddingData =
       alloc->allocateBuf<float>(embedding_matrix_size, 64);
-  data_->matrixData =
-      alloc->allocateBuf<float>(transition_matrix_size, 64);
-  data_->maxentWeightData = alloc->allocateBuf<float>(static_cast<size_t>(hdr.maxentSize), 64);
+  data_->matrixData = alloc->allocateBuf<float>(transition_matrix_size, 64);
+  data_->maxentWeightData =
+      alloc->allocateBuf<float>(static_cast<size_t>(hdr.maxentSize), 64);
 
-  JPP_RIE_MSG(copyArray(contents, data_->embeddingData,
-                        embedding_matrix_size, &start),
-              "embeds");
+  JPP_RIE_MSG(
+      copyArray(contents, data_->embeddingData, embedding_matrix_size, &start),
+      "embeds");
   JPP_RIE_MSG(copyArray(contents, data_->nceEmbeddingData,
                         embedding_matrix_size, &start),
               "nce embeds");
-  JPP_RIE_MSG(copyArray(contents, data_->matrixData,
-                        transition_matrix_size, &start),
-              "matrix");
   JPP_RIE_MSG(
-      copyArray(contents, data_->maxentWeightData, static_cast<size_t>(hdr.maxentSize), &start),
-      "maxent weights");
+      copyArray(contents, data_->matrixData, transition_matrix_size, &start),
+      "matrix");
+  JPP_RIE_MSG(copyArray(contents, data_->maxentWeightData,
+                        static_cast<size_t>(hdr.maxentSize), &start),
+              "maxent weights");
   if (start != contents.size()) {
     return Status::InvalidState() << "did not read rnn model file fully";
   }

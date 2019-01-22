@@ -28,7 +28,7 @@ class PexStreamReader : public StreamReader {
   Status analyzeWith(analysis::Analyzer *an) override;
   StringPiece comment() override;
   StringPiece surface() const;
-  analysis::ScorePlugin* getPlugin() const;
+  analysis::ScorePlugin *getPlugin() const;
 };
 
 }  // namespace input

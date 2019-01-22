@@ -45,7 +45,7 @@ struct SpecParserImpl {
   Resource* fileResourece(StringPiece name, p::position pos);
   Status buildSpec(spec::AnalysisSpec* result);
 
-  SpecParserImpl(StringPiece basename): basename_{basename.str()} {}
+  SpecParserImpl(StringPiece basename) : basename_{basename.str()} {}
 };
 
 chars::CharacterClass charClassByName(StringPiece name);

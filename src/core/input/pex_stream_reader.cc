@@ -4,10 +4,10 @@
 
 #include <memory>
 
+#include "core/analysis/lattice_types.h"
 #include "core/analysis/score_plugin.h"
 #include "core/input/partial_example.h"
 #include "core/input/partial_example_io.h"
-#include "core/analysis/lattice_types.h"
 #include "pex_stream_reader.h"
 
 namespace jumanpp {

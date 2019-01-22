@@ -76,9 +76,7 @@ class OwningFullTrainer final : public ITrainer {
                   *conf.analyzerConfig},
         trainer_{&analyzer_, conf.trainingSpec, *conf.trainingConfig} {}
 
-  void reset() {
-    trainer_.reset();
-  }
+  void reset() { trainer_.reset(); }
 
   Status initAnalyzer(const analysis::ScorerDef* sconf) {
     return analyzer_.initScorers(*sconf);

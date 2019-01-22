@@ -73,7 +73,7 @@ struct RnnCrdHasher {
     v ^= 0xfeadbeed1235;
     v *= 0x12312f12aff1ULL;
     v ^= (v >> 33);
-    //TODO: Can algorithm support u32?
+    // TODO: Can algorithm support u32?
     return static_cast<size_t>(v);
   }
 

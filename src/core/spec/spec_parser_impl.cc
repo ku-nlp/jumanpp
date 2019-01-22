@@ -3,8 +3,8 @@
 //
 
 #include "spec_parser_impl.h"
-#include "util/mmap.h"
 #include "path.hpp"
+#include "util/mmap.h"
 
 #include <cctype>
 
@@ -18,31 +18,29 @@ Status SpecParserImpl::buildSpec(AnalysisSpec *result) {
   return Status::Ok();
 }
 
-struct FileResource: Resource {
+struct FileResource : Resource {
   util::FullyMappedFile file_;
   Status open(StringPiece name) {
     return file_.open(name, util::MMapType::ReadOnly);
   }
 
-  Status validate() const override {
-    return Status::Ok();
-  }
+  Status validate() const override { return Status::Ok(); }
 
-  StringPiece data() const override {
-    return file_.contents();
-  }
+  StringPiece data() const override { return file_.contents(); }
 };
 
 Resource *SpecParserImpl::fileResourece(StringPiece name, p::position pos) {
   Pathie::Path p{this->basename_};
   auto par = p.parent();
   auto theName = par.join(name.str());
-  FileResource* res = builder_.alloc_->make<FileResource>();
+  FileResource *res = builder_.alloc_->make<FileResource>();
   builder_.garbage_.push_back(res);
   auto nameString = theName.str();
   auto s = res->open(nameString);
   if (!s) {
-    throw p::parse_error("failed to open file: [" + nameString + "], error: " + s.message().str(), pos);
+    throw p::parse_error("failed to open file: [" + nameString +
+                             "], error: " + s.message().str(),
+                         pos);
   }
   return res;
 }
