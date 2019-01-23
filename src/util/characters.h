@@ -149,7 +149,7 @@ struct InputCodepoint {
 
   JPP_ALWAYS_INLINE constexpr InputCodepoint(const char32_t cp,
                                              const CharacterClass& cc,
-                                             const StringPiece& b) noexcept
+                                             StringPiece b) noexcept
       : codepoint(cp), charClass{cc}, bytes(b) {}
 
   explicit JPP_ALWAYS_INLINE InputCodepoint(StringPiece sp) noexcept

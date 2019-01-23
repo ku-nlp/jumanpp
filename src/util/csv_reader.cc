@@ -11,7 +11,7 @@ namespace util {
 CsvReader::CsvReader(char separator_, char quote_)
     : separator_(separator_), quote_{quote_} {}
 
-Status CsvReader::open(const StringPiece &filename) {
+Status CsvReader::open(StringPiece filename) {
   JPP_RETURN_IF_ERROR(file_.open(filename, MMapType::ReadOnly));
   JPP_RETURN_IF_ERROR(file_.map(&fragment_, 0, file_.size()));
   return initFromMemory(fragment_.asStringPiece());
@@ -118,7 +118,7 @@ StringPiece CsvReader::field(i32 idx) const {
   return fields_[idx];
 }
 
-Status CsvReader::initFromMemory(const StringPiece &data) {
+Status CsvReader::initFromMemory(StringPiece data) {
   start_ = lineStart_ = position_ = data.char_begin();
   end_ = data.char_end();
   line_number_ = 0;

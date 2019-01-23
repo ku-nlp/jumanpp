@@ -159,12 +159,10 @@ class StringPiece {
 
 static constexpr const StringPiece EMPTY_SP = StringPiece{};
 
-std::ostream& operator<<(std::ostream& str, const StringPiece& sp);
+std::ostream& operator<<(std::ostream& str, StringPiece sp);
 
-bool operator==(const StringPiece& l, const StringPiece& r);
-inline bool operator!=(const StringPiece& l, const StringPiece& r) {
-  return !(l == r);
-}
+bool operator==(StringPiece l, StringPiece r);
+inline bool operator!=(StringPiece l, StringPiece r) { return !(l == r); }
 bool operator<(StringPiece s1, StringPiece s2);
 
 namespace util {
@@ -172,7 +170,7 @@ namespace impl {
 struct StringPieceHash {
   static const constexpr u64 StringPieceSeed = 0x4adf325;
 
-  inline size_t operator()(const StringPiece& p) const noexcept {
+  inline size_t operator()(StringPiece p) const noexcept {
     using ptrtype = const u8*;
     auto start = reinterpret_cast<ptrtype>(p.begin());
     auto end = reinterpret_cast<ptrtype>(p.end());

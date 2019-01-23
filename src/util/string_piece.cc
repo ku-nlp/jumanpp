@@ -8,12 +8,12 @@
 
 namespace jumanpp {
 
-std::ostream &operator<<(std::ostream &str, const StringPiece &sp) {
+std::ostream &operator<<(std::ostream &str, StringPiece sp) {
   str.write(sp.char_begin(), sp.size());
   return str;
 }
 
-bool operator==(const StringPiece &l, const StringPiece &r) {
+bool operator==(StringPiece l, StringPiece r) {
   if (l.size() != r.size()) return false;
   return std::strncmp(l.char_begin(), r.char_begin(), l.size()) == 0;
 }

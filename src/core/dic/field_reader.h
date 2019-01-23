@@ -18,7 +18,7 @@ class StringStorageReader {
   u32 alignPower_;
 
  public:
-  explicit StringStorageReader(const StringPiece& obj, u32 alignPower) noexcept
+  explicit StringStorageReader(StringPiece obj, u32 alignPower) noexcept
       : data_{obj}, alignPower_{alignPower} {}
 
   StringPiece data() const noexcept { return data_; }
@@ -156,7 +156,7 @@ class IntStorageReader {
 
  public:
   IntStorageReader() noexcept = default;
-  explicit IntStorageReader(const StringPiece& obj) noexcept : data_{obj} {}
+  explicit IntStorageReader(StringPiece obj) noexcept : data_{obj} {}
 
   IntListTraversal raw() const { return rawWithLimit(0, data_.size()); }
 
@@ -214,8 +214,7 @@ class StringStorageTraversal {
   u32 alignment_;
 
  public:
-  explicit StringStorageTraversal(const StringPiece& data,
-                                  u32 alignPower) noexcept
+  explicit StringStorageTraversal(StringPiece data, u32 alignPower) noexcept
       : parser_{data}, alignPower_{alignPower}, alignment_{1u << alignPower} {}
   explicit StringStorageTraversal(const StringStorageReader& rdr) noexcept
       : StringStorageTraversal(rdr.data(), rdr.alignPower()) {}

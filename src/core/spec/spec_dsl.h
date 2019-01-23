@@ -78,7 +78,7 @@ class FieldBuilder : public DslOpBase {
   FieldBuilder() {}
 
  public:
-  FieldBuilder(i32 csvColumn_, const StringPiece& name_)
+  FieldBuilder(i32 csvColumn_, StringPiece name_)
       : csvColumn_(csvColumn_), name_(name_) {}
 
   FieldBuilder& strings() {
@@ -189,7 +189,7 @@ class FeatureBuilder : DslOpBase {
 
  public:
   FeatureBuilder(const FeatureBuilder&) = delete;
-  FeatureBuilder(const StringPiece& name_, util::memory::PoolAlloc* alloc)
+  FeatureBuilder(StringPiece name_, util::memory::PoolAlloc* alloc)
       : name_(name_),
         fields_{alloc},
         trueTransforms_{alloc},

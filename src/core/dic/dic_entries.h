@@ -207,7 +207,7 @@ class IndexTraversal {
  public:
   explicit IndexTraversal(const EntriesHolder* dic_)
       : da_(dic_->trie.traversal()), dic_(dic_) {}
-  TraverseStatus step(const StringPiece& sp) { return da_.step(sp); }
+  TraverseStatus step(StringPiece sp) { return da_.step(sp); }
   IndexedEntries entries() const { return dic_->entryTraversal(da_.value()); }
 };
 

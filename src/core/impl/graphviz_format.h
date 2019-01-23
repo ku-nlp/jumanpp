@@ -97,7 +97,7 @@ struct Attribute {
   StringPiece key;
   StringPiece value;
 
-  constexpr Attribute(const StringPiece& key, const StringPiece& value)
+  constexpr Attribute(StringPiece key, StringPiece value)
       : key(key), value(value) {}
 };
 

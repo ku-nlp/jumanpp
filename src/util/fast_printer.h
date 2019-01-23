@@ -16,7 +16,7 @@ class FastPrinter {
   fmt::BasicMemoryWriter<char> formatter_;
 
  public:
-  FastPrinter& operator<<(const StringPiece& sp) {
+  FastPrinter& operator<<(StringPiece sp) {
     formatter_.buffer().append(sp.begin(), sp.end());
     return *this;
   }
@@ -46,7 +46,7 @@ class FastPrinter {
 }  // namespace util
 
 template <typename T>
-fmt::BasicWriter<T>& operator<<(fmt::BasicWriter<T>& f, const StringPiece& sp) {
+fmt::BasicWriter<T>& operator<<(fmt::BasicWriter<T>& f, StringPiece sp) {
   f << fmt::BasicStringRef<char>{sp.begin(), sp.size()};
   return f;
 }

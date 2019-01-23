@@ -65,8 +65,7 @@ class TestEnv {
     REQUIRE_OK(bldr.build(&originalSpec));
   }
 
-  void saveDic(const StringPiece& data,
-               const StringPiece name = StringPiece{"test"}) {
+  void saveDic(StringPiece data, const StringPiece name = StringPiece{"test"}) {
     REQUIRE_OK(origDicBuilder.importSpec(&originalSpec));
     REQUIRE_OK(origDicBuilder.importCsv(name, data));
     dic::DictionaryHolder holder1;

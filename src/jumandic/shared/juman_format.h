@@ -68,8 +68,7 @@ class JumanFormat : public core::OutputFormat {
   StringPiece result() const { return printer.result(); }
 };
 
-inline const StringPiece& ifEmpty(const StringPiece& s1,
-                                  const StringPiece& s2) {
+inline StringPiece ifEmpty(StringPiece s1, StringPiece s2) {
   if (s1.size() > 0) {
     return s1;
   }

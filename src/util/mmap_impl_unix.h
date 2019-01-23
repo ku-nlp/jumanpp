@@ -35,7 +35,7 @@ MappedFile::~MappedFile() {
   }
 }
 
-Status MappedFile::open(const StringPiece &filename, MMapType type) {
+Status MappedFile::open(StringPiece filename, MMapType type) {
   if (fd_ != 0) {
     return Status::InvalidState()
            << "mmap has already opened file " << this->filename_;

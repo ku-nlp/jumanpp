@@ -34,7 +34,7 @@ MappedFile::~MappedFile() {
   }
 }
 
-Status MappedFile::open(const StringPiece &filename, MMapType type) {
+Status MappedFile::open(StringPiece filename, MMapType type) {
   if (fd_ != nullptr) {
     return JPPS_INVALID_STATE << "mmap has already opened file "
                               << this->filename_;

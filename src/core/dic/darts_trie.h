@@ -38,7 +38,7 @@ struct PieceWithValue {
   StringPiece key;
   i32 value;
 
-  PieceWithValue(const StringPiece &key, i32 value) : key(key), value(value) {}
+  PieceWithValue(StringPiece key, i32 value) : key(key), value(value) {}
 };
 
 }  // namespace impl
