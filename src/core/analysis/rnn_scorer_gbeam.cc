@@ -5,6 +5,7 @@
 #include "rnn_scorer_gbeam.h"
 #include "rnn/mikolov_rnn.h"
 #include "rnn_id_resolver.h"
+#include "util/logging.hpp"
 #include "util/stl_util.h"
 
 namespace jumanpp {
@@ -298,6 +299,9 @@ RnnScorerGbeamFactory::RnnScorerGbeamFactory() = default;
 
 Status RnnScorerGbeamFactory::makeInstance(
     std::unique_ptr<ScoreComputer>* result) {
+  LOG_TRACE() << "Making new RnnScorerGbeam, params="
+              << state_->rnn.nceConstant() << " " << config().unkConstantTerm
+              << " " << config().unkLengthPenalty;
   auto ptr = new RnnScorerGbeam;
   result->reset(ptr);
   ptr->state_.reset(new GbeamRnnState);
@@ -433,6 +437,10 @@ Status RnnScorerGbeamFactory::load(const model::ModelInfo& model) {
     return JPPS_INVALID_PARAMETER << "failed to read RNN header";
   }
 
+  LOG_TRACE() << "Loaded RNN model header: nce_bias="
+              << header.config.nceBias.value()
+              << " scale=" << header.config.rnnWeight.value();
+
   JPP_RETURN_IF_ERROR(state_->resolver.setState(header.fields, p->data[1],
                                                 p->data[2], header.unkIdx));
   auto& rnnhdr = header.rnnHeader;
@@ -454,6 +462,9 @@ Status RnnScorerGbeamFactory::load(const model::ModelInfo& model) {
 
   JPP_RETURN_IF_ERROR(state_->rnn.init(rnnhdr, rnnMatrix, maxentWeights));
   state_->computeBosState(0);
+  if (config().rnnWeight.defined()) {
+    state_->rnn.setNceConstant(config().rnnWeight);
+  }
 
   return Status::Ok();
 }

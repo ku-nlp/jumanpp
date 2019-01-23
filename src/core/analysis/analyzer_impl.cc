@@ -9,6 +9,8 @@
 #include "core/analysis/score_processor.h"
 #include "core/analysis/unk_nodes_creator.h"
 #include "core/impl/feature_impl_types.h"
+#include "util/debug_output.h"
+#include "util/logging.hpp"
 
 namespace jumanpp {
 namespace core {
@@ -298,6 +300,7 @@ Status AnalyzerImpl::computeScores(const ScorerDef* sconf) {
   if (sproc_ == nullptr) {
     return JPPS_INVALID_STATE << "Analyzer was not initialized";
   }
+  LOG_TRACE() << "Scorer weights: " << VOut(sconf->scoreWeights);
   if (cfg().globalBeamSize <= 0) {
     return computeScoresFull(sconf);
   } else {

@@ -104,6 +104,7 @@ class MikolovRnn {
               const util::ArraySlice<float>& weights,
               const util::ArraySlice<float>& maxentW);
   void setNceConstant(float value) { rnnNceConstant = value; }
+  float nceConstant() const { return rnnNceConstant; }
   void apply(StepData* data);
   void applyParallel(ParallelStepData* data) const;
   void computeNewParCtx(ParallelContextData* pcd) const;
