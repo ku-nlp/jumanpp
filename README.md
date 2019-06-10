@@ -86,7 +86,7 @@ The demo still uses v1 but, it will be updated to v2 soon.
 
 ## Extracting diffs caused by beam configurations
 
-You can see sentences in which two different beam configutaions produce different analyses.
+You can see sentences in which two different beam configurations produce different analyses.
 A `src/jumandic/jpp_jumandic_pathdiff` binary [(source)](https://github.com/ku-nlp/jumanpp/blob/master/src/jumandic/main/path_diff.cc) 
 (relative to a compilation root) does it.
 The only Jumandic-specific thing here is the usage of [code-generated linear model inference](https://github.com/ku-nlp/jumanpp/blob/master/src/jumandic/main/path_diff.cc#L195).
@@ -113,7 +113,7 @@ We also have a partial annotation tool. Please see https://github.com/eiennohito
 
 ## Performance Notes
 
-To get the best performance, you need to build with [extended instructuion sets](https://gcc.gnu.org/onlinedocs/gcc/x86-Options.html).
+To get the best performance, you need to build with [extended instruction sets](https://gcc.gnu.org/onlinedocs/gcc/x86-Options.html).
 If you are planning to use Juman++ only locally,
 specify `-DCMAKE_CXX_FLAGS="-march=native"`.
 
