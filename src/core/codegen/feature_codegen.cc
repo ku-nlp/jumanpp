@@ -9,6 +9,7 @@
 #include "core/codegen/pattern_feature_codegen.h"
 #include "core/impl/feature_impl_combine.h"
 #include "core/impl/feature_impl_ngram_partial.h"
+#include "core/spec/spec_hashing.h"
 #include "util/logging.hpp"
 
 namespace jumanpp {
@@ -46,12 +47,15 @@ Status StaticFeatureCodegen::writeHeader(const std::string& filename) {
         << "namespace jumanpp_generated {\n"
         << "class " << config_.className
         << ": public jumanpp::core::features::StaticFeatureFactory {\n"
+        << "public:\n"
         << JPP_TEXT(jumanpp::core::features::NgramFeatureApply*)
         << "ngram() const override;\n"
         << JPP_TEXT(jumanpp::core::features::PartialNgramFeatureApply*)
         << "ngramPartial() const override;\n";
     ofs << JPP_TEXT(jumanpp::core::features::GeneratedPatternFeatureApply*)
         << "pattern() const override;\n";
+    ofs << JPP_TEXT(::jumanpp::u64) << " runtimeHash() const override { return "
+        << spec::hashSpec(this->spec_) << "ULL; }\n";
     ofs << "};\n"
         << "} //namespace jumanpp_generated\n";
 

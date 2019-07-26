@@ -8,6 +8,7 @@
 #include "core/analysis/perceptron.h"
 #include "core/impl/feature_impl_combine.h"
 #include "core/impl/feature_impl_ngram_partial.h"
+#include "core/spec/spec_hashing.h"
 #include "testing/test_analyzer.h"
 
 using namespace jumanpp::testing;
@@ -241,4 +242,18 @@ TEST_CASE("partial ngram joint biTri produces the same values") {
     CAPTURE(i);
     CHECK(result1[i] == Approx(result2[i]));
   }
+}
+
+TEST_CASE("spec hash matches") {
+  TestEnv env;
+  env.spec([](ModelSpecBuilder& msb) {
+    jumanpp::codegentest::CgTwoSpecFactory::fillSpec(msb);
+  });
+  env.importDic("a,b,c\nc,d,e\nf,g,h\n");
+
+  jumanpp_generated::Test02 features;
+  auto restHash = jumanpp::core::spec::hashSpec(env.restoredDic.spec);
+  auto origHash = jumanpp::core::spec::hashSpec(env.origDicBuilder.spec());
+  CHECK(restHash == origHash);
+  CHECK(features.runtimeHash() == restHash);
 }

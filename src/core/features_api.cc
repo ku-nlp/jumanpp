@@ -4,10 +4,11 @@
 
 #include "features_api.h"
 #include "core/core.h"
+#include "core/impl/feature_impl_combine.h"
+#include "core/impl/feature_impl_compute.h"
+#include "core/impl/feature_impl_ngram_partial.h"
 #include "core/impl/feature_impl_pattern.h"
-#include "impl/feature_impl_combine.h"
-#include "impl/feature_impl_compute.h"
-#include "impl/feature_impl_ngram_partial.h"
+#include "core/spec/spec_hashing.h"
 #include "util/logging.hpp"
 
 namespace jumanpp {
@@ -35,7 +36,8 @@ Status makeFeatures(const CoreHolder &info, const StaticFeatureFactory *sff,
   }
 
   if (sff != nullptr) {
-    if (true) {  // TODO: check hashes
+    auto dicHash = spec::hashSpec(info.spec());
+    if (dicHash == sff->runtimeHash()) {
       result->patternStatic.reset(sff->pattern());
       result->ngramStatic.reset(sff->ngram());
       result->ngramPartialStatic.reset(sff->ngramPartial());
