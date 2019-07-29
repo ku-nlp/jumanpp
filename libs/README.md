@@ -12,9 +12,9 @@ Right now the full list is:
 * backward (https://github.com/bombela/backward-cpp) -- stack trace library for C++
 * Pathie (https://github.com/Quintus/pathie-cpp) -- A library for Unicode path management
 
-Also, JUMAN++ internally uses:
+Also, Juman++ internally uses:
 
 * fmt (https://github.com/fmtlib/fmt) -- formatting library for C++ (lies in jumanpp/util)
-* Darts trie implementation by Taku Kudo
+* Darts trie implementation, adapted for our needs (https://github.com/s-yata/darts-clone)
 * Some files from Protobuf
 * Some files from TensorFlow

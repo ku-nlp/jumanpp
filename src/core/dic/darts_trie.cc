@@ -45,11 +45,15 @@ Status DoubleArrayBuilder::build(ProgressCallback *progress) {
   immediate_.clear();
   immediate_.shrink_to_fit();
 
-  auto retval = array_->build(keys.size(), keys.data(), lengths.data(),
-                              values.data(), progress);
+  try {
+    auto retval = array_->build(keys.size(), keys.data(), lengths.data(),
+                                values.data(), progress);
 
-  if (retval != 0) {
-    return JPPS_INVALID_STATE << "double array build failed, code=" << retval;
+    if (retval != 0) {
+      return JPPS_INVALID_STATE << "double array build failed, code=" << retval;
+    }
+  } catch (JppDarts::Details::Exception& e) {
+    return JPPS_INVALID_STATE << "failed to build darts trie, " << e.what();
   }
 
   return Status::Ok();
@@ -94,8 +98,6 @@ std::string DoubleArray::describe() const {
   std::string description;
   description += "size=";
   description += std::to_string(underlying_->size());
-  description += " nonzero=";
-  description += std::to_string(underlying_->nonzero_size());
   return description;
 }
 

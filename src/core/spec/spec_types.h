@@ -22,7 +22,7 @@ std::ostream& operator<<(std::ostream& o, FieldType ct);
 constexpr static i32 InvalidInt = std::numeric_limits<i32>::min();
 
 constexpr static u32 SpecMagic = 0xfeed0000;
-constexpr static u32 SpecFormatVersion = 2;
+constexpr static u32 SpecFormatVersion = 3;
 
 struct FieldDescriptor {
   /**

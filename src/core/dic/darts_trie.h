@@ -11,9 +11,8 @@
 #include "util/string_piece.h"
 #include "util/types.hpp"
 
-namespace Darts {
-template <class node_type_, class node_u_type_, class array_type_,
-          class array_u_type_, class length_func_>
+namespace JppDarts {
+template <typename, typename, typename T, typename>
 class DoubleArrayImpl;
 }
 
@@ -21,18 +20,10 @@ namespace jumanpp {
 namespace core {
 class ProgressCallback;
 namespace dic {
-
-struct CharStringLength {
-  size_t operator()(StringPiece::pointer_t data) const {
-    JPP_DCHECK_NOT("should never be called");
-    return 0;
-  }
-};
-
 namespace impl {
 
 using DoubleArrayCore =
-    Darts::DoubleArrayImpl<char, unsigned char, i32, u32, CharStringLength>;
+    JppDarts::DoubleArrayImpl<char, unsigned char, i32, u32>;
 
 struct PieceWithValue {
   StringPiece key;
