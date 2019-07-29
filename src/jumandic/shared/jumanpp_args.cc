@@ -7,7 +7,9 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 #endif
+#include <errors.hpp>
 #include <iostream>
+#include <path.hpp>
 #include <regex>
 #include <util/logging.hpp>
 #include "args.h"
@@ -298,6 +300,38 @@ Status parseCfgFile(StringPiece filename, JumanppConf* conf,
   return Status::Ok();
 }
 
+namespace {
+Status fixupModelPath(JumanppConf* result) {
+  try {
+    Pathie::Path modelPath(result->modelFile);
+    if (modelPath.exists()) {
+      return Status::Ok();
+    }
+
+    Pathie::Path configPath(result->configFile);
+    Pathie::Path configParent = configPath.parent();
+
+    if (!configParent.exists() || !configParent.is_directory()) {
+      return Status::Ok();
+    }
+
+    if (modelPath.is_absolute()) {
+      return Status::Ok();
+    }
+
+    Pathie::Path relativeToCfg = configParent / modelPath;
+    if (relativeToCfg.exists()) {
+      result->modelFile = relativeToCfg.utf8_str();
+    }
+  } catch (Pathie::PathieError& e) {
+    return JPPS_INVALID_PARAMETER
+           << "failed to fixup path: " << result->modelFile.value()
+           << " reason=" << e.what();
+  }
+  return Status::Ok();
+}
+}  // namespace
+
 Status parseArgs(int argc, const char* argv[], JumanppConf* result) {
   StringPiece myName{"/jumandic.config"};
   JppArgsParser argsParser;
@@ -322,6 +356,7 @@ Status parseArgs(int argc, const char* argv[], JumanppConf* result) {
              << "\n"
              << s;
     }
+    JPP_RETURN_IF_ERROR(fixupModelPath(result));
   }
 
   if (!loadedConfig) {
@@ -332,6 +367,7 @@ Status parseArgs(int argc, const char* argv[], JumanppConf* result) {
       argsParser.fillResult(result);
       loadedConfig = true;
     }
+    JPP_RETURN_IF_ERROR(fixupModelPath(result));
     LOG_DEBUG() << "tried to read global config from " << globalCfgName
                 << " error=" << s;
   }
@@ -345,6 +381,7 @@ Status parseArgs(int argc, const char* argv[], JumanppConf* result) {
     if (s) {
       argsParser.fillResult(result);
     }
+    JPP_RETURN_IF_ERROR(fixupModelPath(result));
     LOG_DEBUG() << "tried to read user config from " << userConfigPath
                 << " error=" << s;
   }

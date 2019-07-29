@@ -43,6 +43,7 @@ endif()
 
 add_library(jpp_jumandic ${jumandic_sources} ${jumandic_headers} ${jpp_jumandic_cg_SRC})
 target_include_directories(jpp_jumandic PRIVATE ${jpp_jumandic_cg_INCLUDE})
+target_link_libraries(jpp_jumandic pathie)
 if (${JPP_USE_PROTOBUF})
   target_include_directories(jpp_jumandic PUBLIC ${Protobuf_INCLUDE_DIR} ${CMAKE_CURRENT_BINARY_DIR}/gen)
   target_link_libraries(jpp_jumandic ${Protobuf_LIBRARIES})
