@@ -52,7 +52,7 @@ Status DoubleArrayBuilder::build(ProgressCallback *progress) {
     if (retval != 0) {
       return JPPS_INVALID_STATE << "double array build failed, code=" << retval;
     }
-  } catch (JppDarts::Details::Exception& e) {
+  } catch (JppDarts::Details::Exception &e) {
     return JPPS_INVALID_STATE << "failed to build darts trie, " << e.what();
   }
 
