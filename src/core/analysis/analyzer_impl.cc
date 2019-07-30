@@ -300,7 +300,7 @@ Status AnalyzerImpl::computeScores(const ScorerDef* sconf) {
   if (sproc_ == nullptr) {
     return JPPS_INVALID_STATE << "Analyzer was not initialized";
   }
-  LOG_TRACE() << "Scorer weights: " << VOut(sconf->scoreWeights);
+  // LOG_TRACE() << "Scorer weights: " << VOut(sconf->scoreWeights);
   if (cfg().globalBeamSize <= 0) {
     return computeScoresFull(sconf);
   } else {
