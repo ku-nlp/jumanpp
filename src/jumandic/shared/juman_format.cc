@@ -17,7 +17,7 @@ Status JumanFormat::format(const core::analysis::Analyzer& analysis,
 
   auto& outMgr = analysis.output();
 
-  if (comment.size() > 0) {
+  if (!comment.empty()) {
     printer << "# " << comment << '\n';
   }
 
@@ -39,6 +39,25 @@ Status JumanFormat::format(const core::analysis::Analyzer& analysis,
 
   return Status::Ok();
 }
+
+namespace {
+StringPiece escapeJumandicSymbols(StringPiece in) {
+  if (in.size() == 1) {
+    switch (in[0]) {
+      // return fullwidth char
+      case ' ':
+        return StringPiece("　");
+      case '"':
+        return StringPiece("”");
+      case '<':
+        return StringPiece("＜");
+      case '>':
+        return StringPiece("＞");
+    }
+  }
+  return in;
+}
+}  // namespace
 
 void formatNormalizedFeature(util::io::FastPrinter& p, i32 featureVal) {
   p << "非標準表記:";
@@ -94,7 +113,7 @@ bool JumanFormat::formatOne(const core::analysis::OutputManager& om,
 
     auto newId = idResolver.dicToJuman(rawId);
 
-    printer << flds.surface[walker] << " ";
+    printer << escapeJumandicSymbols(flds.surface[walker]) << " ";
     printer << flds.reading[walker] << " ";
     printer << flds.baseform[walker] << " ";
     printer << ifEmpty(flds.pos[walker], "*") << " " << newId.pos << " ";
@@ -114,7 +133,7 @@ bool JumanFormat::formatOne(const core::analysis::OutputManager& om,
     } else {
       bool output = false;
       printer << '"';
-      if (canonic.size() > 0) {
+      if (!canonic.empty()) {
         printer << "代表表記:" << canonic;
         if (res.hasNext()) {
           printer << " ";
@@ -152,7 +171,7 @@ bool JumanFormat::formatOne(const core::analysis::OutputManager& om,
   return true;
 }
 
-JumanFormat::JumanFormat() {
+JumanFormat::JumanFormat() : analysisResult() {
   printer.reserve(16 * 1024);  // 16k
 }
 
