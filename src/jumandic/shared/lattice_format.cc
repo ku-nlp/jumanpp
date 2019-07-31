@@ -71,6 +71,15 @@ i32 LatticeFormatInfo::idOf(LatticeNodePtr ptr) const {
   return 0;
 }
 
+namespace {
+StringPiece escapeTab(StringPiece sp) {
+  if (sp.size() == 1 && sp[0] == '\t') {
+    return StringPiece("\\t");
+  }
+  return sp;
+}
+}  // namespace
+
 Status LatticeFormat::format(const core::analysis::Analyzer& analyzer,
                              StringPiece comment) {
   printer.reset();
@@ -94,7 +103,7 @@ Status LatticeFormat::format(const core::analysis::Analyzer& analyzer,
 
   auto& f = flds;
 
-  if (comment.size() > 0) {
+  if (!comment.empty()) {
     printer << "# " << comment << '\n';
   } else {
     printer << "# MA-SCORE\t";
@@ -128,7 +137,7 @@ Status LatticeFormat::format(const core::analysis::Analyzer& analyzer,
           auto s1 = lat->boundary(p1.boundary)->scores()->forPtr(p1);
           auto s2 = lat->boundary(p2.boundary)->scores()->forPtr(p2);
           float total1 = 0, total2 = 0;
-          for (int i = 0; i < weights.size(); ++i) {
+          for (size_t i = 0; i < weights.size(); ++i) {
             total1 += s1[i] * weights[i];
             total2 += s2[i] * weights[i];
           }
@@ -144,7 +153,7 @@ Status LatticeFormat::format(const core::analysis::Analyzer& analyzer,
       printer << "-\t";
       printer << n.nodeInfo().id << '\t';
       auto& prevs = n.nodeInfo().prev;
-      for (int i = 0; i < prevs.size(); ++i) {
+      for (size_t i = 0; i < prevs.size(); ++i) {
         auto id = latticeInfo.idOf(prevs[i]);
         printer << id;
         if (i != prevs.size() - 1) {
@@ -155,9 +164,9 @@ Status LatticeFormat::format(const core::analysis::Analyzer& analyzer,
       auto position = cptr.boundary - 2;  // we have 2 BOS
       printer << position << '\t';
       printer << position + ninfo.numCodepoints() - 1 << '\t';
-      printer << f.surface[walker] << '\t';
+      printer << escapeTab(f.surface[walker]) << '\t';
       auto canFrm = f.canonicForm[walker];
-      if (canFrm.size() > 0) {
+      if (!canFrm.empty()) {
         printer << f.canonicForm[walker];
       } else {
         printer << f.baseform[walker] << '/' << f.reading[walker];
@@ -217,7 +226,7 @@ Status LatticeFormat::format(const core::analysis::Analyzer& analyzer,
 
       printer << "ランク:";
       auto& ranks = n.nodeInfo().ranks;
-      for (int i = 0; i < ranks.size(); ++i) {
+      for (size_t i = 0; i < ranks.size(); ++i) {
         printer << ranks[i] + 1;
         if (i != ranks.size() - 1) {
           printer << ';';
@@ -235,7 +244,7 @@ Status LatticeFormat::format(const core::analysis::Analyzer& analyzer,
 StringPiece LatticeFormat::result() const { return printer.result(); }
 
 Status LatticeFormat::initialize(const core::analysis::OutputManager& om) {
-  LOG_TRACE() << "Initializing Lattce format, topn=" << topN;
+  LOG_TRACE() << "Initializing Lattice format, topn=" << topN;
   JPP_RETURN_IF_ERROR(flds.initialize(om));
   JPP_RETURN_IF_ERROR(idResolver.initialize(om.dic()));
   return Status::Ok();

@@ -41,10 +41,12 @@ Status JumanFormat::format(const core::analysis::Analyzer& analysis,
 }
 
 namespace {
-StringPiece escapeJumandicSymbols(StringPiece in) {
+StringPiece escapeForJumanOutput(StringPiece in) {
   if (in.size() == 1) {
     switch (in[0]) {
       // return fullwidth char
+      case '\t':
+        return StringPiece("\\t");
       case ' ':
         return StringPiece("　");
       case '"':
@@ -113,7 +115,7 @@ bool JumanFormat::formatOne(const core::analysis::OutputManager& om,
 
     auto newId = idResolver.dicToJuman(rawId);
 
-    printer << escapeJumandicSymbols(flds.surface[walker]) << " ";
+    printer << escapeForJumanOutput(flds.surface[walker]) << " ";
     printer << flds.reading[walker] << " ";
     printer << flds.baseform[walker] << " ";
     printer << ifEmpty(flds.pos[walker], "*") << " " << newId.pos << " ";
