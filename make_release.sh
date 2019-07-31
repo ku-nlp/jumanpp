@@ -16,7 +16,7 @@ OUT_DIR="release-stage-dir/jumanpp-${VERSION}"
 
 mkdir -p "${OUT_DIR}"
 
-cp -r docs libs src test CMakeLists.txt \
+cp -r cmake docs libs src test CMakeLists.txt \
     CONTRIBUTORS README.md README_ja.md \
     "release-stage-dir/jumanpp-${VERSION}"
 
