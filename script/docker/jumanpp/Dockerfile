@@ -9,7 +9,7 @@ RUN apk add --update --no-cache --virtual=build-deps \
     && mkdir bld \
     && cd bld \
     && cmake .. -DCMAKE_BUILD_TYPE=Release \
-    && make -j $(nproc) \
+    && make -j "$(nproc)" \
     && make install \
     && rm -rf /var/cache/* \
     && apk del build-deps \
