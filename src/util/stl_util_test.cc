@@ -25,7 +25,7 @@ TEST_CASE("can partition a shuffled array (3,4)") {
     CAPTURE(i);
     std::shuffle(v.begin(), v.end(), rng);
     auto r = u::partition(v.begin(), v.end(), std::less<>(), 3, 4);
-    long dist = std::distance(v.begin(), r);
+    auto dist = std::distance(v.begin(), r);
     CHECK(dist < 5);
     CHECK(v[0] <= 3);
     CHECK(v[1] <= 3);
@@ -43,7 +43,7 @@ TEST_CASE("can partition a shuffled array (2,3)") {
     CAPTURE(i);
     std::shuffle(v.begin(), v.end(), rng);
     auto r = u::partition(v.begin(), v.end(), std::less<>(), 2, 3);
-    long dist = std::distance(v.begin(), r);
+    auto dist = std::distance(v.begin(), r);
     CHECK(dist < 4);
     CHECK(v[0] <= 2);
     CHECK(v[1] <= 2);
@@ -62,7 +62,7 @@ TEST_CASE("can partition a shuffled array 20: (4,7)") {
     CAPTURE(i);
     std::shuffle(v.begin(), v.end(), rng);
     auto r = u::partition(v.begin(), v.end(), std::less<>(), 4, 7);
-    long dist = std::distance(v.begin(), r);
+    auto dist = std::distance(v.begin(), r);
     CAPTURE(dist);
     CHECK(dist < 8);
     CHECK(v[0] < dist);

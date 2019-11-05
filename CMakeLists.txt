@@ -15,20 +15,22 @@ endif()
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/version ${JUMANPP_FULL_VERSION})
 
 set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+
 if (MSVC)
 	add_compile_options(
     "/utf-8" #Ensures MSVC treats strings as UTF-8 at both compile/runtime time
     "/wd4141" # double inline
     "/wd4018" # comparing signed-unsigned types
+    "/wd4200" # nonstandard extension used: zero-sized array in struct/union
   )
 endif()
 
 if (WIN32)
     add_definitions("-D_WIN32_WINNT=0x0600") # VISTA
 endif()
-
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
 
 include_directories("${CMAKE_SOURCE_DIR}/libs")
 

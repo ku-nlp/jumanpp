@@ -46,17 +46,17 @@ PathieError::PathieError()
   m_pathie_errmsg = "Unknown pathie exception.";
 }
 
-PathieError::PathieError(std::string message)
+PathieError::PathieError(std::string message) noexcept
 {
-  m_pathie_errmsg = message;
+  m_pathie_errmsg = std::move(message);
 }
 
-PathieError::~PathieError() throw()
+PathieError::~PathieError() noexcept
 {
   //
 }
 
-const char* PathieError::what() const throw()
+const char* PathieError::what() const noexcept
 {
   return m_pathie_errmsg.c_str();
 }

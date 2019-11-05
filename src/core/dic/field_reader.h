@@ -102,7 +102,9 @@ class IntListTraversal {
     return nread;
   }
 
-  i32 numReadBytes() const noexcept { return parser_.numReadBytes(); }
+  i32 numReadBytes() const noexcept {
+    return static_cast<i32>(parser_.numReadBytes());
+  }
 
   void clear() {
     length_ = 0;
@@ -158,7 +160,10 @@ class IntStorageReader {
   IntStorageReader() noexcept = default;
   explicit IntStorageReader(StringPiece obj) noexcept : data_{obj} {}
 
-  IntListTraversal raw() const { return rawWithLimit(0, data_.size()); }
+  IntListTraversal raw() const {
+    auto length = static_cast<i32>(data_.size());
+    return rawWithLimit(0, length);
+  }
 
   IntListTraversal rawWithLimit(i32 ptr, i32 length) const {
     JPP_DCHECK_IN(ptr, 0, data_.size());

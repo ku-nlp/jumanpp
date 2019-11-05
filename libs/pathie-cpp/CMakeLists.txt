@@ -56,7 +56,8 @@ option(PATHIE_ASSUME_UTF8_ON_UNIX "Assume file paths under UNIX to be always enc
 ########################################
 # Extra flags
 
-set(CMAKE_CXX_STANDARD 98)
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")

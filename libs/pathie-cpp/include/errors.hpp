@@ -49,8 +49,8 @@ namespace Pathie {
   class PathieError: public std::exception {
   public:
     PathieError(); ///< Constructs a new instance.
-    PathieError(std::string message); ///< Contructs a new instance with the given what() message.
-    virtual ~PathieError() throw();
+    PathieError(std::string message) noexcept; ///< Contructs a new instance with the given what() message.
+    virtual ~PathieError() noexcept;
 
     virtual const char* what() const throw(); ///< The error message.
   protected:
@@ -63,7 +63,7 @@ namespace Pathie {
   class ErrnoError: public PathieError {
   public:
     ErrnoError(int val); ///< Constructs a new instance from the given `errno` value.
-    virtual ~ErrnoError() throw();
+    virtual ~ErrnoError() noexcept;
 
     inline int get_val(){return m_val;} ///< The `errno` value.
   private:

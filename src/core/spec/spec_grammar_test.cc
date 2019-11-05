@@ -27,7 +27,7 @@ void shouldParse(StringPiece data) {
   bool success = false;
   try {
     success = pt::parse<full_grammar>(input);
-  } catch (pt::parse_error& e) {
+  } catch (pt::parse_error&) {
     success = false;
   }
 
@@ -45,7 +45,7 @@ void failParse(StringPiece data) {
   auto result = false;
   try {
     result = pt::parse<full_grammar>(input);
-  } catch (pt::parse_error& e) {
+  } catch (pt::parse_error&) {
     result = false;
   }
   CAPTURE(data);

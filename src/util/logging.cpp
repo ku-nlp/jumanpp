@@ -31,8 +31,8 @@ WriteInDestructorLoggerImpl::~WriteInDestructorLoggerImpl() {
   }
 }
 
-#ifdef _MSC_VER
-inline static struct tm *localtime_r(const time_t *timep, struct tm *result) {
+#if defined(_MSC_VER) || defined(MINGW_SDK_INIT)
+inline static std::tm *localtime_r(const time_t *timep, std::tm *result) {
   return localtime_s(result, timep) == 0 ? result : nullptr;
 }
 #endif
