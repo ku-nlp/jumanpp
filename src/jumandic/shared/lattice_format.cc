@@ -172,8 +172,8 @@ Status LatticeFormat::format(const core::analysis::Analyzer& analyzer,
         printer << f.baseform[walker] << '/' << f.reading[walker];
       }
       printer << '\t';
-      printer << f.reading[walker] << '\t';
-      printer << f.baseform[walker] << '\t';
+      printer << escapeTab(f.reading[walker]) << '\t';
+      printer << escapeTab(f.baseform[walker]) << '\t';
 
       auto fieldBuffer = walker.features();
 
