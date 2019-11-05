@@ -27,3 +27,8 @@ __pycache__/
 .DS_Store
 
 build/
+
+# MSVS
+
+CMakeSettings.json
+.vs/
