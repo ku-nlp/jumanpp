@@ -12,8 +12,8 @@ the original Juman++.
 ## System Requirements
 
 * OS: Linux, MacOS X or Windows.
-* Compiler: C++14 compatible (will [downgrade to C++11](https://github.com/ku-nlp/jumanpp/issues/20) later)
-  * For, example gcc 5.1+, clang 3.4+, MSVC 2017
+* Compiler: C++14 compatible
+  * For example gcc 5.1+, clang 3.4+, MSVC 2017
   * We test on GCC and clang on Linux/MacOS, mingw64-gcc and MSVC2017 on Windows
 - CMake v3.1 or later
 
