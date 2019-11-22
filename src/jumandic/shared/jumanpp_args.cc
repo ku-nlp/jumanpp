@@ -191,7 +191,7 @@ struct JppArgsParser {
     auto data = file.contents();
     auto wstart = data.begin();
     std::regex_token_iterator<const char*> begin{wstart, data.end(), separator};
-    std::regex_token_iterator<const char*> end;
+    std::regex_token_iterator<const char*> end{};
     std::vector<std::string> parts;
     for (; begin != end; ++begin) {
       parts.emplace_back(wstart, begin->first);
