@@ -88,6 +88,10 @@ class TempFile {
           "failed to convert buffer with WideCharToMultiByte");
     }
   }
+
+  void delete_file(const char* name) {
+    _unlink(name);
+  }
 #else
   TempFile() {
     char buffer[L_tmpnam];
@@ -109,15 +113,19 @@ class TempFile {
 #endif
     filename_.assign(buffer);
   }
+
+  void delete_file(const char* name) {
+    unlink(name);
+  }
 #endif  //_WIN32_WINNT
 
-  bool isOk() const { return filename_.size() > 0; }
+  bool isOk() const { return !filename_.empty(); }
 
   const std::string &name() const { return filename_; }
 
   ~TempFile() {
     // delete file
-    unlink(filename_.c_str());
+    delete_file(filename_.c_str());
   }
 };
 

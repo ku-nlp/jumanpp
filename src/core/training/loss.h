@@ -109,7 +109,7 @@ class LossCalculator {
 
   void computeFeatureDiff(u32 mask);
 
-  i32 fullSize() const { return comparison.size(); }
+  i32 fullSize() const { return static_cast<i32>(comparison.size()); }
 
   std::string compDump() const;
 

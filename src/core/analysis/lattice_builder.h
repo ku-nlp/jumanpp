@@ -90,7 +90,7 @@ class LatticeCompactor {
   Status initialize(ExtraNodesContext* ctx, const spec::AnalysisSpec& spec);
   void computeHashes(util::ArraySlice<LatticeNodeSeed> seeds);
   bool compact(util::MutableArraySlice<LatticeNodeSeed>* seeds);
-  i32 numDeleted() const { return processed.size(); }
+  i32 numDeleted() const { return static_cast<i32>(processed.size()); }
 
   util::ArraySlice<i32> usedFeatures() const { return features; }
 };

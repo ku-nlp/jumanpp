@@ -186,8 +186,8 @@ TEST_CASE(
     proc2.startBoundary(nels);
     auto t0s1 = proc1.scores_.bufferT0();
     auto t0s2 = proc2.scores_.bufferT0();
-    util::fill(t0s1, 1000);
-    util::fill(t0s2, 1000);
+    util::fill(t0s1, 1000.0f);
+    util::fill(t0s2, 1000.0f);
     proc1.computeT0All(bndIdx, &hfp, &pfc);
     proc2.applyT0(bndIdx, &hfp);
 

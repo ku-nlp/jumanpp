@@ -70,7 +70,7 @@ struct FeatureBuffer {
     return util::Sliceable<u64>{slice, numTrigrams, numElems};
   }
 
-  util::MutableArraySlice<float> scoreBuf(u32 size) const {
+  util::MutableArraySlice<float> scoreBuf(u64 size) const {
     return util::MutableArraySlice<float>{scoreBuffer, 0, size};
   }
 };

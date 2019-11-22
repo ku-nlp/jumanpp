@@ -13,7 +13,7 @@ Status GlobalBeamPositionFormat::initialize(
     const core::analysis::Analyzer& analyzer) {
   auto& dic = analyzer.output().dic();
   auto totalFlds = dic.fields().totalFields();
-  for (int i = 0; i < totalFlds; ++i) {
+  for (size_t i = 0; i < totalFlds; ++i) {
     auto& fld = dic.fields().at(i);
     if (fld.isSurfaceField) {
       JPP_RETURN_IF_ERROR(analyzer.output().stringField(fld.name, &surface_));

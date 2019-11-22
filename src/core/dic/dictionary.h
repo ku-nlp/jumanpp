@@ -50,7 +50,7 @@ class FieldsHolder {
 
   Status load(const BuiltDictionary& dic);
 
-  u32 totalFields() const { return fields_.size(); }
+  size_t totalFields() const { return fields_.size(); }
 };
 
 class DictionaryHolder {
