@@ -12,6 +12,7 @@
 #include <path.hpp>
 #include <regex>
 #include <util/logging.hpp>
+
 #include "args.h"
 #include "rnn/rnn_arg_parse.h"
 #include "util/debug_output.h"
@@ -184,6 +185,7 @@ struct JppArgsParser {
   std::regex separator{"[ \t\n\r]+"};
 
   Status parseFile(StringPiece filename) {
+    LOG_TRACE() << "Trying to parse config file: " << filename;
     util::FullyMappedFile file;
     JPP_RETURN_IF_ERROR(file.open(filename));
     auto data = file.contents();
@@ -302,6 +304,11 @@ Status parseCfgFile(StringPiece filename, JumanppConf* conf,
 
 namespace {
 Status fixupModelPath(JumanppConf* result) {
+  // don't try anything if there is no file
+  if (result->configFile.isDefault()) {
+    return Status::Ok();
+  }
+
   try {
     Pathie::Path modelPath(result->modelFile);
     if (modelPath.exists()) {
@@ -325,8 +332,8 @@ Status fixupModelPath(JumanppConf* result) {
     }
   } catch (Pathie::PathieError& e) {
     return JPPS_INVALID_PARAMETER
-           << "failed to fixup path: " << result->modelFile.value()
-           << " reason=" << e.what();
+           << "failed to fixup path to a configuration file: \'"
+           << result->modelFile.value() << "\' reason=" << e.what();
   }
   return Status::Ok();
 }
