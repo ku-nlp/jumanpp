@@ -47,16 +47,14 @@ void CheckEqImpl(const util::ArraySlice<T1>& s1,
 
 template <typename C1, typename C2>
 void CheckEq(const C1& s1, const C2& s2) {
-  util::ArraySlice<typename C1::value_type> sl1{s1};
-  util::ArraySlice<typename C2::value_type> sl2{s2};
-  CheckEqImpl(sl1, sl2);
+  CheckEqImpl(util::ArraySlice<typename C1::value_type>{s1},
+              util::ArraySlice<typename C2::value_type>{s2});
 }
 
 template <typename C1, typename C2>
 void SeqEq(const C1& c1, const std::initializer_list<C2>& ilist) {
-  util::ArraySlice<typename C1::value_type> sl1{c1};
   util::ArraySlice<C2> sl2{ilist};
-  CheckEqImpl(sl1, sl2);
+  CheckEqImpl(util::ArraySlice<typename C1::value_type>{c1}, sl2);
 }
 
 void SeqEq(const std::vector<std::string>& c1,
@@ -66,8 +64,8 @@ void SeqEq(const std::vector<std::string>& c1,
     copy.emplace_back(s);
   }
 
-  util::ArraySlice<StringPiece> sl1{copy.data(), copy.size()};
-  util::ArraySlice<StringPiece> sl2{c2.begin(), c2.size()};
+  util::ArraySlice<StringPiece> sl1(copy.data(), copy.size());
+  util::ArraySlice<StringPiece> sl2(c2.begin(), c2.size());
 
   CheckEqImpl(sl1, sl2);
 }

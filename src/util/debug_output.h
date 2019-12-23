@@ -73,7 +73,7 @@ std::ostream& operator<<(std::ostream& os, const Sliceable<T>& s) {
 template <typename C>
 util::VOutImpl<typename C::value_type> VOut(const C& slice) {
   using T = typename C::value_type;
-  util::ArraySlice<T> aslice{slice};
+  util::ArraySlice<T> aslice(slice);
   return util::VOutImpl<T>{aslice};
 }
 

@@ -18,7 +18,7 @@ u32 fullMask = ~u32{0};
 TEST_CASE("unigram is equal to full") {
   NgramFeatureImpl<1> baseUni{0, 0};
   constexpr UnigramFeature partUni{0, 0, 0};
-  util::ArraySlice<u64> data{50};
+  u64 data[] = {50};
   u32 buf1[1];
   u32 buf2[1];
   baseUni.apply(buf1, data, data, data);
@@ -29,8 +29,8 @@ TEST_CASE("unigram is equal to full") {
 TEST_CASE("bigram is equal to full") {
   NgramFeatureImpl<2> baseUni{0, 0, 0};
   constexpr BigramFeature partBi{0, 0, 0, 0};
-  util::ArraySlice<u64> data1{50};
-  util::ArraySlice<u64> data2{60};
+  u64 data1[] = {50};
+  u64 data2[] = {60};
   u32 buf1[1];
   u32 buf2[1];
   u64 state1[1];
@@ -43,9 +43,9 @@ TEST_CASE("bigram is equal to full") {
 TEST_CASE("trigram is equal to full") {
   NgramFeatureImpl<3> baseUni{0, 0, 0, 0};
   constexpr TrigramFeature partTri{0, 0, 0, 0, 0};
-  util::ArraySlice<u64> data1{50};
-  util::ArraySlice<u64> data2{60};
-  util::ArraySlice<u64> data3{70};
+  u64 data1[] = {50};
+  u64 data2[] = {60};
+  u64 data3[] = {60};
   u32 buf1[1];
   u32 buf2[1];
   u64 state1[1];
