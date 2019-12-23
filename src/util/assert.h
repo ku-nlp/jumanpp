@@ -69,7 +69,7 @@ class AssertException : public std::exception {
   ~AssertException() noexcept override;
   const char* what() const noexcept override;
 
-  void doThrow() JPP_NO_INLINE {
+  void JPP_NO_INLINE doThrow() {
     if (isDebuggerAttached()) {
       std::fputs(what(), stderr);
       JPP_BREAK_TO_DEBUGGER_IF_ATTACHED();
