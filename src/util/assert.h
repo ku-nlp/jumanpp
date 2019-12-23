@@ -69,7 +69,7 @@ class AssertException : public std::exception {
   ~AssertException() noexcept override;
   const char* what() const noexcept override;
 
-  void doThrow() {
+  void doThrow() JPP_NO_INLINE {
     if (isDebuggerAttached()) {
       std::fputs(what(), stderr);
       JPP_BREAK_TO_DEBUGGER_IF_ATTACHED();
@@ -143,7 +143,7 @@ JPP_NORETURN void die();
 #ifndef NDEBUG
 #define JPP_DCHECK_IMPL1(expr) \
   JPP_UNLIKELY(!(expr)) ? \
-  	[&]() JPP_NO_INLINE -> ::jumanpp::util::asserts::AssertException {\
+  	[&]() -> ::jumanpp::util::asserts::AssertException {\
   	::jumanpp::util::asserts::AssertBuilder bldr_{__FILE__, __LINE__}; \
     bldr_.AddExpr( #expr ); \
     bldr_.PrintStacktrace(); \
@@ -152,7 +152,7 @@ JPP_NORETURN void die();
 
 #define JPP_DCHECK_IMPL2(expr, x, y) \
   JPP_UNLIKELY(!(expr)) ? \
-  	[&]() JPP_NO_INLINE -> ::jumanpp::util::asserts::AssertException {\
+  	[&]() -> ::jumanpp::util::asserts::AssertException {\
   	::jumanpp::util::asserts::AssertBuilder bldr_{__FILE__, __LINE__}; \
     bldr_.AddExpr( #expr ); \
     bldr_.AddArg( #x, x ); \
@@ -163,7 +163,7 @@ JPP_NORETURN void die();
 
 #define JPP_DCHECK_IMPL3(expr, x, y, z) \
   JPP_UNLIKELY(!(expr)) ? \
-  	[&]() JPP_NO_INLINE -> ::jumanpp::util::asserts::AssertException {\
+  	[&]() -> ::jumanpp::util::asserts::AssertException {\
   	::jumanpp::util::asserts::AssertBuilder bldr_{__FILE__, __LINE__}; \
     bldr_.AddExpr( #expr ); \
     bldr_.AddArg( #x, x ); \
