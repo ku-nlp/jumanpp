@@ -1,6 +1,17 @@
-from sys import stderr, stdout
+import sys
+import os
 import argparse
 import re
+import random
+import math
+
+try:
+    import numpy as np
+
+    no_numpy = False
+except ImportError:
+    no_numpy = True
+
 
 class DiffPart(object):
     EQUAL = 0
@@ -15,6 +26,95 @@ class DiffPart(object):
 
     def __repr__(self):
         return f"{self.kind} {self.sys} {self.gold}"
+
+
+class StreamingVariance(object):
+    def __init__(self):
+        self.cnt = 0
+        self.m2 = 0
+        self.mean = 0
+
+    def add(self, x):
+        self.cnt += 1
+        delta = x - self.mean
+        self.mean += delta / self.cnt
+        delta2 = x - self.mean
+        self.m2 += delta * delta2
+
+    def variance(self):
+        return self.m2 / self.cnt
+
+
+class Measure(object):
+    __slots__ = ["fp", "tp", "fn", "prec", "rec", "f1"]
+
+    def __init__(self, tp, fp, fn):
+        """
+        :type tp: int
+        :type fp: int
+        :type fn: int
+        """
+        self.tp = tp
+        self.fp = fp
+        self.fn = fn
+        self.prec = tp / max(tp + fp, 1)
+        self.rec = tp / max(tp + fn, 1)
+        self.f1 = 2 * self.prec * self.rec / max(self.prec + self.rec, 1e-6)
+
+    def prec_str(self):
+        return f"{self.prec * 100:.4F} ({self.tp}/{self.tp + self.fp})"
+
+    def rec_str(self):
+        return f"{self.rec * 100:.4F} ({self.tp}/{self.tp + self.fn})"
+
+
+class Measure3(object):
+    def __init__(self, tp, fp, fn, prec, rec, f1):
+        self.tp = tp
+        self.fp = fp
+        self.fn = fn
+        self.prec = prec
+        self.rec = rec
+        self.f1 = f1
+
+
+class Measure2(object):
+    def __init__(self):
+        self.tp = []
+        self.fp = []
+        self.fn = []
+        self.prec = []
+        self.rec = []
+        self.f1 = []
+
+    def add(self, x):
+        self.tp.append(float(x.tp))
+        self.fp.append(float(x.fp))
+        self.fn.append(float(x.fn))
+        self.prec.append(x.prec)
+        self.rec.append(x.rec)
+        self.f1.append(x.f1)
+
+    def _stats(self, data, interval=0.025):
+        sdata = sorted(data)
+        sumdata = sum(data)
+        lendata = len(data)
+        avgdata = sumdata / lendata
+        lb = int(lendata * interval)
+        ub = int(lendata * (1 - interval) - 1)
+        lv = sdata[lb]
+        uv = sdata[ub]
+        return avgdata, lv, uv
+
+    def finalize(self, interval=0.025):
+        return Measure3(
+            tp=self._stats(self.tp, interval),
+            fp=self._stats(self.fp, interval),
+            fn=self._stats(self.fn, interval),
+            prec=self._stats(self.prec, interval),
+            rec=self._stats(self.rec, interval),
+            f1=self._stats(self.f1, interval),
+        )
 
 
 class ScoreInfo(object):
@@ -50,11 +150,15 @@ class ScoreInfo(object):
                 self.fp[2] += sys_cnt
                 self.fn[2] += gold_cnt
 
+    def add(self, o):
+        for i in range(3):
+            self.tp[i] += o.tp[i]
+            self.fp[i] += o.fp[i]
+            self.fn[i] += o.fn[i]
+
     def stats(self):
-        prec = [float(tp)/(tp + fp) for tp, fp in zip(self.tp, self.fp)]
-        recall = [float(tp)/(tp + fn) for tp, fn in zip(self.tp, self.fn)]
-        f1 = [(2 * p * r)/(p + r) for p, r in zip(prec, recall)]
-        return prec, recall, f1
+        measures = [Measure(*args) for args in zip(self.tp, self.fp, self.fn)]
+        return measures
 
 
 yellow = '\033[0;33m'
@@ -62,6 +166,36 @@ red = '\033[0;31m'
 green = '\033[0;32m'
 blue = '\033[0;34m'
 reset = '\033[0;0m'
+
+
+class Diff(object):
+    __slots__ = ['data']
+
+    def __init__(self):
+        self.data = []
+
+    def __index__(self, i):
+        return self.data[i]
+
+    def append(self, item: DiffPart):
+        d = self.data
+        if len(d) == 0:
+            d.append(item)
+            return
+
+        last = d[-1]
+        if last.kind == item.kind:
+            last.sys.extend(item.sys)
+            last.gold.extend(item.gold)
+        else:
+            d.append(item)
+
+    def __iter__(self):
+        return iter(self.data)
+
+    def __len__(self):
+        return len(self.data)
+
 
 def render_diff(diff, buffer):
     has_space = False
@@ -97,32 +231,6 @@ def render_diff(diff, buffer):
             buffer.write("] ")
             has_space = True
     buffer.write('\n')
-
-
-class Diff(object):
-    __slots__ = ['data']
-
-    def __init__(self):
-        self.data = []
-
-    def __index__(self, i):
-        return self.data[i]
-
-    def append(self, item: DiffPart):
-        d = self.data
-        if len(d) == 0:
-            d.append(item)
-            return
-
-        last = d[-1]
-        if last.kind == item.kind:
-            last.sys.extend(item.sys)
-            last.gold.extend(item.gold)
-        else:
-            d.append(item)
-
-    def __iter__(self):
-        return self.data.__iter__()
 
 
 def compute_diff(sysobj, goldobj, lineno):
@@ -202,12 +310,115 @@ def not_same(diff):
     return False
 
 
+class Bootstrap(object):
+    def __init__(self):
+        self.scores = []
+        self.normal = ScoreInfo()
+
+    def add_diff(self, diff):
+        s = ScoreInfo()
+        s.add_diff(diff)
+        self.normal.add_diff(diff)
+        self.scores.append(s)
+
+    def run(self, niters):
+        stats = [Measure2(), Measure2(), Measure2()]
+        for i in range(niters):
+            s = self.resample_iter()
+            ms = s.stats()
+            print(i, ms[0].prec_str())
+            for a, b in zip(stats, ms):
+                a.add(b)
+        return stats
+
+    def _make_scores(self):
+        a = []
+        for s in self.scores:
+            v = [
+                s.tp,
+                s.fn,
+                s.fp
+            ]
+            a.append(v)
+        return np.asarray(a, np.int32)
+
+    def resample_numpy(self, counts, g, niters, crd=0.025):
+        lcnt = counts.shape[0]
+        indices = g.integers(lcnt, size=(lcnt, niters))
+        resampled = counts[indices]
+        sums = np.sum(resampled, axis=0)
+        sums = sums.astype(np.float32)
+        tps = sums[:, 0]
+        fns = sums[:, 1]
+        fps = sums[:, 2]
+
+        recs = tps / np.maximum(tps + fns, 1)
+        precs = tps / np.maximum(tps + fps, 1)
+        f1s = 2 * recs * precs / np.maximum(recs + precs, 1e-6)
+        values = np.stack([precs, recs, f1s])
+        data = np.sort(values, axis=1)
+        lcrd = int(niters * crd)
+        ucrd = int(niters * (1 - crd) - 1)
+        cint_lo = data[:, lcrd]
+        cint_hi = data[:, ucrd]
+
+        return cint_lo, cint_hi
+
+    def run_numpy(self, niters):
+        score_nda = self._make_scores()
+        g = np.random.default_rng()
+        lo, hi = self.resample_numpy(score_nda, g, niters)
+        measures = []
+
+        for i in range(3):
+            measures.append(Measure3(tp=None, fp=None, fn=None,
+                               prec=(float(lo[0, i]), float(hi[0, i])),
+                               rec=(float(lo[1, i]), float(hi[1, i])),
+                               f1=(float(lo[2, i]), float(hi[2, i])),
+                               ))
+
+        return measures
+
+    def resample_iter(self):
+        s = ScoreInfo()
+        scores = self.scores
+        max_score = len(scores)
+        for i in range(max_score):
+            idx = random.randrange(max_score)
+            so = scores[idx]
+            s.add(so)
+        return s
+
+
+def print_bootstrap_line(segn, seg, name):
+    prl, prh = seg.prec
+    prec = f'\\cim{{{segn.prec*100:.2F}}}{{{prl*100:.2F}}}{{{prh*100:.2F}}}'
+    rel, reh = seg.rec
+    rec = f'\\cim{{{segn.rec*100:.2F}}}{{{rel*100:.2F}}}{{{reh*100:.2F}}}'
+    f1l, f1h = seg.f1
+    f1 = f'\\cim{{{segn.f1*100:.2F}}}{{{f1l*100:.2F}}}{{{f1h*100:.2F}}}'
+    measures = " & ".join([prec, rec, f1])
+    sys.stderr.write(f"{name} PRF: {measures}\n")
+
+
+def print_bootstrap(bootstrap, niters):
+    stats = bootstrap.run_numpy(niters)
+    s0 = bootstrap.normal.stats()
+
+    print_bootstrap_line(s0[0], stats[0], "Seg")
+    print_bootstrap_line(s0[1], stats[1], "+P1")
+    print_bootstrap_line(s0[2], stats[2], "+P2")
+
+
 def calculate_stats(syslines, goldlines, args):
     line = 1
-    scores = ScoreInfo()
+    if args.bootstrap is None:
+        scores = ScoreInfo()
+    else:
+        scores = Bootstrap()
 
     if len(goldlines) != len(syslines):
-        print("System output and gold data have different number of sentences", file=stderr)
+        print("System output and gold data have different number of sentences", file=sys.stderr)
         exit(1)
 
     for golddata, sysdata in zip(goldlines, syslines):
@@ -220,7 +431,7 @@ def calculate_stats(syslines, goldlines, args):
                 print(goldobj.comment)
             elif sysobj.comment is not None:
                 print(sysobj.comment)
-            render_diff(diff, stdout)
+            render_diff(diff, sys.stdout)
 
         line += 1
     return scores
@@ -246,19 +457,21 @@ def parse_sentence(line, lineno):
     try:
         return Sentence(comment, [separate_parts(p) for p in parts])
     except ValueError:
-        print("Failed to parse line ", lineno, line, file=stderr)
+        print("Failed to parse line ", lineno, line, file=sys.stderr)
         exit(1)
 
 
 def read_and_eval(opts):
-    with open(opts.system, 'rt') as sysin:
-        with open(opts.gold, 'rt') as goldin:
+    with open(opts.system, 'rt', encoding='utf-8') as sysin:
+        with open(opts.gold, 'rt', encoding='utf-8') as goldin:
             return calculate_stats(
                 syslines=sysin.readlines(),
                 goldlines=goldin.readlines(),
                 args=opts)
 
+
 parts_regex = re.compile(r'^([^_]+)_([^:]+):(.*)$')
+
 
 def separate_parts(obj):
     mtch = parts_regex.fullmatch(obj)
@@ -272,10 +485,16 @@ def parse_args():
     p.add_argument('system')
     p.add_argument('gold')
     p.add_argument('-v', '--verbose', action='store_true')
+    p.add_argument('-b', '--bootstrap', type=int)
     return p.parse_args()
 
 
 if __name__ == '__main__':
-    stats = read_and_eval(parse_args())
-    seg, joint, sjoint = stats.stats()
-    print(f"Seg: ({stats.tp[0]:5}/{stats.tp[0] + stats.fp[0]:5}({seg[0]:3.2F}")
+    args = parse_args()
+    stats = read_and_eval(args)
+    if args.bootstrap is None:
+        ms = stats.stats()
+        seg = ms[0]
+        print(f"Seg: {seg.prec_str()} {seg.rec_str()} {seg.f1 * 100:.2F}", file=sys.stderr)
+    else:
+        print_bootstrap(stats, args.bootstrap)
