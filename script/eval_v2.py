@@ -331,6 +331,45 @@ class Bootstrap(object):
                 a.add(b)
         return stats
 
+
+    def _make_scores(self):
+        a = []
+        for s in self.scores:
+            v = [
+                s.tp,
+                s.fn,
+                s.fp
+            ]
+            a.append(v)
+        return np.asarray(a)
+
+    def resample_numpy(self, counts, g):
+        lcnt = counts.shape[0]
+        indices = g.integers(lcnt)
+        resampled = counts[indices]
+        sums = np.sum(resampled, axis=0)
+        sums = np.cast(sums, 'float32')
+        tps = sums[0]
+        fns = sums[1]
+        fps = sums[2]
+
+        recs = tps / np.maximum(tps + fns, 1)
+        precs = tps / np.maximum(tps + fps, 1)
+        f1s = 2 * recs * precs / np.maximum(recs + precs, 1e-6)
+
+
+
+    def run_numpy(self, niters):
+        stats = [Measure2(), Measure2(), Measure2()]
+        score_nda = self._make_scores()
+        for i in range(niters):
+            s = self.resample_iter()
+            ms = s.stats()
+            print(i, ms[0].prec_str())
+            for a, b in zip(stats, ms):
+                a.add(b)
+        return stats
+
     def resample_iter(self):
         s = ScoreInfo()
         scores = self.scores
