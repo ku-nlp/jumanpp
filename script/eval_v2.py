@@ -1,6 +1,16 @@
 from sys import stderr, stdout
 import argparse
 import re
+import random
+import math
+
+try:
+    import numpy as np
+
+    no_numpy = False
+except ImportError:
+    no_numpy = True
+
 
 class DiffPart(object):
     EQUAL = 0
@@ -15,6 +25,64 @@ class DiffPart(object):
 
     def __repr__(self):
         return f"{self.kind} {self.sys} {self.gold}"
+
+
+class StreamingVariance(object):
+    def __init__(self):
+        self.cnt = 0
+        self.m2 = 0
+        self.mean = 0
+
+    def add(self, x):
+        self.cnt += 1
+        delta = x - self.mean
+        self.mean += delta / self.cnt
+        delta2 = x - self.mean
+        self.m2 += delta * delta2
+
+    def variance(self):
+        return self.m2 / self.cnt
+
+
+class Measure(object):
+    __slots__ = ["fp", "tp", "fn", "prec", "rec", "f1"]
+
+    def __init__(self, tp, fp, fn):
+        """
+        :type tp: int
+        :type fp: int
+        :type fn: int
+        """
+        self.tp = tp
+        self.fp = fp
+        self.fn = fn
+        self.prec = tp / max(tp + fp, 1)
+        self.rec = tp / max(tp + fn, 1)
+        self.f1 = 2 * self.prec * self.rec / max(self.prec + self.rec, 1e-6)
+
+    def prec_str(self):
+        return f"{self.prec * 100:.4F} ({self.tp}/{self.tp + self.fp})"
+
+    def rec_str(self):
+        return f"{self.rec * 100:.4F} ({self.tp}/{self.tp + self.fn})"
+
+
+class Measure2(object):
+    def __init__(self):
+        self.tp = StreamingVariance()
+        self.fp = StreamingVariance()
+        self.fn = StreamingVariance()
+        self.prec = StreamingVariance()
+        self.rec = StreamingVariance()
+        self.f1 = StreamingVariance()
+
+    def add(self, x):
+        self.tp.add(float(x.tp))
+        self.fp.add(float(x.fp))
+        self.fn.add(float(x.fn))
+        self.prec.add(x.prec)
+        self.rec.add(x.rec)
+        self.f1.add(x.f1)
 
 
 class ScoreInfo(object):
@@ -50,11 +118,15 @@ class ScoreInfo(object):
                 self.fp[2] += sys_cnt
                 self.fn[2] += gold_cnt
 
+    def add(self, o):
+        for i in range(3):
+            self.tp[i] += o.tp[i]
+            self.fp[i] += o.fp[i]
+            self.fn[i] += o.fn[i]
+
     def stats(self):
-        prec = [float(tp)/(tp + fp) for tp, fp in zip(self.tp, self.fp)]
-        recall = [float(tp)/(tp + fn) for tp, fn in zip(self.tp, self.fn)]
-        f1 = [(2 * p * r)/(p + r) for p, r in zip(prec, recall)]
-        return prec, recall, f1
+        measures = [Measure(*args) for args in zip(self.tp, self.fp, self.fn)]
+        return measures
 
 
 yellow = '\033[0;33m'
@@ -62,6 +134,36 @@ red = '\033[0;31m'
 green = '\033[0;32m'
 blue = '\033[0;34m'
 reset = '\033[0;0m'
+
+
+class Diff(object):
+    __slots__ = ['data']
+
+    def __init__(self):
+        self.data = []
+
+    def __index__(self, i):
+        return self.data[i]
+
+    def append(self, item: DiffPart):
+        d = self.data
+        if len(d) == 0:
+            d.append(item)
+            return
+
+        last = d[-1]
+        if last.kind == item.kind:
+            last.sys.extend(item.sys)
+            last.gold.extend(item.gold)
+        else:
+            d.append(item)
+
+    def __iter__(self):
+        return iter(self.data)
+
+    def __len__(self):
+        return len(self.data)
+
 
 def render_diff(diff, buffer):
     has_space = False
@@ -97,32 +199,6 @@ def render_diff(diff, buffer):
             buffer.write("] ")
             has_space = True
     buffer.write('\n')
-
-
-class Diff(object):
-    __slots__ = ['data']
-
-    def __init__(self):
-        self.data = []
-
-    def __index__(self, i):
-        return self.data[i]
-
-    def append(self, item: DiffPart):
-        d = self.data
-        if len(d) == 0:
-            d.append(item)
-            return
-
-        last = d[-1]
-        if last.kind == item.kind:
-            last.sys.extend(item.sys)
-            last.gold.extend(item.gold)
-        else:
-            d.append(item)
-
-    def __iter__(self):
-        return self.data.__iter__()
 
 
 def compute_diff(sysobj, goldobj, lineno):
@@ -202,9 +278,58 @@ def not_same(diff):
     return False
 
 
+class Bootstrap(object):
+    def __init__(self):
+        self.scores = []
+        self.normal = ScoreInfo()
+
+    def add_diff(self, diff):
+        s = ScoreInfo()
+        s.add_diff(diff)
+        self.normal.add_diff(diff)
+        self.scores.append(s)
+
+    def run(self, niters):
+        stats = [Measure2(), Measure2(), Measure2()]
+        for i in range(niters):
+            s = self.resample_iter()
+            ms = s.stats()
+            print(i, ms[0].prec_str())
+            for a, b in zip(stats, ms):
+                a.add(b)
+        return stats
+
+    def resample_iter(self):
+        s = ScoreInfo()
+        scores = self.scores
+        max_score = len(scores)
+        for i in range(max_score):
+            idx = random.randrange(max_score)
+            so = scores[idx]
+            s.add(so)
+        return s
+
+
+def print_bootstrap(bootstrap, niters):
+    stats = bootstrap.run(niters)
+    s0 = bootstrap.normal.stats()
+    seg = stats[0]
+    segn = s0[0]
+    variance = seg.prec.variance()
+    serr = math.sqrt(variance)
+    cb = serr / math.sqrt(niters) * 3.291
+    mean = seg.prec.mean
+    data = [mean, variance, mean - cb, mean + cb, cb]
+    strs = [format(x * 100, ".4F") for x in data]
+    print(",".join(strs), segn.prec_str(), sep=",")
+
+
 def calculate_stats(syslines, goldlines, args):
     line = 1
-    scores = ScoreInfo()
+    if args.bootstrap is None:
+        scores = ScoreInfo()
+    else:
+        scores = Bootstrap()
 
     if len(goldlines) != len(syslines):
         print("System output and gold data have different number of sentences", file=stderr)
@@ -251,14 +376,16 @@ def parse_sentence(line, lineno):
 
 
 def read_and_eval(opts):
-    with open(opts.system, 'rt') as sysin:
-        with open(opts.gold, 'rt') as goldin:
+    with open(opts.system, 'rt', encoding='utf-8') as sysin:
+        with open(opts.gold, 'rt', encoding='utf-8') as goldin:
             return calculate_stats(
                 syslines=sysin.readlines(),
                 goldlines=goldin.readlines(),
                 args=opts)
 
+
 parts_regex = re.compile(r'^([^_]+)_([^:]+):(.*)$')
+
 
 def separate_parts(obj):
     mtch = parts_regex.fullmatch(obj)
@@ -272,10 +399,16 @@ def parse_args():
     p.add_argument('system')
     p.add_argument('gold')
     p.add_argument('-v', '--verbose', action='store_true')
+    p.add_argument('-b', '--bootstrap', type=int)
     return p.parse_args()
 
 
 if __name__ == '__main__':
-    stats = read_and_eval(parse_args())
-    seg, joint, sjoint = stats.stats()
-    print(f"Seg: ({stats.tp[0]:5}/{stats.tp[0] + stats.fp[0]:5}({seg[0]:3.2F}")
+    args = parse_args()
+    stats = read_and_eval(args)
+    if args.bootstrap is None:
+        ms = stats.stats()
+        seg = ms[0]
+        print(f"Seg: {seg.prec_str()} {seg.rec_str()} {seg.f1 * 100:.2F}", file=stderr)
+    else:
+        print_bootstrap(stats, args.bootstrap)
