@@ -67,22 +67,54 @@ class Measure(object):
         return f"{self.rec * 100:.4F} ({self.tp}/{self.tp + self.fn})"
 
 
+class Measure3(object):
+    def __init__(self, tp, fp, fn, prec, rec, f1):
+        self.tp = tp
+        self.fp = fp
+        self.fn = fn
+        self.prec = prec
+        self.rec = rec
+        self.f1 = f1
+
+
 class Measure2(object):
     def __init__(self):
-        self.tp = StreamingVariance()
-        self.fp = StreamingVariance()
-        self.fn = StreamingVariance()
-        self.prec = StreamingVariance()
-        self.rec = StreamingVariance()
-        self.f1 = StreamingVariance()
+        self.tp = []
+        self.fp = []
+        self.fn = []
+        self.prec = []
+        self.rec = []
+        self.f1 = []
 
     def add(self, x):
-        self.tp.add(float(x.tp))
-        self.fp.add(float(x.fp))
-        self.fn.add(float(x.fn))
-        self.prec.add(x.prec)
-        self.rec.add(x.rec)
-        self.f1.add(x.f1)
+        self.tp.append(float(x.tp))
+        self.fp.append(float(x.fp))
+        self.fn.append(float(x.fn))
+        self.prec.append(x.prec)
+        self.rec.append(x.rec)
+        self.f1.append(x.f1)
+
+    def _stats(self, data, interval=0.025):
+        sdata = sorted(data)
+        sumdata = sum(data)
+        lendata = len(data)
+        avgdata = sumdata / lendata
+        lb = int(lendata * interval)
+        ub = int(lendata * (1 - interval) - 1)
+        lv = sdata[lb]
+        uv = sdata[ub]
+        return avgdata, lv, uv
+
+    def finalize(self, interval=0.025):
+        return Measure3(
+            tp=self._stats(self.tp, interval),
+            fp=self._stats(self.fp, interval),
+            fn=self._stats(self.fn, interval),
+            prec=self._stats(self.prec, interval),
+            rec=self._stats(self.rec, interval),
+            f1=self._stats(self.f1, interval),
+        )
+
 
 
 class ScoreInfo(object):
@@ -313,13 +345,11 @@ class Bootstrap(object):
 def print_bootstrap(bootstrap, niters):
     stats = bootstrap.run(niters)
     s0 = bootstrap.normal.stats()
-    seg = stats[0]
     segn = s0[0]
-    variance = seg.prec.variance()
-    serr = math.sqrt(variance)
-    cb = serr / math.sqrt(niters) * 3.291
-    mean = seg.prec.mean
-    data = [mean, variance, mean - cb, mean + cb, cb]
+    s2 = [x.finalize() for x in stats]
+    seg = s2[0]
+    mean, cb, ct = seg.prec
+    data = [mean, cb, ct]
     strs = [format(x * 100, ".4F") for x in data]
     print(",".join(strs), segn.prec_str(), sep=",")
 
