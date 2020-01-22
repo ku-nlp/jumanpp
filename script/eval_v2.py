@@ -1,4 +1,5 @@
-from sys import stderr, stdout
+import sys
+import os
 import argparse
 import re
 import random
@@ -114,7 +115,6 @@ class Measure2(object):
             rec=self._stats(self.rec, interval),
             f1=self._stats(self.f1, interval),
         )
-
 
 
 class ScoreInfo(object):
@@ -331,7 +331,6 @@ class Bootstrap(object):
                 a.add(b)
         return stats
 
-
     def _make_scores(self):
         a = []
         for s in self.scores:
@@ -341,34 +340,44 @@ class Bootstrap(object):
                 s.fp
             ]
             a.append(v)
-        return np.asarray(a)
+        return np.asarray(a, np.int32)
 
-    def resample_numpy(self, counts, g):
+    def resample_numpy(self, counts, g, niters, crd=0.025):
         lcnt = counts.shape[0]
-        indices = g.integers(lcnt)
+        indices = g.integers(lcnt, size=(lcnt, niters))
         resampled = counts[indices]
         sums = np.sum(resampled, axis=0)
-        sums = np.cast(sums, 'float32')
-        tps = sums[0]
-        fns = sums[1]
-        fps = sums[2]
+        sums = sums.astype(np.float32)
+        tps = sums[:, 0]
+        fns = sums[:, 1]
+        fps = sums[:, 2]
 
         recs = tps / np.maximum(tps + fns, 1)
         precs = tps / np.maximum(tps + fps, 1)
         f1s = 2 * recs * precs / np.maximum(recs + precs, 1e-6)
+        values = np.stack([precs, recs, f1s])
+        data = np.sort(values, axis=1)
+        lcrd = int(niters * crd)
+        ucrd = int(niters * (1 - crd) - 1)
+        cint_lo = data[:, lcrd]
+        cint_hi = data[:, ucrd]
 
-
+        return cint_lo, cint_hi
 
     def run_numpy(self, niters):
-        stats = [Measure2(), Measure2(), Measure2()]
         score_nda = self._make_scores()
-        for i in range(niters):
-            s = self.resample_iter()
-            ms = s.stats()
-            print(i, ms[0].prec_str())
-            for a, b in zip(stats, ms):
-                a.add(b)
-        return stats
+        g = np.random.default_rng()
+        lo, hi = self.resample_numpy(score_nda, g, niters)
+        measures = []
+
+        for i in range(3):
+            measures.append(Measure3(tp=None, fp=None, fn=None,
+                               prec=(float(lo[0, i]), float(hi[0, i])),
+                               rec=(float(lo[1, i]), float(hi[1, i])),
+                               f1=(float(lo[2, i]), float(hi[2, i])),
+                               ))
+
+        return measures
 
     def resample_iter(self):
         s = ScoreInfo()
@@ -381,16 +390,24 @@ class Bootstrap(object):
         return s
 
 
+def print_bootstrap_line(segn, seg, name):
+    prl, prh = seg.prec
+    prec = f'\\cim{{{segn.prec*100:.2F}}}{{{prl*100:.2F}}}{{{prh*100:.2F}}}'
+    rel, reh = seg.rec
+    rec = f'\\cim{{{segn.rec*100:.2F}}}{{{rel*100:.2F}}}{{{reh*100:.2F}}}'
+    f1l, f1h = seg.f1
+    f1 = f'\\cim{{{segn.f1*100:.2F}}}{{{f1l*100:.2F}}}{{{f1h*100:.2F}}}'
+    measures = " & ".join([prec, rec, f1])
+    sys.stderr.write(f"{name} PRF: {measures}\n")
+
+
 def print_bootstrap(bootstrap, niters):
-    stats = bootstrap.run(niters)
+    stats = bootstrap.run_numpy(niters)
     s0 = bootstrap.normal.stats()
-    segn = s0[0]
-    s2 = [x.finalize() for x in stats]
-    seg = s2[0]
-    mean, cb, ct = seg.prec
-    data = [mean, cb, ct]
-    strs = [format(x * 100, ".4F") for x in data]
-    print(",".join(strs), segn.prec_str(), sep=",")
+
+    print_bootstrap_line(s0[0], stats[0], "Seg")
+    print_bootstrap_line(s0[1], stats[1], "+P1")
+    print_bootstrap_line(s0[2], stats[2], "+P2")
 
 
 def calculate_stats(syslines, goldlines, args):
@@ -401,7 +418,7 @@ def calculate_stats(syslines, goldlines, args):
         scores = Bootstrap()
 
     if len(goldlines) != len(syslines):
-        print("System output and gold data have different number of sentences", file=stderr)
+        print("System output and gold data have different number of sentences", file=sys.stderr)
         exit(1)
 
     for golddata, sysdata in zip(goldlines, syslines):
@@ -414,7 +431,7 @@ def calculate_stats(syslines, goldlines, args):
                 print(goldobj.comment)
             elif sysobj.comment is not None:
                 print(sysobj.comment)
-            render_diff(diff, stdout)
+            render_diff(diff, sys.stdout)
 
         line += 1
     return scores
@@ -440,7 +457,7 @@ def parse_sentence(line, lineno):
     try:
         return Sentence(comment, [separate_parts(p) for p in parts])
     except ValueError:
-        print("Failed to parse line ", lineno, line, file=stderr)
+        print("Failed to parse line ", lineno, line, file=sys.stderr)
         exit(1)
 
 
@@ -478,6 +495,6 @@ if __name__ == '__main__':
     if args.bootstrap is None:
         ms = stats.stats()
         seg = ms[0]
-        print(f"Seg: {seg.prec_str()} {seg.rec_str()} {seg.f1 * 100:.2F}", file=stderr)
+        print(f"Seg: {seg.prec_str()} {seg.rec_str()} {seg.f1 * 100:.2F}", file=sys.stderr)
     else:
         print_bootstrap(stats, args.bootstrap)
