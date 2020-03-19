@@ -29,7 +29,7 @@ def process(out):
     out.write("namespace jumandic {\n")
 
     if args.grammar:
-        with open(args.grammar, "r") as grammarf:
+        with open(args.grammar, "r", encoding='utf-8') as grammarf:
             idmap.parse_grammar(grammarf.read())
         out.write("const JumandicTuple posInfo[] = {\n")
         for (key1, key2), val in sorted(idmap.pos_spos2id.items(), key=lambda x: idmap.pos2id[x[0][0]] * 1000 + x[1]):
@@ -38,7 +38,7 @@ def process(out):
         out.write("const u32 posInfoCount = %dU;\n\n" % len(idmap.pos_spos2id.items()))
 
     if args.katuyou:
-        with open(args.katuyou, "r") as katuyouf:
+        with open(args.katuyou, "r", encoding='utf-8') as katuyouf:
             idmap.parse_katuyou(katuyouf.read())
         out.write("const JumandicTuple conjInfo[] = {\n")
         for (key1, key2), val in sorted(idmap.type_form2id.items(), key=lambda x: idmap.type2id[x[0][0]] * 1000 + x[1]):
@@ -51,7 +51,7 @@ def process(out):
 
 if __name__ == "__main__":
     if args.output != '-':
-        with open(args.output, 'w') as ofile:
+        with open(args.output, 'w', encoding='utf-8') as ofile:
             process(ofile)
     else:
         process(sys.stdout)
