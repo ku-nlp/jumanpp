@@ -209,14 +209,15 @@ std::pair<RnnNode*, RnnNode*> RnnIdContainer::addPrevChain(
     const ConnectionPtr* cptr, const ExtraNodesContext* xtra) {
   auto prevPair = ptrCache_.emplace(cptr, nullptr);
   if (prevPair.second) {
-    auto span = addPrevChain(resolver, lat, cptr->previous, xtra);  // recursion
+    // prevPair invalidated from recursion back into emplace!
+    auto span = addPrevChain(resolver, lat, cptr->previous, xtra);
     auto prev = span.second;
-    auto& nodePtr = prevPair.first->second;
     auto& coord = resolveId(resolver, lat, cptr, xtra);
     auto rnnIdU32 =
         static_cast<u32>(coord.rnnId) | (static_cast<u64>(coord.length) << 32);
     auto hash = util::hashing::FastHash1{prev->hash}.mix(rnnIdU32).result();
     auto it = crdCache_.find(coord);
+    auto& nodePtr = ptrCache_.at(cptr);
 
     if (it != crdCache_.end()) {
       auto* cached = it->second;
