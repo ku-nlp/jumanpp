@@ -145,7 +145,7 @@ If you use Juman++ V1 in academic setting, then please cite the first work (EMNL
 
 ## Authors
 * Arseny Tolmachev <arseny **at** kotonoha.ws>
-* Hajime Morita <hmorita  **at** i.kyoto-u.ac.jp>  
+* Hajime Morita <hmorita  **at** nlp.ist.i.kyoto-u.ac.jp>  
 * Daisuke Kawahara <dk  **at** i.kyoto-u.ac.jp>  
 * Sadao Kurohashi <kuro  **at** i.kyoto-u.ac.jp>
 
