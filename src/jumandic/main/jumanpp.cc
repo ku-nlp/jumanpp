@@ -116,7 +116,7 @@ int main(int argc, const char** argv) {
   if (!s.isOk()) {
     if (conf.outputType == jumandic::OutputType::Version) {
       exec.printFullVersion();
-      return 1;
+      return 0;
     }
 
     if (conf.modelFile.isDefault()) {
@@ -126,7 +126,7 @@ int main(int argc, const char** argv) {
 
     if (conf.outputType == jumandic::OutputType::ModelInfo) {
       exec.printModelInfo();
-      return 1;
+      return 0;
     }
 
     std::cerr << "failed to load model from disk: " << s;
@@ -135,7 +135,7 @@ int main(int argc, const char** argv) {
 
   if (conf.outputType == jumandic::OutputType::Version) {
     exec.printFullVersion();
-    return 1;
+    return 0;
   }
 
   if (conf.outputType == jumandic::OutputType::ModelInfo) {
