@@ -72,7 +72,11 @@ else()
 endif()
 
 add_subdirectory(libs)
+
+if(${JPP_ENABLE_TESTS})
 add_subdirectory(test) #need to set variable here
+endif()
+
 add_subdirectory(src)
 if (IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/model)
     add_subdirectory(model)
