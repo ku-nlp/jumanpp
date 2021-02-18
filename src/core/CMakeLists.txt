@@ -64,11 +64,14 @@ set(core_test_srcs
 
 add_library(jpp_core ${core_srcs} ${core_hdrs} ${libs3p_pegtl_headers})
 jpp_test_executable(jpp_core_tests ${core_test_srcs})
+if(JPP_ENABLE_TESTS)
+  target_link_libraries(jpp_core_tests jpp_core jpp_core_train)
+endif()
+
 
 target_include_directories(jpp_core PUBLIC ${jpp_core_cfg_dir})
 
 target_link_libraries(jpp_core PUBLIC jpp_util jpp_rnn PRIVATE pathie)
-target_link_libraries(jpp_core_tests jpp_core jpp_core_train)
 
 if (${JPP_USE_PROTOBUF})
   target_include_directories(jpp_core PUBLIC ${Protobuf_INCLUDE_DIR} ${CMAKE_CURRENT_BINARY_DIR})

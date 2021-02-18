@@ -26,7 +26,9 @@ endif()
 
 add_library(jpp_util ${jpp_util_sources} ${jpp_util_headers} ${BACKWARD_headers})
 jpp_test_executable(jpp_util_test ${jpp_util_test_srcs} ${jpp_util_headers})
-target_link_libraries(jpp_util_test jpp_util)
+if(JPP_ENABLE_TESTS)
+  target_link_libraries(jpp_util_test jpp_util)
+endif()
 target_link_libraries(jpp_util ${CMAKE_THREAD_LIBS_INIT})
 target_include_directories(jpp_util PUBLIC ${JPP_LIBS_DIR} ${JPP_SRC_DIR})
 target_compile_features(jpp_util PUBLIC

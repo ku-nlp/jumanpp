@@ -34,4 +34,6 @@ jpp_core_files(core_hdrs
   )
 
 jpp_test_executable(jpp_core_spec_tests ${core_spec_tsrc} ${libs3p_pegtl_headers})
-target_link_libraries(jpp_core_spec_tests jpp_core)
+if(JPP_ENABLE_TESTS)
+  target_link_libraries(jpp_core_spec_tests jpp_core)
+endif()

@@ -29,8 +29,11 @@ set(jpp_codegen_tsrcs
   )
 
 add_library(jpp_core_codegen ${jpp_codegen_srcs} ${jpp_codegen_hdrs})
+target_link_libraries(jpp_core_codegen jpp_core)
 
 jpp_test_executable(jpp_codegen_tests ${jpp_codegen_tsrcs})
-target_include_directories(jpp_codegen_tests PRIVATE ${cgtest02_INCLUDE})
-target_link_libraries(jpp_core_codegen jpp_core)
-target_link_libraries(jpp_codegen_tests jpp_core_codegen)
+if(JPP_ENABLE_TESTS)
+  target_include_directories(jpp_codegen_tests PRIVATE ${cgtest02_INCLUDE})
+  target_link_libraries(jpp_codegen_tests jpp_core_codegen)
+endif()
+

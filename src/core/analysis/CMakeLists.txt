@@ -80,4 +80,6 @@ jpp_core_files(core_hdrs
 
 
 jpp_test_executable(jpp_core_analysis_tests ${core_analysis_tsrc})
-target_link_libraries(jpp_core_analysis_tests jpp_core)
+if(JPP_ENABLE_TESTS)
+  target_link_libraries(jpp_core_analysis_tests jpp_core)
+endif()

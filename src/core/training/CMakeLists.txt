@@ -39,7 +39,9 @@ set(core_train_hdrs
 
 
 add_library(jpp_core_train ${core_train_src} ${core_train_hdrs})
-jpp_test_executable(jpp_core_train_tests ${core_train_tsrc})
-
 target_link_libraries(jpp_core_train jpp_core)
-target_link_libraries(jpp_core_train_tests jpp_core_train)
+
+jpp_test_executable(jpp_core_train_tests ${core_train_tsrc})
+if(JPP_ENABLE_TESTS)
+  target_link_libraries(jpp_core_train_tests jpp_core_train)
+endif()

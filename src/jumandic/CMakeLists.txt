@@ -53,9 +53,6 @@ if (${JPP_USE_PROTOBUF})
 endif ()
 
 
-jpp_test_executable(jpp_jumandic_tests ${jumandic_tests})
-jpp_test_executable(jpp_bug_tests ${bug_test_sources})
-target_include_directories(jpp_jumandic_tests PRIVATE ${jpp_jumandic_cg_INCLUDE})
 
 add_executable(jpp_jumandic_bootstrap main/bootstrap.cc)
 add_executable(jumanpp_v2 main/jumanpp.cc)
@@ -64,11 +61,18 @@ add_executable(jpp_jumandic_pathdiff main/path_diff.cc)
 target_include_directories(jpp_jumandic_pathdiff PRIVATE ${jpp_jumandic_cg_INCLUDE})
 
 target_link_libraries(jpp_jumandic jpp_jumandic_spec)
-target_link_libraries(jpp_jumandic_tests jpp_jumandic jpp_core_train)
-target_link_libraries(jpp_bug_tests jpp_jumandic jpp_core_train)
 target_link_libraries(jpp_jumandic_bootstrap jpp_jumandic)
 target_link_libraries(jumanpp_v2 jpp_jumandic)
 target_link_libraries(jumanpp_v2_train jpp_jumandic jpp_core_train)
 target_link_libraries(jpp_jumandic_pathdiff jpp_jumandic)
+
+jpp_test_executable(jpp_jumandic_tests ${jumandic_tests})
+jpp_test_executable(jpp_bug_tests ${bug_test_sources})
+if(JPP_ENABLE_TESTS)
+  target_include_directories(jpp_jumandic_tests PRIVATE ${jpp_jumandic_cg_INCLUDE})
+  target_link_libraries(jpp_jumandic_tests jpp_jumandic jpp_core_train)
+  target_link_libraries(jpp_bug_tests jpp_jumandic jpp_core_train)
+endif()
+
 
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/jumanpp_v2 RENAME jumanpp DESTINATION bin)

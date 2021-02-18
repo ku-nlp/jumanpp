@@ -5,8 +5,11 @@ set(jpp_rnn_tests mikolov_rnn_test.cc)
 add_library(jpp_rnn ${jpp_rnn_sources} ${jpp_rnn_includes} )
 add_library(jumanpp_rnn_legacy legacy/rnnlmlib.h legacy/rnnlmlib_static.h legacy/rnnlmlib_static.cpp)
 
-jpp_test_executable(jpp_rnn_tests ${jpp_rnn_tests})
 target_link_libraries(jpp_rnn jpp_util)
-target_link_libraries(jpp_rnn_tests jpp_rnn jumanpp_rnn_legacy)
-
 target_link_libraries(jumanpp_rnn_legacy jpp_util)
+
+jpp_test_executable(jpp_rnn_tests ${jpp_rnn_tests})
+if(JPP_ENABLE_TESTS)
+  target_link_libraries(jpp_rnn_tests jpp_rnn jumanpp_rnn_legacy)
+endif()
+
