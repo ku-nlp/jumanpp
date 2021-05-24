@@ -32,7 +32,7 @@ else()
   endif()
 
   file(GLOB EIGEN_DIRNAMES "${EIGEN_TMP_DIR}/*")
-  file(RENAME ${EIGEN_DIRNAMES} ${CMAKE_CURRENT_SOURCE_DIR}/eigen3)
+  file(COPY ${EIGEN_DIRNAMES} ${CMAKE_CURRENT_SOURCE_DIR}/eigen3)
 endif()
 
 add_subdirectory(pathie-cpp EXCLUDE_FROM_ALL)
