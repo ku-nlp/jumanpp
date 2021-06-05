@@ -3,6 +3,7 @@
 //
 
 #include <fstream>
+
 #include "core/impl/graphviz_format.h"
 #include "core/input/partial_example_io.h"
 #include "core/training/scw.h"
@@ -113,7 +114,7 @@ TEST_CASE("can compute loss/features from a simple example bnds/words") {
   for (auto& e : env.trainer.featureDiff()) {
     total += e.score;
   }
-  CHECK(total == Approx(0.0));
+  CHECK(total == Approx(0.0).margin(1e-5));
 }
 
 TEST_CASE("can compute loss/features from a simple example with tags") {

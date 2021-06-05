@@ -35,6 +35,20 @@ MappedFile::~MappedFile() {
   }
 }
 
+struct PageSizeInfo {
+  size_t normalPage = 4096;
+  size_t largePage = size_t(1U << 21U);  // 2MB
+
+  PageSizeInfo() {
+#ifdef _SC_PAGESIZE
+    long pageSize = sysconf(_SC_PAGESIZE);
+    if (pageSize != -1) {
+      normalPage = pageSize;
+    }
+#endif  // _SC_PAGESIZE
+  }
+};
+
 Status MappedFile::open(StringPiece filename, MMapType type) {
   if (fd_ != 0) {
     return Status::InvalidState()
@@ -86,7 +100,7 @@ Status MappedFile::open(StringPiece filename, MMapType type) {
   return Status::Ok();
 }
 
-char ZERO[] = {'\0'};
+const char ZERO[] = {'\0'};
 
 Status MappedFile::map(MappedFileFragment *view, size_t offset, size_t size,
                        bool useHuge) {
@@ -94,6 +108,11 @@ Status MappedFile::map(MappedFileFragment *view, size_t offset, size_t size,
   int flags = 0;
 
   auto endoffset = offset + size;
+
+  static PageSizeInfo psInfo{};
+  size_t offsetPsAligned = (offset / psInfo.normalPage) * psInfo.normalPage;
+  size_t sizePsAligned = endoffset - offsetPsAligned;
+  size_t offsetFromStart = offset - offsetPsAligned;
 
   if (!view->isClean()) {
     return JPPS_INVALID_STATE << "fragment for the file " << filename_
@@ -143,13 +162,15 @@ Status MappedFile::map(MappedFileFragment *view, size_t offset, size_t size,
     if (size >= TWO_MEGS) {
       flags2 |= MAP_HUGETLB;
     }
-    addr = ::mmap(NULL, size, protection, flags2, this->fd_, (off_t)offset);
+    addr = ::mmap(NULL, sizePsAligned, protection, flags2, this->fd_,
+                  (off_t)offsetPsAligned);
 #endif
   }
   // MAP_HUGETLB mmap call can fail if there are no resources,
   // try without MAP_HUGETLB
   if (addr == MAP_FAILED) {
-    addr = ::mmap(NULL, size, protection, flags, this->fd_, (off_t)offset);
+    addr = ::mmap(NULL, sizePsAligned, protection, flags, this->fd_,
+                  (off_t)offsetPsAligned);
   }
 
   if (addr == MAP_FAILED) {
@@ -157,7 +178,9 @@ Status MappedFile::map(MappedFileFragment *view, size_t offset, size_t size,
                               << strerror(errno);
   }
 
-  view->address_ = addr;
+  view->baseAddress_ = addr;
+  view->alignedSize_ = sizePsAligned;
+  view->address_ = static_cast<char *>(addr) + offsetFromStart;
   view->size_ = size;
 
   return Status::Ok();
@@ -181,7 +204,8 @@ MappedFileFragment::~MappedFileFragment() {
 }
 
 void MappedFileFragment::unmap() {
-  ::munmap(address_, size_);
+  ::munmap(baseAddress_, alignedSize_);
+  baseAddress_ = MAP_FAILED;
   address_ = MAP_FAILED;
 }
 
@@ -197,8 +221,7 @@ Status MappedFileFragment::flush() {
 }
 
 StringPiece MappedFileFragment::asStringPiece() const {
-  StringPiece::pointer_t asChar =
-      reinterpret_cast<StringPiece::pointer_t>(address_);
+  const auto *asChar = reinterpret_cast<StringPiece::pointer_t>(address_);
   return StringPiece(asChar, size_);
 }
 
