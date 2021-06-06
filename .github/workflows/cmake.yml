@@ -13,10 +13,11 @@ env:
 jobs:
   build:
     strategy:
-      os:
-        - ubuntu-18.04
-        - windows-latest
-        - macos-latest
+      matrix:
+        os:
+          - ubuntu-18.04
+          - windows-latest
+          - macos-latest
     # The CMake configure and build commands are platform agnostic and should work equally
     # well on Windows or Mac.  You can convert this to a matrix build if you need
     # cross-platform coverage.
