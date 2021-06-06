@@ -16,6 +16,8 @@
 using namespace jumanpp::core;
 using namespace jumanpp;
 
+using Catch::Matchers::WithinAbs;
+
 namespace {
 
 void dumpJumandicLattice(std::string dst,
@@ -107,7 +109,7 @@ TEST_CASE(
             analysis::EntryBeam::isFake(be2)) {
           continue;
         }
-        CHECK(be1.totalScore == Approx(be2.totalScore));
+        CHECK_THAT(be1.totalScore, WithinAbs(be2.totalScore, 1e-3f));
       }
     }
   }
@@ -118,7 +120,7 @@ TEST_CASE(
 
   for (int i = 0; i < tenv.beamSize; ++i) {
     CAPTURE(i);
-    CHECK(lbeam1.at(i).totalScore == Approx(lbeam2.at(i).totalScore));
+    CHECK_THAT(lbeam1.at(i).totalScore, WithinAbs(lbeam2.at(i).totalScore, 1e-3f));
   }
 }
 
@@ -196,7 +198,7 @@ TEST_CASE(
 
     for (int el = 0; el < nels; ++el) {
       CAPTURE(el);
-      CHECK(t0s1.at(el) == Approx(t0s2.at(el)));
+      CHECK_THAT(t0s1.at(el), WithinAbs(t0s2.at(el), 1e-3f));
     }
     auto t1x1 = fb1.t1Buf(gen.ngramStats().num2Grams, nels);
     auto t1x2 = fb2.t1Buf(gen.ngramStats().num2Grams, nels);
@@ -232,7 +234,7 @@ TEST_CASE(
       auto t1s2 = proc2.scores_.bufferT1();
       for (int el = 0; el < nels; ++el) {
         CAPTURE(el);
-        CHECK(t1s1.at(el) == Approx(t1s2.at(el)));
+        CHECK_THAT(t1s1.at(el), WithinAbs(t1s2.at(el), 1e-3f));
       }
       proc1.resolveBeamAt(t1node.boundary, t1node.position);
       proc2.resolveBeamAt(t1node.boundary, t1node.position);
@@ -247,7 +249,7 @@ TEST_CASE(
         auto t2s2 = proc1.scores_.bufferT2();
         for (int el = 0; el < nels; ++el) {
           CAPTURE(el);
-          CHECK(t2s1.at(el) == Approx(t2s2.at(el)));
+          CHECK_THAT(t2s1.at(el), WithinAbs(t2s2.at(el), 1e-3f));
         }
       }
     }
@@ -337,7 +339,7 @@ TEST_CASE("feature representation of gen/nongen is the same with global beam") {
         }
 
         CAPTURE(beam);
-        CHECK(be1.totalScore == Approx(be2.totalScore));
+        CHECK_THAT(be1.totalScore, WithinAbs(be2.totalScore, 1e-3f));
         CHECK(be1.ptr == be2.ptr);
       }
     }
@@ -349,7 +351,7 @@ TEST_CASE("feature representation of gen/nongen is the same with global beam") {
 
   for (int i = 0; i < tenv.beamSize; ++i) {
     CAPTURE(i);
-    CHECK(lbeam1.at(i).totalScore == Approx(lbeam2.at(i).totalScore));
+    CHECK_THAT(lbeam1.at(i).totalScore, WithinAbs(lbeam2.at(i).totalScore, 1e-3f));
     // LOG_WARN() << lbeam1.at(i).totalScore;
     // LOG_WARN() << lbeam2.at(i).totalScore;
   }
