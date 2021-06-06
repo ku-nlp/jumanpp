@@ -43,6 +43,7 @@ jobs:
       run: ctest -C ${{env.BUILD_TYPE}} --verbose --output-on-failure
       
     - name: Publish Test Report
+      if: always()
       uses: mikepenz/action-junit-report@v2.4.2
       with:
         report_paths: 'build/**/*.report.xml'
