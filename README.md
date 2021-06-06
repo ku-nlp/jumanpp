@@ -5,7 +5,7 @@ word sequences by using a recurrent neural network language model (RNNLM).
 Version 2 has better accuracy and greatly (>250x) improved analysis speed than
 the original Juman++.
 
-[![Build Status](https://travis-ci.org/ku-nlp/jumanpp.svg?branch=master)](https://travis-ci.org/ku-nlp/jumanpp)
+[![Build Status](https://github.com/ku-nlp/jumanpp/actions/workflows/cmake.yml/badge.svg)](https://github.com/ku-nlp/jumanpp/actions/workflows/cmake.yml)
 
 # Installation
 
