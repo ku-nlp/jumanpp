@@ -4,6 +4,8 @@
 
 #include "jumandic_test_env.h"
 
+using Catch::Matchers::WithinAbs;
+
 TEST_CASE("jumanpp can correctly read stuff") {
   JumandicTrainingTestEnv env{"jumandic/jumanpp_minimal.mdic"};
   env.initialize();
@@ -19,7 +21,7 @@ TEST_CASE("jumanpp can correctly read stuff") {
   // env.dumpTrainers("/tmp/dots/2");
   REQUIRE_OK(env.trainEnv.value().trainOneBatch(1));
   REQUIRE_OK(env.trainEnv.value().trainOneBatch(2));
-  CHECK(env.trainEnv.value().batchLoss() == Approx(0.0f));
+  CHECK_THAT(env.trainEnv.value().batchLoss(), WithinAbs(0.0f, 1e-4f));
 }
 
 TEST_CASE("jumanpp can learn with minidic") {

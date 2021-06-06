@@ -4,12 +4,14 @@
 
 #include "jumandic/shared/jumandic_test_env.h"
 
+using Catch::Matchers::WithinAbs;
+
 TEST_CASE("unk node is correctly selected as a gold one") {
   JumandicTrainingTestEnv env{"jumandic/codegen.mdic"};
   env.trainArgs.batchSize = 20;
   env.initialize();
   auto loss = env.trainNepochsFrom("jumandic/unk_ex.data", 5);
-  CHECK(loss == Approx(0));
+  CHECK_THAT(loss, WithinAbs(0, 1e-3f));
   auto tr = env.trainEnv.value().trainer(0);
   auto realTr = dynamic_cast<core::training::OwningFullTrainer*>(tr);
   CHECK(realTr != nullptr);
