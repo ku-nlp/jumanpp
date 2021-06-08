@@ -5,9 +5,12 @@
 #ifndef JUMANPP_COMMON_HPP
 #define JUMANPP_COMMON_HPP
 
+#if defined(_WIN32_WINNT) && (defined(_M_IX86) || defined(_M_X64))
 #include <intrin.h>
+#endif
 
 #ifdef _MSC_VER
+
 #define JPP_ALWAYS_INLINE __forceinline
 #define JPP_NO_INLINE __declspec(noinline)
 
