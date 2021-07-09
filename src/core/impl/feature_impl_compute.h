@@ -6,22 +6,20 @@
 #define JUMANPP_FEATURE_IMPL_COMPUTE_H
 
 #include "core/features_api.h"
+#include "core/impl/feature_impl_hasher.h"
 #include "core/impl/feature_impl_prim.h"
 #include "core/impl/feature_impl_types.h"
 #include "core/impl/feature_types.h"
-#include "util/fast_hash.h"
 
 namespace jumanpp {
 namespace core {
 namespace features {
 namespace impl {
 
-using Hash = util::hashing::FastHash1;
-
 class ComputeFeatureImpl {
  public:
   virtual ~ComputeFeatureImpl() = default;
-  virtual Hash mixPrmitives(Hash input, PrimitiveFeatureContext* ctx,
+  virtual Hasher mixPrmitives(Hasher input, PrimitiveFeatureContext* ctx,
                             const NodeInfo& nodeInfo,
                             const util::ArraySlice<i32>& entry) const = 0;
 
@@ -36,7 +34,7 @@ class NoopComputeFeatureImpl : public ComputeFeatureImpl {
   const PrimitiveFeatureImpl* prim_;
 
  public:
-  virtual Hash mixPrmitives(Hash input, PrimitiveFeatureContext* ctx,
+  virtual Hasher mixPrmitives(Hasher input, PrimitiveFeatureContext* ctx,
                             const NodeInfo& nodeInfo,
                             const util::ArraySlice<i32>& entry) const override;
   virtual ~NoopComputeFeatureImpl() override;
@@ -53,7 +51,7 @@ class ExprComputeFeatureImpl : public ComputeFeatureImpl {
   std::vector<const PrimitiveFeatureImpl*> false_;
 
  public:
-  virtual Hash mixPrmitives(Hash input, PrimitiveFeatureContext* ctx,
+  virtual Hasher mixPrmitives(Hasher input, PrimitiveFeatureContext* ctx,
                             const NodeInfo& nodeInfo,
                             const util::ArraySlice<i32>& entry) const override;
   Status initialize(

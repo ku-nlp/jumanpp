@@ -9,8 +9,8 @@ namespace core {
 namespace features {
 namespace impl {
 
-Hash ExprComputeFeatureImpl::mixPrmitives(
-    Hash input, PrimitiveFeatureContext *ctx, const NodeInfo &nodeInfo,
+Hasher ExprComputeFeatureImpl::mixPrmitives(
+    Hasher input, PrimitiveFeatureContext *ctx, const NodeInfo &nodeInfo,
     const util::ArraySlice<i32> &entry) const {
   auto check = condition_->access(ctx, nodeInfo, entry);
   if (check != 0) {
@@ -56,8 +56,8 @@ Status ExprComputeFeatureImpl::initialize(
 
 ExprComputeFeatureImpl::~ExprComputeFeatureImpl() = default;
 
-Hash NoopComputeFeatureImpl::mixPrmitives(
-    Hash input, PrimitiveFeatureContext *ctx, const NodeInfo &nodeInfo,
+Hasher NoopComputeFeatureImpl::mixPrmitives(
+    Hasher input, PrimitiveFeatureContext *ctx, const NodeInfo &nodeInfo,
     const util::ArraySlice<i32> &entry) const {
   return input.mix(prim_->access(ctx, nodeInfo, entry));
 }

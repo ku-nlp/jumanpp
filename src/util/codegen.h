@@ -85,7 +85,7 @@ class ResultAssign {
     PrintSemicolon x{p};
     p << "result.at(" << resultIdx_ << ") = "
       << "static_cast<::jumanpp::u32>("
-      << "jumanpp::util::hashing::FastHash1{}";
+      << "::jumanpp::core::features::impl::Hasher{}";
     p << ".mix(" << pieces_.size() << ")";
     for (const auto& piece : pieces_) {
       p << piece;

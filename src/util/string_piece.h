@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <iosfwd>
 #include <string>
+
 #include "common.hpp"
 #include "murmur_hash.h"
 #include "types.hpp"
@@ -61,14 +62,10 @@ class StringPiece {
    * @param array
    */
   template <size_t array_size>
-  JPP_ALWAYS_INLINE
-  // MSVC has a bug with constexpr here :|
-#ifndef _MSC_VER
-      constexpr
-#endif
-      StringPiece(const char (&array)[array_size]) noexcept
-      : begin_{array}, end_{array + array_size - 1} {
-  }
+  JPP_ALWAYS_INLINE           /*implicit*/
+      constexpr StringPiece(  // NOLINT(google-explicit-constructor)
+          const char (&array)[array_size]) noexcept
+      : begin_{array}, end_{array + array_size - 1} {}
 
   /**
    * Constructor for everything that has .data(), .size() and its type can be
@@ -81,7 +78,9 @@ class StringPiece {
                 std::is_same<char, typename std::remove_cv<
                                        typename Cont::value_type>::type>::value,
                 size_t>::type>
-  JPP_ALWAYS_INLINE constexpr StringPiece(const Cont& cont) noexcept
+  JPP_ALWAYS_INLINE           /*implicit*/
+      constexpr StringPiece(  // NOLINT(google-explicit-constructor)
+          const Cont& cont) noexcept
       : begin_{cont.data()}, end_{cont.data() + static_cast<Sz>(cont.size())} {
     // static_cast here is to make MSVC compute the second template parameter
     // and SFINAE on bad things.

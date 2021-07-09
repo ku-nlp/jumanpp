@@ -9,7 +9,7 @@ set(jpp_util_headers mmap.h status.hpp memory.hpp characters.h types.hpp logging
   sliceable_array.h printer.h codegen.h array_slice_util.h lazy.h debug_output.h
   seahash.h serialization_flatmap.h lru_cache.h bounded_queue.h fast_hash.h assert.h
   quantized_weights.h format.h fast_printer.h cfg.h mmap_impl_unix.h  mmap_impl_win32.h
-  parse_utils.h)
+  parse_utils.h fast_hash_rot.h)
 
 set(jpp_util_test_srcs memory_test.cpp mmap_test.cc string_piece_test.cc
   csv_reader_test.cc coded_io_test.cc characters_test.cpp hashing_test.cc

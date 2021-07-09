@@ -33,3 +33,4 @@ build/
 
 CMakeSettings.json
 .vs/
+out/

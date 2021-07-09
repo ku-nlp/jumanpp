@@ -27,6 +27,15 @@ namespace jumanpp {
 namespace util {
 namespace hashing {
 
+/**
+ * This implements SeaHash hasher trimmed to a single u64 hash intermediate
+ * state. Juman++ uses this to prioritize execution speed over gains in hash
+ * quality. We did not find problems in hash quality with this implementation
+ * for our application.
+ *
+ * Actually, we use the version which uses rotate instead of xoring in the
+ * third hash opration (see FashHashRot)
+ */
 class FastHash1 {
   u64 state_;
 
@@ -38,7 +47,7 @@ class FastHash1 {
   JPP_ALWAYS_INLINE FastHash1 mix(u64 data) const noexcept {
     u64 v = state_ ^ data;
     v *= SeaHashMult;
-    v = v ^ (v >> 32);
+    v = v ^ (v >> 32u);
     return FastHash1{v};
   }
 
@@ -172,18 +181,16 @@ class FastHash4 {
     return mixImpl(arg);
   }
 
-  JPP_ALWAYS_INLINE FastHash4 mixGatherInstr(const u64* base,
-                                             const u32* indices) const
-      noexcept {
+  JPP_ALWAYS_INLINE FastHash4
+  mixGatherInstr(const u64* base, const u32* indices) const noexcept {
     auto idx = _mm_loadu_si128(reinterpret_cast<const __m128i*>(indices));
     auto ptr = reinterpret_cast<const long long int*>(base);
     auto arg = _mm256_i32gather_epi64(ptr, idx, sizeof(u64));
     return mixImpl(arg);
   }
 
-  JPP_ALWAYS_INLINE FastHash4 mixGatherNaive(const u64* base,
-                                             const u32* indices) const
-      noexcept {
+  JPP_ALWAYS_INLINE FastHash4
+  mixGatherNaive(const u64* base, const u32* indices) const noexcept {
     auto arg = _mm256_undefined_si256();
     arg[0] = base[indices[0]];
     arg[1] = base[indices[1]];
@@ -226,8 +233,8 @@ class FastHash4 {
     _mm_prefetch(addr + _mm256_extract_epi32(state_, 3), hint);
   }
 
-  JPP_ALWAYS_INLINE void joinStore(FastHash4 other, u32 mask, u32* result) const
-      noexcept {
+  JPP_ALWAYS_INLINE void joinStore(FastHash4 other, u32 mask,
+                                   u32* result) const noexcept {
     auto s = _mm256_blend_epi32(state_, other.state_,
                                 JPP_BITS8(0, 0, 0, 0, 1, 1, 1, 1));
     _mm256_storeu_si256(reinterpret_cast<__m256i*>(result), s);
