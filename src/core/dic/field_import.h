@@ -94,8 +94,9 @@ class StringStorage {
   }
 
   void setAlignment(i32 power) {
+    auto spow = static_cast<size_t>(power);
     alignmentPower = power;
-    alignment = static_cast<size_t>(1 << power);
+    alignment = size_t{1} << spow;
   }
 
   size_t size() const { return mapping_.size(); }
@@ -116,7 +117,7 @@ class StringFieldImporter : public FieldImporter {
 
   virtual bool importFieldValue(const util::CsvReader& csv) override {
     auto sp = csv.field(field_);
-    if (ignore_ == sp || sp.size() == 0) {
+    if (ignore_ == sp || sp.empty()) {
       return true;
     }
     return storage_->increaseFieldValueCount(sp);
@@ -128,7 +129,7 @@ class StringFieldImporter : public FieldImporter {
 
   virtual i32 fieldPointer(const util::CsvReader& csv) override {
     auto sp = csv.field(field_);
-    if (sp.size() == 0 || ignore_ == sp) {
+    if (sp.empty() || ignore_ == sp) {
       return 0;
     }
     JPP_CAPTURE(sp);

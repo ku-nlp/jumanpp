@@ -7,18 +7,16 @@
 
 #include "core/features_api.h"
 #include "core/impl/feature_impl_compute.h"
+#include "core/impl/feature_impl_hasher.h"
 #include "core/impl/feature_impl_prim.h"
 #include "core/impl/feature_impl_types.h"
 #include "util/array_slice.h"
-#include "util/fast_hash.h"
 #include "util/printer.h"
 
 namespace jumanpp {
 namespace core {
 namespace features {
 namespace impl {
-
-using fh = util::hashing::FastHash1;
 
 class DynamicPatternFeatureImpl {
   i32 index_;
@@ -31,7 +29,8 @@ class DynamicPatternFeatureImpl {
                     util::ArraySlice<i32> nodeFeatures,
                     util::MutableArraySlice<u64> result) const noexcept {
     auto u32idx = static_cast<u32>(index_);
-    auto hash = fh{}.mix(u32idx).mix(compute_.size()).mix(PatternFeatureSeed);
+    auto hash =
+        Hasher{}.mix(u32idx).mix(compute_.size()).mix(PatternFeatureSeed);
     for (auto f : compute_) {
       hash = f->mixPrmitives(hash, pfc, info, nodeFeatures);
     }

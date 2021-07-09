@@ -6,7 +6,9 @@
 #define JUMANPP_FEATURE_IMPL_COMBINE_H
 
 #include <array>
+
 #include "core/features_api.h"
+#include "core/impl/feature_impl_hasher.h"
 #include "core/impl/feature_impl_types.h"
 #include "core/impl/feature_types.h"
 #include "util/codegen.h"
@@ -17,8 +19,6 @@ namespace jumanpp {
 namespace core {
 namespace features {
 namespace impl {
-
-using fh = util::hashing::FastHash1;
 
 template <int N>
 class NgramFeatureImpl {
@@ -41,44 +41,42 @@ class NgramFeatureImpl {
 };
 
 template <>
-inline void NgramFeatureImpl<1>::apply(util::MutableArraySlice<u32> result,
-                                       const util::ArraySlice<u64> &t2,
-                                       const util::ArraySlice<u64> &t1,
-                                       const util::ArraySlice<u64> &t0) const
-    noexcept {
+inline void NgramFeatureImpl<1>::apply(
+    util::MutableArraySlice<u32> result, const util::ArraySlice<u64> &t2,
+    const util::ArraySlice<u64> &t1,
+    const util::ArraySlice<u64> &t0) const noexcept {
   auto p0 = storage[0];
   auto v0 = t0.at(p0);
-  auto ret = fh{}.mix(3).mix(index).mix(UnigramSeed).mix(v0);
+  auto ret = Hasher{}.mix(3).mix(index).mix(UnigramSeed).mix(v0);
   result.at(index) = static_cast<u32>(ret.result());
 };
 
 template <>
-inline void NgramFeatureImpl<2>::apply(util::MutableArraySlice<u32> result,
-                                       const util::ArraySlice<u64> &t2,
-                                       const util::ArraySlice<u64> &t1,
-                                       const util::ArraySlice<u64> &t0) const
-    noexcept {
+inline void NgramFeatureImpl<2>::apply(
+    util::MutableArraySlice<u32> result, const util::ArraySlice<u64> &t2,
+    const util::ArraySlice<u64> &t1,
+    const util::ArraySlice<u64> &t0) const noexcept {
   auto p0 = storage[0];
   auto v0 = t0.at(p0);
   auto p1 = storage[1];
   auto v1 = t1.at(p1);
-  auto ret = fh{}.mix(4).mix(index).mix(BigramSeed).mix(v0).mix(v1);
+  auto ret = Hasher{}.mix(4).mix(index).mix(BigramSeed).mix(v0).mix(v1);
   result.at(index) = static_cast<u32>(ret.result());
 };
 
 template <>
-inline void NgramFeatureImpl<3>::apply(util::MutableArraySlice<u32> result,
-                                       const util::ArraySlice<u64> &t2,
-                                       const util::ArraySlice<u64> &t1,
-                                       const util::ArraySlice<u64> &t0) const
-    noexcept {
+inline void NgramFeatureImpl<3>::apply(
+    util::MutableArraySlice<u32> result, const util::ArraySlice<u64> &t2,
+    const util::ArraySlice<u64> &t1,
+    const util::ArraySlice<u64> &t0) const noexcept {
   auto p0 = storage[0];
   auto v0 = t0.at(p0);
   auto p1 = storage[1];
   auto v1 = t1.at(p1);
   auto p2 = storage[2];
   auto v2 = t2.at(p2);
-  auto ret = fh{}.mix(5).mix(index).mix(TrigramSeed).mix(v0).mix(v1).mix(v2);
+  auto ret =
+      Hasher{}.mix(5).mix(index).mix(TrigramSeed).mix(v0).mix(v1).mix(v2);
   result.at(index) = static_cast<u32>(ret.result());
 };
 

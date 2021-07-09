@@ -21,7 +21,7 @@ TEST_CASE("ngram features can be compiled") {
   uni.apply(&res, t2, t1, t0);
   bi.apply(&res, t2, t1, t0);
   tri.apply(&res, t2, t1, t0);
-  CHECK(data[0] == 0x84fde475);
-  CHECK(data[1] == 0xe5e130dd);
-  CHECK(data[2] == 0x176432bf);
+  CHECK(data[0] == 0xb43cdad6);
+  CHECK(data[1] == 0x66f322e1);
+  CHECK(data[2] == 0x99518c1f);
 }
