@@ -14,7 +14,7 @@ function(jpp_register_test executable)
     if (JPP_TEST_REPORT_JUNIT)
         set(CATCH_FLAGS -r junit "-#" --success "--out=${CMAKE_CURRENT_BINARY_DIR}/${executable}.report.xml")
     else(JPP_TEST_REPORT_JUNIT)
-        set(CATCH_FLAGS "")
+        set(CATCH_FLAGS "--use-colour" "yes")
     endif(JPP_TEST_REPORT_JUNIT)
 
     add_test(
