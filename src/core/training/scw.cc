@@ -226,6 +226,11 @@ u64 SoftConfidenceWeighted::substractInitValues() {
   }
   return zeroed;
 }
+void SoftConfidenceWeighted::setAllWeights(float value) {
+  for (auto& w : usableWeights) {
+    w = value;
+  }
+}
 
 }  // namespace training
 }  // namespace core
