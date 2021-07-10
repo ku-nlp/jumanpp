@@ -128,7 +128,7 @@ TEST_CASE("can compute loss/features from a simple example with tags") {
   for (auto& e : env.trainer.featureDiff()) {
     total += e.score;
   }
-  CHECK_THAT(total, Catch::Matchers::WithinRel(0.f, 1e-4f));
+  CHECK_THAT(total, Catch::Matchers::WithinAbs(0.f, 1e-4f));
 }
 
 TEST_CASE("can decrease loss/features from a simple example with tags") {
@@ -149,5 +149,5 @@ TEST_CASE("can decrease loss/features from a simple example with tags") {
   }
   auto sconf = scw.scorers();
   REQUIRE(env.trainer.compute(sconf));
-  CHECK_THAT(env.trainer.loss(), Catch::Matchers::WithinRel(0.f, 1e-4f));
+  CHECK_THAT(env.trainer.loss(), Catch::Matchers::WithinAbs(0.f, 1e-4f));
 }
