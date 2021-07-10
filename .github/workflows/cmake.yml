@@ -30,7 +30,7 @@ jobs:
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DJPP_TEST_REPORT_JUNIT=ON -C ${{github.workspace}}/travis/cmake.conf --warn-uninitialized
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -C ${{github.workspace}}/travis/cmake.conf --warn-uninitialized
 
     - name: Build
       # Build your program with the given configuration
@@ -40,11 +40,5 @@ jobs:
       working-directory: ${{github.workspace}}/build
       # Execute tests defined by the CMake configuration.  
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-      run: ctest -C ${{env.BUILD_TYPE}} --verbose --output-on-failure
-      
-    - name: Publish Test Report
-      if: always()
-      uses: mikepenz/action-junit-report@v2.4.2
-      with:
-        report_paths: 'build/**/*.report.xml'
+      run: ctest -C ${{env.BUILD_TYPE}} --extra-verbose --output-on-failure
       
