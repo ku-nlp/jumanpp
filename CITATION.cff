@@ -1,4 +1,4 @@
-cff-version: "1.1.0"
+cff-version: "1.2.0"
 authors: 
   -
     family-names: Tolmachev
@@ -6,7 +6,6 @@ authors:
   -
     family-names: Morita
     given-names: Hajime
-cff-version: "1.1.0"
 license: "Apache-2.0"
 message: "If you use this software, please cite it using these metadata."
 url: "https://github.com/ku-nlp/jumanpp"
