@@ -2,11 +2,19 @@
 // Created by Arseny Tolmachev on 2017/10/26.
 //
 
-#include <backward.hpp>
 #include <exception>
 #include <sstream>
+
 #include "logging.hpp"
-#include "util/common.hpp"
+
+// clang-format off
+#include "util_config.h"
+
+#if JPP_HAS_BACKWARD
+#include <backward.hpp>
+#endif
+
+// clang-format on
 
 #if defined(__APPLE__)
 #include <sys/sysctl.h>
@@ -75,6 +83,7 @@ bool isDebuggerAttached() {
 }
 
 void AssertBuilder::PrintStacktrace() {
+#if JPP_HAS_BACKWARD
   namespace b = backward;
   b::StackTrace st;
   st.load_here(32);
@@ -89,6 +98,9 @@ void AssertBuilder::PrintStacktrace() {
               << " at " << t.source.filename << ":" << t.source.line << " of "
               << t.source.function << " (" << t.addr << " in "
               << t.object_filename << ") " << t.object_function;
+#else
+  data_->ss << "Stacktrace unavailable, backward does not work!";
+#endif
   }
 }
 

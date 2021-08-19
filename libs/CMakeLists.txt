@@ -36,3 +36,36 @@ else()
 endif()
 
 add_subdirectory(pathie-cpp EXCLUDE_FROM_ALL)
+
+# Try to compile backward example
+
+try_compile(RESULT_VAR ${CMAKE_CURRENT_BINARY_DIR}
+        SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/backward-cfg/backward-test.cpp
+        CMAKE_FLAGS -DINCLUDE_DIRECTORIES=${CMAKE_CURRENT_SOURCE_DIR}
+        CXX_STANDARD 14
+        OUTPUT_VARIABLE BWD_OUT)
+
+if (${RESULT_VAR})
+  message("Backward... OK, no additional libraries needed")
+  set(BACKWARD_libs "" PARENT_SCOPE)
+  set(JPP_HAS_BACKWARD TRUE)
+endif ()
+
+# If failed, try to link with execinfo (for Alpine)
+
+if (NOT ${RESULT_VAR})
+  try_compile(RESULT_VAR ${CMAKE_CURRENT_BINARY_DIR}
+          SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/backward-cfg/backward-test.cpp
+          CMAKE_FLAGS -DINCLUDE_DIRECTORIES=${CMAKE_CURRENT_SOURCE_DIR}
+          LINK_LIBRARIES execinfo
+          CXX_STANDARD 14
+          OUTPUT_VARIABLE BWD_OUT)
+
+  if (${RESULT_VAR})
+    message("Backward... disabled")
+    set(BACKWARD_libs "execinfo" PARENT_SCOPE)
+    set(JPP_HAS_BACKWARD TRUE CACHE BOOL PARENT_SCOPE)
+  else()
+    set(JPP_HAS_BACKWARD FALSE CACHE BOOL PARENT_SCOPE)
+  endif ()
+endif()
