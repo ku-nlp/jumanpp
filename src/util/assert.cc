@@ -2,19 +2,15 @@
 // Created by Arseny Tolmachev on 2017/10/26.
 //
 
-#include <exception>
-#include <sstream>
-
-#include "logging.hpp"
-
-// clang-format off
 #include "util_config.h"
-
 #if JPP_HAS_BACKWARD
 #include <backward.hpp>
 #endif
+#include <exception>
+#include <iostream>
+#include <sstream>
 
-// clang-format on
+#include "util/common.hpp"
 
 #if defined(__APPLE__)
 #include <sys/sysctl.h>
@@ -98,10 +94,8 @@ void AssertBuilder::PrintStacktrace() {
               << " at " << t.source.filename << ":" << t.source.line << " of "
               << t.source.function << " (" << t.addr << " in "
               << t.object_filename << ") " << t.object_function;
-#else
-  data_->ss << "Stacktrace unavailable, backward does not work!";
-#endif
   }
+#endif
 }
 
 void AssertBuilder::AddExpr(const char *expr) {
