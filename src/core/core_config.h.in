@@ -2,8 +2,6 @@
 #ifndef __JUMANPP_CORE_CONFIG_H__
 #define __JUMANPP_CORE_CONFIG_H__
 
-#include <util/string_piece.h>
-
 namespace jumanpp {
 namespace core {
 

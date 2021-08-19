@@ -1,3 +1,8 @@
+configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/util_config.h.in
+        ${CMAKE_CURRENT_BINARY_DIR}/cfg/util_config.h
+)
+
 set(jpp_util_sources mmap.cc memory.cpp logging.cpp string_piece.cc status.cpp
   csv_reader.cc coded_io.cc characters.cc printer.cc codegen.cc assert.cc format.cc
   parse_utils.cc
@@ -9,7 +14,8 @@ set(jpp_util_headers mmap.h status.hpp memory.hpp characters.h types.hpp logging
   sliceable_array.h printer.h codegen.h array_slice_util.h lazy.h debug_output.h
   seahash.h serialization_flatmap.h lru_cache.h bounded_queue.h fast_hash.h assert.h
   quantized_weights.h format.h fast_printer.h cfg.h mmap_impl_unix.h  mmap_impl_win32.h
-  parse_utils.h fast_hash_rot.h)
+  parse_utils.h fast_hash_rot.h
+  ${CMAKE_CURRENT_BINARY_DIR}/cfg/util_config.h)
 
 set(jpp_util_test_srcs memory_test.cpp mmap_test.cc string_piece_test.cc
   csv_reader_test.cc coded_io_test.cc characters_test.cpp hashing_test.cc
@@ -27,8 +33,8 @@ endif()
 add_library(jpp_util ${jpp_util_sources} ${jpp_util_headers} ${BACKWARD_headers})
 jpp_test_executable(jpp_util_test ${jpp_util_test_srcs} ${jpp_util_headers})
 target_link_libraries(jpp_util_test jpp_util)
-target_link_libraries(jpp_util ${CMAKE_THREAD_LIBS_INIT})
-target_include_directories(jpp_util PUBLIC ${JPP_LIBS_DIR} ${JPP_SRC_DIR})
+target_link_libraries(jpp_util ${CMAKE_THREAD_LIBS_INIT} ${BACKWARD_libs})
+target_include_directories(jpp_util PUBLIC ${JPP_LIBS_DIR} ${JPP_SRC_DIR} ${CMAKE_CURRENT_BINARY_DIR}/cfg)
 target_compile_features(jpp_util PUBLIC
   cxx_constexpr
   cxx_variadic_templates

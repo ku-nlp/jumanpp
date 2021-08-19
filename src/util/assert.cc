@@ -2,10 +2,14 @@
 // Created by Arseny Tolmachev on 2017/10/26.
 //
 
+#include "util_config.h"
+#if JPP_HAS_BACKWARD
 #include <backward.hpp>
+#endif
 #include <exception>
+#include <iostream>
 #include <sstream>
-#include "logging.hpp"
+
 #include "util/common.hpp"
 
 #if defined(__APPLE__)
@@ -75,6 +79,7 @@ bool isDebuggerAttached() {
 }
 
 void AssertBuilder::PrintStacktrace() {
+#if JPP_HAS_BACKWARD
   namespace b = backward;
   b::StackTrace st;
   st.load_here(32);
@@ -90,6 +95,7 @@ void AssertBuilder::PrintStacktrace() {
               << t.source.function << " (" << t.addr << " in "
               << t.object_filename << ") " << t.object_function;
   }
+#endif
 }
 
 void AssertBuilder::AddExpr(const char *expr) {
