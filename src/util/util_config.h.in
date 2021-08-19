@@ -1,5 +1,5 @@
-#ifndef __JPP_CORE_CONFIG__
-#define __JPP_CORE_CONFIG__ 1
+#ifndef __JPP_UTIL_CONFIG_H__
+#define __JPP_UTIL_CONFIG_H__ 1
 
 #cmakedefine JPP_HAS_BACKWARD 1
 
