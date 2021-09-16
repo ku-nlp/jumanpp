@@ -76,6 +76,15 @@ Status MappedFile::open(StringPiece filename, MMapType type) {
     }
   }
 
+  if (type == MMapType::ReadWrite) {
+    FILETIME now;
+    ::GetSystemTimeAsFileTime(&now);
+    ::SetFileTime(fd,
+                  &now,
+                  &now,
+                  &now);
+  }
+
   this->fd_ = fd;
 
   return Status::Ok();
