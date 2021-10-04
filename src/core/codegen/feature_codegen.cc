@@ -3,8 +3,10 @@
 //
 
 #include "feature_codegen.h"
+
 #include <fstream>
 #include <iostream>
+
 #include "core/codegen/partial_ngram_feature_codegen.h"
 #include "core/codegen/pattern_feature_codegen.h"
 #include "core/impl/feature_impl_combine.h"
@@ -48,11 +50,11 @@ Status StaticFeatureCodegen::writeHeader(const std::string& filename) {
         << "class " << config_.className
         << ": public jumanpp::core::features::StaticFeatureFactory {\n"
         << "public:\n"
-        << JPP_TEXT(jumanpp::core::features::NgramFeatureApply*)
+        << JPP_TEXT(::jumanpp::core::features::NgramFeatureApply*)
         << "ngram() const override;\n"
-        << JPP_TEXT(jumanpp::core::features::PartialNgramFeatureApply*)
+        << JPP_TEXT(::jumanpp::core::features::PartialNgramFeatureApply*)
         << "ngramPartial() const override;\n";
-    ofs << JPP_TEXT(jumanpp::core::features::GeneratedPatternFeatureApply*)
+    ofs << JPP_TEXT(::jumanpp::core::features::GeneratedPatternFeatureApply*)
         << "pattern() const override;\n";
     ofs << JPP_TEXT(::jumanpp::u64) << " runtimeHash() const override { return "
         << spec::hashSpec(this->spec_) << "ULL; }\n";
@@ -83,13 +85,13 @@ bool outputNgramFeatures(i::Printer& p, StringPiece name,
     << "public :";
   {
     i::Indent id{p, 2};
-    p << "\ninline void apply(jumanpp::util::MutableArraySlice<jumanpp::u32> "
+    p << "\ninline void apply(::jumanpp::util::MutableArraySlice<jumanpp::u32> "
          "result,\n"
-         "                     const jumanpp::util::ArraySlice<jumanpp::u64> "
+         "                     const ::jumanpp::util::ArraySlice<jumanpp::u64> "
          "&t2,\n"
-         "                     const jumanpp::util::ArraySlice<jumanpp::u64> "
+         "                     const ::jumanpp::util::ArraySlice<jumanpp::u64> "
          "&t1,\n"
-         "                     const jumanpp::util::ArraySlice<jumanpp::u64> "
+         "                     const ::jumanpp::util::ArraySlice<jumanpp::u64> "
          "&t0) const noexcept {\n";
 
     {
@@ -179,7 +181,7 @@ Status StaticFeatureCodegen::writeSource(const std::string& filename) {
   p << "\n} //anon namespace\n";
 
   p << "\n"
-    << JPP_TEXT(jumanpp::core::features::NgramFeatureApply*)
+    << JPP_TEXT(::jumanpp::core::features::NgramFeatureApply*)
     << config_.className << "::"
     << "ngram() const {";
   {

@@ -5,7 +5,12 @@
 #ifndef JUMANPP_COMMON_HPP
 #define JUMANPP_COMMON_HPP
 
+#if defined(_WIN32_WINNT) && (defined(_M_IX86) || defined(_M_X64))
+#include <intrin.h>
+#endif
+
 #ifdef _MSC_VER
+
 #define JPP_ALWAYS_INLINE __forceinline
 #define JPP_NO_INLINE __declspec(noinline)
 
@@ -58,6 +63,8 @@ template <PrefetchHint hint>
 inline JPP_ALWAYS_INLINE void prefetch(const void* x) {
 #if defined(__llvm__) || defined(__GNUC__)
   __builtin_prefetch(x, 0, hint);
+#elif defined(_WIN32_WINNT) && (defined(_M_IX86) || defined(_M_X64))
+  _mm_prefetch(static_cast<const char*>(x), hint);
 #else
 // You get no effect.  Feel free to add more sections above.
 #endif

@@ -18,7 +18,6 @@ static constexpr u64 SeaHashMult = 0x6eed0e9da4d94a4fULL;
 
 // See http://ticki.github.io/blog/seahash-explained/ for explanation.
 // This implementation uses only two u64 for states instead of four.
-
 struct SeaHashState {
   u64 s0 = SeaHashSeed0;
   u64 s1 = SeaHashSeed1;
@@ -30,8 +29,8 @@ struct SeaHashState {
 
   JPP_ALWAYS_INLINE inline static u64 diffuse(u64 v) {
     v *= SeaHashMult;
-    auto a = v >> 32;
-    auto b = static_cast<unsigned char>(v >> 60);
+    auto a = v >> 32UL;
+    auto b = static_cast<unsigned char>(v >> 60UL);
     v ^= a >> b;
     v *= SeaHashMult;
     return v;
@@ -55,8 +54,8 @@ class SeaHashLite {
 
   constexpr static JPP_ALWAYS_INLINE inline u64 diffuse(u64 v) {
     v *= SeaHashMult;
-    auto a = v >> 32;
-    auto b = static_cast<unsigned char>(v >> 60);
+    auto a = v >> 32UL;
+    auto b = static_cast<unsigned char>(v >> 60UL);
     return v ^ (a >> b);
   }
 
@@ -68,11 +67,18 @@ class SeaHashLite {
     return SeaHashLite{diffuse(state_ ^ v)};
   }
 
+  constexpr JPP_ALWAYS_INLINE SeaHashLite
+  mixMem(const u64* const v) const noexcept {
+    return mix(*v);
+  }
+
   constexpr JPP_ALWAYS_INLINE u64 finish() const noexcept {
     return diffuse(state_ ^ SeaHashSeed1);
   }
 
   constexpr JPP_ALWAYS_INLINE u64 state() const noexcept { return state_; }
+
+  constexpr JPP_ALWAYS_INLINE u64 result() const noexcept { return finish(); }
 };
 
 namespace detail {

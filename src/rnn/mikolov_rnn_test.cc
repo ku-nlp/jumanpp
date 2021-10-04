@@ -12,6 +12,7 @@
 
 using namespace jumanpp;
 using namespace jumanpp::rnn::mikolov;
+using Catch::Matchers::WithinAbs;
 
 TEST_CASE("can read mikonov rnn header") {
   util::MappedFile file;
@@ -296,13 +297,13 @@ TEST_CASE("legacy rnn reader works") {
   LegacyTester ltst;
   auto init = ltst.initCtx();
   auto c1 = ltst.step(init, "me");
-  CHECK(c1.score == Approx(-4.22612f));
+  CHECK_THAT(c1.score, WithinAbs(-4.22612f, 1e-3f));
   auto c2 = ltst.step(c1.ctx, "what");
-  CHECK(c2.score == Approx(-2.78254f));
+  CHECK_THAT(c2.score, WithinAbs(-2.78254f, 1e-3f));
   auto c3 = ltst.step(c2.ctx, "is");
   auto c4 = ltst.step(c3.ctx, "this");
   auto c5 = ltst.step(c4.ctx, "thing");
-  CHECK(c5.score == Approx(-2.58717f));
+  CHECK_THAT(c5.score, WithinAbs(-2.58717f, 1e-3f));
 }
 
 TEST_CASE("model reader can read vocabulary") {
@@ -315,15 +316,15 @@ TEST_CASE("reimplementation can compute scores") {
   CHECK(tstr.rdr.words().size() == 10000);
   auto z = tstr.zero();
   auto s1 = tstr.step(z, "me");
-  CHECK(s1.normalizedScore == Approx(-4.22612f));
+  CHECK_THAT(s1.normalizedScore, WithinAbs(-4.22612f, 1e-3f));
   CHECK(s1.prevWords[0] == 811);
   CHECK(s1.prevWords[1] == 0);
   auto s2 = tstr.step(s1, "what");
-  CHECK(s2.normalizedScore == Approx(-2.78254f));
+  CHECK_THAT(s2.normalizedScore, WithinAbs(-2.78254f, 1e-3f));
   auto s3 = tstr.step(s2, "is");
   auto s4 = tstr.step(s3, "this");
   auto s5 = tstr.step(s4, "thing");
-  CHECK(s5.normalizedScore == Approx(-2.58717f));
+  CHECK_THAT(s5.normalizedScore, WithinAbs(-2.58717f, 1e-3f));
 }
 
 TEST_CASE("legacy rnn computes scores for us") {
@@ -340,12 +341,12 @@ TEST_CASE("legacy rnn computes scores for us") {
   auto c21 = ltst.step(b2.ctx, "when");
   auto c22 = ltst.step(b2.ctx, "duck");
   auto c23 = ltst.step(b2.ctx, "company");
-  CHECK(c11.score == Approx(-2.81244f));
-  CHECK(c12.score == Approx(-5.74136f));
-  CHECK(c13.score == Approx(-3.71568f));
-  CHECK(c21.score == Approx(-2.4811f));
-  CHECK(c22.score == Approx(-6.68284f));
-  CHECK(c23.score == Approx(-3.62682f));
+  CHECK_THAT(c11.score, WithinAbs(-2.81244f, 1e-3f));
+  CHECK_THAT(c12.score, WithinAbs(-5.74136f, 1e-3f));
+  CHECK_THAT(c13.score, WithinAbs(-3.71568f, 1e-3f));
+  CHECK_THAT(c21.score, WithinAbs(-2.4811f, 1e-3f));
+  CHECK_THAT(c22.score, WithinAbs(-6.68284f, 1e-3f));
+  CHECK_THAT(c23.score, WithinAbs(-3.62682f, 1e-3f));
 }
 
 TEST_CASE("repimplementation works in NxM mode") {
@@ -358,18 +359,18 @@ TEST_CASE("repimplementation works in NxM mode") {
   auto c = tstr.stepBeam({b1, b2}, {"when", "duck", "company"});
   auto d = tstr.step(b1, "when");
   auto d2 = tstr.step(b2, "company");
-  CHECK(d.normalizedScore == Approx(-2.81244f));
+  CHECK_THAT(d.normalizedScore, WithinAbs(-2.81244f, 1e-3f));
   CHECK(c.size() == 2);
   auto& c0 = c[0];
   auto& c1 = c[1];
-  CHECK(c0.nScore(0) == Approx(d.normalizedScore));
-  CHECK(c1.nScore(2) == Approx(d2.normalizedScore));
-  CHECK(c0.nScore(0) == Approx(-2.81244f));
-  CHECK(c0.nScore(1) == Approx(-5.74136f));
-  CHECK(c0.nScore(2) == Approx(-3.71568f));
-  CHECK(c1.nScore(0) == Approx(-2.4811f));
-  CHECK(c1.nScore(1) == Approx(-6.68284f));
-  CHECK(c1.nScore(2) == Approx(-3.62682f));
+  CHECK_THAT(c0.nScore(0), WithinAbs(d.normalizedScore, 1e-3f));
+  CHECK_THAT(c1.nScore(2), WithinAbs(d2.normalizedScore, 1e-3f));
+  CHECK_THAT(c0.nScore(0), WithinAbs(-2.81244f, 1e-3f));
+  CHECK_THAT(c0.nScore(1), WithinAbs(-5.74136f, 1e-3f));
+  CHECK_THAT(c0.nScore(2), WithinAbs(-3.71568f, 1e-3f));
+  CHECK_THAT(c1.nScore(0), WithinAbs(-2.4811f, 1e-3f));
+  CHECK_THAT(c1.nScore(1), WithinAbs(-6.68284f, 1e-3f));
+  CHECK_THAT(c1.nScore(2), WithinAbs(-3.62682f, 1e-3f));
 }
 
 TEST_CASE("reimplementation works in parallel mode with a single arg") {
@@ -379,7 +380,7 @@ TEST_CASE("reimplementation works in parallel mode with a single arg") {
   auto b = tstr.stepParallel({a1}, {"me"});
   auto b1a = tstr.step(a1, "me");
   REQUIRE(b.size() == 1);
-  CHECK(b[0].nScore(0) == Approx(b1a.normalizedScore));
+  CHECK_THAT(b[0].nScore(0), WithinAbs(b1a.normalizedScore, 1e-4f));
 }
 
 TEST_CASE("reimplementation works in parallel mode") {
@@ -391,6 +392,6 @@ TEST_CASE("reimplementation works in parallel mode") {
   auto b1a = tstr.step(a1, "me");
   auto b2a = tstr.step(a2, "me");
   REQUIRE(b.size() == 2);
-  CHECK(b[0].nScore(0) == Approx(b1a.normalizedScore));
-  CHECK(b[1].nScore(0) == Approx(b2a.normalizedScore));
+  CHECK_THAT(b[0].nScore(0), WithinAbs(b1a.normalizedScore, 1e-3f));
+  CHECK_THAT(b[1].nScore(0), WithinAbs(b2a.normalizedScore, 1e-3f));
 }

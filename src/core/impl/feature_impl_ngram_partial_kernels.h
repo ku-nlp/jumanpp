@@ -6,8 +6,8 @@
 #define JUMANPP_FEATURE_NGRAM_PARTIAL_KERNELS_H
 
 #include "core/analysis/perceptron.h"
+#include "core/impl/feature_impl_hasher.h"
 #include "util/common.hpp"
-#include "util/fast_hash.h"
 #include "util/sliceable_array.h"
 #include "util/types.hpp"
 
@@ -38,13 +38,13 @@ inline void applyBiTriFullKernel(
     for (; (feat + 2) <= numBiFeat; feat += 2) {
       auto f = feat;
       auto t1v1 = t1row.at(t1featuresBi.at(f));
-      auto v1 = util::hashing::FastHash1{biState.at(f)}.mix(t1v1).masked(mask);
+      auto v1 = Hasher{biState.at(f)}.mix(t1v1).masked(mask);
       weights.prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(v1);
       buf1.at(f) = v1;
       r1 += weights.at(buf2.at(f));
       f += 1;
       auto t1v2 = t1row.at(t1featuresBi.at(f));
-      auto v2 = util::hashing::FastHash1{biState.at(f)}.mix(t1v2).masked(mask);
+      auto v2 = Hasher{biState.at(f)}.mix(t1v2).masked(mask);
       weights.prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(v2);
       buf1.at(f) = v2;
       r2 += weights.at(buf2.at(f));
@@ -52,7 +52,7 @@ inline void applyBiTriFullKernel(
     if (numBiFeat & 0x1) {
       auto f = feat;
       auto t1v1 = t1row.at(t1featuresBi.at(f));
-      auto v1 = util::hashing::FastHash1{biState.at(f)}.mix(t1v1).masked(mask);
+      auto v1 = Hasher{biState.at(f)}.mix(t1v1).masked(mask);
       weights.prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(v1);
       buf1.at(f) = v1;
       r1 += weights.at(buf2.at(f));
@@ -77,18 +77,14 @@ inline void applyBiTriFullKernel(
       auto f = feat;
       auto t1v1 = t1row.at(t1FeaturesTri.at(f));
       auto t2v1 = t2row.at(t2FeaturesTri.at(f));
-      auto v1 =
-          util::hashing::FastHash1{triState.at(f)}.mix(t1v1).mix(t2v1).masked(
-              mask);
+      auto v1 = Hasher{triState.at(f)}.mix(t1v1).mix(t2v1).masked(mask);
       weights.prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(v1);
       tribuf1.at(f) = v1;
       r1 += weights.at(tribuf2.at(f));
       f += 1;
       auto t1v2 = t1row.at(t1FeaturesTri.at(f));
       auto t2v2 = t2row.at(t2FeaturesTri.at(f));
-      auto v2 =
-          util::hashing::FastHash1{triState.at(f)}.mix(t1v2).mix(t2v2).masked(
-              mask);
+      auto v2 = Hasher{triState.at(f)}.mix(t1v2).mix(t2v2).masked(mask);
       weights.prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(v2);
       tribuf1.at(f) = v2;
       r2 += weights.at(tribuf2.at(f));
@@ -97,9 +93,7 @@ inline void applyBiTriFullKernel(
       auto f = feat;
       auto t1v1 = t1row.at(t1FeaturesTri.at(f));
       auto t2v1 = t2row.at(t2FeaturesTri.at(f));
-      auto v1 =
-          util::hashing::FastHash1{triState.at(f)}.mix(t1v1).mix(t2v1).masked(
-              mask);
+      auto v1 = Hasher{triState.at(f)}.mix(t1v1).mix(t2v1).masked(mask);
       weights.prefetch<util::PrefetchHint::PREFETCH_HINT_T0>(v1);
       tribuf1.at(f) = v1;
       r1 += weights.at(tribuf2.at(f));

@@ -53,7 +53,7 @@ set(core_hdrs
   env.h
   features_api.h
   ${core_hdrs}
-  )
+        impl/feature_impl_hasher.h)
 
 set(core_test_srcs
   ${core_test_srcs}

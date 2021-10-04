@@ -7,15 +7,13 @@
 
 #include "core/analysis/perceptron.h"
 #include "core/features_api.h"
+#include "core/impl/feature_impl_hasher.h"
 #include "core/impl/feature_impl_types.h"
-#include "util/fast_hash.h"
 
 namespace jumanpp {
 namespace core {
 namespace features {
 namespace impl {
-
-namespace h = util::hashing;
 
 class UnigramFeature {
   u32 target_;
@@ -29,8 +27,7 @@ class UnigramFeature {
       : target_{target}, index_{index}, t0idx_{t0idx} {}
 
   JPP_ALWAYS_INLINE u32 maskedValueFor(u64 t0, u32 mask) const noexcept {
-    auto v =
-        h::FastHash1{}.mix(TotalHashArgs).mix(index_).mix(UnigramSeed).mix(t0);
+    auto v = Hasher{}.mix(TotalHashArgs).mix(index_).mix(UnigramSeed).mix(t0);
     return v.masked(mask);
   }
 
@@ -58,12 +55,11 @@ class BigramFeature {
   constexpr BigramFeature(u32 target, u32 index, u32 t0idx, u32 t1idx) noexcept
       : target_{target}, index_{index}, t0idx_{t0idx}, t1idx_{t1idx} {}
 
-  JPP_ALWAYS_INLINE void step0(util::ArraySlice<u64> patterns,
-                               util::MutableArraySlice<u64> state) const
-      noexcept {
+  JPP_ALWAYS_INLINE void step0(
+      util::ArraySlice<u64> patterns,
+      util::MutableArraySlice<u64> state) const noexcept {
     auto t0 = patterns.at(t0idx_);
-    auto v =
-        h::FastHash1{}.mix(TotalHashArgs).mix(index_).mix(BigramSeed).mix(t0);
+    auto v = Hasher{}.mix(TotalHashArgs).mix(index_).mix(BigramSeed).mix(t0);
     state.at(target_) = v.result();
   }
 
@@ -73,7 +69,7 @@ class BigramFeature {
                               u32 mask) const noexcept {
     auto t1 = patterns.at(t1idx_);
     auto s = state.at(target_);
-    auto v = h::FastHash1{s}.mix(t1);
+    auto v = Hasher{s}.mix(t1);
     u32 r = v.masked(mask);
     result.at(target_) = r;
     return r;
@@ -91,16 +87,15 @@ class BigramFeature {
   JPP_ALWAYS_INLINE u32 raw2(u64 state, util::ArraySlice<u64> t1,
                              u32 mask) const noexcept {
     auto t1v = t1.at(t1idx_);
-    auto v = h::FastHash1{state}.mix(t1v);
+    auto v = Hasher{state}.mix(t1v);
     return v.masked(mask);
   }
 
   JPP_ALWAYS_INLINE u32 jointRaw(util::ArraySlice<u64> t0,
-                                 util::ArraySlice<u64> t1, u32 mask) const
-      noexcept {
+                                 util::ArraySlice<u64> t1,
+                                 u32 mask) const noexcept {
     auto t0v = t0.at(t0idx_);
-    auto v =
-        h::FastHash1{}.mix(TotalHashArgs).mix(index_).mix(BigramSeed).mix(t0v);
+    auto v = Hasher{}.mix(TotalHashArgs).mix(index_).mix(BigramSeed).mix(t0v);
     return raw2(v.result(), t1, mask);
   }
 
@@ -125,22 +120,20 @@ class TrigramFeature {
         t1idx_{t1idx},
         t2idx_{t2idx} {}
 
-  JPP_ALWAYS_INLINE void step0(util::ArraySlice<u64> patterns,
-                               util::MutableArraySlice<u64> state) const
-      noexcept {
+  JPP_ALWAYS_INLINE void step0(
+      util::ArraySlice<u64> patterns,
+      util::MutableArraySlice<u64> state) const noexcept {
     auto t0 = patterns.at(t0idx_);
-    auto v =
-        h::FastHash1{}.mix(TotalHashArgs).mix(index_).mix(TrigramSeed).mix(t0);
+    auto v = Hasher{}.mix(TotalHashArgs).mix(index_).mix(TrigramSeed).mix(t0);
     state.at(target_) = v.result();
   }
 
-  JPP_ALWAYS_INLINE void step1(util::ArraySlice<u64> patterns,
-                               util::ArraySlice<u64> state,
-                               util::MutableArraySlice<u64> result) const
-      noexcept {
+  JPP_ALWAYS_INLINE void step1(
+      util::ArraySlice<u64> patterns, util::ArraySlice<u64> state,
+      util::MutableArraySlice<u64> result) const noexcept {
     auto t1 = patterns.at(t1idx_);
     auto s = state.at(target_);
-    auto v = h::FastHash1{s}.mix(t1);
+    auto v = Hasher{s}.mix(t1);
     result.at(target_) = v.result();
   }
 
@@ -150,28 +143,27 @@ class TrigramFeature {
                               u32 mask) const noexcept {
     auto t2 = patterns.at(t2idx_);
     auto s = state.at(target_);
-    auto v = h::FastHash1{s}.mix(t2);
+    auto v = Hasher{s}.mix(t2);
     auto res = v.masked(mask);
     result.at(target_) = res;
     return res;
   }
 
   JPP_ALWAYS_INLINE u32 raw23(u64 state, util::ArraySlice<u64> t1,
-                              util::ArraySlice<u64> t2, u32 mask) const
-      noexcept {
+                              util::ArraySlice<u64> t2,
+                              u32 mask) const noexcept {
     auto t1v = t1.at(t1idx_);
     auto t2v = t2.at(t2idx_);
-    auto v = h::FastHash1{state}.mix(t1v).mix(t2v);
+    auto v = Hasher{state}.mix(t1v).mix(t2v);
     return v.masked(mask);
   }
 
   JPP_ALWAYS_INLINE u32 jointRaw(util::ArraySlice<u64> t0,
                                  util::ArraySlice<u64> t1,
-                                 util::ArraySlice<u64> t2, u32 mask) const
-      noexcept {
+                                 util::ArraySlice<u64> t2,
+                                 u32 mask) const noexcept {
     auto t0v = t0.at(t0idx_);
-    auto v =
-        h::FastHash1{}.mix(TotalHashArgs).mix(index_).mix(TrigramSeed).mix(t0v);
+    auto v = Hasher{}.mix(TotalHashArgs).mix(index_).mix(TrigramSeed).mix(t0v);
     return raw23(v.result(), t1, t2, mask);
   }
 
@@ -222,8 +214,8 @@ class PartialNgramFeatureApplyImpl : public PartialNgramFeatureApply {
         analysis::impl::computeUnrolled4RawPerceptron(weights, buf2);
   }
 
-  void applyBiStep1(FeatureBuffer* buffers, util::ConstSliceable<u64> p0) const
-      noexcept override {
+  void applyBiStep1(FeatureBuffer* buffers,
+                    util::ConstSliceable<u64> p0) const noexcept override {
     auto numElems = static_cast<u32>(p0.numRows());
     auto result = buffers->t1Buf(child().numBigrams(), numElems);
     for (auto row = 0; row < p0.numRows(); ++row) {
@@ -234,10 +226,10 @@ class PartialNgramFeatureApplyImpl : public PartialNgramFeatureApply {
     buffers->currentElems = numElems;
   }
 
-  void applyBiStep2(FeatureBuffer* buffers, util::ArraySlice<u64> p1,
-                    analysis::FeatureScorer* scorer,
-                    util::MutableArraySlice<float> result) const
-      noexcept override {
+  void applyBiStep2(
+      FeatureBuffer* buffers, util::ArraySlice<u64> p1,
+      analysis::FeatureScorer* scorer,
+      util::MutableArraySlice<float> result) const noexcept override {
     auto numBigrams = child().numBigrams();
     auto buf1 = buffers->valBuf1(numBigrams);
     auto buf2 = buffers->valBuf2(numBigrams);
@@ -267,8 +259,8 @@ class PartialNgramFeatureApplyImpl : public PartialNgramFeatureApply {
         analysis::impl::computeUnrolled4RawPerceptron(weights, buf2);
   }
 
-  void applyTriStep1(FeatureBuffer* buffers, util::ConstSliceable<u64> p0) const
-      noexcept override {
+  void applyTriStep1(FeatureBuffer* buffers,
+                     util::ConstSliceable<u64> p0) const noexcept override {
     auto numElems = static_cast<u32>(p0.numRows());
     JPP_DCHECK_EQ(numElems, buffers->currentElems);
     auto result = buffers->t2Buf1(child().numTrigrams(), numElems);
@@ -280,8 +272,8 @@ class PartialNgramFeatureApplyImpl : public PartialNgramFeatureApply {
     buffers->currentElems = numElems;
   }
 
-  void applyTriStep2(FeatureBuffer* buffers, util::ArraySlice<u64> p1) const
-      noexcept override {
+  void applyTriStep2(FeatureBuffer* buffers,
+                     util::ArraySlice<u64> p1) const noexcept override {
     auto numElems = buffers->currentElems;
     auto state = buffers->t2Buf1(child().numTrigrams(), numElems);
     auto result = buffers->t2Buf2(child().numTrigrams(), numElems);
@@ -293,10 +285,10 @@ class PartialNgramFeatureApplyImpl : public PartialNgramFeatureApply {
     buffers->currentElems = numElems;
   }
 
-  void applyTriStep3(FeatureBuffer* buffers, util::ArraySlice<u64> p2,
-                     analysis::FeatureScorer* scorer,
-                     util::MutableArraySlice<float> result) const
-      noexcept override {
+  void applyTriStep3(
+      FeatureBuffer* buffers, util::ArraySlice<u64> p2,
+      analysis::FeatureScorer* scorer,
+      util::MutableArraySlice<float> result) const noexcept override {
     auto numTrigrams = child().numTrigrams();
     auto buf1 = buffers->valBuf1(numTrigrams);
     auto buf2 = buffers->valBuf2(numTrigrams);
@@ -326,12 +318,11 @@ class PartialNgramFeatureApplyImpl : public PartialNgramFeatureApply {
         analysis::impl::computeUnrolled4RawPerceptron(weights, buf2);
   }
 
-  void applyBiTri(FeatureBuffer* buffers, u32 t0idx, util::ArraySlice<u64> t0,
-                  util::ConstSliceable<u64> t1, util::ConstSliceable<u64> t2,
-                  util::ArraySlice<u32> t1idxes,
-                  analysis::FeatureScorer* scorer,
-                  util::MutableArraySlice<float> result) const
-      noexcept override {
+  void applyBiTri(
+      FeatureBuffer* buffers, u32 t0idx, util::ArraySlice<u64> t0,
+      util::ConstSliceable<u64> t1, util::ConstSliceable<u64> t2,
+      util::ArraySlice<u32> t1idxes, analysis::FeatureScorer* scorer,
+      util::MutableArraySlice<float> result) const noexcept override {
     JPP_DCHECK_EQ(t1idxes.size(), t2.numRows());
     auto numElems = t2.numRows();
     if (numElems == 0) {

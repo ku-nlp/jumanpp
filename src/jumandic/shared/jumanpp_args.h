@@ -28,7 +28,7 @@ enum class OutputType {
 #if defined(JPP_USE_PROTOBUF)
   JumanPb,
   LatticePb,
-  FullLatticeDump
+  FullLatticeDump,
 #endif
 #if defined(JPP_ENABLE_DEV_TOOLS)
       GlobalBeamPos,

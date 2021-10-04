@@ -18,7 +18,7 @@ std::string InNodeComputationsCodegen::patternValue(
   }
   std::string name = concat("fe_pat_", pat.index);
   std::string hashName = concat("fe_pat_hash_", pat.index);
-  p << "\nauto " << hashName << " = ::jumanpp::util::hashing::FastHash1{}.mix("
+  p << "\nauto " << hashName << " = ::jumanpp::core::features::impl::Hasher{}.mix("
     << pat.index << "ULL).mix(" << pat.references.size() << "ULL).mix("
     << features::impl::PatternFeatureSeed << "ULL);";
   for (auto ref : pat.references) {

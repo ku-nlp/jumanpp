@@ -219,7 +219,7 @@ struct InputData {
     }
   }
 
-  void __attribute__((noinline))
+  void JPP_NO_INLINE
   computeFeature(util::MutableArraySlice<u32> result, i32 item, u64 seed) {
     util::ConstSliceable<u64> stateSlice{state, numItems, numFeatures};
     FeatureAssigner<30, 30, 3>::assignFeature(result, stateSlice.row(item),
@@ -319,6 +319,8 @@ struct HorizontalPerceptron<4000> {
   }
 };
 
+#ifdef __clang__
+
 template <>
 struct HorizontalPerceptron<401> {
   static float compute(util::ArraySlice<u32> idxes, u32 mask) {
@@ -403,7 +405,7 @@ struct HorizontalPerceptron<402> {
 };
 
 template <int N>
-static void __attribute__((noinline))
+static void JPP_NO_INLINE
 horizontalPerc(util::MutableArraySlice<float> result,
                util::ConstSliceable<u32> features, u32 max) {
   u32 mask = max - 1;
@@ -411,6 +413,8 @@ horizontalPerc(util::MutableArraySlice<float> result,
     result[i] += HorizontalPerceptron<N>::compute(features.row(i), mask);
   }
 }
+
+#endif
 
 struct OutputData {
   std::vector<u32> outputFeatures;
@@ -425,7 +429,7 @@ struct OutputData {
     }
   }
 
-  void __attribute__((noinline)) computeMixedScoresPf1(u64 seed, u32 mask) {
+  void JPP_NO_INLINE computeMixedScoresPf1(u64 seed, u32 mask) {
     auto& weights = inputs.weights;
     util::ConstSliceable<u64> stateSlice{inputs.state, numItems, numFeatures};
     for (int i = 0; i < features.numRows(); ++i) {
@@ -436,6 +440,8 @@ struct OutputData {
 };
 
 volatile u64 size4m = 4 * 1024 * 1024;
+
+#ifdef __clang__
 
 BENCHMARK("hor-4-4m", [](context* ctx) {
   OutputData out;
@@ -468,6 +474,8 @@ BENCHMARK("hor-4f-4m", [](context* ctx) {
     horizontalPerc<4000>(&out.outputScores, out.features, size4m);
   }
 });
+
+#endif
 
 BENCHMARK("hor-fu-pf1-4m", [](context* ctx) {
   OutputData out;

@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <iosfwd>
 #include <string>
+
 #include "common.hpp"
 #include "murmur_hash.h"
 #include "types.hpp"

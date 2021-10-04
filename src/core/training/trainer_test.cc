@@ -72,6 +72,7 @@ TEST_CASE("trainer can compute score for a simple sentence") {
   TrainerEnv env{dic};
   env.parseMrph(ex);
   SoftConfidenceWeighted scw{TrainerEnv::testConf()};
+  scw.setAllWeights(0.01f);
   CHECK(env.trainer.example().numNodes() == 4);
   CHECK(env.trainer.prepare());
   CHECK(env.trainer.compute(scw.scorers()));
@@ -87,6 +88,7 @@ TEST_CASE(
   TrainerEnv env{dic};
   env.parseMrph(ex);
   SoftConfidenceWeighted scw{TrainerEnv::testConf()};
+  scw.setAllWeights(0.01f);
   CHECK(env.trainer.example().numNodes() == 3);
   CHECK(env.trainer.prepare());
   auto mem1 = env.anaImpl()->usedMemory();
@@ -120,6 +122,7 @@ TEST_CASE("trainer can compute score for sentence with full unks") {
   TrainerEnv env{dic, true};  // use unks
   env.parseMrph(ex);
   SoftConfidenceWeighted scw{TrainerEnv::testConf()};
+  scw.setAllWeights(0.01f);
   CHECK(env.trainer.example().numNodes() == 3);
   CHECK(env.trainer.prepare());
   CHECK(env.trainer.compute(scw.scorers()));
@@ -137,6 +140,7 @@ TEST_CASE("trainer can compute score for sentence with part unks") {
   TrainerEnv env{dic, true};  // use unks
   env.parseMrph(ex);
   SoftConfidenceWeighted scw{TrainerEnv::testConf()};
+  scw.setAllWeights(0.01f);
   CHECK(env.trainer.example().numNodes() == 3);
   CHECK(env.trainer.prepare());
   CHECK(env.trainer.compute(scw.scorers()));
@@ -157,6 +161,7 @@ TEST_CASE("trainer can compute score for sentence with other POS unks") {
   TrainerEnv env{dic, true};  // use unks
   env.parseMrph(ex);
   SoftConfidenceWeighted scw{TrainerEnv::testConf()};
+  scw.setAllWeights(0.01f);
   CHECK(env.trainer.example().numNodes() == 10);
   CHECK(env.trainer.prepare());
   CHECK(env.trainer.compute(scw.scorers()));

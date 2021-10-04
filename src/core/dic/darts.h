@@ -1396,6 +1396,35 @@ void DoubleArrayBuilder::build(const Keyset<T> &keyset) {
   }
 }
 
+/// Returns maximum power of 2 that is lesser than a given number
+/// \param n given number
+/// \return
+static inline std::size_t max_pow2(std::size_t n) {
+  if ((n & (n - 1)) == 0) {
+    return n >> 1;
+  }
+
+  std::size_t res = 0;
+  while (n > 0) {
+    n >>= 1;
+    res += 1;
+  }
+
+  return 1 << (res - 1);
+}
+
+static inline std::size_t progress_unit(std::size_t num_max, std::size_t num_steps) {
+  std::size_t rough = num_max / num_steps;
+  if (rough == 0) {
+    return 0;
+  }
+  return max_pow2(rough) - 1;
+}
+
+static inline bool should_progress(std::size_t step, std::size_t unit) {
+  return (step & unit) == 0;
+}
+
 inline void DoubleArrayBuilder::copy(std::size_t *size_ptr,
                                      DoubleArrayUnit **buf_ptr) const {
   if (size_ptr != NULL) {
@@ -1422,9 +1451,10 @@ template <typename T>
 void DoubleArrayBuilder::build_dawg(const Keyset<T> &keyset,
                                     DawgBuilder *dawg_builder) {
   dawg_builder->init();
+  std::size_t prog_unit = progress_unit(keyset.num_keys() + 1, 1000);
   for (std::size_t i = 0; i < keyset.num_keys(); ++i) {
     dawg_builder->insert(keyset.keys(i), keyset.lengths(i), keyset.values(i));
-    if (progress_func_ != NULL) {
+    if (progress_func_ != NULL && should_progress(i + 1, prog_unit)) {
       progress_func_->report(i + 1, keyset.num_keys() + 1);
     }
   }
@@ -1592,6 +1622,7 @@ id_type DoubleArrayBuilder::arrange_from_keyset(const Keyset<T> &keyset,
   labels_.resize(0);
 
   value_type value = -1;
+  std::size_t prog_unit = progress_unit(keyset.num_keys() + 1, 1000);
   for (std::size_t i = begin; i < end; ++i) {
     uchar_type label = keyset.keys(i, depth);
     if (label == '\0') {
@@ -1606,7 +1637,7 @@ id_type DoubleArrayBuilder::arrange_from_keyset(const Keyset<T> &keyset,
       if (value == -1) {
         value = keyset.values(i);
       }
-      if (progress_func_ != NULL) {
+      if (progress_func_ != NULL && should_progress(i + 1, prog_unit)) {
         progress_func_->report(i + 1, keyset.num_keys() + 1);
       }
     }

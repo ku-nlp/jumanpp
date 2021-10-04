@@ -5,7 +5,7 @@ word sequences by using a recurrent neural network language model (RNNLM).
 Version 2 has better accuracy and greatly (>250x) improved analysis speed than
 the original Juman++.
 
-[![Build Status](https://travis-ci.org/ku-nlp/jumanpp.svg?branch=master)](https://travis-ci.org/ku-nlp/jumanpp)
+[![Build Status](https://github.com/ku-nlp/jumanpp/actions/workflows/cmake.yml/badge.svg)](https://github.com/ku-nlp/jumanpp/actions/workflows/cmake.yml)
 
 # Installation
 
@@ -76,6 +76,13 @@ Use `--help` to see more options.
 ## Input
 JUMAN++ can handle only utf-8 encoded text as an input.
 Lines beginning with `# ` will be interpreted as comments.
+
+## Training Jumandic Model
+
+A set of scripts for training Jumandic model is available in [this repository](https://github.com/ku-nlp/jumanpp-jumandic).
+It is possible to modify the system dictionary to add other entries to the trained model.
+
+**Attention**: You need to have access to Mainichi Shinbun for Year 1995 to be able to use Kyoto Univeristy corpus for training.
 
 # Other
 

@@ -31,7 +31,7 @@ THE SOFTWARE.
 #endif
 
 #ifdef _MSC_VER
-#define BENCH_NOEXCEPT _NOEXCEPT
+#define BENCH_NOEXCEPT noexcept
 #define BENCH_CONSTEXPR
 #else
 #define BENCH_NOEXCEPT noexcept

@@ -19,8 +19,12 @@ namespace util {
 enum class MMapType { ReadOnly, ReadWrite };
 
 class MappedFileFragment {
-  void *address_;
-  size_t size_;
+  void *
+      baseAddress_;  // address of mapped segment with page alignment limiations
+  void *address_;    // address of mapped requested data
+  size_t alignedSize_;  // size with alignment limitations (may be larger than
+                        // original size)
+  size_t size_;  // size of requested data
 
   MappedFileFragment(const MappedFileFragment &) = delete;
   MappedFileFragment &operator=(const MappedFileFragment &) = delete;

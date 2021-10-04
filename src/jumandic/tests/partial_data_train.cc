@@ -4,6 +4,8 @@
 
 #include "jumandic/shared/jumandic_test_env.h"
 
+using Catch::Matchers::WithinAbs;
+
 TEST_CASE("can train with combined examples (boundary only)") {
   JumandicTrainingTestEnv env{"jumandic/jumanpp_minimal.mdic"};
   env.trainArgs.batchSize = 20;
@@ -16,7 +18,7 @@ TEST_CASE("can train with combined examples (boundary only)") {
   auto loss = env.trainNepochsFrom("jumandic/train_mini_01.txt", 10);
 
   // env.dumpTrainers("/tmp/jpp-debug");
-  CHECK(loss == Approx(0));
+  CHECK_THAT(loss, WithinAbs(0, 1e-3));
 }
 
 TEST_CASE("can train with part and gbeam", "[gbeam]") {
@@ -32,5 +34,5 @@ TEST_CASE("can train with part and gbeam", "[gbeam]") {
   auto loss = env.trainNepochsFrom("jumandic/train_mini_01.txt", 10);
 
   // env.dumpTrainers("/tmp/jpp-debug");
-  CHECK(loss == Approx(0));
+  CHECK_THAT(loss, WithinAbs(0, 1e-3));
 }

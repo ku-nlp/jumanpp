@@ -106,6 +106,7 @@ class TempFile {
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
     auto res = std::tmpnam(buffer);
+    CHECK(res);
 #ifdef __clang__
 #pragma clang diagnostic pop
 #elif defined(__GNUC__)
