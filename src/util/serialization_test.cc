@@ -2,6 +2,7 @@
 // Created by Arseny Tolmachev on 2017/03/04.
 //
 
+#include <limits>
 #include "util/serialization.h"
 #include "testing/standalone_test.h"
 #include "util/serialization_flatmap.h"
