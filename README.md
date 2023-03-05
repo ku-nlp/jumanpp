@@ -16,6 +16,10 @@ the original Juman++.
   * For example gcc 5.1+, clang 3.4+, MSVC 2017
   * We test on GCC and clang on Linux/MacOS, mingw64-gcc and MSVC2017 on Windows
 - CMake v3.1 or later
+- For Ubuntu22.04, you need to install additional packages as follows:
+
+```bash
+$ sudo apt install libprotobuf-dev protobuf-compiler
 
 Read [this document](docs/building.md) for CentOS and RHEL derivatives or non-CMake alternatives.
 
