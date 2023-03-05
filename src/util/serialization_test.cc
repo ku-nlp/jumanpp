@@ -6,6 +6,7 @@
 #include "util/serialization.h"
 #include "testing/standalone_test.h"
 #include "util/serialization_flatmap.h"
+#include <limits>
 
 using namespace jumanpp;
 using namespace jumanpp::util::serialization;
