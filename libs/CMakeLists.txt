@@ -4,8 +4,8 @@ set(libs3p_pegtl_headers ${pegtl_headers_raw} PARENT_SCOPE)
 set(BACKWARD_headers ${CMAKE_CURRENT_SOURCE_DIR}/backward.hpp PARENT_SCOPE)
 set(JPP_LIBS_DIR ${CMAKE_CURRENT_SOURCE_DIR} PARENT_SCOPE)
 
-set(EIGEN_VERSION "3.3.7")
-set(EIGEN_HASH "685adf14bd8e9c015b78097c1dc22f2f01343756f196acdc76a678e1ae352e11")
+set(EIGEN_VERSION "5.0.1")
+set(EIGEN_HASH "e4de6b08f33fd8b8985d2f204381408c660bffa6170ac65b68ae1bd3cd575c0a")
 
 if (IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/eigen3)
   message("-- Eigen3... OK")
