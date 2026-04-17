@@ -243,6 +243,27 @@ TEST_CASE("do not make numeric unk nodes ends with period") {
   CHECK(env.numNodeSeeds() == 1);
 }
 
+// Regression for ku-nlp/jumanpp#157: trailing digit+period caused a read
+// past the end of the codepoint vector during the second spawnNodes pass
+// (start > 0), because checkPeriod bounded the lookahead against `pos`
+// instead of the absolute position `start + pos`.
+TEST_CASE("multi-digit number followed by trailing period does not crash") {
+  NumericTestEnv env{"x,l1\nほげ,l2\n"};
+  env.analyze("１０．");
+  CHECK(env.contains("１０", 0, "l1"));
+  CHECK(env.contains("０", 1, "l1"));
+  CHECK(!env.contains("１０．", 0, "l1"));
+  CHECK(!env.contains("０．", 1, "l1"));
+  CHECK(env.numNodeSeeds() == 2);
+}
+
+TEST_CASE("digit+period preceded by non-numeric context does not crash") {
+  NumericTestEnv env{"x,l1\nほげ,l2\n"};
+  env.analyze("ほげ４．");
+  CHECK(env.contains("４", 2, "l1"));
+  CHECK(!env.contains("４．", 2, "l1"));
+}
+
 TEST_CASE("do not make numeric unk nodes starts with period") {
   NumericTestEnv env{"x,l1\nほげ,l2\n"};
   env.analyze("．４");
