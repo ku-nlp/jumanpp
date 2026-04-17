@@ -245,7 +245,7 @@ size_t NumericUnkMaker::checkPeriod(const CodepointStorage &codepoints,
   if (pos == 0) return 0;
   if (!codepoints[posPeriod].hasClass(PeriodClass)) return 0;
   if (!codepoints[posPeriod - 1].hasClass(charClass_)) return 0;
-  if (pos + 1 < codepoints.size() &&
+  if (posPeriod + 1 < codepoints.size() &&
       codepoints[posPeriod + 1].hasClass(charClass_))
     return 1;
   return 0;
