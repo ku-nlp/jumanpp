@@ -15,7 +15,7 @@ the original Juman++.
 * Compiler: C++14 compatible
   * For example gcc 5.1+, clang 3.4+, MSVC 2017
   * We test on GCC and clang on Linux/MacOS, mingw64-gcc and MSVC2017 on Windows
-- CMake v3.1 or later
+- CMake v3.13 or later
 - For Ubuntu22.04, you need to install additional packages as follows: `sudo apt install libprotobuf-dev protobuf-compiler`
 
 Read [this document](docs/building.md) for CentOS and RHEL derivatives or non-CMake alternatives.
@@ -27,14 +27,13 @@ Download the package from [Releases](https://github.com/ku-nlp/jumanpp/releases)
 **Important**: The download should be around 300 MB. If it is not you have probably downloaded a source snapshot which does not contain a model.
 
 ```bash
-$ tar xf jumanpp-<version>.tar.xz # decompress the package
-$ cd jumanpp-<version> # move into the directory
-$ mkdir bld # make a subdirectory for build
-$ cd bld
-$ cmake .. \
-  -DCMAKE_BUILD_TYPE=Release \ # you want to do this for performance
-  -DCMAKE_INSTALL_PREFIX=<prefix> # where to install Juman++
-$ make install -j<parallelism>
+$ tar xf jumanpp-<version>.tar.xz  # decompress the package
+$ cd jumanpp-<version>
+$ cmake -S . -B build \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=<prefix>
+$ cmake --build build -j<parallelism>
+$ cmake --install build
 ```
 ## Building from git
 
@@ -42,10 +41,8 @@ $ make install -j<parallelism>
 The current git version is not compatible with the models of 2.0-rc1 and 2.0-rc2.
 
 ```bash
-$ mkdir cmake-build-dir # CMake does not support in-source builds
-$ cd cmake-build-dir
-$ cmake ..
-$ make # -j
+$ cmake -S . -B build
+$ cmake --build build -j
 ```
 
 # Usage
