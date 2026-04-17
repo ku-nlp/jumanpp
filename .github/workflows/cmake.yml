@@ -6,39 +6,81 @@ on:
   pull_request:
     branches: [ master ]
 
-env:
-  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
-  BUILD_TYPE: Release
-
 jobs:
   build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+
     strategy:
+      fail-fast: false
       matrix:
-        os:
-          - ubuntu-18.04
-          - windows-latest
-          - macos-latest
-    # The CMake configure and build commands are platform agnostic and should work equally
-    # well on Windows or Mac.  You can convert this to a matrix build if you need
-    # cross-platform coverage.
-    # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
-    runs-on: ${{matrix.os}}
+        include:
+          - name: linux-release
+            os: ubuntu-22.04
+            build_type: Release
+            extra_cxxflags: ""
+            extra_ldflags: ""
+            extra_cmake_args: ""
+
+          # Optimized + ASan so memory-safety bugs on the hot path are caught
+          # in CI (see ku-nlp/jumanpp#157).
+          - name: linux-release-asan
+            os: ubuntu-22.04
+            build_type: RelWithDebInfo
+            extra_cxxflags: "-fsanitize=address -fno-omit-frame-pointer"
+            extra_ldflags: "-fsanitize=address"
+            extra_cmake_args: ""
+
+          - name: macos-release
+            os: macos-latest
+            build_type: Release
+            extra_cxxflags: ""
+            extra_ldflags: ""
+            extra_cmake_args: ""
+
+          # No Windows consumer uses the Protobuf-based components, so skip
+          # the vcpkg dance and disable them.
+          - name: windows-release
+            os: windows-latest
+            build_type: Release
+            extra_cxxflags: ""
+            extra_ldflags: ""
+            extra_cmake_args: "-DJPP_USE_PROTOBUF=OFF"
+
+    defaults:
+      run:
+        shell: bash
 
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-    - name: Configure CMake
-      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
-      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -C ${{github.workspace}}/travis/cmake.conf --warn-uninitialized
+      - name: Install dependencies (Ubuntu)
+        if: startsWith(matrix.os, 'ubuntu-')
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libprotobuf-dev protobuf-compiler
 
-    - name: Build
-      # Build your program with the given configuration
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} -j
+      - name: Install dependencies (macOS)
+        if: startsWith(matrix.os, 'macos-')
+        run: brew install protobuf
 
-    - name: Test
-      working-directory: ${{github.workspace}}/build
-      # Execute tests defined by the CMake configuration.  
-      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-      run: ctest -C ${{env.BUILD_TYPE}} --extra-verbose --output-on-failure
-      
+      - name: Configure CMake
+        env:
+          EXTRA_CXXFLAGS: ${{ matrix.extra_cxxflags }}
+          EXTRA_LDFLAGS: ${{ matrix.extra_ldflags }}
+          EXTRA_CMAKE_ARGS: ${{ matrix.extra_cmake_args }}
+        run: |
+          cmake -B "${{ github.workspace }}/build" \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DCMAKE_CXX_FLAGS="$EXTRA_CXXFLAGS" \
+            -DCMAKE_EXE_LINKER_FLAGS="$EXTRA_LDFLAGS" \
+            -C "${{ github.workspace }}/.github/cmake.conf" \
+            --warn-uninitialized \
+            $EXTRA_CMAKE_ARGS
+
+      - name: Build
+        run: cmake --build "${{ github.workspace }}/build" --config ${{ matrix.build_type }} -j
+
+      - name: Test
+        working-directory: ${{ github.workspace }}/build
+        run: ctest -C ${{ matrix.build_type }} --output-on-failure
