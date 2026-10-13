@@ -98,8 +98,10 @@ class PrimFeatureTestEnv {
     CHECK_OK(tenv.analyzer->buildLattice());
   }
 
-  void analyze2(StringPiece str) {
+  void analyze2(StringPiece str, ScorePlugin* plugin = nullptr) {
     analyze(str);
+    // set after analyze(): resetForInput clears the plugin
+    tenv.analyzer->setPlugin(plugin);
     REQUIRE_OK(tenv.analyzer->bootstrapAnalysis());
     CHECK_OK(tenv.analyzer->computeScores(&sconf));
     CHECK_OK(top1.fillIn(tenv.analyzer->lattice()));

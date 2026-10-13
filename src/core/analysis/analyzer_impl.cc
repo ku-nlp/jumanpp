@@ -235,8 +235,9 @@ Status AnalyzerImpl::computeScoresFull(const ScorerDef* sconf) {
       for (i32 beamIdx = 0; beamIdx < activeBeam; ++beamIdx) {
         JPP_CAPTURE(beamIdx);
         proc.applyT2(beamIdx, sconf->feature);
-        proc.copyFeatureScores(t1idx, beamIdx, scores);
+        // makeBeams reads the stored scores, so the plugin goes first
         proc.applyPluginToFullBeam(boundary, t1idx, beamIdx);
+        proc.copyFeatureScores(t1idx, beamIdx, scores);
       }
     }
 
